@@ -30,11 +30,12 @@ import com.github.packageurl.PackageURLBuilder;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
@@ -101,7 +102,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 LOGGER.info("Starting GitHub Advisory mirroring task");
                 try {
                     retrieveAdvisories(null);
-                } catch (IOException ex) {
+                } catch (IOException | ParseException ex) {
                     handleRequestException(LOGGER, ex);
                 }
                 final long end = System.currentTimeMillis();
@@ -129,7 +130,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         }
     }
 
-    private void retrieveAdvisories(final String advisoriesEndCursor) throws IOException {
+    private void retrieveAdvisories(final String advisoriesEndCursor) throws IOException, ParseException {
         final String queryTemplate = generateQueryTemplate(advisoriesEndCursor);
         HttpPost request = new HttpPost(GITHUB_GRAPHQL_URL);
         request.addHeader("Authorization", "bearer " + accessToken);
@@ -140,8 +141,8 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         var stringEntity = new StringEntity(jsonBody.toString());
         request.setEntity(stringEntity);
         try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-            if (response.getStatusLine().getStatusCode() < HttpStatus.SC_OK || response.getStatusLine().getStatusCode() >= HttpStatus.SC_MULTIPLE_CHOICES) {
-                LOGGER.error("An error was encountered retrieving advisories with HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
+            if (response.getCode() < HttpStatus.SC_OK || response.getCode() >= HttpStatus.SC_MULTIPLE_CHOICES) {
+                LOGGER.error("An error was encountered retrieving advisories with HTTP Status : " + response.getCode() + " " + response.getReasonPhrase());
                 LOGGER.debug(queryTemplate);
                 mirroredWithoutErrors = false;
             } else {

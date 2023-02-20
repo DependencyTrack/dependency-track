@@ -26,11 +26,10 @@ import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.notification.NotificationConstants;
@@ -38,6 +37,7 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.epss.EpssParser;
 import org.dependencytrack.persistence.QueryManager;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -144,10 +144,9 @@ public class EpssMirrorTask implements LoggableSubscriber {
             LOGGER.info("Initiating download of " + url.toExternalForm());
             final HttpUriRequest request = new HttpGet(urlString);
             try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                final StatusLine status = response.getStatusLine();
                 final long end = System.currentTimeMillis();
                 metricDownloadTime += end - start;
-                if (status.getStatusCode() == HttpStatus.SC_OK) {
+                if (response.getCode() == HttpStatus.SC_OK) {
                     LOGGER.info("Downloading...");
                     try (InputStream in = response.getEntity().getContent()) {
                         file = new File(outputDir, filename);
@@ -160,12 +159,12 @@ public class EpssMirrorTask implements LoggableSubscriber {
                     }
                 } else {
                     mirroredWithoutErrors = false;
-                    LOGGER.warn("Unable to download - HTTP Response " + status.getStatusCode() + ": " + status.getReasonPhrase());
+                    LOGGER.warn("Unable to download - HTTP Response " + response.getCode() + ": " + response.getReasonPhrase());
                     Notification.dispatch(new Notification()
                             .scope(NotificationScope.SYSTEM)
                             .group(NotificationGroup.DATASOURCE_MIRRORING)
                             .title(NotificationConstants.Title.EPSS_MIRROR)
-                            .content("An error occurred mirroring the contents of the Exploit Prediction Scoring System. Check log for details. HTTP Response: " + status.getStatusCode())
+                            .content("An error occurred mirroring the contents of the Exploit Prediction Scoring System. Check log for details. HTTP Response: " + response.getCode())
                             .level(NotificationLevel.ERROR)
                     );
                 }

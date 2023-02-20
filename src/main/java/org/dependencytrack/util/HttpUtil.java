@@ -18,10 +18,10 @@
  */
 package org.dependencytrack.util;
 
+import org.apache.hc.core5.http.HttpHeaders;
+
 import java.util.Base64;
 import java.util.Objects;
-
-import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
 public final class HttpUtil {
 
@@ -32,7 +32,7 @@ public final class HttpUtil {
     }
 
     public static String basicAuthHeader(final String username, final String password) {
-        return AUTHORIZATION + ": " + basicAuthHeaderValue(username, password);
+        return HttpHeaders.AUTHORIZATION + ": " + basicAuthHeaderValue(username, password);
     }
 
     public static String basicAuthHeaderValue(final String username, final String password) {

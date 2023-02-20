@@ -36,14 +36,14 @@ import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.apache.http.Header;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.net.URIBuilder;
 import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.common.ManagedHttpClientFactory;
@@ -111,7 +111,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                 ))
                 .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_MAX_ATTEMPTS))
                 .retryOnException(exception -> false)
-                .retryOnResult(response -> 429 == response.getStatusLine().getStatusCode())
+                .retryOnResult(response -> 429 == response.getCode())
                 .build());
         RETRY = retryRegistry.retry("snyk-api");
         RETRY.getEventPublisher()
@@ -311,7 +311,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                 } else {
                     apiVersionSunset = null;
                 }
-                if (response.getStatusLine().getStatusCode() >= HttpStatus.SC_OK && response.getStatusLine().getStatusCode() < HttpStatus.SC_MULTIPLE_CHOICES) {
+                if (response.getCode() >= HttpStatus.SC_OK && response.getCode()< HttpStatus.SC_MULTIPLE_CHOICES) {
                     String responseString = EntityUtils.toString(response.getEntity());
                     JSONObject responseJson = new JSONObject(responseString);
                     handle(component, responseJson);
@@ -321,14 +321,14 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                     final List<SnykError> errors = new SnykParser().parseErrors(responseJson);
                     if (!errors.isEmpty()) {
                         LOGGER.error("Analysis of component %s failed with HTTP status %d: \n%s"
-                                .formatted(component.getPurl(), response.getStatusLine().getStatusCode(), errors.stream()
+                                .formatted(component.getPurl(), response.getCode(), errors.stream()
                                         .map(error -> " - %s: %s (%s)" .formatted(error.title(), error.detail(), error.code()))
                                         .collect(Collectors.joining("\n"))));
                     } else {
-                        handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                        handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
                     }
                 } else {
-                    handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                    handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
                 }
             }
         } catch (Throwable  ex) {

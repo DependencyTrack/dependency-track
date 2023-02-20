@@ -19,16 +19,17 @@
 package org.dependencytrack.integrations.fortifyssc;
 
 import alpine.common.logging.Logger;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.mime.HttpMultipartMode;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.net.URIBuilder;
 import org.dependencytrack.common.HttpClientPool;
 import org.json.JSONObject;
 
@@ -59,7 +60,7 @@ public class FortifySscClient {
         try {
             request.setEntity(new StringEntity(payload.toString()));
             try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+                if (response.getCode() == HttpStatus.SC_CREATED) {
                     if (response.getEntity() != null) {
                         String responseString = EntityUtils.toString(response.getEntity());
                         final JSONObject root = new JSONObject(responseString);
@@ -67,10 +68,10 @@ public class FortifySscClient {
                         return root.getJSONObject("data").getString("token");
                     }
                 } else {
-                    uploader.handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                    uploader.handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
                 }
             }
-        } catch (IOException ex) {
+        } catch (IOException | ParseException | URISyntaxException ex) {
             uploader.handleException(LOGGER, ex);
         }
         return null;
@@ -83,15 +84,15 @@ public class FortifySscClient {
             builder.setParameter("engineType", "DEPENDENCY_TRACK").setParameter("mat", token).setParameter("entityId", applicationVersion);
             HttpPost request = new HttpPost(builder.build());
             request.addHeader("accept", "application/xml");
-            HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+            HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.LEGACY)
                     .addBinaryBody("files[]", findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json")
                     .build();
             request.setEntity(data);
             try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                if (response.getCode() == HttpStatus.SC_OK) {
                     LOGGER.debug("Successfully uploaded findings to Fortify SSC");
                 } else {
-                    uploader.handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                    uploader.handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
                 }
             }
         } catch (URISyntaxException | IOException ex) {

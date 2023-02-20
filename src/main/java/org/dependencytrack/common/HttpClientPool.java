@@ -19,8 +19,9 @@
 package org.dependencytrack.common;
 
 import alpine.common.logging.Logger;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.util.TimeValue;
 
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -90,9 +91,9 @@ public class HttpClientPool {
                 // Every 5 seconds.
                 while ((stopRequest = stopSignal.poll(5, TimeUnit.SECONDS)) == null) {
                     // Close expired connections
-                    cm.closeExpiredConnections();
+                    cm.closeExpired();
                     // Optionally, close connections that have been idle too long.
-                    cm.closeIdleConnections(60, TimeUnit.SECONDS);
+                    cm.closeIdle(TimeValue.ofSeconds(60));
                     LOGGER.debug("Stats: " + cm.getTotalStats().toString());
                 }
                 // Acknowledge the stop request.

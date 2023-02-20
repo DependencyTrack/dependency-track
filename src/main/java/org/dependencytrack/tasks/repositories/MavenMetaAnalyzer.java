@@ -20,9 +20,9 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpStatus;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.util.DateUtil;
@@ -78,7 +78,7 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
             final String mavenGavUrl = component.getPurl().getNamespace().replaceAll("\\.", "/") + "/" + component.getPurl().getName();
             final String url = String.format(baseUrl + REPO_METADATA_URL, mavenGavUrl);
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                if (response.getCode() == HttpStatus.SC_OK) {
                     final HttpEntity entity = response.getEntity();
                     if (entity != null) {
                         try (InputStream in = entity.getContent()) {
@@ -101,7 +101,7 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
                         }
                     }
                 } else {
-                    handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
+                    handleUnexpectedHttpResponse(LOGGER, url, response.getCode(), response.getReasonPhrase(), component);
                 }
             } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
                 handleRequestException(LOGGER, e);

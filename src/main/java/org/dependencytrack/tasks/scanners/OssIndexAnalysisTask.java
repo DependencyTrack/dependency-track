@@ -34,13 +34,14 @@ import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.common.ManagedHttpClientFactory;
@@ -255,7 +256,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     /**
      * Submits the payload to the Sonatype OSS Index service
      */
-    private List<ComponentReport> submit(final JSONObject payload) throws IOException {
+    private List<ComponentReport> submit(final JSONObject payload) throws IOException, ParseException {
         HttpPost request = new HttpPost(API_BASE_URL);
         request.addHeader(HttpHeaders.ACCEPT, "application/json");
         request.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
@@ -267,11 +268,11 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             HttpEntity responseEntity = response.getEntity();
             String responseString = EntityUtils.toString(responseEntity);
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+            if (response.getCode() == HttpStatus.SC_OK) {
                 final OssIndexParser parser = new OssIndexParser();
                 return parser.parse(responseString);
             } else {
-                handleUnexpectedHttpResponse(LOGGER, API_BASE_URL, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                handleUnexpectedHttpResponse(LOGGER, API_BASE_URL, response.getCode(), response.getReasonPhrase());
             }
         }
         return new ArrayList<>();

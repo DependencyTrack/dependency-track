@@ -24,12 +24,10 @@ import alpine.event.framework.LoggableSubscriber;
 import alpine.model.ConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import org.apache.http.HttpStatus;
-import org.json.JSONObject;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.OsvMirrorEvent;
@@ -44,6 +42,7 @@ import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
+import org.json.JSONObject;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 
@@ -108,14 +107,13 @@ public class OsvDownloadTask implements LoggableSubscriber {
                             + "/all.zip";
                     HttpUriRequest request = new HttpGet(url);
                     try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                        final StatusLine status = response.getStatusLine();
-                        if (status.getStatusCode() == HttpStatus.SC_OK) {
+                        if (response.getCode() == HttpStatus.SC_OK) {
                             try (InputStream in = response.getEntity().getContent();
                                  ZipInputStream zipInput = new ZipInputStream(in)) {
                                 unzipFolder(zipInput);
                             }
                         } else {
-                            LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
+                            LOGGER.error("Download failed : " + response.getCode() + ": " + response.getReasonPhrase());
                         }
                     } catch (Exception ex) {
                         LOGGER.error("Exception while executing Http client request", ex);
@@ -352,8 +350,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
         String url = this.osvBaseUrl + "ecosystems.txt";
         HttpUriRequest request = new HttpGet(url);
         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-            final StatusLine status = response.getStatusLine();
-            if (status.getStatusCode() == HttpStatus.SC_OK) {
+            if (response.getCode() == HttpStatus.SC_OK) {
                 try (InputStream in = response.getEntity().getContent();
                      Scanner scanner = new Scanner(in, StandardCharsets.UTF_8)) {
                     while (scanner.hasNextLine()) {
@@ -364,7 +361,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     }
                 }
             } else {
-                LOGGER.error("Ecosystem download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
+                LOGGER.error("Ecosystem download failed : " + response.getCode() + ": " + response.getReasonPhrase());
             }
         } catch (Exception ex) {
             LOGGER.error("Exception while executing Http request for ecosystems", ex);

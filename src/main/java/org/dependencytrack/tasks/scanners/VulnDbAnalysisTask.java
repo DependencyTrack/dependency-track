@@ -26,6 +26,7 @@ import alpine.security.crypto.DataEncryption;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
+import org.apache.hc.core5.http.ParseException;
 import org.dependencytrack.event.VulnDbAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -156,7 +157,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                                 return;
                             }
                         } catch (IOException | OAuthMessageSignerException | OAuthExpectationFailedException |
-                                 URISyntaxException | OAuthCommunicationException ex) {
+                                 URISyntaxException | OAuthCommunicationException | ParseException ex) {
                             handleRequestException(LOGGER, ex);
                         }
                     }

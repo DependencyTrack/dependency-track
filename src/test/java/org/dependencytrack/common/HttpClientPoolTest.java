@@ -19,7 +19,7 @@
 package org.dependencytrack.common;
 
 import io.jsonwebtoken.lang.Assert;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.junit.Test;
 
 public class HttpClientPoolTest {

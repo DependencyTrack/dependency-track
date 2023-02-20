@@ -20,10 +20,11 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.util.HttpUtil;
@@ -65,14 +66,14 @@ public abstract class AbstractWebhookPublisher implements Publisher {
         try {
             request.setEntity(new StringEntity(content));
             try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() >= 300) {
+                if (response.getCode() < 200 || response.getCode() >= 300) {
                     logger.error("An error was encountered publishing notification to " + publisherName +
-                            "with HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase() +
+                            "with HTTP Status : " + response.getCode() + " " + response.getReasonPhrase() +
                             " Destination: " + destination + " Response: " + EntityUtils.toString(response.getEntity()));
                     logger.debug(content);
                 }
             }
-        } catch (IOException ex) {
+        } catch (IOException | ParseException ex) {
             handleRequestException(logger, ex);
         }
     }

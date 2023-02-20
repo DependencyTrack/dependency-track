@@ -20,13 +20,13 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
-import org.json.JSONObject;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -78,8 +78,8 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
         final String url = String.format(baseUrl + API_URL, component.getPurl().getNamespace(), component.getPurl().getName());
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
+            if (response.getCode() != HttpStatus.SC_OK) {
+                handleUnexpectedHttpResponse(LOGGER, url, response.getCode(), response.getReasonPhrase(), component);
                 return meta;
             }
             if (response.getEntity().getContent() == null) {
@@ -130,7 +130,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                     LOGGER.warn("An error occurred while parsing upload time", e);
                 }
             });
-        } catch (IOException ex) {
+        } catch (IOException | org.apache.hc.core5.http.ParseException ex) {
             handleRequestException(LOGGER, ex);
         }
 

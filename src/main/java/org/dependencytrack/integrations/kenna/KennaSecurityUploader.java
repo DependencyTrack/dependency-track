@@ -21,17 +21,17 @@ package org.dependencytrack.integrations.kenna;
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
+import org.apache.hc.client5.http.entity.mime.HttpMultipartMode;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.PortfolioFindingUploader;
@@ -105,12 +105,12 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
             List<NameValuePair> nameValuePairList = new ArrayList<>();
             nameValuePairList.add(new BasicNameValuePair("run", "true"));
             request.setEntity(new UrlEncodedFormEntity(nameValuePairList, StandardCharsets.UTF_8));
-            HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+            HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.LEGACY)
                     .addBinaryBody("file", payload, ContentType.APPLICATION_JSON, "findings.json")
                     .build();
             request.setEntity(data);
             try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK && response.getEntity() != null) {
+                if (response.getCode() == HttpStatus.SC_OK && response.getEntity() != null) {
                     String responseString = EntityUtils.toString(response.getEntity());
                     final JSONObject root = new JSONObject(responseString);
                     if (root.getString("success").equals("true")) {
@@ -119,7 +119,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                     }
                     LOGGER.warn("An unexpected response was received uploading findings to Kenna Security");
                 } else {
-                    handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                    handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
                 }
             }
         } catch (Exception e) {

@@ -20,9 +20,10 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.json.JSONObject;
@@ -67,7 +68,7 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
         if (component.getPurl() != null) {
             final String url = String.format(baseUrl + API_URL, component.getPurl().getName());
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+                if (response.getCode() == HttpStatus.SC_OK){
                     if(response.getEntity()!=null){
                         String responseString = EntityUtils.toString(response.getEntity());
                         var jsonObject = new JSONObject(responseString);
@@ -75,9 +76,9 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
                         meta.setLatestVersion(latest);
                     }
                 } else {
-                    handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
+                    handleUnexpectedHttpResponse(LOGGER, url, response.getCode(), response.getReasonPhrase(), component);
                 }
-            }catch (IOException ex){
+            }catch (IOException | ParseException ex){
                 handleRequestException(LOGGER, ex);
             }
 

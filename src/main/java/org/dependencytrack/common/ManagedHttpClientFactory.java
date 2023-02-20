@@ -22,37 +22,28 @@ import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.common.util.SystemUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.auth.AuthSchemeProvider;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.NTCredentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.Lookup;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.routing.HttpRoute;
-import org.apache.http.conn.routing.HttpRoutePlanner;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustAllStrategy;
-import org.apache.http.impl.auth.BasicSchemeFactory;
-import org.apache.http.impl.auth.DigestSchemeFactory;
-import org.apache.http.impl.auth.NTLMSchemeFactory;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.LaxRedirectStrategy;
-import org.apache.http.impl.client.ProxyAuthenticationStrategy;
-import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.hc.client5.http.auth.CredentialsProvider;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.routing.DefaultProxyRoutePlanner;
+import org.apache.hc.client5.http.routing.HttpRoutePlanner;
+import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
+import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.TrustAllStrategy;
+import org.apache.hc.core5.http.HttpException;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.config.Registry;
+import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.hc.core5.util.Timeout;
 
 import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
@@ -69,11 +60,13 @@ public final class ManagedHttpClientFactory {
 
     private static final String PROXY_ADDRESS = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS);
     private static int PROXY_PORT;
+
     static {
         if (PROXY_ADDRESS != null) {
             PROXY_PORT = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_PROXY_PORT);
         }
     }
+
     private static final String PROXY_USERNAME = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME);
     private static final String PROXY_PASSWORD = Config.getInstance().getPropertyOrFile(Config.AlpineKey.HTTP_PROXY_PASSWORD);
     private static final String NO_PROXY = Config.getInstance().getProperty(Config.AlpineKey.NO_PROXY);
@@ -82,6 +75,7 @@ public final class ManagedHttpClientFactory {
     private static final int TIMEOUT_SOCKET = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_TIMEOUT_SOCKET);
     private static final Logger LOGGER = Logger.getLogger(ManagedHttpClientFactory.class);
     private static final String USER_AGENT;
+
     static {
         USER_AGENT = Config.getInstance().getApplicationName()
                 + " v" + Config.getInstance().getApplicationVersion()
@@ -93,7 +87,8 @@ public final class ManagedHttpClientFactory {
                 + Config.getInstance().getSystemUuid();
     }
 
-    private ManagedHttpClientFactory() { }
+    private ManagedHttpClientFactory() {
+    }
 
     public static String getUserAgent() {
         return USER_AGENT;
@@ -104,16 +99,21 @@ public final class ManagedHttpClientFactory {
      * proxy settings defined in application.properties first. If they are not set,
      * this method will attempt to use proxy settings from the environment by looking
      * for 'https_proxy', 'http_proxy' and 'no_proxy'.
+     *
      * @return a PooledHttpClient object with optional proxy settings
      */
     public static ManagedHttpClient newManagedHttpClient() {
         PoolingHttpClientConnectionManager connectionManager = null;
-        final RequestConfig config = RequestConfig.custom()
-                .setConnectTimeout(TIMEOUT_CONNECTION * 1000)
-                .setConnectionRequestTimeout(TIMEOUT_POOL * 1000)
-                .setSocketTimeout(TIMEOUT_SOCKET * 1000)
+        final RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectionRequestTimeout(Timeout.ofSeconds(TIMEOUT_POOL))
                 .build();
-        final HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(config);
+        final ConnectionConfig connectionConfig = ConnectionConfig.custom()
+                .setConnectTimeout(Timeout.ofSeconds(TIMEOUT_CONNECTION))
+                .build();
+        final SocketConfig socketConfig = SocketConfig.custom()
+                .setSoTimeout(Timeout.ofSeconds(TIMEOUT_SOCKET))
+                .build();
+        final HttpClientBuilder clientBuilder = HttpClients.custom().setDefaultRequestConfig(requestConfig);
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         clientBuilder.useSystemProperties();
 
@@ -122,24 +122,23 @@ public final class ManagedHttpClientFactory {
         if (proxyInfo != null) {
             HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner(new HttpHost(proxyInfo.host, proxyInfo.port)) {
                 @Override
-                public HttpRoute determineRoute(
-                        final HttpHost host,
-                        final HttpRequest request,
-                        final HttpContext context) throws HttpException {
-                    if (isProxy(proxyInfo.noProxy, host)) {
-                        return super.determineRoute(host, request, context);
+                protected HttpHost determineProxy(final HttpHost target, final HttpContext context) throws HttpException {
+                    if (isProxy(proxyInfo.noProxy, target)) {
+                        return super.determineProxy(target, context);
                     }
-                    return new HttpRoute(host);
+
+                    return target;
                 }
             };
             clientBuilder.setRoutePlanner(routePlanner);
-            if (StringUtils.isNotBlank(proxyInfo.username) && StringUtils.isNotBlank(proxyInfo.password)) {
-                if (proxyInfo.domain != null) {
-                    credsProvider.setCredentials(AuthScope.ANY, new NTCredentials(proxyInfo.username, proxyInfo.password, proxyInfo.domain, null));
-                } else {
-                    credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxyInfo.username, proxyInfo.password));
-                }
-            }
+            // FIXME
+//            if (StringUtils.isNotBlank(proxyInfo.username) && StringUtils.isNotBlank(proxyInfo.password)) {
+//                if (proxyInfo.domain != null) {
+//                    credsProvider.setCredentials(AuthScope.ANY, new NTCredentials(proxyInfo.username, proxyInfo.password, proxyInfo.domain, null));
+//                } else {
+//                    credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxyInfo.username, proxyInfo.password));
+//                }
+//            }
         }
         // When a proxy is enabled, turn off certificate chain of trust validation and hostname verification
         if (proxyInfo != null && proxyInfo.noProxy == null) {
@@ -148,13 +147,15 @@ public final class ManagedHttpClientFactory {
                         .create()
                         .loadTrustMaterial(new TrustAllStrategy())
                         .build();
-                final Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory> create()
+                final Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
                         .register("http", PlainConnectionSocketFactory.INSTANCE)
                         .register("https", new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE))
                         .build();
                 connectionManager = new PoolingHttpClientConnectionManager(registry);
                 connectionManager.setMaxTotal(200);
                 connectionManager.setDefaultMaxPerRoute(20);
+                connectionManager.setDefaultConnectionConfig(connectionConfig);
+                connectionManager.setDefaultSocketConfig(socketConfig);
                 clientBuilder.setConnectionManager(connectionManager);
                 clientBuilder.setConnectionManagerShared(true);
             } catch (KeyManagementException | KeyStoreException | NoSuchAlgorithmException e) {
@@ -164,26 +165,30 @@ public final class ManagedHttpClientFactory {
             connectionManager = new PoolingHttpClientConnectionManager();
             connectionManager.setMaxTotal(200);
             connectionManager.setDefaultMaxPerRoute(20);
+            connectionManager.setDefaultConnectionConfig(connectionConfig);
+            connectionManager.setDefaultSocketConfig(socketConfig);
             clientBuilder.setConnectionManager(connectionManager);
         }
 
         clientBuilder.setDefaultCredentialsProvider(credsProvider);
-        clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
-        final Lookup<AuthSchemeProvider> authProviders = RegistryBuilder.<AuthSchemeProvider>create()
-                .register(AuthSchemes.BASIC, new BasicSchemeFactory())
-                .register(AuthSchemes.DIGEST, new DigestSchemeFactory())
-                .register(AuthSchemes.NTLM, new NTLMSchemeFactory())
-                .build();
-        clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
+        // FIXME
+//        clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
+//        final Lookup<AuthSchemeProvider> authProviders = RegistryBuilder.<AuthSchemeProvider>create()
+//                .register(AuthSchemes.BASIC, new BasicSchemeFactory())
+//                .register(AuthSchemes.DIGEST, new DigestSchemeFactory())
+//                .register(AuthSchemes.NTLM, new NTLMSchemeFactory())
+//                .build();
+//        clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
         clientBuilder.disableCookieManagement();
-        clientBuilder.setRedirectStrategy(LaxRedirectStrategy.INSTANCE);
+        //clientBuilder.setRedirectStrategy(LaxRedirectStrategy.INSTANCE);
         return new ManagedHttpClient(clientBuilder.build(), connectionManager);
     }
 
     /**
      * Determines if proxy should be used or not for a given URL
+     *
      * @param noProxyList list of URLs to be exempted from proxy
-     * @param host the URL that is being called by this application
+     * @param host        the URL that is being called by this application
      * @return true if proxy is to be be used, false if not
      */
     public static boolean isProxy(String[] noProxyList, HttpHost host) {
@@ -195,7 +200,7 @@ public final class ManagedHttpClientFactory {
         }
         String hostname = host.getHostName();
         int hostPort = host.getPort();
-        for (String bypassURL: noProxyList) {
+        for (String bypassURL : noProxyList) {
             String[] bypassURLList = bypassURL.split(":");
             String byPassHost = bypassURLList[0];
             int byPassPort = -1;
@@ -219,6 +224,7 @@ public final class ManagedHttpClientFactory {
     /**
      * Attempt to use application specific proxy settings if they exist.
      * Otherwise, attempt to use environment variables if they exist.
+     *
      * @return ProxyInfo object, or null if proxy is not configured
      */
     public static ProxyInfo createProxyInfo() {
@@ -231,6 +237,7 @@ public final class ManagedHttpClientFactory {
 
     /**
      * Creates a ProxyInfo object from the application.properties configuration.
+     *
      * @return a ProxyInfo object, or null if proxy is not configured
      */
     private static ProxyInfo fromConfig() {
@@ -254,6 +261,7 @@ public final class ManagedHttpClientFactory {
 
     /**
      * Creates a ProxyInfo object from the environment.
+     *
      * @return a ProxyInfo object, or null if proxy is not defined
      */
     private static ProxyInfo fromEnvironment() {
@@ -280,10 +288,11 @@ public final class ManagedHttpClientFactory {
     /**
      * Retrieves and parses the https_proxy and http_proxy settings. This method ignores the
      * case of the variables in the environment.
+     *
      * @param variable the name of the environment variable
      * @return a ProxyInfo object, or null if proxy is not defined
      * @throws MalformedURLException if the URL of the proxy setting cannot be parsed
-     * @throws SecurityException if the environment variable cannot be retrieved
+     * @throws SecurityException     if the environment variable cannot be retrieved
      */
     private static ProxyInfo buildfromEnvironment(final String variable)
             throws MalformedURLException, SecurityException, UnsupportedEncodingException {
@@ -322,8 +331,9 @@ public final class ManagedHttpClientFactory {
 
     /**
      * Optionally parses usernames if they are NTLM formatted.
+     *
      * @param proxyInfo The ProxyInfo object to update from the result of parsing
-     * @param username The username to parse
+     * @param username  The username to parse
      */
     @SuppressWarnings("deprecation")
     private static void parseProxyUsername(final ProxyInfo proxyInfo, final String username) {
@@ -366,7 +376,9 @@ public final class ManagedHttpClientFactory {
             return password;
         }
 
-        public String[] getNoProxy() { return noProxy; }
+        public String[] getNoProxy() {
+            return noProxy;
+        }
     }
 
 }

@@ -19,18 +19,19 @@
 package org.dependencytrack.integrations.defectdojo;
 
 import alpine.common.logging.Logger;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.InputStreamBody;
-import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.mime.HttpMultipartMode;
+import org.apache.hc.client5.http.entity.mime.InputStreamBody;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.entity.mime.StringBody;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.net.URIBuilder;
 import org.dependencytrack.common.HttpClientPool;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -61,7 +62,7 @@ public class DefectDojoClient {
         InputStreamBody inputStreamBody = new InputStreamBody(findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json");
         request.addHeader("accept", "application/json");
         request.addHeader("Authorization", "Token " + token);
-        HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+        HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.LEGACY)
                 .addPart("file", inputStreamBody)
                 .addPart("engagement", new StringBody(engagementId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_type", new StringBody("Dependency Track Finding Packaging Format (FPF) Export", ContentType.MULTIPART_FORM_DATA))
@@ -76,12 +77,12 @@ public class DefectDojoClient {
 
 
         try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+            if (response.getCode() == HttpStatus.SC_CREATED) {
                 LOGGER.debug("Successfully uploaded findings to DefectDojo");
             } else {
-                uploader.handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                uploader.handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
             }
-        } catch (IOException ex) {
+        } catch (IOException | URISyntaxException ex) {
             uploader.handleException(LOGGER, ex);
         }
     }
@@ -99,7 +100,7 @@ public class DefectDojoClient {
             request.addHeader("accept", "application/json");
             request.addHeader("Authorization", "Token " + token);
             try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                if (response.getCode() == HttpStatus.SC_OK) {
                     if (response.getEntity() != null) {
                         String stringResponse = EntityUtils.toString(response.getEntity());
                         JSONObject dojoObj = new JSONObject(stringResponse);
@@ -126,10 +127,10 @@ public class DefectDojoClient {
                     }
                 } else {
                     LOGGER.warn("DefectDojo Client did not receive expected response while attempting to retrieve tests list "
-                            + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase());
+                            + response.getCode() + " - " + response.getReasonPhrase());
                 }
             }
-        } catch (IOException | URISyntaxException ex) {
+        } catch (IOException | ParseException | URISyntaxException ex) {
             uploader.handleException(LOGGER, ex);
         }
         return new ArrayList<>();
@@ -169,7 +170,7 @@ public class DefectDojoClient {
         request.addHeader("accept", "application/json");
         request.addHeader("Authorization", "Token " + token);
         InputStreamBody inputStreamBody = new InputStreamBody(findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json");
-        HttpEntity fileData = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+        HttpEntity fileData = MultipartEntityBuilder.create().setMode(HttpMultipartMode.LEGACY)
                 .addPart("file", inputStreamBody)
                 .addPart("engagement", new StringBody(engagementId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_type", new StringBody("Dependency Track Finding Packaging Format (FPF) Export", ContentType.MULTIPART_FORM_DATA))
@@ -183,12 +184,12 @@ public class DefectDojoClient {
                 .build();
         request.setEntity(fileData);
         try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+            if (response.getCode() == HttpStatus.SC_CREATED) {
                 LOGGER.debug("Successfully reimport findings to DefectDojo");
             } else {
-                uploader.handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                uploader.handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
             }
-        } catch (IOException ex) {
+        } catch (IOException | URISyntaxException ex) {
             uploader.handleException(LOGGER, ex);
         }
     }

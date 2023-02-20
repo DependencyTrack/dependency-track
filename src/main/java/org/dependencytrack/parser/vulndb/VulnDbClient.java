@@ -23,11 +23,12 @@ import oauth.signpost.basic.DefaultOAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.net.URIBuilder;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.parser.vulndb.model.Results;
 import org.dependencytrack.parser.vulndb.model.Vulnerability;
@@ -63,7 +64,9 @@ public class VulnDbClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VulnDbClient.class);
 
-    public Results getVulnerabilitiesByCpe(String cpe, int size, int page) throws IOException, OAuthMessageSignerException, OAuthExpectationFailedException, URISyntaxException, OAuthCommunicationException {
+    public Results getVulnerabilitiesByCpe(String cpe, int size, int page) throws IOException,
+            OAuthMessageSignerException, OAuthExpectationFailedException, URISyntaxException,
+            OAuthCommunicationException, ParseException {
         String encodedCpe = cpe;
 
         try {
@@ -78,20 +81,20 @@ public class VulnDbClient {
 
     private Results getResults(String url, Class clazz, int size, int page) throws IOException,
             OAuthMessageSignerException, OAuthExpectationFailedException, URISyntaxException,
-            OAuthCommunicationException {
+            OAuthCommunicationException, ParseException {
         String modifiedUrl = url.contains("?") ? url + "&" : url + "?";
         try (CloseableHttpResponse response = this.makeRequest(modifiedUrl + "size=" + size + "&page=" + page)) {
             VulnDbParser vulnDbParser = new VulnDbParser();
             Results results;
             if (response != null) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                if (response.getCode() == HttpStatus.SC_OK) {
                     String responseString = EntityUtils.toString(response.getEntity());
                     var jsonObject = new JSONObject(responseString);
                     results = vulnDbParser.parse(jsonObject, clazz);
                     return results;
                 } else {
                     results = new Results();
-                    results.setErrorCondition("An unexpected response was returned from VulnDB. Request unsuccessful: " + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase());
+                    results.setErrorCondition("An unexpected response was returned from VulnDB. Request unsuccessful: " + response.getCode() + " - " + response.getReasonPhrase());
                     this.logHttpResponseError(response);
                     return results;
                 }
@@ -113,6 +116,6 @@ public class VulnDbClient {
     }
 
     private void logHttpResponseError(CloseableHttpResponse response) {
-        LOGGER.error("Response was not successful: " + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase());
+        LOGGER.error("Response was not successful: " + response.getCode() + " - " + response.getReasonPhrase());
     }
 }

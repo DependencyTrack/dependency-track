@@ -20,9 +20,9 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
@@ -105,7 +105,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     private boolean performVersionCheck(final MetaModel meta, final Component component) {
         final String url = String.format(versionQueryUrl, component.getPurl().getName().toLowerCase());
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+            if (response.getCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {
                     String responseString = EntityUtils.toString(response.getEntity());
                     var jsonObject = new JSONObject(responseString);
@@ -115,9 +115,9 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                 }
                 return true;
             } else {
-                handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
+                handleUnexpectedHttpResponse(LOGGER, url, response.getCode(), response.getReasonPhrase(), component);
             }
-        } catch (IOException e) {
+        } catch (IOException | org.apache.hc.core5.http.ParseException e) {
             handleRequestException(LOGGER, e);
         }
         return false;
@@ -143,7 +143,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     private boolean performLastPublishedCheck(final MetaModel meta, final Component component) {
         final String url = String.format(registrationUrl, component.getPurl().getName().toLowerCase(), meta.getLatestVersion());
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+            if (response.getCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {
                     String stringResponse = EntityUtils.toString(response.getEntity());
                     if (!stringResponse.equalsIgnoreCase("") && !stringResponse.equalsIgnoreCase("{}")) {
@@ -156,9 +156,9 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                     }
                 }
             } else {
-                handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
+                handleUnexpectedHttpResponse(LOGGER, url, response.getCode(), response.getReasonPhrase(), component);
             }
-        } catch (IOException e) {
+        } catch (IOException | org.apache.hc.core5.http.ParseException e) {
             handleRequestException(LOGGER, e);
         }
         return false;
@@ -168,9 +168,9 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         final String url = baseUrl + INDEX_URL;
         try {
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    if(response.getEntity()!=null){
-                    String responseString = EntityUtils.toString(response.getEntity());
+                if (response.getCode() == HttpStatus.SC_OK) {
+                    if (response.getEntity() != null) {
+                        String responseString = EntityUtils.toString(response.getEntity());
                         JSONObject responseJson = new JSONObject(responseString);
                         final JSONArray resources = responseJson.getJSONArray("resources");
                         final JSONObject packageBaseResource = findResourceByType(resources, "PackageBaseAddress");
@@ -182,7 +182,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                     }
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | org.apache.hc.core5.http.ParseException e) {
             handleRequestException(LOGGER, e);
         }
     }

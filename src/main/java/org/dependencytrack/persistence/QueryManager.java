@@ -1057,8 +1057,8 @@ public class QueryManager extends AlpineQueryManager {
         return getMetricsQueryManager().getDependencyMetricsSince(component, since);
     }
 
-    public void synchronizeVulnerabilityMetrics(VulnerabilityMetrics metric) {
-        getMetricsQueryManager().synchronizeVulnerabilityMetrics(metric);
+    public void synchronizeVulnerabilityMetrics(List<VulnerabilityMetrics> metrics) {
+        getMetricsQueryManager().synchronizeVulnerabilityMetrics(metrics);
     }
 
     void deleteMetrics(Project project) {

@@ -242,7 +242,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
 
     @Test
     public void updateConfigPropertyOsvEcosystemTest() {
-        ConfigProperty property = qm.createConfigProperty("my.group", ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(), "maven;npm;maven", IConfigProperty.PropertyType.STRING, "List of ecosystems");
+        ConfigProperty property = qm.createConfigProperty("my.group", ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(), "maven;npm;maven", IConfigProperty.PropertyType.STRING, "List of ecosystems");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("maven;npm;maven");
         Response response = target(V1_CONFIG_PROPERTY).request()
@@ -251,7 +251,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         Assert.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(), json.getString("propertyName"));
+        Assert.assertEquals(ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(), json.getString("propertyName"));
         Assert.assertEquals("maven;npm", json.getString("propertyValue"));
     }
 }

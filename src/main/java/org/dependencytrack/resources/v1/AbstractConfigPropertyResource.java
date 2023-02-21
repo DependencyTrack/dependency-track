@@ -112,13 +112,13 @@ abstract class AbstractConfigPropertyResource extends AlpineResource {
                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An error occurred while encrypting property value. Check log for details.").build();
                 }
             }
-        } else if(ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName().equals(json.getGroupName())) {
+        } else if(ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName().equals(json.getPropertyName())) {
             String propertyValue = json.getPropertyValue();
             if (propertyValue != null && !propertyValue.isBlank()) {
-                Set<String> ecosystems = Arrays.stream(json.getPropertyValue().split(";")).map(String::trim).collect(Collectors.toSet());
+                Set<String> ecosystems = Arrays.stream(propertyValue.split(";")).map(String::trim).collect(Collectors.toSet());
                 property.setPropertyValue(String.join(";", ecosystems));
             } else {
-                property.setPropertyValue(json.getPropertyValue());
+                property.setPropertyValue(propertyValue);
             }
         } else {
             property.setPropertyValue(json.getPropertyValue());

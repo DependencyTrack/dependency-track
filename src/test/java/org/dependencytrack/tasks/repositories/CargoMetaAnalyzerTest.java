@@ -18,16 +18,17 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.github.packageurl.PackageURL;
+
 public class CargoMetaAnalyzerTest {
 
     @Test
-    public void testAnalyzer() throws Exception {
+    public void testAnalyzerForRand() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:cargo/rand@0.7.2"));
 
@@ -35,6 +36,23 @@ public class CargoMetaAnalyzerTest {
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.CARGO, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertTrue(AbstractMetaAnalyzer.isStableVersion(metaModel.getLatestVersion()));
+        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("0.7.1", metaModel.getLatestVersion()));
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+    }
+
+    @Test
+    public void testAnalyzerForBincode() throws Exception {
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:cargo/bincode@1.3.0"));
+
+        CargoMetaAnalyzer analyzer = new CargoMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.CARGO, analyzer.supportedRepositoryType());
+        MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertTrue(AbstractMetaAnalyzer.isStableVersion(metaModel.getLatestVersion()));
+        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("1.3.2", metaModel.getLatestVersion()));
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }

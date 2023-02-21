@@ -18,11 +18,12 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.github.packageurl.PackageURL;
 
 public class NpmMetaAnalyzerTest {
 
@@ -36,6 +37,7 @@ public class NpmMetaAnalyzerTest {
         Assert.assertEquals(RepositoryType.NPM, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
         Assert.assertNotNull(metaModel.getLatestVersion());
-        //Assert.assertNotNull(metaModel.getPublishedTimestamp()); // todo: not yet supported
+        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("2.7.0",metaModel.getLatestVersion()));
+        Assert.assertNull(metaModel.getPublishedTimestamp()); // NPM does not register publication dates
     }
 }

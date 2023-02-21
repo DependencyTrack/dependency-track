@@ -18,10 +18,8 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.PackageURL;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.io.IOException;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -29,8 +27,12 @@ import org.apache.http.util.EntityUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.util.DateUtil;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
-import java.io.IOException;
+import com.github.packageurl.PackageURL;
+
+import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports Cargo via crates.io compatible repos
@@ -73,28 +75,11 @@ public class CargoMetaAnalyzer extends AbstractMetaAnalyzer {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                     final HttpEntity entity = response.getEntity();
                     if (entity != null) {
-                        String responseString = EntityUtils.toString(entity);
-                        var jsonObject = new JSONObject(responseString);
+                        final String responseString = EntityUtils.toString(entity);
+                        final JSONObject jsonObject = new JSONObject(responseString);
                         final JSONObject crate = jsonObject.optJSONObject("crate");
-                        if (crate != null) {
-                            final String latest = crate.getString("newest_version");
-                            meta.setLatestVersion(latest);
-                        }
                         final JSONArray versions = jsonObject.optJSONArray("versions");
-                        if (versions != null) {
-                            for (int i = 0; i < versions.length(); i++) {
-                                final JSONObject version = versions.getJSONObject(i);
-                                final String versionString = version.optString("num");
-                                if (meta.getLatestVersion() != null && meta.getLatestVersion().equals(versionString)) {
-                                    final String publishedTimestamp = version.optString("created_at");
-                                    try {
-                                        meta.setPublishedTimestamp(DateUtil.fromISO8601(publishedTimestamp));
-                                    } catch (IllegalArgumentException e) {
-                                        LOGGER.warn("An error occurred while parsing published time", e);
-                                    }
-                                }
-                            }
-                        }
+                        analyzeCrate(meta, crate, versions);
                     }
                 } else {
                     handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
@@ -104,5 +89,27 @@ public class CargoMetaAnalyzer extends AbstractMetaAnalyzer {
             }
         }
         return meta;
+    }
+
+    private void analyzeCrate(final MetaModel meta, final JSONObject crate, final JSONArray versions) {
+        if (crate != null) {
+            // Cargo has a highest stable version: https://github.com/rust-lang/crates.io/pull/3163
+            final String latest = crate.getString("max_stable_version");
+            meta.setLatestVersion(latest);
+        }
+        if (versions != null) {
+            for (int i=0; i<versions.length(); i++) {
+                final JSONObject version =  versions.getJSONObject(i);
+                final String versionString = version.optString("num");
+                if (meta.getLatestVersion() != null && meta.getLatestVersion().equals(versionString)) {
+                    final String publishedTimestamp = version.optString("created_at");
+                    try {
+                        meta.setPublishedTimestamp(DateUtil.fromISO8601(publishedTimestamp));
+                    } catch (IllegalArgumentException  e) {
+                        LOGGER.warn("An error occurred while parsing published time", e);
+                    }
+                }
+            }
+        }
     }
 }

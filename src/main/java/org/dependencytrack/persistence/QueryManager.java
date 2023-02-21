@@ -18,17 +18,19 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.common.util.BooleanUtil;
-import alpine.event.framework.Event;
-import alpine.model.ApiKey;
-import alpine.model.ConfigProperty;
-import alpine.model.Team;
-import alpine.model.UserPrincipal;
-import alpine.notification.NotificationLevel;
-import alpine.persistence.AlpineQueryManager;
-import alpine.persistence.PaginatedResult;
-import alpine.resources.AlpineRequest;
-import com.github.packageurl.PackageURL;
+import java.security.Principal;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.jdo.FetchPlan;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+import javax.jdo.Transaction;
+import javax.json.JsonObject;
+
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
@@ -52,6 +54,7 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.OutdatedComponentFinding;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -76,17 +79,18 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
-import javax.jdo.FetchPlan;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
-import javax.jdo.Transaction;
-import javax.json.JsonObject;
-import java.security.Principal;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import com.github.packageurl.PackageURL;
+
+import alpine.common.util.BooleanUtil;
+import alpine.event.framework.Event;
+import alpine.model.ApiKey;
+import alpine.model.ConfigProperty;
+import alpine.model.Team;
+import alpine.model.UserPrincipal;
+import alpine.notification.NotificationLevel;
+import alpine.persistence.AlpineQueryManager;
+import alpine.persistence.PaginatedResult;
+import alpine.resources.AlpineRequest;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -516,6 +520,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public Map<String, Component> getDependencyGraphForComponent(Project project, Component component) {
         return getComponentQueryManager().getDependencyGraphForComponent(project, component);
+    }
+
+    public List<OutdatedComponentFinding> getOutdatedComponentFindingForProject(Project project) {
+        return getFindingsQueryManager().getOutdatedComponentFindingForProject(project);
     }
 
     public PaginatedResult getLicenses() {

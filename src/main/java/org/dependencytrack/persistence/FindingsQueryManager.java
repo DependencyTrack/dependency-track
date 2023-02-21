@@ -18,8 +18,13 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.resources.AlpineRequest;
-import com.github.packageurl.PackageURL;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
@@ -28,17 +33,17 @@ import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.OutdatedComponentFinding;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
-import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.tasks.repositories.AbstractMetaAnalyzer;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import com.github.packageurl.PackageURL;
+
+import alpine.resources.AlpineRequest;
 
 public class FindingsQueryManager extends QueryManager implements IQueryManager {
 
@@ -295,5 +300,34 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
             }
         }
         return findings;
+    }
+
+    @Override
+    public List<OutdatedComponentFinding> getOutdatedComponentFindingForProject(Project project) {
+        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, OutdatedComponentFinding.QUERY);
+        query.setParameters(project.getId());
+        final List<Object[]> list = query.executeList();
+        final List<OutdatedComponentFinding> outdatedComponentFindings = new ArrayList<>();
+        for (final Object[] o: list) {
+            final OutdatedComponentFinding outdatedComponentFinding = new OutdatedComponentFinding(project.getUuid(), o);
+            final Component component = getObjectByUuid(Component.class, (String)outdatedComponentFinding.getComponent().get("uuid"));
+            final PackageURL purl = component.getPurl();
+            if (purl != null) {
+                final RepositoryType type = RepositoryType.resolve(purl);
+                final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, component.getPurl().getNamespace(), component.getPurl().getName());
+                String version = (String)outdatedComponentFinding.getComponent().get("version");
+                String latestVersion = repoMetaComponent.getLatestVersion();
+                if ((latestVersion != null) && !version.equals(AbstractMetaAnalyzer.highestVersion(version, latestVersion))) {
+                    outdatedComponentFinding.getComponent().put("latestVersion", latestVersion);
+                    outdatedComponentFinding.getComponent().put("lastCheck", repoMetaComponent.getLastCheck());
+                    final var published = repoMetaComponent.getPublished();
+                    if (published != null) {
+                        outdatedComponentFinding.getComponent().put("published", published);
+                    }
+                    outdatedComponentFindings.add(outdatedComponentFinding);
+                }
+            }            
+        }
+        return outdatedComponentFindings;
     }
 }

@@ -18,16 +18,17 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.github.packageurl.PackageURL;
+
 public class MavenMetaAnalyzerTest {
 
     @Test
-    public void testAnalyzer() throws Exception {
+    public void testAnalyzerForJUnit() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:maven/junit/junit@4.12"));
 
@@ -35,8 +36,23 @@ public class MavenMetaAnalyzerTest {
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.MAVEN, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("4.13.1", metaModel.getLatestVersion()));
+        Assert.assertTrue(AbstractMetaAnalyzer.isStableVersion(metaModel.getLatestVersion()));
+        // publishedTimestamp might be set or not
+    }
+
+    @Test
+    public void testAnalyzerForApacheCamel() throws Exception {
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:maven/org.apache.camel/camel-core@2.21.2"));
+
+        MavenMetaAnalyzer analyzer = new MavenMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.MAVEN, analyzer.supportedRepositoryType());
+        MetaModel metaModel = analyzer.analyze(component);        
+        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("3.20.1", metaModel.getLatestVersion()));
+        Assert.assertTrue(AbstractMetaAnalyzer.isStableVersion(metaModel.getLatestVersion()));
+        // publishedTimestamp might be set or not
     }
 
     @Test
@@ -51,7 +67,9 @@ public class MavenMetaAnalyzerTest {
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.MAVEN, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("2.6.0", metaModel.getLatestVersion()));
+        Assert.assertTrue(AbstractMetaAnalyzer.isStableVersion(metaModel.getLatestVersion()));
+        // publishedTimestamp might be set or not
     }
+    
 }

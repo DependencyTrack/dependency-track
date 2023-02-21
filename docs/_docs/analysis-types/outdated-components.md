@@ -27,3 +27,10 @@ from various repositories. Dependency-Track relies on Package URL (PURL) to iden
 to, the metadata about the component, and uses that data to query the various repositories capable of supporting the 
 components ecosystem. Refer to [Repositories]({{ site.baseurl }}{% link _docs/datasources/repositories.md %}) for 
 further information.
+
+### Stable releases
+In some repositories, for example NPM, the latest release should always denote a stable release. In others, such as Maven, the latest version might be a a stable release or an unstable version. In NPM as wel as Maven repositories the latest version does not need to be the highest version. It's just the latest published to the repository.
+
+For some repositories Dependency track tries to find the highest stable release instead of just the latest version. Refer to [Repositories]({{ site.baseurl }}{% link _docs/datasources/repositories.md %}) for 
+further information.
+

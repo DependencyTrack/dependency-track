@@ -18,16 +18,17 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.github.packageurl.PackageURL;
+
 public class GemMetaAnalyzerTest {
 
     @Test
-    public void testAnalyzer() throws Exception {
+    public void testAnalyzerForTestUnit() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:gem/test-unit@3.2.0"));
 
@@ -35,7 +36,24 @@ public class GemMetaAnalyzerTest {
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.GEM, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertTrue(AbstractMetaAnalyzer.isStableVersion(metaModel.getLatestVersion()));
+        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("3.0.0", metaModel.getLatestVersion()));
         Assert.assertNotNull(metaModel.getLatestVersion());
-        //Assert.assertNotNull(metaModel.getPublishedTimestamp()); // todo: not yet supported
+        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+    }
+
+    @Test
+    public void testAnalyzerForRails() throws Exception {
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:gem/rails@3.2.0"));
+
+        GemMetaAnalyzer analyzer = new GemMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.GEM, analyzer.supportedRepositoryType());
+        MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertTrue(AbstractMetaAnalyzer.isStableVersion(metaModel.getLatestVersion()));
+        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("6.0.0", metaModel.getLatestVersion()));
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }
 }

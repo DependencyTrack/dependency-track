@@ -18,8 +18,10 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.PackageURL;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -28,7 +30,9 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.json.JSONObject;
 
-import java.io.IOException;
+import com.github.packageurl.PackageURL;
+
+import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports NPM.
@@ -40,7 +44,7 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private static final Logger LOGGER = Logger.getLogger(NpmMetaAnalyzer.class);
     private static final String DEFAULT_BASE_URL = "https://registry.npmjs.org";
-    private static final String API_URL = "/-/package/%s/dist-tags";
+    private static final String API_URL = "/%s/";
 
     NpmMetaAnalyzer() {
         this.baseUrl = DEFAULT_BASE_URL;
@@ -78,12 +82,9 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                     if (response.getEntity()!=null) {
-                        String responseString = EntityUtils.toString(response.getEntity());
-                        var jsonObject = new JSONObject(responseString);
-                        final String latest = jsonObject.optString("latest");
-                        if (latest != null) {
-                            meta.setLatestVersion(latest);
-                        }
+                        final String responseString = EntityUtils.toString(response.getEntity());
+                        final JSONObject responseObject = new JSONObject(responseString);
+                        analyzeResponse(meta, responseObject);
                     }
                 } else {
                     handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
@@ -95,6 +96,13 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
             }
         }
         return meta;
+    }
+
+    private void analyzeResponse(final MetaModel meta, JSONObject response) {
+        final JSONObject versionsObject = response.getJSONObject("versions");
+        final List<String> versions = new ArrayList<>(versionsObject.keySet());
+        final String highestVersion = AbstractMetaAnalyzer.findHighestVersion(versions); 
+        meta.setLatestVersion(highestVersion);
     }
 
 }

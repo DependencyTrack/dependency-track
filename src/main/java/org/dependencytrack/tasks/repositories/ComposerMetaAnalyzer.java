@@ -18,21 +18,23 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.PackageURL;
-import org.dependencytrack.exception.MetaAnalyzerException;
-import org.json.JSONObject;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
-import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.RepositoryType;
-
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.util.EntityUtils;
+import org.dependencytrack.exception.MetaAnalyzerException;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.RepositoryType;
+import org.json.JSONObject;
+import com.github.packageurl.PackageURL;
+import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports Composer.
@@ -103,34 +105,23 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             }
             final JSONObject composerPackage = responsePackages.getJSONObject(expectedResponsePackage);
 
-            final ComparableVersion latestVersion = new ComparableVersion(stripLeadingV(component.getPurl().getVersion()));
-            final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
-
-            composerPackage.names().forEach(key_ -> {
-                String key = (String) key_;
-                if (key.startsWith("dev-") || key.endsWith("-dev")) {
+            // get list of versions and published timestamps
+            Map<String, String> versions = new HashMap<>();
+            composerPackage.names().forEach(keyObject -> {
+                String key = (String) keyObject;
+                if (!key.startsWith("dev-") && !key.endsWith("-dev")) {
                     // dev versions are excluded, since they are not pinned but a VCS-branch.
-                    return;
-                }
-
-                final String version_normalized = composerPackage.getJSONObject(key).getString("version_normalized");
-                ComparableVersion currentComparableVersion = new ComparableVersion(version_normalized);
-                if (currentComparableVersion.compareTo(latestVersion) < 0) {
-                    // smaller version can be skipped
-                    return;
-                }
-
-                final String version = composerPackage.getJSONObject(key).getString("version");
-                latestVersion.parseVersion(stripLeadingV(version_normalized));
-                meta.setLatestVersion(version);
-
-                final String published = composerPackage.getJSONObject(key).getString("time");
-                try {
-                    meta.setPublishedTimestamp(dateFormat.parse(published));
-                } catch (ParseException e) {
-                    LOGGER.warn("An error occurred while parsing upload time", e);
+                    final String version = composerPackage.getJSONObject(key).getString("version");
+                    final String published = composerPackage.getJSONObject(key).getString("time");
+                    versions.put(version, published);
                 }
             });
+            final String highestVersion = AbstractMetaAnalyzer.findHighestVersion(new ArrayList<>(versions.keySet()));
+            meta.setLatestVersion(highestVersion);
+
+            final String published = versions.get(highestVersion);
+            meta.setPublishedTimestamp(getPublisedTimestamp(published));
+
         } catch (IOException ex) {
             handleRequestException(LOGGER, ex);
         } catch (Exception ex) {
@@ -140,9 +131,15 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         return meta;
     }
 
-    private static String stripLeadingV(String s) {
-        return s.startsWith("v")
-                ? s.substring(1)
-                : s;
+    private Date getPublisedTimestamp(final String published) {
+        Date publishedTimestamp = null;
+        try {
+            final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+            publishedTimestamp = dateFormat.parse(published);
+        } catch (ParseException e) {
+            LOGGER.warn("An error occurred while parsing upload time", e);
+        }
+        return publishedTimestamp;
     }
+
 }

@@ -59,3 +59,19 @@ leveraging repositories to identify outdated components.
 
 Refer to [Datasource Routing]({{ site.baseurl }}{% link _docs/datasources/routing.md %})
 for information on Package URL and the various ways it is used throughout Dependency-Track.
+
+#### Highest stable release
+Dependency Track identifies outdated components by looking for newer versions of the component. Preferably this should be
+a higher version, but usualy repositories report the newest version of a component which might not be the highest version. Also 
+some repositories report unstable versions as the latest version.
+
+Dependency Track tries find the highest stable release by parsing the list of versions and ignoring labels like alpha, beta, or snapshot. When no stable release exists, the highest unstable version is reported. This feature is suported for all default repositories:
+  * Cargo
+  * Composer
+  * Gem
+  * Go
+  * Hex
+  * Maven
+  * NPM
+  * NuGet
+  * PyPi

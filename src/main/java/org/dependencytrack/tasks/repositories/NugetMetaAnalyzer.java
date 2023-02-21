@@ -18,23 +18,22 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.PackageURL;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
-import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.dependencytrack.exception.MetaAnalyzerException;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.RepositoryType;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.util.EntityUtils;
+import org.dependencytrack.exception.MetaAnalyzerException;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.RepositoryType;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import com.github.packageurl.PackageURL;
+import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports Nuget.
@@ -44,7 +43,7 @@ import java.util.Date;
  */
 public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
 
-    public static final DateFormat[] SUPPORTED_DATE_FORMATS = new DateFormat[]{
+    private static final DateFormat[] SUPPORTED_DATE_FORMATS = new DateFormat[]{
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     };
@@ -95,10 +94,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
      */
     public MetaModel analyze(final Component component) {
         final MetaModel meta = new MetaModel(component);
-        if (component.getPurl() != null) {
-            if (performVersionCheck(meta, component)) {
-                performLastPublishedCheck(meta, component);
-            }
+        if ((component.getPurl() != null) && performVersionCheck(meta, component)) {
+            performLastPublishedCheck(meta, component);
         }
         return meta;
     }
@@ -108,11 +105,12 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {
-                    String responseString = EntityUtils.toString(response.getEntity());
-                    var jsonObject = new JSONObject(responseString);
-                    final JSONArray versions = jsonObject.getJSONArray("versions");
-                    final String latest = findLatestVersion(versions); // get the last version in the array
-                    meta.setLatestVersion(latest);
+                    final String responseString = EntityUtils.toString(response.getEntity());
+                    final JSONObject jsonObject = new JSONObject(responseString);
+                    final JSONArray versionsArray = jsonObject.getJSONArray("versions");
+                    final List<String> versions = versionsArray.toList().stream().map(Object::toString).toList();
+                    final String highestVersion = AbstractMetaAnalyzer.findHighestVersion(versions);
+                    meta.setLatestVersion(highestVersion);
                 }
                 return true;
             } else {
@@ -124,23 +122,6 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
             throw new MetaAnalyzerException(ex);
         }
         return false;
-    }
-
-    private String findLatestVersion(JSONArray versions) {
-        if (versions.length() < 1) {
-            return null;
-        }
-
-        ComparableVersion latestVersion = new ComparableVersion(versions.getString(0));
-
-        for (int i = 1; i < versions.length(); i++) {
-            ComparableVersion version = new ComparableVersion(versions.getString(i));
-            if (version.compareTo(latestVersion) > 0) {
-                latestVersion = version;
-            }
-        }
-
-        return latestVersion.toString();
     }
 
     private boolean performLastPublishedCheck(final MetaModel meta, final Component component) {
@@ -173,17 +154,15 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         final String url = baseUrl + INDEX_URL;
         try {
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    if(response.getEntity()!=null){
-                    String responseString = EntityUtils.toString(response.getEntity());
-                        JSONObject responseJson = new JSONObject(responseString);
-                        final JSONArray resources = responseJson.getJSONArray("resources");
-                        final JSONObject packageBaseResource = findResourceByType(resources, "PackageBaseAddress");
-                        final JSONObject registrationsBaseResource = findResourceByType(resources, "RegistrationsBaseUrl");
-                        if (packageBaseResource != null && registrationsBaseResource != null) {
-                            versionQueryUrl = packageBaseResource.getString("@id") + "%s/index.json";
-                            registrationUrl = registrationsBaseResource.getString("@id") + "%s/%s.json";
-                        }
+                if ((response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) && (response.getEntity() != null)) {
+                    final String responseString = EntityUtils.toString(response.getEntity());
+                    final JSONObject responseJson = new JSONObject(responseString);
+                    final JSONArray resources = responseJson.getJSONArray("resources");
+                    final JSONObject packageBaseResource = findResourceByType(resources, "PackageBaseAddress");
+                    final JSONObject registrationsBaseResource = findResourceByType(resources, "RegistrationsBaseUrl");
+                    if (packageBaseResource != null && registrationsBaseResource != null) {
+                        versionQueryUrl = packageBaseResource.getString("@id") + "%s/index.json";
+                        registrationUrl = registrationsBaseResource.getString("@id") + "%s/%s.json";
                     }
                 }
             }

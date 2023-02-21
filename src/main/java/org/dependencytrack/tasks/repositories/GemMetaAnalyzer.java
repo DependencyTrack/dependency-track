@@ -18,17 +18,27 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.PackageURL;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
+import com.github.packageurl.PackageURL;
+
+import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports Ruby Gems.
@@ -40,7 +50,7 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private static final Logger LOGGER = Logger.getLogger(GemMetaAnalyzer.class);
     private static final String DEFAULT_BASE_URL = "https://rubygems.org";
-    private static final String API_URL = "/api/v1/versions/%s/latest.json";
+    private static final String API_URL = "/api/v1/versions/%s.json";
 
     GemMetaAnalyzer() {
         this.baseUrl = DEFAULT_BASE_URL;
@@ -71,9 +81,8 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
                     if(response.getEntity()!=null){
                         String responseString = EntityUtils.toString(response.getEntity());
-                        var jsonObject = new JSONObject(responseString);
-                        final String latest = jsonObject.getString("version");
-                        meta.setLatestVersion(latest);
+                        var releasesArray = new JSONArray(responseString);
+                        analyzeReleases(meta, releasesArray);
                     }
                 } else {
                     handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
@@ -86,5 +95,31 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
 
         }
         return meta;
+    }
+
+    private void analyzeReleases(final MetaModel meta, final JSONArray releasesArray) {
+        Map<String, String> versions = new HashMap<>();
+        for (int i = 0; i<releasesArray.length(); i++) {
+            JSONObject release = releasesArray.getJSONObject(i);
+            final String version = release.optString("number", null);
+            final String createdAt = release.optString("created_at", null);
+            versions.put(version, createdAt);
+        }
+        final String highestVersion = AbstractMetaAnalyzer.findHighestVersion(new ArrayList<>(versions.keySet()));
+        meta.setLatestVersion(highestVersion);
+         
+        final String createdAt = versions.get(highestVersion);
+        meta.setPublishedTimestamp(getPublishedTimestamp(createdAt));
+    }
+
+    private Date getPublishedTimestamp(final String insertedAt) {
+        final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        Date publishedTimestamp = null;
+        try {
+            publishedTimestamp = dateFormat.parse(insertedAt);
+        } catch (ParseException e) {
+            LOGGER.warn("An error occurred while parsing published time", e);
+        }
+        return publishedTimestamp;
     }
 }

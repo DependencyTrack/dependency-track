@@ -18,9 +18,14 @@
  */
 package org.dependencytrack.parser.cyclonedx.util;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.MalformedPackageURLException;
-import com.github.packageurl.PackageURL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Bom;
@@ -38,7 +43,6 @@ import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.DataClassification;
 import org.dependencytrack.model.ExternalReference;
-import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
@@ -46,6 +50,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityFinding;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
@@ -54,13 +59,10 @@ import org.dependencytrack.util.PurlUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.json.JSONArray;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+
+import alpine.common.logging.Logger;
 
 public class ModelConverter {
 
@@ -544,7 +546,7 @@ public class ModelConverter {
     }
 
     public static org.cyclonedx.model.vulnerability.Vulnerability convert(final QueryManager qm, final CycloneDXExporter.Variant variant,
-                                                                          final Finding finding) {
+                                                                          final VulnerabilityFinding finding) {
         final Component component = qm.getObjectByUuid(Component.class, (String)finding.getComponent().get("uuid"));
         final Project project = component.getProject();
         final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, (String)finding.getVulnerability().get("uuid"));

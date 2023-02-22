@@ -18,23 +18,23 @@
  */
 package org.dependencytrack.integrations.kenna;
 
-import org.apache.commons.collections4.CollectionUtils;
-import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Severity;
-import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.DateUtil;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityFinding;
+import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.DateUtil;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Transforms Dependency-Track findings into Kenna Data Importer (KDI) format.
@@ -71,8 +71,8 @@ public class KennaDataTransformer {
     public void process(final Project project, final String externalId) {
         final JSONObject kdiAsset = generateKdiAsset(project, externalId);
         final JSONArray vulns = new JSONArray();
-        final List<Finding> findings = qm.getFindings(project);
-        for (final Finding finding: findings) {
+        final List<VulnerabilityFinding> findings = qm.getVulnerabilityFindings(project);
+        for (final VulnerabilityFinding finding: findings) {
             final Map analysis = finding.getAnalysis();
             final Object suppressed = finding.getAnalysis().get("isSuppressed");
             if (suppressed instanceof Boolean) {

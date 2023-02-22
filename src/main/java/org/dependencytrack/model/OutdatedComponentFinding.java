@@ -33,9 +33,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @since 3.1.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-// TODO OutdatedComponentFinding and Finding shoud share a common interface so both can treated equally 
-// for example by the ProjectFindingUploader
-public class OutdatedComponentFinding implements Serializable { 
+public class OutdatedComponentFinding extends AbstractProjectFinding implements Serializable { 
 
     private static final long serialVersionUID = 1L;
 
@@ -51,12 +49,14 @@ public class OutdatedComponentFinding implements Serializable {
             "\"COMPONENT\".\"GROUP\"," +
             "\"COMPONENT\".\"VERSION\"," +
             "\"COMPONENT\".\"PURL\"," +
-            "\"COMPONENT\".\"CPE\"," +
+            "\"COMPONENT\".\"CPE\"" +
             "FROM \"COMPONENT\" " +
+            "INNER JOIN \"REPOSITORY_META_COMPONENT\" "+
+            "ON \"COMPONENT\".\"PURL\" LIKE LOWER( CONCAT( 'pkg:', \"REPOSITORY_META_COMPONENT\".\"REPOSITORY_TYPE\", '/', \"REPOSITORY_META_COMPONENT\".\"NAMESPACE\", '/', \"REPOSITORY_META_COMPONENT\".\"NAME\", '%' ) ) " +
+            "AND \"COMPONENT\".\"VERSION\" <> \"REPOSITORY_META_COMPONENT\".\"LATEST_VERSION\" " +
             "WHERE \"COMPONENT\".\"PROJECT_ID\" = ? " +
             "AND \"COMPONENT\".\"PARENT_COMPONENT_ID\" IS NULL";
 
-    private UUID project;
     private Map<String, Object> component = new LinkedHashMap<>();
 
     /**

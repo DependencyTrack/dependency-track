@@ -18,9 +18,20 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.common.util.UuidUtil;
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+
+import java.io.File;
+import java.util.Base64;
+import java.util.UUID;
+
+import javax.json.JsonObject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.ResourceTest;
@@ -42,18 +53,9 @@ import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.json.JsonObject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.File;
-import java.util.Base64;
-import java.util.UUID;
-
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.equalTo;
+import alpine.common.util.UuidUtil;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
 
 public class BomResourceTest extends ResourceTest {
 

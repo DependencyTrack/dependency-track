@@ -18,14 +18,15 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
+import java.io.IOException;
+import java.net.URISyntaxException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.notification.NotificationConstants;
@@ -33,8 +34,9 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.HttpUtil;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import alpine.common.logging.Logger;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 
 /**
  * Base abstract class that all IMetaAnalyzer implementations should likely extend.
@@ -106,6 +108,31 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
             handleRequestException(logger, ex);
             return null;
         }
+    }
+
+    /**
+     * Parse two version strings and return the one containing the highest version
+     * 
+     * @param v1string first version to compare
+     * @param v2string second version to compare
+     * @return the highest of two versions as string value
+     */
+    public static String highestVersion(String v1string, String v2string) {
+        if (v1string == null) {
+            return v2string;
+        } else if (v2string == null) {
+            return v1string;
+        } else {
+            ComparableVersion v1 = new ComparableVersion(stripLeadingV(v1string));
+            ComparableVersion v2 = new ComparableVersion(stripLeadingV(v2string));
+            return v1.compareTo(v2) > 0 ? v1string : v2string;
+        }
+    }
+    
+    protected static String stripLeadingV(String s) {
+        return s.startsWith("v")
+                ? s.substring(1)
+                : s;
     }
 
 }

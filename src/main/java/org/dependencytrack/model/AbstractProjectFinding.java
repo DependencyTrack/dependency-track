@@ -16,19 +16,19 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.integrations;
+package org.dependencytrack.model;
 
-import java.io.InputStream;
-import java.util.List;
+import java.util.UUID;
 
-import org.dependencytrack.model.AbstractProjectFinding;
-import org.dependencytrack.model.Project;
+/**
+ * The Finding object is a metadata/value object that combines data from multiple tables. The object can
+ * only be queried on, not updated or deleted. Modifications to data in the Finding object need to be made
+ * to the original source object needing modified.
+ *
+ * @since 3.1.0
+ */
+public abstract class AbstractProjectFinding  {
 
-public interface ProjectFindingUploader extends FindingUploader {
+    protected UUID project;
 
-    boolean isProjectConfigured(Project project);
-
-    InputStream process(Project project, List<? extends AbstractProjectFinding> findings);
-
-    void upload(Project project, InputStream payload);
 }

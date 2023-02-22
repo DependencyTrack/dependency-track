@@ -18,26 +18,27 @@
  */
 package org.dependencytrack.integrations.fortifyssc;
 
-import alpine.common.logging.Logger;
-import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
-import org.dependencytrack.integrations.AbstractIntegrationPoint;
-import org.dependencytrack.integrations.FindingPackagingFormat;
-import org.dependencytrack.integrations.ProjectFindingUploader;
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectProperty;
-import org.json.JSONObject;
+import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_URL;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
+import org.dependencytrack.integrations.AbstractIntegrationPoint;
+import org.dependencytrack.integrations.ProjectFindingUploader;
+import org.dependencytrack.integrations.VulnerabilityFindingPackagingFormat;
+import org.dependencytrack.model.AbstractProjectFinding;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.model.VulnerabilityFinding;
+import org.json.JSONObject;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_URL;
-import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_TOKEN;
+import alpine.common.logging.Logger;
+import alpine.model.ConfigProperty;
+import alpine.security.crypto.DataEncryption;
 
 public class FortifySscUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 
@@ -67,8 +68,11 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
     }
 
     @Override
-    public InputStream process(final Project project, final List<Finding> findings) {
-        final JSONObject fpf = new FindingPackagingFormat(project.getUuid(), findings).getDocument();
+    public InputStream process(final Project project, final List<? extends AbstractProjectFinding> findings) {
+        List<VulnerabilityFinding> vulnerabilityFindings =  findings.stream()
+            .filter(finding -> finding instanceof VulnerabilityFinding)
+            .map(finding -> (VulnerabilityFinding)finding).toList();
+        final JSONObject fpf = new VulnerabilityFindingPackagingFormat(project.getUuid(), vulnerabilityFindings).getDocument();
         return new ByteArrayInputStream(fpf.toString(2).getBytes());
     }
 

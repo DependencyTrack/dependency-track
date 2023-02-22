@@ -18,20 +18,22 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.PackageURL;
-import org.json.JSONObject;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.json.JSONObject;
 
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import com.github.packageurl.PackageURL;
+
+import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports Composer.
@@ -136,11 +138,5 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
 
         return meta;
-    }
-
-    private static String stripLeadingV(String s) {
-        return s.startsWith("v")
-                ? s.substring(1)
-                : s;
     }
 }

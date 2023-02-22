@@ -18,15 +18,10 @@
  */
 package org.dependencytrack.integrations.defectdojo;
 
-import alpine.common.logging.Logger;
-import alpine.model.ConfigProperty;
-import org.dependencytrack.integrations.AbstractIntegrationPoint;
-import org.dependencytrack.integrations.FindingPackagingFormat;
-import org.dependencytrack.integrations.ProjectFindingUploader;
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectProperty;
-import org.json.JSONObject;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -34,10 +29,17 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
+import org.dependencytrack.integrations.AbstractIntegrationPoint;
+import org.dependencytrack.integrations.ProjectFindingUploader;
+import org.dependencytrack.integrations.VulnerabilityFindingPackagingFormat;
+import org.dependencytrack.model.AbstractProjectFinding;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.model.VulnerabilityFinding;
+import org.json.JSONObject;
+
+import alpine.common.logging.Logger;
+import alpine.model.ConfigProperty;
 
 public class DefectDojoUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 
@@ -77,8 +79,11 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     }
 
     @Override
-    public InputStream process(final Project project, final List<Finding> findings) {
-        final JSONObject fpf = new FindingPackagingFormat(project.getUuid(), findings).getDocument();
+    public InputStream process(final Project project, final List<? extends AbstractProjectFinding> findings) {
+        final List<VulnerabilityFinding> vulnerabilityFindings = findings.stream()
+            .filter(finding -> finding instanceof VulnerabilityFinding)
+            .map(finding -> (VulnerabilityFinding)finding).toList();
+        final JSONObject fpf = new VulnerabilityFindingPackagingFormat(project.getUuid(), vulnerabilityFindings).getDocument();
         return new ByteArrayInputStream(fpf.toString(2).getBytes());
     }
 

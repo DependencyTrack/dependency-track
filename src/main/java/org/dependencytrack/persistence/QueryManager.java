@@ -33,6 +33,7 @@ import javax.json.JsonObject;
 
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.model.AbstractProjectFinding;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
@@ -48,7 +49,6 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.DependencyMetrics;
-import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
@@ -73,6 +73,7 @@ import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.VulnerabilityFinding;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
@@ -264,8 +265,8 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Lazy instantiation of FindingsQueryManager.
-     * @return a FindingsQueryManager object
+     * Lazy instantiation of findingsQueryManager.
+     * @return a findingsQueryManager object
      */
     private FindingsQueryManager getFindingsQueryManager() {
         if (findingsQueryManager == null) {
@@ -273,7 +274,7 @@ public class QueryManager extends AlpineQueryManager {
         }
         return findingsQueryManager;
     }
-
+    
     /**
      * Lazy instantiation of MetricsQueryManager.
      * @return a MetricsQueryManager object
@@ -522,8 +523,8 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().getDependencyGraphForComponent(project, component);
     }
 
-    public List<OutdatedComponentFinding> getOutdatedComponentFindingForProject(Project project) {
-        return getFindingsQueryManager().getOutdatedComponentFindingForProject(project);
+    public List<OutdatedComponentFinding> getOutdatedComponentFindings(Project project) {
+        return getFindingsQueryManager().getOutdatedComponentFindings(project);
     }
 
     public PaginatedResult getLicenses() {
@@ -1017,12 +1018,20 @@ public class QueryManager extends AlpineQueryManager {
         getFindingsQueryManager().deleteAnalysisTrail(project);
     }
 
-    public List<Finding> getFindings(Project project) {
-        return getFindingsQueryManager().getFindings(project);
+    public List<VulnerabilityFinding> getVulnerabilityFindings(Project project) {
+        return getFindingsQueryManager().getVulnerabilityFindings(project);
     }
 
-    public List<Finding> getFindings(Project project, boolean includeSuppressed) {
-        return getFindingsQueryManager().getFindings(project, includeSuppressed);
+    public List<VulnerabilityFinding> getVulnerabilityFindings(Project project, boolean includeSuppressed) {
+        return getFindingsQueryManager().getVulnerabilityFindings(project, includeSuppressed);
+    }
+
+    public List<AbstractProjectFinding> getAllFindings(Project project) {
+        return getFindingsQueryManager().getAllFindings(project);
+    }
+
+    public List<AbstractProjectFinding> getAllFindings(Project project, boolean includeSuppressed) {
+        return getFindingsQueryManager().getAllFindings(project, includeSuppressed);
     }
 
     public List<VulnerabilityMetrics> getVulnerabilityMetrics() {

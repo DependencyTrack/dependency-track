@@ -18,18 +18,18 @@
  */
 package org.dependencytrack.integrations;
 
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.Project;
-import org.junit.Assert;
-import org.junit.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.dependencytrack.model.AbstractProjectFinding;
+import org.dependencytrack.model.Project;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ProjectFindingUploaderTest {
 
@@ -37,7 +37,7 @@ public class ProjectFindingUploaderTest {
     @SuppressWarnings("unchecked")
     public final void projectFindingMethodsTest() throws IOException {
         Project project = new Project();
-        List<Finding> findings = Collections.EMPTY_LIST;
+        List<AbstractProjectFinding> findings = Collections.EMPTY_LIST;
         ProjectFindingUploader uploader = mock(ProjectFindingUploader.class);
         when(uploader.process(project, findings)).thenReturn(new InputStream() {
             @Override

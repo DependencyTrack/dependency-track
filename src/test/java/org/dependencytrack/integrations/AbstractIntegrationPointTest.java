@@ -18,10 +18,11 @@
  */
 package org.dependencytrack.integrations;
 
-import alpine.common.logging.Logger;
 import org.dependencytrack.PersistenceCapableTest;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import alpine.common.logging.Logger;
 
 public class AbstractIntegrationPointTest extends PersistenceCapableTest {
 

@@ -18,21 +18,21 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.cyclonedx.BomGeneratorFactory;
 import org.cyclonedx.CycloneDxSchema;
 import org.cyclonedx.exception.GeneratorException;
 import org.cyclonedx.model.Bom;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
+import org.dependencytrack.model.VulnerabilityFinding;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class CycloneDXExporter {
 
@@ -59,8 +59,8 @@ public class CycloneDXExporter {
     public Bom create(final Project project) {
         final List<Component> components = qm.getAllComponents(project);
         final List<ServiceComponent> services = qm.getAllServiceComponents(project);
-        final List<Finding> findings = switch (variant) {
-            case INVENTORY_WITH_VULNERABILITIES, VDR, VEX -> qm.getFindings(project, true);
+        final List<VulnerabilityFinding> findings = switch (variant) {
+            case INVENTORY_WITH_VULNERABILITIES, VDR, VEX -> qm.getVulnerabilityFindings(project, true);
             default -> null;
         };
         return create(components, services, findings, project);
@@ -72,7 +72,7 @@ public class CycloneDXExporter {
         return create(components, null, null, null);
     }
 
-    private Bom create(final List<Component>components, final List<ServiceComponent> services, final List<Finding> findings, final Project project) {
+    private Bom create(final List<Component>components, final List<ServiceComponent> services, final List<VulnerabilityFinding> findings, final Project project) {
         final List<org.cyclonedx.model.Component> cycloneComponents = (Variant.VEX != variant && components != null) ? components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList()) : null;
         final List<org.cyclonedx.model.Service> cycloneServices = (Variant.VEX != variant && services != null) ? services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList()) : null;
         final List<org.cyclonedx.model.vulnerability.Vulnerability> cycloneVulnerabilities = (findings != null) ? findings.stream().map(finding -> ModelConverter.convert(qm, variant, finding)).collect(Collectors.toList()) : null;

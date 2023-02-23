@@ -325,10 +325,10 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                                         .map(error -> " - %s: %s (%s)" .formatted(error.title(), error.detail(), error.code()))
                                         .collect(Collectors.joining("\n"))));
                     } else {
-                        handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
+                        handleUnexpectedHttpResponse(LOGGER, request.getRequestUri(), response.getCode(), response.getReasonPhrase());
                     }
                 } else {
-                    handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
+                    handleUnexpectedHttpResponse(LOGGER, request.getRequestUri(), response.getCode(), response.getReasonPhrase());
                 }
             }
         } catch (Throwable  ex) {

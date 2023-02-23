@@ -68,10 +68,10 @@ public class FortifySscClient {
                         return root.getJSONObject("data").getString("token");
                     }
                 } else {
-                    uploader.handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
+                    uploader.handleUnexpectedHttpResponse(LOGGER, request.getRequestUri(), response.getCode(), response.getReasonPhrase());
                 }
             }
-        } catch (IOException | ParseException | URISyntaxException ex) {
+        } catch (IOException | ParseException ex) {
             uploader.handleException(LOGGER, ex);
         }
         return null;
@@ -92,7 +92,7 @@ public class FortifySscClient {
                 if (response.getCode() == HttpStatus.SC_OK) {
                     LOGGER.debug("Successfully uploaded findings to Fortify SSC");
                 } else {
-                    uploader.handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
+                    uploader.handleUnexpectedHttpResponse(LOGGER, request.getRequestUri(), response.getCode(), response.getReasonPhrase());
                 }
             }
         } catch (URISyntaxException | IOException ex) {

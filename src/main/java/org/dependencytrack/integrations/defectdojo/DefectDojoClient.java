@@ -80,9 +80,9 @@ public class DefectDojoClient {
             if (response.getCode() == HttpStatus.SC_CREATED) {
                 LOGGER.debug("Successfully uploaded findings to DefectDojo");
             } else {
-                uploader.handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
+                uploader.handleUnexpectedHttpResponse(LOGGER, request.getRequestUri(), response.getCode(), response.getReasonPhrase());
             }
-        } catch (IOException | URISyntaxException ex) {
+        } catch (IOException ex) {
             uploader.handleException(LOGGER, ex);
         }
     }
@@ -187,9 +187,9 @@ public class DefectDojoClient {
             if (response.getCode() == HttpStatus.SC_CREATED) {
                 LOGGER.debug("Successfully reimport findings to DefectDojo");
             } else {
-                uploader.handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
+                uploader.handleUnexpectedHttpResponse(LOGGER, request.getRequestUri(), response.getCode(), response.getReasonPhrase());
             }
-        } catch (IOException | URISyntaxException ex) {
+        } catch (IOException ex) {
             uploader.handleException(LOGGER, ex);
         }
     }

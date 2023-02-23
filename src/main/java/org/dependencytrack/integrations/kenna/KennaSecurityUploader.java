@@ -119,7 +119,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                     }
                     LOGGER.warn("An unexpected response was received uploading findings to Kenna Security");
                 } else {
-                    handleUnexpectedHttpResponse(LOGGER, request.getUri().toString(), response.getCode(), response.getReasonPhrase());
+                    handleUnexpectedHttpResponse(LOGGER, request.getRequestUri(), response.getCode(), response.getReasonPhrase());
                 }
             }
         } catch (Exception e) {

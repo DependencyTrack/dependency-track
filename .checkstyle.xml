@@ -10,7 +10,14 @@
     </module>
     <module name="TreeWalker">
         <module name="AvoidStarImport"/>
-        <module name="IllegalImport"/>
+        <module name="IllegalImport">
+            <!--
+                Prevent (accidental) usage of packages that have been purposefully removed.
+                As they may be re-introduced to the project as transitive dependencies,
+                we want to be sure that we never end up directly depending on them again.
+            -->
+            <property name="illegalPkgs" value="org.apache.http.impl, kong.unirest"/>
+        </module>
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>
     </module>

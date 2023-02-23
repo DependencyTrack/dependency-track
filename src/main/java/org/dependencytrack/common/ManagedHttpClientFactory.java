@@ -22,10 +22,19 @@ import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.common.util.SystemUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hc.client5.http.auth.CredentialsProvider;
+import org.apache.hc.client5.http.auth.AuthSchemeFactory;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.NTCredentials;
+import org.apache.hc.client5.http.auth.StandardAuthScheme;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.DefaultAuthenticationStrategy;
+import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.auth.BasicSchemeFactory;
+import org.apache.hc.client5.http.impl.auth.DigestSchemeFactory;
+import org.apache.hc.client5.http.impl.auth.NTLMSchemeFactory;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
@@ -38,6 +47,7 @@ import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.TrustAllStrategy;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.config.Lookup;
 import org.apache.hc.core5.http.config.Registry;
 import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.apache.hc.core5.http.io.SocketConfig;
@@ -114,7 +124,7 @@ public final class ManagedHttpClientFactory {
                 .setSoTimeout(Timeout.ofSeconds(TIMEOUT_SOCKET))
                 .build();
         final HttpClientBuilder clientBuilder = HttpClients.custom().setDefaultRequestConfig(requestConfig);
-        final CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        final var credsProvider = new BasicCredentialsProvider();
         clientBuilder.useSystemProperties();
 
         final ProxyInfo proxyInfo = createProxyInfo();
@@ -131,14 +141,14 @@ public final class ManagedHttpClientFactory {
                 }
             };
             clientBuilder.setRoutePlanner(routePlanner);
-            // FIXME
-//            if (StringUtils.isNotBlank(proxyInfo.username) && StringUtils.isNotBlank(proxyInfo.password)) {
-//                if (proxyInfo.domain != null) {
-//                    credsProvider.setCredentials(AuthScope.ANY, new NTCredentials(proxyInfo.username, proxyInfo.password, proxyInfo.domain, null));
-//                } else {
-//                    credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxyInfo.username, proxyInfo.password));
-//                }
-//            }
+            if (StringUtils.isNotBlank(proxyInfo.username) && StringUtils.isNotBlank(proxyInfo.password)) {
+                final var authScopeAny = new AuthScope(null, null, -1, null, null);
+                if (proxyInfo.domain != null) {
+                    credsProvider.setCredentials(authScopeAny, new NTCredentials(proxyInfo.username, proxyInfo.password.toCharArray(), proxyInfo.domain, null));
+                } else {
+                    credsProvider.setCredentials(authScopeAny, new UsernamePasswordCredentials(proxyInfo.username, proxyInfo.password.toCharArray()));
+                }
+            }
         }
         // When a proxy is enabled, turn off certificate chain of trust validation and hostname verification
         if (proxyInfo != null && proxyInfo.noProxy == null) {
@@ -171,16 +181,15 @@ public final class ManagedHttpClientFactory {
         }
 
         clientBuilder.setDefaultCredentialsProvider(credsProvider);
-        // FIXME
-//        clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
-//        final Lookup<AuthSchemeProvider> authProviders = RegistryBuilder.<AuthSchemeProvider>create()
-//                .register(AuthSchemes.BASIC, new BasicSchemeFactory())
-//                .register(AuthSchemes.DIGEST, new DigestSchemeFactory())
-//                .register(AuthSchemes.NTLM, new NTLMSchemeFactory())
-//                .build();
-//        clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
+        clientBuilder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
+        final Lookup<AuthSchemeFactory> authProviders = RegistryBuilder.<AuthSchemeFactory>create()
+                .register(StandardAuthScheme.BASIC, BasicSchemeFactory.INSTANCE)
+                .register(StandardAuthScheme.DIGEST, DigestSchemeFactory.INSTANCE)
+                .register(StandardAuthScheme.NTLM, NTLMSchemeFactory.INSTANCE)
+                .build();
+        clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
         clientBuilder.disableCookieManagement();
-        //clientBuilder.setRedirectStrategy(LaxRedirectStrategy.INSTANCE);
+        clientBuilder.setRedirectStrategy(DefaultRedirectStrategy.INSTANCE);
         return new ManagedHttpClient(clientBuilder.build(), connectionManager);
     }
 

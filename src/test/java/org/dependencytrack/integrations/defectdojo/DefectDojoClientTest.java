@@ -24,25 +24,26 @@ import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+
 public class DefectDojoClientTest {
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule();
-
+    @ClassRule
+    public static WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
 
     @Test
     public void testUploadFindingsPositiveCase() throws Exception {
         WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/defectdojo/api/v2/import-scan/"))
                 .withMultipartRequestBody(WireMock.aMultipart().withName("engagement").
                         withBody(WireMock.equalTo("12345"))));
-        InputStream stream = new ByteArrayInputStream("test input" .getBytes());
+        InputStream stream = new ByteArrayInputStream("test input".getBytes());
         String token = "db975c97-98b1-4988-8d6a-9c3e044dfff3";
         String engagementId = "12345";
         DefectDojoUploader uploader = new DefectDojoUploader();

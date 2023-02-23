@@ -239,4 +239,19 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         String body = json.getString(3);
         Assert.assertEquals("A Task scheduler cadence ("+prop4.getPropertyName()+") cannot be inferior to one hour.A value of -2 was provided.", body);
     }
+
+    @Test
+    public void updateConfigPropertyOsvEcosystemTest() {
+        ConfigProperty property = qm.createConfigProperty("my.group", ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(), "maven;npm;maven", IConfigProperty.PropertyType.STRING, "List of ecosystems");
+        ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
+        request.setPropertyValue("maven;npm;maven");
+        Response response = target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(), json.getString("propertyName"));
+        Assert.assertEquals("maven;npm", json.getString("propertyValue"));
+    }
 }

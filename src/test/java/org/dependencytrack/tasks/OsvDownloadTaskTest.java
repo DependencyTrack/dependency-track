@@ -55,7 +55,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
     public void setUp() {
         qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(),
-                "Maven;DWF",
+                "Maven;DWF;Maven",
                 IConfigProperty.PropertyType.STRING,
                 "List of ecosystems");
         qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(),

@@ -34,6 +34,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Path("/v1/integration/osv/ecosystem")
 @Api(value = "ecosystem", authorizations = @Authorization(value = "X-Api-Key"))
@@ -53,6 +54,27 @@ public class OsvEcosytemResource extends AlpineResource {
     public Response getAllEcosystems() {
         OsvDownloadTask osvDownloadTask = new OsvDownloadTask();
         final List<String> ecosystems = osvDownloadTask.getEcosystems();
+        return Response.ok(ecosystems).build();
+    }
+
+    @GET
+    @Path("/inactive")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of available inactive ecosystems in OSV to be selected by user",
+            response = String.class,
+            responseContainer = "List"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response getInactiveEcosystems() {
+        OsvDownloadTask osvDownloadTask = new OsvDownloadTask();
+        var selectedEcosystems = osvDownloadTask.getEnabledEcosystems();
+        final List<String> ecosystems = osvDownloadTask.getEcosystems().stream()
+                .filter(element -> !selectedEcosystems.contains(element))
+                .collect(Collectors.toList());
         return Response.ok(ecosystems).build();
     }
 }

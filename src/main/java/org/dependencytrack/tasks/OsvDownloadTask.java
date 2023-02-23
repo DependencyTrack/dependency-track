@@ -60,6 +60,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -73,11 +75,11 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
     private String ecosystemConfig;
-    private List<String> ecosystems;
+    private Set<String> ecosystems;
     private String osvBaseUrl;
 
     public List<String> getEnabledEcosystems() {
-        return this.ecosystems;
+        return this.ecosystems.stream().toList();
     }
 
     public OsvDownloadTask() {
@@ -86,7 +88,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
             if (enabled != null) {
                 this.ecosystemConfig = enabled.getPropertyValue();
                 if (this.ecosystemConfig != null) {
-                    ecosystems = Arrays.stream(this.ecosystemConfig.split(";")).map(String::trim).toList();
+                    ecosystems = Arrays.stream(this.ecosystemConfig.split(";")).map(String::trim).collect(Collectors.toSet());
                 }
                 this.osvBaseUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName()).getPropertyValue();
                 if (this.osvBaseUrl != null && !this.osvBaseUrl.endsWith("/")) {

@@ -31,6 +31,9 @@ import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 abstract class AbstractConfigPropertyResource extends AlpineResource {
 
@@ -108,6 +111,14 @@ abstract class AbstractConfigPropertyResource extends AlpineResource {
                     LOGGER.error("An error occurred while encrypting config property value", e);
                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An error occurred while encrypting property value. Check log for details.").build();
                 }
+            }
+        } else if(ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName().equals(json.getPropertyName())) {
+            String propertyValue = json.getPropertyValue();
+            if (propertyValue != null && !propertyValue.isBlank()) {
+                Set<String> ecosystems = Arrays.stream(propertyValue.split(";")).map(String::trim).collect(Collectors.toSet());
+                property.setPropertyValue(String.join(";", ecosystems));
+            } else {
+                property.setPropertyValue(propertyValue);
             }
         } else {
             property.setPropertyValue(json.getPropertyValue());

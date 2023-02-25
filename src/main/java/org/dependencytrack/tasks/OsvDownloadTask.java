@@ -25,7 +25,6 @@ import alpine.model.ConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.http.HttpStatus;
-import org.json.JSONObject;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -44,6 +43,7 @@ import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
+import org.json.JSONObject;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 
@@ -74,21 +74,16 @@ import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 public class OsvDownloadTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
-    private String ecosystemConfig;
     private Set<String> ecosystems;
     private String osvBaseUrl;
-
-    public List<String> getEnabledEcosystems() {
-        return this.ecosystems.stream().toList();
-    }
 
     public OsvDownloadTask() {
         try (final QueryManager qm = new QueryManager()) {
             final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName());
             if (enabled != null) {
-                this.ecosystemConfig = enabled.getPropertyValue();
-                if (this.ecosystemConfig != null) {
-                    ecosystems = Arrays.stream(this.ecosystemConfig.split(";")).map(String::trim).collect(Collectors.toSet());
+                final String ecosystemConfig = enabled.getPropertyValue();
+                if (ecosystemConfig != null) {
+                    ecosystems = Arrays.stream(ecosystemConfig.split(";")).map(String::trim).collect(Collectors.toSet());
                 }
                 this.osvBaseUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName()).getPropertyValue();
                 if (this.osvBaseUrl != null && !this.osvBaseUrl.endsWith("/")) {
@@ -373,4 +368,10 @@ public class OsvDownloadTask implements LoggableSubscriber {
         }
         return ecosystems;
     }
+
+    public Set<String> getEnabledEcosystems() {
+        return Optional.ofNullable(this.ecosystems)
+                .orElseGet(Collections::emptySet);
+    }
+
 }

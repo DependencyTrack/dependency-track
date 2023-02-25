@@ -154,7 +154,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
     public void updateDatasource(final OsvAdvisory advisory) {
 
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager().withL2CacheDisabled()) {
 
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
             final Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);

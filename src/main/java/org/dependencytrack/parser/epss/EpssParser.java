@@ -56,7 +56,7 @@ public final class EpssParser {
                     final String cveId = values.get(0);
                     final BigDecimal epssScore = new BigDecimal(values.get(1));
                     final BigDecimal percentile = new BigDecimal(values.get(2));
-                    try (final QueryManager qm = new QueryManager()) {
+                    try (final QueryManager qm = new QueryManager().withL2CacheDisabled()) {
                         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, cveId);
                         if (vuln != null) {
                             vuln.setEpssScore(epssScore);

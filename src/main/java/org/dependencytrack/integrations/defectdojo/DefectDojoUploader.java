@@ -44,11 +44,22 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     private static final Logger LOGGER = Logger.getLogger(DefectDojoUploader.class);
     private static final String ENGAGEMENTID_PROPERTY = "defectdojo.engagementId";
     private static final String REIMPORT_PROPERTY = "defectdojo.reimport";
+    private static final String DO_NOT_REACTIVATE_PROPERTY = "defectdojo.doNotReactivate";
+
 
     public boolean isReimportConfigured(final Project project) {
         final ProjectProperty reimport = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), REIMPORT_PROPERTY);
         if (reimport != null) {
             return Boolean.parseBoolean(reimport.getPropertyValue());
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isDoNotReactivateConfigured(final Project project) {
+        final ProjectProperty reactivate = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), DO_NOT_REACTIVATE_PROPERTY);
+        if (reactivate != null) {
+            return Boolean.parseBoolean(reactivate.getPropertyValue());
         } else {
             return false;
         }
@@ -97,7 +108,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                 if (testId.equals("")) {
                     client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);
                 } else {
-                    client.reimportDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, testId);
+                    client.reimportDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, testId, isDoNotReactivateConfigured(project));
                 }
             } else {
                 client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);

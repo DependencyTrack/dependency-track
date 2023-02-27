@@ -30,6 +30,10 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
 > Previous versions of Dependency-Track supported only a single CWE (`cweId` and `cweName` fields respectively) per
 > vulnerability.
 > The `cweId` and `cweName` fields are deprecated and will be removed in a later version. Please use `cwes` instead.
+ 
+> Finding Packaging Format v1.2 was introduced in Dependency-Track v4.8.0.
+> It removes the allBySource and the technical 'id' values, which were exposed unintentionally, in the aliases array of a vulnerability.
+> The example below shows how aliases are currently exported.
 
 #### Example
 
@@ -93,6 +97,12 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
       "uuid": "701a3953-666b-4b7a-96ca-e1e6a3e1def3",
       "source": "NPM",
       "vulnId": "48",
+      "aliases": [
+        {
+          "cveId": "CVE-2022-2053",
+          "ghsaId": "GHSA-95rf-557x-44g5"
+        }
+      ],
       "title": "Regular Expression Denial of Service",
       "subtitle": "uglify-js",
       "severity": "LOW",

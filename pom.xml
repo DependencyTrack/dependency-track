@@ -490,7 +490,7 @@
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>
-                <version>10.0.13</version>
+                <version>10.0.14</version>
                 <configuration>
                     <webApp>
                         <contextPath>/</contextPath>

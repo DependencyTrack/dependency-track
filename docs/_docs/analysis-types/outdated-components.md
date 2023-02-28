@@ -29,8 +29,7 @@ components ecosystem. Refer to [Repositories]({{ site.baseurl }}{% link _docs/da
 further information.
 
 ### Stable releases
-In some repositories, for example NPM, the latest release should always denote a stable release. In others, such as Maven, the latest version might be a a stable release or an unstable version. In NPM as wel as Maven repositories the latest version does not need to be the highest version. It's just the latest published to the repository.
+In some repositories, for example NPM, the latest release should always denote a stable release. In others, such as Maven, the latest version might be a stable release or an unstable version. In NPM as well as Maven repositories, the latest version does not need to be the highest version. It's just the latest published to the repository.
 
-For some repositories Dependency track tries to find the highest stable release instead of just the latest version. Refer to [Repositories]({{ site.baseurl }}{% link _docs/datasources/repositories.md %}) for 
-further information.
+For some repositories, Dependency-Track tries to find the highest stable release instead of just the latest version. Refer to [Repositories]({{ site.baseurl }}{% link _docs/datasources/repositories.md %}) for further information.
 

@@ -49,9 +49,9 @@ import alpine.notification.NotificationLevel;
  */
 public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
 
-    protected static final String VERSIONS_PATTERN = "(\\d+(\\.\\d+)*)(.*)";     
-    protected static final String SEMVER_PRE_RELEASE_PATTERN = "(?i)(-[0-9a-z]).*"; // ignore case
-    protected static final String UNSTABLE_LABELS_PATTERN = "(?i)[_\\.](dev|atlassian|preview|next|canary|snapshot|a|alpha|b|beta|rc|cr|m|mr|ea).*"; // ignore case
+    protected static final Pattern VERSIONS_PATTERN = Pattern.compile("(\\d+(\\.\\d+)*)(.*)");     
+    protected static final Pattern SEMVER_PRE_RELEASE_PATTERN = Pattern.compile("(?i)(-[0-9a-z]).*"); // ignore case
+    protected static final Pattern UNSTABLE_LABELS_PATTERN = Pattern.compile("(?i)[_\\.](dev|atlassian|preview|next|canary|snapshot|a|alpha|b|beta|rc|cr|m|mr|ea).*"); // ignore case
     
     
     protected String baseUrl;
@@ -142,11 +142,10 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
      * @return true if the version string denotes a stable version
      */
     protected static boolean isStableVersion(String version) {
-        Pattern pattern = Pattern.compile(VERSIONS_PATTERN);
-        Matcher matcher = pattern.matcher(stripLeadingV(version));
-        if (matcher.matches()) {
-            String label = matcher.group(3);        
-            return !label.matches(SEMVER_PRE_RELEASE_PATTERN) && !label.matches(UNSTABLE_LABELS_PATTERN);
+        Matcher version_matcher = VERSIONS_PATTERN.matcher(stripLeadingV(version));
+        if (version_matcher.matches()) {
+            String label = version_matcher.group(3);
+            return !SEMVER_PRE_RELEASE_PATTERN.matcher(label).matches() && !UNSTABLE_LABELS_PATTERN.matcher(label).matches();
         } else {
             return false;
         }

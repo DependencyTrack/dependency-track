@@ -65,7 +65,7 @@ public class AbstractMetaAnalyzerTest {
         Assert.assertEquals("v2", AbstractMetaAnalyzer.highestVersion("v2-alpha", "v2"));
         Assert.assertEquals("v2", AbstractMetaAnalyzer.highestVersion("v2-snapshot", "v2"));
         Assert.assertEquals("v2-snapshot", AbstractMetaAnalyzer.highestVersion("v1", "v2-snapshot"));
-        Assert.assertEquals("9.3.0-beta.14-77e850b", AbstractMetaAnalyzer.highestVersion("9.2.3", "9.3.0-beta.14-77e850b"));        
+        Assert.assertEquals("9.3.0-beta.14-77e850b", AbstractMetaAnalyzer.highestVersion("9.2.3", "9.3.0-beta.14-77e850b"));
     }
 
     @Test
@@ -87,6 +87,8 @@ public class AbstractMetaAnalyzerTest {
         Assert.assertFalse(AbstractMetaAnalyzer.isStableVersion("1-alpha"));
         Assert.assertFalse(AbstractMetaAnalyzer.isStableVersion("1-b"));
         Assert.assertFalse(AbstractMetaAnalyzer.isStableVersion("11.1-SNApshot"));
+        Assert.assertFalse(AbstractMetaAnalyzer.isStableVersion("11.1-develop"));
+        Assert.assertFalse(AbstractMetaAnalyzer.isStableVersion("11.1-dev"));
         Assert.assertFalse(AbstractMetaAnalyzer.isStableVersion("1.22.333-rc1"));
         Assert.assertFalse(AbstractMetaAnalyzer.isStableVersion("9.3.0-BETA.14-77e850b"));
         Assert.assertFalse(AbstractMetaAnalyzer.isStableVersion("3.10.0-canary.1"));
@@ -130,13 +132,13 @@ public class AbstractMetaAnalyzerTest {
         Assert.assertEquals("2", AbstractMetaAnalyzer.findHighestStableOrUnstableVersion(Arrays.asList("1", "2", "2-alpha")));
         Assert.assertEquals("2", AbstractMetaAnalyzer.findHighestStableOrUnstableVersion(Arrays.asList("1", "2", "2-beta")));
         Assert.assertEquals("2", AbstractMetaAnalyzer.findHighestStableOrUnstableVersion(Arrays.asList("1", "2", "2-rc1")));
-        Assert.assertEquals("9.3.0-beta.14-77e850b", AbstractMetaAnalyzer.findHighestStableOrUnstableVersion(Arrays.asList("9.2.3", "9.3.0-beta.14-77e850b")));        
+        Assert.assertEquals("9.3.0-beta.14-77e850b", AbstractMetaAnalyzer.findHighestStableOrUnstableVersion(Arrays.asList("9.2.3", "9.3.0-beta.14-77e850b")));
         Assert.assertEquals("v1", AbstractMetaAnalyzer.findHighestStableOrUnstableVersion(Arrays.asList("v1")));
         Assert.assertEquals("v2-snapshot", AbstractMetaAnalyzer.findHighestStableOrUnstableVersion(Arrays.asList("1", "v2-snapshot")));
         Assert.assertEquals("2", AbstractMetaAnalyzer.findHighestStableOrUnstableVersion(Arrays.asList("v1", "2")));
         Assert.assertEquals("v2", AbstractMetaAnalyzer.findHighestStableOrUnstableVersion(Arrays.asList("v1", "v2")));
         Assert.assertEquals("v2", AbstractMetaAnalyzer.findHighestStableOrUnstableVersion(Arrays.asList("1", "v2")));
-        
+
     }
 
     @Test
@@ -155,7 +157,7 @@ public class AbstractMetaAnalyzerTest {
         Assert.assertEquals("2", AbstractMetaAnalyzer.findHighestStableVersion(Arrays.asList("v1", "2", "2-beta")));
         Assert.assertEquals("2", AbstractMetaAnalyzer.findHighestStableVersion(Arrays.asList("v1", "2", "v2-rc1")));
         Assert.assertNull(AbstractMetaAnalyzer.findHighestStableVersion(Arrays.asList("1-a", "2-snapshot", "2-rc1")));
-        Assert.assertEquals("9.2.3", AbstractMetaAnalyzer.findHighestStableVersion(Arrays.asList("9.2.3", "9.3.0-beta.14-77e850b")));        
+        Assert.assertEquals("9.2.3", AbstractMetaAnalyzer.findHighestStableVersion(Arrays.asList("9.2.3", "9.3.0-beta.14-77e850b")));
     }
 
     @Test
@@ -174,8 +176,8 @@ public class AbstractMetaAnalyzerTest {
         Assert.assertEquals("2", AbstractMetaAnalyzer.findHighestVersion(Arrays.asList("1", "2", "2-alpha")));
         Assert.assertEquals("2", AbstractMetaAnalyzer.findHighestVersion(Arrays.asList("1", "2", "2-beta")));
         Assert.assertEquals("2", AbstractMetaAnalyzer.findHighestVersion(Arrays.asList("1", "2", "2-rc1")));
-        // N.B. 2.rc1 would be a better choise than 2-snapshot :-( 
-        Assert.assertEquals("2-snapshot", AbstractMetaAnalyzer.findHighestVersion(Arrays.asList("1-a", "2-snapshot", "2-rc1"))); 
+        // N.B. 2.rc1 would be a better choise than 2-snapshot :-(
+        Assert.assertEquals("2-snapshot", AbstractMetaAnalyzer.findHighestVersion(Arrays.asList("1-a", "2-snapshot", "2-rc1")));
     }
 
 }

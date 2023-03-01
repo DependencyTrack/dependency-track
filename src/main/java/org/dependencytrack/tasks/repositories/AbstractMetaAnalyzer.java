@@ -23,7 +23,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -36,7 +35,6 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.HttpUtil;
-
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
@@ -49,17 +47,17 @@ import alpine.notification.NotificationLevel;
  */
 public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
 
-    protected static final Pattern VERSIONS_PATTERN = Pattern.compile("(\\d+(\\.\\d+)*)(.*)");     
+    protected static final Pattern VERSIONS_PATTERN = Pattern.compile("(\\d+(\\.\\d+)*)(.*)");
     protected static final Pattern SEMVER_PRE_RELEASE_PATTERN = Pattern.compile("(?i)(-[0-9a-z]).*"); // ignore case
-    protected static final Pattern UNSTABLE_LABELS_PATTERN = Pattern.compile("(?i)[_\\.](dev|atlassian|preview|next|canary|snapshot|a|alpha|b|beta|rc|cr|m|mr|ea).*"); // ignore case
-    
-    
+    protected static final Pattern UNSTABLE_LABELS_PATTERN = Pattern.compile("(?i)[_\\.](dev|develop|atlassian|preview|next|canary|snapshot|a|alpha|b|beta|rc|cr|m|mr|ea).*"); // ignore case
+
+
     protected String baseUrl;
 
     protected String username;
 
     protected String password;
-    
+
     /**
      * {@inheritDoc}
      */
@@ -102,13 +100,13 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
                 .level(NotificationLevel.ERROR)
         );
     }
-        
+
     /**
-     * Parse two version strings (strip optinal leading 'v') and compare versions 
-     * 
+     * Parse two version strings (strip optinal leading 'v') and compare versions
+     *
      * @param v1string first version to compare
      * @param v2string second version to compare
-     * @return 0 when the versions are equal, greater than 0 if v2 is larger than v2 
+     * @return 0 when the versions are equal, greater than 0 if v2 is larger than v2
      * or less than 0 when v2 is smaler than v1
      * @see ComparableVersion#compareTo
      */
@@ -123,10 +121,10 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
             return v1.compareTo(v2);
         }
     }
-        
+
     /**
      * Parse two version strings and return the one containing the highest version
-     * 
+     *
      * @param v1string first version to compare
      * @param v2string second version to compare
      * @return the highest of two versions as string value
@@ -149,11 +147,11 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         } else {
             return false;
         }
-    }    
+    }
 
     /**
      * Get the highest version from a list of version strings
-     * 
+     *
      * @param versions list of version strings
      * @return the highest version in the list
      */
@@ -164,10 +162,10 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         }
         return highestStableOrUnstableVersion;
     }
-    
+
     /**
      * Get the highest stable version from a list of version strings
-     * 
+     *
      * @param versions list of version strings
      * @return the highest version in the list
      */
@@ -177,11 +175,11 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         return findHighestStableOrUnstableVersion(stableVersions);
     }
 
-    
+
     /**
      * Get the highest  version from a list of version strings. When a stable version is found
      * this is returned, otherwise an unstable version or null weh no version is found
-     * 
+     *
      * @param versions list of version strings
      * @return the highest version in the list
      */
@@ -194,7 +192,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         } else {
             // find highest stable version
             String highestStableVersion = findHighestStableVersion(versions);
-    
+
             // use highestStableVersion, or else latest unstable release (e.g. alpha, milestone) or else latest snapshot
             return highestStableVersion != null ? highestStableVersion: highestStableOrUnstableVersion;
         }

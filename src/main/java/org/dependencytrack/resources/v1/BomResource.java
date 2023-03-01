@@ -251,6 +251,9 @@ public class BomResource extends AlpineResource {
                                @DefaultValue("false") @FormDataParam("autoCreate") boolean autoCreate,
                                @FormDataParam("projectName") String projectName,
                                @FormDataParam("projectVersion") String projectVersion,
+                               @FormDataParam("parentName") String parentName,
+                               @FormDataParam("parentVersion") String parentVersion,
+                               @FormDataParam("parentUUID") String parentUUID,
                                final FormDataMultiPart multiPart) {
 
         final List<FormDataBodyPart> artifactParts = multiPart.getFields("bom");
@@ -266,7 +269,21 @@ public class BomResource extends AlpineResource {
                 Project project = qm.getProject(trimmedProjectName, trimmedProjectVersion);
                 if (project == null && autoCreate) {
                     if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT) || hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
-                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, null, null, null, true, true);
+                        Project parent = null;
+                        if (parentUUID != null || parentName != null) {
+                            if (parentUUID != null) {
+                              parent = qm.getObjectByUuid(Project.class, parentUUID);
+                            } else {
+                              final String trimmedParentName = StringUtils.trimToNull(parentName);
+                              final String trimmedParentVersion = StringUtils.trimToNull(parentVersion);
+                              parent = qm.getProject(trimmedParentName, trimmedParentVersion);
+                            }
+
+                            if (parent == null) { // if parent project is specified but not found
+                                return Response.status(Response.Status.NOT_FOUND).entity("The parent component could not be found.").build();
+                            }
+                        }
+                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, null, parent, null, true, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
                     } else {

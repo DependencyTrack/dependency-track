@@ -86,6 +86,34 @@ mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 
 The above command is also suitable for debugging. For IntelliJ, simply *Debug* the [Jetty](./.run/Jetty.run.xml) run configuration.
 
+### Skipping NVD mirroring
+
+For local debugging and testing, it is sometimes desirable to skip the NVD mirroring process
+that is executed a minute after Dependency-Track has started.
+
+This can be achieved by tricking Dependency-Track into thinking that it already
+mirrored the NVD data, so there's no need to re-download it again.
+
+Prior to starting Dependency-Track, execute the `data-nist-generate-dummy.sh` script:
+
+```shell
+./scripts/data-nist-generate-dummy.sh
+```
+
+> **Note** 
+> The `modified` feed will still be downloaded. But that feed is so small that it
+> doesn't really have an impact.
+
+When testing containerized deployments, simply mount the local directory containing the prepared
+NVD data into the container:
+
+```shell
+./scripts/data-nist-generate-dummy.sh
+docker run -d --name dtrack \
+  -v "$HOME/.dependency-track:/data/.dependency-track" \
+  -p '127.0.0.1:8080:8080' dependencytrack/apiserver:snapshot
+```
+
 ## Debugging with Frontend
 
 Start the API server via the Jetty Maven plugin (see [Debugging](#debugging) above). The API server will listen on 

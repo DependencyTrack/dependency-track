@@ -18,12 +18,21 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.common.util.UuidUtil;
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Date;
+import java.util.UUID;
+
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import org.apache.http.HttpStatus;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
@@ -34,15 +43,10 @@ import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Date;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import alpine.common.util.UuidUtil;
+import alpine.server.auth.AlpineAuthenticationException;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
 
 public class ComponentResourceTest extends ResourceTest {
 
@@ -149,9 +153,17 @@ public class ComponentResourceTest extends ResourceTest {
         componentA.setProject(projectA);
         componentA.setGroup("groupA");
         componentA.setName("nameA");
-        componentA.setVersion("versionA");
-        componentA.setCpe("cpe:2.3:a:groupA:nameA:versionA:*:*:*:*:*:*:*");
-        componentA.setPurl("pkg:maven/groupA/nameA@versionA?foo=bar");
+        componentA.setVersion("1.0.0");
+        componentA.setCpe("cpe:2.3:a:groupA:nameA:1.0.0:*:*:*:*:*:*:*");
+        componentA.setPurl("pkg:maven/groupA/nameA@1.0.0?foo=bar");
+        RepositoryMetaComponent metaA = new RepositoryMetaComponent();
+        Date lastCheck = new Date();
+        metaA.setLastCheck(lastCheck);
+        metaA.setNamespace("groupA");
+        metaA.setName("nameA");
+        metaA.setLatestVersion("2.0.0");
+        metaA.setRepositoryType(RepositoryType.MAVEN);
+        qm.persist(metaA);
         qm.createComponent(componentA, false);
 
         final Project projectB = qm.createProject("projectB", null, "1.0", null, null, null, true, false);
@@ -159,15 +171,22 @@ public class ComponentResourceTest extends ResourceTest {
         componentB.setProject(projectB);
         componentB.setGroup("groupB");
         componentB.setName("nameB");
-        componentB.setVersion("versionB");
-        componentB.setCpe("cpe:2.3:a:groupB:nameB:versionB:*:*:*:*:*:*:*");
-        componentA.setPurl("pkg:maven/groupB/nameB@versionB?baz=qux");
+        componentB.setVersion("2.1.0");
+        componentB.setCpe("cpe:2.3:a:groupB:nameB:2.1.0:*:*:*:*:*:*:*");
+        componentB.setPurl("pkg:maven/groupB/nameB@versionB?baz=qux");
+        RepositoryMetaComponent metaB = new RepositoryMetaComponent();
+        metaB.setLastCheck(lastCheck);
+        metaB.setNamespace("groupB");
+        metaB.setName("nameB");
+        metaB.setLatestVersion("2.2.0");
+        metaB.setRepositoryType(RepositoryType.MAVEN);
+        qm.persist(metaB);
         componentB = qm.createComponent(componentB, false);
 
         final Response response = target(V1_COMPONENT + "/identity")
                 .queryParam("group", "groupB")
                 .queryParam("name", "nameB")
-                .queryParam("version", "versionB")
+                .queryParam("version", "2.1.0")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -180,6 +199,56 @@ public class ComponentResourceTest extends ResourceTest {
         final JsonObject jsonComponent = json.getJsonObject(0);
         assertThat(jsonComponent).isNotNull();
         assertThat(jsonComponent.getString("uuid")).isEqualTo(componentB.getUuid().toString());
+        assertThat(jsonComponent.getJsonObject("repositoryMeta").getString("latestVersion")).isEqualTo(metaB.getLatestVersion());
+    }
+
+    @Test
+    public void getComponentByIdentityWithCoordinatesNoAccessTest() throws AlpineAuthenticationException {        
+        // Enable access-management ACL
+        qm.createConfigProperty(
+            ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), 
+            ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), 
+            "true", 
+            ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), 
+            ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
+        );
+        
+        final Project projectA = qm.createProject("projectA", null, "1.0", null, null, null, true, false);
+        projectA.getAccessTeams().add(team);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setGroup("group");
+        componentA.setName("name");
+        componentA.setVersion("1");
+        componentA.setCpe("cpe:2.3:a:group:name:1:*:*:*:*:*:*:*");
+        componentA.setPurl("pkg:maven/group/name@1?foo=bar");
+        qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("projectB", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setGroup("group");
+        componentB.setName("name");
+        componentB.setVersion("2");
+        componentB.setCpe("cpe:2.3:a:group:name:2:*:*:*:*:*:*:*");
+        componentB.setPurl("pkg:maven/group/name@2?baz=qux");
+        componentB = qm.createComponent(componentB, false);
+        
+        final Response response = target(V1_COMPONENT + "/identity")
+                .queryParam("group", "group")
+                .queryParam("name", "name")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(1);
+
+        final JsonObject jsonComponent = json.getJsonObject(0);
+        assertThat(jsonComponent).isNotNull();
+        assertThat(jsonComponent.getString("uuid")).isEqualTo(componentA.getUuid().toString());
     }
 
     @Test

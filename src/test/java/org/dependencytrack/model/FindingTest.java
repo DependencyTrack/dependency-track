@@ -18,19 +18,19 @@
  */
 package org.dependencytrack.model;
 
-import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.persistence.CweImporter;
-import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.persistence.CweImporter;
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public class FindingTest extends PersistenceCapableTest {
 
@@ -55,6 +55,7 @@ public class FindingTest extends PersistenceCapableTest {
         Assert.assertEquals("component-group", map.get("group"));
         Assert.assertEquals("component-version", map.get("version"));
         Assert.assertEquals("component-purl", map.get("purl"));
+        Assert.assertEquals("component-cpe", map.get("cpe"));
     }
 
     @Test

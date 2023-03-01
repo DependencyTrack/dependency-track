@@ -18,15 +18,21 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.common.logging.Logger;
-import alpine.event.framework.Event;
-import alpine.model.ApiKey;
-import alpine.model.Team;
-import alpine.model.UserPrincipal;
-import alpine.persistence.PaginatedResult;
-import alpine.resources.AlpineRequest;
-import com.github.packageurl.MalformedPackageURLException;
-import com.github.packageurl.PackageURL;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.jdo.FetchPlan;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonValue;
+
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -35,19 +41,16 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 
-import javax.jdo.FetchPlan;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
-import javax.json.Json;
-import javax.json.JsonValue;
-import javax.json.JsonArray;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+
+import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
+import alpine.model.ApiKey;
+import alpine.model.Team;
+import alpine.model.UserPrincipal;
+import alpine.persistence.PaginatedResult;
+import alpine.resources.AlpineRequest;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
 

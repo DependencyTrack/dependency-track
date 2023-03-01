@@ -18,6 +18,29 @@
  */
 package org.dependencytrack.resources.v1;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.event.VulnerabilityAnalysisEvent;
+import org.dependencytrack.integrations.FindingPackagingFormat;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.persistence.QueryManager;
+
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.server.auth.PermissionRequired;
@@ -29,27 +52,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
-import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.event.VulnerabilityAnalysisEvent;
-import org.dependencytrack.integrations.FindingPackagingFormat;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.persistence.QueryManager;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * JAX-RS resources for processing findings.
@@ -64,10 +66,10 @@ public class FindingResource extends AlpineResource {
     private static final Logger LOGGER = Logger.getLogger(FindingResource.class);
 
     @GET
-    @Path("/project/{uuid}")
+    @Path("/project/{uuid}/vulnerabilities")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Returns a list of all findings for a specific project",
+            value = "Returns a list of all vulnerability findings for a specific project",
             response = Finding.class,
             responseContainer = "List",
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
@@ -78,7 +80,7 @@ public class FindingResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
-    public Response getFindingsByProject(@PathParam("uuid") String uuid,
+    public Response getVulnerabilityFindingsByProject(@PathParam("uuid") String uuid,
                                          @ApiParam(value = "Optionally includes suppressed findings")
                                          @QueryParam("suppressed") boolean suppressed,
                                          @ApiParam(value = "Optionally limit findings to specific sources of vulnerability intelligence")
@@ -87,8 +89,7 @@ public class FindingResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                    //final long totalCount = qm.getVulnerabilityCount(project, suppressed);
-                    final List<Finding> findings = qm.getFindings(project, suppressed);
+                    final List<Finding> findings = qm.getVulnerabilityFindings(project, suppressed);
                     if (source != null) {
                         final List<Finding> filteredList = findings.stream().filter(finding -> source.name().equals(finding.getVulnerability().get("source"))).collect(Collectors.toList());
                         return Response.ok(filteredList).header(TOTAL_COUNT_HEADER, filteredList.size()).build();
@@ -121,7 +122,7 @@ public class FindingResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                    final List<Finding> findings = qm.getFindings(project);
+                    final List<Finding> findings = qm.getVulnerabilityFindings(project);
                     final FindingPackagingFormat fpf = new FindingPackagingFormat(UUID.fromString(uuid), findings);
                     final Response.ResponseBuilder rb = Response.ok(fpf.getDocument().toString(), "application/json");
                     rb.header("Content-Disposition", "inline; filename=findings-" + uuid + ".fpf");
@@ -172,5 +173,73 @@ public class FindingResource extends AlpineResource {
         }
     }
 
+    @GET
+    @Path("/project/{uuid}/outdated")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+        
+        value = "Returns a list of all outdated component findings for a specific project",
+        response = Finding.class,
+        responseContainer = "List",
+        responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of outdated component findings")
+        )
+        @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
+            @ApiResponse(code = 404, message = "The project could not be found")
+        })
+        @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
+        public Response getOutdatedComponentsByProject(@PathParam("uuid") String uuid,
+                @ApiParam(value = "Optionally includes suppressed findings")
+                @QueryParam("suppressed") boolean suppressed) {
+            try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Project project = qm.getObjectByUuid(Project.class, uuid);
+            if (project != null) {
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    final List<Finding> outdatedComponentFindingForProject = qm.getOutdatedComponentFindings(project, suppressed);
+                    return Response.ok(outdatedComponentFindingForProject).header(TOTAL_COUNT_HEADER, outdatedComponentFindingForProject.size()).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+        }
+    }
+
+    @GET
+    @Path("/project/{uuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all outdated component findings and vulnerability findings for a specific project",
+            response = Finding.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of outdated component findings")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
+            @ApiResponse(code = 404, message = "The project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
+    public Response getFindingsByProject(@PathParam("uuid") String uuid,
+            @ApiParam(value = "Optionally includes suppressed findings")
+            @QueryParam("suppressed") boolean suppressed,
+            @ApiParam(value = "Optionally limit findings to specific sources of vulnerability intelligence")
+            @QueryParam("source") Vulnerability.Source source) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Project project = qm.getObjectByUuid(Project.class, uuid);
+            if (project != null) {
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    final List<? extends Finding> findingForProject = qm.getFindings(project, suppressed);
+                    return Response.ok(findingForProject).header(TOTAL_COUNT_HEADER, findingForProject.size()).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+        }
+    }
 
 }

@@ -18,22 +18,20 @@
  */
 package org.dependencytrack.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.apache.commons.lang3.StringUtils;
-import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.util.VulnerabilityUtil;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.Set;
-import java.util.List;
-import java.util.HashSet;
 import java.util.HashMap;
-
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.util.VulnerabilityUtil;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * The Finding object is a metadata/value object that combines data from multiple tables. The object can
@@ -48,12 +46,12 @@ public class Finding implements Serializable {
     private static final long serialVersionUID = 5313521394432526986L;
 
     /*
-     * This statement works on Microsoft SQL Server, MySQL, and PostgreSQL. Due to the standardization
-     * of upper-case table and column names in Dependency-Track, every identifier needs to be wrapped
-     * in double quotes to satisfy PostgreSQL case-sensitive requirements. This also places a requirement
-     * on ANSI_QUOTES mode being enabled in MySQL. SQL Server works regardless and is just happy to be invited :-)
-     */
-    public static final String QUERY = "SELECT " +
+    * This statement works on Microsoft SQL Server, MySQL, and PostgreSQL. Due to the standardization
+    * of upper-case table and column names in Dependency-Track, every identifier needs to be wrapped
+    * in double quotes to satisfy PostgreSQL case-sensitive requirements. This also places a requirement
+    * on ANSI_QUOTES mode being enabled in MySQL. SQL Server works regardless and is just happy to be invited :-)
+    */
+    public static final String QUERY_FINDINGS = "SELECT " +
             "\"COMPONENT\".\"UUID\"," +
             "\"COMPONENT\".\"NAME\"," +
             "\"COMPONENT\".\"GROUP\"," +
@@ -87,7 +85,60 @@ public class Finding implements Serializable {
             "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
             "INNER JOIN \"FINDINGATTRIBUTION\" ON (\"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\")" +
             "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
-            "WHERE \"COMPONENT\".\"PROJECT_ID\" = ?";
+            "WHERE \"COMPONENT\".\"PROJECT_ID\" = ? ";
+
+    /*
+     * This statement works on Microsoft SQL Server, MySQL, and PostgreSQL. Due to the standardization
+     * of upper-case table and column names in Dependency-Track, every identifier needs to be wrapped
+     * in double quotes to satisfy PostgreSQL case-sensitive requirements. This also places a requirement
+     * on ANSI_QUOTES mode being enabled in MySQL. SQL Server works regardless and is just happy to be invited :-)
+     */
+    public static final String QUERY_OUTDATED = "SELECT " +
+            "\"COMPONENT\".\"UUID\"," +
+            "\"COMPONENT\".\"NAME\"," +
+            "\"COMPONENT\".\"GROUP\"," +
+            "\"COMPONENT\".\"VERSION\"," +
+            "\"COMPONENT\".\"PURL\"," +
+            "\"COMPONENT\".\"CPE\"," +
+            "\"VULNERABILITY\".\"UUID\"," +
+            "\"VULNERABILITY\".\"SOURCE\"," +
+            "\"VULNERABILITY\".\"VULNID\"," +
+            "\"VULNERABILITY\".\"TITLE\"," +
+            "\"VULNERABILITY\".\"SUBTITLE\"," +
+            "\"VULNERABILITY\".\"DESCRIPTION\"," +
+            "\"VULNERABILITY\".\"RECOMMENDATION\"," +
+            "\"VULNERABILITY\".\"SEVERITY\"," +
+            "\"VULNERABILITY\".\"CVSSV2BASESCORE\"," +
+            "\"VULNERABILITY\".\"CVSSV3BASESCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRLIKELIHOODSCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRTECHNICALIMPACTSCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRBUSINESSIMPACTSCORE\"," +
+            "\"VULNERABILITY\".\"EPSSSCORE\"," +
+            "\"VULNERABILITY\".\"EPSSPERCENTILE\"," +
+            "\"VULNERABILITY\".\"CWES\"," +
+            "\"FINDINGATTRIBUTION\".\"ANALYZERIDENTITY\"," +
+            "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\"," +
+            "\"FINDINGATTRIBUTION\".\"ALT_ID\"," +
+            "\"FINDINGATTRIBUTION\".\"REFERENCE_URL\"," +
+            "\"ANALYSIS\".\"STATE\"," +
+            "\"ANALYSIS\".\"SUPPRESSED\" " +
+            "FROM \"COMPONENT\" " +
+            "LEFT JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
+            "LEFT JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
+            "LEFT JOIN \"FINDINGATTRIBUTION\" ON (\"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\")" +
+            "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
+            "INNER JOIN \"REPOSITORY_META_COMPONENT\" "+
+            "ON \"COMPONENT\".\"PURL\" LIKE LOWER( CONCAT( 'pkg:', \"REPOSITORY_META_COMPONENT\".\"REPOSITORY_TYPE\", '/', \"REPOSITORY_META_COMPONENT\".\"NAMESPACE\", '/', \"REPOSITORY_META_COMPONENT\".\"NAME\", '%' ) ) " +
+            "AND \"COMPONENT\".\"VERSION\" <> \"REPOSITORY_META_COMPONENT\".\"LATEST_VERSION\" " +
+            "WHERE \"COMPONENT\".\"PROJECT_ID\" = ? " +
+            "AND \"COMPONENT\".\"PARENT_COMPONENT_ID\" IS NULL ";
+
+    public static final String QUERY_OUTDATED_WITHOUT_VULNERABILITIES = QUERY_OUTDATED + " " +
+            "AND NOT EXISTS ( " +
+            "  SELECT \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\""+
+            "  FROM \"COMPONENTS_VULNERABILITIES\"" +
+            "  WHERE \"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\" " +
+            ")";
 
     private UUID project;
     private Map<String, Object> component = new LinkedHashMap<>();
@@ -111,37 +162,38 @@ public class Finding implements Serializable {
         optValue(component, "cpe", o[5]);
         optValue(component, "project", project.toString());
 
-        optValue(vulnerability, "uuid", o[6]);
-        optValue(vulnerability, "source", o[7]);
-        optValue(vulnerability, "vulnId", o[8]);
-        optValue(vulnerability, "title", o[9]);
-        optValue(vulnerability, "subtitle", o[10]);
-        //optValue(vulnerability, "description", o[11]); // CLOB - handle this in QueryManager
-        //optValue(vulnerability, "recommendation", o[12]); // CLOB - handle this in QueryManager
-        final Severity severity = VulnerabilityUtil.getSeverity(o[13], (BigDecimal) o[14], (BigDecimal) o[15], (BigDecimal) o[16], (BigDecimal) o[17], (BigDecimal) o[18]);
-        optValue(vulnerability, "cvssV2BaseScore", o[14]);
-        optValue(vulnerability, "cvssV3BaseScore", o[15]);
-        optValue(vulnerability, "owaspLikelihoodScore", o[16]);
-        optValue(vulnerability, "owaspTechnicalImpactScore", o[17]);
-        optValue(vulnerability, "owaspBusinessImpactScore", o[18]);
-        optValue(vulnerability, "severity", severity.name());
-        optValue(vulnerability, "severityRank", severity.ordinal());
-        optValue(vulnerability, "epssScore", o[19]);
-        optValue(vulnerability, "epssPercentile", o[20]);
-        final List<Cwe> cwes = getCwes(o[21]);
-        if (cwes != null && !cwes.isEmpty()) {
-            // Ensure backwards-compatibility with DT < 4.5.0. Remove this in v5!
-            optValue(vulnerability, "cweId", cwes.get(0).getCweId());
-            optValue(vulnerability, "cweName", cwes.get(0).getName());
+        if (o.length > 6) {
+            optValue(vulnerability, "uuid", o[6]);
+            optValue(vulnerability, "source", o[7]);
+            optValue(vulnerability, "vulnId", o[8]);
+            optValue(vulnerability, "title", o[9]);
+            optValue(vulnerability, "subtitle", o[10]);
+            //optValue(vulnerability, "description", o[11]); // CLOB - handle this in QueryManager
+            //optValue(vulnerability, "recommendation", o[12]); // CLOB - handle this in QueryManager
+            final Severity severity = VulnerabilityUtil.getSeverity(o[13], (BigDecimal) o[14], (BigDecimal) o[15], (BigDecimal) o[16], (BigDecimal) o[17], (BigDecimal) o[18]);
+            optValue(vulnerability, "cvssV2BaseScore", o[14]);
+            optValue(vulnerability, "cvssV3BaseScore", o[15]);
+            optValue(vulnerability, "owaspLikelihoodScore", o[16]);
+            optValue(vulnerability, "owaspTechnicalImpactScore", o[17]);
+            optValue(vulnerability, "owaspBusinessImpactScore", o[18]);
+            optValue(vulnerability, "severity", severity.name());
+            optValue(vulnerability, "severityRank", severity.ordinal());
+            optValue(vulnerability, "epssScore", o[19]);
+            optValue(vulnerability, "epssPercentile", o[20]);
+            final List<Cwe> cwes = getCwes(o[21]);
+            if (cwes != null && !cwes.isEmpty()) {
+                // Ensure backwards-compatibility with DT < 4.5.0. Remove this in v5!
+                optValue(vulnerability, "cweId", cwes.get(0).getCweId());
+                optValue(vulnerability, "cweName", cwes.get(0).getName());
+            }
+            optValue(vulnerability, "cwes", cwes);
+            optValue(attribution, "analyzerIdentity", o[22]);
+            optValue(attribution, "attributedOn", o[23]);
+            optValue(attribution, "alternateIdentifier", o[24]);
+            optValue(attribution, "referenceUrl", o[25]);
+            optValue(analysis, "state", o[26]);
+            optValue(analysis, "isSuppressed", o[27], false);
         }
-        optValue(vulnerability, "cwes", cwes);
-        optValue(attribution, "analyzerIdentity", o[22]);
-        optValue(attribution, "attributedOn", o[23]);
-        optValue(attribution, "alternateIdentifier", o[24]);
-        optValue(attribution, "referenceUrl", o[25]);
-
-        optValue(analysis, "state", o[26]);
-        optValue(analysis, "isSuppressed", o[27], false);
     }
 
     public Map getComponent() {

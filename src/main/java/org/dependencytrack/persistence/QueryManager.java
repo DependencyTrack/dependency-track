@@ -18,17 +18,17 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.common.util.BooleanUtil;
-import alpine.event.framework.Event;
-import alpine.model.ApiKey;
-import alpine.model.ConfigProperty;
-import alpine.model.Team;
-import alpine.model.UserPrincipal;
-import alpine.notification.NotificationLevel;
-import alpine.persistence.AlpineQueryManager;
-import alpine.persistence.PaginatedResult;
-import alpine.resources.AlpineRequest;
-import com.github.packageurl.PackageURL;
+import java.security.Principal;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import javax.jdo.FetchPlan;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+import javax.jdo.Transaction;
+import javax.json.JsonObject;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
@@ -76,18 +76,17 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-
-import javax.jdo.FetchPlan;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
-import javax.jdo.Transaction;
-import javax.json.JsonObject;
-import java.security.Principal;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import com.github.packageurl.PackageURL;
+import alpine.common.util.BooleanUtil;
+import alpine.event.framework.Event;
+import alpine.model.ApiKey;
+import alpine.model.ConfigProperty;
+import alpine.model.Team;
+import alpine.model.UserPrincipal;
+import alpine.notification.NotificationLevel;
+import alpine.persistence.AlpineQueryManager;
+import alpine.persistence.PaginatedResult;
+import alpine.resources.AlpineRequest;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -1026,6 +1025,22 @@ public class QueryManager extends AlpineQueryManager {
         getFindingsQueryManager().deleteAnalysisTrail(project);
     }
 
+    public List<Finding> getVulnerabilityFindings(Project project) {
+        return getFindingsQueryManager().getVulnerabilityFindings(project);
+    }
+
+    public List<Finding> getVulnerabilityFindings(Project project, boolean includeSuppressed) {
+        return getFindingsQueryManager().getVulnerabilityFindings(project, includeSuppressed);
+    }
+
+    public List<Finding> getOutdatedComponentFindings(Project project, boolean includeSuppressed) {
+        return getFindingsQueryManager().getOutdatedComponentFindings(project, includeSuppressed);
+    }
+
+    public List<Finding> getOutdatedComponentFindings(Project project, boolean includeSuppressed, boolean withoutVulnerabilitiesOnly) {
+        return getFindingsQueryManager().getOutdatedComponentFindings(project, includeSuppressed, withoutVulnerabilitiesOnly);
+    }
+
     public List<Finding> getFindings(Project project) {
         return getFindingsQueryManager().getFindings(project);
     }
@@ -1321,7 +1336,7 @@ public class QueryManager extends AlpineQueryManager {
         pm.currentTransaction().begin();
         pm.deletePersistentAll(team.getApiKeys());
         String aclDeleteQuery = """
-            DELETE FROM \"PROJECT_ACCESS_TEAMS\" WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?      
+            DELETE FROM \"PROJECT_ACCESS_TEAMS\" WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?
         """;
         final Query query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, aclDeleteQuery);
         query.executeWithArray(team.getId());

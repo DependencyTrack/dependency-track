@@ -182,7 +182,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      */
     void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
         LOGGER.debug("Updating datasource with GitHub advisories");
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager().withL2CacheDisabled()) {
             for (final GitHubSecurityAdvisory advisory : advisories) {
                 LOGGER.debug("Synchronizing GitHub advisory: " + advisory.getGhsaId());
                 final Vulnerability mappedVulnerability = mapAdvisoryToVulnerability(qm, advisory);

@@ -77,7 +77,7 @@ public final class NvdParser {
 
             cveItems.forEach((c) -> {
                 final JsonObject cveItem = (JsonObject) c;
-                try (QueryManager qm = new QueryManager()) {
+                try (QueryManager qm = new QueryManager().withL2CacheDisabled()) {
                     final Vulnerability vulnerability = new Vulnerability();
                     vulnerability.setSource(Vulnerability.Source.NVD);
 

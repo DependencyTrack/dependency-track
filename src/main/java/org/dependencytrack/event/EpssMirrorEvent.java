@@ -18,7 +18,9 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
+import alpine.event.framework.SingletonCapableEvent;
+
+import java.util.UUID;
 
 /**
  * Defines an event used to start a mirror of EPSS.
@@ -26,6 +28,13 @@ import alpine.event.framework.Event;
  * @author Steve Springett
  * @since 4.5.0
  */
-public class EpssMirrorEvent implements Event {
+public class EpssMirrorEvent extends SingletonCapableEvent {
+
+    private static final UUID CHAIN_IDENTIFIER = UUID.fromString("63aa687a-17f0-4e2d-abd3-e2016b3c4f0a");
+
+    public EpssMirrorEvent() {
+        setChainIdentifier(CHAIN_IDENTIFIER);
+        setSingleton(true);
+    }
 
 }

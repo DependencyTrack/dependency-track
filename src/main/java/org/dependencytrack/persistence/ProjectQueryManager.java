@@ -644,7 +644,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (includeACL) {
             List<Team> accessTeams = source.getAccessTeams();
-            if (CollectionUtils.isEmpty(accessTeams)) {
+            if (!CollectionUtils.isEmpty(accessTeams)) {
                 project.setAccessTeams(new ArrayList<>(accessTeams));
             }
         }

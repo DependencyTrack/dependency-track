@@ -149,8 +149,11 @@ public class Finding implements Serializable {
     /**
      * Constructs a new Finding object. The generic Object array passed as an argument is the
      * individual values for each row in a resultset. The order of these must match the order
-     * of the columns being queried in {@link #QUERY}.
-     * @param o An array of values specific to an individual row returned from {@link #QUERY}
+     * of the columns being queried in {@link #QUERY_FINDINGS}, {@link #QUERY_OUTDATED} or
+     * {@link #QUERY_OUTDATED_WITHOUT_VULNERABILITIES}.
+     *
+     * @param o An array of values specific to an individual row returned from {@link #QUERY_FINDINGS},
+     * {@link #QUERY_OUTDATED} or {@link #QUERY_OUTDATED_WITHOUT_VULNERABILITIES}
      */
     public Finding(UUID project, Object... o) {
         this.project = project;

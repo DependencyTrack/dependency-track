@@ -455,6 +455,39 @@ If a port number is specified for a URL, only the requests with that port number
 
 Dependency-Track supports proxies that require BASIC, DIGEST, and NTLM authentication.
 
+#### Initial admin user
+
+By default, Dependency Track will generate an administrative `admin` user with a default set of credentials (`admin:admin`) on first startup. The user is created with `forceChangePassword=true`.
+For containerized deployments, you can override this behaviour on first startup using the environment variables below :
+
+```shell
+DEPENDENCY_TRACK_ADMIN_USERNAME
+DEPENDENCY_TRACK_ADMIN_PASSWORD
+DEPENDENCY_TRACK_ADMIN_FULL_NAME
+DEPENDENCY_TRACK_ADMIN_EMAIL
+```
+
+#### Administrative configuration
+
+Besides the technical configuration (i.e `application.properties`) described above, Dependency Track allow administrators to configure various part of the application behaviour through the UI. Those configuration items are saved in the database in table `CONFIGPROPERTY`.
+On the first startup, this table is loaded with default values that you can find in [ConfigPropertyConstants.java](https://github.com/DependencyTrack/dependency-track/blob/master/src/main/java/org/dependencytrack/model/ConfigPropertyConstants.java).
+
+For containerized deployments, the config properties default values can also be specified as environment variables. All environment variables are based on uppercase property group joined with uppercase property name by an underscore (_). Periods (.) and hyphens (-) replaced with underscores (_). Most of the times, the enumeration name follow this convention.
+
+For example enumeration
+
+```
+VULNERABILITY_SOURCE_NVD_ENABLED("vuln-source", "nvd.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable National Vulnerability Database")
+```
+
+translate to environment variable
+
+```
+VULN_SOURCE_NVD_ENABLED
+```
+
+**Please note that the environment variables will be processed only on the first startup**. Once loaded up, the database table `CONFIGPROPERTY` is the single source of truth. 
+
 #### Logging Levels
 
 Logging levels (INFO, WARN, ERROR, DEBUG, TRACE) can be specified by passing the level 

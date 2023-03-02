@@ -137,9 +137,14 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Object unmodifiableMap = unmodifiableMapField.get(null);
         clearUnmodifiableMap(key, unmodifiableMap);
 
-        Field caseInsensitiveMapField = getAccessibleField(processEnvironment, "theCaseInsensitiveEnvironment");
-        Map<String, String> caseInsensitiveMap = (Map<String, String>) caseInsensitiveMapField.get(null);
-        caseInsensitiveMap.remove(key);
+        try {
+            Field caseInsensitiveMapField = getAccessibleField(processEnvironment, "theCaseInsensitiveEnvironment");
+            Map<String, String> caseInsensitiveMap = (Map<String, String>) caseInsensitiveMapField.get(null);
+            caseInsensitiveMap.remove(key);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+            // Nothing to be done, the attribute presence depend on the JVM
+        }
 
         Field mapField = getAccessibleField(processEnvironment, "theEnvironment");
         Map<String, String> map = (Map<String, String>) mapField.get(null);
@@ -154,9 +159,14 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Object unmodifiableMap = unmodifiableMapField.get(null);
         injectIntoUnmodifiableMap(key, value, unmodifiableMap);
 
-        Field caseInsensitiveMapField = getAccessibleField(processEnvironment, "theCaseInsensitiveEnvironment");
-        Map<String, String> caseInsensitiveMap = (Map<String, String>) caseInsensitiveMapField.get(null);
-        caseInsensitiveMap.put(key, value);
+        try {
+            Field caseInsensitiveMapField = getAccessibleField(processEnvironment, "theCaseInsensitiveEnvironment");
+            Map<String, String> caseInsensitiveMap = (Map<String, String>) caseInsensitiveMapField.get(null);
+            caseInsensitiveMap.put(key, value);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+            // Nothing to be done, the attribute presence depend on the JVM
+        }
 
         Field mapField = getAccessibleField(processEnvironment, "theEnvironment");
         Map<String, String> map = (Map<String, String>) mapField.get(null);

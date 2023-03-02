@@ -79,24 +79,29 @@ public final class NvdParser {
 
         LOGGER.info("Parsing " + file.getName());
 
-        try (InputStream in = Files.newInputStream(file.toPath());
-             final JsonParser parser = objectMapper.createParser(in)) {
+        try (final InputStream in = Files.newInputStream(file.toPath());
+             final JsonParser jsonParser = objectMapper.createParser(in)) {
+            jsonParser.nextToken(); // Position cursor at first token
 
-            JsonToken current = parser.nextToken();
-            while (parser.nextToken() != JsonToken.END_OBJECT) {
-                final String fieldName = parser.getCurrentName();
-                current = parser.nextToken();
+            // Due to JSON feeds being rather large, do not parse them completely,
+            // but "stream" through them. Parsing individual CVE items
+            // one-by-one allows for garbage collection to kick in sooner,
+            // keeping the overall memory footprint low.
+            JsonToken currentToken;
+            while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                final String fieldName = jsonParser.getCurrentName();
+                currentToken = jsonParser.nextToken();
                 if ("CVE_Items".equals(fieldName)) {
-                    if (current == JsonToken.START_ARRAY) {
-                        while (parser.nextToken() != JsonToken.END_ARRAY) {
-                            final ObjectNode cveItem = parser.readValueAsTree();
+                    if (currentToken == JsonToken.START_ARRAY) {
+                        while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
+                            final ObjectNode cveItem = jsonParser.readValueAsTree();
                             parseCveItem(cveItem);
                         }
                     } else {
-                        parser.skipChildren();
+                        jsonParser.skipChildren();
                     }
                 } else {
-                    parser.skipChildren();
+                    jsonParser.skipChildren();
                 }
             }
         } catch (Exception e) {

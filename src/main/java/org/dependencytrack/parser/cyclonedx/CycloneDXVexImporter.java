@@ -48,11 +48,7 @@ public class CycloneDXVexImporter {
             if (vulns == null) continue;
             for (final Vulnerability vuln: vulns) {
                 // NOTE: These vulnerability objects are detached
-                if ((vuln.getSource().equals(Vulnerability.Source.NVD.name())
-                        || vuln.getSource().equals(Vulnerability.Source.OSSINDEX.name())
-                        || vuln.getSource().equals(Vulnerability.Source.GITHUB.name())
-                        || vuln.getSource().equals(Vulnerability.Source.INTERNAL.name()))
-                        && vuln.getVulnId().equals(cdxVuln.getId())) {
+                if (vuln.getVulnId().equals(cdxVuln.getId())) {
 
                     if (cdxVuln.getAffects() == null) continue;
                     for (org.cyclonedx.model.vulnerability.Vulnerability.Affect affect: cdxVuln.getAffects()) {

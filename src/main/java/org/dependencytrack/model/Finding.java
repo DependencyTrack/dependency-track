@@ -46,11 +46,13 @@ public class Finding implements Serializable {
     private static final long serialVersionUID = 5313521394432526986L;
 
     /*
-    * This statement works on Microsoft SQL Server, MySQL, and PostgreSQL. Due to the standardization
+    * These statements works on Microsoft SQL Server, MySQL, and PostgreSQL. Due to the standardization
     * of upper-case table and column names in Dependency-Track, every identifier needs to be wrapped
     * in double quotes to satisfy PostgreSQL case-sensitive requirements. This also places a requirement
     * on ANSI_QUOTES mode being enabled in MySQL. SQL Server works regardless and is just happy to be invited :-)
     */
+
+    // QUERY_FINDINGS: only components with vulnerabilities
     public static final String QUERY_FINDINGS = "SELECT " +
             "\"COMPONENT\".\"UUID\"," +
             "\"COMPONENT\".\"NAME\"," +
@@ -79,20 +81,26 @@ public class Finding implements Serializable {
             "\"FINDINGATTRIBUTION\".\"ALT_ID\"," +
             "\"FINDINGATTRIBUTION\".\"REFERENCE_URL\"," +
             "\"ANALYSIS\".\"STATE\"," +
-            "\"ANALYSIS\".\"SUPPRESSED\" " +
+            "\"ANALYSIS\".\"SUPPRESSED\", " +
+            "\"REPOSITORY_META_COMPONENT\".\"LATEST_VERSION\", " +
+            "\"REPOSITORY_META_COMPONENT\".\"PUBLISHED\", " +
+            "\"REPOSITORY_META_COMPONENT\".\"LAST_CHECK\" " +
             "FROM \"COMPONENT\" " +
             "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
             "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
             "INNER JOIN \"FINDINGATTRIBUTION\" ON (\"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\")" +
             "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
+            "LEFT JOIN \"REPOSITORY_META_COMPONENT\" "+
+            "ON ( " +
+            " ( \"REPOSITORY_META_COMPONENT\".\"NAME\" = \"COMPONENT\".\"NAME\" AND \"REPOSITORY_META_COMPONENT\".\"NAMESPACE\" = \"COMPONENT\".\"GROUP\" AND \"COMPONENT\".\"PURL\" LIKE LOWER( CONCAT( 'pkg:', \"REPOSITORY_META_COMPONENT\".\"REPOSITORY_TYPE\", '/', '%' ) ) ) " +
+            " OR " +
+            " ( \"REPOSITORY_META_COMPONENT\".\"NAME\" = \"COMPONENT\".\"NAME\" AND \"REPOSITORY_META_COMPONENT\".\"NAMESPACE\" IS NULL AND \"COMPONENT\".\"GROUP\" IS NULL AND \"COMPONENT\".\"PURL\" LIKE LOWER( CONCAT( 'pkg:', \"REPOSITORY_META_COMPONENT\".\"REPOSITORY_TYPE\", '/', '%' ) ) ) " +
+            ") " +
+            "AND \"COMPONENT\".\"VERSION\" <> \"REPOSITORY_META_COMPONENT\".\"LATEST_VERSION\" " +
             "WHERE \"COMPONENT\".\"PROJECT_ID\" = ? ";
 
-    /*
-     * This statement works on Microsoft SQL Server, MySQL, and PostgreSQL. Due to the standardization
-     * of upper-case table and column names in Dependency-Track, every identifier needs to be wrapped
-     * in double quotes to satisfy PostgreSQL case-sensitive requirements. This also places a requirement
-     * on ANSI_QUOTES mode being enabled in MySQL. SQL Server works regardless and is just happy to be invited :-)
-     */
+    // Only components with newer versions available,
+    // might or might not have known vulnerabilities
     public static final String QUERY_OUTDATED = "SELECT " +
             "\"COMPONENT\".\"UUID\"," +
             "\"COMPONENT\".\"NAME\"," +
@@ -121,18 +129,33 @@ public class Finding implements Serializable {
             "\"FINDINGATTRIBUTION\".\"ALT_ID\"," +
             "\"FINDINGATTRIBUTION\".\"REFERENCE_URL\"," +
             "\"ANALYSIS\".\"STATE\"," +
-            "\"ANALYSIS\".\"SUPPRESSED\" " +
+            "\"ANALYSIS\".\"SUPPRESSED\", " +
+            "\"REPOSITORY_META_COMPONENT\".\"LATEST_VERSION\", " +
+            "\"REPOSITORY_META_COMPONENT\".\"PUBLISHED\", " +
+            "\"REPOSITORY_META_COMPONENT\".\"LAST_CHECK\" " +
             "FROM \"COMPONENT\" " +
-            "LEFT JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
-            "LEFT JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
-            "LEFT JOIN \"FINDINGATTRIBUTION\" ON (\"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\")" +
-            "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
+            "INNER JOIN \"PROJECT\" ON \"COMPONENT\".\"PROJECT_ID\" = \"PROJECT\".\"ID\" " +
+            "AND \"PROJECT\".\"DIRECT_DEPENDENCIES\" LIKE CONCAT( '%\"', \"COMPONENT\".\"UUID\", '\"%' ) " +
+            // \\: results in NucleusUserException: SQL query has parameter "2" yet not found
+            // "AND \"PROJECT\".\"DIRECT_DEPENDENCIES\" LIKE CONCAT( '%\"uuid\"\\:\"', \"COMPONENT\".\"UUID\", '\"%' ) " +
+            "LEFT JOIN \"COMPONENTS_VULNERABILITIES\" ON \"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\" " +
+            "LEFT JOIN \"VULNERABILITY\" ON \"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\" " +
+            "LEFT JOIN \"FINDINGATTRIBUTION\" ON \"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\" " +
+            "AND \"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\" " +
+            "LEFT JOIN \"ANALYSIS\" ON \"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\" " +
+            "AND \"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\" " +
+            "AND \"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\" " +
             "INNER JOIN \"REPOSITORY_META_COMPONENT\" "+
-            "ON \"COMPONENT\".\"PURL\" LIKE LOWER( CONCAT( 'pkg:', \"REPOSITORY_META_COMPONENT\".\"REPOSITORY_TYPE\", '/', \"REPOSITORY_META_COMPONENT\".\"NAMESPACE\", '/', \"REPOSITORY_META_COMPONENT\".\"NAME\", '%' ) ) " +
+            "ON ( " +
+            " ( \"REPOSITORY_META_COMPONENT\".\"NAME\" = \"COMPONENT\".\"NAME\" AND \"REPOSITORY_META_COMPONENT\".\"NAMESPACE\" = \"COMPONENT\".\"GROUP\" AND \"COMPONENT\".\"PURL\" LIKE LOWER( CONCAT( 'pkg:', \"REPOSITORY_META_COMPONENT\".\"REPOSITORY_TYPE\", '/', '%' ) ) ) " +
+            " OR " +
+            " ( \"REPOSITORY_META_COMPONENT\".\"NAME\" = \"COMPONENT\".\"NAME\" AND \"REPOSITORY_META_COMPONENT\".\"NAMESPACE\" IS NULL AND \"COMPONENT\".\"GROUP\" IS NULL AND \"COMPONENT\".\"PURL\" LIKE LOWER( CONCAT( 'pkg:', \"REPOSITORY_META_COMPONENT\".\"REPOSITORY_TYPE\", '/', '%' ) ) ) " +
+            ") " +
             "AND \"COMPONENT\".\"VERSION\" <> \"REPOSITORY_META_COMPONENT\".\"LATEST_VERSION\" " +
-            "WHERE \"COMPONENT\".\"PROJECT_ID\" = ? " +
-            "AND \"COMPONENT\".\"PARENT_COMPONENT_ID\" IS NULL ";
+            "WHERE \"COMPONENT\".\"PROJECT_ID\" = ? ";
 
+    // Only components with newer versions available
+    // and no known vulnerabilities
     public static final String QUERY_OUTDATED_WITHOUT_VULNERABILITIES = QUERY_OUTDATED + " " +
             "AND NOT EXISTS ( " +
             "  SELECT \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\""+
@@ -196,6 +219,9 @@ public class Finding implements Serializable {
             optValue(attribution, "referenceUrl", o[25]);
             optValue(analysis, "state", o[26]);
             optValue(analysis, "isSuppressed", o[27], false);
+            optValue(component, "latestVersion", o[28]);
+            optValue(component, "published", o[29]);
+            optValue(component, "lastCheck", o[30]);
         }
     }
 
@@ -253,7 +279,10 @@ public class Finding implements Serializable {
     }
 
     public String getMatrix() {
-        return project.toString() + ":" + component.get("uuid") + ":" + vulnerability.get("uuid");
+        if (vulnerability.get("uuid") != null) {
+            return project.toString() + ":" + component.get("uuid") + ":" + vulnerability.get("uuid");
+        }
+        return project.toString() + ":" + component.get("uuid") + ":";
     }
 
     public void addVulnerabilityAliases(List<VulnerabilityAlias> aliases) {

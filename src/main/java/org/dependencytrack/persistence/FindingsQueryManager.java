@@ -33,12 +33,9 @@ import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.RepositoryMetaComponent;
-import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.util.ComponentVersion;
-import com.github.packageurl.PackageURL;
 import alpine.resources.AlpineRequest;
 
 public class FindingsQueryManager extends QueryManager implements IQueryManager {
@@ -291,8 +288,8 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
     @Override
     public List<Finding> getFindings(Project project, boolean includeSuppressed) {
         return Stream.concat(
-            getOutdatedComponentFindings(project, includeSuppressed, true).stream().map(Finding.class::cast),
-            getVulnerabilityFindings(project, includeSuppressed).stream().map(Finding.class::cast)
+            getVulnerabilityFindings(project, includeSuppressed).stream().map(Finding.class::cast),
+            getOutdatedComponentFindings(project, includeSuppressed, true).stream().map(Finding.class::cast)
         ).toList();
     }
 
@@ -319,16 +316,6 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
                 // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)
                 vulnerabilityFinding.getVulnerability().put("description", vulnerability.getDescription());
                 vulnerabilityFinding.getVulnerability().put("recommendation", vulnerability.getRecommendation());
-                final PackageURL purl = component.getPurl();
-                if (purl != null) {
-                    final RepositoryType type = RepositoryType.resolve(purl);
-                    if (RepositoryType.UNSUPPORTED != type) {
-                        final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
-                        if (repoMetaComponent != null) {
-                            vulnerabilityFinding.getComponent().put("latestVersion", repoMetaComponent.getLatestVersion());
-                        }
-                    }
-                }
                 vulnerabilityfindings.add(vulnerabilityFinding);
             }
         }
@@ -365,25 +352,10 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
                     outdatedComponentFinding.getVulnerability().clear();
                 }
             }
-            final PackageURL purl = component.getPurl();
-            if (purl != null) {
-                final RepositoryType type = RepositoryType.resolve(purl);
-                String version = (String)outdatedComponentFinding.getComponent().get("version");
-                if (RepositoryType.UNSUPPORTED != type) {
-                    final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
-                    if (repoMetaComponent != null) {
-                        String latestVersion = repoMetaComponent.getLatestVersion();
-                        if ((latestVersion != null) && !version.equals(ComponentVersion.highestVersion(version, latestVersion))) {
-                            outdatedComponentFinding.getComponent().put("latestVersion", latestVersion);
-                            outdatedComponentFinding.getComponent().put("lastCheck", repoMetaComponent.getLastCheck());
-                            final var published = repoMetaComponent.getPublished();
-                            if (published != null) {
-                                outdatedComponentFinding.getComponent().put("published", published);
-                            }
-                            outdatedComponentFindings.add(outdatedComponentFinding);
-                        }
-                    }
-                }
+            final var version = component.getVersion();
+            final var latestVersion = (String)outdatedComponentFinding.getComponent().get("latestVersion");
+            if (ComponentVersion.compareVersions(version, latestVersion) < 0) {
+                outdatedComponentFindings.add(outdatedComponentFinding);
             }
         }
 

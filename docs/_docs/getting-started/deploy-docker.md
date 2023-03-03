@@ -154,8 +154,8 @@ services:
     # - ALPINE_METRICS_AUTH_PASSWORD=
     #
     # Optional environmental variables to enable default notification publisher templates override and set the base directory to search for templates
-    # - DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false
-    # - DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=/data
+    # - DT_DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false
+    # - DT_DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=/data
     #
     # Optional configuration for the Snyk analyzer
     # - SNYK_THREAD_POOL_SIZE=10

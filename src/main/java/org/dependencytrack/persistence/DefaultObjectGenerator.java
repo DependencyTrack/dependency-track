@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import org.apache.commons.lang3.SystemUtils;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -62,6 +63,8 @@ public class DefaultObjectGenerator implements ServletContextListener {
     static final String DEFAULT_ADMIN_EMAIL = "admin@localhost";
 
     static final String ADMIN_EMAIL_ENV_VARIABLE = "DEPENDENCY_TRACK_ADMIN_EMAIL";
+
+    static final String ENV_VARIABLE_NAME_PREFIX = "DT";
 
     /**
      * {@inheritDoc}
@@ -162,10 +165,10 @@ public class DefaultObjectGenerator implements ServletContextListener {
                 return;
             }
             LOGGER.info("Adding default users and teams to datastore");
-            String adminUsername = getEnvVariable(ADMIN_USERNAME_ENV_VARIABLE, DEFAULT_ADMIN_USERNAME);
-            String adminPassword = getEnvVariable(ADMIN_PASSWORD_ENV_VARIABLE, DEFAULT_ADMIN_PASSWORD);
-            String adminFullName = getEnvVariable(ADMIN_FULL_NAME_ENV_VARIABLE, DEFAULT_ADMIN_FULL_NAME);
-            String adminEmail = getEnvVariable(ADMIN_EMAIL_ENV_VARIABLE, DEFAULT_ADMIN_EMAIL);
+            String adminUsername = SystemUtils.getEnvironmentVariable(ADMIN_USERNAME_ENV_VARIABLE, DEFAULT_ADMIN_USERNAME);
+            String adminPassword = SystemUtils.getEnvironmentVariable(ADMIN_PASSWORD_ENV_VARIABLE, DEFAULT_ADMIN_PASSWORD);
+            String adminFullName = SystemUtils.getEnvironmentVariable(ADMIN_FULL_NAME_ENV_VARIABLE, DEFAULT_ADMIN_FULL_NAME);
+            String adminEmail = SystemUtils.getEnvironmentVariable(ADMIN_EMAIL_ENV_VARIABLE, DEFAULT_ADMIN_EMAIL);
 
             LOGGER.debug("Creating user: "+adminUsername);
             ManagedUser admin = qm.createManagedUser(adminUsername, adminFullName, adminEmail,
@@ -253,7 +256,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
                 LOGGER.debug("Creating config property: " + cpc.getGroupName() + " / " + cpc.getPropertyName());
 
                 if (qm.getConfigProperty(cpc.getGroupName(), cpc.getPropertyName()) == null) {
-                    qm.createConfigProperty(cpc.getGroupName(), cpc.getPropertyName(), getEnvVariable(generateEnvVariableName(cpc), cpc.getDefaultPropertyValue()), cpc.getPropertyType(), cpc.getDescription());
+                    qm.createConfigProperty(cpc.getGroupName(), cpc.getPropertyName(), SystemUtils.getEnvironmentVariable(generateEnvVariableName(cpc), cpc.getDefaultPropertyValue()), cpc.getPropertyType(), cpc.getDescription());
                 }
             }
         }
@@ -273,15 +276,11 @@ public class DefaultObjectGenerator implements ServletContextListener {
 
     String generateEnvVariableName(ConfigPropertyConstants configProperty) {
         StringBuilder sb = new StringBuilder();
+        sb.append(ENV_VARIABLE_NAME_PREFIX).append("_");
         sb.append(configProperty.getGroupName().toUpperCase().replaceAll("[\\-\\.]", "_"));
         sb.append("_");
         sb.append(configProperty.getPropertyName().toUpperCase().replaceAll("[\\-\\.]", "_"));
         LOGGER.debug("Environment variable name for property group "+configProperty.getGroupName()+" and property name "+configProperty.getPropertyName()+" is "+sb);
         return sb.toString();
-    }
-
-    String getEnvVariable(String name, String defaultValue) {
-        String value = System.getenv(name);
-        return value != null ? value : defaultValue;
     }
 }

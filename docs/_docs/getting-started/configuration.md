@@ -472,7 +472,7 @@ DEPENDENCY_TRACK_ADMIN_EMAIL
 Besides the technical configuration (i.e `application.properties`) described above, Dependency Track allow administrators to configure various part of the application behaviour through the UI. Those configuration items are saved in the database in table `CONFIGPROPERTY`.
 On the first startup, this table is loaded with default values that you can find in [ConfigPropertyConstants.java](https://github.com/DependencyTrack/dependency-track/blob/master/src/main/java/org/dependencytrack/model/ConfigPropertyConstants.java).
 
-For containerized deployments, the config properties default values can also be specified as environment variables. All environment variables are based on uppercase property group joined with uppercase property name by an underscore (_). Periods (.) and hyphens (-) replaced with underscores (_). Most of the times, the enumeration name follow this convention.
+For containerized deployments, the config properties default values can also be specified as environment variables. All environment variables are based on `DT` prefix joined with uppercase property group and uppercase property name by an underscore (_). Periods (.) and hyphens (-) replaced with underscores (_). Most of the time, the enumeration name follow this convention.
 
 For example enumeration
 
@@ -483,7 +483,7 @@ VULNERABILITY_SOURCE_NVD_ENABLED("vuln-source", "nvd.enabled", "true", PropertyT
 translate to environment variable
 
 ```
-VULN_SOURCE_NVD_ENABLED
+DT_VULN_SOURCE_NVD_ENABLED
 ```
 
 **Please note that the environment variables will be processed only on the first startup**. Once loaded up, the database table `CONFIGPROPERTY` is the single source of truth. 

@@ -189,6 +189,7 @@ public class Finding implements Serializable {
         optValue(component, "project", project.toString());
 
         if (o.length > 6) {
+            // Vulnerability, attribution and analysis fields:
             optValue(vulnerability, "uuid", o[6]);
             optValue(vulnerability, "source", o[7]);
             optValue(vulnerability, "vulnId", o[8]);
@@ -219,9 +220,12 @@ public class Finding implements Serializable {
             optValue(attribution, "referenceUrl", o[25]);
             optValue(analysis, "state", o[26]);
             optValue(analysis, "isSuppressed", o[27], false);
-            optValue(component, "latestVersion", o[28]);
-            optValue(component, "published", o[29]);
-            optValue(component, "lastCheck", o[30]);
+            if (o.length > 28) {
+                // RepositoryMetaComponent fields:
+                optValue(component, "latestVersion", o[28]);
+                optValue(component, "published", o[29]);
+                optValue(component, "lastCheck", o[30]);
+            }
         }
     }
 

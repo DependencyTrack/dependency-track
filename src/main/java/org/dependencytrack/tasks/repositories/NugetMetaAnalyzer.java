@@ -30,6 +30,7 @@ import org.apache.http.util.EntityUtils;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import com.github.packageurl.PackageURL;
@@ -109,7 +110,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                     final JSONObject jsonObject = new JSONObject(responseString);
                     final JSONArray versionsArray = jsonObject.getJSONArray("versions");
                     final List<String> versions = versionsArray.toList().stream().map(Object::toString).toList();
-                    final String highestVersion = AbstractMetaAnalyzer.findHighestVersion(versions);
+                    final String highestVersion = ComponentVersion.findHighestVersion(versions);
                     meta.setLatestVersion(highestVersion);
                 }
                 return true;

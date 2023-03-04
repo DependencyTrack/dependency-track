@@ -227,6 +227,12 @@
             <artifactId>lucene-sandbox</artifactId>
             <version>${lib.lucene.version}</version>
         </dependency>
+        <!-- Semver4j-->
+        <dependency>
+            <groupId>com.vdurmont</groupId>
+            <artifactId>semver4j</artifactId>
+            <version>3.1.0</version>
+        </dependency>
         <!-- Pebble templating engine -->
         <dependency>
             <groupId>io.pebbletemplates</groupId>

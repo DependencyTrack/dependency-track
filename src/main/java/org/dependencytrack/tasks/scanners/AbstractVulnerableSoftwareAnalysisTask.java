@@ -27,7 +27,6 @@ import org.dependencytrack.util.ComponentVersion;
 import org.dependencytrack.util.NotificationUtil;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.values.LogicalValue;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -72,19 +71,25 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * versionStartIncluding.
      *
      * @param vs a reference to the vulnerable software to compare
-     * @param targetVersion the version to compare
+     * @param targetVersion the CPE version to comparez, might contain wildcards
      * @return <code>true</code> if the target version is matched; otherwise
      * <code>false</code>
      *
      * Ported from Dependency-Check v5.2.1
      */
     private static boolean compareVersions(VulnerableSoftware vs, String targetVersion) {
+        // For VulnerableSoftware (could actually be hardware) without a version number.
+        // e.g. cpe:2.3:o:intel:2000e_firmware:-:*:*:*:*:*:*:*
+        if (LogicalValue.NA.getAbbreviation().equals(vs.getVersion())) {
+            return true;
+        }
         //if any of the four conditions will be evaluated - then true;
         boolean result = (vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty())
                 || (vs.getVersionStartExcluding() != null && !vs.getVersionStartExcluding().isEmpty())
                 || (vs.getVersionEndIncluding() != null && !vs.getVersionEndIncluding().isEmpty())
                 || (vs.getVersionStartIncluding() != null && !vs.getVersionStartIncluding().isEmpty());
 
+        // Check for CPE wilcards first, before comparing versions
         // Modified from original by Steve Springett
         // Added null check: vs.getVersion() != null as purl sources that use version ranges may not have version populated.
         if (!result && vs.getVersion() != null && compareAttributes(vs.getVersion(), targetVersion)) {
@@ -92,9 +97,6 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         }
 
         final ComponentVersion target = new ComponentVersion(targetVersion);
-        if (target.getVersionParts().isEmpty()) {
-            return false;
-        }
         if (result && vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty()) {
             final ComponentVersion endExcluding = new ComponentVersion(vs.getVersionEndExcluding());
             result = endExcluding.compareTo(target) > 0;

@@ -25,17 +25,15 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.json.JSONObject;
-
 import com.github.packageurl.PackageURL;
-
 import alpine.common.logging.Logger;
 
 /**
@@ -81,7 +79,7 @@ public class PypiMetaAnalyzer extends AbstractMetaAnalyzer {
                         final String stringResponse = EntityUtils.toString(response.getEntity());
                         final JSONObject jsonObject = new JSONObject(stringResponse);
                         final JSONObject releases = jsonObject.getJSONObject("releases");
-                        analyzeReleases(meta, releases);            
+                        analyzeReleases(meta, releases);
                     }
                 } else {
                     handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
@@ -97,7 +95,7 @@ public class PypiMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private void analyzeReleases(final MetaModel meta, final JSONObject releases) {
         List<String> versions = new ArrayList<>(releases.keySet());
-        final String highestVersion = AbstractMetaAnalyzer.findHighestVersion(versions);
+        final String highestVersion = ComponentVersion.findHighestVersion(versions);
         meta.setLatestVersion(highestVersion);
         if (highestVersion != null) {
             final JSONObject release = releases.getJSONArray(highestVersion).getJSONObject(0);

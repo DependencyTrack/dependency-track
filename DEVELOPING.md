@@ -86,6 +86,74 @@ mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 
 The above command is also suitable for debugging. For IntelliJ, simply *Debug* the [Jetty](./.run/Jetty.run.xml) run configuration.
 
+### Inspecting the database
+
+Unless configured otherwise, Dependency-Track will use an [H2](https://www.h2database.com/html/main.html) database in 
+`embedded` mode. The database file is located at `~/.dependency-track/db.mv.db`.
+
+You can open and inspect the database file, for example with tools like [DBeaver](https://dbeaver.io/) or 
+[IntelliJ Ultimate's integrated one](https://www.jetbrains.com/help/idea/database-tool-window.html),
+using the following connection details:
+
+* Username: `sa`
+* Password: none
+* URL: `jdbc:h2:~/.dependency-track/db`
+
+> **Warning**  
+> Make sure that your database tool uses version **2** of the H2 database driver.
+> Connections using version 1 of the driver will fail!
+
+A limitation of the H2 database in `embedded` mode is that *only a single process at a time can access it*.
+If you want to inspect the database while Dependency-Track is running, you have two options:
+
+#### Use H2 in `server` mode
+
+Dependency-Track can be configured to start an H2 server, that other processes can then connect to.
+
+```shell
+# Enable H2 server
+export ALPINE_DATABASE_MODE=server
+
+# Launch Dependency-Track
+mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
+```
+
+Username, password, and location of the database file on disk remain the same.
+
+When connecting from your database tool of choice, use the following URL:
+
+```shell
+jdbc:h2:tcp://localhost:9092/~/.dependency-track/db
+```
+
+> **Note**  
+> The port of the H2 server defaults to `9092`, and can be configured with `ALPINE_DATABASE_PORT`.
+
+Here's how you would connect to the database using DBeaver:
+
+![Connecting to the H2 server with DBeaver](.github/images/dev-h2-server-connection.png)
+
+#### Use an external database
+
+Simply set up any of the [supported external databases](https://docs.dependencytrack.org/getting-started/database-support/).
+
+```shell
+# Launch a Postgres container
+docker run -d --name postgres -p "127.0.0.1:5432:5432" \
+  -e "POSTGRES_DB=dtrack" -e "POSTGRES_USER=dtrack" -e "POSTGRES_PASSWORD=dtrack" \
+  postgres:15-alpine
+
+# Configure the database connection for Dependency-Track
+export ALPINE_DATABASE_MODE=external
+export ALPINE_DATABASE_URL=jdbc:postgresql://localhost:5432/dtrack
+export ALPINE_DATABASE_DRIVER=org.postgresql.Driver
+export ALPINE_DATABASE_USERNAME=dtrack
+export ALPINE_DATABASE_PASSWORD=dtrack
+
+# Launch Dependency-Track
+mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
+```
+
 ### Skipping NVD mirroring
 
 For local debugging and testing, it is sometimes desirable to skip the NVD mirroring process

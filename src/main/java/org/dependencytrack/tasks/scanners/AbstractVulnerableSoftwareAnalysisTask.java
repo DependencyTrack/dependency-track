@@ -18,19 +18,18 @@
  */
 package org.dependencytrack.tasks.scanners;
 
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.ComponentVersion;
 import org.dependencytrack.util.NotificationUtil;
 import us.springett.parsers.cpe.util.Convert;
 import us.springett.parsers.cpe.values.LogicalValue;
-
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Base analysis task for using the internal VulnerableSoftware model as the source of truth for
@@ -42,20 +41,20 @@ import java.util.regex.Pattern;
 public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseComponentAnalyzerTask {
 
     /**
-     * Analyzes the targetVersion against a list of VulnerableSoftware objects which may contain
+     * Analyzes the cpeVersion against a list of VulnerableSoftware objects which may contain
      * specific versions or version ranges. For every match, every vulnerability associated with
      * the VulnerableSoftware object will be applied to the specified component.
      *
      * @param qm the QueryManager to use
      * @param vsList a list of VulnerableSoftware objects
-     * @param targetVersion the version of the component
+     * @param cpeVersion the version of the component
      * @param component the component being analyzed
      */
     protected void analyzeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
-                                       final String targetVersion, final String targetUpdate, final Component component,
+                                       final String cpeVersion, final String targetUpdate, final Component component,
                                        final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         for (final VulnerableSoftware vs: vsList) {
-            if (compareVersions(vs, targetVersion) && compareUpdate(vs, targetUpdate)) {
+            if (compareVersions(vs, cpeVersion) && compareUpdate(vs, targetUpdate)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
@@ -72,13 +71,13 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * versionStartIncluding.
      *
      * @param vs a reference to the vulnerable software to compare
-     * @param targetVersion the version to compare
+     * @param cpeVersion the CPE version to comparez, might contain wildcards
      * @return <code>true</code> if the target version is matched; otherwise
      * <code>false</code>
      *
      * Ported from Dependency-Check v5.2.1
      */
-    private static boolean compareVersions(VulnerableSoftware vs, String targetVersion) {
+    private static boolean compareVersions(VulnerableSoftware vs, String cpeVersion) {
         // For VulnerableSoftware (could actually be hardware) without a version number.
         // e.g. cpe:2.3:o:intel:2000e_firmware:-:*:*:*:*:*:*:*
         if (LogicalValue.NA.getAbbreviation().equals(vs.getVersion())) {
@@ -90,16 +89,14 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
                 || (vs.getVersionEndIncluding() != null && !vs.getVersionEndIncluding().isEmpty())
                 || (vs.getVersionStartIncluding() != null && !vs.getVersionStartIncluding().isEmpty());
 
+        // Check for CPE wilcards first, before comparing versions
         // Modified from original by Steve Springett
         // Added null check: vs.getVersion() != null as purl sources that use version ranges may not have version populated.
-        if (!result && vs.getVersion() != null && compareAttributes(vs.getVersion(), targetVersion)) {
+        if (!result && vs.getVersion() != null && compareAttributes(vs.getVersion(), cpeVersion)) {
             return true;
         }
 
-        final ComponentVersion target = new ComponentVersion(targetVersion);
-        if (target.getVersionParts().isEmpty()) {
-            return false;
-        }
+        final ComponentVersion target = new ComponentVersion(cpeVersion);
         if (result && vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty()) {
             final ComponentVersion endExcluding = new ComponentVersion(vs.getVersionEndExcluding());
             result = endExcluding.compareTo(target) > 0;

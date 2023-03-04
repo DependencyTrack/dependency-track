@@ -21,16 +21,14 @@ package org.dependencytrack.tasks.repositories;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.json.JSONObject;
-
 import com.github.packageurl.PackageURL;
-
 import alpine.common.logging.Logger;
 
 /**
@@ -98,7 +96,7 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
     private void analyzeResponse(final MetaModel meta, JSONObject response) {
         final JSONObject versionsObject = response.getJSONObject("versions");
         final List<String> versions = new ArrayList<>(versionsObject.keySet());
-        final String highestVersion = AbstractMetaAnalyzer.findHighestVersion(versions); 
+        final String highestVersion = ComponentVersion.findHighestVersion(versions);
         meta.setLatestVersion(highestVersion);
     }
 

@@ -26,16 +26,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.json.JSONObject;
-
 import com.github.packageurl.PackageURL;
-
 import alpine.common.logging.Logger;
 
 /**
@@ -118,7 +116,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                     versions.put(version, published);
                 }
             });
-            final String highestVersion = AbstractMetaAnalyzer.findHighestVersion(new ArrayList<>(versions.keySet()));
+            final String highestVersion = ComponentVersion.findHighestVersion(new ArrayList<>(versions.keySet()));
             meta.setLatestVersion(highestVersion);
 
             final String published = versions.get(highestVersion);

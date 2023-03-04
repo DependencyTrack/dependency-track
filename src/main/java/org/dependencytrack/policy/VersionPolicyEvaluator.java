@@ -18,14 +18,13 @@
  */
 package org.dependencytrack.policy;
 
-import alpine.common.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.util.ComponentVersion;
-
-import java.util.ArrayList;
-import java.util.List;
+import alpine.common.logging.Logger;
 
 /**
  * Evaluates a components version against a policy.
@@ -51,10 +50,6 @@ public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
 
             final var conditionVersion = new ComponentVersion(condition.getValue());
-            if (conditionVersion.getVersionParts().isEmpty()) {
-                LOGGER.warn("Unable to parse version (" + condition.getValue() + " provided by condition");
-                continue;
-            }
 
             if (matches(componentVersion, conditionVersion, condition.getOperator())) {
                 violations.add(new PolicyConditionViolation(condition, component));

@@ -20,9 +20,9 @@ package org.dependencytrack.tasks.repositories;
 
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.junit.Assert;
 import org.junit.Test;
-
 import com.github.packageurl.PackageURL;
 
 public class NpmMetaAnalyzerTest {
@@ -37,7 +37,7 @@ public class NpmMetaAnalyzerTest {
         Assert.assertEquals(RepositoryType.NPM, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
         Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("2.7.0",metaModel.getLatestVersion()));
+        Assert.assertTrue(ComponentVersion.compareVersions("2.7.0",metaModel.getLatestVersion()) < 0);
         Assert.assertNull(metaModel.getPublishedTimestamp()); // NPM does not register publication dates
     }
 }

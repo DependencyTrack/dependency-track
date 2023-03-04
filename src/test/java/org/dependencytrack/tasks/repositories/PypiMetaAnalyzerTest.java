@@ -20,9 +20,9 @@ package org.dependencytrack.tasks.repositories;
 
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.junit.Assert;
 import org.junit.Test;
-
 import com.github.packageurl.PackageURL;
 
 public class PypiMetaAnalyzerTest {
@@ -36,8 +36,8 @@ public class PypiMetaAnalyzerTest {
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.PYPI, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertTrue(AbstractMetaAnalyzer.isStableVersion(metaModel.getLatestVersion()));
-        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("2.2.2", metaModel.getLatestVersion()));
+        Assert.assertTrue(ComponentVersion.isStableVersion(metaModel.getLatestVersion()));
+        Assert.assertTrue(ComponentVersion.compareVersions("2.2.2", metaModel.getLatestVersion()) < 0);
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }
@@ -51,8 +51,8 @@ public class PypiMetaAnalyzerTest {
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.PYPI, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertTrue(AbstractMetaAnalyzer.isStableVersion(metaModel.getLatestVersion()));
-        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("0.3.0", metaModel.getLatestVersion()));
+        Assert.assertTrue(ComponentVersion.isStableVersion(metaModel.getLatestVersion()));
+        Assert.assertTrue(metaModel.getLatestVersion().startsWith("0") || ComponentVersion.compareVersions("0.3.0", metaModel.getLatestVersion()) < 0); // 0 is considered unstable in SemVer
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }

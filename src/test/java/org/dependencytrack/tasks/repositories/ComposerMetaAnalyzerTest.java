@@ -20,21 +20,19 @@ package org.dependencytrack.tasks.repositories;
 
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
-
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
-
 import com.github.packageurl.PackageURL;
 
 public class ComposerMetaAnalyzerTest {
@@ -61,7 +59,7 @@ public class ComposerMetaAnalyzerTest {
         Assert.assertEquals(RepositoryType.COMPOSER, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
         Assert.assertFalse(metaModel.getLatestVersion().startsWith("v"));
-        Assert.assertEquals(-1, AbstractMetaAnalyzer.compareVersions("10.0.0", metaModel.getLatestVersion()));
+        Assert.assertTrue(ComponentVersion.compareVersions("10.0.0", metaModel.getLatestVersion()) < 0);
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }

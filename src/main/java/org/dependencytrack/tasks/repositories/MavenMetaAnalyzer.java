@@ -23,6 +23,7 @@ import com.github.packageurl.PackageURL;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.util.DateUtil;
@@ -105,6 +106,8 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
                 }
             } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
                 handleRequestException(LOGGER, e);
+            } catch (Exception ex) {
+                throw new MetaAnalyzerException(ex);
             }
 
         }

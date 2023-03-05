@@ -23,6 +23,7 @@ import com.github.packageurl.PackageURL;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.json.JSONArray;
@@ -102,6 +103,8 @@ public class PypiMetaAnalyzer extends AbstractMetaAnalyzer {
                 }
             } catch (IOException e) {
                 handleRequestException(LOGGER, e);
+            } catch (Exception ex) {
+                throw new MetaAnalyzerException(ex);
             }
         }
         return meta;

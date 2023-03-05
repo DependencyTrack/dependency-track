@@ -21,8 +21,10 @@ package org.dependencytrack.util;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.maven.artifact.versioning.ComparableVersion;
+
 import com.vdurmont.semver4j.Semver;
 
 public class ComponentVersion implements Comparable<ComponentVersion> {
@@ -85,8 +87,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
     // Semver version format:
     // https://semver.org/
     // restricted number, label and build metadata parts to preven ReDOS attacks.
-    protected static final Pattern SEMVER_PATTERN = Pattern.compile("^(0|[1-9]\\d{0,32})\\.(0|[1-9]\\d{0,32})\\.(0|[1-9]\\d{0,32})(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)){0,8}))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+){0,8}))?$");
-
+    protected static final Pattern SEMVER_PATTERN = Pattern.compile("^(0|[1-9]\\d{0,32})\\.(0|[1-9]\\d{0,32})\\.(0|[1-9]\\d{0,32})(?:-((?:0|[1-9]\\d{0,32}|\\d{0,32}[a-zA-Z-][0-9a-zA-Z-]{0,100})(?:\\.(?:0|[1-9]\\d{0,32}|\\d{0,32}[a-zA-Z-][0-9a-zA-Z-]{0,100})){0,8}))?(?:\\+([0-9a-zA-Z-]{1,100}(?:\\.[0-9a-zA-Z-]{1,100}){0,8}))?$");
 
     protected static final Pattern SEMVER_PRE_RELEASE_PATTERN = Pattern.compile("(-[0-9a-z]).*", Pattern.CASE_INSENSITIVE);
 

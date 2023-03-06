@@ -58,6 +58,7 @@ public class PolicyEngine {
         evaluators.add(new ComponentAgePolicyEvaluator());
         evaluators.add(new ComponentHashPolicyEvaluator());
         evaluators.add(new CwePolicyEvaluator());
+        evaluators.add(new VulnerabilityIdPolicyEvaluator());
     }
 
     public List<PolicyViolation> evaluate(final List<Component> components) {
@@ -143,6 +144,7 @@ public class PolicyEngine {
             case CPE:
             case SWID_TAGID:
             case COMPONENT_HASH:
+            case VULNERABILITY_ID:
             case VERSION:
                 return PolicyViolation.Type.OPERATIONAL;
             case LICENSE:

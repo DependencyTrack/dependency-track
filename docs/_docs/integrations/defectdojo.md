@@ -48,7 +48,7 @@ This feature is used to map projects in Dependency-Track to engagements in Defec
 | ---------------| --------------------------------- |
 | Group Name     | `integrations`                    |
 | Property Name  | `defectdojo.engagementId`         |
-| Property Value | The CI/CD engagement ID to upload findings to, noted in Step 3 |
+| Property Value | The CI/CD engagement ID to upload findings to, noted in Step 3 |s
 | Property Type  | `STRING`                          |
 
 #### Step 7: Add Per-project configuration for Reimport Enhancement (Optional)
@@ -64,7 +64,25 @@ The additional configuration property is defined as below:
 | Property Value | 'true'                            |
 | Property Type  | `BOOLEAN`                         |
 
-#### Step 8: Global configuration for Reimport Enhancement (Optional)
+#### Step 8: Add Per-project configuration for do_not_reactivate Enhancement (Optional)
+![Configure Project](/images/screenshots/defectdojo_do-not-reactivate.png)
+
+* Dependency-Track v4.8.0 or higher
+* Only work in combination with reimport
+* Enabling this flag will mean that DefectDojo is considered the source of truth and findings closed in DefectDojo are not re-opened.
+* WARNING! This comes with the downside that a potentially patched vulnerability that is re-introduced by, for example a library downgrade, is reactivated
+
+As mentioned in the DefectDojo documentation this feature 'Will keep existing findings closed, without reactivating them.' Usually DefectDojo considers the scanners report as the source of truth, this leads DefectDojo to re-open findings that might have been closed in DefectDojo if it shows up in a scan.
+
+
+| Attribute      | Value                             |
+| ---------------| --------------------------------- |
+| Group Name     | `integrations`                    |
+| Property Name  | `defectdojo.doNotReactivate`             |
+| Property Value | 'true'                            |
+| Property Type  | `BOOLEAN`                         |
+
+#### Step 9: Global configuration for Reimport Enhancement (Optional)
 * Dependency-Track v4.6.0 or higher
 ![Configure Project](/images/screenshots/defectdojo_global_reimport.png)
 Alternatively, you can turn on the above reimport feature for all projects in one click, by checking on 'Enable reimport' box as shown in the screenshot above.

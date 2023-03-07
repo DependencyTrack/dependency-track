@@ -163,7 +163,7 @@ public class DefectDojoClient {
      * A Reimport will reuse (overwrite) the existing test, instead of create a new test.
      * The Successfully reimport will also  increase the reimport counter by 1.
      */
-    public void reimportDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final String testId) {
+    public void reimportDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final String testId, final Boolean doNotReactivate) {
         LOGGER.debug("Re-reimport Dependency-Track findings to DefectDojo per Engagement");
         HttpPost request = new HttpPost(baseURL + "/api/v2/reimport-scan/");
         request.addHeader("accept", "application/json");
@@ -178,6 +178,7 @@ public class DefectDojoClient {
                 .addPart("minimum_severity", new StringBody("Info", ContentType.MULTIPART_FORM_DATA))
                 .addPart("close_old_findings", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
                 .addPart("push_to_jira", new StringBody("push_to_jira", ContentType.MULTIPART_FORM_DATA))
+                .addPart("do_not_reactivate", new StringBody(doNotReactivate.toString(), ContentType.MULTIPART_FORM_DATA))
                 .addPart("test", new StringBody(testId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA))
                 .build();

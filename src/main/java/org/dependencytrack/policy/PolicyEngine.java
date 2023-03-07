@@ -137,6 +137,7 @@ public class PolicyEngine {
         switch(subject) {
             case CWE:
             case SEVERITY:
+            case VULNERABILITY_ID:
                 return PolicyViolation.Type.SECURITY;
             case AGE:
             case COORDINATES:
@@ -144,7 +145,6 @@ public class PolicyEngine {
             case CPE:
             case SWID_TAGID:
             case COMPONENT_HASH:
-            case VULNERABILITY_ID:
             case VERSION:
                 return PolicyViolation.Type.OPERATIONAL;
             case LICENSE:

@@ -42,13 +42,16 @@ public class CycloneDXVexImporter {
 
     public void applyVex(final QueryManager qm, final Bom bom, final Project project) {
         if (bom.getVulnerabilities() == null) return;
-        for (org.cyclonedx.model.vulnerability.Vulnerability cdxVuln: bom.getVulnerabilities()) {
+        List<org.cyclonedx.model.vulnerability.Vulnerability> auditableVulnerabilities = bom.getVulnerabilities().stream().filter(
+                bomVuln -> bomVuln.getSource() == null || Vulnerability.Source.isKnownSource(bomVuln.getSource().getName())
+        ).toList();
+        for (org.cyclonedx.model.vulnerability.Vulnerability cdxVuln: auditableVulnerabilities) {
             if (cdxVuln.getAnalysis() == null) continue;
             final List<Vulnerability> vulns = qm.getVulnerabilities(project, true);
             if (vulns == null) continue;
             for (final Vulnerability vuln: vulns) {
                 // NOTE: These vulnerability objects are detached
-                if (vuln.getVulnId().equals(cdxVuln.getId())) {
+                if (shouldAuditVulnerability(cdxVuln, vuln)) {
 
                     if (cdxVuln.getAffects() == null) continue;
                     for (org.cyclonedx.model.vulnerability.Vulnerability.Affect affect: cdxVuln.getAffects()) {
@@ -75,6 +78,13 @@ public class CycloneDXVexImporter {
                 }
             }
         }
+    }
+
+    private boolean shouldAuditVulnerability(org.cyclonedx.model.vulnerability.Vulnerability bomVulnerability, Vulnerability dtVulnerability) {
+        boolean result = true;
+        result = result && dtVulnerability.getVulnId().equals(bomVulnerability.getId());
+        result = result && (bomVulnerability.getSource() == null || dtVulnerability.getSource().equalsIgnoreCase(bomVulnerability.getSource().getName()));
+        return result;
     }
 
     private void updateAnalysis(final QueryManager qm, final Component component, final Vulnerability vuln,

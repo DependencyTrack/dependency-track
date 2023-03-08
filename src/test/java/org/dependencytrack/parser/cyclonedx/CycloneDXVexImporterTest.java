@@ -46,7 +46,23 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
 
         List<org.cyclonedx.model.vulnerability.Vulnerability> audits = new LinkedList<>();
 
-        // Vulnerabilities for the VEX are dynamically built for each available vulnerability source
+        var unknownSourceVulnerability = new Vulnerability();
+        unknownSourceVulnerability.setVulnId("CVE-2020-25649");
+        unknownSourceVulnerability.setSource(Vulnerability.Source.NVD);
+        unknownSourceVulnerability.setSeverity(Severity.HIGH);
+        unknownSourceVulnerability.setComponents(List.of(component));
+        unknownSourceVulnerability = qm.createVulnerability(unknownSourceVulnerability, false);
+        qm.addVulnerability(unknownSourceVulnerability, component, AnalyzerIdentity.NONE);
+
+        var mismatchSourceVulnerability = new Vulnerability();
+        mismatchSourceVulnerability.setVulnId("CVE-2020-25650");
+        mismatchSourceVulnerability.setSource(Vulnerability.Source.NVD);
+        mismatchSourceVulnerability.setSeverity(Severity.HIGH);
+        mismatchSourceVulnerability.setComponents(List.of(component));
+        mismatchSourceVulnerability = qm.createVulnerability(mismatchSourceVulnerability, false);
+        qm.addVulnerability(mismatchSourceVulnerability, component, AnalyzerIdentity.NONE);
+
+        // Build vulnerabilities for each available and known vulnerability source
         for (var source : sources) {
             var vulnId = source.name().toUpperCase()+"-001";
             var vulnerability = new Vulnerability();
@@ -70,6 +86,7 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
             audit.setAffects(List.of(affect));
             audits.add(audit);
         }
+        audits.addAll(vex.getVulnerabilities());
         vex.setVulnerabilities(audits);
         qm.getPersistenceManager().refreshAll();
 
@@ -79,8 +96,11 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         // Assert
         final Query<Analysis> query = qm.getPersistenceManager().newQuery(Analysis.class, "project == :project");
         var analyses =  (List<Analysis>) query.execute(project);
+        // CVE-2020-256[49|50] are not audited otherwise analyses.size would have been equal to sources.size()+2
         Assert.assertEquals(sources.size(), analyses.size());
         Assertions.assertThat(analyses).allSatisfy(analysis -> {
+            Assertions.assertThat(analysis.getVulnerability().getVulnId()).isNotEqualTo("CVE-2020-25649");
+            Assertions.assertThat(analysis.getVulnerability().getVulnId()).isNotEqualTo("CVE-2020-25650");
             Assertions.assertThat(analysis.isSuppressed()).isTrue();
             Assertions.assertThat(analysis.getAnalysisComments().size()).isEqualTo(3);
             Assertions.assertThat(analysis.getAnalysisComments()).satisfiesExactlyInAnyOrder(comment -> {

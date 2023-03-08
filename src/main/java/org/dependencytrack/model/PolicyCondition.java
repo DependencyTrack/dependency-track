@@ -76,7 +76,8 @@ public class PolicyCondition implements Serializable {
         SWID_TAGID,
         VERSION,
         COMPONENT_HASH,
-        CWE
+        CWE,
+        VULNERABILITY_ID
     }
 
     @PrimaryKey

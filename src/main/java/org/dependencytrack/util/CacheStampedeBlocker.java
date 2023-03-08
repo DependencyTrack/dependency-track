@@ -22,6 +22,7 @@ import alpine.common.logging.Logger;
 import alpine.common.metrics.Metrics;
 import com.google.common.util.concurrent.Striped;
 import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.core.predicate.PredicateCreator;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
@@ -128,7 +129,7 @@ public class CacheStampedeBlocker<K, V> {
         this(cacheName, nbBuckets, blockCompetingThreads, nbRetryMax, DEFAULT_CACHE_LOADER_ENTRY_TTL_MS);
     }
 
-    public CacheStampedeBlocker(String cacheName, int nbBuckets, boolean blockCompetingThreads, int nbRetryMax, long cacheLoaderEntryTTL, Class<? extends Exception>... ignoredExceptions) {
+    public CacheStampedeBlocker(String cacheName, int nbBuckets, boolean blockCompetingThreads, int nbRetryMax, long cacheLoaderEntryTTL, Class<? extends Exception>... retryableExceptions) {
         LOGGER.debug("Striped Lock is configured with "+nbBuckets+" buckets");
         this.cacheName = cacheName;
         stripedLock = Striped.lazyWeakReadWriteLock(nbBuckets);
@@ -140,7 +141,7 @@ public class CacheStampedeBlocker<K, V> {
         RetryConfig config = RetryConfig.custom()
                 .maxAttempts(this.nbRetryMax)
                 .intervalFunction(intervalWithCustomExponentialBackoff)
-                .ignoreExceptions(ignoredExceptions)
+                .retryOnException(PredicateCreator.createExceptionsPredicate(retryableExceptions).orElse(throwable -> false))
                 .failAfterMaxAttempts(true)
                 .build();
         RetryRegistry registry = RetryRegistry.of(config);

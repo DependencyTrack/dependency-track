@@ -76,7 +76,7 @@ public class CacheStampedeBlockerTest {
     }
 
     @Test
-    public void retryScenarioWithNonIgnoredException() {
+    public void retryScenarioWithNonRetryableException() {
         // Arrange
         CacheStampedeBlocker<String, Integer> cacheStampedeBlocker = new CacheStampedeBlocker<>("testCache", 10, true, 3);
 
@@ -89,11 +89,11 @@ public class CacheStampedeBlockerTest {
         });
 
         // Assert
-        Assert.assertEquals(3, counter.get());
+        Assert.assertEquals(1, counter.get());
     }
 
     @Test
-    public void retryScenarioWithIgnoredException() {
+    public void retryScenarioWithRetryableException() {
         // Arrange
         CacheStampedeBlocker<String, Integer> cacheStampedeBlocker = new CacheStampedeBlocker<>("testCache", 10, true, 3, Duration.ofMinutes(10).toMillis(), ArithmeticException.class);
 
@@ -106,6 +106,6 @@ public class CacheStampedeBlockerTest {
         });
 
         // Assert
-        Assert.assertEquals(1, counter.get());
+        Assert.assertEquals(3, counter.get());
     }
 }

@@ -29,7 +29,6 @@ import io.micrometer.core.instrument.Timer;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.event.RepositoryMetaEvent;
-import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -44,7 +43,6 @@ import org.dependencytrack.util.PurlUtil;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -67,9 +65,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                 "repositoryMetaCache",
                 Config.getInstance().getPropertyAsInt(ConfigKey.REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_LOCK_BUCKETS),
                 false,
-                Config.getInstance().getPropertyAsInt(ConfigKey.REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_MAX_ATTEMPTS),
-                Duration.ofMinutes(10).toMillis(),
-                MetaAnalyzerException.class
+                Config.getInstance().getPropertyAsInt(ConfigKey.REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_MAX_ATTEMPTS)
         );
     }
 

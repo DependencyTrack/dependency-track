@@ -132,6 +132,12 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
         var filter = "cpe23 == :cpe23";
         final var parameters = new HashMap<String, Object>();
         parameters.put("cpe23", Objects.requireNonNull(cpe23));
+
+        // When building the query filter, ensure that null values are
+        // not passed as parameters, as this would bypass the query compilation
+        // cache. This method is called very frequently during NVD mirroring,
+        // we should avoid the overhead of repeated re-compilation if possible.
+        // See also: https://github.com/DependencyTrack/dependency-track/issues/2540
         if (versionEndExcluding != null) {
             filter += " && versionEndExcluding == :vee";
             parameters.put("vee", versionEndExcluding);

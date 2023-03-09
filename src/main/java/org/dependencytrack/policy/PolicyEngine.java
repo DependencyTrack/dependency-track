@@ -131,7 +131,10 @@ public class PolicyEngine {
         return policyViolations;
     }
 
-    private PolicyViolation.Type determineViolationType(final PolicyCondition.Subject subject) {
+    public PolicyViolation.Type determineViolationType(final PolicyCondition.Subject subject) {
+        if (subject == null) {
+            return null;
+        }
         return switch (subject) {
             case CWE, SEVERITY, VULNERABILITY_ID -> PolicyViolation.Type.SECURITY;
             case AGE, COORDINATES, PACKAGE_URL, CPE, SWID_TAGID, COMPONENT_HASH, VERSION ->

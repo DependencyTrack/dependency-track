@@ -82,6 +82,16 @@ public class SnykParser {
                     } else {
                         vsList = parseVersionRanges(qm, purl, representation);
                     }
+
+                    JSONArray remedies = coordinates.getJSONObject(countCoordinates).optJSONArray("remedies");
+                    if (remedies != null) {
+                        var recommendation = "";
+                        for (int remedyCount = 0; remedyCount < remedies.length(); remedyCount++) {
+                            var remedy = remedies.getJSONObject(remedyCount).optString("description");
+                            recommendation += remedy + System.lineSeparator();
+                        }
+                        vulnerability.setRecommendation(recommendation);
+                    }
                 }
             }
             final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));

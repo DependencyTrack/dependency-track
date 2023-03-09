@@ -57,6 +57,7 @@ public class NotificationConstants {
         public static final String POLICY_VIOLATION = "Policy Violation";
         public static final String BOM_CONSUMED = "Bill of Materials Consumed";
         public static final String BOM_PROCESSED = "Bill of Materials Processed";
+        public static final String BOM_PROCESSING_FAILED = "Bill of Materials Processing Failed";
         public static final String VEX_CONSUMED = "Vulnerability Exploitability Exchange (VEX) Consumed";
         public static final String VEX_PROCESSED = "Vulnerability Exploitability Exchange (VEX) Processed";
         public static final String PROJECT_CREATED = "Project Added";

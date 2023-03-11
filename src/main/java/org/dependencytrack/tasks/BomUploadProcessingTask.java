@@ -18,15 +18,16 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.common.logging.Logger;
-import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import org.cyclonedx.BomParserFactory;
 import org.cyclonedx.parsers.Parser;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
+import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Bom;
@@ -44,12 +45,11 @@ import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
-
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
+import alpine.event.framework.Subscriber;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 
 /**
  * Subscriber task that performs processing of bill-of-material (bom)
@@ -76,12 +76,12 @@ public class BomUploadProcessingTask implements Subscriber {
             try {
                 final Project project =  qm.getObjectByUuid(Project.class, event.getProjectUuid());
                 bomProcessingFailedProject = project;
-                
+
                 if (project == null) {
                     LOGGER.warn("Ignoring BOM Upload event for no longer existing project " + event.getProjectUuid());
                     return;
                 }
-                
+
                 final List<Component> components;
                 final List<Component> newComponents = new ArrayList<>();
                 final List<Component> flattenedComponents = new ArrayList<>();
@@ -168,8 +168,11 @@ public class BomUploadProcessingTask implements Subscriber {
                     // vulnerability analysis completed.
                     vae.onSuccess(new NewVulnerableDependencyAnalysisEvent(newComponents));
                 }
+                // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
+                // as both might be needed in policy evaluation
+                vae.onSuccess(new RepositoryMetaEvent(detachedFlattenedComponent));
+                vae.onSuccess(new PolicyEvaluationEvent(detachedFlattenedComponent).project(detachedProject));
                 Event.dispatch(vae);
-                Event.dispatch(new RepositoryMetaEvent(detachedFlattenedComponent));
                 LOGGER.info("Processed " + flattenedComponents.size() + " components and " + flattenedServices.size() + " services uploaded to project " + event.getProjectUuid());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)

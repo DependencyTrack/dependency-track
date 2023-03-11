@@ -849,7 +849,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                         sb.append(" || ");
                     }
                 }
-                if (inputFilter != null) {
+                if (inputFilter != null && !inputFilter.isBlank()) {
                     query.setFilter(inputFilter + " && (" + sb.toString() + ")");
                 } else {
                     query.setFilter(sb.toString());

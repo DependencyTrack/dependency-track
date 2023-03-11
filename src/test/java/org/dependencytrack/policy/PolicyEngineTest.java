@@ -32,6 +32,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -142,6 +143,13 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         Assert.assertEquals(0, violations.size());
     }
 
+    @Test
+    public void determineViolationTypeTest(){
+        PolicyCondition policyCondition = new PolicyCondition();
+        policyCondition.setSubject(null);
+        PolicyEngine policyEngine = new PolicyEngine();
+        Assertions.assertNull(policyEngine.determineViolationType(policyCondition.getSubject()));
+    }
     @Test
     public void issue1924() {
         Policy policy = qm.createPolicy("Policy 1924", Policy.Operator.ALL, Policy.ViolationState.INFO);

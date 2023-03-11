@@ -21,6 +21,8 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
@@ -33,15 +35,15 @@ import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
-
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ComponentResourceTest extends ResourceTest {
@@ -61,6 +63,61 @@ public class ComponentResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(405, response.getStatus()); // No longer prohibited in DT 4.0+
+    }
+
+    @Test
+    public void getOutdatedComponentsTest() throws MalformedPackageURLException {
+        final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        final List<String> directDepencencies = new ArrayList<>();
+        for (int i = 0; i < 1000; i++) {
+            Component component = new Component();
+            component.setProject(project);
+            component.setGroup("component-group");
+            component.setName("component-name-"+i);
+            component.setVersion(String.valueOf(i)+".0");
+            component.setPurl(new PackageURL(RepositoryType.MAVEN.toString(), "component-group", "component-name-"+i , String.valueOf(i)+".0", null, null));
+            component = qm.createComponent(component, false);
+            if (i<100) {
+                if ((i >= 25) && (i < 75)) {
+                    // 50 recent direct depencencies
+                    directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
+                }
+                // same version
+                final var metaComponent = new RepositoryMetaComponent();
+                metaComponent.setRepositoryType(RepositoryType.MAVEN);
+                metaComponent.setNamespace("component-group");
+                metaComponent.setName("component-name-"+i);
+                metaComponent.setLatestVersion(String.valueOf(i)+".0");
+                metaComponent.setLastCheck(new Date());
+                qm.persist(metaComponent);
+            }
+            if (i>=100 && i<200) {
+                if ((i >= 150) && (i < 175)) {
+                    // 25 outdated direct depencencies
+                    directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
+                }
+                // newer version
+                final var metaComponent = new RepositoryMetaComponent();
+                metaComponent.setRepositoryType(RepositoryType.MAVEN);
+                metaComponent.setNamespace("component-group");
+                metaComponent.setName("component-name-"+i);
+                metaComponent.setLatestVersion(String.valueOf(i+1)+".0");
+                metaComponent.setLastCheck(new Date());
+                qm.persist(metaComponent);
+            }
+        }
+        project.setDirectDependencies("[" + String.join(",", directDepencencies.toArray(new String[0])) + "]");
+
+        final Response response = target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyOutdated", true)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("25");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(25); // Only 25 direct dependencies
     }
 
     @Test

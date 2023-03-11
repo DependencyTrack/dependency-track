@@ -40,14 +40,10 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
-
-import java.util.List;
-import java.util.Map;
-
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -60,6 +56,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
+import java.util.Map;
 
 /**
  * JAX-RS resources for processing components.
@@ -86,12 +84,16 @@ public class ComponentResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getAllComponents(@PathParam("uuid") String uuid) {
+    public Response getAllComponents(
+            @ApiParam(value = "The UUID of the project to retrieve components for", required = true)
+            @PathParam("uuid") String uuid,
+            @ApiParam(value = "Optionally exclude recent components and indirect dependencies so only outdated are returned", required = false)
+            @QueryParam("onlyOutdated") boolean onlyOutdated) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                    final PaginatedResult result = qm.getComponents(project, true);
+                    final PaginatedResult result = qm.getComponents(project, true, onlyOutdated);
                     return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();

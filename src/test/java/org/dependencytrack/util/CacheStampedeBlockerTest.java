@@ -3,6 +3,7 @@ package org.dependencytrack.util;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,13 +13,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CacheStampedeBlockerTest {
+
+    private ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 
     @Test
     public void highConcurrencyScenarioWithSuccessfulCallable() throws ExecutionException, InterruptedException {
         // Arrange
-        ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
         CacheStampedeBlocker<String, Integer> cacheStampedeBlocker = new CacheStampedeBlocker<>("testCache", 10, true);
         Map<String, Integer> cache = new HashMap<>();
         for (int i = 0; i < 10; i++) {
@@ -49,7 +52,6 @@ public class CacheStampedeBlockerTest {
     @Test
     public void highConcurrencyScenarioWithErroneousCallable() throws ExecutionException, InterruptedException {
         // Arrange
-        ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
         CacheStampedeBlocker<String, Integer> cacheStampedeBlocker = new CacheStampedeBlocker<>("testCache", 10, true);
         Map<String, Integer> cache = new HashMap<>();
         for (int i = 0; i < 10; i++) {
@@ -71,5 +73,39 @@ public class CacheStampedeBlockerTest {
             Optional<Integer> result = results.get(i).get();
             Assert.assertTrue(result.isEmpty());
         }
+    }
+
+    @Test
+    public void retryScenarioWithNonRetryableException() {
+        // Arrange
+        CacheStampedeBlocker<String, Integer> cacheStampedeBlocker = new CacheStampedeBlocker<>("testCache", 10, true, 3);
+
+        // Act
+        AtomicInteger counter = new AtomicInteger();
+        cacheStampedeBlocker.readThroughOrPopulateCache("key", () -> {
+            counter.incrementAndGet();
+            // Throwing ArithmeticException
+            return 2 / 0;
+        });
+
+        // Assert
+        Assert.assertEquals(1, counter.get());
+    }
+
+    @Test
+    public void retryScenarioWithRetryableException() {
+        // Arrange
+        CacheStampedeBlocker<String, Integer> cacheStampedeBlocker = new CacheStampedeBlocker<>("testCache", 10, true, 3, Duration.ofMinutes(10).toMillis(), ArithmeticException.class);
+
+        // Act
+        AtomicInteger counter = new AtomicInteger();
+        cacheStampedeBlocker.readThroughOrPopulateCache("key", () -> {
+            counter.incrementAndGet();
+            // Throwing ArithmeticException
+            return 2 / 0;
+        });
+
+        // Assert
+        Assert.assertEquals(3, counter.get());
     }
 }

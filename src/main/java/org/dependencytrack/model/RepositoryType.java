@@ -28,6 +28,7 @@ import com.github.packageurl.PackageURL;
  */
 public enum RepositoryType {
 
+    CPAN,
     MAVEN,
     NPM,
     GEM,
@@ -50,6 +51,8 @@ public enum RepositoryType {
             return MAVEN;
         } else if (PackageURL.StandardTypes.NPM.equals(type)) {
             return NPM;
+        } else if ("cpan".equals(type)) { // Not defined in StandardTypes
+            return CPAN;
         } else if (PackageURL.StandardTypes.GEM.equals(type)) {
             return GEM;
         } else if (PackageURL.StandardTypes.PYPI.equals(type)) {

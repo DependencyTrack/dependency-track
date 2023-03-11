@@ -30,11 +30,12 @@ Dependency-Track supports the following default repositories:
 | npm        | NPM              | 1 |
 | nuget      | NuGet            | 1 |
 | pypi       | PyPi             | 1 |
+| cpan       | CPAN             | 1 |
 
 
 Additional repositories can be added for each supported ecosystem. Additionally, repositories can be enabled or disabled
-as well as identified as 'internal'. For internal repositories, a username and/or password may be specified. This allows 
-Dependency-Track to scan packages from private repositories that require basic authentication, like Azure Artifacts or 
+as well as identified as 'internal'. For internal repositories, a username and/or password may be specified. This allows
+Dependency-Track to scan packages from private repositories that require basic authentication, like Azure Artifacts or
 Artifactory.
 
 ![repositories](/images/screenshots/repositories.png)
@@ -46,13 +47,13 @@ Artifactory.
 
 ### Outdated Version Tracking
 
-One primary use-case for the support of repositories is the identification of outdated components. By leveraging tight 
-integration with APIs available from various repositories, the platform can identify outdated versions of components 
-across multiple ecosystems. Dependency-Track relies on Package URL (PURL) to identify the ecosystem a component belongs 
-to, the metadata about the component, and uses that data to query the various repositories capable of supporting the 
+One primary use-case for the support of repositories is the identification of outdated components. By leveraging tight
+integration with APIs available from various repositories, the platform can identify outdated versions of components
+across multiple ecosystems. Dependency-Track relies on Package URL (PURL) to identify the ecosystem a component belongs
+to, the metadata about the component, and uses that data to query the various repositories capable of supporting the
 components ecosystem.
 
-Package URL is natively supported in the [CycloneDX](http://cyclonedx.org/) BOM specification. By using CycloneDX as a 
+Package URL is natively supported in the [CycloneDX](http://cyclonedx.org/) BOM specification. By using CycloneDX as a
 means to populate project dependencies, organizations benefit from the many use-cases Package URL provides, including
 leveraging repositories to identify outdated components.
 

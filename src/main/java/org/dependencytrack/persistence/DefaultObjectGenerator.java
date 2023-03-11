@@ -18,11 +18,11 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.common.logging.Logger;
-import alpine.model.ManagedUser;
-import alpine.model.Permission;
-import alpine.model.Team;
-import alpine.server.auth.PasswordService;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -32,12 +32,11 @@ import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
 import org.dependencytrack.util.NotificationUtil;
-
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import alpine.common.logging.Logger;
+import alpine.model.ManagedUser;
+import alpine.model.Permission;
+import alpine.model.Team;
+import alpine.server.auth.PasswordService;
 
 /**
  * Creates default objects on an empty database.
@@ -207,6 +206,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private void loadDefaultRepositories() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing default repositories to datastore");
+            qm.createRepository(RepositoryType.CPAN, "cpan-public-registry", "https://fastapi.metacpan.org/v1/", true, false);
             qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true, false);
             qm.createRepository(RepositoryType.HEX, "hex.pm", "https://hex.pm/", true, false);
             qm.createRepository(RepositoryType.MAVEN, "central", "https://repo1.maven.org/maven2/", true, false);

@@ -18,14 +18,15 @@
  */
 package org.dependencytrack.model;
 
-import com.github.packageurl.PackageURL;
 import org.junit.Assert;
 import org.junit.Test;
+import com.github.packageurl.PackageURL;
 
 public class RepositoryTypeTest {
 
     @Test
     public void testEnums() {
+        Assert.assertEquals("CPAN", RepositoryType.CPAN.name());
         Assert.assertEquals("MAVEN", RepositoryType.MAVEN.name());
         Assert.assertEquals("NPM", RepositoryType.NPM.name());
         Assert.assertEquals("GEM", RepositoryType.GEM.name());
@@ -39,6 +40,12 @@ public class RepositoryTypeTest {
     public void testResolveMaven() throws Exception {
         PackageURL purl = new PackageURL("pkg:maven/groupId/artifactId@1.0.0");
         Assert.assertEquals(RepositoryType.MAVEN, RepositoryType.resolve(purl));
+    }
+
+    @Test
+    public void testResolveCpan() throws Exception {
+        PackageURL purl = new PackageURL("pkg:cpan/artifact@1.0.0");
+        Assert.assertEquals(RepositoryType.CPAN, RepositoryType.resolve(purl));
     }
 
     @Test
@@ -76,4 +83,4 @@ public class RepositoryTypeTest {
         PackageURL purl = new PackageURL("pkg:generic/artifact@1.0.0");
         Assert.assertEquals(RepositoryType.UNSUPPORTED, RepositoryType.resolve(purl));
     }
-} 
+}

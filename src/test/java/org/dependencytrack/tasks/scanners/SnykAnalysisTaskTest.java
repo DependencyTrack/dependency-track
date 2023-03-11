@@ -302,6 +302,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         assertThat(vulnerability.getSeverity()).isEqualTo(Severity.HIGH);
         assertThat(vulnerability.getCreated()).isInSameDayAs("2022-10-31");
         assertThat(vulnerability.getUpdated()).isInSameDayAs("2022-11-26");
+        assertThat(vulnerability.getRecommendation()).contains("Upgrade the package version to 5.0.4,6.0.4 to fix this vulnerability");
         assertThat(vulnerability.getAliases()).satisfiesExactly(
                 alias -> {
                     assertThat(alias.getSnykId()).isEqualTo("SNYK-JAVA-COMFASTERXMLWOODSTOX-3091135");

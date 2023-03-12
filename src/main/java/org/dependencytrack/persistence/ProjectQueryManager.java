@@ -31,6 +31,7 @@ import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Analysis;
@@ -41,6 +42,7 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
@@ -48,7 +50,6 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.NotificationUtil;
-
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -194,6 +195,23 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * Returns a project by its uuid.
+     * @param uuid the uuid of the Project (required)
+     * @return a Project object, or null if not found
+     */
+    public Project getProject(final String uuid) {
+        final Project project = getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
+        if (project != null) {
+            // set Metrics to minimize the number of round trips a client needs to make
+            project.setMetrics(getMostRecentProjectMetrics(project));
+            // set ProjectVersions to minimize the number of round trips a client needs to make
+            project.setVersions(getProjectVersions(project));
+        }
+        return project;
+    }
+
+
+    /**
      * Returns a project by its name and version.
      * @param name the name of the Project (required)
      * @param version the version of the Project (or null)
@@ -212,7 +230,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         preprocessACLs(query, queryFilter, params, false);
         query.setFilter(queryFilter);
         query.setRange(0, 1);
-        return singleResult(query.executeWithMap(params));
+        final Project project = singleResult(query.executeWithMap(params));
+        if (project != null) {
+            // set Metrics to prevent extra round trip
+            project.setMetrics(getMostRecentProjectMetrics(project));
+            // set ProjectVersions to prevent extra round trip
+            project.setVersions(getProjectVersions(project));
+        }
+        return project;
     }
 
     /**
@@ -1094,5 +1119,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             }
         }
         return hasActiveChild;
+    }
+
+    private List<ProjectVersion> getProjectVersions(Project project) {
+        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL, "SELECT UUID, VERSION FROM PROJECT WHERE NAME = ?");
+        query.setParameters(project.getName());
+        final var stream = query.executeList().stream();
+        return stream.map(i -> new ProjectVersion(i[0].toString(), i[1].toString())).toList();
     }
 }

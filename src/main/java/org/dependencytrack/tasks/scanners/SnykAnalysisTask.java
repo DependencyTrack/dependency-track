@@ -92,7 +92,6 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             PackageURL.StandardTypes.GEM,
             PackageURL.StandardTypes.GENERIC,
             PackageURL.StandardTypes.HEX,
-            "cpan", // Not defined in StandardTypes
             PackageURL.StandardTypes.MAVEN,
             PackageURL.StandardTypes.NPM,
             PackageURL.StandardTypes.NUGET,

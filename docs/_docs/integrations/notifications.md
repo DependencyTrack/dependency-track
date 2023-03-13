@@ -33,6 +33,7 @@ Each scope contains a set of notification groups that can be used to subscribe t
 | PORTFOLIO | PROJECT_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                         |
 | PORTFOLIO | BOM_CONSUMED | Notifications generated whenever a supported BOM is ingested and identified                                                       |
 | PORTFOLIO | BOM_PROCESSED | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
+| PORTFOLIO | BOM_PROCESSING_FAILED | Notifications generated whenever a BOM upload process fails                                 |
 | PORTFOLIO | POLICY_VIOLATION | Notifications generated whenever a policy violation is identified                                                                 |
 
 ## Configuring Publishers

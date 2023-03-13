@@ -66,11 +66,15 @@ public class BomUploadProcessingTask implements Subscriber {
      */
     public void inform(final Event e) {
         if (e instanceof BomUploadEvent) {
+            String projectName = null;
+            String projectVersion = null;
             final BomUploadEvent event = (BomUploadEvent) e;
             final byte[] bomBytes = CompressUtil.optionallyDecompress(event.getBom());
             final QueryManager qm = new QueryManager();
             try {
-                final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
+                final Project project =  qm.getObjectByUuid(Project.class, event.getProjectUuid());
+                projectName = project.getName();
+                projectVersion = project.getVersion();
                 
                 if (project == null) {
                     LOGGER.warn("Ignoring BOM Upload event for no longer existing project " + event.getProjectUuid());
@@ -173,6 +177,13 @@ public class BomUploadProcessingTask implements Subscriber {
                         .subject(new BomConsumedOrProcessed(detachedProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom", ex);
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.PORTFOLIO)
+                        .group(NotificationGroup.BOM_PROCESSING_FAILED)
+                        .title(NotificationConstants.Title.BOM_PROCESSING_FAILED)
+                        .level(NotificationLevel.ERROR)
+                        .content("Error while processing BOM" + (projectName != null ? " for project " + projectName + (projectVersion != null ? " : " + projectVersion : "") : "") +
+                                "\n\nProject UUID: " + event.getProjectUuid() + " \n\nCheck logs for error and retry upload."));
             } finally {
                 qm.commitSearchIndex(true, Component.class);
                 qm.commitSearchIndex(true, ServiceComponent.class);

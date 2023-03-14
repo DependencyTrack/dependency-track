@@ -39,6 +39,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
+import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
@@ -66,15 +67,13 @@ public class BomUploadProcessingTask implements Subscriber {
      */
     public void inform(final Event e) {
         if (e instanceof BomUploadEvent) {
-            String projectName = null;
-            String projectVersion = null;
+            Project bomProcessingFailedProject = null;
             final BomUploadEvent event = (BomUploadEvent) e;
             final byte[] bomBytes = CompressUtil.optionallyDecompress(event.getBom());
             final QueryManager qm = new QueryManager();
             try {
                 final Project project =  qm.getObjectByUuid(Project.class, event.getProjectUuid());
-                projectName = project.getName();
-                projectVersion = project.getVersion();
+                bomProcessingFailedProject = project;
                 
                 if (project == null) {
                     LOGGER.warn("Ignoring BOM Upload event for no longer existing project " + event.getProjectUuid());
@@ -182,8 +181,8 @@ public class BomUploadProcessingTask implements Subscriber {
                         .group(NotificationGroup.BOM_PROCESSING_FAILED)
                         .title(NotificationConstants.Title.BOM_PROCESSING_FAILED)
                         .level(NotificationLevel.ERROR)
-                        .content("Error while processing BOM" + (projectName != null ? " for project " + projectName + (projectVersion != null ? " : " + projectVersion : "") : "") +
-                                "\n\nProject UUID: " + event.getProjectUuid() + " \n\nCheck logs for error and retry upload."));
+                        .content("An error occurred while processing a BOM")
+                        .subject(new BomProcessingFailed(bomProcessingFailedProject, Base64.getEncoder().encodeToString(bomBytes), ex.getMessage())));
             } finally {
                 qm.commitSearchIndex(true, Component.class);
                 qm.commitSearchIndex(true, ServiceComponent.class);

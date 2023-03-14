@@ -105,8 +105,7 @@ public class Component implements Serializable {
     private long id;
 
     @Persistent
-    @Column(name = "AUTHOR", jdbcType = "VARCHAR")
-    @Size(max = 255)
+    @Column(name = "AUTHOR", jdbcType = "CLOB")
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
     private String author;
 

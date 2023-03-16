@@ -65,7 +65,7 @@ CI/CD environments.
 * Robust policy engine with support for global and per-project policies
   * Security risk and compliance
   * License risk and compliance
-  * Operational risk and compliance  
+  * Operational risk and compliance
 * Ecosystem agnostic with built-in repository support for:
   * Cargo (Rust)
   * Composer (PHP)
@@ -73,9 +73,10 @@ CI/CD environments.
   * Hex (Erlang/Elixir)
   * Maven (Java)
   * NPM (Javascript)
+  * CPAN (Perl)
   * NuGet (.NET)
   * Pypi (Python)
-  * More coming soon.  
+  * More coming soon.
 * Identifies APIs and external service components including:
   * Service provider
   * Endpoint URIs
@@ -143,7 +144,7 @@ Dependency-Track has three distribution variants. They are:
 
 | Package    | Package Format          | Recommended | Supported | Docker | Download |
 |:-----------|:------------------------|:-----------:|:---------:|:------:|:--------:|
-| API Server | Executable WAR          |      ✅      |     ✅     |   ✅    |    ✅     | 
+| API Server | Executable WAR          |      ✅      |     ✅     |   ✅    |    ✅     |
 | Frontend   | Single Page Application |      ✅      |     ✅     |   ✅    |    ✅     |
 | Bundled    | Executable WAR          |      ❌      |    ☑️     |   ✅    |    ✅     |
 

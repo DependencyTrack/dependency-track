@@ -272,6 +272,7 @@ public class BomResource extends AlpineResource {
                         Project parent = null;
                         if (parentUUID != null || parentName != null) {
                             if (parentUUID != null) {
+
                               parent = qm.getObjectByUuid(Project.class, parentUUID);
                             } else {
                               final String trimmedParentName = StringUtils.trimToNull(parentName);
@@ -281,6 +282,8 @@ public class BomResource extends AlpineResource {
 
                             if (parent == null) { // if parent project is specified but not found
                                 return Response.status(Response.Status.NOT_FOUND).entity("The parent component could not be found.").build();
+                            } else if (! qm.hasAccess(super.getPrincipal(), parent)) {
+                                return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified parent project is forbidden").build();
                             }
                         }
                         project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, null, parent, null, true, true);

@@ -561,4 +561,48 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertEquals("The principal does not have permission to create project.", body);
     }
 
+    @Test
+    public void uploadBomAutoCreateTestWithParent() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        File file = new File(Thread.currentThread().getContextClassLoader().getResource("bom-1.xml").toURI());
+        String bomString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
+        // Upload parent project
+        BomSubmitRequest request = new BomSubmitRequest(null, "Acme Parent", "1.0", true, bomString);
+        Response response = target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        String parentUUID = json.getString("token");
+        Assert.assertNotNull(parentUUID);
+        Assert.assertTrue(UuidUtil.isValidUUID(parentUUID));
+
+        // Upload first child, search parent by UUID
+        request = new BomSubmitRequest(null, "Acme Example", "1.0", true, parentUUID, null, null, bomString);
+        response = target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertNotNull(json.getString("token"));
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        Project child = qm.getProject("Acme Example", "1.0");
+        Assert.assertNotNull(child);
+
+        // Upload second child, search parent by name+ver
+        request = new BomSubmitRequest(null, "Acme Example", "2.0", true, null, "Acme Parent", "1.0", bomString);
+        response = target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertNotNull(json.getString("token"));
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        child = qm.getProject("Acme Example", "2.0");
+        Assert.assertNotNull(child);
+    }
+
 }

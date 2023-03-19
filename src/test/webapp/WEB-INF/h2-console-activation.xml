@@ -1,0 +1,14 @@
+<?xml version="1.0"  encoding="ISO-8859-1"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN"
+        "http://www.eclipse.org/jetty/configure_9_0.dtd">
+
+<Configure class="org.eclipse.jetty.maven.plugin.MavenWebAppContext">
+    <Call name="setInitParameter">
+        <Arg>h2.console.enabled</Arg>
+        <Arg>true</Arg>
+    </Call>
+    <Call name="setInitParameter">
+        <Arg>h2.console.path</Arg>
+        <Arg>/h2-console</Arg>
+    </Call>
+</Configure>

@@ -107,6 +107,7 @@
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
+        <plugin.jetty.version>10.0.14</plugin.jetty.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
         <!-- CycloneDX CLI -->
@@ -490,7 +491,7 @@
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>
-                <version>10.0.14</version>
+                <version>${plugin.jetty.version}</version>
                 <configuration>
                     <webApp>
                         <contextPath>/</contextPath>
@@ -542,6 +543,24 @@
             <properties>
                 <war-embedded-finalname>${project.build.finalName}-apiserver</war-embedded-finalname>
             </properties>
+        </profile>
+        <profile>
+            <id>h2-console</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.eclipse.jetty</groupId>
+                        <artifactId>jetty-maven-plugin</artifactId>
+                        <version>${plugin.jetty.version}</version>
+                        <configuration>
+                            <webApp>
+                                <contextPath>/</contextPath>
+                            </webApp>
+                            <contextXml>src/test/webapp/WEB-INF/h2-console-activation.xml</contextXml>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
         <profile>
             <id>bundle-ui</id>

@@ -21,7 +21,6 @@ package org.dependencytrack.persistence;
 
 import alpine.Config;
 import alpine.common.logging.Logger;
-import org.dependencytrack.common.ConfigKey;
 import org.h2.server.web.WebServlet;
 
 import javax.servlet.ServletContext;
@@ -33,6 +32,9 @@ import java.util.Map;
 public class H2WebConsoleInitializer implements ServletContextListener {
     private static final Logger LOGGER = Logger.getLogger(H2WebConsoleInitializer.class);
 
+    private static final String H2_CONSOLE_ENABLED_INIT_PARAM = "h2.console.enabled";
+    private static final String H2_CONSOLE_PATH_INIT_PARAM = "h2.console.path";
+
     /**
      * {@inheritDoc}
      */
@@ -41,7 +43,7 @@ public class H2WebConsoleInitializer implements ServletContextListener {
         Config configuration = Config.getInstance();
         String databaseMode = configuration.getProperty(Config.AlpineKey.DATABASE_MODE);
         String databaseDriver = configuration.getProperty(Config.AlpineKey.DATABASE_DRIVER);
-        Boolean h2ConsoleEnabled = configuration.getPropertyAsBoolean(ConfigKey.H2_CONSOLE_ENABLED);
+        Boolean h2ConsoleEnabled = Boolean.valueOf(event.getServletContext().getInitParameter(H2_CONSOLE_ENABLED_INIT_PARAM));
         // Misconfiguration check, if external database is used, no need to pointlessly expose the H2 console
         if ("external".equals(databaseMode) || !org.h2.Driver.class.getName().equals(databaseDriver) || !h2ConsoleEnabled) {
             LOGGER.debug("H2 web console will not be initialized since either database mode is external or database driver is not H2 or the console is simply disabled !");
@@ -50,13 +52,12 @@ public class H2WebConsoleInitializer implements ServletContextListener {
             LOGGER.debug("H2 web console enabled : "+h2ConsoleEnabled);
             return;
         }
-        String h2ConsolePath = configuration.getProperty(ConfigKey.H2_CONSOLE_PATH);
-        LOGGER.debug("Building and exposing H2 servlet");
+        String h2ConsolePath = event.getServletContext().getInitParameter(H2_CONSOLE_PATH_INIT_PARAM);
+        LOGGER.warn("Building and exposing H2 web servlet to "+h2ConsolePath);
+        LOGGER.warn("It should only be enabled for development purposes to avoid security risks related to production data leak.");
         ServletContext servletContext = event.getServletContext();
         WebServlet h2WebServlet = new WebServlet();
         ServletRegistration.Dynamic registration = servletContext.addServlet("h2Console", h2WebServlet);
-        registration.setInitParameter("webAllowOthers", "false");
-        registration.setInitParameter("trace", "");
         registration.addMapping(h2ConsolePath+"/*");
         registration.setLoadOnStartup(1);
         // Production filter alteration : we rely here on the fact the Jetty server does not entirely respect Servlet 3.0 specs. See https://github.com/DependencyTrack/dependency-track/pull/2561

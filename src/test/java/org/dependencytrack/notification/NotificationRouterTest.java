@@ -419,12 +419,12 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.BOM_PROCESSING_FAILED.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
-        notification.setSubject(new BomProcessingFailed(projectB, "", null));
+        notification.setSubject(new BomProcessingFailed(projectB, "", null, Bom.Format.CYCLONEDX, ""));
 
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(notification)).isEmpty();
 
-        notification.setSubject(new BomProcessingFailed(projectA, "", null));
+        notification.setSubject(new BomProcessingFailed(projectA, "", null, Bom.Format.CYCLONEDX, ""));
         assertThat(router.resolveRules(notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }

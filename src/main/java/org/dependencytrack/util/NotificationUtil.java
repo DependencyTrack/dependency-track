@@ -449,10 +449,14 @@ public final class NotificationUtil {
             builder.add("project", toJson(vo.getProject()));
         }
         if (vo.getBom() != null) {
-            builder.add("bom", vo.getBom());
+            builder.add("bom", Json.createObjectBuilder()
+                    .add("content", vo.getBom())
+                    .add("format", vo.getFormat().getFormatShortName())
+                    .add("specVersion", vo.getSpecVersion()).build()
+            );
         }
-        if (vo.getException() != null) {
-            builder.add("exception", vo.getException());
+        if (vo.getCause() != null) {
+            builder.add("cause", vo.getCause());
         }
         return builder.build();
     }

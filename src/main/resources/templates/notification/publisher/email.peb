@@ -83,8 +83,8 @@ Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
 
 --------------------------------------------------------------------------------
 
-Exception:
-{{ subject.exception }}
+Cause:
+{{ subject.cause }}
 {% elseif notification.group == "VEX_CONSUMED" %}
 Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}

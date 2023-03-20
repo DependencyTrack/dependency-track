@@ -68,6 +68,8 @@ public class BomUploadProcessingTask implements Subscriber {
     public void inform(final Event e) {
         if (e instanceof BomUploadEvent) {
             Project bomProcessingFailedProject = null;
+            Bom.Format bomProcessingFailedBomFormat = null;
+            String bomProcessingFailedBomVersion = null;
             final BomUploadEvent event = (BomUploadEvent) e;
             final byte[] bomBytes = CompressUtil.optionallyDecompress(event.getBom());
             final QueryManager qm = new QueryManager();
@@ -98,9 +100,11 @@ public class BomUploadProcessingTask implements Subscriber {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
                         LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProjectUuid());
                         bomFormat = Bom.Format.CYCLONEDX;
+                        bomProcessingFailedBomFormat = bomFormat;
                         final Parser parser = BomParserFactory.createParser(bomBytes);
                         cycloneDxBom = parser.parse(bomBytes);
                         bomSpecVersion = cycloneDxBom.getSpecVersion();
+                        bomProcessingFailedBomVersion = bomSpecVersion;
                         bomVersion = cycloneDxBom.getVersion();
                         if (project.getClassifier() == null) {
                             final var classifier = Optional.ofNullable(cycloneDxBom.getMetadata())
@@ -176,13 +180,16 @@ public class BomUploadProcessingTask implements Subscriber {
                         .subject(new BomConsumedOrProcessed(detachedProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom", ex);
+                if (bomProcessingFailedProject != null) {
+                    bomProcessingFailedProject = qm.detach(Project.class, bomProcessingFailedProject.getId());
+                }
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)
                         .group(NotificationGroup.BOM_PROCESSING_FAILED)
                         .title(NotificationConstants.Title.BOM_PROCESSING_FAILED)
                         .level(NotificationLevel.ERROR)
                         .content("An error occurred while processing a BOM")
-                        .subject(new BomProcessingFailed(bomProcessingFailedProject, Base64.getEncoder().encodeToString(bomBytes), ex.getMessage())));
+                        .subject(new BomProcessingFailed(bomProcessingFailedProject, Base64.getEncoder().encodeToString(bomBytes), ex.getMessage(), bomProcessingFailedBomFormat, bomProcessingFailedBomVersion)));
             } finally {
                 qm.commitSearchIndex(true, Component.class);
                 qm.commitSearchIndex(true, ServiceComponent.class);

@@ -18,18 +18,23 @@
  */
 package org.dependencytrack.notification.vo;
 
+import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Project;
 
 public class BomProcessingFailed {
 
     private Project project;
     private String bom;
-    private String exception;
+    private String cause;
+    private Bom.Format format;
+    private String specVersion;
 
-    public BomProcessingFailed(final Project project, final String bom, final String exception) {
+    public BomProcessingFailed(final Project project, final String bom, final String cause, final Bom.Format format, final String specVersion) {
         this.project = project;
         this.bom = bom;
-        this.exception = exception;
+        this.cause = cause;
+        this.format = format;
+        this.specVersion = specVersion;
     }
 
     public Project getProject() {
@@ -40,7 +45,15 @@ public class BomProcessingFailed {
         return bom;
     }
 
-    public String getException() {
-        return exception;
+    public String getCause() {
+        return cause;
+    }
+
+    public Bom.Format getFormat() {
+        return format;
+    }
+
+    public String getSpecVersion() {
+        return specVersion;
     }
 }

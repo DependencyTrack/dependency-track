@@ -97,7 +97,7 @@
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
-        <lib.log4j-over-slf4j.version>2.0.6</lib.log4j-over-slf4j.version>
+        <lib.log4j-over-slf4j.version>2.0.7</lib.log4j-over-slf4j.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.3.jre17</lib.jdbc-driver.mssql.version>
         <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->

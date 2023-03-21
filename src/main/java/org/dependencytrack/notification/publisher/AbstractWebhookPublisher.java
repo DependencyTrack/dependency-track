@@ -51,15 +51,19 @@ public abstract class AbstractWebhookPublisher implements Publisher {
         var request = new HttpPost(destination);
         request.addHeader("content-type", mimeType);
         request.addHeader("accept", mimeType);
-        final BasicAuthCredentials credentials;
+        final AuthCredentials credentials;
         try {
-            credentials = getBasicAuthCredentials();
+            credentials = getAuthCredentials();
         } catch (PublisherException e) {
             logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification", e);
             return;
         }
         if (credentials != null) {
-            request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(credentials.user(), credentials.password()));
+            if(credentials.user() != null) {
+                request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(credentials.user(), credentials.password()));
+            } else {
+                request.addHeader("Authorization", "Bearer " + credentials.password);
+            }
         }
 
         try {
@@ -81,11 +85,12 @@ public abstract class AbstractWebhookPublisher implements Publisher {
         return config.getString(CONFIG_DESTINATION);
     }
 
-    protected BasicAuthCredentials getBasicAuthCredentials() {
+
+    protected AuthCredentials getAuthCredentials() {
         return null;
     }
 
-    protected record BasicAuthCredentials(String user, String password) {
+    protected record AuthCredentials(String user, String password) {
     }
 
     protected void handleRequestException(final Logger logger, final Exception e) {

@@ -37,7 +37,7 @@ public enum ConfigPropertyConstants {
     INTERNAL_COMPONENTS_NAMES_REGEX("internal-components", "names.regex", null, PropertyType.STRING, "Regex that matches names of internal components"),
     JIRA_URL("integrations", "jira.url", null, PropertyType.URL, "The base URL of the JIRA instance"),
     JIRA_USERNAME("integrations", "jira.username", null, PropertyType.STRING, "The optional username to authenticate with when creating an Jira issue"),
-    JIRA_PASSWORD("integrations", "jira.password", null, PropertyType.ENCRYPTEDSTRING, "The optional password for the username used for authentication"),
+    JIRA_PASSWORD("integrations", "jira.password", null, PropertyType.ENCRYPTEDSTRING, "The password for the username or bearer token used for authentication"),
     SCANNER_INTERNAL_ENABLED("scanner", "internal.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable the internal analyzer"),
     SCANNER_INTERNAL_FUZZY_ENABLED("scanner", "internal.fuzzy.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable non-exact fuzzy matching using the internal analyzer"),
     SCANNER_INTERNAL_FUZZY_EXCLUDE_PURL("scanner", "internal.fuzzy.exclude.purl", "true", PropertyType.BOOLEAN, "Flag to enable/disable fuzzy matching on components that have a Package URL (PURL) defined"),

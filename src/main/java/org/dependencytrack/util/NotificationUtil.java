@@ -43,6 +43,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
+import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -438,6 +439,24 @@ public final class NotificationUtil {
                     .add("format", vo.getFormat().getFormatShortName())
                     .add("specVersion", vo.getSpecVersion()).build()
             );
+        }
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final BomProcessingFailed vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        if (vo.getProject() != null) {
+            builder.add("project", toJson(vo.getProject()));
+        }
+        if (vo.getBom() != null) {
+            builder.add("bom", Json.createObjectBuilder()
+                    .add("content", vo.getBom())
+                    .add("format", vo.getFormat().getFormatShortName())
+                    .add("specVersion", vo.getSpecVersion()).build()
+            );
+        }
+        if (vo.getCause() != null) {
+            builder.add("cause", vo.getCause());
         }
         return builder.build();
     }

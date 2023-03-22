@@ -146,7 +146,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 }
                 if (Bom.Format.CYCLONEDX == bomFormat) {
                     LOGGER.info("Processing CycloneDX dependency graph for project: " + event.getProjectUuid());
-                    ModelConverter.generateDependencies(qm, cycloneDxBom, project, components);
+                    ModelConverter.generateDependencies(cycloneDxBom, project, components);
                 }
                 LOGGER.debug("Reconciling components for project " + event.getProjectUuid());
                 qm.reconcileComponents(project, existingProjectComponents, flattenedComponents);

@@ -54,6 +54,11 @@ import org.dependencytrack.util.PurlUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.json.JSONArray;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -666,13 +671,13 @@ public class ModelConverter {
 
     /**
      * Converts a parsed Bom to a native list of Dependency-Track component objects
-     * @param qm
-     * @param bom the Bom to convert
-     * @param project The project based on the BOM
+     *
+     * @param bom        the Bom to convert
+     * @param project    The project based on the BOM
      * @param components All known {@link Component}s from the BOM
      * @return a List of Component object
      */
-    public static void generateDependencies(final QueryManager qm, final Bom bom, final Project project, final List<Component> components) {
+    public static void generateDependencies(final Bom bom, final Project project, final List<Component> components) {
         // Get direct dependencies first
         if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null && bom.getMetadata().getComponent().getBomRef() != null) {
             final String targetBomRef = bom.getMetadata().getComponent().getBomRef();
@@ -719,6 +724,53 @@ public class ModelConverter {
                 }
             }
         }
+    }
+
+    /**
+     * Converts {@link Project#getDirectDependencies()} and {@link Component#getDirectDependencies()}
+     * references to a CycloneDX dependency graph.
+     *
+     * @param project    The {@link Project} to generate the graph for
+     * @param components The {@link Component}s belonging to {@code project}
+     * @return The CycloneDX representation of the {@link Project}'s dependency graph
+     */
+    public static List<Dependency> generateDependencies(final Project project, final List<Component> components) {
+        if (project == null) {
+            return Collections.emptyList();
+        }
+
+        final var dependencies = new ArrayList<Dependency>();
+        final var rootDependency = new Dependency(project.getUuid().toString());
+        rootDependency.setDependencies(convertDirectDependencies(project.getDirectDependencies()));
+        dependencies.add(rootDependency);
+
+        for (final Component component : components) {
+            final var dependency = new Dependency(component.getUuid().toString());
+            dependency.setDependencies(convertDirectDependencies(component.getDirectDependencies()));
+            dependencies.add(dependency);
+        }
+
+        return dependencies;
+    }
+
+    private static List<Dependency> convertDirectDependencies(final String directDependenciesRaw) {
+        if (directDependenciesRaw == null || directDependenciesRaw.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        final var dependencies = new ArrayList<Dependency>();
+        final JsonValue directDependenciesJson = Json
+                .createReader(new StringReader(directDependenciesRaw))
+                .readValue();
+        if (directDependenciesJson instanceof final JsonArray directDependenciesJsonArray) {
+            for (final JsonValue directDependency : directDependenciesJsonArray) {
+                if (directDependency instanceof final JsonObject directDependencyObject) {
+                    dependencies.add(new Dependency(directDependencyObject.getString("uuid")));
+                }
+            }
+        }
+
+        return dependencies;
     }
 
     public static List<ExternalReference> convertBomMetadataExternalReferences(Bom bom) {

@@ -207,6 +207,29 @@ public class BomResourceTest extends ResourceTest {
                             "name": "acme-lib-c",
                             "version": "1.0.0"
                         }
+                    ],
+                    "dependencies": [
+                        {
+                            "ref": "${json-unit.matches:projectUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithoutVulnUuid}",
+                                "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithoutVulnUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithVulnUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnUuid}",
+                            "dependsOn": []
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
+                            "dependsOn": []
+                        }
                     ]
                 }
                 """));
@@ -332,6 +355,29 @@ public class BomResourceTest extends ResourceTest {
                             "bom-ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
                             "name": "acme-lib-c",
                             "version": "1.0.0"
+                        }
+                    ],
+                    "dependencies": [
+                        {
+                            "ref": "${json-unit.matches:projectUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithoutVulnUuid}",
+                                "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithoutVulnUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithVulnUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnUuid}",
+                            "dependsOn": []
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
+                            "dependsOn": []
                         }
                     ],
                     "vulnerabilities": [
@@ -502,6 +548,29 @@ public class BomResourceTest extends ResourceTest {
                             "bom-ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
                             "name": "acme-lib-c",
                             "version": "1.0.0"
+                        }
+                    ],
+                    "dependencies": [
+                        {
+                            "ref": "${json-unit.matches:projectUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithoutVulnUuid}",
+                                "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithoutVulnUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithVulnUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnUuid}",
+                            "dependsOn": []
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
+                            "dependsOn": []
                         }
                     ],
                     "vulnerabilities": [

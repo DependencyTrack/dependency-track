@@ -95,9 +95,12 @@ You can open and inspect the database file, for example with tools like [DBeaver
 [IntelliJ Ultimate's integrated one](https://www.jetbrains.com/help/idea/database-tool-window.html),
 using the following connection details:
 
+* JDBC URL: `jdbc:h2:~/.dependency-track/db`
 * Username: `sa`
 * Password: none
-* URL: `jdbc:h2:~/.dependency-track/db`
+
+These are the values defined via `alpine.database.*` properties in the
+[`application.properties`](src/main/resources/application.properties) file.
 
 > **Warning**  
 > Make sure that your database tool uses version **2** of the H2 database driver.
@@ -106,36 +109,30 @@ using the following connection details:
 A limitation of the H2 database in `embedded` mode is that *only a single process at a time can access it*.
 If you want to inspect the database while Dependency-Track is running, you have two options:
 
-#### Use H2 in `server` mode
+#### Enable the embedded H2 console
 
-Dependency-Track can be configured to start an H2 server, that other processes can then connect to.
+When building Dependency-Track locally, you can opt in to enabling an embedded 
+[H2 console](http://www.h2database.com/html/quickstart.html#h2_console). 
 
-```shell
-# Enable H2 server
-export ALPINE_DATABASE_MODE=server
-
-# Launch Dependency-Track
-mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
-```
-
-Username, password, and location of the database file on disk remain the same.
-
-When connecting from your database tool of choice, use the following URL:
+To enable it, simply pass the additional `h2-console` Maven profile to your build command.
+This also works with the Jetty Maven plugin:
 
 ```shell
-jdbc:h2:tcp://localhost:9092/~/.dependency-track/db
+mvn jetty:run -P enhance -P h2-console -Dlogback.configurationFile=src/main/docker/logback.xml
 ```
+
+Once enabled, the console will be available at http://localhost:8080/h2-console.
 
 > **Note**  
-> The port of the H2 server defaults to `9092`, and can be configured with `ALPINE_DATABASE_PORT`.
-
-Here's how you would connect to the database using DBeaver:
-
-![Connecting to the H2 server with DBeaver](.github/images/dev-h2-server-connection.png)
+> Supporting the H2 console via a dedicated build profile instead of a runtime configuration 
+> was an [active decision](https://github.com/DependencyTrack/dependency-track/pull/2592). Exposing
+> the console is a security risk, and should only ever be done for local testing purposes. Enabling
+> the console is not possible in official builds distributed via GitHub releases and Docker Hub.
 
 #### Use an external database
 
 Simply set up any of the [supported external databases](https://docs.dependencytrack.org/getting-started/database-support/).
+Docker makes this very easy. Here's an example for how you can do it with PostgreSQL:
 
 ```shell
 # Launch a Postgres container
@@ -153,6 +150,8 @@ export ALPINE_DATABASE_PASSWORD=dtrack
 # Launch Dependency-Track
 mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 ```
+
+You can now use tooling native to your chosen RDBMS, for example [pgAdmin](https://www.pgadmin.org/).
 
 ### Skipping NVD mirroring
 

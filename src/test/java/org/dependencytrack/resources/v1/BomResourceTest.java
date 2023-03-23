@@ -112,12 +112,14 @@ public class BomResourceTest extends ResourceTest {
         componentWithoutVuln.setProject(project);
         componentWithoutVuln.setName("acme-lib-a");
         componentWithoutVuln.setVersion("1.0.0");
+        componentWithoutVuln.setDirectDependencies("[]");
         componentWithoutVuln = qm.createComponent(componentWithoutVuln, false);
 
         var componentWithVuln = new Component();
         componentWithVuln.setProject(project);
         componentWithVuln.setName("acme-lib-b");
         componentWithVuln.setVersion("1.0.0");
+        componentWithVuln.setDirectDependencies("[]");
         componentWithVuln = qm.createComponent(componentWithVuln, false);
         qm.addVulnerability(vulnerability, componentWithVuln, AnalyzerIdentity.INTERNAL_ANALYZER);
 
@@ -125,9 +127,31 @@ public class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setProject(project);
         componentWithVulnAndAnalysis.setName("acme-lib-c");
         componentWithVulnAndAnalysis.setVersion("1.0.0");
+        componentWithVulnAndAnalysis.setDirectDependencies("[]");
         componentWithVulnAndAnalysis = qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, AnalyzerIdentity.INTERNAL_ANALYZER);
         qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+
+        // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
+        componentWithoutVuln.setDirectDependencies("""
+                [
+                    {"uuid": "%s"}
+                ]
+                """.formatted(componentWithVuln.getUuid()));
+
+        // Make project depend on componentWithoutVuln (acme-lib-a)
+        // and componentWithVulnAndAnalysis (acme-lib-c)
+        project.setDirectDependencies("""
+                [
+                    {"uuid": "%s"},
+                    {"uuid": "%s"}
+                ]
+                """
+                .formatted(
+                        componentWithoutVuln.getUuid(),
+                        componentWithVulnAndAnalysis.getUuid()
+                ));
+        qm.persist(project);
 
         final Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .queryParam("variant", "inventory")
@@ -186,6 +210,14 @@ public class BomResourceTest extends ResourceTest {
                     ]
                 }
                 """));
+
+        // Ensure the dependency graph did not get deleted during export.
+        // https://github.com/DependencyTrack/dependency-track/issues/2494
+        qm.getPersistenceManager().refreshAll(project, componentWithoutVuln, componentWithVuln, componentWithVulnAndAnalysis);
+        assertThat(project.getDirectDependencies()).isNotNull();
+        assertThat(componentWithoutVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVulnAndAnalysis.getDirectDependencies()).isNotNull();
     }
 
     @Test
@@ -205,12 +237,14 @@ public class BomResourceTest extends ResourceTest {
         componentWithoutVuln.setProject(project);
         componentWithoutVuln.setName("acme-lib-a");
         componentWithoutVuln.setVersion("1.0.0");
+        componentWithoutVuln.setDirectDependencies("[]");
         componentWithoutVuln = qm.createComponent(componentWithoutVuln, false);
 
         var componentWithVuln = new Component();
         componentWithVuln.setProject(project);
         componentWithVuln.setName("acme-lib-b");
         componentWithVuln.setVersion("1.0.0");
+        componentWithVuln.setDirectDependencies("[]");
         componentWithVuln = qm.createComponent(componentWithVuln, false);
         qm.addVulnerability(vulnerability, componentWithVuln, AnalyzerIdentity.INTERNAL_ANALYZER);
 
@@ -218,9 +252,31 @@ public class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setProject(project);
         componentWithVulnAndAnalysis.setName("acme-lib-c");
         componentWithVulnAndAnalysis.setVersion("1.0.0");
+        componentWithVulnAndAnalysis.setDirectDependencies("[]");
         componentWithVulnAndAnalysis = qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, AnalyzerIdentity.INTERNAL_ANALYZER);
         qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+
+        // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
+        componentWithoutVuln.setDirectDependencies("""
+                [
+                    {"uuid": "%s"}
+                ]
+                """.formatted(componentWithVuln.getUuid()));
+
+        // Make project depend on componentWithoutVuln (acme-lib-a)
+        // and componentWithVulnAndAnalysis (acme-lib-c)
+        project.setDirectDependencies("""
+                [
+                    {"uuid": "%s"},
+                    {"uuid": "%s"}
+                ]
+                """
+                .formatted(
+                        componentWithoutVuln.getUuid(),
+                        componentWithVulnAndAnalysis.getUuid()
+                ));
+        qm.persist(project);
 
         final Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .queryParam("variant", "withVulnerabilities")
@@ -324,6 +380,14 @@ public class BomResourceTest extends ResourceTest {
                     ]
                 }
                 """));
+
+        // Ensure the dependency graph did not get deleted during export.
+        // https://github.com/DependencyTrack/dependency-track/issues/2494
+        qm.getPersistenceManager().refreshAll(project, componentWithoutVuln, componentWithVuln, componentWithVulnAndAnalysis);
+        assertThat(project.getDirectDependencies()).isNotNull();
+        assertThat(componentWithoutVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVulnAndAnalysis.getDirectDependencies()).isNotNull();
     }
 
     @Test
@@ -343,12 +407,14 @@ public class BomResourceTest extends ResourceTest {
         componentWithoutVuln.setProject(project);
         componentWithoutVuln.setName("acme-lib-a");
         componentWithoutVuln.setVersion("1.0.0");
+        componentWithoutVuln.setDirectDependencies("[]");
         componentWithoutVuln = qm.createComponent(componentWithoutVuln, false);
 
         var componentWithVuln = new Component();
         componentWithVuln.setProject(project);
         componentWithVuln.setName("acme-lib-b");
         componentWithVuln.setVersion("1.0.0");
+        componentWithVuln.setDirectDependencies("[]");
         componentWithVuln = qm.createComponent(componentWithVuln, false);
         qm.addVulnerability(vulnerability, componentWithVuln, AnalyzerIdentity.INTERNAL_ANALYZER);
 
@@ -356,9 +422,31 @@ public class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setProject(project);
         componentWithVulnAndAnalysis.setName("acme-lib-c");
         componentWithVulnAndAnalysis.setVersion("1.0.0");
+        componentWithVulnAndAnalysis.setDirectDependencies("[]");
         componentWithVulnAndAnalysis = qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, AnalyzerIdentity.INTERNAL_ANALYZER);
         qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+
+        // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
+        componentWithoutVuln.setDirectDependencies("""
+                [
+                    {"uuid": "%s"}
+                ]
+                """.formatted(componentWithVuln.getUuid()));
+
+        // Make project depend on componentWithoutVuln (acme-lib-a)
+        // and componentWithVulnAndAnalysis (acme-lib-c)
+        project.setDirectDependencies("""
+                [
+                    {"uuid": "%s"},
+                    {"uuid": "%s"}
+                ]
+                """
+                .formatted(
+                        componentWithoutVuln.getUuid(),
+                        componentWithVulnAndAnalysis.getUuid()
+                ));
+        qm.persist(project);
 
         final Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .queryParam("variant", "vdr")
@@ -468,6 +556,14 @@ public class BomResourceTest extends ResourceTest {
                     ]
                 }
                 """));
+
+        // Ensure the dependency graph did not get deleted during export.
+        // https://github.com/DependencyTrack/dependency-track/issues/2494
+        qm.getPersistenceManager().refreshAll(project, componentWithoutVuln, componentWithVuln, componentWithVulnAndAnalysis);
+        assertThat(project.getDirectDependencies()).isNotNull();
+        assertThat(componentWithoutVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVulnAndAnalysis.getDirectDependencies()).isNotNull();
     }
 
     @Test

@@ -59,8 +59,14 @@ public class SnykParser {
         if (vulnAttributes != null && vulnAttributes.optString("type").equalsIgnoreCase("package_vulnerability")) {
             // get the references of the data record (vulnerability)
             final JSONObject slots = vulnAttributes.optJSONObject("slots");
-            if (slots != null && slots.optJSONArray("references") != null) {
-                vulnerability.setReferences(addReferences(slots));
+            if (slots != null) {
+                var publishedTime = jsonStringToTimestamp(slots.optString("publication_time"));
+                if (publishedTime != null) {
+                    vulnerability.setPublished(Date.from(publishedTime.toInstant()));
+                }
+                if (slots.optJSONArray("references") != null) {
+                    vulnerability.setReferences(addReferences(slots));
+                }
             }
             vulnerability.setTitle(vulnAttributes.optString("title", null));
             vulnerability.setDescription(vulnAttributes.optString("description", null));

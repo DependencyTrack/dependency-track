@@ -225,7 +225,29 @@ public class BomResource extends AlpineResource {
                 Project project = qm.getProject(request.getProjectName(), request.getProjectVersion());
                 if (project == null && request.isAutoCreate()) {
                     if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT) || hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
-                        project = qm.createProject(StringUtils.trimToNull(request.getProjectName()), null, StringUtils.trimToNull(request.getProjectVersion()), null, null, null, true, true);
+                        Project parent = null;
+                        if (request.getParentUUID() != null || request.getParentName() != null) {
+                            if (request.getParentUUID() != null) {
+                                failOnValidationError(validator.validateProperty(request, "parentUUID"));
+                                parent = qm.getObjectByUuid(Project.class, request.getParentUUID());
+                            } else {
+                                failOnValidationError(
+                                        validator.validateProperty(request, "parentName"),
+                                        validator.validateProperty(request, "parentVersion")
+                                );
+                                final String trimmedParentName = StringUtils.trimToNull(request.getParentName());
+                                final String trimmedParentVersion = StringUtils.trimToNull(request.getParentVersion());
+                                parent = qm.getProject(trimmedParentName, trimmedParentVersion);
+                            }
+
+                            if (parent == null) { // if parent project is specified but not found
+                                return Response.status(Response.Status.NOT_FOUND).entity("The parent component could not be found.").build();
+                            } else if (! qm.hasAccess(super.getPrincipal(), parent)) {
+                                return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified parent project is forbidden").build();
+                            }
+                        }
+
+                        project = qm.createProject(StringUtils.trimToNull(request.getProjectName()), null, StringUtils.trimToNull(request.getProjectVersion()), null, parent, null, true, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
                     } else {

@@ -18,13 +18,12 @@
  */
 package org.dependencytrack.policy;
 
-import alpine.common.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-
-import java.util.ArrayList;
-import java.util.List;
+import alpine.common.logging.Logger;
 
 /**
  * Evaluates a components Package URL against a policy.
@@ -50,17 +49,15 @@ public class PackageURLPolicyEvaluator extends AbstractPolicyEvaluator {
     @Override
     public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
         final List<PolicyConditionViolation> violations = new ArrayList<>();
-        if (component.getPurl() == null) {
-            return violations;
-        }
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
+            final var canonicalPurl = component.getPurl() == null ? null : component.getPurl().canonicalize();
             if (PolicyCondition.Operator.MATCHES == condition.getOperator()) {
-                if (Matcher.matches(component.getPurl().canonicalize(), condition.getValue())) {
+                if (Matcher.matches(canonicalPurl, condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
             } else if (PolicyCondition.Operator.NO_MATCH == condition.getOperator()) {
-                if (!Matcher.matches(component.getPurl().canonicalize(), condition.getValue())) {
+                if (!Matcher.matches(canonicalPurl, condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
             }

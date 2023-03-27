@@ -20,6 +20,7 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.exception.MetaAnalyzerException;
 import org.json.JSONObject;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -132,8 +133,9 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             });
         } catch (IOException ex) {
             handleRequestException(LOGGER, ex);
+        } catch (Exception ex) {
+            throw new MetaAnalyzerException(ex);
         }
-
 
         return meta;
     }

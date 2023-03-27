@@ -18,14 +18,13 @@
  */
 package org.dependencytrack.persistence;
 
+import java.lang.reflect.Method;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.lang.reflect.Method;
 
 public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
 
@@ -72,7 +71,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultRepositories");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(13, qm.getAllRepositories().size());
+        Assert.assertEquals(14, qm.getAllRepositories().size());
     }
 
     @Test

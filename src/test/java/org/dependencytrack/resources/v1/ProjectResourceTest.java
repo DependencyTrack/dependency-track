@@ -23,6 +23,7 @@ import alpine.notification.Notification;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
@@ -40,7 +41,6 @@ import javax.ws.rs.HttpMethod;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -79,6 +79,38 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertEquals(100, json.size());
         Assert.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
         Assert.assertEquals("999", json.getJsonObject(0).getString("version"));
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/2583
+    public void getProjectsWithAclEnabledTest() {
+        // Enable portfolio access control.
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                null
+        );
+
+        // Create project and give access to current principal's team.
+        final Project accessProject = qm.createProject("acme-app-a", null, "1.0.0", null, null, null, true, false);
+        accessProject.setAccessTeams(List.of(team));
+        qm.persist(accessProject);
+
+        // Create a second project that the current principal has no access to.
+        qm.createProject("acme-app-b", null, "2.0.0", null, null, null, true, false);
+
+        final Response response = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals("1", response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(1, json.size());
+        Assert.assertEquals("acme-app-a", json.getJsonObject(0).getString("name"));
+        Assert.assertEquals("1.0.0", json.getJsonObject(0).getString("version"));
     }
 
     @Test

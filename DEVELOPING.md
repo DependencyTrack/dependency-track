@@ -86,6 +86,101 @@ mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 
 The above command is also suitable for debugging. For IntelliJ, simply *Debug* the [Jetty](./.run/Jetty.run.xml) run configuration.
 
+### Inspecting the database
+
+Unless configured otherwise, Dependency-Track will use an [H2](https://www.h2database.com/html/main.html) database in 
+`embedded` mode. The database file is located at `~/.dependency-track/db.mv.db`.
+
+You can open and inspect the database file, for example with tools like [DBeaver](https://dbeaver.io/) or 
+[IntelliJ Ultimate's integrated one](https://www.jetbrains.com/help/idea/database-tool-window.html),
+using the following connection details:
+
+* JDBC URL: `jdbc:h2:~/.dependency-track/db`
+* Username: `sa`
+* Password: none
+
+These are the values defined via `alpine.database.*` properties in the
+[`application.properties`](src/main/resources/application.properties) file.
+
+> **Warning**  
+> Make sure that your database tool uses version **2** of the H2 database driver.
+> Connections using version 1 of the driver will fail!
+
+A limitation of the H2 database in `embedded` mode is that *only a single process at a time can access it*.
+If you want to inspect the database while Dependency-Track is running, you have two options:
+
+#### Enable the embedded H2 console
+
+When building Dependency-Track locally, you can opt in to enabling an embedded 
+[H2 console](http://www.h2database.com/html/quickstart.html#h2_console). 
+
+To enable it, simply pass the additional `h2-console` Maven profile to your build command.
+This also works with the Jetty Maven plugin:
+
+```shell
+mvn jetty:run -P enhance -P h2-console -Dlogback.configurationFile=src/main/docker/logback.xml
+```
+
+Once enabled, the console will be available at http://localhost:8080/h2-console.
+
+> **Note**  
+> Supporting the H2 console via a dedicated build profile instead of a runtime configuration 
+> was an [active decision](https://github.com/DependencyTrack/dependency-track/pull/2592). Exposing
+> the console is a security risk, and should only ever be done for local testing purposes. Enabling
+> the console is not possible in official builds distributed via GitHub releases and Docker Hub.
+
+#### Use an external database
+
+Simply set up any of the [supported external databases](https://docs.dependencytrack.org/getting-started/database-support/).
+Docker makes this very easy. Here's an example for how you can do it with PostgreSQL:
+
+```shell
+# Launch a Postgres container
+docker run -d --name postgres -p "127.0.0.1:5432:5432" \
+  -e "POSTGRES_DB=dtrack" -e "POSTGRES_USER=dtrack" -e "POSTGRES_PASSWORD=dtrack" \
+  postgres:15-alpine
+
+# Configure the database connection for Dependency-Track
+export ALPINE_DATABASE_MODE=external
+export ALPINE_DATABASE_URL=jdbc:postgresql://localhost:5432/dtrack
+export ALPINE_DATABASE_DRIVER=org.postgresql.Driver
+export ALPINE_DATABASE_USERNAME=dtrack
+export ALPINE_DATABASE_PASSWORD=dtrack
+
+# Launch Dependency-Track
+mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
+```
+
+You can now use tooling native to your chosen RDBMS, for example [pgAdmin](https://www.pgadmin.org/).
+
+### Skipping NVD mirroring
+
+For local debugging and testing, it is sometimes desirable to skip the NVD mirroring process
+that is executed a minute after Dependency-Track has started.
+
+This can be achieved by tricking Dependency-Track into thinking that it already
+mirrored the NVD data, so there's no need to re-download it again.
+
+Prior to starting Dependency-Track, execute the `data-nist-generate-dummy.sh` script:
+
+```shell
+./scripts/data-nist-generate-dummy.sh
+```
+
+> **Note** 
+> The `modified` feed will still be downloaded. But that feed is so small that it
+> doesn't really have an impact.
+
+When testing containerized deployments, simply mount the local directory containing the prepared
+NVD data into the container:
+
+```shell
+./scripts/data-nist-generate-dummy.sh
+docker run -d --name dtrack \
+  -v "$HOME/.dependency-track:/data/.dependency-track" \
+  -p '127.0.0.1:8080:8080' dependencytrack/apiserver:snapshot
+```
+
 ## Debugging with Frontend
 
 Start the API server via the Jetty Maven plugin (see [Debugging](#debugging) above). The API server will listen on 

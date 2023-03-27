@@ -85,7 +85,7 @@ public class DefectDojoClientTest {
                         withBody(WireMock.equalTo(engagementId))).willReturn(WireMock.aResponse().withStatus(201).withHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
         DefectDojoUploader uploader = new DefectDojoUploader();
         DefectDojoClient client = new DefectDojoClient(uploader, new URL(wireMockRule.baseUrl() + "/defectdojo"));
-        client.reimportDependencyTrackFindings(token, engagementId, new NullInputStream(0), testId);
+        client.reimportDependencyTrackFindings(token, engagementId, new NullInputStream(0), testId, false);
         WireMock.verify(WireMock.postRequestedFor(WireMock.urlPathEqualTo("/defectdojo/api/v2/reimport-scan/"))
                 .withAnyRequestBodyPart(WireMock.aMultipart().withName("engagement").
                         withBody(WireMock.equalTo(engagementId)
@@ -103,7 +103,7 @@ public class DefectDojoClientTest {
                         withBody(WireMock.equalTo(""))).willReturn(WireMock.aResponse().withStatus(400).withHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
         DefectDojoUploader uploader = new DefectDojoUploader();
         DefectDojoClient client = new DefectDojoClient(uploader, new URL(wireMockRule.baseUrl() + "/defectdojo"));
-        client.reimportDependencyTrackFindings(token, engagementId, new NullInputStream(16), testId);
+        client.reimportDependencyTrackFindings(token, engagementId, new NullInputStream(16), testId, false);
         WireMock.verify(WireMock.postRequestedFor(WireMock.urlPathEqualTo("/defectdojo/api/v2/reimport-scan/"))
                 .withAnyRequestBodyPart(WireMock.aMultipart().withName("engagement").
                         withBody(WireMock.equalTo(engagementId)

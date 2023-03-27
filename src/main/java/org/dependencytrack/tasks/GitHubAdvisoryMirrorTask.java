@@ -18,17 +18,18 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.common.logging.Logger;
-import alpine.event.framework.Event;
-import alpine.event.framework.LoggableSubscriber;
-import alpine.model.ConfigProperty;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
-import com.github.packageurl.MalformedPackageURLException;
-import com.github.packageurl.PackageURL;
-import com.github.packageurl.PackageURLBuilder;
-import io.pebbletemplates.pebble.PebbleEngine;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -53,20 +54,17 @@ import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.github.graphql.model.PageableList;
 import org.dependencytrack.persistence.QueryManager;
 import org.json.JSONObject;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+import com.github.packageurl.PackageURLBuilder;
+import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
+import alpine.event.framework.LoggableSubscriber;
+import alpine.model.ConfigProperty;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
@@ -182,7 +180,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      */
     void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
         LOGGER.debug("Updating datasource with GitHub advisories");
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager().withL2CacheDisabled()) {
             for (final GitHubSecurityAdvisory advisory : advisories) {
                 LOGGER.debug("Synchronizing GitHub advisory: " + advisory.getGhsaId());
                 final Vulnerability mappedVulnerability = mapAdvisoryToVulnerability(qm, advisory);
@@ -326,6 +324,13 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         return null;
     }
 
+    /**
+     * Map GitHub ecosystem to PackageURL type
+     *
+     * @param ecosystem GitHub ecosystem
+     * @return the PackageURL for the ecosystem
+     * @see https://github.com/github/advisory-database
+     */
     private String mapGitHubEcosystemToPurlType(final String ecosystem) {
         switch (ecosystem.toUpperCase()) {
             case "MAVEN":

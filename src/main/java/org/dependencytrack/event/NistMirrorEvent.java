@@ -18,7 +18,9 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
+import alpine.event.framework.SingletonCapableEvent;
+
+import java.util.UUID;
 
 /**
  * Defines an event used to start a mirror of the NVD.
@@ -26,6 +28,13 @@ import alpine.event.framework.Event;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NistMirrorEvent implements Event {
+public class NistMirrorEvent extends SingletonCapableEvent {
+
+    private static final UUID CHAIN_IDENTIFIER = UUID.fromString("077fa5fe-2f7a-457f-a0f1-9e9a0e578ede");
+
+    public NistMirrorEvent() {
+        setChainIdentifier(CHAIN_IDENTIFIER);
+        setSingleton(true);
+    }
 
 }

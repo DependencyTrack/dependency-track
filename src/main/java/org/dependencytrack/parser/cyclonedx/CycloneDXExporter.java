@@ -83,7 +83,14 @@ public class CycloneDXExporter {
         bom.setComponents(cycloneComponents);
         bom.setServices(cycloneServices);
         bom.setVulnerabilities(cycloneVulnerabilities);
-        if (components != null) ModelConverter.generateDependencies(qm, bom, project, components);
+        // TODO: Graph generation is not implemented yet; The method being called is used for IMPORTING of a BOM,
+        // it just happened to have a fitting method signature. Calling it will not generate a dependency graph
+        // in the BOM, but it will delete all dependency relationships in the to-be-exported project.
+        // Commenting out for 4.8.0. A proper implementation is targeted for 4.9.0.
+        // See:
+        //   * https://github.com/DependencyTrack/dependency-track/issues/2494
+        //   * https://github.com/DependencyTrack/dependency-track/issues/2616
+        // if (components != null) ModelConverter.generateDependencies(qm, bom, project, components);
         return bom;
     }
 

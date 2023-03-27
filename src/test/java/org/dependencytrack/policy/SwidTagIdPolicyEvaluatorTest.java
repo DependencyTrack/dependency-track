@@ -18,14 +18,13 @@
  */
 package org.dependencytrack.policy;
 
+import java.util.List;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 public class SwidTagIdPolicyEvaluatorTest extends PersistenceCapableTest {
 
@@ -35,6 +34,20 @@ public class SwidTagIdPolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.SWID_TAGID, PolicyCondition.Operator.MATCHES, "0123456789");
         Component component = new Component();
         component.setSwidTagId("0123456789");
+        PolicyEvaluator evaluator = new SwidTagIdPolicyEvaluator();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+        PolicyConditionViolation violation = violations.get(0);
+        Assert.assertEquals(component, violation.getComponent());
+        Assert.assertEquals(condition, violation.getPolicyCondition());
+    }
+
+    @Test
+    public void hasMatchNullTag() {
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.SWID_TAGID, PolicyCondition.Operator.NO_MATCH, ".+");
+        Component component = new Component();
+        component.setSwidTagId(null);
         PolicyEvaluator evaluator = new SwidTagIdPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(1, violations.size());

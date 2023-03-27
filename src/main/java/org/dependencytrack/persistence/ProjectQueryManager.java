@@ -644,7 +644,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (includeACL) {
             List<Team> accessTeams = source.getAccessTeams();
-            if (CollectionUtils.isEmpty(accessTeams)) {
+            if (!CollectionUtils.isEmpty(accessTeams)) {
                 project.setAccessTeams(new ArrayList<>(accessTeams));
             }
         }
@@ -849,7 +849,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                         sb.append(" || ");
                     }
                 }
-                if (inputFilter != null) {
+                if (inputFilter != null && !inputFilter.isBlank()) {
                     query.setFilter(inputFilter + " && (" + sb.toString() + ")");
                 } else {
                     query.setFilter(sb.toString());

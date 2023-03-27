@@ -108,8 +108,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
-        EVENT_SERVICE_ST.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
-        EVENT_SERVICE_ST.subscribe(EpssMirrorEvent.class, EpssMirrorTask.class);
+        EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
+        EVENT_SERVICE.subscribe(EpssMirrorEvent.class, EpssMirrorTask.class);
 
         TaskScheduler.getInstance();
     }
@@ -148,8 +148,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.shutdown();
 
         EVENT_SERVICE_ST.unsubscribe(IndexTask.class);
-        EVENT_SERVICE_ST.unsubscribe(NistMirrorTask.class);
-        EVENT_SERVICE_ST.unsubscribe(EpssMirrorTask.class);
+        EVENT_SERVICE.unsubscribe(NistMirrorTask.class);
+        EVENT_SERVICE.unsubscribe(EpssMirrorTask.class);
         EVENT_SERVICE_ST.shutdown();
     }
 }

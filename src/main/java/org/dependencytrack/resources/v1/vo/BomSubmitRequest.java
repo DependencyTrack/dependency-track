@@ -105,12 +105,15 @@ public final class BomSubmitRequest {
     public String getProjectVersion() {
         return projectVersion;
     }
+
     public String getParentUUID() {
         return parentUUID;
     }
+
     public String getParentName() {
         return parentName;
     }
+
     public String getParentVersion() {
         return parentVersion;
     }

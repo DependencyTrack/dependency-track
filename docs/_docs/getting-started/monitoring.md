@@ -5,6 +5,33 @@ chapter: 1
 order: 12
 ---
 
+
+### Health
+
+Starting with v4.8.0, Dependency-Track exposes health information according to the [MicroProfile Health] specification.
+Refer to the specification for details on how the exposed endpoints behave (i.e. [MicroProfile Health REST interfaces specifications]).
+
+Currently, only a single [readiness check] is included. The *database* check verifies that database connections can be
+acquired and used successfully. The check spans both connection pools (see [Connection Pooling]).
+
+```json
+{
+    "status": "UP",
+    "checks": [
+        {
+            "name": "database",
+            "status": "UP",
+            "data": {
+                "nontx_connection_pool": "UP",
+                "tx_connection_pool": "UP"
+            }
+        }
+    ]
+}
+```
+
+### Metrics
+
 The API server can be configured to expose system metrics via the Prometheus [text-based exposition format].
 They can then be collected and visualized using tools like [Prometheus] and [Grafana]. Especially for containerized
 deployments where directly attaching to the underlying Java Virtual Machine (JVM) is not possible, monitoring 
@@ -19,13 +46,13 @@ To enable metrics exposition, set the `alpine.metrics.enabled` property to `true
 Metrics will be exposed in the `/metrics` endpoint, and can optionally be protected using 
 basic authentication via `alpine.metrics.auth.username` and `alpine.metrics.auth.password`.
 
-### Exposed Metrics
+#### Exposed Metrics
 
 Exposed metrics include various general purpose system and JVM statistics (CPU and Heap usage, thread states, 
 garbage collector activity etc.), but also some related to Dependency-Track's internal event and notification system.
 More metrics covering other areas of Dependency-Track will be added in future versions.
 
-#### Database
+##### Database
 
 Metrics of the ORM used by the Dependency-Track API server are exposed under the `datanucleus` namespace. 
 They provide a high-level overview of how many, and which kind of persistence operations are performend:
@@ -145,7 +172,7 @@ hikaricp_connections_acquire_seconds_max{pool="non-transactional",} 1.41889E-4
 hikaricp_connections_acquire_seconds_max{pool="transactional",} 1.77837E-4
 ```
 
-#### Event and Notification System
+##### Event and Notification System
 
 Event and notification metrics include the following:
 
@@ -216,7 +243,7 @@ doing keeping up with the work it's being exposed to. For example, a constantly 
 value combined with a high number of `executor_queued_tasks` may indicate that the configured `alpine.worker.pool.size` 
 is too small for the workload at hand.
 
-#### Retries
+##### Retries
 
 Dependency-Track will occasionally retry requests to external services. Metrics about this behavior are
 exposed in the following format:
@@ -230,7 +257,7 @@ resilience4j_retry_calls_total{kind="successful_without_retry",name="snyk-api",}
 
 Where `name` describes the remote endpoint that Dependency-Track uses retries for.
 
-### Grafana Dashboard
+#### Grafana Dashboard
 
 Because [Micrometer](https://micrometer.io/) is used to collect and expose metrics, common Grafana dashboards for
 Micrometer should just work.
@@ -253,7 +280,10 @@ An [example dashboard] is provided as a quickstart. Refer to the [Grafana docume
 [executors]: https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html
 [Grafana]: https://grafana.com/
 [Grafana documentation]: https://grafana.com/docs/grafana/latest/dashboards/export-import/#import-dashboard
+[MicroProfile Health]: https://download.eclipse.org/microprofile/microprofile-health-3.1/microprofile-health-spec-3.1.html
+[MicroProfile Health REST interfaces specifications]: https://download.eclipse.org/microprofile/microprofile-health-3.1/microprofile-health-spec-3.1.html#_appendix_a_rest_interfaces_specifications
 [Prometheus]: https://prometheus.io/
+[readiness check]: https://download.eclipse.org/microprofile/microprofile-health-3.1/microprofile-health-spec-3.1.html#_readiness_check
 [Snyk]: {{ site.baseurl }}{% link _docs/datasources/snyk.md %}
 [text-based exposition format]: https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format
 [thread states]: https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Thread.State.html

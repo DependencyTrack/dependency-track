@@ -75,6 +75,30 @@ alpine.database.url=jdbc:mysql://localhost:3306/dtrack?autoReconnect=true&useSSL
 MySQL may erroneously report index key length violations ("Specified key was too long"), when in fact the multi-byte
 key length is lower than the actual value. **Do not use MySQL if don't know how to work around errors like this**!
 
+#### Cloud SQL
+
+Connecting to Cloud SQL with IAM and mTLS is supported using the Cloud SQL database connectors included.
+
+More information [here](https://github.com/GoogleCloudPlatform/cloud-sql-jdbc-socket-factory)
+
+##### CloudSQL PostgreSQL
+
+```
+jdbc:postgresql:///<DATABASE_NAME>?cloudSqlInstance=<INSTANCE_CONNECTION_NAME>&socketFactory=com.google.cloud.sql.postgres.SocketFactory
+```
+
+##### CloudSQL Microsoft SQL Server
+
+```
+jdbc:sqlserver://localhost;databaseName=<DATABASE_NAME>;socketFactoryClass=com.google.cloud.sql.sqlserver.SocketFactory;socketFactoryConstructorArg=<INSTANCE_CONNECTION_NAME>
+```
+
+##### CloudSQL MySQL
+
+```
+jdbc:mysql:///<DATABASE_NAME>?cloudSqlInstance=<INSTANCE_CONNECTION_NAME>&socketFactory=com.google.cloud.sql.mysql.SocketFactory
+```
+
 ### Connection Pooling
 
 The Dependency-Track API server utilizes **two** database connection pools - one for *transactional* and one for 

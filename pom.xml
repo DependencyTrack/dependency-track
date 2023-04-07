@@ -286,6 +286,21 @@
             <artifactId>postgresql</artifactId>
             <version>${lib.jdbc-driver.postgresql.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>mysql-socket-factory-connector-j-8</artifactId>
+            <version>1.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>postgres-socket-factory</artifactId>
+            <version>1.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>cloud-sql-connector-jdbc-sqlserver</artifactId>
+            <version>1.11.0</version>
+        </dependency>
         <!-- Xerces -->
         <dependency>
             <groupId>xerces</groupId>

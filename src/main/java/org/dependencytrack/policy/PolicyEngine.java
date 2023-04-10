@@ -77,6 +77,7 @@ public class PolicyEngine {
 
     private List<PolicyViolation> evaluate(final QueryManager qm, final List<Policy> policies, final Component component) {
         final List<PolicyViolation> policyViolations = new ArrayList<>();
+        final List<PolicyViolation> existingPolicyViolations = qm.detach(qm.getAllPolicyViolations(component));
         for (final Policy policy : policies) {
             if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())
                     || isPolicyAssignedToProjectTag(policy, component.getProject())) {
@@ -106,7 +107,9 @@ public class PolicyEngine {
         }
         qm.reconcilePolicyViolations(component, policyViolations);
         for (final PolicyViolation pv : qm.getAllPolicyViolations(component)) {
-            NotificationUtil.analyzeNotificationCriteria(qm, pv);
+            if (existingPolicyViolations.stream().noneMatch(existingViolation -> existingViolation.getId() == pv.getId())) {
+                NotificationUtil.analyzeNotificationCriteria(qm, pv);
+            }
         }
         return policyViolations;
     }

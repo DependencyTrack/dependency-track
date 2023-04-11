@@ -31,11 +31,11 @@
       "facts": [
         {
           "name": "Project",
-          "value": "{{ subject.dependency.project.toString | escape(strategy="json") }}"
+          "value": "{{ subject.component.project.toString | escape(strategy="json") }}"
         },
         {
           "name": "Component",
-          "value": "{{ subject.dependency.component.toString | escape(strategy="json") }}"
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
         }
       ],
       {% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}

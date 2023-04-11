@@ -82,8 +82,9 @@ public class CycloneDXVexImporter {
 
     private boolean shouldAuditVulnerability(org.cyclonedx.model.vulnerability.Vulnerability bomVulnerability, Vulnerability dtVulnerability) {
         boolean result = true;
+        result = result && bomVulnerability.getSource() != null;
         result = result && dtVulnerability.getVulnId().equals(bomVulnerability.getId());
-        result = result && (bomVulnerability.getSource() == null || dtVulnerability.getSource().equalsIgnoreCase(bomVulnerability.getSource().getName()));
+        result = result && dtVulnerability.getSource().equalsIgnoreCase(bomVulnerability.getSource().getName());
         return result;
     }
 

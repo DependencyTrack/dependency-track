@@ -46,21 +46,29 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
 
         List<org.cyclonedx.model.vulnerability.Vulnerability> audits = new LinkedList<>();
 
-        var unknownSourceVulnerability = new Vulnerability();
-        unknownSourceVulnerability.setVulnId("CVE-2020-25649");
-        unknownSourceVulnerability.setSource(Vulnerability.Source.NVD);
-        unknownSourceVulnerability.setSeverity(Severity.HIGH);
-        unknownSourceVulnerability.setComponents(List.of(component));
-        unknownSourceVulnerability = qm.createVulnerability(unknownSourceVulnerability, false);
-        qm.addVulnerability(unknownSourceVulnerability, component, AnalyzerIdentity.NONE);
+        var unknownVexSourceVulnerability = new Vulnerability();
+        unknownVexSourceVulnerability.setVulnId("CVE-2020-25649");
+        unknownVexSourceVulnerability.setSource(Vulnerability.Source.NVD);
+        unknownVexSourceVulnerability.setSeverity(Severity.HIGH);
+        unknownVexSourceVulnerability.setComponents(List.of(component));
+        unknownVexSourceVulnerability = qm.createVulnerability(unknownVexSourceVulnerability, false);
+        qm.addVulnerability(unknownVexSourceVulnerability, component, AnalyzerIdentity.NONE);
 
-        var mismatchSourceVulnerability = new Vulnerability();
-        mismatchSourceVulnerability.setVulnId("CVE-2020-25650");
-        mismatchSourceVulnerability.setSource(Vulnerability.Source.NVD);
-        mismatchSourceVulnerability.setSeverity(Severity.HIGH);
-        mismatchSourceVulnerability.setComponents(List.of(component));
-        mismatchSourceVulnerability = qm.createVulnerability(mismatchSourceVulnerability, false);
-        qm.addVulnerability(mismatchSourceVulnerability, component, AnalyzerIdentity.NONE);
+        var mismatchVexSourceVulnerability = new Vulnerability();
+        mismatchVexSourceVulnerability.setVulnId("CVE-2020-25650");
+        mismatchVexSourceVulnerability.setSource(Vulnerability.Source.NVD);
+        mismatchVexSourceVulnerability.setSeverity(Severity.HIGH);
+        mismatchVexSourceVulnerability.setComponents(List.of(component));
+        mismatchVexSourceVulnerability = qm.createVulnerability(mismatchVexSourceVulnerability, false);
+        qm.addVulnerability(mismatchVexSourceVulnerability, component, AnalyzerIdentity.NONE);
+
+        var noVexSourceVulnerability = new Vulnerability();
+        noVexSourceVulnerability.setVulnId("CVE-2020-25651");
+        noVexSourceVulnerability.setSource(Vulnerability.Source.GITHUB);
+        noVexSourceVulnerability.setSeverity(Severity.HIGH);
+        noVexSourceVulnerability.setComponents(List.of(component));
+        noVexSourceVulnerability = qm.createVulnerability(noVexSourceVulnerability, false);
+        qm.addVulnerability(noVexSourceVulnerability, component, AnalyzerIdentity.NONE);
 
         // Build vulnerabilities for each available and known vulnerability source
         for (var source : sources) {
@@ -76,6 +84,9 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
             var audit = new org.cyclonedx.model.vulnerability.Vulnerability();
             audit.setBomRef(UUID.randomUUID().toString());
             audit.setId(vulnId);
+            var auditSource = new org.cyclonedx.model.vulnerability.Vulnerability.Source();
+            auditSource.setName(source.name());
+            audit.setSource(auditSource);
             var analysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
             analysis.setState(org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.FALSE_POSITIVE);
             analysis.setDetail("Unit test");
@@ -96,7 +107,7 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         // Assert
         final Query<Analysis> query = qm.getPersistenceManager().newQuery(Analysis.class, "project == :project");
         var analyses =  (List<Analysis>) query.execute(project);
-        // CVE-2020-256[49|50] are not audited otherwise analyses.size would have been equal to sources.size()+2
+        // CVE-2020-256[49|50|51] are not audited otherwise analyses.size would have been equal to sources.size()+3
         Assert.assertEquals(sources.size(), analyses.size());
         Assertions.assertThat(analyses).allSatisfy(analysis -> {
             Assertions.assertThat(analysis.getVulnerability().getVulnId()).isNotEqualTo("CVE-2020-25649");

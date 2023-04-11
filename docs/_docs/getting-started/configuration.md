@@ -461,10 +461,10 @@ By default, Dependency Track will generate an administrative `admin` user with a
 For containerized deployments, you can override this behaviour on first startup using the environment variables below :
 
 ```shell
-DEPENDENCY_TRACK_ADMIN_USERNAME
-DEPENDENCY_TRACK_ADMIN_PASSWORD
-DEPENDENCY_TRACK_ADMIN_FULL_NAME
-DEPENDENCY_TRACK_ADMIN_EMAIL
+DT_INIT_ADMIN_USERNAME
+DT_INIT_ADMIN_PASSWORD
+DT_INIT_ADMIN_FULL_NAME
+DT_INIT_ADMIN_EMAIL
 ```
 
 #### Administrative configuration
@@ -483,7 +483,7 @@ VULNERABILITY_SOURCE_NVD_ENABLED("vuln-source", "nvd.enabled", "true", PropertyT
 translate to environment variable
 
 ```
-DT_VULN_SOURCE_NVD_ENABLED
+DT_INIT_VULN_SOURCE_NVD_ENABLED
 ```
 
 **Please note that the environment variables will be processed only on the first startup**. Once loaded up, the database table `CONFIGPROPERTY` is the single source of truth. 

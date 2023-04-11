@@ -50,21 +50,21 @@ public class DefaultObjectGenerator implements ServletContextListener {
 
     static final String DEFAULT_ADMIN_USERNAME = "admin";
 
-    static final String ADMIN_USERNAME_ENV_VARIABLE = "DEPENDENCY_TRACK_ADMIN_USERNAME";
+    static final String ADMIN_USERNAME_ENV_VARIABLE = "DT_INIT_ADMIN_USERNAME";
 
     static final String DEFAULT_ADMIN_PASSWORD = "admin";
 
-    static final String ADMIN_PASSWORD_ENV_VARIABLE = "DEPENDENCY_TRACK_ADMIN_PASSWORD";
+    static final String ADMIN_PASSWORD_ENV_VARIABLE = "DT_INIT_ADMIN_PASSWORD";
 
     static final String DEFAULT_ADMIN_FULL_NAME = "Administrator";
 
-    static final String ADMIN_FULL_NAME_ENV_VARIABLE = "DEPENDENCY_TRACK_ADMIN_FULL_NAME";
+    static final String ADMIN_FULL_NAME_ENV_VARIABLE = "DT_INIT_ADMIN_FULL_NAME";
 
     static final String DEFAULT_ADMIN_EMAIL = "admin@localhost";
 
-    static final String ADMIN_EMAIL_ENV_VARIABLE = "DEPENDENCY_TRACK_ADMIN_EMAIL";
+    static final String ADMIN_EMAIL_ENV_VARIABLE = "DT_INIT_ADMIN_EMAIL";
 
-    static final String ENV_VARIABLE_NAME_PREFIX = "DT";
+    static final String ENV_VARIABLE_NAME_PREFIX = "DT_INIT";
 
     /**
      * {@inheritDoc}

@@ -27,6 +27,29 @@
           "value": "{{ subject.component.toString | escape(strategy="json") }}"
         }
       ],
+      {% elseif notification.group == "VULNERABILITY_UPDATED" %}
+      "facts": [
+        {
+          "name": "VulnID",
+          "value": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+        },
+        {
+          "name": "Old Severity",
+          "value": "{{ subject.vulnerabilityUpdateDiff.oldSeverity | escape(strategy="json") }}"
+        },
+        {
+          "name": "New Severity",
+          "value": "{{ subject.vulnerabilityUpdateDiff.newSeverity | escape(strategy="json") }}"
+        },
+        {
+          "name": "Source",
+          "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
+        },
+        {
+          "name": "Component",
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
+        }
+      ],
       {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
       "facts": [
         {

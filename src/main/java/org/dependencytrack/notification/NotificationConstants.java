@@ -40,6 +40,7 @@ public class NotificationConstants {
         public static final String ANALYZER_ERROR = "Analyzer Error";
         public static final String INTEGRATION_ERROR = "Integration Error";
         public static final String NEW_VULNERABILITY = "New Vulnerability Identified";
+        public static final String VULNERABILITY_UPDATED = "Change in Severity of a Vulnerability";
         public static final String NEW_VULNERABLE_DEPENDENCY = "Vulnerable Dependency Introduced";
         public static final String ANALYSIS_DECISION_EXPLOITABLE = "Analysis Decision: Exploitable";
         public static final String ANALYSIS_DECISION_IN_TRIAGE = "Analysis Decision: In Triage";

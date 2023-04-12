@@ -38,6 +38,7 @@ import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
+import org.dependencytrack.notification.vo.VulnerabilityUpdate;
 import org.dependencytrack.persistence.QueryManager;
 
 import jakarta.json.Json;
@@ -171,6 +172,24 @@ public class NotificationRouter implements Subscriber {
                             for (final Project project : rule.getProjects()) {
                                 if (subject.getComponent().getProject().getUuid().equals(project.getUuid()) || (Boolean.TRUE.equals(rule.isNotifyChildren() && checkIfChildrenAreAffected(project, subject.getComponent().getProject().getUuid())))) {
                                     rules.add(rule);
+                                }
+                            }
+                        } else {
+                            rules.add(rule);
+                        }
+                    }
+                }
+            } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
+                    && notification.getSubject() instanceof final VulnerabilityUpdate subject) {
+                for (final NotificationRule rule: result) {
+                    if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
+                        if (rule.getProjects() != null && rule.getProjects().size() > 0
+                                && subject.getComponent() != null) {
+                            if (subject.getComponent().getProject() != null) {
+                                for (final Project project : rule.getProjects()) {
+                                    if (subject.getComponent().getProject().getUuid().equals(project.getUuid()) || (Boolean.TRUE.equals(rule.isNotifyChildren() && checkIfChildrenAreAffected(project, subject.getComponent().getProject().getUuid())))) {
+                                        rules.add(rule);
+                                    }
                                 }
                             }
                         } else {

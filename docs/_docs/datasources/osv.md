@@ -21,14 +21,14 @@ No personal access token is required to authenticate with OSV.
 ![](../../images/osv-architecture.png)
 <center><i style="font-size:80%">OSV Architecture</i></center>
 
-**Ecosystems**
+### Ecosystems
 
 User can select specific ecosystems to mirror vulnerabilities from OSV. Ecosystems need to be selected (per requirement) in order to enable OSV feature.
 Debian ecosystem package is superset of all individual versions, it is suggested to enable Debian alone instead of all Debian versions.
 
 **NOTE**: Disabling the OSV would remove current ecosystem selection, but already mirrored vulnerabilities would be retained.
 
-![](../../images/osv-configuration.png)
+![OSV Configuration](../../images/screenshots/osv-configuration.png)
 
 This integration will enable vulnerability DB of selective ecosystems in DT (as shown). It can be also used in an offline mode (without having internet access to the DT API server).
 
@@ -51,3 +51,19 @@ Current defined ecosystems are below. Updated list can be found at [https://osv-
 |  Android   | The Android ecosystem                                                                                                                                                                                                                                                                                                |
 |  GitHub Actions |    The GitHub Actions ecosystem                                                                                                                                                                                                                                                                                                                  |
 |  Pub |        The package manager for the Dart ecosystem                                                                                                                                                                                                                                                                                                              |
+
+### Vulnerability Aliases
+
+The OSV schema allows vulnerability databases to express if the same vulnerability is present in other databases
+as well, and what its identifiers in those databases are. The OSV [aliases field] is intended for this purpose. 
+
+While most of the time only truly identical vulnerabilities are listed in `aliases`, there are [multiple cases]
+where related vulnerabilities are listed, too. Alias support in Dependency-Track however is based on the
+assumption that vulnerabilities reported as aliases are indeed identical.
+
+Thus, as of Dependency-Track v4.8.0, synchronization of alias information from OSV (and other sources that provide it),
+can be selectively turned off. For OSV, synchronization is disabled per default. Enabling it is not recommended at this
+point in time.
+
+[aliases field]: https://ossf.github.io/osv-schema/#aliases-field
+[multiple cases]: https://github.com/google/osv.dev/issues/888

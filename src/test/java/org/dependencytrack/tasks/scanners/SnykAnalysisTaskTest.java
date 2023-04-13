@@ -62,6 +62,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_ALIAS_SYNC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_API_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_API_VERSION;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BASE_URL;
@@ -88,6 +89,11 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
                 "true",
                 IConfigProperty.PropertyType.BOOLEAN,
                 "snyk");
+        qm.createConfigProperty(SCANNER_SNYK_ALIAS_SYNC_ENABLED.getGroupName(),
+                SCANNER_SNYK_ALIAS_SYNC_ENABLED.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                "aliasSyncEnabled");
         qm.createConfigProperty(SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(),
                 SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName(),
                 "86400",
@@ -337,6 +343,144 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
                 .containsEntry("vulnIds", Json.createArrayBuilder().add(vulnerability.getId()).build());
 
         mockServer.verify(request(), VerificationTimes.exactly(3));
+    }
+
+    @Test
+    public void testAnalyzeWithAliasSyncDisabled() {
+        final ConfigProperty aliasSyncProperty = qm.getConfigProperty(
+                SCANNER_SNYK_ALIAS_SYNC_ENABLED.getGroupName(),
+                SCANNER_SNYK_ALIAS_SYNC_ENABLED.getPropertyName()
+        );
+        aliasSyncProperty.setPropertyValue("false");
+        qm.persist(aliasSyncProperty);
+
+        mockServer
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues")
+                        .withQueryStringParameter("version", "version"))
+                .respond(response()
+                        .withStatusCode(200)
+                        .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")
+                        .withBody("""
+                                {
+                                   "jsonapi": {
+                                     "version": "1.0"
+                                   },
+                                   "data": [
+                                     {
+                                       "id": "SNYK-JAVA-COMFASTERXMLWOODSTOX-3091135",
+                                       "type": "issue",
+                                       "attributes": {
+                                         "key": "SNYK-JAVA-COMFASTERXMLWOODSTOX-3091135",
+                                         "title": "Denial of Service (DoS)",
+                                         "type": "package_vulnerability",
+                                         "created_at": "2022-10-31T11:25:51.137662Z",
+                                         "updated_at": "2022-11-26T01:10:27.643959Z",
+                                         "description": "## Overview\\n\\nAffected versions of this package are vulnerable to Denial of Service (DoS). If the parser is running on user supplied input, an attacker may supply content that causes the parser to crash by stack overflow.\\n\\n## Details\\n\\nDenial of Service (DoS) describes a family of attacks, all aimed at making a system inaccessible to its intended and legitimate users.\\n\\nUnlike other vulnerabilities, DoS attacks usually do not aim at breaching security. Rather, they are focused on making websites and services unavailable to genuine users resulting in downtime.\\n\\nOne popular Denial of Service vulnerability is DDoS (a Distributed Denial of Service), an attack that attempts to clog network pipes to the system by generating a large volume of traffic from many machines.\\n\\nWhen it comes to open source libraries, DoS vulnerabilities allow attackers to trigger such a crash or crippling of the service by using a flaw either in the application code or from the use of open source libraries.\\n\\nTwo common types of DoS vulnerabilities:\\n\\n* High CPU/Memory Consumption- An attacker sending crafted requests that could cause the system to take a disproportionate amount of time to process. For example, [commons-fileupload:commons-fileupload](SNYK-JAVA-COMMONSFILEUPLOAD-30082).\\n\\n* Crash - An attacker sending crafted requests that could cause the system to crash. For Example,  [npm `ws` package](https://snyk.io/vuln/npm:ws:20171108)\\n\\n## Remediation\\nUpgrade `com.fasterxml.woodstox:woodstox-core` to version 5.0.4, 6.0.4 or higher.\\n## References\\n- [GitHub Issue](https://github.com/FasterXML/woodstox/issues/157)\\n- [GitHub Issue](https://github.com/x-stream/xstream/issues/304#issuecomment-1254647926)\\n- [GitHub PR](https://github.com/FasterXML/woodstox/pull/159)\\n",
+                                         "problems": [
+                                           {
+                                             "id": "CVE-2022-40152",
+                                             "source": "CVE"
+                                           },
+                                           {
+                                             "id": "GHSA-3f7h-mf4q-vrm4",
+                                             "source": "GHSA"
+                                           }
+                                         ],
+                                         "coordinates": [
+                                           {
+                                             "remedies": [
+                                               {
+                                                 "type": "indeterminate",
+                                                 "description": "Upgrade the package version to 5.0.4,6.0.4 to fix this vulnerability",
+                                                 "details": {
+                                                   "upgrade_package": "5.0.4,6.0.4"
+                                                 }
+                                               }
+                                             ],
+                                             "representation": [
+                                               "[,5.0.4)",
+                                               "[6.0.0.pr1,6.0.4)"
+                                             ]
+                                           }
+                                         ],
+                                         "severities": [
+                                           {
+                                             "source": "Snyk",
+                                             "level": "medium",
+                                             "score": 5.3,
+                                             "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+                                           },
+                                           {
+                                             "source": "NVD",
+                                             "level": "high",
+                                             "score": 7.5,
+                                             "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+                                           },
+                                           {
+                                             "source": "Red Hat",
+                                             "level": "high",
+                                             "score": 7.5,
+                                             "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+                                           }
+                                         ],
+                                         "effective_severity_level": "medium",
+                                         "slots": {
+                                           "disclosure_time": "2022-10-31T11:15:12Z",
+                                           "exploit": "Not Defined",
+                                           "publication_time": "2022-10-31T16:11:28.305760Z",
+                                           "references": [
+                                             {
+                                               "url": "https://github.com/FasterXML/woodstox/issues/157",
+                                               "title": "GitHub Issue"
+                                             },
+                                             {
+                                               "url": "https://github.com/x-stream/xstream/issues/304%23issuecomment-1254647926",
+                                               "title": "GitHub Issue"
+                                             },
+                                             {
+                                               "url": "https://github.com/FasterXML/woodstox/pull/159",
+                                               "title": "GitHub PR"
+                                             }
+                                           ]
+                                         }
+                                       }
+                                     }
+                                   ],
+                                   "links": {
+                                     "self": "/orgs/fd53e445-dc38-4b25-9c8a-5f68ed79f537/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues?version=2023-01-04&limit=1000&offset=0"
+                                   },
+                                   "meta": {
+                                     "package": {
+                                       "name": "woodstox-core",
+                                       "type": "maven",
+                                       "url": "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0",
+                                       "version": "5.0.0"
+                                     }
+                                   }
+                                 }
+                                """));
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.fasterxml.woodstox");
+        component.setName("woodstox-core");
+        component.setVersion("5.0.0");
+        component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
+        component = qm.createComponent(component, false);
+
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(component));
+
+        final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
+        assertThat(vulnerabilities).hasSize(1);
+
+        final Vulnerability vulnerability = vulnerabilities.get(0);
+        assertThat(vulnerability.getAliases()).isEmpty();
     }
 
     @Test
@@ -605,11 +749,11 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testAnalyzeWithMultipleTokens() throws Exception {
-        final ConfigProperty configProperty =  qm.getConfigProperty(
+        final ConfigProperty configProperty = qm.getConfigProperty(
                 SCANNER_SNYK_API_TOKEN.getGroupName(),
                 SCANNER_SNYK_API_TOKEN.getPropertyName());
-       configProperty.setPropertyValue(DataEncryption.encryptAsString("token1;token2;token3;token4;token5"));
-       qm.persist(configProperty);
+        configProperty.setPropertyValue(DataEncryption.encryptAsString("token1;token2;token3;token4;token5"));
+        qm.persist(configProperty);
 
         mockServer
                 .when(request()
@@ -666,8 +810,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         new SnykAnalysisTask().inform(new SnykAnalysisEvent(component));
 
         mockServer.verify(
-            request().withHeader("User-Agent", ManagedHttpClientFactory.getUserAgent()),
-            VerificationTimes.once()
+                request().withHeader("User-Agent", ManagedHttpClientFactory.getUserAgent()),
+                VerificationTimes.once()
         );
     }
 

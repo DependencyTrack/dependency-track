@@ -18,20 +18,22 @@
  */
 package org.dependencytrack.tasks.scanners;
 
-import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import alpine.Config;
+import alpine.common.logging.Logger;
+import alpine.common.metrics.Metrics;
+import alpine.common.util.UrlUtil;
+import alpine.event.framework.Event;
+import alpine.event.framework.LoggableUncaughtExceptionHandler;
+import alpine.event.framework.Subscriber;
+import alpine.model.ConfigProperty;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
+import alpine.security.crypto.DataEncryption;
+import com.github.packageurl.PackageURL;
+import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.http.Header;
@@ -60,22 +62,22 @@ import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.RoundRobinAccessor;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import com.github.packageurl.PackageURL;
-import alpine.Config;
-import alpine.common.logging.Logger;
-import alpine.common.metrics.Metrics;
-import alpine.common.util.UrlUtil;
-import alpine.event.framework.Event;
-import alpine.event.framework.LoggableUncaughtExceptionHandler;
-import alpine.event.framework.Subscriber;
-import alpine.model.ConfigProperty;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
-import alpine.security.crypto.DataEncryption;
-import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
-import io.github.resilience4j.retry.Retry;
-import io.github.resilience4j.retry.RetryConfig;
-import io.github.resilience4j.retry.RetryRegistry;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
 
 /**
  * Subscriber task that performs an analysis of component using Snyk vulnerability REST API.
@@ -133,6 +135,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
     private String apiOrgId;
     private Supplier<String> apiTokenSupplier;
     private String apiVersion;
+    private boolean aliasSyncEnabled;
     private volatile String apiVersionSunset;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
@@ -187,6 +190,8 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                     LOGGER.error("An error occurred decrypting the Snyk API Token; Skipping", ex);
                     return;
                 }
+
+                aliasSyncEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_SNYK_ALIAS_SYNC_ENABLED);
             }
             vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
             LOGGER.info("Starting Snyk vulnerability analysis task");
@@ -348,7 +353,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             if (data != null && !data.isEmpty()) {
                 final var snykParser = new SnykParser();
                 for (int count = 0; count < data.length(); count++) {
-                    Vulnerability synchronizedVulnerability = snykParser.parse(data, qm, purl, count);
+                    Vulnerability synchronizedVulnerability = snykParser.parse(data, qm, purl, count, aliasSyncEnabled);
                     addVulnerabilityToCache(component, synchronizedVulnerability);
                     final Component componentPersisted = qm.getObjectByUuid(Component.class, component.getUuid());
                     if (componentPersisted != null && synchronizedVulnerability.getVulnId() != null) {

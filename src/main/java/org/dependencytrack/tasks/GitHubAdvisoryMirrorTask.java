@@ -18,18 +18,17 @@
  */
 package org.dependencytrack.tasks;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
+import alpine.event.framework.LoggableSubscriber;
+import alpine.model.ConfigProperty;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+import com.github.packageurl.PackageURLBuilder;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -54,17 +53,21 @@ import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.github.graphql.model.PageableList;
 import org.dependencytrack.persistence.QueryManager;
 import org.json.JSONObject;
-import com.github.packageurl.MalformedPackageURLException;
-import com.github.packageurl.PackageURL;
-import com.github.packageurl.PackageURLBuilder;
-import alpine.common.logging.Logger;
-import alpine.event.framework.Event;
-import alpine.event.framework.LoggableSubscriber;
-import alpine.model.ConfigProperty;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
-import io.pebbletemplates.pebble.PebbleEngine;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
 
 public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
@@ -74,6 +77,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
     private static final String GITHUB_GRAPHQL_URL = "https://api.github.com/graphql";
 
     private final boolean isEnabled;
+    private final boolean isAliasSyncEnabled;
     private String accessToken;
     private boolean mirroredWithoutErrors = true;
 
@@ -81,6 +85,9 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         try (final QueryManager qm = new QueryManager()) {
             final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getPropertyName());
             this.isEnabled = enabled != null && Boolean.parseBoolean(enabled.getPropertyValue());
+
+            final ConfigProperty aliasSyncEnabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName());
+            isAliasSyncEnabled = aliasSyncEnabled != null && Boolean.parseBoolean(aliasSyncEnabled.getPropertyValue());
 
             final ConfigProperty accessToken = qm.getConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN.getGroupName(), VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN.getPropertyName());
             if (accessToken != null) {
@@ -192,14 +199,16 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                     if (vs != null) {
                         vsList.add(vs);
                     }
-                    for (Pair<String, String> identifier : advisory.getIdentifiers()) {
-                        if (identifier != null && identifier.getLeft() != null
-                                && "CVE" .equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
-                            LOGGER.debug("Updating vulnerability alias for " + advisory.getGhsaId());
-                            final VulnerabilityAlias alias = new VulnerabilityAlias();
-                            alias.setGhsaId(advisory.getGhsaId());
-                            alias.setCveId(identifier.getRight());
-                            qm.synchronizeVulnerabilityAlias(alias);
+                    if (isAliasSyncEnabled) {
+                        for (Pair<String, String> identifier : advisory.getIdentifiers()) {
+                            if (identifier != null && identifier.getLeft() != null
+                                    && "CVE".equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
+                                LOGGER.debug("Updating vulnerability alias for " + advisory.getGhsaId());
+                                final VulnerabilityAlias alias = new VulnerabilityAlias();
+                                alias.setGhsaId(advisory.getGhsaId());
+                                alias.setCveId(identifier.getRight());
+                                qm.synchronizeVulnerabilityAlias(alias);
+                            }
                         }
                     }
                 }

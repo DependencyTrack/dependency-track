@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
@@ -76,6 +77,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
     private Set<String> ecosystems;
     private String osvBaseUrl;
+    private boolean aliasSyncEnabled;
 
     public OsvDownloadTask() {
         try (final QueryManager qm = new QueryManager()) {
@@ -88,6 +90,13 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 this.osvBaseUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName()).getPropertyValue();
                 if (this.osvBaseUrl != null && !this.osvBaseUrl.endsWith("/")) {
                     this.osvBaseUrl += "/";
+                }
+                final ConfigProperty aliasSyncProperty = qm.getConfigProperty(
+                        VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getGroupName(),
+                        VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getPropertyName()
+                );
+                if (aliasSyncProperty != null) {
+                    this.aliasSyncEnabled = "true".equals(aliasSyncProperty.getPropertyValue());
                 }
             }
         }
@@ -167,7 +176,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                synchronizedVulnerability  = qm.synchronizeVulnerability(vulnerability, false);
             }
 
-            if (advisory.getAliases() != null) {
+            if (aliasSyncEnabled && advisory.getAliases() != null) {
                 for (int i = 0; i < advisory.getAliases().size(); i++) {
                     final String alias = advisory.getAliases().get(i);
                     final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();

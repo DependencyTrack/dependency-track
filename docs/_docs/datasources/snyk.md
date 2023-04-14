@@ -26,6 +26,26 @@ To configure the Snyk integration, navigate to *Analyzers* -> *Snyk (Beta)* in t
 
 ![Snyk Configuration](../../images/screenshots/snyk-configuration.png)
 
+### Vulnerability Aliases
+
+As Snyk vulnerabilities have their own identifier format (e.g. `SNYK-JAVA-ORGECLIPSEJETTY-2945452`),
+Snyk may additionally report identifiers of the same vulnerability in other databases, if applicable.
+
+This makes it possible to correlate Snyk's vulnerabilities with CVEs in the NVD, or GHSAs in GitHub Security Advisories, 
+for example. While oftentimes there will be a one-to-one relationship between Snyk vulnerability and CVEs or GHSAs,
+Snyk does not guarantee that the reported identifiers actually refer to the same vulnerability. Additionally, it was
+observed that:
+
+* some Snyk vulnerabilities may refer to multiple CVEs, or multiple GHSAs
+* multiple Snyk vulnerabilities may refer to the same CVEs and GHSAs
+
+Alias support in Dependency-Track however is based on the assumption that vulnerabilities reported as aliases are indeed
+identical. Given the data Snyk currently provides, it is not possible to guarantee that this assumption will hold true.
+
+Thus, as of Dependency-Track v4.8.0, synchronization of alias information from Snyk (and other sources that provide it),
+can be selectively turned off. For Snyk, synchronization is disabled per default. Enabling it is not recommended at this
+point in time.
+
 ### Rate Limiting
 
 The Snyk REST API is subject to rate limiting. At the time of writing, it allows for up to 1620 requests per minute, *per authentication token*.

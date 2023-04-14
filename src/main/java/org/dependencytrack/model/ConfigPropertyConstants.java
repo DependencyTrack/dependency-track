@@ -52,7 +52,7 @@ public enum ConfigPropertyConstants {
     SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET("scanner", "vulndb.api.oath1.consumerSecret", null, PropertyType.ENCRYPTEDSTRING, "The OAuth 1.0a consumer secret"),
     SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD("scanner", "analysis.cache.validity.period","43200000", PropertyType.NUMBER, "Validity period for individual component analysis cache"),
     SCANNER_SNYK_ENABLED("scanner", "snyk.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Snyk Vulnerability Analysis"),
-    SCANNER_SNYK_ALIAS_SYNC_ENABLED("scanner", "snyk.alias.sync.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable alias synchronization for Snyk"),
+    SCANNER_SNYK_ALIAS_SYNC_ENABLED("scanner", "snyk.alias.sync.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable alias synchronization for Snyk"),
     SCANNER_SNYK_API_TOKEN("scanner", "snyk.api.token", null, PropertyType.ENCRYPTEDSTRING, "The API token used for Snyk API authentication"),
     SCANNER_SNYK_ORG_ID("scanner", "snyk.org.id", null, PropertyType.STRING, "The Organization ID used for Snyk API access"),
     SCANNER_SNYK_API_VERSION("scanner", "snyk.api.version", "2022-11-14", PropertyType.STRING, "Snyk API version"),

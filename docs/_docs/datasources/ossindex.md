@@ -22,7 +22,7 @@ Sonatype's proprietary vulnerability intelligence data. When rate limiting becom
 to the proprietary data is desired, [register](https://ossindex.sonatype.org/user/register) a free account
 and configure the API credentials in Dependency-Track's administration panel.
 
-![OSS Index Configuration]({{ site.baseurl }}/images/screenshots/ossindex-conifguration.png)
+![OSS Index Configuration]({{ site.baseurl }}/images/screenshots/ossindex-configuration.png)
 
 Vulnerabilities from the proprietary dataset have their IDs prefixed with `sonatpye-`, and their source labeled as `OSSINDEX`.
 

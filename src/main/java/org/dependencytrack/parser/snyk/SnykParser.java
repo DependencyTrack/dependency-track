@@ -22,8 +22,6 @@ import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
@@ -34,6 +32,8 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public class SnykParser {
 
     private static final Logger LOGGER = Logger.getLogger(SnykParser.class);
 
-    public Vulnerability parse(JSONArray data, QueryManager qm, String purl, int count) {
+    public Vulnerability parse(JSONArray data, QueryManager qm, String purl, int count, boolean syncAliases) {
         Vulnerability synchronizedVulnerability = new Vulnerability();
         Vulnerability vulnerability = new Vulnerability();
         List<VulnerableSoftware> vsList = new ArrayList<>();
@@ -73,7 +73,7 @@ public class SnykParser {
             vulnerability.setCreated(Date.from(jsonStringToTimestamp(vulnAttributes.optString("created_at")).toInstant()));
             vulnerability.setUpdated(Date.from(jsonStringToTimestamp(vulnAttributes.optString("updated_at")).toInstant()));
             final JSONArray problems = vulnAttributes.optJSONArray("problems");
-            if (problems != null) {
+            if (syncAliases && problems != null) {
                 vulnerability.setAliases(computeAliases(vulnerability, qm, problems));
             }
             final JSONArray cvssArray = vulnAttributes.optJSONArray("severities");

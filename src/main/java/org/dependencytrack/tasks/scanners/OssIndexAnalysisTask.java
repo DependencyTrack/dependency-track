@@ -83,7 +83,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     private static final Logger LOGGER = Logger.getLogger(OssIndexAnalysisTask.class);
     private String apiUsername;
     private String apiToken;
-
+    private boolean aliasSyncEnabled;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     private static Retry ossIndexRetryer;
@@ -143,6 +143,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                         return;
                     }
                 }
+                aliasSyncEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ALIAS_SYNC_ENABLED);
             }
             final var event = (OssIndexAnalysisEvent) e;
             LOGGER.info("Starting Sonatype OSS Index analysis task");
@@ -325,7 +326,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 // a later time, the vulnerability will be published to the NVD. Therefore, add an alias.
                                 // The "startsWith CVE" is unforntuantly necessary as of 11 June 2022, OSS Index has
                                 // multiple vulnerabilities with sonatype identifiers in the cve field.
-                                if (reportedVuln.getCve() != null && reportedVuln.getCve().startsWith("CVE-")) {
+                                if (aliasSyncEnabled && reportedVuln.getCve() != null && reportedVuln.getCve().startsWith("CVE-")) {
                                     LOGGER.debug("Updating vulnerability alias for " + reportedVuln.getId());
                                     final VulnerabilityAlias alias = new VulnerabilityAlias();
                                     alias.setSonatypeId(reportedVuln.getId());

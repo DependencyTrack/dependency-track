@@ -203,6 +203,8 @@ Now visit `http://127.0.0.1:8081` in your browser and use Dependency-Track as us
 
 ## Testing
 
+### Running unit tests
+
 To run all tests:
 
 ```shell
@@ -211,6 +213,46 @@ mvn clean verify -P enhance
 
 Depending on your machine, this will take roughly 10-30min. Unless you modified central parts of the application,
 starting single tests separately via IDE is a better choice. 
+
+### Testing manually
+
+We provide multiple Docker Compose files that can be used to quickly set up a local testing environment.
+
+#### With embedded H2 database
+
+The default `docker-compose.yml` will deploy a frontend and API server container using an embedded H2 database.
+
+```shell
+docker compose up -d
+```
+
+#### With PostgreSQL database
+
+To use a PostgreSQL database instead of embedded H2, use `docker-compose.postgres.yml`.
+
+```shell
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+```
+
+#### With Microsoft SQL Server database
+
+To use a Microsoft SQL Server database instead of embedded H2, use `docker-compose.mssql.yml`.
+
+```shell
+docker compose -f docker-compose.yml -f docker-compose.mssql.yml up -d
+```
+
+#### With monitoring stack
+
+To deploy both Prometheus and Grafana, `docker-compose.monitoring.yml` may be supplied to any
+of the commands listed above. For example:
+
+```shell
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml -f docker-compose.monitoring.yml up -d
+```
+
+Prometheus should automatically discover the API server's metrics. To visualize them, follow the instructions
+for setting up the sample Grafana dashboard in the [docs](https://docs.dependencytrack.org/getting-started/monitoring/#grafana-dashboard).
 
 ## DataNucleus Bytecode Enhancement
 

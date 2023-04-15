@@ -18,6 +18,11 @@
  */
 package org.dependencytrack.policy;
 
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
+import alpine.notification.NotificationService;
+import alpine.notification.Subscriber;
+import alpine.notification.Subscription;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
@@ -29,8 +34,14 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
@@ -38,8 +49,37 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class PolicyEngineTest extends PersistenceCapableTest {
+
+    public static class NotificationSubscriber implements Subscriber {
+
+        @Override
+        public void inform(final Notification notification) {
+            NOTIFICATIONS.add(notification);
+        }
+
+    }
+
+    private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
+
+    @BeforeClass
+    public static void setUpClass() {
+        NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
+    }
+
+    @After
+    public void tearDown() {
+        NOTIFICATIONS.clear();
+    }
 
     @Test
     public void hasTagMatchPolicyLimitedToTag() {
@@ -144,12 +184,13 @@ public class PolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void determineViolationTypeTest(){
+    public void determineViolationTypeTest() {
         PolicyCondition policyCondition = new PolicyCondition();
         policyCondition.setSubject(null);
         PolicyEngine policyEngine = new PolicyEngine();
         Assertions.assertNull(policyEngine.determineViolationType(policyCondition.getSubject()));
     }
+
     @Test
     public void issue1924() {
         Policy policy = qm.createPolicy("Policy 1924", Policy.Operator.ALL, Policy.ViolationState.INFO);
@@ -265,4 +306,63 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
         Assert.assertEquals(PolicyCondition.Subject.LICENSE_GROUP, policyViolation.getPolicyCondition().getSubject());
     }
+
+    @Test
+    public void notificationTest() {
+        final var policy = qm.createPolicy("Test", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+
+        // Create a policy condition that matches on any coordinates.
+        final var policyConditionA = qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, """
+                {"group": "*", name: "*", version: "*"}
+                """);
+
+        final var project = new Project();
+        project.setName("Test Project");
+        qm.createProject(project, Collections.emptyList(), false);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setGroup("foo");
+        component.setName("bar");
+        component.setVersion("1.2.3");
+        qm.createComponent(component, false);
+
+        // Evaluate policies and ensure that a notification has been sent.
+        final var policyEngine = new PolicyEngine();
+        assertThat(policyEngine.evaluate(List.of(component))).hasSize(1);
+        assertThat(NOTIFICATIONS).hasSize(1);
+
+        // Create an additional policy condition that matches on the exact version of the component,
+        // and re-evaluate policies. Ensure that only one notification per newly violated condition was sent.
+        final var policyConditionB = qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.2.3");
+        assertThat(policyEngine.evaluate(List.of(component))).hasSize(2);
+        assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification -> {
+                    assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+                    assertThat(notification.getGroup()).isEqualTo(NotificationGroup.POLICY_VIOLATION.name());
+                    assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
+                    assertThat(notification.getSubject()).isInstanceOf(PolicyViolationIdentified.class);
+                    final var subject = (PolicyViolationIdentified) notification.getSubject();
+                    assertThat(subject.getComponent().getUuid()).isEqualTo(component.getUuid());
+                    assertThat(subject.getProject().getUuid()).isEqualTo(project.getUuid());
+                    assertThat(subject.getPolicyViolation().getPolicyCondition().getUuid()).isEqualTo(policyConditionA.getUuid());
+                },
+                notification -> {
+                    assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+                    assertThat(notification.getGroup()).isEqualTo(NotificationGroup.POLICY_VIOLATION.name());
+                    assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
+                    assertThat(notification.getSubject()).isInstanceOf(PolicyViolationIdentified.class);
+                    final var subject = (PolicyViolationIdentified) notification.getSubject();
+                    assertThat(subject.getComponent().getUuid()).isEqualTo(component.getUuid());
+                    assertThat(subject.getProject().getUuid()).isEqualTo(project.getUuid());
+                    assertThat(subject.getPolicyViolation().getPolicyCondition().getUuid()).isEqualTo(policyConditionB.getUuid());
+                }
+        );
+
+        // Delete a policy condition and re-evaluate policies again. No new notifications should be sent.
+        qm.deletePolicyCondition(policyConditionA);
+        assertThat(policyEngine.evaluate(List.of(component))).hasSize(1);
+        assertThat(NOTIFICATIONS).hasSize(2);
+    }
+
 }

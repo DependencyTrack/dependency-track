@@ -85,6 +85,9 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
     }
 
     private boolean versionMatches(final PolicyCondition.Operator conditionOperator, final String conditionValue, final String part) {
+        if (conditionValue == null && part == null) {
+            return true;
+        }
         final Matcher versionOperatorMatcher = VERSION_OPERATOR_PATTERN.matcher(conditionValue);
         if (!versionOperatorMatcher.find()) {
             // No operator provided, use default matching algorithm

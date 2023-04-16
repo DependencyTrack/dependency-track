@@ -57,6 +57,11 @@ public class LicenseGroupPolicyEvaluator extends AbstractPolicyEvaluator {
         for (final PolicyCondition condition : super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final LicenseGroup lg = qm.getObjectByUuid(LicenseGroup.class, condition.getValue());
+            if (lg == null) {
+                LOGGER.warn("The license group %s does not exist; Skipping evaluation of condition %s of policy %s"
+                        .formatted(condition.getValue(), condition.getUuid(), policy.getName()));
+                continue;
+            }
             if (license == null) {
                 if (PolicyCondition.Operator.IS_NOT == condition.getOperator()) {
                     violations.add(new PolicyConditionViolation(condition, component));

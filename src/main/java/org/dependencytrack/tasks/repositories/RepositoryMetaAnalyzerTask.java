@@ -72,11 +72,9 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings("unchecked")
     public void inform(final Event e) {
-        if (e instanceof RepositoryMetaEvent) {
+        if (e instanceof final RepositoryMetaEvent event) {
             LOGGER.debug("Analyzing component repository metadata");
-            final RepositoryMetaEvent event = (RepositoryMetaEvent)e;
             // TODO - Remove when https://github.com/DependencyTrack/dependency-track/issues/2110 is implemented
             Timer timer = Timer.builder("repository_meta_analyzer_task")
                     .description("Repository meta analyzer task timer")
@@ -89,6 +87,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     // Refreshing the object by querying for it again is preventative
                     LOGGER.info("Performing component repository metadata analysis against " + components.size() + " components");
                     for (final Component component: components) {
+                        qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
                         analyze(qm, qm.getObjectById(Component.class, component.getId()));
                     }
                     LOGGER.info("Completed component repository metadata analysis against " + components.size() + " components");
@@ -101,6 +100,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                         final List<Component> components = qm.getAllComponents(project);
                         LOGGER.debug("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
                         for (final Component component: components) {
+                            qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
                             analyze(qm, component);
                         }
                         LOGGER.debug("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());

@@ -1315,6 +1315,23 @@ public class QueryManager extends AlpineQueryManager {
         }
     }
 
+    /**
+     * Convenience method to ensure that any active transaction is rolled back.
+     * <p>
+     * Calling this method may sometimes be necessary due to {@link AlpineQueryManager#persist(Object)}
+     * no performing a rollback in case committing the transaction fails. This can impact other persistence
+     * operations performed in the same session (e.g. {@code NucleusTransactionException: Invalid state. Transaction has already started}).
+     *
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2677">Issue 2677</a>
+     * @since 4.8.0
+     */
+    public void ensureNoActiveTransaction() {
+        final Transaction trx = pm.currentTransaction();
+        if (trx != null && trx.isActive()) {
+            trx.rollback();
+        }
+    }
+
     public void recursivelyDeleteTeam(Team team) {
         pm.setProperty("datanucleus.query.sql.allowAll", true);
         final Transaction trx = pm.currentTransaction();

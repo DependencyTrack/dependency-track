@@ -171,6 +171,31 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void matchWithComponentVersionAndConditionVersionNull() {
+        final String def = "{}";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void noMatchWithConditionVersionNull() {
+        final String def = "{}";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
+
+        final var component = new Component();
+        component.setVersion("1.0.0");
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
     public void matchWithVersionOperatorLessThan() {
         final String def = "{ 'version': '< 1.1.1' }";
         final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);

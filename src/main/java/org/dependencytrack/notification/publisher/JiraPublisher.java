@@ -19,6 +19,7 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.common.logging.Logger;
+import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.security.crypto.DataEncryption;
 import io.pebbletemplates.pebble.PebbleEngine;
@@ -64,16 +65,16 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
         } catch (final Exception e) {
             throw new PublisherException("An error occurred during the retrieval of the Jira URL", e);
         }
-
     }
 
     @Override
-    public BasicAuthCredentials getBasicAuthCredentials() {
+    public AuthCredentials getAuthCredentials() {
         try (final QueryManager qm = new QueryManager()) {
-            final String jiraUsername = qm.getConfigProperty(JIRA_USERNAME.getGroupName(), JIRA_USERNAME.getPropertyName()).getPropertyValue();
-            final String encryptedPassword = qm.getConfigProperty(JIRA_PASSWORD.getGroupName(), JIRA_PASSWORD.getPropertyName()).getPropertyValue();
-            final String jiraPassword = (encryptedPassword == null) ? null : DataEncryption.decryptAsString(encryptedPassword);
-            return new BasicAuthCredentials(jiraUsername, jiraPassword);
+            final ConfigProperty jiraUsernameProp = qm.getConfigProperty(JIRA_USERNAME.getGroupName(), JIRA_USERNAME.getPropertyName());
+            final String jiraUsername = (jiraUsernameProp == null) ? null : jiraUsernameProp.getPropertyValue();
+            final ConfigProperty jiraPasswordProp = qm.getConfigProperty(JIRA_PASSWORD.getGroupName(), JIRA_PASSWORD.getPropertyName());
+            final String jiraPassword = (jiraPasswordProp == null || jiraPasswordProp.getPropertyValue() == null) ? null : DataEncryption.decryptAsString(jiraPasswordProp.getPropertyValue());
+            return new AuthCredentials(jiraUsername, jiraPassword);
         } catch (final Exception e) {
             throw new PublisherException("An error occurred during the retrieval of Jira credentials", e);
         }

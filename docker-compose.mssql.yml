@@ -14,12 +14,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) Steve Springett. All Rights Reserved.
-version: "3"
-
 services:
   apiserver:
     depends_on:
-    - mssql
+      mssql-init:
+        condition: service_completed_successfully
     environment:
       ALPINE_DATABASE_MODE: "external"
       ALPINE_DATABASE_URL: "jdbc:sqlserver://mssql:1433;databaseName=dtrack;sendStringParametersAsUnicode=false;trustServerCertificate=true"
@@ -33,6 +32,12 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "DTrack1234#"
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -b -o /dev/null
+      interval: 15s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     ports:
     - "127.0.0.1:1433:1433"
     volumes:
@@ -43,7 +48,8 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     platform: "linux/amd64" # arm64 is not supported
     depends_on:
-    - mssql
+      mssql:
+        condition: service_healthy
     command:
     - /opt/mssql-tools/bin/sqlcmd
     - -S

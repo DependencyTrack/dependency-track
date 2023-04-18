@@ -14,8 +14,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) Steve Springett. All Rights Reserved.
-version: "3"
-
 services:
   apiserver:
     environment:

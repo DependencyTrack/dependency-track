@@ -517,6 +517,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         project.setCpe(transientProject.getCpe());
         project.setPurl(transientProject.getPurl());
         project.setSwidTagId(transientProject.getSwidTagId());
+        project.setExternalReferences(transientProject.getExternalReferences());
 
         if (Boolean.TRUE.equals(project.isActive()) && !Boolean.TRUE.equals(transientProject.isActive()) && hasActiveChild(project)){
             throw new IllegalArgumentException("Project cannot be set to inactive if active children are present.");

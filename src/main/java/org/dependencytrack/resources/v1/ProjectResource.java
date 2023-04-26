@@ -41,6 +41,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 
 import java.security.Principal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -326,7 +327,7 @@ public class ProjectResource extends AlpineResource {
             }
         }
     }
-    
+
     @PATCH
     @Path("/{uuid}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -393,9 +394,13 @@ public class ProjectResource extends AlpineResource {
                     modified |= project.getParent() == null || !parent.getUuid().equals(project.getParent().getUuid());
                     project.setParent(parent);
                 }
-                if (jsonProject.getTags() != null && (!Collections.isEmpty(jsonProject.getTags()) || !Collections.isEmpty(project.getTags()))) {
+                if (isCollectionModified(jsonProject.getTags(), project.getTags())) {
                     modified = true;
                     project.setTags(jsonProject.getTags());
+                }
+                if (isCollectionModified(jsonProject.getExternalReferences(), project.getExternalReferences())) {
+                   modified = true;
+                   project.setExternalReferences(jsonProject.getExternalReferences());
                 }
                 if (modified) {
                     try {
@@ -413,6 +418,13 @@ public class ProjectResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }
         }
+    }
+
+    /**
+     * returns `true` if the given [updated] collection should be considered an update of the [original] collection.
+     */
+    private static <T> boolean isCollectionModified(Collection<T> updated, Collection<T> original) {
+       return updated != null && (!Collections.isEmpty(updated) || !Collections.isEmpty(original));
     }
 
     /**

@@ -21,24 +21,14 @@ package org.dependencytrack.persistence;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.model.ApiKey;
+import alpine.model.IConfigProperty;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.RepositoryMetaComponent;
-import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
-
-import javax.jdo.FetchPlan;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonValue;
@@ -49,7 +39,23 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import javax.jdo.FetchPlan;
+import javax.jdo.JDOObjectNotFoundException;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+import javax.json.Json;
+import javax.json.JsonValue;
+import org.datanucleus.exceptions.NucleusObjectNotFoundException;
+import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ComponentProperty;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
 
@@ -76,7 +82,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * Returns a list of all Components defined in the datastore.
      * @return a List of Components
      */
-    public PaginatedResult getComponents(final boolean includeMetrics) {
+    @Override public PaginatedResult getComponents(final boolean includeMetrics) {
         final PaginatedResult result;
         final Query<Component> query = pm.newQuery(Component.class);
         if (orderBy == null) {
@@ -103,8 +109,56 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * Returns a list of all Components defined in the datastore.
      * @return a List of Components
      */
-    public PaginatedResult getComponents() {
+    @Override public PaginatedResult getComponents() {
         return getComponents(false);
+    }
+
+	 /**
+     * Returns a ComponentProperty with the specified groupName and propertyName.
+     * @param component the component the property belongs to
+     * @param groupName the group name of the config property
+     * @param propertyName the name of the property
+     * @return a ComponentProperty object
+     */
+    @Override public ComponentProperty getComponentProperty(final Component component, final String groupName, final String propertyName) {
+        final Query<ComponentProperty> query = this.pm.newQuery(ComponentProperty.class, "component == :component && groupName == :groupName && propertyName == :propertyName");
+        query.setRange(0, 1);
+        return singleResult(query.execute(component, groupName, propertyName));
+    }
+
+	/**
+     * Returns a List of ProjectProperty's for the specified project.
+     * @param component the project the property belongs to
+     * @return a List ProjectProperty objects
+     */
+    @Override @SuppressWarnings("unchecked")
+    public List<ComponentProperty> getComponentProperties(final Component component) {
+        final Query<ComponentProperty> query = this.pm.newQuery(ComponentProperty.class, "component == :component");
+        query.setOrdering("groupName asc, propertyName asc");
+        return (List<ComponentProperty>)query.execute(component);
+    }
+
+	  /**
+     * Creates a key/value pair (ComponentProperty) for the specified Project.
+     * @param component the Component to create the property for
+     * @param groupName the group name of the property
+     * @param propertyName the name of the property
+     * @param propertyValue the value of the property
+     * @param propertyType the type of property
+     * @param description a description of the property
+     * @return the created ComponentProperty object
+     */
+    @Override public ComponentProperty createComponentProperty(final Component component, final String groupName, final String propertyName,
+                                                 final String propertyValue, final IConfigProperty.PropertyType propertyType,
+                                                 final String description) {
+        final ComponentProperty property = new ComponentProperty();
+        property.setComponent(component);
+        property.setGroupName(groupName);
+        property.setPropertyName(propertyName);
+        property.setPropertyValue(propertyValue);
+        property.setPropertyType(propertyType);
+        property.setDescription(description);
+        return persist(property);
     }
 
     /**
@@ -112,7 +166,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * This method if designed NOT to provide paginated results.
      * @return a List of Components
      */
-    public List<Component> getAllComponents() {
+    @Override public List<Component> getAllComponents() {
         final Query<Component> query = pm.newQuery(Component.class);
         query.setOrdering("id asc");
         return query.executeList();
@@ -124,7 +178,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param project the Project to retrieve dependencies of
      * @return a List of Component objects
      */
-    @SuppressWarnings("unchecked")
+    @Override @SuppressWarnings("unchecked")
     public List<Component> getAllComponents(Project project) {
         final Query<Component> query = pm.newQuery(Component.class, "project == :project");
         query.getFetchPlan().setMaxFetchDepth(2);
@@ -138,7 +192,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param includeMetrics Optionally includes third-party metadata about the component from external repositories
      * @return a List of Dependency objects
      */
-    public PaginatedResult getComponents(final Project project, final boolean includeMetrics) {
+    @Override public PaginatedResult getComponents(final Project project, final boolean includeMetrics) {
         return getComponents(project, includeMetrics, false, false);
     }
     /**
@@ -191,7 +245,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 final PackageURL purl = component.getPurl();
                 if (purl != null) {
                     final RepositoryType type = RepositoryType.resolve(purl);
-                    if (RepositoryType.UNSUPPORTED != type) {
+                    if (type != RepositoryType.UNSUPPORTED) {
                         final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
                         component.setRepositoryMeta(repoMetaComponent);
                     }
@@ -206,7 +260,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param hash the hash of the component to retrieve
      * @return a list of components
      */
-    public PaginatedResult getComponentByHash(String hash) {
+    @Override public PaginatedResult getComponentByHash(String hash) {
         if (hash == null) {
             return null;
         }
@@ -231,11 +285,11 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param identity the ComponentIdentity to query against
      * @return a list of components
      */
-    public PaginatedResult getComponents(ComponentIdentity identity) {
+    @Override public PaginatedResult getComponents(ComponentIdentity identity) {
         return getComponents(identity, null, false);
     }
 
-    public PaginatedResult getComponents(ComponentIdentity identity, boolean includeMetrics) {
+    @Override public PaginatedResult getComponents(ComponentIdentity identity, boolean includeMetrics) {
         return getComponents(identity, null, includeMetrics);
     }
 
@@ -246,7 +300,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param includeMetrics whether or not to include component metrics or not
      * @return a list of components
      */
-    public PaginatedResult getComponents(ComponentIdentity identity, Project project, boolean includeMetrics) {
+    @Override public PaginatedResult getComponents(ComponentIdentity identity, Project project, boolean includeMetrics) {
         if (identity == null) {
             return null;
         }
@@ -302,7 +356,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 final PackageURL purl = component.getPurl();
                 if (purl != null) {
                     final RepositoryType type = RepositoryType.resolve(purl);
-                    if (RepositoryType.UNSUPPORTED != type) {
+                    if (type != RepositoryType.UNSUPPORTED) {
                         final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
                         component.setRepositoryMeta(repoMetaComponent);
                     }
@@ -336,14 +390,14 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a new Component
      */
-    public Component createComponent(Component component, boolean commitIndex) {
+    @Override public Component createComponent(Component component, boolean commitIndex) {
         final Component result = persist(component);
         Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);
         return result;
     }
 
-    public Component cloneComponent(Component sourceComponent, Project destinationProject, boolean commitIndex) {
+    @Override public Component cloneComponent(Component sourceComponent, Project destinationProject, boolean commitIndex) {
         final Component component = new Component();
         component.setGroup(sourceComponent.getGroup());
         component.setName(sourceComponent.getName());
@@ -383,7 +437,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a Component
      */
-    public Component updateComponent(Component transientComponent, boolean commitIndex) {
+    @Override public Component updateComponent(Component transientComponent, boolean commitIndex) {
         final Component component = getObjectByUuid(Component.class, transientComponent.getUuid());
         component.setName(transientComponent.getName());
         component.setVersion(transientComponent.getVersion());
@@ -414,7 +468,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * Deletes all components for the specified Project.
      * @param project the Project to delete components of
      */
-    protected void deleteComponents(Project project) {
+    @Override protected void deleteComponents(Project project) {
         final Query<Component> query = pm.newQuery(Component.class, "project == :project");
         query.deletePersistentAll(project);
     }
@@ -424,7 +478,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param component the Component to delete
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */
-    public void recursivelyDelete(Component component, boolean commitIndex) {
+    @Override public void recursivelyDelete(Component component, boolean commitIndex) {
         if (component.getChildren() != null) {
             for (final Component child: component.getChildren()) {
                 recursivelyDelete(child, false);
@@ -441,7 +495,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             deletePolicyViolations(component);
             delete(component);
             commitSearchIndex(commitIndex, Component.class);
-        } catch (javax.jdo.JDOObjectNotFoundException | org.datanucleus.exceptions.NucleusObjectNotFoundException e) {
+        } catch (JDOObjectNotFoundException | NucleusObjectNotFoundException e) {
             LOGGER.warn("Deletion of component failed because it didn't exist anymore.");
         }
 
@@ -453,7 +507,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param cid the identity values of the component
      * @return a Component object, or null if not found
      */
-    public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
+    @Override public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
         String purlString = null;
         String purlCoordinates = null;
         if (cid.getPurl() != null) {
@@ -475,7 +529,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param cid the identity values of the component
      * @return a List of Component objects, or null if not found
      */
-    @SuppressWarnings("unchecked")
+    @Override @SuppressWarnings("unchecked")
     public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {
         String purlString = null;
         String purlCoordinates = null;
@@ -496,7 +550,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param cid the identity values of the component
      * @return a List of Component objects
      */
-    @SuppressWarnings("unchecked")
+    @Override @SuppressWarnings("unchecked")
     public List<Component> matchIdentity(final ComponentIdentity cid) {
         String purlString = null;
         String purlCoordinates = null;
@@ -520,7 +574,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param existingProjectComponents the complete list of existing dependent components
      * @param components the complete list of components that should be dependencies of the project
      */
-    public void reconcileComponents(Project project, List<Component> existingProjectComponents, List<Component> components) {
+    @Override public void reconcileComponents(Project project, List<Component> existingProjectComponents, List<Component> components) {
         // Removes components as dependencies to the project for all
         // components not included in the list provided
         List<Component> markedForDeletion = new ArrayList<>();
@@ -586,7 +640,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         }
     }
 
-    public Map<String, Component> getDependencyGraphForComponent(Project project, Component component) {
+    @Override public Map<String, Component> getDependencyGraphForComponent(Project project, Component component) {
         Map<String, Component> dependencyGraph = new HashMap<>();
         if (project.getDirectDependencies() == null || project.getDirectDependencies().isBlank()) {
             return dependencyGraph;
@@ -623,7 +677,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             transientComponent.setExpandDependencyGraph(entry.getValue().isExpandDependencyGraph());
             if (transientComponent.getPurl() != null) {
                 final RepositoryType type = RepositoryType.resolve(transientComponent.getPurl());
-                if (RepositoryType.UNSUPPORTED != type) {
+                if (type != RepositoryType.UNSUPPORTED) {
                     final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, transientComponent.getPurl().getNamespace(), transientComponent.getPurl().getName());
                     if (repoMetaComponent != null) {
                         RepositoryMetaComponent transientRepoMetaComponent = new RepositoryMetaComponent();
@@ -654,7 +708,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
         List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
         for (Component component : components) {
-            if (component.getUuid() != searchedComponent.getUuid()) {
+            if (!Objects.equals(component.getUuid(), searchedComponent.getUuid())) {
                 component.setExpandDependencyGraph(true);
                 if (dependencyGraph.containsKey(component.getUuid().toString())) {
                     if (component.getDependencyGraph().add(component.getUuid().toString())) {

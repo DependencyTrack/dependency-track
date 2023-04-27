@@ -37,29 +37,7 @@ public class v490Updater extends AbstractUpgradeItem {
     }
 
     @Override
-    public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
-        updateDefaultSnykApiVersion(connection);
+    public void executeUpgrade(final AlpineQueryManager alpineQueryManager, final Connection connection) throws Exception {
+        LOGGER.info("HOOOO");
     }
-
-    /**
-     * Update the Snyk API version from its previous default to a current and actively supported one.
-     * Only do so when the version has not been modified manually.
-     *
-     * @param connection The {@link Connection} to use for executing queries
-     * @throws Exception When executing a query failed
-     */
-    private static void updateDefaultSnykApiVersion(final Connection connection) throws Exception {
-        LOGGER.info("Updating Snyk API version from 2022-11-14 to %s"
-                .formatted(SCANNER_SNYK_API_VERSION.getDefaultPropertyValue()));
-        try (final PreparedStatement ps = connection.prepareStatement("""
-                UPDATE "CONFIGPROPERTY" SET "PROPERTYVALUE" = ?
-                WHERE "GROUPNAME" = 'scanner'
-                    AND "PROPERTYNAME" = 'snyk.api.version'
-                    AND "PROPERTYVALUE" = '2022-11-14'
-                """)) {
-            ps.setString(1, SCANNER_SNYK_API_VERSION.getDefaultPropertyValue());
-            ps.executeUpdate();
-        }
-    }
-
 }

@@ -21,10 +21,9 @@ package org.dependencytrack.upgrade.v490;
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
-
+import alpine.server.util.DbUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_API_VERSION;
 
 public class v490Updater extends AbstractUpgradeItem {
@@ -39,6 +38,7 @@ public class v490Updater extends AbstractUpgradeItem {
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
         updateDefaultSnykApiVersion(connection);
+        removeUnstableVersionsFromAnalysisCacheAndRepoMetadata(connection);
     }
 
     /**
@@ -60,6 +60,22 @@ public class v490Updater extends AbstractUpgradeItem {
             ps.setString(1, SCANNER_SNYK_API_VERSION.getDefaultPropertyValue());
             ps.executeUpdate();
         }
+    }
+
+    /**
+     * Versions with a '-' in it probably indicate unstable versions. Remove them all
+     * from component analysis cache and repository metadata, so only stable versions
+     * remain.
+     *
+     * @param connection The {@link Connection} to use for executing queries
+     * @throws Exception When executing a query failed
+     * @see: https://github.com/DependencyTrack/dependency-track/issues/2500
+     */
+    private void removeUnstableVersionsFromAnalysisCacheAndRepoMetadata(Connection connection) throws Exception {
+        LOGGER.info("Removing possible unstable versions from component analysis cache");
+        DbUtil.executeUpdate(connection, "DELETE FROM \"COMPONENTANALYSISCACHE\" WHERE RESULT LIKE '%-%'");
+        LOGGER.info("Removing possible unstable versions from repository metadata");
+        DbUtil.executeUpdate(connection, "DELETE FROM \"REPOSITORY_META_COMPONENT\" WHERE LATEST_VERSION LIKE '%-%'");
     }
 
 }

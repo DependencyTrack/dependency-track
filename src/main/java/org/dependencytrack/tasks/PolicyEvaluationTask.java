@@ -18,16 +18,16 @@
  */
 package org.dependencytrack.tasks;
 
-import java.util.ArrayList;
-import java.util.List;
+import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
+import alpine.event.framework.Subscriber;
 import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.ProjectMetricsUpdateEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.policy.PolicyEngine;
-import alpine.common.logging.Logger;
-import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PolicyEvaluationTask implements Subscriber {
 
@@ -36,16 +36,16 @@ public class PolicyEvaluationTask implements Subscriber {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void inform(final Event e) {
-        if (e instanceof PolicyEvaluationEvent) {
-            final PolicyEvaluationEvent event = (PolicyEvaluationEvent) e;
-            LOGGER.info("Starting policy evaluation");
-            if (event.getComponents() != null && !event.getComponents().isEmpty()) {
-                performPolicyEvaluation(event.getProject(), event.getComponents());
-            } else if (event.getProject() != null) {
-                performPolicyEvaluation(event.getProject(), new ArrayList<>());
+        if (e instanceof PolicyEvaluationEvent event) {
+            if (event.getProject() != null) {
+                if (event.getComponents() != null && !event.getComponents().isEmpty()) {
+                    performPolicyEvaluation(event.getProject(), event.getComponents());
+                } else {
+                    performPolicyEvaluation(event.getProject(), new ArrayList<>());
+                }
             }
-            LOGGER.info("Policy evaluation complete");
         }
     }
 

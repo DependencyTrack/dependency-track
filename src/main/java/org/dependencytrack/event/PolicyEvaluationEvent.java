@@ -18,19 +18,15 @@
  */
 package org.dependencytrack.event;
 
-import java.util.ArrayList;
-import java.util.List;
+import alpine.event.framework.AbstractChainableEvent;
+import alpine.event.framework.Event;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
-import alpine.event.framework.AbstractChainableEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Defines a general purpose event to analyze components for vulnerabilities.
- * Additional logic in the event handler performs analysis on what specific
- * type of analysis should take place.
- *
- * @author Steve Springett
- * @since 3.0.0
+ * Defines an {@link Event} used to trigger policy evaluation.
  */
 public class PolicyEvaluationEvent extends AbstractChainableEvent {
 

@@ -18,11 +18,11 @@
  */
 package org.dependencytrack.tasks;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
+import alpine.event.framework.Subscriber;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import org.cyclonedx.BomParserFactory;
 import org.cyclonedx.parsers.Parser;
 import org.dependencytrack.event.BomUploadEvent;
@@ -45,11 +45,11 @@ import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
-import alpine.common.logging.Logger;
-import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Subscriber task that performs processing of bill-of-material (bom)
@@ -65,6 +65,7 @@ public class BomUploadProcessingTask implements Subscriber {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void inform(final Event e) {
         if (e instanceof BomUploadEvent) {
             Project bomProcessingFailedProject = null;
@@ -168,11 +169,17 @@ public class BomUploadProcessingTask implements Subscriber {
                     // vulnerability analysis completed.
                     vae.onSuccess(new NewVulnerableDependencyAnalysisEvent(newComponents));
                 }
-                // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
-                // as both might be needed in policy evaluation
-                vae.onSuccess(new RepositoryMetaEvent(detachedFlattenedComponent));
+                // Start PolicyEvaluationEvent when VulnerabilityAnalysisEvent is succesful
                 vae.onSuccess(new PolicyEvaluationEvent(detachedFlattenedComponent).project(detachedProject));
                 Event.dispatch(vae);
+
+                // Repository Metadata analysis
+                final var rme = new RepositoryMetaEvent(detachedFlattenedComponent);
+                // Start PolicyEvaluationEvent again when RepositoryMetaEvent is succesful,
+                // as it might trigger new violations
+                rme.onSuccess(new PolicyEvaluationEvent(detachedFlattenedComponent).project(detachedProject));
+                Event.dispatch(rme);
+
                 LOGGER.info("Processed " + flattenedComponents.size() + " components and " + flattenedServices.size() + " services uploaded to project " + event.getProjectUuid());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)

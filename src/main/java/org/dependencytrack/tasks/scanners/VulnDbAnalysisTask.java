@@ -36,7 +36,6 @@ import org.dependencytrack.parser.vulndb.VulnDbClient;
 import org.dependencytrack.parser.vulndb.model.Results;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -58,6 +57,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
 
     private String apiBaseUrl;
 
+    @Override
     public AnalyzerIdentity getAnalyzerIdentity() {
         return AnalyzerIdentity.VULNDB_ANALYZER;
     }
@@ -73,6 +73,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     /**
      * {@inheritDoc}
      */
+    @Override
     public void inform(final Event e) {
         if (e instanceof VulnDbAnalysisEvent) {
             if (!super.isEnabled(ConfigPropertyConstants.SCANNER_VULNDB_ENABLED)) {
@@ -110,11 +111,11 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
             }
             final var event = (VulnDbAnalysisEvent) e;
             vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
-            LOGGER.info("Starting VulnDB analysis task");
+            LOGGER.debug("Starting VulnDB analysis task");
             if (!event.getComponents().isEmpty()) {
                 analyze(event.getComponents());
             }
-            LOGGER.info("VulnDB analysis complete");
+            LOGGER.debug("VulnDB analysis complete");
         }
     }
 
@@ -124,6 +125,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
      * @param component the Component to analyze
      * @return true if VulnDbAnalysisTask should analyze, false if not
      */
+    @Override
     public boolean isCapable(final Component component) {
         return component.getCpe() != null;
     }
@@ -133,6 +135,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
      *
      * @param components a list of Components
      */
+    @Override
     public void analyze(final List<Component> components) {
         final var api = new VulnDbClient(this.apiConsumerKey, this.apiConsumerSecret, this.apiBaseUrl);
         for (final Component component : components) {

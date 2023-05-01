@@ -259,7 +259,7 @@ docker build --build-arg WAR_FILENAME=dependency-track-bundled.jar -t dependency
 ## Documentation
 
 The documentation is built using [Jekyll](https://jekyllrb.com/) and published to 
-[docs.dependencytrack.org](https://docs.dependecytrack.org). Sources are located in the [`docs`](./docs) directory.
+[docs.dependencytrack.org](https://docs.dependencytrack.org). Sources are located in the [`docs`](./docs) directory.
 
 There is a lot going on in `docs`, but most of the time you'll want to spend your time in these directories:
 

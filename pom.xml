@@ -87,7 +87,7 @@
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>7.3.2</lib.cyclonedx-java.version>
-        <lib.jaxb.runtime.version>2.3.6</lib.jaxb.runtime.version>
+        <lib.jaxb.runtime.version>2.3.8</lib.jaxb.runtime.version>
         <lib.json-unit.version>2.38.0</lib.json-unit.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
@@ -99,15 +99,15 @@
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.log4j-over-slf4j.version>2.0.7</lib.log4j-over-slf4j.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>11.2.3.jre17</lib.jdbc-driver.mssql.version>
-        <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
-        <lib.jdbc-driver.mysql.version>8.0.29</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.5.1</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.mssql.version>12.2.0.jre11</lib.jdbc-driver.mssql.version>
+        <!-- Upgrading to 8.0.33 as https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
+        <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
+        <lib.jdbc-driver.postgresql.version>42.6.0</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.jetty.version>10.0.15</plugin.jetty.version>
+        <plugin.jetty.version>11.0.15</plugin.jetty.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
         <!-- CycloneDX CLI -->

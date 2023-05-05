@@ -99,7 +99,7 @@
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.log4j-over-slf4j.version>2.0.7</lib.log4j-over-slf4j.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>11.2.3.jre17</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>12.3.0.jre17-preview</lib.jdbc-driver.mssql.version>
         <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
         <lib.jdbc-driver.mysql.version>8.0.29</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.5.1</lib.jdbc-driver.postgresql.version>

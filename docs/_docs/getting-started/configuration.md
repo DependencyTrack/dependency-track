@@ -335,6 +335,12 @@ alpine.metrics.auth.password=
 alpine.oidc.enabled=false
 
 # Optional
+# Defines the client ID to be used for OpenID Connect.
+# The client ID should be the same as the one configured for the frontend,
+# and will only be used to validate ID tokens.
+alpine.oidc.client.id=
+
+# Optional
 # Defines the issuer URL to be used for OpenID Connect.
 # This issuer MUST support provider configuration via the /.well-known/openid-configuration endpoint.
 # See also:

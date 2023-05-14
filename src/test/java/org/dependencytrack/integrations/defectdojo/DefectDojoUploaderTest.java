@@ -272,7 +272,7 @@ public class DefectDojoUploaderTest extends PersistenceCapableTest {
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                         .withBody("""
                                 {
-                                  "count": 2,
+                                  "count": 3,
                                   "next": "%s/api/v2/tests/?engagement=666&limit=100&offset=100",
                                   "previous": null,
                                   "results": [
@@ -302,6 +302,32 @@ public class DefectDojoUploaderTest extends PersistenceCapableTest {
                                       "api_scan_configuration": null,
                                       "notes": [],
                                       "files": []
+                                    },
+                                    {
+                                      "id": 2,
+                                      "tags": [],
+                                      "test_type_name": "API Test",
+                                      "finding_groups": [],
+                                      "title": null,
+                                      "description": null,
+                                      "target_start": "2023-04-29T00:00:00Z",
+                                      "target_end": "2023-04-29T21:36:22.798765Z",
+                                      "estimated_time": null,
+                                      "actual_time": null,
+                                      "percent_complete": 100,
+                                      "updated": "2023-04-29T21:36:22.858597Z",
+                                      "created": "2023-04-29T21:36:22.802993Z",
+                                      "version": "",
+                                      "build_id": "",
+                                      "commit_hash": "",
+                                      "branch_tag": "",
+                                      "engagement": 666,
+                                      "lead": 1,
+                                      "test_type": 1,
+                                      "environment": 7,
+                                      "api_scan_configuration": null,
+                                      "notes": [],
+                                      "files": []
                                     }
                                   ],
                                   "prefetch": {}
@@ -317,12 +343,12 @@ public class DefectDojoUploaderTest extends PersistenceCapableTest {
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                         .withBody("""
                                 {
-                                   "count": 2,
+                                   "count": 3,
                                    "next": null,
                                    "previous": "%s/api/v2/tests/?engagement=666&limit=100",
                                    "results": [
                                      {
-                                       "id": 2,
+                                       "id": 3,
                                        "tags": [],
                                        "test_type_name": "Dependency Track Finding Packaging Format (FPF) Export",
                                        "finding_groups": [],
@@ -395,7 +421,7 @@ public class DefectDojoUploaderTest extends PersistenceCapableTest {
                         .withBody(equalTo("666")))
                 .withAnyRequestBodyPart(aMultipart()
                         .withName("test")
-                        .withBody(equalTo("2")))
+                        .withBody(equalTo("3")))
                 .withAnyRequestBodyPart(aMultipart()
                         .withName("scan_type")
                         .withBody(equalTo("Dependency Track Finding Packaging Format (FPF) Export")))

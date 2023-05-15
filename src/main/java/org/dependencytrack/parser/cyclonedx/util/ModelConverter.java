@@ -23,6 +23,7 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Hash;
@@ -96,7 +97,8 @@ public class ModelConverter {
 
     @SuppressWarnings("deprecation")
     public static Component convert(final QueryManager qm, final org.cyclonedx.model.Component cycloneDxComponent, final Project project) {
-        Component component = qm.matchSingleIdentity(project, new ComponentIdentity(cycloneDxComponent));
+        ComponentIdentity parentIdentity = new ComponentIdentity(cycloneDxComponent);
+        Component component = qm.matchSingleIdentity(project, parentIdentity);
         if (component == null) {
             component = new Component();
             component.setProject(project);
@@ -187,7 +189,8 @@ public class ModelConverter {
             final Collection<Component> components = new ArrayList<>();
             for (int i = 0; i < cycloneDxComponent.getComponents().size(); i++) {
                 final org.cyclonedx.model.Component cycloneDxChildComponent = cycloneDxComponent.getComponents().get(i);
-                if (cycloneDxChildComponent != null) {
+                ComponentIdentity childIdentity = new ComponentIdentity(cycloneDxChildComponent);
+                if (cycloneDxChildComponent != null && !EqualsBuilder.reflectionEquals(parentIdentity, childIdentity)) {
                     components.add(convert(qm, cycloneDxChildComponent, project));
                 }
             }

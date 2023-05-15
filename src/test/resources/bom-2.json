@@ -1,0 +1,35 @@
+{
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.4",
+    "version": 1,
+    "metadata": {
+        "timestamp": "2023-01-01T11:01:51Z",
+        "tools": [
+            {
+                "vendor": "changeme",
+                "name": "changeme",
+                "version": "0.62.3"
+            }
+        ]
+    },
+    "components": [
+        {
+            "bom-ref": "pkg:pypi/pillow@9.3.0",
+            "type": "library",
+            "name": "Pillow",
+            "version": "9.3.0",
+            "cpe": "cpe:2.3:a:alex_clark_\\(pil_fork_author\\):python-Pillow:9.3.0:*:*:*:*:*:*:*",
+            "purl": "pkg:pypi/Pillow@9.3.0",
+            "components": [
+                {
+                    "bom-ref": "pkg:pypi/pillow@9.3.0?package-id=212c649613e17901",
+                    "type": "library",
+                    "name": "Pillow",
+                    "version": "9.3.0",
+                    "cpe": "cpe:2.3:a:alex_clark_\\(pil_fork_author\\):python-Pillow:9.3.0:*:*:*:*:*:*:*",
+                    "purl": "pkg:pypi/Pillow@9.3.0"
+                }
+            ]
+        }
+    ]
+}

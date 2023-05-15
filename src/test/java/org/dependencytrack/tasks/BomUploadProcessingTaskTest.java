@@ -52,6 +52,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -207,6 +208,29 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isNull();
         assertThat(project.getLastBomImport()).isNull();
+    }
+
+    @Test
+    public void informTestWithInvalidCycloneDxBomRecursiveDuplicateTest() throws Exception {
+        // Test case for issue #1905 : https://github.com/DependencyTrack/dependency-track/issues/1905
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        final byte[] bomBytes = Files.readAllBytes(Paths.get(getClass().getClassLoader().getResource("bom-2.json").toURI()));
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        assertConditionWithTimeout(() -> qm.getAllComponents(project).size() == 1, Duration.ofSeconds(5));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 3, Duration.ofSeconds(5));
+        List<Component> components = qm.getAllComponents(project);
+        final Component component = components.get(0);
+        assertThat(component.getName()).isEqualTo("Pillow");
+        assertThat(component.getVersion()).isEqualTo("9.3.0");
+        assertThat(component.getCpe()).isEqualTo("cpe:2.3:a:alex_clark_\\(pil_fork_author\\):python-Pillow:9.3.0:*:*:*:*:*:*:*");
+        assertThat(component.getPurl().canonicalize()).isEqualTo("pkg:pypi/pillow@9.3.0");
+        assertThat(NOTIFICATIONS).satisfiesExactly(
+                n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name()),
+                n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.BOM_CONSUMED.name()),
+                n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.BOM_PROCESSED.name())
+        );
     }
 
 }

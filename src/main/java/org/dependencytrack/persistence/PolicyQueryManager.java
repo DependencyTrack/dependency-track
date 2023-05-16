@@ -269,16 +269,17 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
         PaginatedResult result;
-        final String projectFilter = includeSuppressed ? "project.id == :pid" : "project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null)";
+        final String queryFilter = includeSuppressed ? "project.id == :pid" : "project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null)";
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
         if (orderBy == null) {
             query.setOrdering("timestamp desc, component.name, component.version");
         }
         if (filter != null) {
-            query.setFilter(projectFilter + " && (policyCondition.policy.name.toLowerCase().matches(:filter) || component.name.toLowerCase().matches(:filter))");
+            query.setFilter(queryFilter + " && (policyCondition.policy.name.toLowerCase().matches(:filter) || component.name.toLowerCase().matches(:filter))");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             result = execute(query, project.getId(), filterString);
         } else {
+            query.setFilter(queryFilter);
             result = execute(query, project.getId());
         }
         for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {

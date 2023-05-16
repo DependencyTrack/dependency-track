@@ -180,6 +180,46 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getViolationsByProjectIssue2766() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+
+        final Project projectA = qm.createProject("acme-app-a", null, "1.0", null, null, null, true, false);
+        final var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("acme-lib-a");
+        componentA.setVersion("1.0.1");
+        qm.persist(componentA);
+
+        final Project projectB = qm.createProject("acme-app-b", null, "2.0", null, null, null, true, false);
+        final var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("acme-lib-b");
+        componentB.setVersion("2.0.1");
+        qm.persist(componentB);
+
+        final Policy policy = qm.createPolicy("policy", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0.1");
+        final var violation = new PolicyViolation();
+        violation.setPolicyCondition(condition);
+        violation.setComponent(componentA);
+        violation.setType(PolicyViolation.Type.OPERATIONAL);
+        violation.setTimestamp(new Date());
+        qm.persist(violation);
+
+        // Requesting violations for projectB must not yield violations for projectA.
+        final Response response = target(V1_POLICY_VIOLATION)
+                .path("/project/" + projectB.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("0");
+
+        final JsonArray jsonArray = parseJsonArray(response);
+        assertThat(jsonArray).hasSize(0);
+    }
+
+    @Test
     public void getViolationsByProjectUnauthorizedTest() {
         final Response response = target(V1_POLICY_VIOLATION)
                 .path("/project/" + UUID.randomUUID())

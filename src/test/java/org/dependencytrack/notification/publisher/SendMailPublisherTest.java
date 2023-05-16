@@ -17,7 +17,6 @@ public class SendMailPublisherTest {
     return Json.createObjectBuilder().add("destination", destination).build();
   }
 
-
   @Test
   public void testSingleDestination() {
     JsonObject config = configWithDestination("john@doe.com");
@@ -32,6 +31,10 @@ public class SendMailPublisherTest {
                              SendMailPublisher.parseDestination(config));
   }
 
+  @Test
+  public void testNullDestination() {
+    Assert.assertArrayEquals(null, SendMailPublisher.parseDestination(Json.createObjectBuilder().build()));
+  }
 
   @Test
   public void testEmptyDestinations() {
@@ -291,6 +294,37 @@ public class SendMailPublisherTest {
     teams.add(team);
 
     Assert.assertArrayEquals(new String[] {"john@doe.com", "steve@jobs.org", "managedUser@Test.com", "ldapUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
+  }
+
+  @Test
+  public void testNullConfigDestinationAndTeamsDestination() {
+    JsonObject config = Json.createObjectBuilder().build();
+    ManagedUser managedUser = new ManagedUser();
+    managedUser.setUsername("ManagedUserTest");
+    managedUser.setEmail("managedUser@Test.com");
+    List<ManagedUser> managedUsers = new ArrayList<>();
+    managedUsers.add(managedUser);
+
+    LdapUser ldapUser = new LdapUser();
+    ldapUser.setUsername("ldapUserTest");
+    ldapUser.setEmail("ldapUser@Test.com");
+    List<LdapUser> ldapUsers = new ArrayList<>();
+    ldapUsers.add(ldapUser);
+
+    OidcUser oidcUser = new OidcUser();
+    oidcUser.setUsername("oidcUserTest");
+    oidcUser.setEmail("john@doe.com");
+    List<OidcUser> oidcUsers = new ArrayList<>();
+    oidcUsers.add(oidcUser);
+
+    List<Team> teams = new ArrayList<>();
+    Team team = new Team();
+    team.setManagedUsers(managedUsers);
+    team.setLdapUsers(ldapUsers);
+    team.setOidcUsers(oidcUsers);
+    teams.add(team);
+
+    Assert.assertArrayEquals(new String[] {"managedUser@Test.com", "ldapUser@Test.com", "john@doe.com"}, SendMailPublisher.parseDestination(config, teams));
   }
 
   @Test

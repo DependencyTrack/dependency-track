@@ -19,6 +19,7 @@
 package org.dependencytrack.integrations.defectdojo;
 
 import alpine.common.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -69,7 +70,7 @@ public class DefectDojoClient {
                 .addPart("active", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
                 .addPart("minimum_severity", new StringBody("Info", ContentType.MULTIPART_FORM_DATA))
                 .addPart("close_old_findings", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
-                .addPart("push_to_jira", new StringBody("push_to_jira", ContentType.MULTIPART_FORM_DATA))
+                .addPart("push_to_jira", new StringBody("false", ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA))
                 .build();
         request.setEntity(data);
@@ -87,7 +88,7 @@ public class DefectDojoClient {
     }
 
     // Pulling DefectDojo 'tests' API endpoint with engagementID filter on, and retrieve a list of existing tests
-    public ArrayList getDojoTestIds(final String token, final String eid) {
+    public ArrayList<String> getDojoTestIds(final String token, final String eid) {
         LOGGER.debug("Pulling DefectDojo Tests API ...");
         String testsUri = "/api/v2/tests/";
         LOGGER.debug("Make the first pagination call");
@@ -104,22 +105,22 @@ public class DefectDojoClient {
                         String stringResponse = EntityUtils.toString(response.getEntity());
                         JSONObject dojoObj = new JSONObject(stringResponse);
                         JSONArray dojoArray = dojoObj.getJSONArray("results");
-                        ArrayList dojoTests = jsonToList(dojoArray);
-                        String nextUrl = "";
-                        while (dojoObj.get("next") != null) {
-                            nextUrl = dojoObj.get("next").toString();
+                        ArrayList<String> dojoTests = jsonToList(dojoArray);
+                        while (StringUtils.isNotBlank(dojoObj.optString("next"))) {
+                            final String nextUrl = dojoObj.getString("next");
                             LOGGER.debug("Making the subsequent pagination call on " + nextUrl);
                             uriBuilder = new URIBuilder(nextUrl);
                             request = new HttpGet(uriBuilder.build().toString());
                             request.addHeader("accept", "application/json");
                             request.addHeader("Authorization", "Token " + token);
                             try (CloseableHttpResponse response1 = HttpClientPool.getClient().execute(request)) {
-                                nextUrl = dojoObj.get("next").toString();
                                 stringResponse = EntityUtils.toString(response1.getEntity());
                             }
                             dojoObj = new JSONObject(stringResponse);
-                            dojoArray = dojoObj.getJSONArray("results");
-                            dojoTests.addAll(jsonToList(dojoArray));
+                            dojoArray = dojoObj.optJSONArray("results");
+                            if (dojoArray != null) {
+                                dojoTests.addAll(jsonToList(dojoArray));
+                            }
                         }
                         LOGGER.debug("Successfully retrieved the test list ");
                         return dojoTests;
@@ -136,13 +137,12 @@ public class DefectDojoClient {
     }
 
     // Given the engagement id and scan type, search for existing test id
-    public String getDojoTestId(final String engagementID, final ArrayList dojoTests) {
-        for (int i = 0; i < dojoTests.size(); i++) {
-            String s = dojoTests.get(i).toString();
-            JSONObject dojoTest = new JSONObject(s);
-            if (dojoTest.get("engagement").toString().equals(engagementID) &&
-                    dojoTest.get("scan_type").toString().equals("Dependency Track Finding Packaging Format (FPF) Export")) {
-                return dojoTest.get("id").toString();
+    public String getDojoTestId(final String engagementID, final ArrayList<String> dojoTests) {
+        for (final String dojoTestJson : dojoTests) {
+            JSONObject dojoTest = new JSONObject(dojoTestJson);
+            if (dojoTest.optString("engagement").equals(engagementID) &&
+                    dojoTest.optString("scan_type").equals("Dependency Track Finding Packaging Format (FPF) Export")) {
+                return dojoTest.optString("id");
             }
         }
         return "";
@@ -150,7 +150,7 @@ public class DefectDojoClient {
 
     // JSONArray to ArrayList simple converter
     public ArrayList<String> jsonToList(final JSONArray jsonArray) {
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
         if (jsonArray != null) {
             for (int i = 0; i < jsonArray.length(); i++) {
                 list.add(jsonArray.get(i).toString());
@@ -177,7 +177,7 @@ public class DefectDojoClient {
                 .addPart("active", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
                 .addPart("minimum_severity", new StringBody("Info", ContentType.MULTIPART_FORM_DATA))
                 .addPart("close_old_findings", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
-                .addPart("push_to_jira", new StringBody("push_to_jira", ContentType.MULTIPART_FORM_DATA))
+                .addPart("push_to_jira", new StringBody("false", ContentType.MULTIPART_FORM_DATA))
                 .addPart("do_not_reactivate", new StringBody(doNotReactivate.toString(), ContentType.MULTIPART_FORM_DATA))
                 .addPart("test", new StringBody(testId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA))

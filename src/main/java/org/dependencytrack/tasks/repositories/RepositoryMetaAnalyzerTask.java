@@ -128,7 +128,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                 try {
                     cacheLoader.call();
                 } catch (Exception e) {
-                    LOGGER.error("Error while fetching component meta model for component(id="+component.getId()+"; purl="+component.getPurl()+") : "+e.getMessage());
+                    LOGGER.warn("Error while fetching component meta model for component(id="+component.getId()+"; purl="+component.getPurl()+") : "+e.getMessage(), e);
                 }
             }
         }

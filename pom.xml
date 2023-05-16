@@ -81,7 +81,7 @@
 
     <properties>
         <!-- Dependency Versions -->
-        <frontend.version>4.8.0</frontend.version>
+        <frontend.version>4.8.1</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>

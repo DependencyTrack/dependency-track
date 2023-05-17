@@ -22,6 +22,7 @@ import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
@@ -34,6 +35,10 @@ import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import us.springett.cvss.Cvss;
+import us.springett.cvss.CvssV2;
+import us.springett.cvss.CvssV3;
+import us.springett.cvss.CvssV3_1;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -188,13 +193,40 @@ public class SnykParser {
                     vulnerability.setSeverity(Severity.UNASSIGNED);
                 }
             }
-            vulnerability.setCvssV3Vector(cvss.optString("vector", null));
-            final String cvssScore = cvss.optString("score");
-            if (cvssScore != null) {
-                vulnerability.setCvssV3BaseScore(BigDecimal.valueOf(Double.parseDouble(cvssScore)));
+            BigDecimal cvssScore = null;
+            if (cvss.optString("score") != null) {
+                cvssScore = BigDecimal.valueOf(Double.parseDouble(cvss.optString("score")));
+            }
+            final String cvssVector = cvss.optString("vector", null);
+            if (cvssVector != null) {
+                var cvssType = determineCvssType(cvssVector);
+                if (cvssType != null) {
+                    if (CvssV3_1.class.equals(cvssType) || CvssV3.class.equals(cvssType)) {
+                        vulnerability.setCvssV3Vector(cvssVector);
+                        vulnerability.setCvssV3BaseScore(cvssScore);
+                    } else if (CvssV2.class.equals(cvssType)) {
+                        vulnerability.setCvssV2Vector(cvssVector);
+                        vulnerability.setCvssV2BaseScore(cvssScore);
+                    }
+                }
             }
         }
         return vulnerability;
+    }
+
+    public Class determineCvssType(final String cvssVector) {
+        if (cvssVector != null) {
+            // The response doesn't provide Cvss method type.
+            // use prefix matching to identify it.
+            if (StringUtils.startsWithIgnoreCase(cvssVector, "cvss:3.1/")) {
+                return CvssV3_1.class;
+            } else if (StringUtils.startsWithIgnoreCase(cvssVector, "cvss:3.0/")) {
+                return CvssV3.class;
+            } else if (Cvss.fromVector(cvssVector) instanceof CvssV2) {
+                return CvssV2.class;
+            }
+        }
+        return null;
     }
 
     public String addReferences(JSONObject slots) {

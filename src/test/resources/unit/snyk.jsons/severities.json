@@ -74,5 +74,21 @@
       "score": null,
       "vector": null
     }
+  ],
+  "severities6": [
+    {
+      "source": "SNYK",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    }
+  ],
+  "severities7": [
+    {
+      "source": "SNYK",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:2.0/AV:N/AC:L/Au:S/C:P/I:P/A:N"
+    }
   ]
 }

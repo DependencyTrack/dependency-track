@@ -19,6 +19,7 @@
 package org.dependencytrack.parser.snyk;
 
 import alpine.model.IConfigProperty;
+import org.dependencytrack.model.Vulnerability;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.dependencytrack.PersistenceCapableTest;
@@ -27,6 +28,9 @@ import org.dependencytrack.parser.snyk.model.SnykError;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import us.springett.cvss.CvssV2;
+import us.springett.cvss.CvssV3;
+import us.springett.cvss.CvssV3_1;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -248,4 +252,35 @@ public class SnykParserTest extends PersistenceCapableTest {
         assertThat(parser.parseErrors(new JSONObject("{}"))).isEmpty();
     }
 
+    @Test
+    public void testDetermineCvssType() {
+        String cvssVector = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H";
+        Class cvssType = parser.determineCvssType(cvssVector);
+        assertThat(cvssType).isEqualTo(CvssV3_1.class);
+
+        cvssVector = "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H";
+        cvssType = parser.determineCvssType(cvssVector);
+        assertThat(cvssType).isEqualTo(CvssV3.class);
+
+        cvssVector = "CVSS:2.0/AV:N/AC:L/Au:S/C:P/I:P/A:N";
+        cvssType = parser.determineCvssType(cvssVector);
+        assertThat(cvssType).isEqualTo(CvssV2.class);
+    }
+
+    @Test
+    public void testParseCvssTypeSnyk() throws IOException {
+        String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/severities.json")));
+        final JSONObject jsonObject = new JSONObject(jsonString);
+        JSONArray severities = jsonObject.optJSONArray("severities6");
+        var cvssParsedVuln = parser.setCvssScore(severities, new Vulnerability());
+        assertThat(cvssParsedVuln).isNotNull();
+        assertThat(cvssParsedVuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H");
+        assertThat(cvssParsedVuln.getCvssV3BaseScore().doubleValue()).isEqualTo(7.5);
+
+        severities = jsonObject.optJSONArray("severities7");
+        cvssParsedVuln = parser.setCvssScore(severities, new Vulnerability());
+        assertThat(cvssParsedVuln).isNotNull();
+        assertThat(cvssParsedVuln.getCvssV2Vector()).isEqualTo("CVSS:2.0/AV:N/AC:L/Au:S/C:P/I:P/A:N");
+        assertThat(cvssParsedVuln.getCvssV2BaseScore().doubleValue()).isEqualTo(7.5);
+    }
 }

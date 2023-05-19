@@ -69,7 +69,7 @@ alpine.data.directory=~/.dependency-track
 # alpine.secret.key.path=/var/run/secrets/secret.key
 
 # Required
-# Defines the interval (in seconds) to log general heath information. If value
+# Defines the interval (in seconds) to log general health information. If value
 # equals 0, watchdog logging will be disabled.
 alpine.watchdog.logging.interval=0
 

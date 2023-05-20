@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "9.3.1"
+      "version": "9.3.11"
     },
     {
       "type": "datasource",
@@ -129,7 +129,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.3.11",
       "targets": [
         {
           "datasource": {
@@ -195,7 +195,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.3.11",
       "targets": [
         {
           "datasource": {
@@ -267,7 +267,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.3.11",
       "targets": [
         {
           "datasource": {
@@ -331,14 +331,16 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.3.11",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(increase(alpine_events_published_total{instance=\"$instance\"}[$__rate_interval]))",
+          "editorMode": "code",
+          "expr": "sum(rate(alpine_events_published_total{instance=\"$instance\"}[1m]))",
+          "range": true,
           "refId": "A"
         }
       ],
@@ -389,7 +391,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.3.11",
       "targets": [
         {
           "datasource": {
@@ -447,7 +449,7 @@
         },
         "textMode": "name"
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.3.11",
       "targets": [
         {
           "datasource": {
@@ -522,7 +524,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.3.1",
+      "pluginVersion": "9.3.11",
       "targets": [
         {
           "datasource": {
@@ -973,12 +975,208 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Average duration of garbage collection pauses caused by the JVM garbage collector.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 59,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(jvm_gc_pause_seconds_sum{instance=\"$instance\"}[1m]) / rate(jvm_gc_pause_seconds_count{instance=\"$instance\"}[1m]) > 0",
+          "legendFormat": "{{action}} ({{cause}})",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Average GC Pause Duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Average amount of memory allocated by the JVM garbage collector.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 60,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(jvm_gc_memory_allocated_bytes_total{instance=\"$instance\"}[1m]) > 0",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Average GC Memory Allocation",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 32
       },
       "id": 49,
       "panels": [],
@@ -990,6 +1188,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
+      "description": "Number of connections in the transactional connection pool.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1046,7 +1245,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 33
       },
       "id": 51,
       "options": {
@@ -1122,6 +1321,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
+      "description": "Number of connections in the non-transactional connection pool.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1178,7 +1378,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 25
+        "y": 33
       },
       "id": 52,
       "options": {
@@ -1254,6 +1454,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
+      "description": "Average number of database operations per second.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1302,7 +1503,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "ops"
         },
         "overrides": []
       },
@@ -1310,7 +1512,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 33
+        "y": 41
       },
       "id": 54,
       "options": {
@@ -1336,7 +1538,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(datanucleus_datastore_writes_total{instance=\"$instance\"}[$__rate_interval])",
+          "expr": "rate(datanucleus_datastore_writes_total{instance=\"$instance\"}[1m]) > 0",
           "legendFormat": "Writes",
           "range": true,
           "refId": "A"
@@ -1347,7 +1549,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(datanucleus_datastore_reads_total{instance=\"$instance\"}[$__rate_interval])",
+          "expr": "rate(datanucleus_datastore_reads_total{instance=\"$instance\"}[1m]) > 0",
           "hide": false,
           "legendFormat": "Reads",
           "range": true,
@@ -1362,6 +1564,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
+      "description": "Average number of database queries per second.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1410,7 +1613,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "ops"
         },
         "overrides": [
           {
@@ -1434,7 +1638,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 33
+        "y": 41
       },
       "id": 56,
       "options": {
@@ -1460,7 +1664,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(datanucleus_queries_executed_total{instance=\"$instance\"}[$__rate_interval])",
+          "expr": "rate(datanucleus_queries_executed_total{instance=\"$instance\"}[1m]) > 0",
           "legendFormat": "Total",
           "range": true,
           "refId": "A"
@@ -1471,7 +1675,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(datanucleus_queries_failed_total{instance=\"$instance\"}[$__rate_interval])",
+          "expr": "rate(datanucleus_queries_failed_total{instance=\"$instance\"}[1m]) > 0",
           "hide": false,
           "legendFormat": "Failed",
           "range": true,
@@ -1486,6 +1690,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
+      "description": "Average number of database transactions per second.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1534,7 +1739,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "ops"
         },
         "overrides": [
           {
@@ -1558,7 +1764,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 33
+        "y": 41
       },
       "id": 57,
       "options": {
@@ -1584,7 +1790,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(datanucleus_transactions_total{instance=\"$instance\"}[$__rate_interval])",
+          "expr": "rate(datanucleus_transactions_total{instance=\"$instance\"}[1m]) > 0",
           "legendFormat": "Total",
           "range": true,
           "refId": "A"
@@ -1595,7 +1801,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(datanucleus_transactions_committed_total{instance=\"$instance\"}[$__rate_interval])",
+          "expr": "rate(datanucleus_transactions_committed_total{instance=\"$instance\"}[1m]) > 0",
           "hide": false,
           "legendFormat": "Committed",
           "range": true,
@@ -1607,7 +1813,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(datanucleus_transactions_rolledback_total{instance=\"$instance\"}[$__rate_interval])",
+          "expr": "rate(datanucleus_transactions_rolledback_total{instance=\"$instance\"}[1m]) > 0",
           "hide": false,
           "legendFormat": "Rolled Back",
           "range": true,
@@ -1618,12 +1824,330 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Average time it takes for a thread to acquire a connection from the database connection pool.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 49
+      },
+      "id": 62,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "(rate(hikaricp_connections_acquire_seconds_sum{instance=\"$instance\"}[1m]) / rate(hikaricp_connections_acquire_seconds_count{instance=\"$instance\"}[1m])) > 0",
+          "legendFormat": "{{pool}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Average Connection Acquisition Duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Average time it takes to create a new database connection.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 49
+      },
+      "id": 74,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "(rate(hikaricp_connections_creation_seconds_sum{instance=\"$instance\"}[1m]) / rate(hikaricp_connections_creation_seconds_count{instance=\"$instance\"}[1m])) > 0",
+          "legendFormat": "{{pool}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Average Connection Creation Duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Total number of entries in the caches used by the object relational mapper (ORM).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 57
+      },
+      "id": 63,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "datanucleus_cache_second_level_entries{instance=\"$instance\"}",
+          "legendFormat": "L2",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "datanucleus_cache_query_generic_compilation_entries{instance=\"$instance\"}",
+          "hide": false,
+          "legendFormat": "Generic Query Compilation",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "datanucleus_cache_query_datastore_compilation_entries{instance=\"$instance\"}",
+          "hide": false,
+          "legendFormat": "Datastore Query Compilation",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "ORM Cache Entries",
+      "type": "timeseries"
+    },
+    {
       "collapsed": true,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 65
       },
       "id": 10,
       "panels": [
@@ -1632,6 +2156,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "description": "Number of events processed per second.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1672,10 +2197,12 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   }
                 ]
-              }
+              },
+              "unit": "ops"
             },
             "overrides": []
           },
@@ -1683,7 +2210,7 @@
             "h": 8,
             "w": 8,
             "x": 0,
-            "y": 12
+            "y": 20
           },
           "id": 6,
           "options": {
@@ -1709,7 +2236,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "increase(executor_completed_tasks_total{instance=\"$instance\", name=\"Alpine-EventService\"}[$__rate_interval])",
+              "expr": "rate(executor_completed_tasks_total{instance=\"$instance\", name=\"Alpine-EventService\"}[1m]) > 0",
               "legendFormat": "{{name}}",
               "range": true,
               "refId": "A"
@@ -1720,7 +2247,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "increase(executor_completed_tasks_total{instance=\"$instance\", name=\"Alpine-SingleThreadedEventService\"}[$__rate_interval])",
+              "expr": "rate(executor_completed_tasks_total{instance=\"$instance\", name=\"Alpine-SingleThreadedEventService\"}[1m]) > 0",
               "hide": false,
               "legendFormat": "{{name}}",
               "range": true,
@@ -1735,6 +2262,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "description": "Total number of events queued for processing.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1746,7 +2274,7 @@
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
-                "drawStyle": "line",
+                "drawStyle": "bars",
                 "fillOpacity": 15,
                 "gradientMode": "opacity",
                 "hideFrom": {
@@ -1775,7 +2303,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   }
                 ]
               }
@@ -1786,7 +2315,7 @@
             "h": 8,
             "w": 8,
             "x": 8,
-            "y": 12
+            "y": 20
           },
           "id": 4,
           "options": {
@@ -1812,7 +2341,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "executor_queued_tasks{instance=\"$instance\", name=\"Alpine-EventService\"}",
+              "expr": "executor_queued_tasks{instance=\"$instance\", name=\"Alpine-EventService\"} > 0",
               "legendFormat": "{{name}}",
               "range": true,
               "refId": "A"
@@ -1823,7 +2352,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "executor_queued_tasks{instance=\"$instance\", name=\"Alpine-SingleThreadedEventService\"}",
+              "expr": "executor_queued_tasks{instance=\"$instance\", name=\"Alpine-SingleThreadedEventService\"} > 0",
               "hide": false,
               "legendFormat": "{{name}}",
               "range": true,
@@ -1838,6 +2367,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "description": "Number of active threads per worker pool.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1849,7 +2379,7 @@
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
-                "drawStyle": "line",
+                "drawStyle": "bars",
                 "fillOpacity": 15,
                 "gradientMode": "opacity",
                 "hideFrom": {
@@ -1878,7 +2408,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1893,7 +2424,7 @@
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 12
+            "y": 20
           },
           "id": 30,
           "options": {
@@ -1919,7 +2450,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "executor_active_threads{instance=\"$instance\", name=\"Alpine-EventService\"}",
+              "expr": "executor_active_threads{instance=\"$instance\", name=\"Alpine-EventService\"} > 0",
               "legendFormat": "{{name}}",
               "range": true,
               "refId": "A"
@@ -1930,7 +2461,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "executor_active_threads{instance=\"$instance\", name=\"Alpine-SingleThreadedEventService\"}",
+              "expr": "executor_active_threads{instance=\"$instance\", name=\"Alpine-SingleThreadedEventService\"} > 0",
               "hide": false,
               "legendFormat": "{{name}}",
               "range": true,
@@ -1945,7 +2476,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "description": "",
+          "description": "Average number of events published per second.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1986,14 +2517,16 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
                     "value": 80
                   }
                 ]
-              }
+              },
+              "unit": "ops"
             },
             "overrides": []
           },
@@ -2001,7 +2534,7 @@
             "h": 10,
             "w": 24,
             "x": 0,
-            "y": 20
+            "y": 28
           },
           "id": 2,
           "options": {
@@ -2029,7 +2562,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "increase(alpine_events_published_total{instance=\"$instance\"}[$__rate_interval])",
+              "expr": "rate(alpine_events_published_total{instance=\"$instance\"}[1m]) > 0",
               "legendFormat": "{{event}}",
               "range": true,
               "refId": "A"
@@ -2048,7 +2581,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 66
       },
       "id": 12,
       "panels": [
@@ -2057,6 +2590,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "description": "Number of notifications processed per second.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2097,14 +2631,16 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
                     "value": 80
                   }
                 ]
-              }
+              },
+              "unit": "ops"
             },
             "overrides": []
           },
@@ -2112,7 +2648,7 @@
             "h": 8,
             "w": 8,
             "x": 0,
-            "y": 35
+            "y": 67
           },
           "id": 42,
           "options": {
@@ -2138,7 +2674,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "increase(executor_completed_tasks_total{instance=\"$instance\", name=\"Alpine-NotificationService\"}[$__rate_interval])",
+              "expr": "rate(executor_completed_tasks_total{instance=\"$instance\", name=\"Alpine-NotificationService\"}[1m]) > 0",
               "legendFormat": "{{name}}",
               "range": true,
               "refId": "A"
@@ -2152,6 +2688,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "description": "Total number of notifications queued for processing.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2163,7 +2700,7 @@
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
-                "drawStyle": "line",
+                "drawStyle": "bars",
                 "fillOpacity": 15,
                 "gradientMode": "opacity",
                 "hideFrom": {
@@ -2192,7 +2729,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   }
                 ]
               }
@@ -2203,7 +2741,7 @@
             "h": 8,
             "w": 8,
             "x": 8,
-            "y": 35
+            "y": 67
           },
           "id": 43,
           "options": {
@@ -2229,7 +2767,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "executor_queued_tasks{instance=\"$instance\", name=\"Alpine-NotificationService\"}",
+              "expr": "executor_queued_tasks{instance=\"$instance\", name=\"Alpine-NotificationService\"} > 0",
               "legendFormat": "{{name}}",
               "range": true,
               "refId": "A"
@@ -2243,6 +2781,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "description": "Number of active threads per worker pool.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2254,7 +2793,7 @@
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
-                "drawStyle": "line",
+                "drawStyle": "bars",
                 "fillOpacity": 15,
                 "gradientMode": "opacity",
                 "hideFrom": {
@@ -2283,7 +2822,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -2298,7 +2838,7 @@
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 35
+            "y": 67
           },
           "id": 44,
           "options": {
@@ -2324,7 +2864,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "executor_active_threads{instance=\"$instance\", name=\"Alpine-NotificationService\"}",
+              "expr": "executor_active_threads{instance=\"$instance\", name=\"Alpine-NotificationService\"} > 0",
               "legendFormat": "{{name}}",
               "range": true,
               "refId": "A"
@@ -2338,7 +2878,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "description": "Notifications published by the system. Note that this includes ALL notifications, even those for which no alert was configured.",
+          "description": "Average number of events published per second. Note that this includes ALL notifications, even those for which no alert was configured.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2382,14 +2922,16 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
                     "value": 80
                   }
                 ]
-              }
+              },
+              "unit": "ops"
             },
             "overrides": []
           },
@@ -2397,7 +2939,7 @@
             "h": 10,
             "w": 24,
             "x": 0,
-            "y": 43
+            "y": 75
           },
           "id": 8,
           "options": {
@@ -2409,7 +2951,9 @@
               ],
               "displayMode": "table",
               "placement": "right",
-              "showLegend": true
+              "showLegend": true,
+              "sortBy": "Total",
+              "sortDesc": true
             },
             "tooltip": {
               "mode": "multi",
@@ -2423,7 +2967,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "increase(alpine_notifications_published_total{instance=\"$instance\"}[$__rate_interval])",
+              "expr": "rate(alpine_notifications_published_total{instance=\"$instance\"}[1m]) > 0",
               "legendFormat": "{{group}}",
               "range": true,
               "refId": "A"
@@ -2434,6 +2978,412 @@
         }
       ],
       "title": "Notifications",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 67
+      },
+      "id": 67,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "description": "Average time taken to analyze the repository metadata for all components in a project.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "gradientMode": "opacity",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 68
+          },
+          "id": 65,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "(rate(repository_meta_analyzer_task_seconds_sum{instance=\"$instance\"}[1m]) / rate(repository_meta_analyzer_task_seconds_count{instance=\"$instance\"}[1m])) > 0",
+              "legendFormat": "{{instance}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Average Repository Metadata Analysis Duration",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "description": "Average time taken to rebuild Lucene search indexes, per index type.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 68
+          },
+          "id": 69,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "(rate(lucene_index_rebuild_seconds_sum{instance=\"$instance\"}[1m]) / rate(lucene_index_rebuild_seconds_count{instance=\"$instance\"}[1m])) > 0",
+              "legendFormat": "{{type}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Average Search Index Rebuild Duration",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "description": "Average number of retries against the Sonatype OSS Index API.\n\nNote: If OSS Index is not enabled, no data will be displayed.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 76
+          },
+          "id": 71,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "rate(resilience4j_retry_calls_total{instance=\"$instance\",name=\"ossIndexRetryer\"}[1m]) > 0",
+              "legendFormat": "{{kind}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Retries: Sonatype OSS Index API",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "description": "Average number of retries against the Snyk API.\n\nNote: If Snyk is not enabled, no data will be displayed.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 76
+          },
+          "id": 72,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max",
+                "mean"
+              ],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "rate(resilience4j_retry_calls_total{instance=\"$instance\",name=\"snyk-api\"}[1m]) > 0",
+              "legendFormat": "{{kind}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Retries: Snyk",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Functional",
       "type": "row"
     }
   ],
@@ -2469,13 +3419,13 @@
     ]
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Dependency-Track",
   "uid": "wYGnYRRVk",
-  "version": 3,
+  "version": 1,
   "weekStart": ""
 }

@@ -88,7 +88,7 @@
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>7.3.2</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.6</lib.jaxb.runtime.version>
-        <lib.json-unit.version>2.37.0</lib.json-unit.version>
+        <lib.json-unit.version>2.38.0</lib.json-unit.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.2.0</lib.pebble.version>

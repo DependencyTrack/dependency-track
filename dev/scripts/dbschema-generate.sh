@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DEFAULT_OUTPUT="./schema.sql"
-DEFAULT_DNPROPS="./scripts/dbschema-generate.datanucleus.properties"
+DEFAULT_DNPROPS="./dev/scripts/dbschema-generate.datanucleus.properties"
 
 function printHelp() {
   echo "Generate the database schema for Dependency-Track."
@@ -40,4 +40,4 @@ mvn datanucleus:schema-create \
   -Dprops="${dnprops:-$DEFAULT_DNPROPS}" \
   -DcompleteDdl=true \
   -DddlFile="${output:-$DEFAULT_OUTPUT}" \
-  -Dlog4jConfiguration=./scripts/dbschema-generate.log4j.properties
+  -Dlog4jConfiguration=./dev/scripts/dbschema-generate.log4j.properties

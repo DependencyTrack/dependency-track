@@ -20,7 +20,7 @@ services:
       ALPINE_METRICS_ENABLED: "true"
 
   prometheus:
-    image: prom/prometheus:v2.37.6
+    image: prom/prometheus:v2.37.8
     entrypoint: /bin/sh
     command:
     - -c
@@ -45,7 +45,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana-oss:9.3.11
+    image: grafana/grafana-oss:9.5.2
     depends_on:
     - prometheus
     environment:

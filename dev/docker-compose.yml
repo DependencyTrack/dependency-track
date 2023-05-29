@@ -14,6 +14,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) Steve Springett. All Rights Reserved.
+name: "dependency-track"
+
 services:
   apiserver:
     image: dependencytrack/apiserver:snapshot

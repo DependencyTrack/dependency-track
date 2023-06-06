@@ -18,9 +18,10 @@
  */
 package org.dependencytrack.parser.osv;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
@@ -38,69 +39,76 @@ import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
  */
 public class OsvAdvisoryParser {
 
-    public OsvAdvisory parse(final JSONObject object) {
+    public OsvAdvisory parse(final JsonNode object) {
 
         OsvAdvisory advisory = null;
 
         // initial check if advisory is valid or withdrawn
-        String withdrawn = object.optString("withdrawn", null);
+        String withdrawn = Json.optString(object, "withdrawn", null);
 
-        if(object != null && withdrawn == null) {
+        if (object != null && withdrawn == null) {
 
             advisory = new OsvAdvisory();
-            advisory.setId(object.optString("id", null));
-            advisory.setSummary(trimSummary(object.optString("summary", null)));
-            advisory.setDetails(object.optString("details", null));
-            advisory.setPublished(jsonStringToTimestamp(object.optString("published", null)));
-            advisory.setModified(jsonStringToTimestamp(object.optString("modified", null)));
-            advisory.setSchema_version(object.optString("schema_version", null));
+            advisory.setId(Json.optString(object, "id", null));
+            advisory.setSummary(trimSummary(Json.optString(object, "summary", null)));
+            advisory.setDetails(Json.optString(object, "details", null));
+            advisory.setPublished(jsonStringToTimestamp(Json.optString(object, "published", null)));
+            advisory.setModified(jsonStringToTimestamp(Json.optString(object, "modified", null)));
+            advisory.setSchema_version(Json.optString(object, "schema_version", null));
 
-            final JSONArray references = object.optJSONArray("references");
+            final ArrayNode references = Json.optArray(object, "references");
             if (references != null) {
-                for (int i=0; i<references.length(); i++) {
-                    final JSONObject reference = references.getJSONObject(i);
-                    final String url = reference.optString("url", null);
-                    advisory.addReference(url);
-                }
-            }
-
-            final JSONArray credits = object.optJSONArray("credits");
-            if (credits != null) {
-                for (int i=0; i<credits.length(); i++) {
-                    final JSONObject credit = credits.getJSONObject(i);
-                    final String name = credit.optString("name", null);
-                    advisory.addCredit(name);
-                }
-            }
-
-            final JSONArray aliases = object.optJSONArray("aliases");
-            if(aliases != null) {
-                for (int i=0; i<aliases.length(); i++) {
-                    advisory.addAlias(aliases.optString(i));
-                }
-            }
-
-            final JSONObject databaseSpecific = object.optJSONObject("database_specific");
-            if (databaseSpecific != null) {
-                advisory.setSeverity(databaseSpecific.optString("severity", null));
-                final JSONArray cweIds = databaseSpecific.optJSONArray("cwe_ids");
-                if(cweIds != null) {
-                    for (int i=0; i<cweIds.length(); i++) {
-                        advisory.addCweId(cweIds.optString(i));
+                for (int i = 0; i < references.size(); i++) {
+                    final JsonNode reference = references.get(i);
+                    final String url = Json.optString(reference, "url", null);
+                    if (url != null) {
+                        advisory.addReference(url);
                     }
                 }
             }
 
-            final JSONArray cvssList = object.optJSONArray("severity");
+            final ArrayNode credits = Json.optArray(object, "credits");
+            if (credits != null) {
+                for (int i = 0; i < credits.size(); i++) {
+                    final JsonNode credit = credits.get(i);
+                    final String name = Json.optString(credit, "name", null);
+                    if (name != null) {
+                        advisory.addCredit(name);
+                    }
+                }
+            }
+
+            final ArrayNode aliases = Json.optArray(object, "aliases");
+            if (aliases != null) {
+                for (int i = 0; i < aliases.size(); i++) {
+                    final String alias = Json.optString(aliases, i, null);
+                    if (alias != null) {
+                        advisory.addAlias(Json.optString(aliases, i));
+                    }
+                }
+            }
+
+            final JsonNode databaseSpecific = object.get("database_specific");
+            if (databaseSpecific != null) {
+                advisory.setSeverity(Json.optString(databaseSpecific, "severity", null));
+                final ArrayNode cweIds = Json.optArray(databaseSpecific, "cwe_ids");
+                if (cweIds != null) {
+                    for (int i = 0; i < cweIds.size(); i++) {
+                        advisory.addCweId(Json.optString(cweIds, i));
+                    }
+                }
+            }
+
+            final ArrayNode cvssList = Json.optArray(object, "severity");
             if (cvssList != null) {
-                for (int i=0; i<cvssList.length(); i++) {
-                    final JSONObject cvss = cvssList.getJSONObject(i);
-                    final String type = cvss.optString("type", null);
+                for (int i = 0; i < cvssList.size(); i++) {
+                    final JsonNode cvss = cvssList.get(i);
+                    final String type = Json.optString(cvss, "type");
                     if (type.equalsIgnoreCase("CVSS_V3")) {
-                        advisory.setCvssV3Vector(cvss.optString("score", null));
+                        advisory.setCvssV3Vector(Json.optString(cvss, "score", null));
                     }
                     if (type.equalsIgnoreCase("CVSS_V2")) {
-                        advisory.setCvssV2Vector(cvss.optString("score", null));
+                        advisory.setCvssV2Vector(Json.optString(cvss, "score", null));
                     }
                 }
             }
@@ -111,35 +119,35 @@ public class OsvAdvisoryParser {
         return advisory;
     }
 
-    private List<OsvAffectedPackage> parseAffectedPackages(final JSONObject advisory) {
+    private List<OsvAffectedPackage> parseAffectedPackages(final JsonNode advisory) {
 
         List<OsvAffectedPackage> affectedPackages = new ArrayList<>();
-        final JSONArray affected = advisory.optJSONArray("affected");
+        final ArrayNode affected = Json.optArray(advisory, "affected");
         if (affected != null) {
-            for(int i=0; i<affected.length(); i++) {
+            for (int i = 0; i < affected.size(); i++) {
 
-                affectedPackages.addAll(parseAffectedPackageRange(affected.getJSONObject(i)));
+                affectedPackages.addAll(parseAffectedPackageRange(affected.get(i)));
             }
         }
         return affectedPackages;
     }
 
-    public List<OsvAffectedPackage> parseAffectedPackageRange(final JSONObject affected) {
+    public List<OsvAffectedPackage> parseAffectedPackageRange(final JsonNode affected) {
 
         List<OsvAffectedPackage> osvAffectedPackageList = new ArrayList<>();
-        final JSONArray ranges = affected.optJSONArray("ranges");
-        final JSONArray versions = affected.optJSONArray("versions");
+        final ArrayNode ranges = Json.optArray(affected, "ranges");
+        final ArrayNode versions = Json.optArray(affected, "versions");
         if (ranges != null) {
-            for (int j=0; j<ranges.length(); j++) {
-                final JSONObject range = ranges.getJSONObject(j);
+            for (int j = 0; j < ranges.size(); j++) {
+                final JsonNode range = ranges.get(j);
                 osvAffectedPackageList.addAll(parseVersionRanges(affected, range));
             }
         }
         // if ranges are not available or only commit hash range is available, look for versions
-        if (osvAffectedPackageList.size() == 0 && versions != null && versions.length() > 0) {
-            for (int j=0; j<versions.length(); j++) {
+        if (osvAffectedPackageList.size() == 0 && versions != null && versions.size() > 0) {
+            for (int j = 0; j < versions.size(); j++) {
                 OsvAffectedPackage vuln = createAffectedPackage(affected);
-                vuln.setVersion(versions.getString(j));
+                vuln.setVersion(versions.get(j).asText());
                 osvAffectedPackageList.add(vuln);
             }
         }
@@ -150,8 +158,8 @@ public class OsvAdvisoryParser {
         return osvAffectedPackageList;
     }
 
-    private List<OsvAffectedPackage> parseVersionRanges(JSONObject vulnerability, JSONObject range) {
-        final String rangeType = range.optString("type");
+    private List<OsvAffectedPackage> parseVersionRanges(JsonNode vulnerability, JsonNode range) {
+        final String rangeType = Json.optString(range, "type");
         if (!"ECOSYSTEM".equalsIgnoreCase(rangeType) && !"SEMVER".equalsIgnoreCase(rangeType)) {
             // We can't support ranges of type GIT for now, as evaluating them requires knowledge of
             // the entire Git history of a package. We don't have that, so there's no point in
@@ -163,17 +171,17 @@ public class OsvAdvisoryParser {
             return List.of();
         }
 
-        final JSONArray rangeEvents = range.optJSONArray("events");
+        final ArrayNode rangeEvents = Json.optArray(range, "events");
         if (rangeEvents == null) {
             return List.of();
         }
 
         final List<OsvAffectedPackage> affectedPackages = new ArrayList<>();
 
-        for (int i = 0; i < rangeEvents.length(); i++) {
-            JSONObject event = rangeEvents.getJSONObject(i);
+        for (int i = 0; i < rangeEvents.size(); i++) {
+            JsonNode event = rangeEvents.get(i);
 
-            final String introduced = event.optString("introduced", null);
+            final String introduced = Json.optString(event, "introduced", null);
             if (introduced == null) {
                 // "introduced" is required for every range. But events are not guaranteed to be sorted,
                 // it's merely a recommendation by the OSV specification.
@@ -187,11 +195,11 @@ public class OsvAdvisoryParser {
             final OsvAffectedPackage affectedPackage = createAffectedPackage(vulnerability);
             affectedPackage.setLowerVersionRange(introduced);
 
-            if (i + 1 < rangeEvents.length()) {
-                event = rangeEvents.getJSONObject(i + 1);
-                final String fixed = event.optString("fixed", null);
-                final String lastAffected = event.optString("last_affected", null);
-                final String limit = event.optString("limit", null);
+            if (i + 1 < rangeEvents.size()) {
+                event = rangeEvents.get(i + 1);
+                final String fixed = Json.optString(event, "fixed", null);
+                final String lastAffected = Json.optString(event, "last_affected", null);
+                final String limit = Json.optString(event, "limit", null);
 
                 if (fixed != null) {
                     affectedPackage.setUpperVersionRangeExcluding(fixed);
@@ -206,11 +214,11 @@ public class OsvAdvisoryParser {
             }
 
             // Special treatment for GitHub: https://github.com/github/advisory-database/issues/470
-            final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
+            final JsonNode databaseSpecific = vulnerability.get("database_specific");
             if (databaseSpecific != null
                     && affectedPackage.getUpperVersionRangeIncluding() == null
                     && affectedPackage.getUpperVersionRangeExcluding() == null) {
-                final String lastAffectedRange = databaseSpecific.optString("last_known_affected_version_range", null);
+                final String lastAffectedRange = Json.optString(databaseSpecific, "last_known_affected_version_range", null);
                 if (lastAffectedRange != null) {
                     if (lastAffectedRange.startsWith("<=")) {
                         affectedPackage.setUpperVersionRangeIncluding(lastAffectedRange.replaceFirst("<=", "").trim());
@@ -226,26 +234,26 @@ public class OsvAdvisoryParser {
         return affectedPackages;
     }
 
-    private OsvAffectedPackage createAffectedPackage(JSONObject vulnerability) {
+    private OsvAffectedPackage createAffectedPackage(JsonNode vulnerability) {
 
         OsvAffectedPackage osvAffectedPackage = new OsvAffectedPackage();
-        final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
-        final JSONObject ecosystemSpecific = vulnerability.optJSONObject("ecosystem_specific");
-        final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
+        final JsonNode affectedPackageJson = vulnerability.get("package");
+        final JsonNode ecosystemSpecific = vulnerability.get("ecosystem_specific");
+        final JsonNode databaseSpecific = vulnerability.get("database_specific");
         Severity ecosystemSeverity = parseEcosystemSeverity(ecosystemSpecific, databaseSpecific);
-        osvAffectedPackage.setPackageName(affectedPackageJson.optString("name", null));
-        osvAffectedPackage.setPackageEcosystem(affectedPackageJson.optString("ecosystem", null));
-        osvAffectedPackage.setPurl(affectedPackageJson.optString("purl", null));
+        osvAffectedPackage.setPackageName(Json.optString(affectedPackageJson, "name", null));
+        osvAffectedPackage.setPackageEcosystem(Json.optString(affectedPackageJson, "ecosystem", null));
+        osvAffectedPackage.setPurl(Json.optString(affectedPackageJson, "purl", null));
         osvAffectedPackage.setSeverity(ecosystemSeverity);
         return osvAffectedPackage;
     }
 
-    private Severity parseEcosystemSeverity(JSONObject ecosystemSpecific, JSONObject databaseSpecific) {
+    private Severity parseEcosystemSeverity(JsonNode ecosystemSpecific, JsonNode databaseSpecific) {
 
         String severity = null;
 
         if (databaseSpecific != null) {
-            String cvssVector = databaseSpecific.optString("cvss", null);
+            String cvssVector = Json.optString(databaseSpecific, "cvss", null);
             if (cvssVector != null) {
                 Cvss cvss = Cvss.fromVector(cvssVector);
                 Score score = cvss.calculateScore();
@@ -253,8 +261,8 @@ public class OsvAdvisoryParser {
             }
         }
 
-        if(severity == null && ecosystemSpecific != null) {
-            severity = ecosystemSpecific.optString("severity", null);
+        if (severity == null && ecosystemSpecific != null) {
+            severity = Json.optString(ecosystemSpecific, "severity", null);
         }
 
         if (severity != null) {
@@ -272,10 +280,9 @@ public class OsvAdvisoryParser {
     }
 
     public String trimSummary(String summary) {
-
         final int MAX_LEN = 255;
-        if(summary != null && summary.length() > 255) {
-            return StringUtils.substring(summary, 0, MAX_LEN-2) + "..";
+        if (summary != null && summary.length() > 255) {
+            return StringUtils.substring(summary, 0, MAX_LEN - 2) + "..";
         }
         return summary;
     }

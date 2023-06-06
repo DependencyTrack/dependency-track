@@ -20,8 +20,12 @@ package org.dependencytrack.parser.snyk;
 
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
@@ -32,8 +36,6 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -48,52 +50,54 @@ public class SnykParser {
 
     private static final Logger LOGGER = Logger.getLogger(SnykParser.class);
 
-    public Vulnerability parse(JSONArray data, QueryManager qm, String purl, int count, boolean syncAliases) {
+    public Vulnerability parse(ArrayNode data, QueryManager qm, String purl, int count, boolean syncAliases) {
         Vulnerability synchronizedVulnerability = new Vulnerability();
         Vulnerability vulnerability = new Vulnerability();
         List<VulnerableSoftware> vsList = new ArrayList<>();
         vulnerability.setSource(Vulnerability.Source.SNYK);
         // get the id of the data record (vulnerability)
-        vulnerability.setVulnId(data.optJSONObject(count).optString("id", null));
-        final JSONObject vulnAttributes = data.optJSONObject(count).optJSONObject("attributes");
-        if (vulnAttributes != null && vulnAttributes.optString("type").equalsIgnoreCase("package_vulnerability")) {
+        final JsonNode dataNode = data.get(count);
+        vulnerability.setVulnId(Json.optString(dataNode, "id", null));
+        final JsonNode vulnAttributes = dataNode.get("attributes");
+        if (vulnAttributes != null && Json.optString(vulnAttributes, "type").equalsIgnoreCase("package_vulnerability")) {
             // get the references of the data record (vulnerability)
-            final JSONObject slots = vulnAttributes.optJSONObject("slots");
+            final JsonNode slots = vulnAttributes.get("slots");
             if (slots != null) {
-                var publishedTime = jsonStringToTimestamp(slots.optString("publication_time"));
+                var publishedTime = jsonStringToTimestamp(Json.optString(slots, "publication_time"));
                 if (publishedTime != null) {
                     vulnerability.setPublished(Date.from(publishedTime.toInstant()));
                 }
-                if (slots.optJSONArray("references") != null) {
+                if (Json.optArray(slots, "references") != null) {
                     vulnerability.setReferences(addReferences(slots));
                 }
             }
-            vulnerability.setTitle(vulnAttributes.optString("title", null));
-            vulnerability.setDescription(vulnAttributes.optString("description", null));
-            vulnerability.setCreated(Date.from(jsonStringToTimestamp(vulnAttributes.optString("created_at")).toInstant()));
-            vulnerability.setUpdated(Date.from(jsonStringToTimestamp(vulnAttributes.optString("updated_at")).toInstant()));
-            final JSONArray problems = vulnAttributes.optJSONArray("problems");
+            vulnerability.setTitle(Json.optString(vulnAttributes,"title", null));
+            vulnerability.setDescription(Json.optString(vulnAttributes,"description", null));
+            vulnerability.setCreated(Date.from(jsonStringToTimestamp(Json.optString(vulnAttributes,"created_at", null)).toInstant()));
+            vulnerability.setUpdated(Date.from(jsonStringToTimestamp(Json.optString(vulnAttributes,"updated_at", null)).toInstant()));
+            final ArrayNode problems = Json.optArray(vulnAttributes, "problems");
             if (syncAliases && problems != null) {
                 vulnerability.setAliases(computeAliases(vulnerability, qm, problems));
             }
-            final JSONArray cvssArray = vulnAttributes.optJSONArray("severities");
+            final ArrayNode cvssArray = Json.optArray(vulnAttributes, "severities");
             vulnerability = cvssArray != null ? setCvssScore(cvssArray, vulnerability) : vulnerability;
-            JSONArray coordinates = vulnAttributes.optJSONArray("coordinates");
+            ArrayNode coordinates = Json.optArray(vulnAttributes, "coordinates");
             if (coordinates != null) {
 
-                for (int countCoordinates = 0; countCoordinates < coordinates.length(); countCoordinates++) {
-                    JSONArray representation = coordinates.getJSONObject(countCoordinates).optJSONArray("representation");
-                    if ((representation.length() == 1 && representation.get(0).equals("*"))) {
-                        LOGGER.debug("Range only contains *. Will not compute vulnerable software for this range. Purl is: "+purl);
+                for (int countCoordinates = 0; countCoordinates < coordinates.size(); countCoordinates++) {
+                    final JsonNode coordinate = coordinates.get(countCoordinates);
+                    final ArrayNode representation = Json.optArray(coordinate, "representation");
+                    if ((representation.size() == 1 && "*".equals(representation.get(0).asText()))) {
+                        LOGGER.debug("Range only contains *. Will not compute vulnerable software for this range. Purl is: " + purl);
                     } else {
                         vsList = parseVersionRanges(qm, purl, representation);
                     }
 
-                    JSONArray remedies = coordinates.getJSONObject(countCoordinates).optJSONArray("remedies");
+                    final ArrayNode remedies = Json.optArray(coordinate, "remedies");
                     if (remedies != null) {
                         var recommendation = "";
-                        for (int remedyCount = 0; remedyCount < remedies.length(); remedyCount++) {
-                            var remedy = remedies.getJSONObject(remedyCount).optString("description");
+                        for (int remedyCount = 0; remedyCount < remedies.size(); remedyCount++) {
+                            final String remedy = Json.optString(remedies.get(remedyCount), "description");
                             recommendation += remedy + System.lineSeparator();
                         }
                         vulnerability.setRecommendation(recommendation);
@@ -111,39 +115,39 @@ public class SnykParser {
         return synchronizedVulnerability;
     }
 
-    public List<SnykError> parseErrors(final JSONObject jsonResponse) {
+    public List<SnykError> parseErrors(final JsonNode jsonResponse) {
         if (jsonResponse == null) {
             return Collections.emptyList();
         }
 
-        final JSONArray errorsArray = jsonResponse.optJSONArray("errors");
+        final ArrayNode errorsArray = Json.optArray(jsonResponse, "errors");
         if (errorsArray == null) {
             return Collections.emptyList();
         }
 
         final var errors = new ArrayList<SnykError>();
-        for (int i = 0; i < errorsArray.length(); i++) {
-            final JSONObject errorObject = errorsArray.optJSONObject(i);
+        for (int i = 0; i < errorsArray.size(); i++) {
+            final JsonNode errorObject = errorsArray.get(i);
             if (errorObject == null) {
                 continue;
             }
 
             errors.add(new SnykError(
-                    errorObject.optString("code"),
-                    errorObject.optString("title"),
-                    errorObject.optString("detail")
+                    Json.optString(errorObject,"code"),
+                    Json.optString(errorObject,"title"),
+                    Json.optString(errorObject,"detail")
             ));
         }
 
         return errors;
     }
 
-    public List<VulnerabilityAlias> computeAliases(Vulnerability vulnerability, QueryManager qm, JSONArray problems) {
+    public List<VulnerabilityAlias> computeAliases(Vulnerability vulnerability, QueryManager qm, ArrayNode problems) {
         List<VulnerabilityAlias> vulnerabilityAliasList = new ArrayList<>();
-        for (int i = 0; i < problems.length(); i++) {
-            final JSONObject problem = problems.optJSONObject(i);
-            String source = problem.optString("source");
-            String id = problem.optString("id");
+        for (int i = 0; i < problems.size(); i++) {
+            final JsonNode problem = problems.get(i);
+            String source = Json.optString(problem,"source");
+            String id = Json.optString(problem,"id");
             // CWE
             if (source.equalsIgnoreCase("CWE")) {
                 final Cwe cwe = CweResolver.getInstance().resolve(qm, id);
@@ -171,10 +175,10 @@ public class SnykParser {
         return vulnerabilityAliasList;
     }
 
-    public Vulnerability setCvssScore(JSONArray cvssArray, Vulnerability vulnerability) {
-        JSONObject cvss = selectCvssObjectBasedOnSource(cvssArray);
+    public Vulnerability setCvssScore(ArrayNode cvssArray, Vulnerability vulnerability) {
+        JsonNode cvss = selectCvssObjectBasedOnSource(cvssArray);
         if (cvss != null) {
-            String severity = cvss.optString("level", null);
+            String severity = Json.optString(cvss,"level", null);
             if (severity != null) {
                 if (severity.equalsIgnoreCase("CRITICAL")) {
                     vulnerability.setSeverity(Severity.CRITICAL);
@@ -188,8 +192,8 @@ public class SnykParser {
                     vulnerability.setSeverity(Severity.UNASSIGNED);
                 }
             }
-            vulnerability.setCvssV3Vector(cvss.optString("vector", null));
-            final String cvssScore = cvss.optString("score");
+            vulnerability.setCvssV3Vector(Json.optString(cvss,"vector"));
+            final String cvssScore = Json.optString(cvss,"score", null);
             if (cvssScore != null) {
                 vulnerability.setCvssV3BaseScore(BigDecimal.valueOf(Double.parseDouble(cvssScore)));
             }
@@ -197,12 +201,12 @@ public class SnykParser {
         return vulnerability;
     }
 
-    public String addReferences(JSONObject slots) {
-        final JSONArray links = slots.optJSONArray("references");
+    public String addReferences(JsonNode slots) {
+        final ArrayNode links = Json.optArray(slots, "references", Json.newArray());
         final StringBuilder sb = new StringBuilder();
-        for (int linkCount = 0; linkCount < links.length(); linkCount++) {
-            final JSONObject link = links.getJSONObject(linkCount);
-            String reference = link.optString("url", null);
+        for (int linkCount = 0; linkCount < links.size(); linkCount++) {
+            final JsonNode link = links.get(linkCount);
+            String reference = Json.optString(link,"url", null);
             if (reference != null) {
                 sb.append("* [").append(reference).append("](").append(reference).append(")\n");
             }
@@ -210,25 +214,25 @@ public class SnykParser {
         return sb.toString();
     }
 
-    public JSONObject selectCvssObjectBasedOnSource(JSONArray cvssArray) {
+    public JsonNode selectCvssObjectBasedOnSource(ArrayNode cvssArray) {
 
         String cvssSourceHigh = getSnykCvssConfig(ConfigPropertyConstants.SCANNER_SNYK_CVSS_SOURCE);
         String cvssSourceLow = cvssSourceHigh.equalsIgnoreCase(SnykCvssSource.NVD.toString()) ? SnykCvssSource.SNYK.toString() : SnykCvssSource.NVD.toString();
-        JSONObject cvss = cvssArray.optJSONObject(0);
-        if (cvssArray.length() > 1) {
-            for (int i = 0; i < cvssArray.length(); i++) {
-                final JSONObject cvssObject = cvssArray.optJSONObject(i);
-                String source = cvssObject.optString("source");
-                String vector = cvssObject.optString("vector");
-                String score = cvssObject.optString("score");
-                if (!source.isBlank() && !vector.isBlank() && !score.isBlank()) {
+        JsonNode cvss = cvssArray.get(0);
+        if (cvssArray.size() > 1) {
+            for (int i = 0; i < cvssArray.size(); i++) {
+                final JsonNode cvssObject = cvssArray.get(i);
+                String source = Json.optString(cvssObject,"source");
+                String vector = Json.optString(cvssObject,"vector");
+                String score = Json.optString(cvssObject,"score");
+                if (!StringUtils.isBlank(source) && !StringUtils.isBlank(vector) && !StringUtils.isBlank(score)) {
                     if (source.equalsIgnoreCase(cvssSourceHigh)) {
                         return cvssObject;
                     }
                     if (source.equalsIgnoreCase(cvssSourceLow)) {
                         cvss = cvssObject;
                     } else {
-                        if (cvss != null && !cvss.optString("source").equalsIgnoreCase(cvssSourceLow)) {
+                        if (cvss != null && !Json.optString(cvss,"source").equalsIgnoreCase(cvssSourceLow)) {
                             cvss = cvssObject;
                         }
                     }
@@ -238,7 +242,7 @@ public class SnykParser {
         return cvss;
     }
 
-    public List<VulnerableSoftware> parseVersionRanges(final QueryManager qm, final String purl, final JSONArray ranges) {
+    public List<VulnerableSoftware> parseVersionRanges(final QueryManager qm, final String purl, final ArrayNode ranges) {
 
         List<VulnerableSoftware> vulnerableSoftwares = new ArrayList<>();
         if (purl == null) {
@@ -253,9 +257,9 @@ public class SnykParser {
             LOGGER.debug("Invalid PURL  " + purl + " - skipping", ex);
             return Collections.emptyList();
         }
-        for (int i = 0; i < ranges.length(); i++) {
+        for (int i = 0; i < ranges.size(); i++) {
 
-            String range = ranges.optString(i);
+            String range = Json.optString(ranges, i);
             String versionStartIncluding = null;
             String versionStartExcluding = null;
             String versionEndIncluding = null;
@@ -299,7 +303,7 @@ public class SnykParser {
                     LOGGER.debug("Range not definite. Not saving this vulnerable software information. The purl was: "+purl);
                 }
             }
-            
+
             //check for a numeric definite version range
             if ((versionStartIncluding != null && versionEndIncluding != null) || (versionStartIncluding != null && versionEndExcluding != null) || (versionStartExcluding != null && versionEndIncluding != null) || (versionStartExcluding != null && versionEndExcluding != null)) {
                 VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);

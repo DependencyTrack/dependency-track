@@ -313,7 +313,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
 
         // Create a policy condition that matches on any coordinates.
         final var policyConditionA = qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, """
-                {"group": "*", name: "*", version: "*"}
+                {"group": "*", "name": "*", "version": "*"}
                 """);
 
         final var project = new Project();

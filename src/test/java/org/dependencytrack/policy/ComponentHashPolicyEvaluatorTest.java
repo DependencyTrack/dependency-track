@@ -33,7 +33,7 @@ public class ComponentHashPolicyEvaluatorTest extends PersistenceCapableTest {
 
     @Test
     public void hasMatch() {
-        String hashJson = "{ 'algorithm': 'SHA3-512', 'value': 'test_hash' }";
+        String hashJson = "{ \"algorithm\": \"SHA3-512\", \"value\": \"test_hash\" }";
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.COMPONENT_HASH, PolicyCondition.Operator.IS, hashJson);
         Component component = new Component();
@@ -48,7 +48,7 @@ public class ComponentHashPolicyEvaluatorTest extends PersistenceCapableTest {
 
     @Test
     public void noMatch() {
-        String hashJson = "{ 'algorithm': 'MD5', 'value': 'test_hash' }";
+        String hashJson = "{ \"algorithm\": \"MD5\", \"value\": \"test_hash\" }";
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COMPONENT_HASH, PolicyCondition.Operator.IS, hashJson);
         Component component = new Component();
@@ -60,7 +60,7 @@ public class ComponentHashPolicyEvaluatorTest extends PersistenceCapableTest {
 
     @Test
     public void NoMatchNoHash() {
-        String hashJson = "{ 'algorithm': '', 'value': '' }";
+        String hashJson = "{ \"algorithm\": \"\", \"value\": \"\" }";
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COMPONENT_HASH, PolicyCondition.Operator.IS, hashJson);
         Component component = new Component();

@@ -17,9 +17,11 @@ package org.dependencytrack.tasks;
 
 import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Severity;
@@ -29,7 +31,6 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.persistence.CweImporter;
-import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +50,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 
 public class OsvDownloadTaskTest extends PersistenceCapableTest {
-    private JSONObject jsonObject;
+    private JsonNode jsonObject;
     private final OsvAdvisoryParser parser = new OsvAdvisoryParser();
 
     @Before
@@ -221,7 +222,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         // Because vs3 was attributed to OSV, the association with the vulnerability
         // should be removed in the mirroring process.
         final var task = new OsvDownloadTask();
-        task.updateDatasource(parser.parse(new JSONObject("""
+        task.updateDatasource(parser.parse(Json.readString("""
                 {
                    "id": "GHSA-57j2-w4cx-62h2",
                    "summary": "Deeply nested json in jackson-databind",
@@ -562,7 +563,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("NVD", "CVE-2021-34552", false);
         Assert.assertNotNull(vulnerability);
         Assert.assertEquals(Severity.UNASSIGNED, vulnerability.getSeverity());
-        Assert.assertEquals(jsonObject.getString("details"), vulnerability.getDescription());
+        Assert.assertEquals(jsonObject.get("details").asText(), vulnerability.getDescription());
 
         final List<VulnerableSoftware> vsList = vulnerability.getVulnerableSoftware();
         assertThat(vsList).satisfiesExactlyInAnyOrder(
@@ -654,6 +655,6 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
     private void prepareJsonObject(String filePath) throws IOException {
         // parse OSV json file to Advisory object
         String jsonString = new String(Files.readAllBytes(Paths.get(filePath)));
-        jsonObject = new JSONObject(jsonString);
+        jsonObject = Json.readString(jsonString);
     }
 }

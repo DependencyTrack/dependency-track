@@ -19,18 +19,18 @@
 package org.dependencytrack.persistence.defaults;
 
 import alpine.common.logging.Logger;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.persistence.QueryManager;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.net.URLDecoder;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,16 +61,17 @@ public class DefaultLicenseGroupImporter implements IDefaultObjectImporter {
 
     public void loadDefaults() throws IOException {
         final File defaultsFile = new File(URLDecoder.decode(getClass().getProtectionDomain().getCodeSource().getLocation().getPath(), UTF_8.name()) + "default-objects/licenseGroups.json");
-        final JSONArray licenseGroups = readFile(defaultsFile);
-        for (int i = 0; i < licenseGroups.length(); i++) {
-            final JSONObject json = licenseGroups.getJSONObject(i);
+        final ArrayNode licenseGroups = readFile(defaultsFile);
+        for (int i = 0; i < licenseGroups.size(); i++) {
+            final JsonNode json = licenseGroups.get(i);
             final LicenseGroup licenseGroup = new LicenseGroup();
-            licenseGroup.setName(json.getString("name"));
-            licenseGroup.setRiskWeight(json.getInt("riskWeight"));
+            licenseGroup.setName(json.get("name").asText());
+            licenseGroup.setRiskWeight(json.get("riskWeight").asInt());
             LOGGER.debug("Adding " + licenseGroup.getName());
+            final var licensesArray = (ArrayNode) json.get("licenses");
             final List<License> licenses = new ArrayList<>();
-            for (int k=0; k<json.getJSONArray("licenses").length(); k++) {
-                final String licenseId = json.getJSONArray("licenses").getString(k);
+            for (int k = 0; k < licensesArray.size(); k++) {
+                final String licenseId = licensesArray.get(k).asText();
                 final License license = qm.getLicense(licenseId);
                 if (license != null) {
                     LOGGER.debug("Adding " + license.getLicenseId() + " to " + licenseGroup.getName());
@@ -84,12 +85,9 @@ public class DefaultLicenseGroupImporter implements IDefaultObjectImporter {
         }
     }
 
-    private JSONArray readFile(final File file) throws IOException {
-        final BufferedReader streamReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), UTF_8));
-        final StringBuilder responseStrBuilder = new StringBuilder();
-        String inputStr;
-        while ((inputStr = streamReader.readLine()) != null)
-            responseStrBuilder.append(inputStr);
-        return new JSONArray(responseStrBuilder.toString());
+    private ArrayNode readFile(final File file) throws IOException {
+        try (final InputStream inputStream = Files.newInputStream(file.toPath())) {
+            return Json.objectReader().readValue(inputStream, ArrayNode.class);
+        }
     }
 }

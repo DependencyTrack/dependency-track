@@ -19,6 +19,8 @@
 package org.dependencytrack.integrations.defectdojo;
 
 import alpine.common.logging.Logger;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
@@ -31,17 +33,14 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.HttpClientPool;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.dependencytrack.common.Json;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 
 public class DefectDojoClient {
@@ -88,7 +87,7 @@ public class DefectDojoClient {
     }
 
     // Pulling DefectDojo 'tests' API endpoint with engagementID filter on, and retrieve a list of existing tests
-    public ArrayList<String> getDojoTestIds(final String token, final String eid) {
+    public ArrayNode getDojoTestIds(final String token, final String eid) {
         LOGGER.debug("Pulling DefectDojo Tests API ...");
         String testsUri = "/api/v2/tests/";
         LOGGER.debug("Make the first pagination call");
@@ -101,29 +100,25 @@ public class DefectDojoClient {
             request.addHeader("Authorization", "Token " + token);
             try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    if (response.getEntity() != null) {
-                        String stringResponse = EntityUtils.toString(response.getEntity());
-                        JSONObject dojoObj = new JSONObject(stringResponse);
-                        JSONArray dojoArray = dojoObj.getJSONArray("results");
-                        ArrayList<String> dojoTests = jsonToList(dojoArray);
-                        while (StringUtils.isNotBlank(dojoObj.optString("next"))) {
-                            final String nextUrl = dojoObj.getString("next");
+                    JsonNode jsonObject = Json.readHttpResponse(response);
+                    if (jsonObject != null) {
+                        final ArrayNode dojoArray = Json.optArray(jsonObject, "results", Json.newArray());
+                        while (jsonObject != null && StringUtils.isNotBlank(Json.optString(jsonObject, "next"))) {
+                            final String nextUrl = Json.optString(jsonObject, "next");
                             LOGGER.debug("Making the subsequent pagination call on " + nextUrl);
                             uriBuilder = new URIBuilder(nextUrl);
                             request = new HttpGet(uriBuilder.build().toString());
                             request.addHeader("accept", "application/json");
                             request.addHeader("Authorization", "Token " + token);
                             try (CloseableHttpResponse response1 = HttpClientPool.getClient().execute(request)) {
-                                stringResponse = EntityUtils.toString(response1.getEntity());
-                            }
-                            dojoObj = new JSONObject(stringResponse);
-                            dojoArray = dojoObj.optJSONArray("results");
-                            if (dojoArray != null) {
-                                dojoTests.addAll(jsonToList(dojoArray));
+                                jsonObject = Json.readHttpResponse(response1);
+                                if (jsonObject != null) {
+                                    dojoArray.addAll(Json.optArray(jsonObject, "results", Json.newArray()));
+                                }
                             }
                         }
                         LOGGER.debug("Successfully retrieved the test list ");
-                        return dojoTests;
+                        return dojoArray;
                     }
                 } else {
                     LOGGER.warn("DefectDojo Client did not receive expected response while attempting to retrieve tests list "
@@ -133,30 +128,19 @@ public class DefectDojoClient {
         } catch (IOException | URISyntaxException ex) {
             uploader.handleException(LOGGER, ex);
         }
-        return new ArrayList<>();
+        return Json.newArray();
     }
 
     // Given the engagement id and scan type, search for existing test id
-    public String getDojoTestId(final String engagementID, final ArrayList<String> dojoTests) {
-        for (final String dojoTestJson : dojoTests) {
-            JSONObject dojoTest = new JSONObject(dojoTestJson);
-            if (dojoTest.optString("engagement").equals(engagementID) &&
-                    dojoTest.optString("scan_type").equals("Dependency Track Finding Packaging Format (FPF) Export")) {
-                return dojoTest.optString("id");
+    public String getDojoTestId(final String engagementID, final ArrayNode dojoTests) {
+        for (int i = 0; i < dojoTests.size(); i++) {
+            final JsonNode dojoTest = dojoTests.get(i);
+            if (Json.optString(dojoTest, "engagement").equals(engagementID) &&
+                    Json.optString(dojoTest, "scan_type").equals("Dependency Track Finding Packaging Format (FPF) Export")) {
+                return dojoTest.get("id").asText();
             }
         }
         return "";
-    }
-
-    // JSONArray to ArrayList simple converter
-    public ArrayList<String> jsonToList(final JSONArray jsonArray) {
-        ArrayList<String> list = new ArrayList<>();
-        if (jsonArray != null) {
-            for (int i = 0; i < jsonArray.length(); i++) {
-                list.add(jsonArray.get(i).toString());
-            }
-        }
-        return list;
     }
 
     /*

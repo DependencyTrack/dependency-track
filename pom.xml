@@ -182,15 +182,7 @@
             <artifactId>javax.activation-api</artifactId>
             <version>1.2.0</version>
         </dependency>
-        <!-- org.json
-        This was previously transitively included with Unirest. However, Unirest v3.x removed reliance on org.json
-        in favor of their own API compatible replacement. Therefore, it was necessary to directly include org.json.
-        Removal of org.json is documented in https://github.com/DependencyTrack/dependency-track/issues/1113 -->
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20230227</version>
-        </dependency>
+
         <!-- Package URL -->
         <dependency>
             <groupId>com.github.package-url</groupId>

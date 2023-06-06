@@ -10,7 +10,9 @@
     </module>
     <module name="TreeWalker">
         <module name="AvoidStarImport"/>
-        <module name="IllegalImport"/>
+        <module name="IllegalImport">
+            <property name="illegalPkgs" value="org.json"/>
+        </module>
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>
     </module>

@@ -1,7 +1,8 @@
 package org.dependencytrack.parser.osv;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.junit.Assert;
@@ -40,9 +41,9 @@ public class OsvAdvisoryParserTest {
 
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-vulnerability-no-range.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
-        JSONObject jsonObject = new JSONObject(jsonString);
-        final JSONArray affected = jsonObject.optJSONArray("affected");
-        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(affected.getJSONObject(0));
+        JsonNode jsonObject = Json.readString(jsonString);
+        final ArrayNode affected = Json.optArray(jsonObject, "affected");
+        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(affected.get(0));
         Assert.assertNotNull(affectedPackages);
         Assert.assertEquals(1, affectedPackages.size());
     }
@@ -52,9 +53,9 @@ public class OsvAdvisoryParserTest {
 
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-vulnerability-with-ranges.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
-        JSONObject jsonObject = new JSONObject(jsonString);
-        final JSONArray affected = jsonObject.optJSONArray("affected");
-        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(affected.getJSONObject(1));
+        JsonNode jsonObject = Json.readString(jsonString);
+        final ArrayNode affected = Json.optArray(jsonObject, "affected");
+        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(affected.get(1));
         Assert.assertNotNull(affectedPackages);
         Assert.assertEquals(1, affectedPackages.size());
         OsvAffectedPackage affectedPackage = affectedPackages.get(0);
@@ -70,11 +71,11 @@ public class OsvAdvisoryParserTest {
 
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-vulnerability-with-ranges.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
-        JSONObject jsonObject = new JSONObject(jsonString);
-        final JSONArray affected = jsonObject.optJSONArray("affected");
+        JsonNode jsonObject = Json.readString(jsonString);
+        final ArrayNode affected = Json.optArray(jsonObject, "affected");
 
         // range test full pairs
-        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(affected.getJSONObject(2));
+        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(affected.get(2));
         Assert.assertNotNull(affectedPackages);
         Assert.assertEquals(3, affectedPackages.size());
         Assert.assertEquals("1", affectedPackages.get(0).getLowerVersionRange());
@@ -83,7 +84,7 @@ public class OsvAdvisoryParserTest {
         Assert.assertEquals("4", affectedPackages.get(1).getUpperVersionRangeExcluding());
 
         // range test half pairs
-        affectedPackages = parser.parseAffectedPackageRange(affected.getJSONObject(3));
+        affectedPackages = parser.parseAffectedPackageRange(affected.get(3));
         Assert.assertNotNull(affectedPackages);
         Assert.assertEquals(2, affectedPackages.size());
         Assert.assertEquals("3", affectedPackages.get(0).getLowerVersionRange());
@@ -96,18 +97,18 @@ public class OsvAdvisoryParserTest {
 
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-vulnerability-with-ranges.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
-        JSONObject jsonObject = new JSONObject(jsonString);
-        final JSONArray vulnerabilities = jsonObject.optJSONArray("affected");
+        JsonNode jsonObject = Json.readString(jsonString);
+        final ArrayNode vulnerabilities = Json.optArray(jsonObject, "affected");
 
         // type last_affected
-        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(vulnerabilities.getJSONObject(5));
+        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(vulnerabilities.get(5));
         Assert.assertNotNull(affectedPackages);
         Assert.assertEquals(1, affectedPackages.size());
         Assert.assertEquals("10", affectedPackages.get(0).getLowerVersionRange());
         Assert.assertEquals("13", affectedPackages.get(0).getUpperVersionRangeExcluding());
 
         // type last_affected
-        affectedPackages = parser.parseAffectedPackageRange(vulnerabilities.getJSONObject(6));
+        affectedPackages = parser.parseAffectedPackageRange(vulnerabilities.get(6));
         Assert.assertNotNull(affectedPackages);
         Assert.assertEquals(1, affectedPackages.size());
         Assert.assertEquals("10", affectedPackages.get(0).getLowerVersionRange());
@@ -121,7 +122,7 @@ public class OsvAdvisoryParserTest {
 
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
-        JSONObject jsonObject = new JSONObject(jsonString);
+        JsonNode jsonObject = Json.readString(jsonString);
         OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
         Assert.assertEquals("GHSA-77rv-6vfw-x4gc", advisory.getId());
@@ -140,7 +141,7 @@ public class OsvAdvisoryParserTest {
 
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-git-commit-hash-ranges.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
-        JSONObject jsonObject = new JSONObject(jsonString);
+        JsonNode jsonObject = Json.readString(jsonString);
         OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
         Assert.assertEquals("OSV-2021-1820", advisory.getId());

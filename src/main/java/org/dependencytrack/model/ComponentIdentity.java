@@ -18,10 +18,11 @@
  */
 package org.dependencytrack.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 import org.dependencytrack.util.PurlUtil;
-import org.json.JSONObject;
 
 import java.util.UUID;
 
@@ -38,7 +39,9 @@ public class ComponentIdentity {
     }
 
     private ObjectType objectType;
+    @JsonSerialize(using = CustomPackageURLSerializer.class)
     private PackageURL purl;
+    @JsonSerialize(using = CustomPackageURLSerializer.class)
     private PackageURL purlCoordinates;
     private String cpe;
     private String swidTagId;
@@ -137,17 +140,4 @@ public class ComponentIdentity {
         return uuid;
     }
 
-    public JSONObject toJSON() {
-        final JSONObject jsonObject = new JSONObject();
-        jsonObject.put("uuid", this.getUuid());
-        jsonObject.put("group", this.getGroup());
-        jsonObject.put("name", this.getName());
-        jsonObject.put("version", this.getVersion());
-        jsonObject.put("purl", this.getPurl());
-        jsonObject.put("purlCoordinates", this.getPurlCoordinates());
-        jsonObject.put("cpe", this.getCpe());
-        jsonObject.put("swidTagId", this.getSwidTagId());
-        jsonObject.put("objectType", this.getObjectType());
-        return jsonObject;
-    }
 }

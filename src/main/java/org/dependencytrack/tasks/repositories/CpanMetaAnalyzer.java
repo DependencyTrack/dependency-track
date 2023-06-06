@@ -18,17 +18,18 @@
  */
 package org.dependencytrack.tasks.repositories;
 
+import alpine.common.logging.Logger;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.dependencytrack.common.Json;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.RepositoryType;
+
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.RepositoryType;
-import org.json.JSONObject;
-import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports CPAN.
@@ -74,15 +75,14 @@ public class CpanMetaAnalyzer extends AbstractMetaAnalyzer {
             final String url = String.format(baseUrl + API_URL, packageName);
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    if (response.getEntity()!=null) {
-                        String responseString = EntityUtils.toString(response.getEntity());
-                        var jsonObject = new JSONObject(responseString);
-                        final String latest = jsonObject.optString("version");
+                    JsonNode jsonObject = Json.readHttpResponse(response);
+                    if (jsonObject != null) {
+                        final String latest = Json.optString(jsonObject, "version", null);
                         if (latest != null) {
                             meta.setLatestVersion(latest);
                         }
-                        final String published = jsonObject.optString("date");
-                        if (published != null) {
+                        final String published = Json.optString(jsonObject, "date");
+                        if (!published.isBlank()) {
                             final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
                             try {
                                 meta.setPublishedTimestamp(dateFormat.parse(published));

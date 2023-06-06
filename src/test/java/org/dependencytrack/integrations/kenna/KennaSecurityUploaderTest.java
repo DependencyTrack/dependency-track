@@ -19,14 +19,23 @@
 package org.dependencytrack.integrations.kenna;
 
 import alpine.model.IConfigProperty;
+import org.apache.commons.io.IOUtils;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
+import static org.hamcrest.Matchers.matchesPattern;
 
 public class KennaSecurityUploaderTest extends PersistenceCapableTest {
 
@@ -67,9 +76,66 @@ public class KennaSecurityUploaderTest extends PersistenceCapableTest {
 
     @Test
     public void testIntegrationFindings() throws Exception {
-        KennaSecurityUploader extension = new KennaSecurityUploader();
+        final Project project = qm.createProject("Test", "Sample project", "1.0", null, null, null, true, false);
+
+        qm.createProjectProperty(project, "integrations", "kenna.asset.external_id", "foobar123", IConfigProperty.PropertyType.STRING, null);
+
+        var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("acme-lib-a");
+        componentA.setVersion("1.2.3");
+        componentA = qm.createComponent(componentA, false);
+
+        var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("acme-lib-b");
+        componentB.setVersion("3.2.1");
+        qm.createComponent(componentB, false);
+
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln = qm.createVulnerability(vuln, false);
+
+        var vulnAlias = new VulnerabilityAlias();
+        vulnAlias.setInternalId("INTERNAL-001");
+        vulnAlias.setCveId("CVE-123");
+        qm.synchronizeVulnerabilityAlias(vulnAlias);
+
+        qm.addVulnerability(vuln, componentA, AnalyzerIdentity.INTERNAL_ANALYZER);
+
+        final var extension = new KennaSecurityUploader();
         extension.setQueryManager(qm);
-        InputStream in = extension.process();
-        Assert.assertTrue(in != null && in.available() > 0);
+        assertThatJson(IOUtils.toString(extension.process(), StandardCharsets.UTF_8))
+                .withMatcher("timestamp", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"))
+                .isEqualTo("""
+                        {
+                          "skip_autoclose": false,
+                          "assets": [
+                            {
+                              "application": "Test 1.0",
+                              "external_id": "foobar123",
+                              "vulns": [
+                                {
+                                  "scanner_type": "Dependency-Track",
+                                  "scanner_identifier": "INTERNAL-INTERNAL-001",
+                                  "last_seen_at": "${json-unit.matches:timestamp}",
+                                  "status": "open",
+                                  "scanner_score": 7,
+                                  "override_score": 70
+                                }
+                              ]
+                            }
+                          ],
+                          "vuln_defs": [
+                            {
+                              "scanner_type": "Dependency-Track",
+                              "scanner_identifier": "INTERNAL-INTERNAL-001",
+                              "name": "INTERNAL-001 (source: INTERNAL)"
+                            }
+                          ]
+                        }
+                        """);
     }
 }

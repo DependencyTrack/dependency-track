@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.parser.vulndb;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.basic.DefaultOAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -27,11 +28,10 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.HttpClientPool;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.parser.vulndb.model.Results;
 import org.dependencytrack.parser.vulndb.model.Vulnerability;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,8 +85,7 @@ public class VulnDbClient {
             Results results;
             if (response != null) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    String responseString = EntityUtils.toString(response.getEntity());
-                    var jsonObject = new JSONObject(responseString);
+                    JsonNode jsonObject = Json.readHttpResponse(response);
                     results = vulnDbParser.parse(jsonObject, clazz);
                     return results;
                 } else {

@@ -18,12 +18,14 @@
  */
 package org.dependencytrack.parser.github.graphql;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.lang3.tuple.Pair;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
 import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.github.graphql.model.PageableList;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,28 +33,28 @@ import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
 
 public class GitHubSecurityAdvisoryParser {
 
-    public PageableList parse(final JSONObject object) {
+    public PageableList parse(final JsonNode object) {
         final PageableList pageableList = new PageableList();
         final List<GitHubSecurityAdvisory> advisories = new ArrayList<>();
-        final JSONObject data = object.optJSONObject("data");
+        final JsonNode data = object.get("data");
         if (data != null) {
-            final JSONObject securityAdvisories = data.getJSONObject("securityAdvisories");
+            final JsonNode securityAdvisories = data.get("securityAdvisories");
             if (securityAdvisories != null) {
-                final JSONArray securityAdvisoriesNodes = securityAdvisories.getJSONArray("nodes");
+                final ArrayNode securityAdvisoriesNodes = Json.optArray(securityAdvisories, "nodes");
                 if (securityAdvisoriesNodes != null) {
-                    for (int i = 0; i < securityAdvisoriesNodes.length(); i++) {
-                        final JSONObject securityAdvisory = securityAdvisoriesNodes.getJSONObject(i);
+                    for (int i = 0; i < securityAdvisoriesNodes.size(); i++) {
+                        final JsonNode securityAdvisory = securityAdvisoriesNodes.get(i);
                         final GitHubSecurityAdvisory advisory = parseSecurityAdvisory(securityAdvisory);
                         advisories.add(advisory);
                     }
                 }
-                pageableList.setTotalCount(securityAdvisories.optInt("totalCount"));
-                final JSONObject pageInfo = securityAdvisories.getJSONObject("pageInfo");
+                pageableList.setTotalCount(Json.optInt(securityAdvisories,"totalCount"));
+                final JsonNode pageInfo = securityAdvisories.get("pageInfo");
                 if (pageInfo != null) {
-                    pageableList.setHasNextPage(pageInfo.optBoolean("hasNextPage"));
-                    pageableList.setHasPreviousPage(pageInfo.optBoolean("hasPreviousPage"));
-                    pageableList.setStartCursor(pageInfo.optString("startCursor"));
-                    pageableList.setEndCursor(pageInfo.optString("endCursor"));
+                    pageableList.setHasNextPage(Json.optBoolean(pageInfo,"hasNextPage"));
+                    pageableList.setHasPreviousPage(Json.optBoolean(pageInfo,"hasPreviousPage"));
+                    pageableList.setStartCursor(Json.optString(pageInfo,"startCursor"));
+                    pageableList.setEndCursor(Json.optString(pageInfo,"endCursor"));
                 }
             }
         }
@@ -60,27 +62,27 @@ public class GitHubSecurityAdvisoryParser {
         return pageableList;
     }
 
-    private GitHubSecurityAdvisory parseSecurityAdvisory(final JSONObject object) {
+    private GitHubSecurityAdvisory parseSecurityAdvisory(final JsonNode object) {
         final GitHubSecurityAdvisory advisory = new GitHubSecurityAdvisory();
-        advisory.setDatabaseId(object.getInt("databaseId"));
-        advisory.setDescription(object.optString("description", null));
-        advisory.setGhsaId(object.optString("ghsaId", null));
-        advisory.setId(object.optString("id", null));
-        advisory.setNotificationsPermalink(object.optString("notificationsPermalink", null));
-        advisory.setOrigin(object.optString("origin", null));
-        advisory.setPermalink(object.optString("permalink", null));
-        advisory.setSeverity(object.optString("severity", null));
-        advisory.setSummary(object.optString("summary", null));
-        advisory.setPublishedAt(jsonStringToTimestamp(object.optString("publishedAt", null)));
-        advisory.setUpdatedAt(jsonStringToTimestamp(object.optString("updatedAt", null)));
-        advisory.setWithdrawnAt(jsonStringToTimestamp(object.optString("withdrawnAt", null)));
+        advisory.setDatabaseId(Json.optInt(object, "databaseId"));
+        advisory.setDescription(Json.optString(object,"description", null));
+        advisory.setGhsaId(Json.optString(object,"ghsaId", null));
+        advisory.setId(Json.optString(object,"id", null));
+        advisory.setNotificationsPermalink(Json.optString(object,"notificationsPermalink", null));
+        advisory.setOrigin(Json.optString(object,"origin", null));
+        advisory.setPermalink(Json.optString(object,"permalink", null));
+        advisory.setSeverity(Json.optString(object,"severity", null));
+        advisory.setSummary(Json.optString(object,"summary", null));
+        advisory.setPublishedAt(jsonStringToTimestamp(Json.optString(object,"publishedAt", null)));
+        advisory.setUpdatedAt(jsonStringToTimestamp(Json.optString(object,"updatedAt", null)));
+        advisory.setWithdrawnAt(jsonStringToTimestamp(Json.optString(object,"withdrawnAt", null)));
 
-        final JSONArray identifiers = object.optJSONArray("identifiers");
+        final ArrayNode identifiers = Json.optArray(object,"identifiers");
         if (identifiers != null) {
-            for (int i=0; i<identifiers.length(); i++) {
-                final JSONObject identifier = identifiers.getJSONObject(i);
-                final String type = identifier.optString("type", null);
-                final String value = identifier.optString("value", null);
+            for (int i=0; i<identifiers.size(); i++) {
+                final JsonNode identifier = identifiers.get(i);
+                final String type = Json.optString(identifier,"type", null);
+                final String value = Json.optString(identifier,"value", null);
                 if (type != null && value != null) {
                     final Pair<String, String> pair = Pair.of(type, value);
                     advisory.addIdentifier(pair);
@@ -88,32 +90,32 @@ public class GitHubSecurityAdvisoryParser {
             }
         }
 
-        final JSONArray references = object.optJSONArray("references");
+        final ArrayNode references = Json.optArray(object,"references");
         if (references != null) {
-            for (int i=0; i<references.length(); i++) {
-                final String url = references.optJSONObject(i).optString("url", null);
+            for (int i=0; i<references.size(); i++) {
+                final String url = Json.optString(references.get(i), "url", null);
                 if (url != null) {
                     advisory.addReference(url);
                 }
             }
         }
 
-        final JSONObject cvss = object.optJSONObject("cvss");
+        final JsonNode cvss = object.get("cvss");
         if (cvss != null) {
-            advisory.setCvssScore(cvss.optInt("score", 0));
-            advisory.setCvssVector(cvss.optString("score", null));
+            advisory.setCvssScore(Json.optInt(cvss, "score"));
+            advisory.setCvssVector(Json.optString(cvss,"score", null));
         }
 
-        final JSONObject cwes = object.optJSONObject("cwes");
+        final JsonNode cwes = object.get("cwes");
         if (cwes != null) {
-            final JSONArray edges = cwes.optJSONArray("edges");
+            final ArrayNode edges = Json.optArray(cwes,"edges");
             if (edges != null) {
-                for (int i = 0; i < edges.length(); i++) {
-                    final JSONObject edge = edges.optJSONObject(i);
+                for (int i = 0; i < edges.size(); i++) {
+                    final JsonNode edge = edges.get(i);
                     if (edge != null) {
-                        final JSONObject node = edge.optJSONObject("node");
+                        final JsonNode node = edge.get("node");
                         if (node != null) {
-                            final String cweId = node.optString("cweId", null);
+                            final String cweId = Json.optString(node,"cweId", null);
                             if (cweId != null) {
                                 advisory.addCwe(cweId);
                             }
@@ -127,14 +129,14 @@ public class GitHubSecurityAdvisoryParser {
         return advisory;
     }
 
-    private List<GitHubVulnerability> parseVulnerabilities(final JSONObject object) {
+    private List<GitHubVulnerability> parseVulnerabilities(final JsonNode object) {
         final List<GitHubVulnerability> vulnerabilities = new ArrayList<>();
-        final JSONObject vs = object.optJSONObject("vulnerabilities");
+        final JsonNode vs = object.get("vulnerabilities");
         if (vs != null) {
-            final JSONArray edges = vs.optJSONArray("edges");
+            final ArrayNode edges = Json.optArray(vs,"edges");
             if (edges != null) {
-                for (int i=0; i<edges.length(); i++) {
-                    final JSONObject node = edges.getJSONObject(i).optJSONObject("node");
+                for (int i=0; i<edges.size(); i++) {
+                    final JsonNode node = edges.get(i).get("node");
                     if (node != null) {
                         GitHubVulnerability vulnerability = parseVulnerability(node);
                         vulnerabilities.add(vulnerability);
@@ -145,19 +147,19 @@ public class GitHubSecurityAdvisoryParser {
         return vulnerabilities;
     }
 
-    private GitHubVulnerability parseVulnerability(final JSONObject object) {
+    private GitHubVulnerability parseVulnerability(final JsonNode object) {
         final GitHubVulnerability vulnerability = new GitHubVulnerability();
-        vulnerability.setSeverity(object.optString("severity", null));
-        vulnerability.setUpdatedAt(jsonStringToTimestamp(object.optString("updatedAt", null)));
-        final JSONObject firstPatchedVersion = object.optJSONObject("firstPatchedVersion");
+        vulnerability.setSeverity(Json.optString(object,"severity", null));
+        vulnerability.setUpdatedAt(jsonStringToTimestamp(Json.optString(object,"updatedAt", null)));
+        final JsonNode firstPatchedVersion = object.get("firstPatchedVersion");
         if (firstPatchedVersion != null) {
-            vulnerability.setFirstPatchedVersionIdentifier(firstPatchedVersion.optString("identifier", null));
+            vulnerability.setFirstPatchedVersionIdentifier(Json.optString(firstPatchedVersion,"identifier", null));
         }
-        vulnerability.setVulnerableVersionRange(object.optString("vulnerableVersionRange", null));
-        final JSONObject packageObject = object.optJSONObject("package");
+        vulnerability.setVulnerableVersionRange(Json.optString(object,"vulnerableVersionRange", null));
+        final JsonNode packageObject = object.get("package");
         if (packageObject != null) {
-            vulnerability.setPackageEcosystem(packageObject.optString("ecosystem", null));
-            vulnerability.setPackageName(packageObject.optString("name", null));
+            vulnerability.setPackageEcosystem(Json.optString(packageObject,"ecosystem", null));
+            vulnerability.setPackageName(Json.optString(packageObject,"name", null));
         }
         return vulnerability;
     }

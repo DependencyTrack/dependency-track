@@ -20,18 +20,18 @@ package org.dependencytrack.integrations.defectdojo;
 
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.integrations.ProjectFindingUploader;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
-import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
@@ -89,8 +89,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public InputStream process(final Project project, final List<Finding> findings) {
-        final JSONObject fpf = new FindingPackagingFormat(project.getUuid(), findings).getDocument();
-        return new ByteArrayInputStream(fpf.toString(2).getBytes());
+        final var fpf = new FindingPackagingFormat(project.getUuid(), findings);
+        return new ByteArrayInputStream(fpf.getDocument().getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -102,8 +102,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         try {
             final DefectDojoClient client = new DefectDojoClient(this, new URL(defectDojoUrl.getPropertyValue()));
             if (isReimportConfigured(project) || globalReimportEnabled) {
-                final ArrayList<String> testsIds = client.getDojoTestIds(apiKey.getPropertyValue(), engagementId.getPropertyValue());
-                final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds);
+                final ArrayNode tests = client.getDojoTestIds(apiKey.getPropertyValue(), engagementId.getPropertyValue());
+                final String testId = client.getDojoTestId(engagementId.getPropertyValue(), tests);
                 LOGGER.debug("Found existing test Id: " + testId);
                 if (testId.equals("")) {
                     client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);

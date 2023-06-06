@@ -19,14 +19,13 @@
 package org.dependencytrack.policy;
 
 import alpine.common.logging.Logger;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Hash;
-
-import org.dependencytrack.model.Policy;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.model.Component;
-
+import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,10 +66,10 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
         if (condition.getValue() == null) {
             return null;
         }
-        final JSONObject def = new JSONObject(condition.getValue());
+        final JsonNode def = Json.readString(condition.getValue());
         return new Hash(
-                def.optString("algorithm", null),
-                def.optString("value", null)
+                Json.optString(def, "algorithm", null),
+                Json.optString(def, "value", null)
         );
     }
 

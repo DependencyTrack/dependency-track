@@ -20,11 +20,13 @@ package org.dependencytrack.integrations;
 
 import alpine.model.About;
 import alpine.model.ConfigProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DateUtil;
-import org.json.JSONObject;
 
 import java.util.Date;
 import java.util.List;
@@ -34,7 +36,9 @@ import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL
 
 public class FindingPackagingFormat {
 
-    /** FPF is versioned. If the format changes, the version needs to be bumped. */
+    /**
+     * FPF is versioned. If the format changes, the version needs to be bumped.
+     */
     private static final String FPF_VERSION = "1.2";
     private static final String FIELD_APPLICATION = "application";
     private static final String FIELD_VERSION = "version";
@@ -49,17 +53,17 @@ public class FindingPackagingFormat {
     private static final String FIELD_PROJECT = "project";
     private static final String FIELD_FINDINGS = "findings";
 
-    private final JSONObject payload;
+    private final JsonNode payload;
 
     public FindingPackagingFormat(final UUID projectUuid, final List<Finding> findings) {
         payload = initialize(projectUuid, findings);
     }
 
-    public JSONObject getDocument() {
-        return payload;
+    public String getDocument() {
+        return Json.toString(payload);
     }
 
-    private JSONObject initialize(final UUID projectUuid, final List<Finding> findings) {
+    private JsonNode initialize(final UUID projectUuid, final List<Finding> findings) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final About about = new About();
@@ -70,7 +74,7 @@ public class FindingPackagingFormat {
                 This is useful for file-based parsing systems that needs to be able to
                 identify what type of file it is, and what type of system generated it.
              */
-            final JSONObject meta = new JSONObject();
+            final ObjectNode meta = Json.newObject();
             meta.put(FIELD_APPLICATION, about.getApplication());
             meta.put(FIELD_VERSION, about.getVersion());
             meta.put(FIELD_TIMESTAMP, DateUtil.toISO8601(new Date()));
@@ -78,15 +82,14 @@ public class FindingPackagingFormat {
                 meta.put(FIELD_BASE_URL, baseUrl.getPropertyValue());
             }
 
-
             /*
                 Findings are specific to a given project. This information is useful for
                 systems outside of Dependency-Track so that they can perform mappings as
                 well as not have to perform additional queries back to Dependency-Track
                 to discover basic project information.
              */
-            final JSONObject projectJson = new JSONObject();
-            projectJson.put(FIELD_UUID, project.getUuid());
+            final ObjectNode projectJson = Json.newObject();
+            projectJson.put(FIELD_UUID, project.getUuid().toString());
             projectJson.put(FIELD_NAME, project.getName());
             if (project.getVersion() != null) {
                 projectJson.put(FIELD_VERSION, project.getVersion());
@@ -95,22 +98,21 @@ public class FindingPackagingFormat {
                 projectJson.put(FIELD_DESCRIPTION, project.getDescription());
             }
             if (project.getPurl() != null) {
-                projectJson.put(FIELD_PURL, project.getPurl());
+                projectJson.put(FIELD_PURL, project.getPurl().toString());
             }
             if (project.getCpe() != null) {
                 projectJson.put(FIELD_CPE, project.getCpe());
             }
 
-
             /*
                 Add the meta and project objects along with the findings array
                 to a root json object and return.
              */
-            final JSONObject root = new JSONObject();
+            final ObjectNode root = Json.newObject();
             root.put(FIELD_VERSION, FPF_VERSION);
-            root.put(FIELD_META, meta);
-            root.put(FIELD_PROJECT, projectJson);
-            root.put(FIELD_FINDINGS, findings);
+            root.set(FIELD_META, meta);
+            root.set(FIELD_PROJECT, projectJson);
+            root.putPOJO(FIELD_FINDINGS, findings);
             return root;
         }
     }

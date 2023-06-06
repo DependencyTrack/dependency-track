@@ -19,6 +19,7 @@
 package org.dependencytrack.parser.cyclonedx.util;
 
 import alpine.common.logging.Logger;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
@@ -28,6 +29,7 @@ import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Hash;
 import org.cyclonedx.model.LicenseChoice;
 import org.cyclonedx.model.Swid;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
@@ -52,9 +54,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import org.dependencytrack.util.PurlUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
-import org.json.JSONArray;
 
-import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
@@ -682,13 +682,13 @@ public class ModelConverter {
         if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null && bom.getMetadata().getComponent().getBomRef() != null) {
             final String targetBomRef = bom.getMetadata().getComponent().getBomRef();
             final org.cyclonedx.model.Dependency targetDep = getDependencyFromBomRef(targetBomRef, bom.getDependencies());
-            final JSONArray jsonArray = new JSONArray();
+            final ArrayNode jsonArray = Json.newArray();
             if (targetDep != null && targetDep.getDependencies() != null) {
                 for (final org.cyclonedx.model.Dependency directDep : targetDep.getDependencies()) {
                     final Component c = getComponentFromBomRef(directDep.getRef(), components, false);
                     if (c != null) {
                         final ComponentIdentity ci = new ComponentIdentity(c);
-                        jsonArray.put(ci.toJSON());
+                        jsonArray.addPOJO(ci);
                     }
                 }
             }
@@ -706,14 +706,14 @@ public class ModelConverter {
 
         for (final Map.Entry<String, Component> c1: flatComponents.entrySet()) {
             if (c1.getKey() != null) {
-                final JSONArray jsonArray = new JSONArray();
+                final ArrayNode jsonArray = Json.newArray();
                 final org.cyclonedx.model.Dependency d1 = getDependencyFromBomRef(c1.getKey(), bom.getDependencies());
                 if (d1 != null && d1.getDependencies() != null) {
                     for (final org.cyclonedx.model.Dependency d2: d1.getDependencies()) {
                         final Component c2 = flatComponents.get(d2.getRef());
                         if (c2 != null) {
                             final ComponentIdentity ci = new ComponentIdentity(c2);
-                            jsonArray.put(ci.toJSON());
+                            jsonArray.addPOJO(ci);
                         }
                     }
                 }
@@ -759,7 +759,7 @@ public class ModelConverter {
         }
 
         final var dependencies = new ArrayList<Dependency>();
-        final JsonValue directDependenciesJson = Json
+        final JsonValue directDependenciesJson = javax.json.Json
                 .createReader(new StringReader(directDependenciesRaw))
                 .readValue();
         if (directDependenciesJson instanceof final JsonArray directDependenciesJsonArray) {

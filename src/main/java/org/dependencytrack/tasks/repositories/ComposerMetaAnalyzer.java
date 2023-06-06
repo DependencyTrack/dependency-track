@@ -19,13 +19,13 @@
 package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.exception.MetaAnalyzerException;
-import org.json.JSONObject;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.dependencytrack.common.Json;
+import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 
@@ -83,48 +83,43 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
                 return meta;
             }
-            if (response.getEntity().getContent() == null) {
+            JsonNode jsonObject = Json.readHttpResponse(response);
+            if (jsonObject == null) {
                 return meta;
             }
-            String jsonString = EntityUtils.toString(response.getEntity());
-            if (jsonString.equalsIgnoreCase("")) {
+            if (!jsonObject.fields().hasNext()) {
                 return meta;
             }
-            if (jsonString.equalsIgnoreCase("{}")) {
-                return meta;
-            }
-            JSONObject jsonObject = new JSONObject(jsonString);
             final String expectedResponsePackage = component.getPurl().getNamespace() + "/" + component.getPurl().getName();
-            final JSONObject responsePackages = jsonObject
-                    .getJSONObject("packages");
+            final JsonNode responsePackages = jsonObject
+                    .get("packages");
             if (!responsePackages.has(expectedResponsePackage)) {
                 // the package no longer exists - like this one: https://repo.packagist.org/p/magento/adobe-ims.json
                 return meta;
             }
-            final JSONObject composerPackage = responsePackages.getJSONObject(expectedResponsePackage);
+            final JsonNode composerPackage = responsePackages.get(expectedResponsePackage);
 
             final ComparableVersion latestVersion = new ComparableVersion(stripLeadingV(component.getPurl().getVersion()));
             final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
-            composerPackage.names().forEach(key_ -> {
-                String key = (String) key_;
-                if (key.startsWith("dev-") || key.endsWith("-dev")) {
+            composerPackage.fields().forEachRemaining(field -> {
+                if (field.getKey().startsWith("dev-") || field.getKey().endsWith("-dev")) {
                     // dev versions are excluded, since they are not pinned but a VCS-branch.
                     return;
                 }
 
-                final String version_normalized = composerPackage.getJSONObject(key).getString("version_normalized");
+                final String version_normalized = field.getValue().get("version_normalized").asText();
                 ComparableVersion currentComparableVersion = new ComparableVersion(version_normalized);
                 if (currentComparableVersion.compareTo(latestVersion) < 0) {
                     // smaller version can be skipped
                     return;
                 }
 
-                final String version = composerPackage.getJSONObject(key).getString("version");
+                final String version = field.getValue().get("version").asText();
                 latestVersion.parseVersion(stripLeadingV(version_normalized));
                 meta.setLatestVersion(version);
 
-                final String published = composerPackage.getJSONObject(key).getString("time");
+                final String published = field.getValue().get("time").asText();
                 try {
                     meta.setPublishedTimestamp(dateFormat.parse(published));
                 } catch (ParseException e) {

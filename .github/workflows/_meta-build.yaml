@@ -88,7 +88,7 @@ jobs:
           install: true
 
       - name: Login to Docker.io
-        uses: docker/login-action@v2.1.0
+        uses: docker/login-action@v2.2.0
         if: ${{ inputs.publish-container }}
         with:
           registry: docker.io

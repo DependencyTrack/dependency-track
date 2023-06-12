@@ -27,7 +27,7 @@ jobs:
         id: parse
         run: |-
           VERSION=`yq -p=xml '.project.version' pom.xml`
-          echo "::set-output name=version::${VERSION}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
   call-build:
     needs:

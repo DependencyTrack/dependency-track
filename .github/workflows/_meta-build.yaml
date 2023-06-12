@@ -102,7 +102,7 @@ jobs:
           if [[ "${{ inputs.app-version }}" != "snapshot" ]]; then
             TAGS="${TAGS},docker.io/dependencytrack/${{ matrix.distribution }}:latest"
           fi
-          echo "::set-output name=tags::${TAGS}"
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
         uses: docker/build-push-action@v4.1.0

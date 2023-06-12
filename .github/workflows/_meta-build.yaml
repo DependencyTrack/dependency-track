@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
 
       - name: Set up JDK
         uses: actions/setup-java@v3.11.0
@@ -70,7 +70,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
 
       - name: Download Artifacts
         uses: actions/download-artifact@v3.0.2

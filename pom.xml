@@ -87,7 +87,7 @@
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>7.3.2</lib.cyclonedx-java.version>
-        <lib.jaxb.runtime.version>2.3.6</lib.jaxb.runtime.version>
+        <lib.jaxb.runtime.version>2.3.8</lib.jaxb.runtime.version>
         <lib.json-unit.version>2.37.0</lib.json-unit.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
@@ -478,8 +478,7 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.build.directory}/bom.json"
-                                      tofile="${project.build.directory}/${project.artifactId}/.well-known/sbom"/>
+                                <copy file="${project.build.directory}/bom.json" tofile="${project.build.directory}/${project.artifactId}/.well-known/sbom"/>
                             </target>
                         </configuration>
                         <goals>

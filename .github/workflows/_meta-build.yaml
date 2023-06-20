@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
 
       - name: Set up JDK
         uses: actions/setup-java@v3.11.0
@@ -70,7 +70,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3.5.3
 
       - name: Download Artifacts
         uses: actions/download-artifact@v3.0.2
@@ -82,13 +82,13 @@ jobs:
         uses: docker/setup-qemu-action@v2.1.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2.5.0
+        uses: docker/setup-buildx-action@v2.6.0
         id: buildx
         with:
           install: true
 
       - name: Login to Docker.io
-        uses: docker/login-action@v2.1.0
+        uses: docker/login-action@v2.2.0
         if: ${{ inputs.publish-container }}
         with:
           registry: docker.io
@@ -102,10 +102,10 @@ jobs:
           if [[ "${{ inputs.app-version }}" != "snapshot" ]]; then
             TAGS="${TAGS},docker.io/dependencytrack/${{ matrix.distribution }}:latest"
           fi
-          echo "::set-output name=tags::${TAGS}"
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@v4.0.0
+        uses: docker/build-push-action@v4.1.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
@@ -119,7 +119,7 @@ jobs:
 
       - name: Run Trivy Vulnerability Scanner
         if: ${{ inputs.publish-container }}
-        uses: aquasecurity/trivy-action@0.10.0
+        uses: aquasecurity/trivy-action@0.11.2
         with:
           image-ref: docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
           format: 'sarif'

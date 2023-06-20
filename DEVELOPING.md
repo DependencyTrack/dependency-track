@@ -164,7 +164,7 @@ mirrored the NVD data, so there's no need to re-download it again.
 Prior to starting Dependency-Track, execute the `data-nist-generate-dummy.sh` script:
 
 ```shell
-./scripts/data-nist-generate-dummy.sh
+./dev/scripts/data-nist-generate-dummy.sh
 ```
 
 > **Note** 
@@ -175,7 +175,7 @@ When testing containerized deployments, simply mount the local directory contain
 NVD data into the container:
 
 ```shell
-./scripts/data-nist-generate-dummy.sh
+./dev/scripts/data-nist-generate-dummy.sh
 docker run -d --name dtrack \
   -v "$HOME/.dependency-track:/data/.dependency-track" \
   -p '127.0.0.1:8080:8080' dependencytrack/apiserver:snapshot
@@ -203,6 +203,8 @@ Now visit `http://127.0.0.1:8081` in your browser and use Dependency-Track as us
 
 ## Testing
 
+### Running unit tests
+
 To run all tests:
 
 ```shell
@@ -211,6 +213,52 @@ mvn clean verify -P enhance
 
 Depending on your machine, this will take roughly 10-30min. Unless you modified central parts of the application,
 starting single tests separately via IDE is a better choice. 
+
+### Testing manually
+
+We provide multiple Docker Compose files that can be used to quickly set up a local testing environment.  
+The files are located in the [`dev`](dev/) directory.
+
+#### With embedded H2 database
+
+The default [`docker-compose.yml`](dev/docker-compose.yml) will deploy a frontend and API server container using an 
+embedded H2 database.
+
+```shell
+cd dev
+docker compose up -d
+```
+
+#### With PostgreSQL database
+
+To use a PostgreSQL database instead of embedded H2, use [`docker-compose.postgres.yml`](dev/docker-compose.postgres.yml).
+
+```shell
+cd dev
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+```
+
+#### With Microsoft SQL Server database
+
+To use a Microsoft SQL Server database instead of embedded H2, use [`docker-compose.mssql.yml`](dev/docker-compose.mssql.yml).
+
+```shell
+cd dev
+docker compose -f docker-compose.yml -f docker-compose.mssql.yml up -d
+```
+
+#### With monitoring stack
+
+To deploy both Prometheus and Grafana, [`docker-compose.monitoring.yml`](dev/docker-compose.monitoring.yml) may be supplied to any
+of the commands listed above. For example:
+
+```shell
+cd dev
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml -f docker-compose.monitoring.yml up -d
+```
+
+Prometheus should automatically discover the API server's metrics. To visualize them, follow the instructions
+for setting up the sample Grafana dashboard in the [docs](https://docs.dependencytrack.org/getting-started/monitoring/#grafana-dashboard).
 
 ## DataNucleus Bytecode Enhancement
 
@@ -269,7 +317,7 @@ There is a lot going on in `docs`, but most of the time you'll want to spend you
 To build the docs, run:
 
 ```shell
-./scripts/docs-build.sh
+./dev/scripts/docs-build.sh
 ```
 
 This installs all required dependencies (among them Jekyll) to `docs/vendor/bundle`, generates the documentation
@@ -277,7 +325,7 @@ website and stores it in `docs/_site`.
 
 For local development, you may want to run this instead: 
 ```shell
-./scripts/docs-dev.sh
+./dev/scripts/docs-dev.sh
 ```
 
 This will start a local webserver that listens on `127.0.0.1:4000` and rebuilds the site whenever you make changes.

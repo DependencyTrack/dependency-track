@@ -24,7 +24,7 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>2.2.2</version>
+        <version>2.2.3-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -88,10 +88,10 @@
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>7.3.2</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.6</lib.jaxb.runtime.version>
-        <lib.json-unit.version>2.37.0</lib.json-unit.version>
+        <lib.json-unit.version>2.38.0</lib.json-unit.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
-        <lib.pebble.version>3.2.0</lib.pebble.version>
+        <lib.pebble.version>3.2.1</lib.pebble.version>
         <lib.resilience4j.version>2.0.2</lib.resilience4j.version>
         <lib.woodstox.version>6.5.1</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
@@ -99,9 +99,9 @@
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.log4j-over-slf4j.version>2.0.7</lib.log4j-over-slf4j.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>11.2.3.jre17</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>11.2.3.jre18</lib.jdbc-driver.mssql.version>
         <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
-        <lib.jdbc-driver.mysql.version>8.0.29</lib.jdbc-driver.mysql.version>
+        <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.6.0</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
@@ -411,7 +411,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.3.0</version>
                 <configuration>
                     <configLocation>${project.basedir}/.checkstyle.xml</configLocation>
                     <includeResources>false</includeResources>

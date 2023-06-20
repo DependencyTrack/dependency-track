@@ -91,7 +91,7 @@
         <lib.json-unit.version>2.38.0</lib.json-unit.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
-        <lib.pebble.version>3.2.1</lib.pebble.version>
+        <lib.pebble.version>2.0.0</lib.pebble.version>
         <lib.resilience4j.version>2.0.2</lib.resilience4j.version>
         <lib.woodstox.version>6.5.1</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>

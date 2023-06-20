@@ -150,6 +150,19 @@ alpine.database.pool.max.lifetime=600000
 # alpine.database.pool.nontx.max.lifetime=
 
 # Optional
+# Controls the 2nd level cache type used by DataNucleus, the Object Relational Mapper (ORM).
+# See https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#cache_level2
+# Values supported by Dependency-Track are "soft" (default), "weak", and "none".
+#
+# Setting this property to "none" may help in reducing the memory footprint of Dependency-Track,
+# but has the potential to slow down database operations.
+# Size of the cache may be monitored through the "datanucleus_cache_second_level_entries" metric,
+# refer to https://docs.dependencytrack.org/getting-started/monitoring/#metrics for details.
+#
+# DO NOT CHANGE UNLESS THERE IS A GOOD REASON TO.
+# alpine.datanucleus.cache.level2.type=
+
+# Optional
 # When authentication is enforced, API keys are required for automation, and
 # the user interface will prevent anonymous access by prompting for login
 # credentials.

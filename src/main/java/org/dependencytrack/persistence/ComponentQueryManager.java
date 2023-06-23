@@ -136,32 +136,38 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @return a List of Dependency objects
      */
     public PaginatedResult getComponents(final Project project, final boolean includeMetrics) {
-        return getComponents(project, includeMetrics, false);
+        return getComponents(project, includeMetrics, false, false);
     }
     /**
      * Returns a List of Dependency for the specified Project.
      * @param project the Project to retrieve dependencies of
      * @param includeMetrics Optionally includes third-party metadata about the component from external repositories
      * @param onlyOutdated Optionally exclude recent components so only outdated components are shown
+     * @param onlyDirect Optionally exclude transitive dependencies so only direct dependencies are shown
      * @return a List of Dependency objects
      */
-    public PaginatedResult getComponents(final Project project, final boolean includeMetrics, final boolean onlyOutdated) {
+    public PaginatedResult getComponents(final Project project, final boolean includeMetrics, final boolean onlyOutdated, final boolean onlyDirect) {
         final PaginatedResult result;
         String querySring ="SELECT FROM org.dependencytrack.model.Component WHERE project == :project ";
         if (filter != null) {
             querySring += " && (project == :project) && name.toLowerCase().matches(:name)";
         }
         if (onlyOutdated) {
+            // Components are considered outdated when metadata does exists, but the version is different than latestVersion
+            // Different should always mean version < latestVersion
             // Hack JDO using % instead of .* to get the SQL LIKE clause working:
             querySring +=
-                " && this.project.directDependencies.matches('%\"uuid\":\"'+this.uuid+'\"%') " + // only direct dependencies
-                " && ("+
+                " && !("+
                 " SELECT FROM org.dependencytrack.model.RepositoryMetaComponent m " +
                 " WHERE m.name == this.name " +
                 " && m.namespace == this.group " +
-                " && m.latestVersion == this.version " +
+                " && m.latestVersion != this.version " +
                 " && this.purl.matches('pkg:' + m.repositoryType.toString().toLowerCase() + '/%') " +
                 " ).isEmpty()";
+        }
+        if (onlyDirect) {
+            querySring +=
+                " && this.project.directDependencies.matches('%\"uuid\":\"'+this.uuid+'\"%') "; // only direct dependencies
         }
         final Query<Component> query = pm.newQuery(querySring);
         query.getFetchPlan().setMaxFetchDepth(2);

@@ -880,8 +880,8 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().getComponents(project, includeMetrics);
     }
 
-    public PaginatedResult getComponents(final Project project, final boolean includeMetrics, final boolean onlyOutdated) {
-        return getComponentQueryManager().getComponents(project, includeMetrics, onlyOutdated);
+    public PaginatedResult getComponents(final Project project, final boolean includeMetrics, final boolean onlyOutdated, final boolean onlyDirect) {
+        return getComponentQueryManager().getComponents(project, includeMetrics, onlyOutdated, onlyDirect);
     }
 
     public ServiceComponent matchServiceIdentity(final Project project, final ComponentIdentity cid) {

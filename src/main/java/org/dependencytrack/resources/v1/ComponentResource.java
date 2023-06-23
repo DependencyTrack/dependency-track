@@ -87,13 +87,15 @@ public class ComponentResource extends AlpineResource {
     public Response getAllComponents(
             @ApiParam(value = "The UUID of the project to retrieve components for", required = true)
             @PathParam("uuid") String uuid,
-            @ApiParam(value = "Optionally exclude recent components and indirect dependencies so only outdated are returned", required = false)
-            @QueryParam("onlyOutdated") boolean onlyOutdated) {
+            @ApiParam(value = "Optionally exclude recent components so only outdated components are returned", required = false)
+            @QueryParam("onlyOutdated") boolean onlyOutdated,
+            @ApiParam(value = "Optionally exclude transitive dependencies so only direct dependencies are returned", required = false)
+            @QueryParam("onlyDirect") boolean onlyDirect)  {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                    final PaginatedResult result = qm.getComponents(project, true, onlyOutdated);
+                    final PaginatedResult result = qm.getComponents(project, true, onlyOutdated, onlyDirect);
                     return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();

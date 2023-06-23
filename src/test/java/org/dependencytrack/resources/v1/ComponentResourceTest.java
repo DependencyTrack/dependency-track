@@ -65,10 +65,17 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertEquals(405, response.getStatus()); // No longer prohibited in DT 4.0+
     }
 
-    @Test
-    public void getOutdatedComponentsTest() throws MalformedPackageURLException {
+    /**
+     * Generate a project with different dependencies
+     * @return A project with 1000 dpendencies: <ul>
+     * <li>200 outdated dependencies, 75 direct and 125 transitive</li>
+     * <li>800 recent dependencies, 25 direct, 775 transitive</li>
+     * @throws MalformedPackageURLException
+     */
+    private Project prepareProject() throws MalformedPackageURLException {
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         final List<String> directDepencencies = new ArrayList<>();
+        // Generate 1000 dependencies
         for (int i = 0; i < 1000; i++) {
             Component component = new Component();
             component.setProject(project);
@@ -77,26 +84,14 @@ public class ComponentResourceTest extends ResourceTest {
             component.setVersion(String.valueOf(i)+".0");
             component.setPurl(new PackageURL(RepositoryType.MAVEN.toString(), "component-group", "component-name-"+i , String.valueOf(i)+".0", null, null));
             component = qm.createComponent(component, false);
-            if (i<100) {
-                if ((i >= 25) && (i < 75)) {
-                    // 50 recent direct depencencies
-                    directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
-                }
-                // same version
-                final var metaComponent = new RepositoryMetaComponent();
-                metaComponent.setRepositoryType(RepositoryType.MAVEN);
-                metaComponent.setNamespace("component-group");
-                metaComponent.setName("component-name-"+i);
-                metaComponent.setLatestVersion(String.valueOf(i)+".0");
-                metaComponent.setLastCheck(new Date());
-                qm.persist(metaComponent);
+            // direct depencencies
+            if (i < 100) {
+                // 100 direct depencencies, 900 transitive depencencies
+                directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
             }
-            if (i>=100 && i<200) {
-                if ((i >= 150) && (i < 175)) {
-                    // 25 outdated direct depencencies
-                    directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
-                }
-                // newer version
+            // Recent & Outdated
+            if ((i >= 25) && (i < 225)) {
+                // 100 outdated components, 75 of these are direct dependencies, 25 transitive
                 final var metaComponent = new RepositoryMetaComponent();
                 metaComponent.setRepositoryType(RepositoryType.MAVEN);
                 metaComponent.setNamespace("component-group");
@@ -104,42 +99,87 @@ public class ComponentResourceTest extends ResourceTest {
                 metaComponent.setLatestVersion(String.valueOf(i+1)+".0");
                 metaComponent.setLastCheck(new Date());
                 qm.persist(metaComponent);
+            } else if (i<500) {
+                // 300 recent components, 25 of these are direct dependencies
+                final var metaComponent = new RepositoryMetaComponent();
+                metaComponent.setRepositoryType(RepositoryType.MAVEN);
+                metaComponent.setNamespace("component-group");
+                metaComponent.setName("component-name-"+i);
+                metaComponent.setLatestVersion(String.valueOf(i)+".0");
+                metaComponent.setLastCheck(new Date());
+                qm.persist(metaComponent);
+            } else {
+                // 500 components with no RepositoryMetaComponent containing version
+                // metadata, all transitive dependencies
             }
         }
         project.setDirectDependencies("[" + String.join(",", directDepencencies.toArray(new String[0])) + "]");
-
-        final Response response = target(V1_COMPONENT + "/project/" + project.getUuid())
-                .queryParam("onlyOutdated", true)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get(Response.class);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("25");
-
-        final JsonArray json = parseJsonArray(response);
-        assertThat(json).hasSize(25); // Only 25 direct dependencies
+        return project;
     }
 
     @Test
-    public void getAllComponentsTest() {
-        final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
-        for (int i = 0; i < 1000; i++) {
-            Component component = new Component();
-            component.setProject(project);
-            component.setName("Component Name");
-            component.setVersion(String.valueOf(i));
-            qm.createComponent(component, false);
-        }
+    public void getOutdatedComponentsTest() throws MalformedPackageURLException {
+        final Project project = prepareProject();
+
+        final Response response = target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyOutdated", true)
+                .queryParam("onlyDirect", false)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("200"); // 200 outdated dependencies,  direct and transitive
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(100); // Default page size is 100
+    }
+
+    @Test
+    public void getOutdatedDirectComponentsTest() throws MalformedPackageURLException {
+        final Project project = prepareProject();
+
+        final Response response = target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyOutdated", true)
+                .queryParam("onlyDirect", true)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("75"); // 75 outdated direct dependencies
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(75);
+    }
+
+    @Test
+    public void getAllComponentsTest() throws MalformedPackageURLException {
+        final Project project = prepareProject();
 
         final Response response = target(V1_COMPONENT + "/project/" + project.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1000");
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1000"); // 1000 dependencies
 
         final JsonArray json = parseJsonArray(response);
         assertThat(json).hasSize(100); // Default page size is 100
+    }
+
+    @Test
+    public void getAllDirectComponentsTest() throws MalformedPackageURLException {
+        final Project project = prepareProject();
+
+        final Response response = target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyDirect", true)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("100"); // 100 direct dependencies
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(100);
     }
 
     @Test

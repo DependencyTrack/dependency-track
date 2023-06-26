@@ -163,6 +163,13 @@ public class ModelConverter {
                             component.setResolvedLicense(license);
                         }
                     }
+                    else if (StringUtils.isNotBlank(cycloneLicense.getName()))
+                    {
+                        final License license = qm.getCustomLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                        if (license != null) {
+                            component.setResolvedLicense(license);
+                        }
+                    }
                     component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
                     component.setLicenseUrl(StringUtils.trimToNull(cycloneLicense.getUrl()));
                 }

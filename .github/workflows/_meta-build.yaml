@@ -105,7 +105,7 @@ jobs:
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@v4.1.0
+        uses: docker/build-push-action@v4.1.1
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-

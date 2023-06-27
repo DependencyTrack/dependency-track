@@ -20,6 +20,7 @@ package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * Value object holding UUID and version for a project
@@ -29,20 +30,26 @@ public class ProjectVersion implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String uuid;
+    private UUID uuid;
 
     private String version;
 
-    public ProjectVersion(String uuid, String version) {
+    public ProjectVersion() {
+        this.uuid = null;
+        this.version = null;
+    }
+
+    public ProjectVersion(UUID uuid, String version) {
         this.uuid = uuid;
         this.version = version;
 
     }
-    public void setUuid(String uuid) {
+
+    public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
 
-    public String getUuid() {
+    public UUID getUuid() {
         return uuid;
     }
 

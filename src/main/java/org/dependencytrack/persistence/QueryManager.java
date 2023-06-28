@@ -76,7 +76,6 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -357,6 +356,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getProjects(final String name, final boolean excludeInactive, final boolean onlyRoot) {
         return getProjectQueryManager().getProjects(name, excludeInactive, onlyRoot);
+    }
+
+    public Project getProject(final String uuid) {
+        return getProjectQueryManager().getProject(uuid);
     }
 
     public Project getProject(final String name, final String version) {
@@ -1365,7 +1368,7 @@ public class QueryManager extends AlpineQueryManager {
         pm.currentTransaction().begin();
         pm.deletePersistentAll(team.getApiKeys());
         String aclDeleteQuery = """
-            DELETE FROM \"PROJECT_ACCESS_TEAMS\" WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?      
+            DELETE FROM \"PROJECT_ACCESS_TEAMS\" WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?
         """;
         final Query query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, aclDeleteQuery);
         query.executeWithArray(team.getId());

@@ -39,14 +39,12 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
-
 import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-
 import javax.jdo.FetchGroup;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -115,7 +113,7 @@ public class ProjectResource extends AlpineResource {
             @ApiParam(value = "The UUID of the project to retrieve", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
+            final Project project = qm.getProject(uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     return Response.ok(project).build();

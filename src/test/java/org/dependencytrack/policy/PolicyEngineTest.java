@@ -41,16 +41,15 @@ import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PolicyEngineTest extends PersistenceCapableTest {
@@ -74,6 +73,11 @@ public class PolicyEngineTest extends PersistenceCapableTest {
     @AfterClass
     public static void tearDownClass() {
         NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
+    }
+
+    @Before
+    public void setup() {
+        NOTIFICATIONS.clear();
     }
 
     @After

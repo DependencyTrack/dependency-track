@@ -34,20 +34,19 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
-
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonValue;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
-import javax.json.Json;
-import javax.json.JsonValue;
-import javax.json.JsonArray;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
 
@@ -133,17 +132,49 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     /**
      * Returns a List of Dependency for the specified Project.
      * @param project the Project to retrieve dependencies of
+     * @param includeMetrics Optionally includes third-party metadata about the component from external repositories
      * @return a List of Dependency objects
      */
     public PaginatedResult getComponents(final Project project, final boolean includeMetrics) {
+        return getComponents(project, includeMetrics, false, false);
+    }
+    /**
+     * Returns a List of Dependency for the specified Project.
+     * @param project the Project to retrieve dependencies of
+     * @param includeMetrics Optionally includes third-party metadata about the component from external repositories
+     * @param onlyOutdated Optionally exclude recent components so only outdated components are shown
+     * @param onlyDirect Optionally exclude transitive dependencies so only direct dependencies are shown
+     * @return a List of Dependency objects
+     */
+    public PaginatedResult getComponents(final Project project, final boolean includeMetrics, final boolean onlyOutdated, final boolean onlyDirect) {
         final PaginatedResult result;
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project");
+        String querySring ="SELECT FROM org.dependencytrack.model.Component WHERE project == :project ";
+        if (filter != null) {
+            querySring += " && (project == :project) && name.toLowerCase().matches(:name)";
+        }
+        if (onlyOutdated) {
+            // Components are considered outdated when metadata does exists, but the version is different than latestVersion
+            // Different should always mean version < latestVersion
+            // Hack JDO using % instead of .* to get the SQL LIKE clause working:
+            querySring +=
+                " && !("+
+                " SELECT FROM org.dependencytrack.model.RepositoryMetaComponent m " +
+                " WHERE m.name == this.name " +
+                " && m.namespace == this.group " +
+                " && m.latestVersion != this.version " +
+                " && this.purl.matches('pkg:' + m.repositoryType.toString().toLowerCase() + '/%') " +
+                " ).isEmpty()";
+        }
+        if (onlyDirect) {
+            querySring +=
+                " && this.project.directDependencies.matches('%\"uuid\":\"'+this.uuid+'\"%') "; // only direct dependencies
+        }
+        final Query<Component> query = pm.newQuery(querySring);
         query.getFetchPlan().setMaxFetchDepth(2);
         if (orderBy == null) {
             query.setOrdering("name asc, version desc");
         }
         if (filter != null) {
-            query.setFilter("project == :project && name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             result = execute(query, project, filterString);
         } else {

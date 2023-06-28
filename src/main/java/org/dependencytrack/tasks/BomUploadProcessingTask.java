@@ -27,6 +27,7 @@ import org.cyclonedx.BomParserFactory;
 import org.cyclonedx.parsers.Parser;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
+import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Bom;
@@ -44,7 +45,6 @@ import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
-
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
@@ -65,6 +65,7 @@ public class BomUploadProcessingTask implements Subscriber {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void inform(final Event e) {
         if (e instanceof BomUploadEvent) {
             Project bomProcessingFailedProject = null;
@@ -76,12 +77,12 @@ public class BomUploadProcessingTask implements Subscriber {
             try {
                 final Project project =  qm.getObjectByUuid(Project.class, event.getProjectUuid());
                 bomProcessingFailedProject = project;
-                
+
                 if (project == null) {
                     LOGGER.warn("Ignoring BOM Upload event for no longer existing project " + event.getProjectUuid());
                     return;
                 }
-                
+
                 final List<Component> components;
                 final List<Component> newComponents = new ArrayList<>();
                 final List<Component> flattenedComponents = new ArrayList<>();
@@ -168,8 +169,17 @@ public class BomUploadProcessingTask implements Subscriber {
                     // vulnerability analysis completed.
                     vae.onSuccess(new NewVulnerableDependencyAnalysisEvent(newComponents));
                 }
+                // Start PolicyEvaluationEvent when VulnerabilityAnalysisEvent is succesful
+                vae.onSuccess(new PolicyEvaluationEvent(detachedFlattenedComponent).project(detachedProject));
                 Event.dispatch(vae);
-                Event.dispatch(new RepositoryMetaEvent(detachedFlattenedComponent));
+
+                // Repository Metadata analysis
+                final var rme = new RepositoryMetaEvent(detachedFlattenedComponent);
+                // Start PolicyEvaluationEvent again when RepositoryMetaEvent is succesful,
+                // as it might trigger new violations
+                rme.onSuccess(new PolicyEvaluationEvent(detachedFlattenedComponent).project(detachedProject));
+                Event.dispatch(rme);
+
                 LOGGER.info("Processed " + flattenedComponents.size() + " components and " + flattenedServices.size() + " services uploaded to project " + event.getProjectUuid());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)

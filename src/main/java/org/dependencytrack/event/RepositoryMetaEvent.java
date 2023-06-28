@@ -18,14 +18,13 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
+import alpine.event.framework.AbstractChainableEvent;
 import org.dependencytrack.model.Component;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public class RepositoryMetaEvent implements Event {
+public class RepositoryMetaEvent extends AbstractChainableEvent {
 
     private Optional<List<Component>> components = Optional.empty();
 

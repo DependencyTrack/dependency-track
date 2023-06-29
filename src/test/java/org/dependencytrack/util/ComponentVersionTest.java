@@ -18,14 +18,13 @@
  */
 package org.dependencytrack.util;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import java.util.Arrays;
+import java.util.List;
 
 @RunWith(JUnitParamsRunner.class)
 public class ComponentVersionTest {
@@ -156,6 +155,7 @@ public class ComponentVersionTest {
             new String[] { "2.1.5+deb2+cvs20081104-13.2", "2.1.5+deb1+cvs20081104-13.2" },
             new String[] { "2.1.6+deb1+cvs20081204-13.2", "2.1.5+deb1+cvs20081104-13.2" },
             new String[] { "5.6.0+git+20171128-2", "4.6.0+git+20171128-2" },
+            new String[] { "0.100.0-b21", "0.100.0-21" },
             new String[] { "1:007-4build2", "1:007-4build1" },
             new String[] { "1:1.0.10b", "1:1.0.10" },
             new String[] { "1:1.0.10b-1", "1:1.0.10-1" },
@@ -227,8 +227,49 @@ public class ComponentVersionTest {
         Assert.assertEquals(version1, ComponentVersion.highestVersion(version1, version2));
     }
 
-    private Object[] semverVersions() {
+    private Object[] paremetersSemVerVersions() {
         return new Object[] {
+            // Stable:
+            new String[] { "1.0.0" },
+            new String[] { "9.3.0-Final" },
+            new String[] { "4.22.0+4e01e86b5fc27661dd585946578d0625dd4af38d" },
+            new String[] { "1.0.1-0+20130313144700" },
+            new String[] { "4.22.0-b.e.t.a.1+4e01e86.b5fc27-.-661dd5.85946.578d0--625dd4af38d.1a-as1w2" },
+            // Unstable:
+            new String[] { "1.11.0-1.1" },
+            new String[] { "1.2.0-4" },
+            new String[] { "2.1.2-2.1" },
+            new String[] { "2.2.12-1.1" },
+            new String[] { "1.22.333-rc1" },
+            new String[] { "9.3.0-BETA.14-77e850b" },
+            new String[] { "3.10.0-canary.1" },
+            new String[] { "31.0.0-next.1" },
+            new String[] { "4.22.0-next.1627591352.4e01e86b5fc27661dd585946578d0625dd4af38d" },
+            // 9. A pre-release version MAY be denoted by appending a hyphen and a series of dot separated
+            // identifiers immediately following the patch version. Identifiers MUST comprise only ASCII
+            // alphanumerics and hyphens [0-9A-Za-z-]. Identifiers MUST NOT be empty. Numeric identifiers
+            // MUST NOT include leading zeroes. Pre-release versions have a lower precedence than the
+            // associated normal version. A pre-release version indicates that the version is unstable
+            // and might not satisfy the intended compatibility requirements as denoted by its associated
+            // normal version. Examples: 1.0.0-alpha, 1.0.0-alpha.1, 1.0.0-0.3.7, 1.0.0-x.7.z.92, 1.0.0-x-y-z.--.
+            // (semver.org)
+            new String[] { "1.10.0-alpha" },
+            new String[] { "1.0.10-alpha.1" },
+            new String[] { "1.0.0-0.3.7" },
+            new String[] { "1.0.0-x.7.z.92" },
+            new String[] { "1.0.0-x-y-z.--" },
+            // 10. Build metadata MAY be denoted by appending a plus sign and a series of dot separated
+            // identifiers immediately following the patch or pre-release version. Identifiers MUST
+            // comprise only ASCII alphanumerics and hyphens [0-9A-Za-z-]. Identifiers MUST NOT be empty.
+            // Build metadata MUST be ignored when determining version precedence. Thus two versions that
+            // differ only in the build metadata, have the same precedence. Examples: 1.0.0-alpha+001,
+            // 1.0.0+20130313144700, 1.0.0-beta+exp.sha.5114f85, 1.0.0+21AF26D3----117B344092BD.
+            // (semver.org)
+            new String[] { "4.22.0-beta+4e01e86b5fc27661dd585946578d0625dd4af38d-final" },
+            new String[] { "11.1.0-alpha+001" },
+            new String[] { "1.0.0-beta+exp.sha.5114f85" },
+            new String[] { "0.2.2-beta2+git20190406.ef77f01" },
+
             new String[] { "2.5.1-develop-0017" },
             new String[] { "1.0.0-1.develop09" },
             new String[] { "1.0.0-feat-name09" },
@@ -264,13 +305,31 @@ public class ComponentVersionTest {
             new String[] { "1.0.0+0.build.1-rc.10000aaa-kk-0.1" },
             new String[] { "99999999999999999999999.999999999999999999.99999999999999999" },
             new String[] { "1.0.0-0A.is.legal" },
+
+        };
+    }
+
+    private Object[] paremetersNotSemVerVersions() {
+        return new Object[] {
+            new String[] { "1.0" },
+            new String[] { "1.0.1.0" },
+            new String[] { "version1" },
+            new String[] { "01" },
+            new String[] { "9.3.0.Final" },
+            new String[] { "1.0.1.0+20130313144700" },
         };
     }
 
     @Test
-    @Parameters(method = "semverVersions")
-    public void testIsSemver(String version) {
-        Assert.assertTrue("not semver: " + version, ComponentVersion.isSemver(version));
+    @Parameters(method = "paremetersSemVerVersions")
+    public void testIsSemVer(String version) {
+        Assert.assertTrue("not semver: " + version, ComponentVersion.isSemVer(version));
+    }
+
+    @Test
+    @Parameters(method = "paremetersNotSemVerVersions")
+    public void testIsNotSemVerVersion(String version) {
+        Assert.assertFalse("is semver: " + version, ComponentVersion.isSemVer(version));
     }
 
     private Object[] paremetersStableVersions() {
@@ -365,11 +424,6 @@ public class ComponentVersionTest {
             new String[] { "0.0.0-develop.09" },
             new String[] { "0.0.0-feat-name.09" },
         };
-    }
-
-    private static Stream<Object> flatten(Object[] array) {
-        return Arrays.stream(array)
-            .flatMap(o -> o instanceof Object[] a? flatten(a): Stream.of(o));
     }
 
     @Test

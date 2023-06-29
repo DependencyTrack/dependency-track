@@ -18,14 +18,12 @@
  */
 package org.dependencytrack.util;
 
+import com.vdurmont.semver4j.Semver;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.maven.artifact.versioning.ComparableVersion;
-
-import com.vdurmont.semver4j.Semver;
 
 public class ComponentVersion implements Comparable<ComponentVersion> {
 
@@ -125,7 +123,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
      * @param version the version string
      * @return true if the version string denotes a SemVer version
      */
-    public static boolean isSemver(String version) {
+    public static boolean isSemVer(String version) {
         return SEMVER_PATTERN.matcher(version).matches();
     }
 
@@ -146,7 +144,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
             return true; // could this be false? how?
         }
 
-        if (ComponentVersion.isSemver(version)) {
+        if (ComponentVersion.isSemVer(version)) {
             return new Semver(version).isStable();
         }
 
@@ -305,7 +303,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
             return compareDebianVersions(v1DebianMatcher, v2DebianMatcher);
         }
 
-        if (ComponentVersion.isSemver(v1string) && ComponentVersion.isSemver(v2string)) {
+        if (ComponentVersion.isSemVer(v1string) && ComponentVersion.isSemVer(v2string)) {
             return compareSemver(v1string, v2string);
         }
         return compareNonSemverVersions(stripLeadingV(v1string), stripLeadingV(v2string));
@@ -317,7 +315,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
         if (v1DebianMatcher.matches() || v2DebianMatcher.matches()) {
             return compareDebianVersions(v1DebianMatcher, v2DebianMatcher);
         }
-        if (ComponentVersion.isSemver(v1string) && ComponentVersion.isSemver(v2string)) {
+        if (ComponentVersion.isSemVer(v1string) && ComponentVersion.isSemVer(v2string)) {
             return compareSemver(v1string, v2string);
         }
         return compareNonSemverVersions(v1string, v2string);

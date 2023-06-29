@@ -150,4 +150,22 @@ public class ComponentIdentity {
         jsonObject.put("objectType", this.getObjectType());
         return jsonObject;
     }
+
+    @Override
+    public boolean equals(Object otherObject) {
+        if (otherObject == null) return false;
+        if (!(otherObject instanceof ComponentIdentity)) return false;
+        ComponentIdentity other = (ComponentIdentity)otherObject;
+        if (getUuid() != null && other.getUuid() != null) return getUuid().equals(other.getUuid());
+        if (getPurl() != null && other.getPurl() != null) return getPurl().isCoordinatesEquals(other.getPurl());
+        else if (getCpe() != null && other.getCpe() != null) return getCpe().equalsIgnoreCase(other.getCpe());
+        else return getGroup().equalsIgnoreCase(other.getGroup()) &&
+                getName().equalsIgnoreCase(other.getName()) &&
+                getVersion().equalsIgnoreCase(other.getVersion());
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(getGroup(), getName(), getVersion());
+    }
 }

@@ -46,6 +46,8 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.Vulnerability.Source;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
@@ -55,6 +57,16 @@ import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import org.dependencytrack.util.PurlUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.json.JSONArray;
+import us.springett.parsers.cpe.CpeParser;
+import us.springett.parsers.cpe.Cpe;
+import org.cyclonedx.model.vulnerability.Vulnerability.Version.Status;
+import org.cyclonedx.util.ObjectLocator;
+import org.cyclonedx.model.vulnerability.Vulnerability.Version;
+import org.cyclonedx.model.vulnerability.Vulnerability.Affect;
+import org.cyclonedx.model.vulnerability.Vulnerability.Rating;
+import org.dependencytrack.model.ICpe;
+import us.springett.parsers.cpe.exceptions.CpeEncodingException;
+import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -69,6 +81,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 import java.util.UUID;
 
 public class ModelConverter {
@@ -96,6 +110,23 @@ public class ModelConverter {
             }
         }
         return components;
+    }
+
+    /**
+     * Converts a parsed Bom to native list of DependencyTrack vulnerability objects
+     * @param bom the Bom to convert
+     * @param components list of native component objects parsed from the bom
+     * @return a List of Vulnerability objects.
+     */
+    public static List<Vulnerability> convertVulnerabilities(final Bom bom, final List<Component> components, final List<ServiceComponent> services) {
+        final List<org.cyclonedx.model.vulnerability.Vulnerability> vulnerabilities = bom.getVulnerabilities();
+        if (vulnerabilities == null || vulnerabilities.isEmpty())
+            return new ArrayList<>();
+
+        final Map<String, Component> flattenedComponents = flattenComponents(components);
+        final Map<String, ServiceComponent> flattenedServices = flattenServices(services);
+
+        return vulnerabilities.stream().map( vulnerability -> convert(vulnerability, bom, flattenedComponents, flattenedServices)).toList();
     }
 
     @SuppressWarnings("deprecation")
@@ -1065,5 +1096,162 @@ public class ModelConverter {
         }
 
         return result;
+    }
+
+    /**
+     * Iterate through the list of service components to generate a map keyed on their bom-ref
+     * @param services The services to process
+     * @return A Map of every service component found keyed on their bom-ref
+     */
+    private static Map<String, ServiceComponent> flattenServices(final Collection<ServiceComponent> services) {
+        // Flattent the hierarchical structure
+        // Use iteration instead of recursion to avoid stack overflow
+        Stream<ServiceComponent> flattenedComponents = Stream.empty();
+        Collection<ServiceComponent> current = services;
+        while (!current.isEmpty()) {
+            flattenedComponents = Stream.concat(flattenedComponents, current.stream());
+            current = current.stream().map(s -> s.getChildren())
+                    .filter(Objects::nonNull)
+                    .map(children -> children.stream())
+                    .reduce(Stream.empty(), (stream, children) -> Stream.concat(stream, children)).toList();
+        }
+
+        // Collect the services into a map
+        return flattenedComponents.collect(java.util.stream.Collectors.toMap(s -> s.getBomRef(), s -> s));
+    }
+
+    private static void convertCpe(ICpe cpe, us.springett.parsers.cpe.Cpe parsedCpe) throws CpeEncodingException {
+        cpe.setCpe23(parsedCpe.toCpe23FS());
+        cpe.setCpe22(parsedCpe.toCpe22Uri());
+        cpe.setPart(parsedCpe.getPart().getAbbreviation());
+        cpe.setVendor(parsedCpe.getVendor());
+        cpe.setProduct(parsedCpe.getProduct());
+        cpe.setVersion(parsedCpe.getVersion());
+        cpe.setUpdate(parsedCpe.getUpdate());
+        cpe.setEdition(parsedCpe.getEdition());
+        cpe.setLanguage(parsedCpe.getLanguage());
+        cpe.setSwEdition(parsedCpe.getSwEdition());
+        cpe.setTargetSw(parsedCpe.getTargetSw());
+        cpe.setTargetHw(parsedCpe.getTargetHw());
+        cpe.setOther(parsedCpe.getOther());
+    }
+
+    private static Vulnerability convert(final org.cyclonedx.model.vulnerability.Vulnerability cycloneDxVulnerability, final Bom bom,
+            final Map<String, Component> flattenedComponents, final Map<String, ServiceComponent> flattenedServices) {
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setSource(Source.INTERNAL);
+
+        // Map affects to components, servies, and vulnerable software.
+        List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = cycloneDxVulnerability.getAffects();
+        if (affects != null) {
+            vulnerability.setVulnerableSoftware(affects.stream()
+                    .map(affect -> convert(affect, bom))
+                    .filter(Objects::nonNull)
+                    .map(vsList -> vsList.stream())
+                    .reduce(Stream.empty(), (stream1, stream2) -> Stream.concat(stream1, stream2))
+                    .toList());
+            List<String> affectBomRefs = affects.stream().map(affect -> affect.getRef()).filter(r -> r != null).toList();
+            vulnerability.setComponents(affectBomRefs.stream().map(ref -> flattenedComponents.get(ref)).filter(Objects::nonNull).toList());
+            vulnerability.setServiceComponents(affectBomRefs.stream().map(ref -> flattenedServices.get(ref)).filter(Objects::nonNull).toList());
+        }
+
+        vulnerability.setVulnId(cycloneDxVulnerability.getId());
+        vulnerability.setDescription(cycloneDxVulnerability.getDescription());
+        vulnerability.setDetail(cycloneDxVulnerability.getDetail());
+        vulnerability.setCreated(cycloneDxVulnerability.getCreated());
+        vulnerability.setUpdated(cycloneDxVulnerability.getUpdated());
+
+        setRatings(vulnerability, cycloneDxVulnerability.getRatings());
+
+        return vulnerability;
+    }
+
+    private static List<VulnerableSoftware> convert(final Affect cycloneDxAffect, final Bom bom) {
+        // An affect must refer to a component or service.
+        final ObjectLocator ol = new ObjectLocator(bom, cycloneDxAffect.getRef()).locate();
+        if (!ol.found() || !(ol.isComponent() || ol.isService()))
+            return new ArrayList<VulnerableSoftware>();
+
+        // Each affect must have a bom reference to the object affected by the vulnerability.
+        // The affect may also have a list of versions consisting of either version ranges or specific versions.
+        // Each version or version range must be mapped to a Vulnerable Software.
+
+        final ComponentIdentity component;
+        if (ol.isComponent()) component = new ComponentIdentity((org.cyclonedx.model.Component)ol.getObject());
+        else component = new ComponentIdentity((org.cyclonedx.model.Service)ol.getObject());
+
+        // If the affect does not have any versions, the reference to the object should still reveal a specific version.
+        final Version componentVersion = new Version();
+        componentVersion.setStatus(Status.AFFECTED);
+        componentVersion.setVersion(component.getVersion());
+        Stream<Version> versions = Stream.concat(
+                    Optional.ofNullable(cycloneDxAffect.getVersions()).map(l -> l.stream()).orElse(Stream.empty()),
+                    Stream.of(componentVersion));
+
+        // Map the versions to vulnerable software.
+        return versions.map(version -> {
+            final VulnerableSoftware vs = new VulnerableSoftware();
+            if (version.getStatus() == Status.UNKNOWN)
+                return null;
+
+            vs.setVulnerable(version.getStatus() == Status.AFFECTED);
+
+            final PackageURL purl = component.getPurl();
+            if (purl != null)
+            {
+                vs.setPurlType(purl.getType());
+                vs.setPurlNamespace(purl.getNamespace());
+                vs.setPurlName(purl.getName());
+                vs.setVersion(purl.getVersion());
+                vs.setPurl(purl.canonicalize());
+            }
+
+            final String cpeString = component.getCpe();
+            if ( cpeString != null)
+            {
+                try {
+                    final Cpe cpe = CpeParser.parse(cpeString);
+                    convertCpe(vs, cpe);
+                } catch (CpeParsingException | CpeEncodingException e) {
+                    LOGGER.warn("Error parsing CPE: " + cpeString + " (skipping)", e);
+                    return null;
+                }
+            }
+
+            if (version.getVersion() != null) {
+                vs.setVersion(version.getVersion());
+            } else if (version.getRange() != null) {
+                // TODO: Add support for version ranges
+                // Package URL Version Range syntax parser would be required
+                return null;
+            }
+
+            return vs;
+        }).filter(vs -> vs != null).toList();
+    }
+
+    private static void setRatings(final Vulnerability vulnerability, final List<Rating> ratings) {
+        if (ratings == null || ratings.isEmpty())
+            return;
+
+        for (Rating rating : ratings) {
+            switch(rating.getMethod()) {
+                case CVSSV31:
+                case CVSSV3:
+                    vulnerability.setCvssV3Vector(rating.getVector());
+                    vulnerability.setCvssV3BaseScore(java.math.BigDecimal.valueOf(rating.getScore()));
+                    break;
+                case CVSSV2:
+                    vulnerability.setCvssV2Vector(rating.getVector());
+                    vulnerability.setCvssV2BaseScore(java.math.BigDecimal.valueOf(rating.getScore()));
+                    break;
+                case OWASP:
+                    vulnerability.setOwaspRRVector(rating.getVector());
+                default:
+                    continue;
+            }
+        }
+
+        vulnerability.recalculateScoresFromVectorIgnoreErrors();
     }
 }

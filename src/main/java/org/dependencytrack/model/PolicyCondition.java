@@ -22,7 +22,6 @@ import alpine.common.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -77,7 +76,8 @@ public class PolicyCondition implements Serializable {
         VERSION,
         COMPONENT_HASH,
         CWE,
-        VULNERABILITY_ID
+        VULNERABILITY_ID,
+        VERSION_DISTANCE
     }
 
     @PrimaryKey

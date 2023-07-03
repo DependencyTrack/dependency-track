@@ -26,7 +26,11 @@ import org.dependencytrack.model.RepositoryType;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class RepositoryQueryManager extends QueryManager implements IQueryManager {
@@ -210,4 +214,60 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
             return persist(transientRepositoryMetaComponent);
         }
     }
+
+    /**
+     * Returns a list of {@link RepositoryMetaComponent} objects from the specified type, group, and name.
+     * @param list a list of {@link RepositoryQueryManager.RepositoryMetaComponentSearch} used to filter
+     * @return a List of {@link RepositoryMetaComponent} objects
+     * @since 4.9.0
+     */
+    public List<RepositoryMetaComponent> getRepositoryMetaComponents(final List<RepositoryQueryManager.RepositoryMetaComponentSearch> list) {
+        final Query<RepositoryMetaComponent> query = pm.newQuery(RepositoryMetaComponent.class);
+
+        // Dynamically build the filter string and populate the parameters
+        final String filterTemplate  = "(repositoryType == :%s && name == :%s && namespace == :%s)";
+
+        // List with all the filters
+        final List<String> filters = new ArrayList<>(list.size());
+
+        // Map with all the parameters
+        final Map<String, Object> params = new HashMap<>(list.size() * 3);
+
+        final String repositoryTypeTemplate = "repositoryType_%d";
+        final String nameTemplate = "name_%d";
+        final String namespaceTemplate = "namespace_%d";
+
+        String repositoryTypeTemplatePopulate;
+        String nameTemplatePopulate;
+        String namespaceTemplatePopulate;
+
+        for (int i = 0; i < list.size(); i++) {
+            // Create the template strings for this iteration
+            repositoryTypeTemplatePopulate = String.format(repositoryTypeTemplate, i);
+            namespaceTemplatePopulate = String.format(namespaceTemplate, i);
+            nameTemplatePopulate = String.format(nameTemplate, i);
+
+            // Add the filter to the list
+            filters.add(String.format(filterTemplate, repositoryTypeTemplatePopulate, nameTemplatePopulate, namespaceTemplatePopulate));
+
+            // Add the parameters to the map
+            params.put(repositoryTypeTemplatePopulate, list.get(i).type());
+            params.put(nameTemplatePopulate, list.get(i).name());
+            params.put(namespaceTemplatePopulate, list.get(i).namespace());
+        }
+
+        // Join all filters with OR operator
+        query.setFilter(String.join(" || ", filters));
+        query.setNamedParameters(params);
+        return query.executeList();
+    }
+
+
+    /**
+     * Object used to search for a RepositoryMetaComponent by type, namespace, and name.
+     *
+     * @author Nathan Mittelette <mittelette.nathan@gmail.com>
+     * @since 4.9.0
+     */
+    public record RepositoryMetaComponentSearch(RepositoryType type, String namespace, String name) implements Serializable { }
 }

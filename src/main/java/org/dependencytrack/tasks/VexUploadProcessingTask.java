@@ -59,8 +59,7 @@ public class VexUploadProcessingTask implements Subscriber {
         if (e instanceof VexUploadEvent) {
             final VexUploadEvent event = (VexUploadEvent) e;
             final byte[] vexBytes = CompressUtil.optionallyDecompress(event.getVex());
-            final QueryManager qm = new QueryManager();
-            try {
+            try(final QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
                 final List<Vulnerability> vulnerabilities;
 

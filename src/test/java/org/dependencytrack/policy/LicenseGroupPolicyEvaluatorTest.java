@@ -25,6 +25,7 @@ import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -32,6 +33,14 @@ import java.util.List;
 import java.util.UUID;
 
 public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
+
+    private PolicyEvaluator evaluator;
+
+    @Before
+    public void initEvaluator() {
+        evaluator = new LicenseGroupPolicyEvaluator();
+        evaluator.setQueryManager(qm);
+    }
 
     @Test
     public void hasMatch() {
@@ -51,7 +60,6 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.detach(PolicyCondition.class, condition.getId());
         Component component = new Component();
         component.setResolvedLicense(license);
-        PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(1, violations.size());
     }
@@ -73,7 +81,6 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.detach(PolicyCondition.class, condition.getId());
         Component component = new Component();
         component.setResolvedLicense(license);
-        PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -90,7 +97,6 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(null);
 
-        PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(1, violations.size());
     }
@@ -111,7 +117,6 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.IS, lg.getUuid().toString());
         Component component = new Component();
         component.setResolvedLicense(license);
-        PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -132,7 +137,6 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.MATCHES, lg.getUuid().toString());
         Component component = new Component();
         component.setResolvedLicense(license);
-        PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -150,7 +154,6 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.detach(PolicyCondition.class, condition.getId());
         Component component = new Component();
         component.setResolvedLicense(license);
-        PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }

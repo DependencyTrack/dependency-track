@@ -29,6 +29,8 @@ import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.security.crypto.DataEncryption;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.github.packageurl.PackageURL;
 import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
 import io.github.resilience4j.retry.Retry;
@@ -43,9 +45,9 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.common.HttpClientPool;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.SnykAnalysisEvent;
@@ -60,8 +62,6 @@ import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.RoundRobinAccessor;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -115,8 +115,8 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                 .build());
         RETRY = retryRegistry.retry("snyk-api");
         RETRY.getEventPublisher()
-                .onRetry(event -> LOGGER.debug("Will execute retry #%d in %s" .formatted(event.getNumberOfRetryAttempts(), event.getWaitInterval())))
-                .onError(event -> LOGGER.error("Retry failed after %d attempts: %s" .formatted(event.getNumberOfRetryAttempts(), event.getLastThrowable())));
+                .onRetry(event -> LOGGER.debug("Will execute retry #%d in %s".formatted(event.getNumberOfRetryAttempts(), event.getWaitInterval())))
+                .onError(event -> LOGGER.error("Retry failed after %d attempts: %s".formatted(event.getNumberOfRetryAttempts(), event.getLastThrowable())));
         TaggedRetryMetrics.ofRetryRegistry(retryRegistry)
                 .bindTo(Metrics.getRegistry());
 
@@ -244,7 +244,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                         countDownLatch.countDown();
 
                         if (exception != null) {
-                            LOGGER.error("An unexpected error occurred while analyzing %s" .formatted(component), exception);
+                            LOGGER.error("An unexpected error occurred while analyzing %s".formatted(component), exception);
                         }
                     });
         }
@@ -273,7 +273,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                     .scope(NotificationScope.SYSTEM)
                     .level(NotificationLevel.WARNING)
                     .group(NotificationGroup.ANALYZER)
-                    .title("Snyk API version %s is deprecated" .formatted(apiVersion))
+                    .title("Snyk API version %s is deprecated".formatted(apiVersion))
                     .content(message));
         }
     }
@@ -300,7 +300,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
 
     private void analyzeComponent(final Component component) {
         final String encodedPurl = URLEncoder.encode(component.getPurl().getCoordinates(), StandardCharsets.UTF_8);
-        final String requestUrl = "%s/rest/orgs/%s/packages/%s/issues?version=%s" .formatted(apiBaseUrl, apiOrgId, encodedPurl, apiVersion);
+        final String requestUrl = "%s/rest/orgs/%s/packages/%s/issues?version=%s".formatted(apiBaseUrl, apiOrgId, encodedPurl, apiVersion);
         try {
             URIBuilder uriBuilder = new URIBuilder(requestUrl);
             final HttpUriRequest request = new HttpGet(uriBuilder.build().toString());
@@ -315,17 +315,15 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                     apiVersionSunset = null;
                 }
                 if (response.getStatusLine().getStatusCode() >= HttpStatus.SC_OK && response.getStatusLine().getStatusCode() < HttpStatus.SC_MULTIPLE_CHOICES) {
-                    String responseString = EntityUtils.toString(response.getEntity());
-                    JSONObject responseJson = new JSONObject(responseString);
-                    handle(component, responseJson);
+                    JsonNode jsonObject = Json.readHttpResponse(response);
+                    handle(component, jsonObject);
                 } else if (response.getEntity() != null) {
-                    String responseString = EntityUtils.toString(response.getEntity());
-                    JSONObject responseJson = new JSONObject(responseString);
-                    final List<SnykError> errors = new SnykParser().parseErrors(responseJson);
+                    JsonNode jsonObject = Json.readHttpResponse(response);
+                    final List<SnykError> errors = new SnykParser().parseErrors(jsonObject);
                     if (!errors.isEmpty()) {
                         LOGGER.error("Analysis of component %s failed with HTTP status %d: \n%s"
                                 .formatted(component.getPurl(), response.getStatusLine().getStatusCode(), errors.stream()
-                                        .map(error -> " - %s: %s (%s)" .formatted(error.title(), error.detail(), error.code()))
+                                        .map(error -> " - %s: %s (%s)".formatted(error.title(), error.detail(), error.code()))
                                         .collect(Collectors.joining("\n"))));
                     } else {
                         handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
@@ -334,25 +332,28 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                     handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
                 }
             }
-        } catch (Throwable  ex) {
+        } catch (Throwable ex) {
             handleRequestException(LOGGER, ex);
         }
     }
 
-    private void handle(final Component component, final JSONObject object) {
+    private void handle(final Component component, final JsonNode object) {
         try (QueryManager qm = new QueryManager()) {
             String purl = null;
-            final JSONObject metaInfo = object.optJSONObject("meta");
+            final JsonNode metaInfo = object.get("meta");
             if (metaInfo != null) {
-                purl = metaInfo.optJSONObject("package").optString("url");
-                if (purl == null) {
-                    purl = component.getPurlCoordinates().toString();
+                final JsonNode pkg = metaInfo.get("package");
+                if (pkg != null) {
+                    purl = Json.optString(pkg, "url");
+                    if (purl == null) {
+                        purl = component.getPurlCoordinates().toString();
+                    }
                 }
             }
-            final JSONArray data = object.optJSONArray("data");
+            final ArrayNode data = Json.optArray(object, "data");
             if (data != null && !data.isEmpty()) {
                 final var snykParser = new SnykParser();
-                for (int count = 0; count < data.length(); count++) {
+                for (int count = 0; count < data.size(); count++) {
                     Vulnerability synchronizedVulnerability = snykParser.parse(data, qm, purl, count, aliasSyncEnabled);
                     addVulnerabilityToCache(component, synchronizedVulnerability);
                     final Component componentPersisted = qm.getObjectByUuid(Component.class, component.getUuid());
@@ -392,7 +393,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
     private Supplier<String> createTokenSupplier(final String tokenValue) {
         final String[] tokens = tokenValue.split(";");
         if (tokens.length > 1) {
-            LOGGER.debug("Will use %d tokens in round robin" .formatted(tokens.length));
+            LOGGER.debug("Will use %d tokens in round robin".formatted(tokens.length));
             final var roundRobinAccessor = new RoundRobinAccessor<>(List.of(tokens));
             return roundRobinAccessor::get;
         }

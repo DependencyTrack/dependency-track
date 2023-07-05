@@ -18,7 +18,10 @@
  */
 package org.dependencytrack.parser.vulndb;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.parser.vulndb.model.ApiObject;
 import org.dependencytrack.parser.vulndb.model.Author;
 import org.dependencytrack.parser.vulndb.model.Classification;
@@ -34,15 +37,11 @@ import org.dependencytrack.parser.vulndb.model.Status;
 import org.dependencytrack.parser.vulndb.model.Vendor;
 import org.dependencytrack.parser.vulndb.model.Version;
 import org.dependencytrack.parser.vulndb.model.Vulnerability;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -59,79 +58,58 @@ public class VulnDbParser {
     public VulnDbParser() {
     }
 
-    public Status parseStatus(JSONObject root) {
+    public Status parseStatus(JsonNode root) {
         LOGGER.debug("Parsing JSON node");
-        Status status = new Status(root.optString("organization_name"), root.optString("user_name_requesting"),
-                root.optString("user_email_address_requesting"),
-                root.optString("subscription_end_date"),
-                root.optString("number_of_api_calls_allowed_per_month"),
-                root.optString("number_of_api_calls_made_this_month"),
-                root.optString("vulndb_statistics"),
+        return new Status(Json.optString(root, "organization_name"), Json.optString(root, "user_name_requesting"),
+                Json.optString(root, "user_email_address_requesting"),
+                Json.optString(root, "subscription_end_date"),
+                Json.optString(root, "number_of_api_calls_allowed_per_month"),
+                Json.optString(root, "number_of_api_calls_made_this_month"),
+                Json.optString(root, "vulndb_statistics"),
                 root.toString()
         );
-        return status;
     }
 
-    public <T> Results<T> parse(Object jsonNode, Class<? extends ApiObject> apiObject) {
+    public <T> Results<T> parse(JsonNode root, Class<? extends ApiObject> apiObject) {
         LOGGER.debug("Parsing JSON node");
-
         final Results<T> results = new Results<>();
-        JSONObject root;
-        root = (JSONObject) jsonNode;
-        results.setPage(root.getInt("current_page"));
-        results.setTotal(root.getInt("total_entries"));
-        results.setRawResults(jsonNode.toString());
-        final JSONArray rso = root.getJSONArray("results");
-
-        if (Product.class == apiObject) {
-            results.setResults(parseProducts(rso));
-        } else if (Vendor.class == apiObject) {
-            results.setResults(parseVendors(rso));
-        } else if (Version.class == apiObject) {
-            results.setResults(parseVersions(rso));
-        } else if (Vulnerability.class == apiObject) {
-            results.setResults(parseVulnerabilities(rso));
+        if (root != null) {
+            results.setPage(root.get("current_page").asInt());
+            results.setTotal(root.get("total_entries").asInt());
+            results.setRawResults(root.toString());
+            final ArrayNode rso = Json.optArray(root, "results");
+    
+            if (Product.class == apiObject) {
+                results.setResults(parseProducts(rso));
+            } else if (Vendor.class == apiObject) {
+                results.setResults(parseVendors(rso));
+            } else if (Version.class == apiObject) {
+                results.setResults(parseVersions(rso));
+            } else if (Vulnerability.class == apiObject) {
+                results.setResults(parseVulnerabilities(rso));
+            }
         }
         return results;
     }
 
-    public <T> Results<T> parse(String jsonData, Class<? extends ApiObject> apiObject) {
-        Object result = null;
-        try {
-            result = new JSONObject(jsonData);
-        } catch (JSONException ex) {
-            result = new JSONArray(jsonData);
-        }
-        if (result instanceof JSONObject) {
-            return this.parse((JSONObject) result, apiObject);
-        } else {
-            return this.parse((JSONArray) result, apiObject);
-        }
+    public <T> Results<T> parse(final String jsonData, Class<? extends ApiObject> apiObject) {
+        JsonNode result = Json.readString(jsonData);
+        return this.parse(result, apiObject);
     }
 
     public <T> Results<T> parse(File file, Class<? extends ApiObject> apiObject) throws IOException {
         String jsonData = Files.readString(Paths.get(file.toURI()), Charset.defaultCharset());
-        Object result = null;
-        try {
-            result = new JSONObject(jsonData);
-        } catch (JSONException ex) {
-            result = new JSONArray(jsonData);
-        }
-        if (result instanceof JSONObject) {
-            return this.parse((JSONObject) result, apiObject);
-        } else {
-            return this.parse((JSONArray) result, apiObject);
-        }
+        return parse(jsonData, apiObject);
     }
 
-    private List<Cpe> parseCpes(JSONArray rso) {
+    private List<Cpe> parseCpes(ArrayNode rso) {
         List<Cpe> cpes = null;
         if (rso != null) {
-            cpes = new ArrayList();
+            cpes = new ArrayList<>();
 
-            for (int i = 0; i < rso.length(); ++i) {
-                JSONObject object = rso.getJSONObject(i);
-                Cpe cpe = new Cpe(StringUtils.trimToNull(object.optString("cpe", (String) null)), StringUtils.trimToNull(object.optString("type", (String) null)));
+            for (int i = 0; i < rso.size(); ++i) {
+                JsonNode object = rso.get(i);
+                Cpe cpe = new Cpe(StringUtils.trimToNull(Json.optString(object, "cpe")), StringUtils.trimToNull(Json.optString(object, "type")));
                 cpes.add(cpe);
             }
         }
@@ -139,16 +117,16 @@ public class VulnDbParser {
         return cpes;
     }
 
-    private List<Product> parseProducts(JSONArray rso) {
+    private List<Product> parseProducts(ArrayNode rso) {
         List<Product> products = null;
         if (rso != null) {
-            products = new ArrayList();
+            products = new ArrayList<>();
 
-            for (int i = 0; i < rso.length(); ++i) {
-                JSONObject object = rso.getJSONObject(i);
-                Product product = new Product(object.getInt("id"),
-                        StringUtils.trimToNull(object.optString("name", (String) null)),
-                        this.parseVersions(object.optJSONArray("versions")));
+            for (int i = 0; i < rso.size(); ++i) {
+                JsonNode object = rso.get(i);
+                Product product = new Product(object.get("id").asInt(),
+                        StringUtils.trimToNull(Json.optString(object, "name")),
+                        this.parseVersions(Json.optArray(object, "versions")));
                 products.add(product);
             }
         }
@@ -156,15 +134,15 @@ public class VulnDbParser {
         return products;
     }
 
-    private List<Vendor> parseVendors(JSONArray rso) {
+    private List<Vendor> parseVendors(ArrayNode rso) {
         List<Vendor> vendors = null;
         if (rso != null) {
-            vendors = new ArrayList();
+            vendors = new ArrayList<>();
 
-            for (int i = 0; i < rso.length(); ++i) {
-                JSONObject object = rso.getJSONObject(i);
+            for (int i = 0; i < rso.size(); ++i) {
+                JsonNode object = rso.get(i);
                 if (object.has("vendor")) {
-                    JSONObject childObject = object.getJSONObject("vendor");
+                    JsonNode childObject = object.get("vendor");
                     Vendor vendor = this.parseVendor(childObject);
                     vendors.add(vendor);
                 } else {
@@ -177,26 +155,26 @@ public class VulnDbParser {
         return vendors;
     }
 
-    private Vendor parseVendor(JSONObject object) {
-        Vendor vendor = new Vendor(object.getInt("id"),
-                StringUtils.trimToNull(object.optString("name", (String) null)),
-                StringUtils.trimToNull(object.optString("short_name", (String) null)),
-                StringUtils.trimToNull(object.optString("vendor_url", (String) null)),
-                this.parseProducts(object.optJSONArray("products")));
+    private Vendor parseVendor(JsonNode object) {
+        Vendor vendor = new Vendor(object.get("id").asInt(),
+                StringUtils.trimToNull(Json.optString(object, "name")),
+                StringUtils.trimToNull(Json.optString(object, "short_name")),
+                StringUtils.trimToNull(Json.optString(object, "vendor_url")),
+                this.parseProducts(Json.optArray(object, "products")));
         return vendor;
     }
 
-    private List<Version> parseVersions(JSONArray rso) {
+    private List<Version> parseVersions(ArrayNode rso) {
         List<Version> versions = null;
         if (rso != null) {
-            versions = new ArrayList();
+            versions = new ArrayList<>();
 
-            for (int i = 0; i < rso.length(); ++i) {
-                JSONObject object = rso.getJSONObject(i);
-                Version version = new Version(object.getInt("id"),
-                        StringUtils.trimToNull(object.optString("name", (String) null)),
-                        object.optBoolean("affected", false),
-                        this.parseCpes(object.optJSONArray("cpe")));
+            for (int i = 0; i < rso.size(); ++i) {
+                JsonNode object = rso.get(i);
+                Version version = new Version(object.get("id").asInt(),
+                        StringUtils.trimToNull(Json.optString(object, "name")),
+                        Json.optBoolean(object, "affected"),
+                        this.parseCpes(Json.optArray(object, "cpe")));
                 versions.add(version);
             }
         }
@@ -204,137 +182,137 @@ public class VulnDbParser {
         return versions;
     }
 
-    private List<Vulnerability> parseVulnerabilities(JSONArray rso) {
+    private List<Vulnerability> parseVulnerabilities(ArrayNode rso) {
         List<Vulnerability> vulnerabilities = null;
         if (rso != null) {
-            vulnerabilities = new ArrayList();
+            vulnerabilities = new ArrayList<>();
 
-            for (int i = 0; i < rso.length(); ++i) {
-                JSONObject object = rso.getJSONObject(i);
-                JSONArray classifications = object.optJSONArray("classifications");
+            for (int i = 0; i < rso.size(); ++i) {
+                JsonNode object = rso.get(i);
+                ArrayNode classifications = Json.optArray(object, "classifications");
                 List<Classification> classificationList = new ArrayList<>();
                 if (classifications != null) {
-                    for (int j = 0; j < classifications.length(); ++j) {
-                        JSONObject jso = classifications.getJSONObject(j);
-                        Classification classification = new Classification(jso.getInt("id"), StringUtils.trimToNull(jso.optString("name", (String) null)), StringUtils.trimToNull(jso.optString("longname", (String) null)), StringUtils.trimToNull(jso.optString("description", (String) null)),
-                                StringUtils.trimToNull(jso.optString("mediumtext", (String) null)));
+                    for (int j = 0; j < classifications.size(); ++j) {
+                        JsonNode jso = classifications.get(j);
+                        Classification classification = new Classification(jso.get("id").asInt(), StringUtils.trimToNull(Json.optString(jso, "name")), StringUtils.trimToNull(Json.optString(jso, "longname")), StringUtils.trimToNull(Json.optString(jso, "description")),
+                                StringUtils.trimToNull(Json.optString(jso, "mediumtext")));
                         classificationList.add(classification);
                     }
                 }
 
-                JSONArray authors = object.optJSONArray("authors");
+                ArrayNode authors = Json.optArray(object, "authors");
                 List<Author> authorList = new ArrayList<>();
                 if (authors != null) {
-                    for (int j = 0; j < authors.length(); ++j) {
-                        JSONObject jso = authors.getJSONObject(j);
-                        Author author = new Author(jso.getInt("id"), StringUtils.trimToNull(jso.optString("name", (String) null)), StringUtils.trimToNull(jso.optString("company", (String) null)),
-                                StringUtils.trimToNull(jso.optString("email", (String) null)),
-                                StringUtils.trimToNull(jso.optString("company_url", (String) null)),
-                                StringUtils.trimToNull(jso.optString("country", (String) null)));
+                    for (int j = 0; j < authors.size(); ++j) {
+                        JsonNode jso = authors.get(j);
+                        Author author = new Author(jso.get("id").asInt(), StringUtils.trimToNull(Json.optString(jso, "name")), StringUtils.trimToNull(Json.optString(jso, "company")),
+                                StringUtils.trimToNull(Json.optString(jso, "email")),
+                                StringUtils.trimToNull(Json.optString(jso, "company_url")),
+                                StringUtils.trimToNull(Json.optString(jso, "country")));
                         authorList.add(author);
                     }
                 }
 
-                JSONArray extRefs = object.optJSONArray("ext_references");
+                ArrayNode extRefs = Json.optArray(object, "ext_references");
                 List<ExternalReference> externalReferenceList = new ArrayList<>();
                 if (extRefs != null) {
-                    for (int j = 0; j < extRefs.length(); ++j) {
-                        JSONObject jso = extRefs.getJSONObject(j);
-                        ExternalReference externalReference = new ExternalReference(StringUtils.trimToNull(jso.optString("type", (String) null)),
-                                StringUtils.trimToNull(jso.optString("value", (String) null)));
+                    for (int j = 0; j < extRefs.size(); ++j) {
+                        JsonNode jso = extRefs.get(j);
+                        ExternalReference externalReference = new ExternalReference(StringUtils.trimToNull(Json.optString(jso, "type")),
+                                StringUtils.trimToNull(Json.optString(jso, "value")));
                         externalReferenceList.add(externalReference);
                     }
                 }
 
-                JSONArray extTexts = object.optJSONArray("ext_texts");
+                ArrayNode extTexts = Json.optArray(object, "ext_texts");
                 List<ExternalText> externalTextList = new ArrayList<>();
                 if (extTexts != null) {
-                    for (int j = 0; j < extTexts.length(); ++j) {
-                        JSONObject jso = extTexts.getJSONObject(j);
-                        ExternalText externalText = new ExternalText(StringUtils.trimToNull(jso.optString("type", (String) null)),
-                                StringUtils.trimToNull(jso.optString("value", (String) null)));
+                    for (int j = 0; j < extTexts.size(); ++j) {
+                        JsonNode jso = extTexts.get(j);
+                        ExternalText externalText = new ExternalText(StringUtils.trimToNull(Json.optString(jso, "type")),
+                                StringUtils.trimToNull(Json.optString(jso, "value")));
                         externalTextList.add(externalText);
                     }
                 }
 
-                JSONArray cvssv2Metrics = object.optJSONArray("cvss_metrics");
+                ArrayNode cvssv2Metrics = Json.optArray(object, "cvss_metrics");
                 List<CvssV2Metric> cvssV2MetricList = new ArrayList<>();
                 if (cvssv2Metrics != null) {
-                    for (int j = 0; j < cvssv2Metrics.length(); ++j) {
-                        JSONObject jso = cvssv2Metrics.getJSONObject(j);
-                        CvssV2Metric metric = new CvssV2Metric(jso.getInt("id"),
-                                StringUtils.trimToNull(jso.optString("access_complexity", (String) null)),
-                                StringUtils.trimToNull(jso.optString("cve_id", (String) null)),
-                                StringUtils.trimToNull(jso.optString("source", (String) null)),
-                                StringUtils.trimToNull(jso.optString("availability_impact", (String) null)),
-                                StringUtils.trimToNull(jso.optString("confidentiality_impact", (String) null)),
-                                StringUtils.trimToNull(jso.optString("authentication", (String) null)),
-                                jso.optBigDecimal("calculated_cvss_base_score", (BigDecimal) null),
-                                StringUtils.trimToNull(jso.optString("generated_on", (String) null)),
-                                jso.optBigDecimal("score", (BigDecimal) null),
-                                StringUtils.trimToNull(jso.optString("access_vector", (String) null)),
-                                StringUtils.trimToNull(jso.optString("integrity_impact", (String) null)));
+                    for (int j = 0; j < cvssv2Metrics.size(); ++j) {
+                        JsonNode jso = cvssv2Metrics.get(j);
+                        CvssV2Metric metric = new CvssV2Metric(jso.get("id").asInt(),
+                                StringUtils.trimToNull(Json.optString(jso, "access_complexity")),
+                                StringUtils.trimToNull(Json.optString(jso, "cve_id")),
+                                StringUtils.trimToNull(Json.optString(jso, "source")),
+                                StringUtils.trimToNull(Json.optString(jso, "availability_impact")),
+                                StringUtils.trimToNull(Json.optString(jso, "confidentiality_impact")),
+                                StringUtils.trimToNull(Json.optString(jso, "authentication")),
+                                Json.optBigDecimal(jso, "calculated_cvss_base_score"),
+                                StringUtils.trimToNull(Json.optString(jso, "generated_on")),
+                                Json.optBigDecimal(jso, "score"),
+                                StringUtils.trimToNull(Json.optString(jso, "access_vector")),
+                                StringUtils.trimToNull(Json.optString(jso, "integrity_impact")));
                         cvssV2MetricList.add(metric);
                     }
                 }
 
-                JSONArray cvssv3Metrics = object.optJSONArray("cvss_version_three_metrics");
+                ArrayNode cvssv3Metrics = Json.optArray(object, "cvss_version_three_metrics");
                 List<CvssV3Metric> cvssV3MetricList = new ArrayList<>();
                 if (cvssv3Metrics != null) {
-                    for (int j = 0; j < cvssv3Metrics.length(); ++j) {
-                        JSONObject jso = cvssv3Metrics.getJSONObject(j);
-                        CvssV3Metric metric = new CvssV3Metric(jso.getInt("id"),
-                                StringUtils.trimToNull(jso.optString("attack_complexity", (String) null)),
-                                jso.optString("scope", (String) null),
-                                jso.optString("attack_vector", (String) null),
-                                StringUtils.trimToNull(jso.optString("availability_impact", (String) null)),
-                                jso.optBigDecimal("score", (BigDecimal) null),
-                                StringUtils.trimToNull(jso.optString("privileges_required", (String) null)),
-                                StringUtils.trimToNull(jso.optString("user_interaction", (String) null)),
-                                StringUtils.trimToNull(jso.optString("cve_id", (String) null)),
-                                StringUtils.trimToNull(jso.optString("source", (String) null)),
-                                StringUtils.trimToNull(jso.optString("confidentiality_impact", (String) null)),
-                                jso.optBigDecimal("calculated_cvss_base_score", (BigDecimal) null),
-                                StringUtils.trimToNull(jso.optString("generated_on", (String) null)),
-                                StringUtils.trimToNull(jso.optString("integrity_impact", (String) null))
+                    for (int j = 0; j < cvssv3Metrics.size(); ++j) {
+                        JsonNode jso = cvssv3Metrics.get(j);
+                        CvssV3Metric metric = new CvssV3Metric(jso.get("id").asInt(),
+                                StringUtils.trimToNull(Json.optString(jso, "attack_complexity")),
+                                Json.optString(jso, "scope"),
+                                Json.optString(jso, "attack_vector"),
+                                StringUtils.trimToNull(Json.optString(jso, "availability_impact")),
+                                Json.optBigDecimal(jso, "score"),
+                                StringUtils.trimToNull(Json.optString(jso, "privileges_required")),
+                                StringUtils.trimToNull(Json.optString(jso, "user_interaction")),
+                                StringUtils.trimToNull(Json.optString(jso, "cve_id")),
+                                StringUtils.trimToNull(Json.optString(jso, "source")),
+                                StringUtils.trimToNull(Json.optString(jso, "confidentiality_impact")),
+                                Json.optBigDecimal(jso, "calculated_cvss_base_score"),
+                                StringUtils.trimToNull(Json.optString(jso, "generated_on")),
+                                StringUtils.trimToNull(Json.optString(jso, "integrity_impact"))
                         );
                         cvssV3MetricList.add(metric);
                     }
                 }
 
-                JSONArray nvdInfo = object.optJSONArray("nvd_additional_information");
+                ArrayNode nvdInfo = Json.optArray(object, "nvd_additional_information");
                // List<NvdAdditionalInfo> nvdAdditionalInfos = new ArrayList<>();
                 NvdAdditionalInfo nvdAdditionalInfo = null;
                 if (nvdInfo != null) {
-//                    for (int j = 0; j < nvdInfo.length(); ++j) {
-//                        JSONObject jso = nvdInfo.getJSONObject(j);
-//                        NvdAdditionalInfo nvdAdditionalInfo = new NvdAdditionalInfo(StringUtils.trimToNull(jso.optString("summary", (String) null)),
-//                                StringUtils.trimToNull(jso.optString("cwe_id", (String) null)),
-//                                StringUtils.trimToNull(jso.optString("cve_id", (String) null)));
+//                    for (int j = 0; j < nvdInfo.size(); ++j) {
+//                        JsonNode jso = nvdInfo.get(j);
+//                        NvdAdditionalInfo nvdAdditionalInfo = new NvdAdditionalInfo(StringUtils.trimToNull(Jackson.optString(jso, "summary")),
+//                                StringUtils.trimToNull(Jackson.optString(jso, "cwe_id")),
+//                                StringUtils.trimToNull(Jackson.optString(jso, "cve_id")));
 //                        nvdAdditionalInfos.add(nvdAdditionalInfo);
 //                    }
-                     nvdAdditionalInfo = new NvdAdditionalInfo(StringUtils.trimToNull(nvdInfo.getJSONObject(nvdInfo.length()-1).optString("summary", (String) null)),
-                            StringUtils.trimToNull(nvdInfo.getJSONObject(nvdInfo.length()-1).optString("cwe_id", (String) null)),
-                            StringUtils.trimToNull(nvdInfo.getJSONObject(nvdInfo.length()-1).optString("cve_id", (String) null)));
+                     nvdAdditionalInfo = new NvdAdditionalInfo(StringUtils.trimToNull(Json.optString(nvdInfo.get(nvdInfo.size() - 1), "summary")),
+                            StringUtils.trimToNull(Json.optString(nvdInfo.get(nvdInfo.size() - 1), "cwe_id")),
+                            StringUtils.trimToNull(Json.optString(nvdInfo.get(nvdInfo.size() - 1), "cve_id")));
 
                 }
 
-                JSONArray vendors = object.optJSONArray("vendors");
-                Vulnerability vulnerability = new Vulnerability(object.getInt("vulndb_id"),
-                        StringUtils.trimToNull(object.optString("title", (String) null)),
-                        StringUtils.trimToNull(object.optString("disclosure_date", (String) null)),
-                        StringUtils.trimToNull(object.optString("discovery_date", (String) null)),
-                        StringUtils.trimToNull(object.optString("exploit_publish_date", (String) null)),
-                        StringUtils.trimToNull(object.optString("keywords", (String) null)),
-                        StringUtils.trimToNull(object.optString("short_description", (String) null)),
-                        StringUtils.trimToNull(object.optString("description", (String) null)),
-                        StringUtils.trimToNull(object.optString("solution", (String) null)),
-                        StringUtils.trimToNull(object.optString("manual_notes", (String) null)),
-                        StringUtils.trimToNull(object.optString("t_description", (String) null)),
-                        StringUtils.trimToNull(object.optString("solution_date", (String) null)),
-                        StringUtils.trimToNull(object.optString("vendor_informed_date", (String) null)),
-                        StringUtils.trimToNull(object.optString("vendor_ack_date", (String) null)),
-                        StringUtils.trimToNull(object.optString("third_party_solution_date", (String) null)),
+                ArrayNode vendors = Json.optArray(object, "vendors");
+                Vulnerability vulnerability = new Vulnerability(object.get("vulndb_id").asInt(),
+                        StringUtils.trimToNull(Json.optString(object, "title")),
+                        StringUtils.trimToNull(Json.optString(object, "disclosure_date")),
+                        StringUtils.trimToNull(Json.optString(object, "discovery_date")),
+                        StringUtils.trimToNull(Json.optString(object, "exploit_publish_date")),
+                        StringUtils.trimToNull(Json.optString(object, "keywords")),
+                        StringUtils.trimToNull(Json.optString(object, "short_description")),
+                        StringUtils.trimToNull(Json.optString(object, "description")),
+                        StringUtils.trimToNull(Json.optString(object, "solution")),
+                        StringUtils.trimToNull(Json.optString(object, "manual_notes")),
+                        StringUtils.trimToNull(Json.optString(object, "t_description")),
+                        StringUtils.trimToNull(Json.optString(object, "solution_date")),
+                        StringUtils.trimToNull(Json.optString(object, "vendor_informed_date")),
+                        StringUtils.trimToNull(Json.optString(object, "vendor_ack_date")),
+                        StringUtils.trimToNull(Json.optString(object, "third_party_solution_date")),
                         classificationList,
                         authorList,
                         externalReferenceList,
@@ -351,4 +329,3 @@ public class VulnDbParser {
         return vulnerabilities;
     }
 }
-

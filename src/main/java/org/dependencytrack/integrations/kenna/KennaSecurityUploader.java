@@ -21,6 +21,7 @@ package org.dependencytrack.integrations.kenna;
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -31,13 +32,12 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.HttpClientPool;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.PortfolioFindingUploader;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
-import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -90,7 +90,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                 kdi.process(project, externalId.getPropertyValue());
             }
         }
-        return new ByteArrayInputStream(kdi.generate().toString().getBytes());
+        return new ByteArrayInputStream(Json.toString(kdi.generate()).getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -110,10 +110,9 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                     .build();
             request.setEntity(data);
             try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK && response.getEntity() != null) {
-                    String responseString = EntityUtils.toString(response.getEntity());
-                    final JSONObject root = new JSONObject(responseString);
-                    if (root.getString("success").equals("true")) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    final JsonNode root = Json.readHttpResponse(response);
+                    if (Json.optBoolean(root, "success")) {
                         LOGGER.debug("Successfully uploaded KDI");
                         return;
                     }

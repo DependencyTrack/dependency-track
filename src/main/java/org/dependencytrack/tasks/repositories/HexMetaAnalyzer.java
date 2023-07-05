@@ -19,15 +19,15 @@
 package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.github.packageurl.PackageURL;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -82,16 +82,15 @@ public class HexMetaAnalyzer extends AbstractMetaAnalyzer {
             final String url = String.format(baseUrl + API_URL, packageName);
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    if (response.getEntity()!=null) {
-                        String responseString = EntityUtils.toString(response.getEntity());
-                        var jsonObject = new JSONObject(responseString);
-                        final JSONArray releasesArray = jsonObject.getJSONArray("releases");
-                        if (releasesArray.length() > 0) {
+                    JsonNode jsonObject = Json.readHttpResponse(response);
+                    if (jsonObject != null) {
+                        final ArrayNode releasesArray = Json.optArray(jsonObject, "releases");
+                        if (releasesArray != null && releasesArray.size() > 0) {
                             // The first one in the array is always the latest version
-                            final JSONObject release = releasesArray.getJSONObject(0);
-                            final String latest = release.optString("version", null);
+                            final JsonNode release = releasesArray.get(0);
+                            final String latest = Json.optString(release, "version", null);
                             meta.setLatestVersion(latest);
-                            final String insertedAt = release.optString("inserted_at", null);
+                            final String insertedAt = Json.optString(release, "inserted_at", null);
                             if (insertedAt != null) {
                                 final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
                                 try {

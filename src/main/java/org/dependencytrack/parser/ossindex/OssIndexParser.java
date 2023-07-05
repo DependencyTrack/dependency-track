@@ -19,11 +19,14 @@
 package org.dependencytrack.parser.ossindex;
 
 import alpine.common.logging.Logger;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,42 +43,43 @@ public class OssIndexParser {
     /**
      * Parses the JSON response from Sonatype OSS Index
      *
-     * @param responseString the response as a String to parse
+     * @param response the response to parse
      * @return an ComponentReport object
+     * @throws IOException when reading the response fails
      */
-    public List<ComponentReport> parse(final String responseString) {
+    public List<ComponentReport> parse(final CloseableHttpResponse response) throws IOException {
         LOGGER.debug("Parsing JSON response");
-        JSONArray arr = new JSONArray(responseString);
+        ArrayNode arr = Json.readHttpResponse(response, ArrayNode.class);
         final List<ComponentReport> componentReports = new ArrayList<>();
-        for (int i = 0; i < arr.length(); i++) {
-            final JSONObject object = arr.getJSONObject(i);
+        for (int i = 0; i < arr.size(); i++) {
+            final JsonNode object = arr.get(i);
             final ComponentReport componentReport = parse(object);
             componentReports.add(componentReport);
         }
         return componentReports;
     }
 
-    private ComponentReport parse(final JSONObject object) {
+    private ComponentReport parse(final JsonNode object) {
         final ComponentReport componentReport = new ComponentReport();
-        componentReport.setCoordinates(object.optString("coordinates", null));
-        componentReport.setDescription(object.optString("description", null));
-        componentReport.setReference(object.optString("references", null));
-        final JSONArray vulnerabilities = object.optJSONArray("vulnerabilities");
-        for (int i = 0; i < vulnerabilities.length(); i++) {
-            final JSONObject vulnObject = vulnerabilities.getJSONObject(i);
+        componentReport.setCoordinates(Json.optString(object, "coordinates", null));
+        componentReport.setDescription(Json.optString(object, "description", null));
+        componentReport.setReference(Json.optString(object, "references", null));
+        final ArrayNode vulnerabilities = Json.optArray(object,"vulnerabilities", Json.newArray());
+        for (int i = 0; i < vulnerabilities.size(); i++) {
+            final JsonNode vulnObject = vulnerabilities.get(i);
             final ComponentReportVulnerability vulnerability = new ComponentReportVulnerability();
-            vulnerability.setId(vulnObject.optString("id", null));
-            vulnerability.setTitle(vulnObject.optString("title", null));
-            vulnerability.setDescription(vulnObject.optString("description", null));
-            vulnerability.setCvssScore(vulnObject.optNumber("cvssScore", null));
-            vulnerability.setCvssVector(vulnObject.optString("cvssVector", null));
-            vulnerability.setCwe(vulnObject.optString("cwe", null));
-            vulnerability.setCve(vulnObject.optString("cve", null));
-            vulnerability.setReference(vulnObject.optString("reference", null));
-            final JSONArray externalRefsJSONArray = vulnObject.optJSONArray("externalReferences");
-            final List<String> externalReferences = new ArrayList<String>();
-            for (int j = 0; j < externalRefsJSONArray.length(); j++) {
-                externalReferences.add(externalRefsJSONArray.getString(j));
+            vulnerability.setId(Json.optString(vulnObject, "id", null));
+            vulnerability.setTitle(Json.optString(vulnObject, "title", null));
+            vulnerability.setDescription(Json.optString(vulnObject, "description", null));
+            vulnerability.setCvssScore(Json.optDouble(vulnObject, "cvssScore"));
+            vulnerability.setCvssVector(Json.optString(vulnObject, "cvssVector", null));
+            vulnerability.setCwe(Json.optString(vulnObject, "cwe", null));
+            vulnerability.setCve(Json.optString(vulnObject, "cve", null));
+            vulnerability.setReference(Json.optString(vulnObject, "reference", null));
+            final ArrayNode externalRefsJSONArray = Json.optArray(vulnObject,"externalReferences", Json.newArray());
+            final List<String> externalReferences = new ArrayList<>();
+            for (int j = 0; j < externalRefsJSONArray.size(); j++) {
+                externalReferences.add(externalRefsJSONArray.get(j).asText());
             }
             vulnerability.setExternalReferences(externalReferences);
             componentReport.addVulnerability(vulnerability);

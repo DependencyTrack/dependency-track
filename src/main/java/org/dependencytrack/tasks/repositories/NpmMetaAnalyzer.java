@@ -19,14 +19,14 @@
 package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.packageurl.PackageURL;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
+import org.dependencytrack.common.Json;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -77,10 +77,9 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
             final String url = String.format(baseUrl + API_URL, packageName);
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    if (response.getEntity()!=null) {
-                        String responseString = EntityUtils.toString(response.getEntity());
-                        var jsonObject = new JSONObject(responseString);
-                        final String latest = jsonObject.optString("latest");
+                    JsonNode jsonObject = Json.readHttpResponse(response);
+                    if (jsonObject != null) {
+                        final String latest = Json.optString(jsonObject, "latest", null);
                         if (latest != null) {
                             meta.setLatestVersion(latest);
                         }

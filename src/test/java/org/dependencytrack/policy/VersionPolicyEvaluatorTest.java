@@ -15,6 +15,7 @@ public class VersionPolicyEvaluatorTest extends PersistenceCapableTest {
     @Before
     public void setUp() {
         evaluator = new VersionPolicyEvaluator();
+        evaluator.setQueryManager(qm);
     }
 
     @Test

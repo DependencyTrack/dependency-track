@@ -23,11 +23,20 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
 public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
+
+    private PolicyEvaluator evaluator;
+
+    @Before
+    public void initEvaluator() {
+        evaluator = new CoordinatesPolicyEvaluator();
+        evaluator.setQueryManager(qm);
+    }
 
     @Test
     public void hasFullMatch() {
@@ -38,7 +47,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setGroup("Acme");
         component.setName("Test Component");
         component.setVersion("1.0.0");
-        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
@@ -54,7 +62,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setName("Test Component");
         component.setVersion("1.0.0");
-        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
@@ -71,7 +78,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setGroup("Anything here");
         component.setName("Test Component");
         component.setVersion("1.0.0");
-        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
@@ -88,7 +94,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setGroup("Acme");
         component.setName("Test Component");
         component.setVersion("2.0.0");
-        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -102,7 +107,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setGroup("Acme");
         component.setName("Test");
         component.setVersion("1.0.0");
-        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -116,7 +120,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setGroup("Example");
         component.setName("Test Component");
         component.setVersion("1.0.0");
-        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -129,7 +132,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setName("Test Component");
         component.setVersion("1.0.0");
-        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -141,7 +143,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
         Component component = new Component();
         component.setName("Example Component");
-        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -153,7 +154,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, def);
         Component component = new Component();
         component.setName("Test Component");
-        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -165,7 +165,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.IS, def);
         Component component = new Component();
         component.setName("Test Component");
-        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -177,7 +176,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
     }
@@ -190,7 +188,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
 
         final var component = new Component();
         component.setVersion("1.0.0");
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
     }
@@ -202,7 +199,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -224,7 +220,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -246,7 +241,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -268,7 +262,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -290,7 +283,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -312,7 +304,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -334,7 +325,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -356,7 +346,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -378,7 +367,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -400,7 +388,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -422,7 +409,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");
@@ -444,7 +430,6 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
 
         final var component = new Component();
-        final var evaluator = new CoordinatesPolicyEvaluator();
 
         // Component version is lower
         component.setVersion("1.1.0");

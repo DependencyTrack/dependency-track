@@ -23,13 +23,20 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
 public class ComponentHashPolicyEvaluatorTest extends PersistenceCapableTest {
 
-    PolicyEvaluator evaluator = new ComponentHashPolicyEvaluator();
+    PolicyEvaluator evaluator;
+
+    @Before
+    public void initEvaluator() {
+        evaluator = new ComponentHashPolicyEvaluator();
+        evaluator.setQueryManager(qm);
+    }
 
     @Test
     public void hasMatch() {

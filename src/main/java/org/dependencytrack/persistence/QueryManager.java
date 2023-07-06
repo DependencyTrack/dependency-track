@@ -76,6 +76,7 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -126,6 +127,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Constructs a new QueryManager.
+     *
      * @param pm a PersistenceManager object
      */
     public QueryManager(final PersistenceManager pm) {
@@ -134,6 +136,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Constructs a new QueryManager.
+     *
      * @param request an AlpineRequest object
      */
     public QueryManager(final AlpineRequest request) {
@@ -143,6 +146,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Constructs a new QueryManager.
+     *
      * @param request an AlpineRequest object
      */
     public QueryManager(final PersistenceManager pm, final AlpineRequest request) {
@@ -152,6 +156,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of ProjectQueryManager.
+     *
      * @return a ProjectQueryManager object
      */
     private ProjectQueryManager getProjectQueryManager() {
@@ -163,6 +168,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of TagQueryManager.
+     *
      * @return a TagQueryManager object
      */
     private TagQueryManager getTagQueryManager() {
@@ -174,6 +180,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of ComponentQueryManager.
+     *
      * @return a ComponentQueryManager object
      */
     private ComponentQueryManager getComponentQueryManager() {
@@ -185,6 +192,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of LicenseQueryManager.
+     *
      * @return a LicenseQueryManager object
      */
     private LicenseQueryManager getLicenseQueryManager() {
@@ -196,6 +204,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of BomQueryManager.
+     *
      * @return a BomQueryManager object
      */
     private BomQueryManager getBomQueryManager() {
@@ -207,6 +216,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of VexQueryManager.
+     *
      * @return a VexQueryManager object
      */
     private VexQueryManager getVexQueryManager() {
@@ -218,6 +228,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of PolicyQueryManager.
+     *
      * @return a PolicyQueryManager object
      */
     private PolicyQueryManager getPolicyQueryManager() {
@@ -229,6 +240,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of VulnerabilityQueryManager.
+     *
      * @return a VulnerabilityQueryManager object
      */
     private VulnerabilityQueryManager getVulnerabilityQueryManager() {
@@ -240,6 +252,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of VulnerableSoftwareQueryManager.
+     *
      * @return a VulnerableSoftwareQueryManager object
      */
     private VulnerableSoftwareQueryManager getVulnerableSoftwareQueryManager() {
@@ -251,6 +264,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of ServiceComponentQueryManager.
+     *
      * @return a ServiceComponentQueryManager object
      */
     private ServiceComponentQueryManager getServiceComponentQueryManager() {
@@ -262,6 +276,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of FindingsQueryManager.
+     *
      * @return a FindingsQueryManager object
      */
     private FindingsQueryManager getFindingsQueryManager() {
@@ -273,6 +288,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of MetricsQueryManager.
+     *
      * @return a MetricsQueryManager object
      */
     private MetricsQueryManager getMetricsQueryManager() {
@@ -284,6 +300,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of RepositoryQueryManager.
+     *
      * @return a RepositoryQueryManager object
      */
     private RepositoryQueryManager getRepositoryQueryManager() {
@@ -295,6 +312,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of NotificationQueryManager.
+     *
      * @return a NotificationQueryManager object
      */
     private NotificationQueryManager getNotificationQueryManager() {
@@ -306,6 +324,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Lazy instantiation of CacheQueryManager.
+     *
      * @return a CacheQueryManager object
      */
     private CacheQueryManager getCacheQueryManager() {
@@ -370,11 +389,11 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects(team, excludeInactive, bypass, onlyRoot);
     }
 
-    public PaginatedResult getProjectsWithoutDescendantsOf(final boolean excludeInactive, final Project project){
+    public PaginatedResult getProjectsWithoutDescendantsOf(final boolean excludeInactive, final Project project) {
         return getProjectQueryManager().getProjectsWithoutDescendantsOf(excludeInactive, project);
     }
 
-    public PaginatedResult getProjectsWithoutDescendantsOf(final String name, final boolean excludeInactive, final Project project){
+    public PaginatedResult getProjectsWithoutDescendantsOf(final String name, final boolean excludeInactive, final Project project) {
         return getProjectQueryManager().getProjectsWithoutDescendantsOf(name, excludeInactive, project);
     }
 
@@ -390,15 +409,15 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects(classifier, includeMetrics, excludeInactive, onlyRoot);
     }
 
-    public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+    public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
         return getProjectQueryManager().getChildrenProjects(uuid, includeMetrics, excludeInactive);
     }
 
-    public PaginatedResult getChildrenProjects(final Tag tag, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+    public PaginatedResult getChildrenProjects(final Tag tag, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
         return getProjectQueryManager().getChildrenProjects(tag, uuid, includeMetrics, excludeInactive);
     }
 
-    public PaginatedResult getChildrenProjects(final Classifier classifier, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+    public PaginatedResult getChildrenProjects(final Classifier classifier, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
         return getProjectQueryManager().getChildrenProjects(classifier, uuid, includeMetrics, excludeInactive);
     }
 
@@ -642,7 +661,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public ViolationAnalysis makeViolationAnalysis(Component component, PolicyViolation policyViolation,
-                                 ViolationAnalysisState violationAnalysisState, Boolean isSuppressed) {
+                                                   ViolationAnalysisState violationAnalysisState, Boolean isSuppressed) {
         return getPolicyQueryManager().makeViolationAnalysis(component, policyViolation, violationAnalysisState, isSuppressed);
     }
 
@@ -767,14 +786,14 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public void updateAffectedVersionAttributions(final Vulnerability vulnerability,
-                                                                              final List<VulnerableSoftware> vsList,
-                                                                              final Vulnerability.Source source) {
+                                                  final List<VulnerableSoftware> vsList,
+                                                  final Vulnerability.Source source) {
         getVulnerabilityQueryManager().updateAffectedVersionAttributions(vulnerability, vsList, source);
     }
 
     public void updateAffectedVersionAttribution(final Vulnerability vulnerability,
-                                                                       final VulnerableSoftware vulnerableSoftware,
-                                                                       final Vulnerability.Source source) {
+                                                 final VulnerableSoftware vulnerableSoftware,
+                                                 final Vulnerability.Source source) {
         getVulnerabilityQueryManager().updateAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
@@ -827,8 +846,8 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public VulnerableSoftware getVulnerableSoftwareByPurl(String purlType, String purlNamespace, String purlName,
-                                                           String versionEndExcluding, String versionEndIncluding,
-                                                           String versionStartExcluding, String versionStartIncluding) {
+                                                          String versionEndExcluding, String versionEndIncluding,
+                                                          String versionStartExcluding, String versionStartIncluding) {
         return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
     }
 
@@ -1118,12 +1137,12 @@ public class QueryManager extends AlpineQueryManager {
         return getRepositoryQueryManager().repositoryExist(type, identifier);
     }
 
-    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal) {
-        return getRepositoryQueryManager().createRepository(type, identifier, url, enabled, internal);
+    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal, boolean isAuthenticationRequired, String username, String password) {
+        return getRepositoryQueryManager().createRepository(type, identifier, url, enabled, internal, isAuthenticationRequired, username, password);
     }
 
-    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, String username, String password, boolean enabled) {
-        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, username, password, enabled);
+    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean authenticationRequired, String username, String password, boolean enabled) {
+        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, authenticationRequired, username, password, enabled);
     }
 
     public RepositoryMetaComponent getRepositoryMetaComponent(RepositoryType repositoryType, String namespace, String name) {
@@ -1182,6 +1201,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Determines if a config property is enabled or not.
+     *
      * @param configPropertyConstants the property to query
      * @return true if enabled, false if not
      */
@@ -1204,7 +1224,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public synchronized void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {
-        getCacheQueryManager().updateComponentAnalysisCache(cacheType, targetHost, targetType, target, lastOccurrence,  result);
+        getCacheQueryManager().updateComponentAnalysisCache(cacheType, targetHost, targetType, target, lastOccurrence, result);
     }
 
     public void clearComponentAnalysisCache() {
@@ -1221,8 +1241,9 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Commits the Lucene index.
+     *
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @param clazz the indexable class to commit the index of
+     * @param clazz       the indexable class to commit the index of
      */
     public void commitSearchIndex(boolean commitIndex, Class clazz) {
         if (commitIndex) {
@@ -1232,6 +1253,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Commits the Lucene index.
+     *
      * @param clazz the indexable class to commit the index of
      */
     public void commitSearchIndex(Class clazz) {
@@ -1259,11 +1281,11 @@ public class QueryManager extends AlpineQueryManager {
      * <p>
      * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
      *
-     * @param clazz Class of the object to fetch
-     * @param uuid {@link UUID} of the object to fetch
+     * @param clazz       Class of the object to fetch
+     * @param uuid        {@link UUID} of the object to fetch
      * @param fetchGroups Fetch groups to use for this operation
+     * @param <T>         Type of the object
      * @return The object if found, otherwise {@code null}
-     * @param <T> Type of the object
      * @throws Exception When closing the query failed
      * @since 4.6.0
      */
@@ -1372,8 +1394,8 @@ public class QueryManager extends AlpineQueryManager {
         pm.currentTransaction().begin();
         pm.deletePersistentAll(team.getApiKeys());
         String aclDeleteQuery = """
-            DELETE FROM \"PROJECT_ACCESS_TEAMS\" WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?
-        """;
+                    DELETE FROM \"PROJECT_ACCESS_TEAMS\" WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?
+                """;
         final Query query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, aclDeleteQuery);
         query.executeWithArray(team.getId());
         pm.deletePersistent(team);

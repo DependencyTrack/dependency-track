@@ -170,7 +170,7 @@ public final class NvdParser {
                             if (cwe != null) {
                                 vulnerability.addCwe(cwe);
                             } else {
-                                LOGGER.warn("CWE " + cweString + " now found in Dependency-Track database. This could signify an issue with the NVD or with Dependency-Track not having advanced knowledge of this specific CWE identifier.");
+                                LOGGER.warn("CWE " + cweString + " not found in Dependency-Track database. This could signify an issue with the NVD or with Dependency-Track not having advanced knowledge of this specific CWE identifier.");
                             }
                         }
                     }

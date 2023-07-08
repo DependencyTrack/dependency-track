@@ -257,8 +257,14 @@ cd dev
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml -f docker-compose.monitoring.yml up -d
 ```
 
-Prometheus should automatically discover the API server's metrics. To visualize them, follow the instructions
-for setting up the sample Grafana dashboard in the [docs](https://docs.dependencytrack.org/getting-started/monitoring/#grafana-dashboard).
+Prometheus will automatically discover the API server's metrics. Grafana is configured to provision Prometheus
+as datasource, and import the [sample dashboard](https://docs.dependencytrack.org/getting-started/monitoring/#grafana-dashboard)
+on startup.
+
+To view the dashboard, visit http://localhost:3000 in your browser. The initial Grafana credentials are:
+
+* Username: `admin`
+* Password: `admin`
 
 ## DataNucleus Bytecode Enhancement
 

@@ -25,6 +25,7 @@ import alpine.notification.NotificationService;
 import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import net.jcip.annotations.NotThreadSafe;
+import org.apache.commons.io.IOUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
@@ -56,6 +57,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
 @NotThreadSafe
@@ -207,6 +209,16 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isNull();
         assertThat(project.getLastBomImport()).isNull();
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/2859
+    public void informIssue2859Test() throws Exception {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        final byte[] bomBytes = IOUtils.resourceToByteArray("/unit/bom-issue2859.xml");
+
+        assertThatNoException()
+                .isThrownBy(() -> new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes)));
     }
 
 }

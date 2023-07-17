@@ -709,6 +709,10 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().synchronizeVulnerability(vulnerability, commitIndex);
     }
 
+    public List<Vulnerability> synchronizeVulnerabilities(List<Vulnerability> vulnerabilities, boolean commitIndex) {
+        return getVulnerabilityQueryManager().synchronizeVulnerabilities(vulnerabilities, commitIndex);
+    }
+
     public Vulnerability getVulnerabilityByVulnId(String source, String vulnId) {
         return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false);
     }
@@ -1348,14 +1352,17 @@ public class QueryManager extends AlpineQueryManager {
      */
     public void runInTransaction(final Runnable runnable) {
         final Transaction trx = pm.currentTransaction();
+	boolean inTransaction = trx.isActive();
         try {
-            trx.begin();
+            if (!inTransaction) trx.begin();
             runnable.run();
-            trx.commit();
+            if (!inTransaction) trx.commit();
         } finally {
-            if (trx.isActive()) {
-                trx.rollback();
-            }
+            if (!inTransaction) {
+		if (trx.isActive()) {
+		    trx.rollback();
+		}
+	    }
         }
     }
 

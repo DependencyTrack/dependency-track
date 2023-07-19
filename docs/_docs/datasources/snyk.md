@@ -12,6 +12,8 @@ It is a developer security platform. Integrating directly into development tools
 Dependency-Track integrates with Snyk using its [REST API](https://apidocs.snyk.io/). Dependency-Track does not mirror Snyk entirely,
 but it does consume vulnerabilities on a 'as-identified' basis.
 
+> Access to the Snyk REST API requires an enterprise [plan](https://snyk.io/plans/) subscription. API keys may be tested against Snyk's REST API using their [interactive API documentation](https://apidocs.snyk.io/?version=2023-06-22#auth).
+
 The Snyk integration is disabled by default.
 
 ### Configuration

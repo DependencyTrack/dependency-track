@@ -17,4 +17,5 @@ target/
 
 # IntelliJ
 .idea/*
+!.idea/icon.svg
 !.idea/runConfigurations/

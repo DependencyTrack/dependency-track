@@ -55,7 +55,7 @@ public enum ConfigPropertyConstants {
     SCANNER_SNYK_ALIAS_SYNC_ENABLED("scanner", "snyk.alias.sync.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable alias synchronization for Snyk"),
     SCANNER_SNYK_API_TOKEN("scanner", "snyk.api.token", null, PropertyType.ENCRYPTEDSTRING, "The API token used for Snyk API authentication"),
     SCANNER_SNYK_ORG_ID("scanner", "snyk.org.id", null, PropertyType.STRING, "The Organization ID used for Snyk API access"),
-    SCANNER_SNYK_API_VERSION("scanner", "snyk.api.version", "2022-11-14", PropertyType.STRING, "Snyk API version"),
+    SCANNER_SNYK_API_VERSION("scanner", "snyk.api.version", "2023-06-22", PropertyType.STRING, "Snyk API version"),
     SCANNER_SNYK_CVSS_SOURCE("scanner", "snyk.cvss.source", "NVD", PropertyType.STRING, "Type of source to be prioritized for cvss calculation"),
     SCANNER_SNYK_BASE_URL("scanner", "snyk.base.url", "https://api.snyk.io", PropertyType.URL, "Base Url pointing to the hostname and path for Snyk analysis"),
     VULNERABILITY_SOURCE_NVD_ENABLED("vuln-source", "nvd.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable National Vulnerability Database"),

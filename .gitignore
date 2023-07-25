@@ -10,8 +10,11 @@ docs/Gemfile.lock
 target/
 .classpath
 .project
-.idea/
 .vscode/
 
 # windows
 ~
+
+# IntelliJ
+.idea/*
+!.idea/runConfigurations/

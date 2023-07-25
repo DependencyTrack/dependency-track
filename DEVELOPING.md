@@ -24,7 +24,7 @@ There are a few things you'll need on your journey:
 * Docker (optional)
 
 > We provide common [run configurations](https://www.jetbrains.com/help/idea/run-debug-configuration.html) for IntelliJ 
-> in the [`.run`](./.run) directory for convenience. IntelliJ will automatically pick those up when you open this repository.
+> in the [`.idea/runConfigurations`](./.idea/runConfigurations) directory for convenience. IntelliJ will automatically pick those up when you open this repository.
 
 ## Core Technologies
 
@@ -84,7 +84,7 @@ mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 > Note that the `bundle-ui` profile has no effect using this method. 
 > It works only for the API server, not the bundled distribution.
 
-The above command is also suitable for debugging. For IntelliJ, simply *Debug* the [Jetty](./.run/Jetty.run.xml) run configuration.
+The above command is also suitable for debugging. For IntelliJ, simply *Debug* the [Jetty](./.idea/runConfigurations/Jetty.run.xml) run configuration.
 
 ### Inspecting the database
 

@@ -37,10 +37,10 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * User-defined key/value model for individual projects.
+ * User-defined key/value model for individual components.
  *
  * @author Steve Springett
- * @since 3.0.0
+ * @since 4.9.0
  */
 @PersistenceCapable(table = "COMPONENT_PROPERTY")
 @Unique(name="COMPONENT_PROPERTY_KEYS_IDX", members={"component", "groupName", "propertyName"})

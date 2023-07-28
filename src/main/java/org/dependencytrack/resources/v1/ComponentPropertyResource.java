@@ -48,10 +48,10 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 
 /**
- * JAX-RS resources for processing ProjectProperties
+ * JAX-RS resources for processing component
  *
  * @author Steve Springett
- * @since 3.4.0
+ * @since 4.9.0
  */
 @Path("/v1/component/{uuid}/property")
 @Api(value = "componentProperty", authorizations = @Authorization(value = "X-Api-Key"))
@@ -104,7 +104,7 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Creates a new project property",
+            value = "Creates a new component property",
             response = ComponentProperty.class,
             code = 201
     )
@@ -149,7 +149,7 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
                         return Response.status(Response.Status.CONFLICT).entity("A property with the specified component/group/name combination already exists.").build();
                     }
                 } else {
-                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();
                 }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();

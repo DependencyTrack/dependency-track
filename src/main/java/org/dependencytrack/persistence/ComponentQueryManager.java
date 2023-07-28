@@ -45,8 +45,6 @@ import javax.jdo.FetchPlan;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.json.Json;
-import javax.json.JsonValue;
 import org.datanucleus.exceptions.NucleusObjectNotFoundException;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
@@ -245,7 +243,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 final PackageURL purl = component.getPurl();
                 if (purl != null) {
                     final RepositoryType type = RepositoryType.resolve(purl);
-                    if (type != RepositoryType.UNSUPPORTED) {
+                    if ( RepositoryType.UNSUPPORTED != type) {
                         final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
                         component.setRepositoryMeta(repoMetaComponent);
                     }
@@ -356,7 +354,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 final PackageURL purl = component.getPurl();
                 if (purl != null) {
                     final RepositoryType type = RepositoryType.resolve(purl);
-                    if (type != RepositoryType.UNSUPPORTED) {
+                    if (RepositoryType.UNSUPPORTED != type) {
                         final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
                         component.setRepositoryMeta(repoMetaComponent);
                     }
@@ -677,7 +675,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             transientComponent.setExpandDependencyGraph(entry.getValue().isExpandDependencyGraph());
             if (transientComponent.getPurl() != null) {
                 final RepositoryType type = RepositoryType.resolve(transientComponent.getPurl());
-                if (type != RepositoryType.UNSUPPORTED) {
+                if (RepositoryType.UNSUPPORTED != type) {
                     final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, transientComponent.getPurl().getNamespace(), transientComponent.getPurl().getName());
                     if (repoMetaComponent != null) {
                         RepositoryMetaComponent transientRepoMetaComponent = new RepositoryMetaComponent();

@@ -4,6 +4,7 @@ import alpine.common.logging.Logger;
 import alpine.model.ApiKey;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
+import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import alpine.server.util.DbUtil;
 import com.github.packageurl.PackageURL;
@@ -33,6 +34,30 @@ import java.util.UUID;
 public class FindingsSearchQueryManager extends QueryManager implements IQueryManager {
 
     private static final Logger LOGGER = Logger.getLogger(FindingsSearchQueryManager.class);
+
+    private static final Map<String, String> sortingAttributes = Map.ofEntries(
+        Map.entry("vulnerability.vulnId", "\"VULNERABILITY\".\"VULNID\""),
+        Map.entry("vulnerability.title", "\"VULNERABILITY\".\"TITLE\""),
+        Map.entry("vulnerability.severity", """
+            CASE WHEN \"VULNERABILITY\".\"SEVERITY\" = 'UNASSIGNED' THEN 0 WHEN \"VULNERABILITY\".\"SEVERITY\" = 'LOW' THEN 3
+            WHEN \"VULNERABILITY\".\"SEVERITY\" = 'MEDIUM' THEN 6 WHEN \"VULNERABILITY\".\"SEVERITY\" = 'HIGH' THEN 8
+            WHEN \"VULNERABILITY\".\"SEVERITY\" = 'CRITICAL' THEN 10 ELSE 
+            CASE WHEN \"VULNERABILITY\".\"CVSSV3BASESCORE\" IS NOT NULL THEN \"VULNERABILITY\".\"CVSSV3BASESCORE\" 
+            ELSE \"VULNERABILITY\".\"CVSSV2BASESCORE\" END END
+            """),
+        Map.entry("attribution.analyzerIdentity", "\"FINDINGATTRIBUTION\".\"ANALYZERIDENTITY\""),
+        Map.entry("vulnerability.published", "\"VULNERABILITY\".\"PUBLISHED\""),
+        Map.entry("vulnerability.cvssV3BaseScore", "\"VULNERABILITY\".\"CVSSV3BASESCORE\""),
+        Map.entry("component.projectName", "concat(\"PROJECT\".\"NAME\", ' ', \"PROJECT\".\"VERSION\")"),
+        Map.entry("component.name", "\"COMPONENT\".\"NAME\""),
+        Map.entry("component.version", "\"COMPONENT\".\"VERSION\""),
+        Map.entry("analysis.state", "\"ANALYSIS\".\"STATE\""),
+        Map.entry("analysis.isSuppressed", "\"ANALYSIS\".\"SUPPRESSED\""),
+        Map.entry("attribution.attributedOn", "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\""),
+        Map.entry("vulnerability.affectedProjectCount", "COUNT(DISTINCT \"PROJECT\".\"ID\")"),
+        Map.entry("attribution.firstOccurrence", "MIN(\"AFFECTEDVERSIONATTRIBUTION\".\"FIRST_SEEN\")"),
+        Map.entry("attribution.lastOccurrence", "MAX(\"AFFECTEDVERSIONATTRIBUTION\".\"LAST_SEEN\")")
+    );
 
     /**
      * Constructs a new QueryManager.
@@ -75,7 +100,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
      * @param showInactive determines if inactive projects should be included or not
      * @return a List of Finding objects
      */
-    public List<Finding> getAllFindings(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
+    public PaginatedResult getAllFindings(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
         StringBuilder queryFilter = new StringBuilder();
         Map<String, Object> params = new HashMap<>();
         if (showInactive) {
@@ -92,9 +117,12 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             params.put("showSuppressed", false);
         }
         processFilters(filters, queryFilter, params, false);
-        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, Finding.QUERY_ALL_FINDINGS + queryFilter);
+        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, Finding.QUERY_ALL_FINDINGS + queryFilter + " ORDER BY " + sortingAttributes.get(this.orderBy) + " " + (this.orderDirection.name().toLowerCase().equals("descending") ? " DESC" : "ASC"));
+        PaginatedResult result = new PaginatedResult();
         query.setNamedParameters(params);
-        final List<Object[]> list = query.executeList();
+        final List<Object[]> totalList = query.executeList();
+        result.setTotal(totalList.size());
+        final List<Object[]> list = totalList.subList(this.pagination.getOffset(), (this.pagination.getOffset() + this.pagination.getLimit() >= totalList.size()) ? totalList.size() : this.pagination.getOffset() + this.pagination.getLimit());
         final List<Finding> findings = new ArrayList<>();
         for (final Object[] o: list) {
             final Finding finding = new Finding(UUID.fromString((String) o[29]), o);
@@ -120,7 +148,8 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             }
             findings.add(finding);
         }
-        return findings;
+        result.setObjects(findings);
+        return result;
     }
 
     /**
@@ -129,7 +158,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
      * @param showInactive determines if inactive projects should be included or not
      * @return a List of Finding objects
      */
-    public List<GroupedFinding> getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showInactive) {
+    public PaginatedResult getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showInactive) {
         StringBuilder queryFilter = new StringBuilder();
         Map<String, Object> params = new HashMap<>();
         if (showInactive) {
@@ -137,15 +166,19 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             params.put("active", true);
         }
         processFilters(filters, queryFilter, params, true);
-        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, GroupedFinding.QUERY + queryFilter);
+        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, GroupedFinding.QUERY + queryFilter + " ORDER BY " + sortingAttributes.get(this.orderBy) + " " + (this.orderDirection.name().toLowerCase().equals("descending") ? " DESC" : "ASC"));
+        PaginatedResult result = new PaginatedResult();
         query.setNamedParameters(params);
-        final List<Object[]> list = query.executeList();
+        final List<Object[]> totalList = query.executeList();
+        result.setTotal(totalList.size());
+        final List<Object[]> list = totalList.subList(this.pagination.getOffset(), (this.pagination.getOffset() + this.pagination.getLimit() >= totalList.size()) ? totalList.size() : this.pagination.getOffset() + this.pagination.getLimit());
         final List<GroupedFinding> findings = new ArrayList<>();
         for (Object[] o : list) {
             final GroupedFinding finding = new GroupedFinding(o);
             findings.add(finding);
         }
-        return findings;
+        result.setObjects(findings);
+        return result;
     }
 
     private void processFilters(Map<String, String> filters, StringBuilder queryFilter, Map<String, Object> params, boolean isGroupedByVulnerabilities) {

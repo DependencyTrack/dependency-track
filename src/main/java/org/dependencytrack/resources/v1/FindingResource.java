@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -231,8 +232,8 @@ public class FindingResource extends AlpineResource {
             filters.put("textSearchInput", textSearchInput);
             filters.put("cvssFrom", cvssFrom);
             filters.put("cvssTo", cvssTo);
-            final List<Finding> findings = qm.getAllFindings(filters, showSuppressed, showInactive);
-            return Response.ok(findings).header(TOTAL_COUNT_HEADER, findings.size()).build();
+            final PaginatedResult result = qm.getAllFindings(filters, showSuppressed, showInactive);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
 
@@ -286,8 +287,8 @@ public class FindingResource extends AlpineResource {
             filters.put("occurrencesTo", occurrencesTo);
             filters.put("aggregatedAttributedOnDateFrom", aggregatedAttributedOnDateFrom);
             filters.put("aggregatedAttributedOnDateTo", aggregatedAttributedOnDateTo);
-            final List<GroupedFinding> findings = qm.getAllFindingsGroupedByVulnerability(filters, showInactive);
-            return Response.ok(findings).header(TOTAL_COUNT_HEADER, findings.size()).build();
+            final PaginatedResult result = qm.getAllFindingsGroupedByVulnerability(filters, showInactive);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
 

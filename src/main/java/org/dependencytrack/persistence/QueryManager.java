@@ -1046,11 +1046,11 @@ public class QueryManager extends AlpineQueryManager {
         return getFindingsQueryManager().getFindings(project, includeSuppressed);
     }
 
-    public List<Finding> getAllFindings(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
+    public PaginatedResult getAllFindings(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
         return getFindingsSearchQueryManager().getAllFindings(filters, showSuppressed, showInactive);
     }
 
-    public List<GroupedFinding> getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showInactive) {
+    public PaginatedResult getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showInactive) {
         return getFindingsSearchQueryManager().getAllFindingsGroupedByVulnerability(filters, showInactive);
     }
 

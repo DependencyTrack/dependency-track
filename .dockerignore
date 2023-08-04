@@ -3,6 +3,7 @@
 docs/
 scripts/
 src/
+!src/main/docker/logback*.xml
 target/
 !target/*.jar
 /*.md

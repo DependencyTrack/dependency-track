@@ -53,7 +53,7 @@ RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
 COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
 
 # Copy the compiled WAR to the application directory created above
-COPY ./target/${WAR_FILENAME} ${APP_DIR}
+COPY ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ${APP_DIR}
 
 # Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
 USER ${UID}

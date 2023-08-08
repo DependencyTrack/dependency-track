@@ -127,7 +127,8 @@ public class Finding implements Serializable {
             "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
             "INNER JOIN \"FINDINGATTRIBUTION\" ON (\"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\")" +
             "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
-            "INNER JOIN \"PROJECT\" ON (\"COMPONENT\".\"PROJECT_ID\" = \"PROJECT\".\"ID\")";
+            "INNER JOIN \"PROJECT\" ON (\"COMPONENT\".\"PROJECT_ID\" = \"PROJECT\".\"ID\") " +
+            "LEFT JOIN \"PROJECT_ACCESS_TEAMS\" ON (\"PROJECT\".\"ID\" = \"PROJECT_ACCESS_TEAMS\".\"PROJECT_ID\")";
 
     private UUID project;
     private Map<String, Object> component = new LinkedHashMap<>();

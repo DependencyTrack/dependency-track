@@ -62,6 +62,7 @@ public class GroupedFinding implements Serializable {
                 LEFT JOIN "ANALYSIS" ON ("COMPONENT"."ID" = "ANALYSIS"."COMPONENT_ID") AND ("VULNERABILITY"."ID" = "ANALYSIS"."VULNERABILITY_ID") AND ("COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID")
                 INNER JOIN "PROJECT" ON ("COMPONENT"."PROJECT_ID" = "PROJECT"."ID")
                 LEFT JOIN "AFFECTEDVERSIONATTRIBUTION" ON ("VULNERABILITY"."ID" = "AFFECTEDVERSIONATTRIBUTION"."VULNERABILITY")
+                LEFT JOIN "PROJECT_ACCESS_TEAMS" ON ("PROJECT"."ID" = "PROJECT_ACCESS_TEAMS"."PROJECT_ID")
             """;
 
     private Map<String, Object> vulnerability = new LinkedHashMap<>();

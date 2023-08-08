@@ -114,7 +114,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             params.put("showSuppressed", false);
         }
         processFilters(filters, queryFilter, params, false);
-        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, Finding.QUERY_ALL_FINDINGS + queryFilter + " ORDER BY " + sortingAttributes.get(this.orderBy) + " " + (this.orderDirection.name().toLowerCase().equals("descending") ? " DESC" : "ASC"));
+        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, Finding.QUERY_ALL_FINDINGS + queryFilter + (this.orderBy != null ? " ORDER BY " + sortingAttributes.get(this.orderBy) + " " + (this.orderDirection.name().equalsIgnoreCase("descending") ? " DESC" : "ASC") : ""));
         PaginatedResult result = new PaginatedResult();
         query.setNamedParameters(params);
         final List<Object[]> totalList = query.executeList();
@@ -163,7 +163,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             params.put("active", true);
         }
         processFilters(filters, queryFilter, params, true);
-        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, GroupedFinding.QUERY + queryFilter + " ORDER BY " + sortingAttributes.get(this.orderBy) + " " + (this.orderDirection.name().toLowerCase().equals("descending") ? " DESC" : "ASC"));
+        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, Finding.QUERY_ALL_FINDINGS + queryFilter + (this.orderBy != null ? " ORDER BY " + sortingAttributes.get(this.orderBy) + " " + (this.orderDirection.name().equalsIgnoreCase("descending") ? " DESC" : "ASC") : ""));
         PaginatedResult result = new PaginatedResult();
         query.setNamedParameters(params);
         final List<Object[]> totalList = query.executeList();

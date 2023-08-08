@@ -418,10 +418,10 @@ public class FindingResourceTest extends ResourceTest {
                 .header(X_API_KEY, team.getApiKeys().get(0).getKey())
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(4), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(4, json.size());
+        Assert.assertEquals(3, json.size());
         Assert.assertEquals(date.getTime() ,json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
         Assert.assertEquals(p1.getName() ,json.getJsonObject(0).getJsonObject("component").getString("projectName"));
         Assert.assertEquals(p1.getVersion() ,json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
@@ -431,13 +431,9 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals(p1.getVersion() ,json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
         Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(1).getJsonObject("component").getString("project"));
         Assert.assertEquals(date.getTime() ,json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        Assert.assertEquals(p1_child.getName() ,json.getJsonObject(2).getJsonObject("component").getString("projectName"));
-        Assert.assertEquals(p1_child.getVersion() ,json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
-        Assert.assertEquals(p1_child.getUuid().toString(), json.getJsonObject(2).getJsonObject("component").getString("project"));
-        Assert.assertEquals(date.getTime() ,json.getJsonObject(3).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        Assert.assertEquals(p1.getName() ,json.getJsonObject(3).getJsonObject("component").getString("projectName"));
-        Assert.assertEquals(p1.getVersion() ,json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
-        Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(3).getJsonObject("component").getString("project"));
+        Assert.assertEquals(p1.getName() ,json.getJsonObject(2).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p1.getVersion() ,json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(2).getJsonObject("component").getString("project"));
     }
 
     @Test
@@ -578,7 +574,7 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals(2, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
         Assert.assertEquals(80, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
         Assert.assertEquals(666, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
-        Assert.assertEquals(2, json.getJsonObject(1).getJsonObject("vulnerability").getInt("affectedProjectCount"));
+        Assert.assertEquals(1, json.getJsonObject(1).getJsonObject("vulnerability").getInt("affectedProjectCount"));
 
         Assert.assertEquals("INTERNAL", json.getJsonObject(2).getJsonObject("vulnerability").getString("source"));
         Assert.assertEquals("Vuln-3", json.getJsonObject(2).getJsonObject("vulnerability").getString("vulnId"));

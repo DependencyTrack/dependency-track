@@ -533,12 +533,6 @@ public class BomResourceTest extends ResourceTest {
                     "components": [
                         {
                             "type": "library",
-                            "bom-ref": "${json-unit.matches:componentWithoutVulnUuid}",
-                            "name": "acme-lib-a",
-                            "version": "1.0.0"
-                        },
-                        {
-                            "type": "library",
                             "bom-ref": "${json-unit.matches:componentWithVulnUuid}",
                             "name": "acme-lib-b",
                             "version": "1.0.0"
@@ -554,14 +548,7 @@ public class BomResourceTest extends ResourceTest {
                         {
                             "ref": "${json-unit.matches:projectUuid}",
                             "dependsOn": [
-                                "${json-unit.matches:componentWithoutVulnUuid}",
                                 "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
-                            ]
-                        },
-                        {
-                            "ref": "${json-unit.matches:componentWithoutVulnUuid}",
-                            "dependsOn": [
-                                "${json-unit.matches:componentWithVulnUuid}"
                             ]
                         },
                         {

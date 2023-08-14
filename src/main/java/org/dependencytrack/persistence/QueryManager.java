@@ -22,6 +22,7 @@ import alpine.common.util.BooleanUtil;
 import alpine.event.framework.Event;
 import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
+import alpine.model.IConfigProperty;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.notification.NotificationLevel;
@@ -30,6 +31,18 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import com.google.common.collect.Lists;
+import java.security.Principal;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Supplier;
+import javax.jdo.FetchPlan;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+import javax.jdo.Transaction;
+import javax.json.JsonObject;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
@@ -44,6 +57,7 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
@@ -78,20 +92,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import javax.jdo.FetchPlan;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
-import javax.jdo.Transaction;
-import javax.json.JsonObject;
-import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Supplier;
-
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
  * providing methods that operate on the Dependency-Track specific models.
@@ -453,7 +454,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public ProjectProperty createProjectProperty(final Project project, final String groupName, final String propertyName,
-                                                 final String propertyValue, final ProjectProperty.PropertyType propertyType,
+                                                 final String propertyValue, final IConfigProperty.PropertyType propertyType,
                                                  final String description) {
         return getProjectQueryManager().createProjectProperty(project, groupName, propertyName, propertyValue, propertyType, description);
     }
@@ -492,6 +493,23 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getComponents(final boolean includeMetrics) {
         return getComponentQueryManager().getComponents(includeMetrics);
+    }
+
+	public List<ComponentProperty> getComponentProperties(final Component component) {
+        return getComponentQueryManager().getComponentProperties(component);
+    }
+
+	public  ComponentProperty getComponentProperty(final Component component
+	, final String groupName, final String propertyName) {
+        return getComponentQueryManager().getComponentProperty(component, groupName, propertyName);
+    }
+
+	public ComponentProperty createComponentProperty(final Component component, 
+	final String groupName, final String propertyName,
+	final String propertyValue, final IConfigProperty.PropertyType propertyType,
+	final String description) {
+        return getComponentQueryManager()
+		.createComponentProperty(component, groupName, propertyName, propertyValue, propertyType, description);
     }
 
     public PaginatedResult getComponents() {
@@ -1192,7 +1210,7 @@ public class QueryManager extends AlpineQueryManager {
         final ConfigProperty property = getConfigProperty(
                 configPropertyConstants.getGroupName(), configPropertyConstants.getPropertyName()
         );
-        if (property != null && ConfigProperty.PropertyType.BOOLEAN == property.getPropertyType()) {
+        if (property != null && property.getPropertyType() == ConfigProperty.PropertyType.BOOLEAN) {
             return BooleanUtil.valueOf(property.getPropertyValue());
         }
         return false;

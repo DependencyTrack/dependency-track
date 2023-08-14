@@ -43,13 +43,13 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonValue;
 import java.io.StringReader;
-import java.util.UUID;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
 
@@ -220,8 +220,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             default -> "(blake3 == :hash)";
         };
 
-        final Query<Component> query = pm.newQuery(Component.class);;
-        final Map<String, Object> params = Map.of("hash", hash);
+        final Query<Component> query = pm.newQuery(Component.class);
+        final var params = new HashMap<String, Object>();
+        params.put("hash", hash);
         preprocessACLs(query, queryFilter, params, false);
         return execute(query, params);
     }

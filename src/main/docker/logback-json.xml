@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+    <appender name="JSON_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+    </appender>
+
+    <logger name="alpine" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
+        <appender-ref ref="JSON_STDOUT" />
+    </logger>
+
+    <logger name="org.dependencytrack" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
+        <appender-ref ref="JSON_STDOUT" />
+    </logger>
+
+    <logger name="org.eclipse.jetty" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
+        <appender-ref ref="JSON_STDOUT" />
+    </logger>
+
+    <root level="WARN">
+        <appender-ref ref="JSON_STDOUT" />
+    </root>
+</configuration>

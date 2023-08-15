@@ -92,6 +92,14 @@ public class ModelConverter {
                 }
             }
         }
+        if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null && bom.getMetadata().getComponent().getComponents() != null) {
+            for (int i = 0; i < bom.getMetadata().getComponent().getComponents().size(); i++) {
+                final org.cyclonedx.model.Component cycloneDxComponent = bom.getMetadata().getComponent().getComponents().get(i);
+                if (cycloneDxComponent != null) {
+                    components.add(convert(qm, cycloneDxComponent, project));
+                }
+            }
+        }
         return components;
     }
 

@@ -84,23 +84,32 @@ public class ModelConverter {
      */
     public static List<Component> convertComponents(final QueryManager qm, final Bom bom, final Project project) {
         final List<Component> components = new ArrayList<>();
-        if (bom.getComponents() != null) {
-            for (int i = 0; i < bom.getComponents().size(); i++) {
-                final org.cyclonedx.model.Component cycloneDxComponent = bom.getComponents().get(i);
-                if (cycloneDxComponent != null) {
-                    components.add(convert(qm, cycloneDxComponent, project));
-                }
-            }
-        }
-        if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null && bom.getMetadata().getComponent().getComponents() != null) {
-            for (int i = 0; i < bom.getMetadata().getComponent().getComponents().size(); i++) {
-                final org.cyclonedx.model.Component cycloneDxComponent = bom.getMetadata().getComponent().getComponents().get(i);
-                if (cycloneDxComponent != null) {
-                    components.add(convert(qm, cycloneDxComponent, project));
-                }
-            }
+        final List<String> purls = new ArrayList<>();
+        components.addAll(convertComponents(qm, bom.getComponents(), project, purls));
+        if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null) {
+            components.addAll(convertComponents(qm, bom.getMetadata().getComponent().getComponents(), project, purls));
         }
         return components;
+    }
+
+    private static List<Component> convertComponents(final QueryManager qm, final List<org.cyclonedx.model.Component> components,
+            final Project project, final List<String> purls) {
+        final List<Component> convertedComponents = new ArrayList<>();
+        if (components != null) {
+            for (org.cyclonedx.model.Component component : components) {
+                if (component != null) {
+                    boolean hasPurl = component.getPurl() != null && !component.getPurl().isBlank();
+                    if (hasPurl && purls.contains(component.getPurl())) {
+                        continue;
+                    }
+                    convertedComponents.add(convert(qm, component, project));
+                    if (hasPurl) {
+                        purls.add(component.getPurl());
+                    }
+                }
+            }
+        }
+        return convertedComponents;
     }
 
     @SuppressWarnings("deprecation")

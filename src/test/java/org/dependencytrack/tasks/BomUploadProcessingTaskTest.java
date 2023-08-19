@@ -34,6 +34,7 @@ import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -43,6 +44,7 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -219,6 +221,129 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
         assertThatNoException()
                 .isThrownBy(() -> new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes)));
+    }
+
+    @Test
+    public void informWithBomContainingLicenseExpressionTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "tomcat-catalina",
+                      "version": "9.0.14",
+                      "licenses": [
+                        {
+                          "expression": "EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getLicense()).isNull();
+            assertThat(component.getLicenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
+            assertThat(component.getResolvedLicense()).isNull();
+        });
+    }
+
+    @Test
+    public void informWithBomContainingLicenseExpressionWithSingleIdTest() throws Exception {
+        final var license = new License();
+        license.setLicenseId("EPL-2.0");
+        license.setName("Eclipse Public License 2.0");
+        qm.persist(license);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "tomcat-catalina",
+                      "version": "9.0.14",
+                      "licenses": [
+                        {
+                          "expression": "EPL-2.0"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getResolvedLicense()).isNotNull();
+            assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("EPL-2.0");
+            assertThat(component.getLicense()).isNull();
+            assertThat(component.getLicenseExpression()).isEqualTo("EPL-2.0");
+        });
+    }
+
+    @Test
+    public void informWithBomContainingInvalidLicenseExpressionTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "tomcat-catalina",
+                      "version": "9.0.14",
+                      "licenses": [
+                        {
+                          "expression": "(invalid"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getLicense()).isNull();
+            assertThat(component.getLicenseExpression()).isNull();
+            assertThat(component.getResolvedLicense()).isNull();
+        });
     }
 
 }

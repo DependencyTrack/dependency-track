@@ -21,6 +21,7 @@ package org.dependencytrack.upgrade.v490;
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
+import alpine.server.util.DbUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,6 +40,7 @@ public class v490Updater extends AbstractUpgradeItem {
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
         updateDefaultSnykApiVersion(connection);
+        addLicenseExpressionColumnToComponents(connection);
     }
 
     /**
@@ -59,6 +61,18 @@ public class v490Updater extends AbstractUpgradeItem {
                 """)) {
             ps.setString(1, SCANNER_SNYK_API_VERSION.getDefaultPropertyValue());
             ps.executeUpdate();
+        }
+    }
+
+    private void addLicenseExpressionColumnToComponents(Connection connection) throws Exception {
+        // The JDBC type "CLOB" is mapped to the type CLOB for H2, MEDIUMTEXT for MySQL, and TEXT for PostgreSQL and SQL Server.
+        LOGGER.info("Adding \"LICENSE_EXPRESSION\" to \"COMPONENTS\"");
+        if (DbUtil.isH2()) {
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"COMPONENTS\" ADD \"LICENSE_EXPRESSION\" CLOB");
+        } else if (DbUtil.isMysql()) {
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"COMPONENTS\" ADD \"LICENSE_EXPRESSION\" MEDIUMTEXT");
+        } else {
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"COMPONENTS\" ADD \"LICENSE_EXPRESSION\" TEXT");
         }
     }
 

@@ -48,6 +48,8 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
+import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
+import org.dependencytrack.parser.spdx.expression.model.SpdxExpression;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import org.dependencytrack.util.PurlUtil;
@@ -155,24 +157,52 @@ public class ModelConverter {
         }
 
         final LicenseChoice licenseChoice = cycloneDxComponent.getLicenseChoice();
-        if (licenseChoice != null && licenseChoice.getLicenses() != null && !licenseChoice.getLicenses().isEmpty()) {
-            for (final org.cyclonedx.model.License cycloneLicense : licenseChoice.getLicenses()) {
-                if (cycloneLicense != null) {
-                    if (StringUtils.isNotBlank(cycloneLicense.getId())) {
-                        final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
-                        if (license != null) {
-                            component.setResolvedLicense(license);
+        if (licenseChoice != null) {
+            final List<org.cyclonedx.model.License> licenseOptions = new ArrayList<>();
+            if (licenseChoice.getExpression() != null) {
+                // store license expression, but don't overwrite manual changes to the field
+                if (component.getLicenseExpression() == null) {
+                    component.setLicenseExpression(licenseChoice.getExpression());
+                }
+                // if the expression just consists of one license id, we can add it as another license option
+                SpdxExpressionParser parser = new SpdxExpressionParser();
+                SpdxExpression parsedExpression = parser.parse(licenseChoice.getExpression());
+                if (parsedExpression.getSpdxLicenseId() != null) {
+                    org.cyclonedx.model.License expressionLicense = null;
+                    expressionLicense = new org.cyclonedx.model.License();
+                    expressionLicense.setId(parsedExpression.getSpdxLicenseId());
+                    expressionLicense.setName(parsedExpression.getSpdxLicenseId());
+                    licenseOptions.add(expressionLicense);
+                }
+            }
+            // add license options from the component's license array. These will have higher priority
+            // than the one from the parsed expression, because the following loop iterates through all
+            // the options and does not stop once it found a match.
+            if (licenseChoice.getLicenses() != null && !licenseChoice.getLicenses().isEmpty()) {
+                licenseOptions.addAll(licenseChoice.getLicenses());
+            }
+
+            // try to find a license in the database among the license options, but only if none has been
+            // selected previously.
+            if (component.getResolvedLicense() == null) {
+                for (final org.cyclonedx.model.License cycloneLicense : licenseOptions) {
+                    if (cycloneLicense != null) {
+                        if (StringUtils.isNotBlank(cycloneLicense.getId())) {
+                            final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
+                            if (license != null) {
+                                component.setResolvedLicense(license);
+                            }
                         }
-                    }
-                    else if (StringUtils.isNotBlank(cycloneLicense.getName()))
-                    {
-                        final License license = qm.getCustomLicense(StringUtils.trimToNull(cycloneLicense.getName()));
-                        if (license != null) {
-                            component.setResolvedLicense(license);
+                        else if (StringUtils.isNotBlank(cycloneLicense.getName()))
+                        {
+                            final License license = qm.getCustomLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                            if (license != null) {
+                                component.setResolvedLicense(license);
+                            }
                         }
+                        component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                        component.setLicenseUrl(StringUtils.trimToNull(cycloneLicense.getUrl()));
                     }
-                    component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
-                    component.setLicenseUrl(StringUtils.trimToNull(cycloneLicense.getUrl()));
                 }
             }
         }
@@ -253,25 +283,27 @@ public class ModelConverter {
             cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA3_512, component.getSha3_512()));
         }
 
+        final LicenseChoice licenseChoice = new LicenseChoice();
         if (component.getResolvedLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setId(component.getResolvedLicense().getLicenseId());
             license.setUrl(component.getLicenseUrl());
-            final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
             cycloneComponent.setLicenseChoice(licenseChoice);
         } else if (component.getLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setName(component.getLicense());
             license.setUrl(component.getLicenseUrl());
-            final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
             cycloneComponent.setLicenseChoice(licenseChoice);
         } else if (StringUtils.isNotEmpty(component.getLicenseUrl())) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setUrl(component.getLicenseUrl());
-            final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
+            cycloneComponent.setLicenseChoice(licenseChoice);
+        }
+        if (component.getLicenseExpression() != null) {
+            licenseChoice.setExpression(component.getLicenseExpression());
             cycloneComponent.setLicenseChoice(licenseChoice);
         }
 

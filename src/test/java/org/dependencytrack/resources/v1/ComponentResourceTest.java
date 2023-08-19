@@ -558,6 +558,48 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    public void updateComponentInvalidLicenseExpressionTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var jsonComponent = new Component();
+        jsonComponent.setName("acme-lib");
+        jsonComponent.setVersion("1.0.0");
+        jsonComponent.setLicenseExpression("(invalid");
+
+        final Response response = target(V1_COMPONENT).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity("""
+                        {
+                          "uuid": "%s",
+                          "name": "acme-lib",
+                          "version": "1.0.0",
+                          "licenseExpression": "(invalid"
+                        }
+                        """.formatted(component.getUuid()), MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).
+                isEqualTo("""
+                        [
+                          {
+                            "message": "The license expression must be a valid SPDX expression",
+                            "messageTemplate": "The license expression must be a valid SPDX expression",
+                            "path": "licenseExpression",
+                            "invalidValue": "(invalid"
+                          }
+                        ]
+                        """);
+    }
+
+    @Test
     public void deleteComponentTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();

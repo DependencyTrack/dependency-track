@@ -83,6 +83,7 @@
         <!-- Dependency Versions -->
         <frontend.version>4.8.1</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
+        <lib.awaitility.version>4.2.0</lib.awaitility.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
@@ -404,6 +405,12 @@
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-netty</artifactId>
             <version>5.15.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${lib.awaitility.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

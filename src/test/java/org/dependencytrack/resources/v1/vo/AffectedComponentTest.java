@@ -173,6 +173,24 @@ public class AffectedComponentTest {
         }
 
         @Test
+        public void shouldUseVersionRangeWhenBothRangeAndExactVersionAreAvailable() {
+            final var vs = new VulnerableSoftware();
+            vs.setVersion("*"); // CPEs will have a version wildcard when ranges are defined
+            vs.setVersionStartIncluding("foo");
+            vs.setVersionStartExcluding("bar");
+            vs.setVersionEndIncluding("baz");
+            vs.setVersionEndExcluding("qux");
+
+            final var affectedComponent = new AffectedComponent(vs);
+            assertThat(affectedComponent.getVersionType()).isEqualTo(AffectedComponent.VersionType.RANGE);
+            assertThat(affectedComponent.getVersion()).isNull();
+            assertThat(affectedComponent.getVersionStartIncluding()).isEqualTo("foo");
+            assertThat(affectedComponent.getVersionStartExcluding()).isEqualTo("bar");
+            assertThat(affectedComponent.getVersionEndIncluding()).isEqualTo("baz");
+            assertThat(affectedComponent.getVersionEndExcluding()).isEqualTo("qux");
+        }
+
+        @Test
         public void shouldMapAffectedPackageAttribution() {
             final var vs = new VulnerableSoftware();
             AffectedVersionAttribution ava = new AffectedVersionAttribution();

@@ -25,7 +25,7 @@ import java.util.List;
  * inner node, containss an operation.
  * 
  * @author hborchardt
- * @since 4.8.0
+ * @since 4.9.0
  */
 public class SpdxExpression {
     public static final SpdxExpression INVALID = new SpdxExpression(null);

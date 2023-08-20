@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * to that operator.
  * 
  * @author hborchardt
- * @since 4.8.0
+ * @since 4.9.0
  */
 public class SpdxExpressionOperation {
     private SpdxOperator operator;

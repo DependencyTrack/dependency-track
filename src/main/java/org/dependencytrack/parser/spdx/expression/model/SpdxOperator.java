@@ -22,7 +22,7 @@ package org.dependencytrack.parser.spdx.expression.model;
  * One of the SPDX expression operators as defined in the spec, together with their precedence.
  * 
  * @author hborchardt
- * @since 4.8.0
+ * @since 4.9.0
  */
 public enum SpdxOperator {
     OR(1, "OR"), AND(2, "AND"), WITH(3, "WITH"), PLUS(4, "+");

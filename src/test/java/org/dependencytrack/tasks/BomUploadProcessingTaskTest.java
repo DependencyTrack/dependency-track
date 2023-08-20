@@ -44,11 +44,8 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
-import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -78,8 +75,6 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @Before
     public void setUp() {
-        EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
-        EventService.getInstance().subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
 
         // Enable processing of CycloneDX BOMs
@@ -106,6 +101,9 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @Test
     public void informTest() throws Exception {
+        EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
+        EventService.getInstance().subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
+
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         final VulnerableSoftware vs = new VulnerableSoftware();

@@ -76,22 +76,12 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
 
-    @BeforeClass
-    public static void setUpClass() {
+    @Before
+    public void setUp() {
         EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EventService.getInstance().subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
-    }
 
-    @AfterClass
-    public static void tearDownClass() {
-        EventService.getInstance().unsubscribe(VulnerabilityAnalysisTask.class);
-        EventService.getInstance().unsubscribe(NewVulnerableDependencyAnalysisTask.class);
-        NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
-    }
-
-    @Before
-    public void setUp() {
         // Enable processing of CycloneDX BOMs
         qm.createConfigProperty(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX.getGroupName(),
                 ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX.getPropertyName(), "true",
@@ -108,6 +98,10 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @After
     public void tearDown() {
         NOTIFICATIONS.clear();
+
+        EventService.getInstance().unsubscribe(VulnerabilityAnalysisTask.class);
+        EventService.getInstance().unsubscribe(NewVulnerableDependencyAnalysisTask.class);
+        NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
     }
 
     @Test
@@ -138,7 +132,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         final byte[] bomBytes = Files.readAllBytes(Paths.get(getClass().getClassLoader().getResource("bom-1.xml").toURI()));
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 5, Duration.ofSeconds(5));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 6, Duration.ofSeconds(5));
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
         assertThat(project.getLastBomImport()).isNotNull();

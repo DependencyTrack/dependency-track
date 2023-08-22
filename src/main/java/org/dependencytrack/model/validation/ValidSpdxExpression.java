@@ -16,33 +16,26 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.parser.spdx.expression.model;
+package org.dependencytrack.model.validation;
 
-/**
- * One of the SPDX expression operators as defined in the spec, together with their precedence.
- * 
- * @author hborchardt
- * @since 4.9.0
- */
-public enum SpdxOperator {
-    OR(1, "OR"), AND(2, "AND"), WITH(3, "WITH"), PLUS(4, "+");
+import javax.validation.Constraint;
+import javax.validation.Payload;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    SpdxOperator(int precedence, String token) {
-        this.precedence = precedence;
-        this.token = token;
-    }
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Constraint(validatedBy = SpdxExpressionValidator.class)
+public @interface ValidSpdxExpression {
 
-    private final int precedence;
-    private final String token;
+    String message() default "The license expression must be a valid SPDX expression";
 
-    public int getPrecedence() {
-        return precedence;
-    }
-    public String getToken() {
-        return token;
-    }
-    @Override
-    public String toString() {
-        return this.token;
-    }
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
+
 }

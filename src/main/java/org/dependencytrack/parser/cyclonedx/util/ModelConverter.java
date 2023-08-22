@@ -68,6 +68,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class ModelConverter {
@@ -160,19 +161,25 @@ public class ModelConverter {
         if (licenseChoice != null) {
             final List<org.cyclonedx.model.License> licenseOptions = new ArrayList<>();
             if (licenseChoice.getExpression() != null) {
-                // store license expression, but don't overwrite manual changes to the field
-                if (component.getLicenseExpression() == null) {
-                    component.setLicenseExpression(licenseChoice.getExpression());
-                }
-                // if the expression just consists of one license id, we can add it as another license option
-                SpdxExpressionParser parser = new SpdxExpressionParser();
-                SpdxExpression parsedExpression = parser.parse(licenseChoice.getExpression());
-                if (parsedExpression.getSpdxLicenseId() != null) {
-                    org.cyclonedx.model.License expressionLicense = null;
-                    expressionLicense = new org.cyclonedx.model.License();
-                    expressionLicense.setId(parsedExpression.getSpdxLicenseId());
-                    expressionLicense.setName(parsedExpression.getSpdxLicenseId());
-                    licenseOptions.add(expressionLicense);
+                final var expressionParser = new SpdxExpressionParser();
+                final SpdxExpression parsedExpression = expressionParser.parse(licenseChoice.getExpression());
+                if (!Objects.equals(parsedExpression, SpdxExpression.INVALID)) {
+                    // store license expression, but don't overwrite manual changes to the field
+                    if (component.getLicenseExpression() == null) {
+                        component.setLicenseExpression(licenseChoice.getExpression());
+                    }
+                    // if the expression just consists of one license id, we can add it as another license option
+                    if (parsedExpression.getSpdxLicenseId() != null) {
+                        org.cyclonedx.model.License expressionLicense = new org.cyclonedx.model.License();
+                        expressionLicense.setId(parsedExpression.getSpdxLicenseId());
+                        licenseOptions.add(expressionLicense);
+                    }
+                } else {
+                    LOGGER.warn("""
+                            Encountered invalid license expression "%s" for \
+                            Component{group=%s, name=%s, version=%s, bomRef=%s}; Skipping\
+                            """.formatted(licenseChoice.getExpression(), component.getGroup(),
+                            component.getName(), component.getVersion(), component.getBomRef()));
                 }
             }
             // add license options from the component's license array. These will have higher priority

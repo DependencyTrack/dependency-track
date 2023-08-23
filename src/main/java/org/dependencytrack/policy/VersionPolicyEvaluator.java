@@ -43,9 +43,14 @@ public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
 
     @Override
     public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
-        final var componentVersion = new ComponentVersion(component.getVersion());
-
         final List<PolicyConditionViolation> violations = new ArrayList<>();
+
+        final List<PolicyCondition> policyConditions = super.extractSupportedConditions(policy);
+        if (policyConditions.isEmpty()) {
+            return violations;
+        }
+
+        final var componentVersion = new ComponentVersion(component.getVersion());
 
         for (final PolicyCondition condition : super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");

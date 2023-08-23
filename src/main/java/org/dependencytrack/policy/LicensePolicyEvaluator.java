@@ -54,6 +54,11 @@ public class LicensePolicyEvaluator extends AbstractPolicyEvaluator {
     public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
         final List<PolicyConditionViolation> violations = new ArrayList<>();
 
+        final List<PolicyCondition> policyConditions = super.extractSupportedConditions(policy);
+        if (policyConditions.isEmpty()) {
+            return violations;
+        }
+
         // use spdx expression checking logic from the license group policy evaluator
         final SpdxExpression expression = LicenseGroupPolicyEvaluator.getSpdxExpressionFromComponent(component);
 

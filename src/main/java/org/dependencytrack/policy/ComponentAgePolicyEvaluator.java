@@ -25,6 +25,7 @@ import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.QueryManager;
+
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
@@ -59,6 +60,11 @@ public class ComponentAgePolicyEvaluator extends AbstractPolicyEvaluator {
     public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
         final var violations = new ArrayList<PolicyConditionViolation>();
         if (component.getPurl() == null) {
+            return violations;
+        }
+
+        final List<PolicyCondition> policyConditions = super.extractSupportedConditions(policy);
+        if (policyConditions.isEmpty()) {
             return violations;
         }
 

@@ -187,8 +187,8 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                 case "attributedOnDateFrom" -> processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\"", true, true, false);
                 case "attributedOnDateTo" -> processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\"", false, true, false);
                 case "textSearchField" -> processInputFilter(queryFilter, params, filter, filters.get(filter), filters.get("textSearchInput"));
-                case "cvssFrom" -> processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", true, false, false);
-                case "cvssTo" -> processRangeFilter(queryFilter, params,filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", false, false, false);
+                case "cvssv3From" -> processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", true, false, false);
+                case "cvssv3To" -> processRangeFilter(queryFilter, params,filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", false, false, false);
             }
         }
         preprocessACLs(queryFilter, params);

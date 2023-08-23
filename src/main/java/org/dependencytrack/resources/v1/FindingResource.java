@@ -215,10 +215,10 @@ public class FindingResource extends AlpineResource {
                                    @QueryParam("textSearchField") String textSearchField,
                                    @ApiParam(value = "Filter by this text input")
                                    @QueryParam("textSearchInput") String textSearchInput,
-                                   @ApiParam(value = "Filter CVSS from this value")
-                                   @QueryParam("cvssFrom") String cvssFrom,
-                                   @ApiParam(value = "Filter CVSS from this Value")
-                                   @QueryParam("cvssTo") String cvssTo) {
+                                   @ApiParam(value = "Filter CVSSv3 from this value")
+                                   @QueryParam("cvssv3From") String cvssv3From,
+                                   @ApiParam(value = "Filter CVSSv3 from this Value")
+                                   @QueryParam("cvssv3To") String cvssv3To) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Map<String, String> filters = new HashMap<>();
             filters.put("severity", severity);
@@ -230,8 +230,8 @@ public class FindingResource extends AlpineResource {
             filters.put("attributedOnDateTo", attributedOnDateTo);
             filters.put("textSearchField", textSearchField);
             filters.put("textSearchInput", textSearchInput);
-            filters.put("cvssFrom", cvssFrom);
-            filters.put("cvssTo", cvssTo);
+            filters.put("cvssv3From", cvssv3From);
+            filters.put("cvssv3To", cvssv3To);
             final PaginatedResult result = qm.getAllFindings(filters, showSuppressed, showInactive);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
@@ -262,10 +262,10 @@ public class FindingResource extends AlpineResource {
                                    @QueryParam("textSearchField") String textSearchField,
                                    @ApiParam(value = "Filter by this text input")
                                    @QueryParam("textSearchInput") String textSearchInput,
-                                   @ApiParam(value = "Filter CVSS from this value")
-                                   @QueryParam("cvssFrom") String cvssFrom,
-                                   @ApiParam(value = "Filter CVSS to this value")
-                                   @QueryParam("cvssTo") String cvssTo,
+                                   @ApiParam(value = "Filter CVSSv3 from this value")
+                                   @QueryParam("cvssv3From") String cvssv3From,
+                                   @ApiParam(value = "Filter CVSSv3 to this value")
+                                   @QueryParam("cvssv3To") String cvssv3To,
                                    @ApiParam(value = "Filter occurrences in projects from this value")
                                    @QueryParam("occurrencesFrom") String occurrencesFrom,
                                    @ApiParam(value = "Filter occurrences in projects to this value")
@@ -277,8 +277,8 @@ public class FindingResource extends AlpineResource {
             filters.put("publishDateTo", publishDateTo);
             filters.put("textSearchField", textSearchField);
             filters.put("textSearchInput", textSearchInput);
-            filters.put("cvssFrom", cvssFrom);
-            filters.put("cvssTo", cvssTo);
+            filters.put("cvssv3From", cvssv3From);
+            filters.put("cvssv3To", cvssv3To);
             filters.put("occurrencesFrom", occurrencesFrom);
             filters.put("occurrencesTo", occurrencesTo);
             final PaginatedResult result = qm.getAllFindingsGroupedByVulnerability(filters, showInactive);

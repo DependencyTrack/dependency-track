@@ -30,12 +30,8 @@ import java.util.Map;
 public class GroupedFindingTest extends PersistenceCapableTest {
     private Date published = new Date();
 
-    private Date firstOccurrence = new Date();
-
-    private Date lastOccurrence = new Date();
-
     private GroupedFinding groupedFinding = new GroupedFinding("vuln-source", "vuln-vulnId", "vuln-title",
-            Severity.HIGH, null, BigDecimal.valueOf(8.4), null, null, null, AnalyzerIdentity.INTERNAL_ANALYZER, published, null, 3, firstOccurrence, lastOccurrence);
+            Severity.HIGH, null, BigDecimal.valueOf(8.4), null, null, null, AnalyzerIdentity.INTERNAL_ANALYZER, published, null, 3);
 
 
     @Test
@@ -54,7 +50,5 @@ public class GroupedFindingTest extends PersistenceCapableTest {
     public void testAttribution() {
         Map map = groupedFinding.getAttribution();
         Assert.assertEquals(AnalyzerIdentity.INTERNAL_ANALYZER, map.get("analyzerIdentity"));
-        Assert.assertEquals(firstOccurrence, map.get("firstOccurrence"));
-        Assert.assertEquals(lastOccurrence, map.get("lastOccurrence"));
     }
 }

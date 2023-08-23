@@ -269,11 +269,7 @@ public class FindingResource extends AlpineResource {
                                    @ApiParam(value = "Filter occurrences in projects from this value")
                                    @QueryParam("occurrencesFrom") String occurrencesFrom,
                                    @ApiParam(value = "Filter occurrences in projects to this value")
-                                   @QueryParam("occurrencesTo") String occurrencesTo,
-                                   @ApiParam(value = "Filter first attributed on and last attributed on from this date")
-                                   @QueryParam("aggregatedAttributedOnDateFrom") String aggregatedAttributedOnDateFrom,
-                                   @ApiParam(value = "Filter first attributed on and last attributed on to this date")
-                                   @QueryParam("aggregatedAttributedOnDateTo") String aggregatedAttributedOnDateTo) {
+                                   @QueryParam("occurrencesTo") String occurrencesTo) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Map<String, String> filters = new HashMap<>();
             filters.put("severity", severity);
@@ -285,8 +281,6 @@ public class FindingResource extends AlpineResource {
             filters.put("cvssTo", cvssTo);
             filters.put("occurrencesFrom", occurrencesFrom);
             filters.put("occurrencesTo", occurrencesTo);
-            filters.put("aggregatedAttributedOnDateFrom", aggregatedAttributedOnDateFrom);
-            filters.put("aggregatedAttributedOnDateTo", aggregatedAttributedOnDateTo);
             final PaginatedResult result = qm.getAllFindingsGroupedByVulnerability(filters, showInactive);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }

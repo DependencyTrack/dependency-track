@@ -68,9 +68,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
         Map.entry("analysis.state", "\"ANALYSIS\".\"STATE\""),
         Map.entry("analysis.isSuppressed", "\"ANALYSIS\".\"SUPPRESSED\""),
         Map.entry("attribution.attributedOn", "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\""),
-        Map.entry("vulnerability.affectedProjectCount", "COUNT(DISTINCT \"PROJECT\".\"ID\")"),
-        Map.entry("attribution.firstOccurrence", "MIN(\"AFFECTEDVERSIONATTRIBUTION\".\"FIRST_SEEN\")"),
-        Map.entry("attribution.lastOccurrence", "MAX(\"AFFECTEDVERSIONATTRIBUTION\".\"LAST_SEEN\")")
+        Map.entry("vulnerability.affectedProjectCount", "COUNT(DISTINCT \"PROJECT\".\"ID\")")
     );
 
     /**
@@ -221,14 +219,6 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             switch (filter) {
                 case "occurrencesFrom" -> processRangeFilter(queryFilter, params, filter, filters.get(filter), "COUNT(DISTINCT \"PROJECT\".\"ID\")", true, false, true);
                 case "occurrencesTo" -> processRangeFilter(queryFilter, params, filter, filters.get(filter), "COUNT(DISTINCT \"PROJECT\".\"ID\")", false, false, true);
-                case "aggregatedAttributedOnDateFrom" -> {
-                    processAggregatedDateRangeFilter(queryFilter, params, filter, filters.get(filter), "MIN(\"AFFECTEDVERSIONATTRIBUTION\".\"FIRST_SEEN\")", true, true);
-                    processAggregatedDateRangeFilter(queryFilter, params, filter, filters.get(filter), "MAX(\"AFFECTEDVERSIONATTRIBUTION\".\"LAST_SEEN\")", true, false);
-                }
-                case "aggregatedAttributedOnDateTo" -> {
-                    processAggregatedDateRangeFilter(queryFilter, params, filter, filters.get(filter), "MIN(\"AFFECTEDVERSIONATTRIBUTION\".\"FIRST_SEEN\")", false, true);
-                    processAggregatedDateRangeFilter(queryFilter, params, filter, filters.get(filter), "MAX(\"AFFECTEDVERSIONATTRIBUTION\".\"LAST_SEEN\")", false, false);
-                }
             }
         }
     }

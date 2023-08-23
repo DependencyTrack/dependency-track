@@ -53,15 +53,12 @@ public class GroupedFinding implements Serializable {
                 "VULNERABILITY"."PUBLISHED",
                 "VULNERABILITY"."CWES",
                 COUNT(DISTINCT "PROJECT"."ID") AS "AFFECTED_PROJECT_COUNT",
-                MIN("AFFECTEDVERSIONATTRIBUTION"."FIRST_SEEN") AS "FIRST_OCCURRENCE",
-                MAX("AFFECTEDVERSIONATTRIBUTION"."LAST_SEEN") AS "LAST_OCCURRENCE"
             FROM "COMPONENT"
                 INNER JOIN "COMPONENTS_VULNERABILITIES" ON ("COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID")
                 INNER JOIN "VULNERABILITY" ON ("COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID" = "VULNERABILITY"."ID")
                 INNER JOIN "FINDINGATTRIBUTION" ON ("COMPONENT"."ID" = "FINDINGATTRIBUTION"."COMPONENT_ID") AND ("VULNERABILITY"."ID" = "FINDINGATTRIBUTION"."VULNERABILITY_ID")
                 LEFT JOIN "ANALYSIS" ON ("COMPONENT"."ID" = "ANALYSIS"."COMPONENT_ID") AND ("VULNERABILITY"."ID" = "ANALYSIS"."VULNERABILITY_ID") AND ("COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID")
                 INNER JOIN "PROJECT" ON ("COMPONENT"."PROJECT_ID" = "PROJECT"."ID")
-                LEFT JOIN "AFFECTEDVERSIONATTRIBUTION" ON ("VULNERABILITY"."ID" = "AFFECTEDVERSIONATTRIBUTION"."VULNERABILITY")
                 LEFT JOIN "PROJECT_ACCESS_TEAMS" ON ("PROJECT"."ID" = "PROJECT_ACCESS_TEAMS"."PROJECT_ID")
             """;
 
@@ -78,8 +75,6 @@ public class GroupedFinding implements Serializable {
         optValue(vulnerability, "published", o[10]);
         optValue(vulnerability, "cwes", Finding.getCwes(o[11]));
         optValue(vulnerability, "affectedProjectCount", o[12]);
-        optValue(attribution, "firstOccurrence", o[13]);
-        optValue(attribution, "lastOccurrence", o[14]);
     }
 
     public Map getVulnerability() {

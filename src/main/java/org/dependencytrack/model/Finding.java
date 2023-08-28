@@ -89,7 +89,7 @@ public class Finding implements Serializable {
             "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
             "WHERE \"COMPONENT\".\"PROJECT_ID\" = ?";
 
-    public static final String QUERY_ALL_FINDINGS = "SELECT " +
+    public static final String QUERY_ALL_FINDINGS = "SELECT DISTINCT " +
             "\"COMPONENT\".\"UUID\"," +
             "\"COMPONENT\".\"NAME\"," +
             "\"COMPONENT\".\"GROUP\"," +

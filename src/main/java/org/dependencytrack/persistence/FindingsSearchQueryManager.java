@@ -61,6 +61,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             """),
         Map.entry("attribution.analyzerIdentity", "\"FINDINGATTRIBUTION\".\"ANALYZERIDENTITY\""),
         Map.entry("vulnerability.published", "\"VULNERABILITY\".\"PUBLISHED\""),
+        Map.entry("vulnerability.cvssV2BaseScore", "\"VULNERABILITY\".\"CVSSV2BASESCORE\""),
         Map.entry("vulnerability.cvssV3BaseScore", "\"VULNERABILITY\".\"CVSSV3BASESCORE\""),
         Map.entry("component.projectName", "concat(\"PROJECT\".\"NAME\", ' ', \"PROJECT\".\"VERSION\")"),
         Map.entry("component.name", "\"COMPONENT\".\"NAME\""),
@@ -187,6 +188,8 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                 case "attributedOnDateFrom" -> processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\"", true, true, false);
                 case "attributedOnDateTo" -> processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\"", false, true, false);
                 case "textSearchField" -> processInputFilter(queryFilter, params, filter, filters.get(filter), filters.get("textSearchInput"));
+                case "cvssv2From" -> processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV2BASESCORE\"", true, false, false);
+                case "cvssv2To" -> processRangeFilter(queryFilter, params,filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV2BASESCORE\"", false, false, false);
                 case "cvssv3From" -> processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", true, false, false);
                 case "cvssv3To" -> processRangeFilter(queryFilter, params,filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", false, false, false);
             }

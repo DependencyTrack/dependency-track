@@ -21,7 +21,7 @@ jobs:
             exit 1
           fi
       - name: Checkout Repository
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v3.6.0
 
       - name: Parse Version from POM
         id: parse
@@ -47,7 +47,7 @@ jobs:
       - call-build
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v3.6.0
 
       - name: Download Artifacts
         uses: actions/download-artifact@v3.0.2

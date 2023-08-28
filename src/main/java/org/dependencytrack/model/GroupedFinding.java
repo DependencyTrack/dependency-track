@@ -70,6 +70,7 @@ public class GroupedFinding implements Serializable {
         optValue(vulnerability, "vulnId", o[1]);
         optValue(vulnerability, "title", o[2]);
         optValue(vulnerability, "severity", VulnerabilityUtil.getSeverity(o[3], (BigDecimal) o[4], (BigDecimal) o[5], (BigDecimal) o[6], (BigDecimal) o[7], (BigDecimal) o[8]));
+        optValue(vulnerability, "cvssV2BaseScore", o[4]);
         optValue(vulnerability, "cvssV3BaseScore", o[5]);
         optValue(attribution, "analyzerIdentity", o[9]);
         optValue(vulnerability, "published", o[10]);

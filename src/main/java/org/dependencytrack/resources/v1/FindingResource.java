@@ -215,6 +215,10 @@ public class FindingResource extends AlpineResource {
                                    @QueryParam("textSearchField") String textSearchField,
                                    @ApiParam(value = "Filter by this text input")
                                    @QueryParam("textSearchInput") String textSearchInput,
+                                   @ApiParam(value = "Filter CVSSv2 from this value")
+                                   @QueryParam("cvssv2From") String cvssv2From,
+                                   @ApiParam(value = "Filter CVSSv2 from this Value")
+                                   @QueryParam("cvssv2To") String cvssv2To,
                                    @ApiParam(value = "Filter CVSSv3 from this value")
                                    @QueryParam("cvssv3From") String cvssv3From,
                                    @ApiParam(value = "Filter CVSSv3 from this Value")
@@ -230,6 +234,8 @@ public class FindingResource extends AlpineResource {
             filters.put("attributedOnDateTo", attributedOnDateTo);
             filters.put("textSearchField", textSearchField);
             filters.put("textSearchInput", textSearchInput);
+            filters.put("cvssv2From", cvssv2From);
+            filters.put("cvssv2To", cvssv2To);
             filters.put("cvssv3From", cvssv3From);
             filters.put("cvssv3To", cvssv3To);
             final PaginatedResult result = qm.getAllFindings(filters, showSuppressed, showInactive);
@@ -262,6 +268,10 @@ public class FindingResource extends AlpineResource {
                                    @QueryParam("textSearchField") String textSearchField,
                                    @ApiParam(value = "Filter by this text input")
                                    @QueryParam("textSearchInput") String textSearchInput,
+                                   @ApiParam(value = "Filter CVSSv2 from this value")
+                                   @QueryParam("cvssv2From") String cvssv2From,
+                                   @ApiParam(value = "Filter CVSSv2 to this value")
+                                   @QueryParam("cvssv2To") String cvssv2To,
                                    @ApiParam(value = "Filter CVSSv3 from this value")
                                    @QueryParam("cvssv3From") String cvssv3From,
                                    @ApiParam(value = "Filter CVSSv3 to this value")
@@ -277,6 +287,8 @@ public class FindingResource extends AlpineResource {
             filters.put("publishDateTo", publishDateTo);
             filters.put("textSearchField", textSearchField);
             filters.put("textSearchInput", textSearchInput);
+            filters.put("cvssv2From", cvssv2From);
+            filters.put("cvssv2To", cvssv2To);
             filters.put("cvssv3From", cvssv3From);
             filters.put("cvssv3To", cvssv3To);
             filters.put("occurrencesFrom", occurrencesFrom);

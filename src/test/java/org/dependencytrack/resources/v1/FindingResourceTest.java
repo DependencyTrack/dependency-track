@@ -327,9 +327,9 @@ public class FindingResourceTest extends ResourceTest {
 
     @Test
     public void getAllFindings() {
-        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
-        Project p1_child = qm.createProject("Acme Example", null, "1.0", null, p1, null, true, false);
-        Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Project p1 = qm.createProject("Acme Example 1", null, "1.0", null, null, null, true, false);
+        Project p1_child = qm.createProject("Acme Example 2", null, "1.0", null, p1, null, true, false);
+        Project p2 = qm.createProject("Acme Example 3", null, "1.0", null, null, null, true, false);
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
         Component c3 = createComponent(p1_child, "Component C", "1.0");
@@ -350,7 +350,10 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c3, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING).request()
+        Response response = target(V1_FINDING)
+                .queryParam("sortName", "component.projectName")
+                .queryParam("sortOrder", "asc")
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -367,13 +370,13 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals(p1.getVersion() ,json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
         Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(1).getJsonObject("component").getString("project"));
         Assert.assertEquals(date.getTime() ,json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        Assert.assertEquals(p1_child.getName() ,json.getJsonObject(2).getJsonObject("component").getString("projectName"));
-        Assert.assertEquals(p1_child.getVersion() ,json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
-        Assert.assertEquals(p1_child.getUuid().toString(), json.getJsonObject(2).getJsonObject("component").getString("project"));
+        Assert.assertEquals(p1.getName() ,json.getJsonObject(2).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p1.getVersion() ,json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(2).getJsonObject("component").getString("project"));
         Assert.assertEquals(date.getTime() ,json.getJsonObject(3).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        Assert.assertEquals(p1.getName() ,json.getJsonObject(3).getJsonObject("component").getString("projectName"));
-        Assert.assertEquals(p1.getVersion() ,json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
-        Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(3).getJsonObject("component").getString("project"));
+        Assert.assertEquals(p1_child.getName() ,json.getJsonObject(3).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p1_child.getVersion() ,json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p1_child.getUuid().toString(), json.getJsonObject(3).getJsonObject("component").getString("project"));
         Assert.assertEquals(date.getTime() ,json.getJsonObject(4).getJsonObject("vulnerability").getJsonNumber("published").longValue());
         Assert.assertEquals(p2.getName() ,json.getJsonObject(4).getJsonObject("component").getString("projectName"));
         Assert.assertEquals(p2.getVersion() ,json.getJsonObject(4).getJsonObject("component").getString("projectVersion"));

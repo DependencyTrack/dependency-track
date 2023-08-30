@@ -124,9 +124,17 @@ public class PolicyResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             Policy policy = qm.getPolicy(StringUtils.trimToNull(jsonPolicy.getName()));
             if (policy == null) {
+                Policy.Operator operator = jsonPolicy.getOperator();
+                if (operator == null) {
+                    operator = Policy.Operator.ANY;
+                }
+                Policy.ViolationState violationState = jsonPolicy.getViolationState();
+                if (violationState == null) {
+                    violationState = Policy.ViolationState.INFO;
+                }
                 policy = qm.createPolicy(
                         StringUtils.trimToNull(jsonPolicy.getName()),
-                        Policy.Operator.ANY, Policy.ViolationState.INFO);
+                        operator, violationState);
                 return Response.status(Response.Status.CREATED).entity(policy).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A policy with the specified name already exists.").build();

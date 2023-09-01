@@ -2,32 +2,33 @@
   "isDeprecatedLicenseId": false,
   "isFsfLibre": true,
   "licenseText": "DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE\nVersion 2, December 2004\n\nCopyright (C) 2004 Sam Hocevar \u003csam@hocevar.net\u003e\n\nEveryone is permitted to copy and distribute verbatim or modified copies of this license document, and changing it is allowed as long as the name is changed.\n\nDO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE\nTERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION\n\n  0. You just DO WHAT THE FUCK YOU WANT TO.\n",
-  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE\n\nVersion 2, December 2004\u003c\u003cendOptional\u003e\u003e\n\nCopyright (C) 2004 Sam Hocevar \u003csam@hocevar.net\u003e\n\nEveryone is permitted to copy and distribute verbatim or modified copies of this license document, and changing it is allowed as long as the name is changed.\n\nDO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE\n\nTERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"0.\";match\u003d\".{0,20}\"\u003e\u003e You just DO WHAT THE FUCK YOU WANT TO.",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eDO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE\n\nVersion 2, December 2004\n\n\u003c\u003cendOptional\u003e\u003e\n\nCopyright (C) 2004 Sam Hocevar \u003csam@hocevar.net\u003e\n\nEveryone is permitted to copy and distribute verbatim or modified copies of this license document, and changing it is allowed as long as the name is changed.\n\nDO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE\n\nTERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"0.\";match\u003d\".{0,20}\"\u003e\u003e You just DO WHAT THE FUCK YOU WANT TO.",
   "name": "Do What The F*ck You Want To Public License",
   "licenseId": "WTFPL",
   "crossRef": [
     {
-      "isLive": true,
-      "isValid": true,
-      "isWayBackLink": false,
-      "match": "true",
+      "match": "false",
       "url": "http://www.wtfpl.net/about/",
-      "order": 0,
-      "timestamp": "2020-11-25 - 21:48:55"
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-06-18T16:50:36Z",
+      "isWayBackLink": false,
+      "order": 0
     },
     {
-      "isLive": true,
-      "isValid": true,
-      "isWayBackLink": false,
       "match": "false",
       "url": "http://sam.zoy.org/wtfpl/COPYING",
-      "order": 1,
-      "timestamp": "2020-11-25 - 21:48:55"
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-06-18T16:50:37Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [
     "http://www.wtfpl.net/about/",
     "http://sam.zoy.org/wtfpl/COPYING"
   ],
-  "isOsiApproved": false
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eDO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE\n        \u003cbr /\u003e\n\nVersion 2, December 2004\n      \u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cp\u003eCopyright (C) 2004 Sam Hocevar \u0026lt;sam@hocevar.net\u0026gt;\u003c/p\u003e\n\n      \u003cp\u003eEveryone is permitted to copy and distribute verbatim or modified copies of this license document, and\n         changing it is allowed as long as the name is changed.\u003c/p\u003e\n\n      \u003cp\u003eDO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE\n        \u003cbr /\u003e\n\nTERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION\n      \u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e 0.\u003c/var\u003e\n          You just DO WHAT THE FUCK YOU WANT TO.\n        \u003c/li\u003e\n      \n\u003c/ul\u003e\n    "
 }

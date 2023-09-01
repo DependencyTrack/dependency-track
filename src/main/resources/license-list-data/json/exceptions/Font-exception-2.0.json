@@ -2,9 +2,11 @@
   "isDeprecatedLicenseId": false,
   "licenseExceptionText": "As a special exception, if you create a document which uses this font, and embed this font or unaltered portions of this font into the document, this font does not by itself cause the resulting document to be covered by the GNU General Public License. This exception does not however invalidate any other reasons why the document might be covered by the GNU General Public License. If you modify this font, you may extend this exception to your version of the font, but you are not obligated to do so. If you do not wish to do so, delete this exception statement from your version.\n",
   "name": "Font exception 2.0",
-  "licenseComments": "Typically used with GPL-2.0",
+  "licenseComments": "Typically used with GPL-2.0-only or GPL-2.0-and-later",
   "seeAlso": [
     "http://www.gnu.org/licenses/gpl-faq.html#FontException"
   ],
-  "licenseExceptionId": "Font-exception-2.0"
+  "licenseExceptionId": "Font-exception-2.0",
+  "licenseExceptionTemplate": "As a special exception, if you create a document which uses this font, and embed this font or unaltered portions of this font into the document, this font does not by itself cause the resulting document to be covered by the GNU General Public License. This exception does not however invalidate any other reasons why the document might be covered by the GNU General Public License. If you modify this font, you may extend this exception to your version of the font, but you are not obligated to do so. If you do not wish to do so, delete this exception statement from your version.\n\n",
+  "exceptionTextHtml": "\n      \u003cp\u003eAs a special exception, if you create a document which uses this\n         font, and embed this font or unaltered portions of this font\n         into the document, this font does not by itself cause the\n         resulting document to be covered by the GNU General Public\n         License. This exception does not however invalidate any other\n         reasons why the document might be covered by the GNU General\n         Public License. If you modify this font, you may extend this\n         exception to your version of the font, but you are not\n         obligated to do so. If you do not wish to do so, delete this\n         exception statement from your version.\u003c/p\u003e\n\n    "
 }

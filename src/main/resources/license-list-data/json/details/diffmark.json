@@ -6,17 +6,18 @@
   "licenseId": "diffmark",
   "crossRef": [
     {
-      "isLive": true,
-      "isValid": true,
-      "isWayBackLink": false,
       "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing/diffmark",
-      "order": 0,
-      "timestamp": "2020-11-25 - 21:58:28"
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-06-18T16:41:03Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/diffmark"
   ],
-  "isOsiApproved": false
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \n\u003cul style\u003d\"list-style:none\"\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e 1.\u003c/var\u003e\n          you can do what you want with it\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e 2.\u003c/var\u003e\n          I refuse any responsibility for the consequences\n        \u003c/li\u003e\n      \n\u003c/ul\u003e\n    "
 }

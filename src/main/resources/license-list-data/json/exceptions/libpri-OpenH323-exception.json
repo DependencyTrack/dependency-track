@@ -1,0 +1,11 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "As a special exception, libpri may also be linked to the\nOpenH323 library, so long as the entirity of the derivative\nwork (as defined within the GPL) is licensed either under\nthe MPL of the OpenH323 license or the GPL of libpri.\n",
+  "name": "libpri OpenH323 exception",
+  "seeAlso": [
+    "https://github.com/asterisk/libpri/blob/1.6.0/README#L19-L22"
+  ],
+  "licenseExceptionId": "libpri-OpenH323-exception",
+  "licenseExceptionTemplate": "As a special exception, libpri may also be linked to the OpenH323 library, so long as the entirity of the derivative work (as defined within the GPL) is licensed either under the MPL of the OpenH323 license or the GPL of libpri.\n\n",
+  "exceptionTextHtml": "\n         \u003cp\u003e\n            As a special exception, libpri may also be linked to the\n            OpenH323 library, so long as the entirity of the derivative\n            work (as defined within the GPL) is licensed either under\n            the MPL of the OpenH323 license or the GPL of libpri.\n         \u003c/p\u003e\n\n      "
+}

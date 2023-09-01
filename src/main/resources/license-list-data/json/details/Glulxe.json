@@ -1,22 +1,23 @@
 {
   "isDeprecatedLicenseId": false,
   "licenseText": "The source code in this package is copyright 1999-2010 by Andrew Plotkin.\n\nYou may copy and distribute it freely, by any means and under any conditions, as long as the code and documentation is not changed. You may also incorporate this code into your own program and distribute that, or modify this code and use and distribute the modified version, as long as you retain a notice in your program or documentation which mentions my name and the URL shown above.\n",
-  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"The source code in this package is copyright 1999-2010 by Andrew Plotkin.\";match\u003d\".{0,1000}\"\u003e\u003e\n\nYou may copy and distribute it freely, by any means and under any conditions, as long as the code and documentation is not changed. You may also incorporate this code into your own program and distribute that, or modify this code and use and distribute the modified version, as long as you retain a notice in your program or documentation which mentions my name and the URL shown above.",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"The source code in this package is copyright 1999-2010 by Andrew Plotkin.  \";match\u003d\".{0,5000}\"\u003e\u003e\n\nYou may copy and distribute it freely, by any means and under any conditions, as long as the code and documentation is not changed. You may also incorporate this code into your own program and distribute that, or modify this code and use and distribute the modified version, as long as you retain a notice in your program or documentation which mentions my name and the URL shown above.\n\n",
   "name": "Glulxe License",
   "licenseId": "Glulxe",
   "crossRef": [
     {
-      "isLive": true,
-      "isValid": true,
-      "isWayBackLink": false,
-      "match": "true",
+      "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing/Glulxe",
-      "order": 0,
-      "timestamp": "2020-11-25 - 21:51:47"
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-06-18T16:51:50Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/Glulxe"
   ],
-  "isOsiApproved": false
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e \n         \u003cp\u003eThe source code in this package is copyright 1999-2010 by Andrew Plotkin.\u003c/p\u003e\n\n      \u003c/div\u003e\n\n      \u003cp\u003eYou may copy and distribute it freely, by any means and under any conditions, as long as the code and\n         documentation is not changed. You may also incorporate this code into your own program and distribute\n         that, or modify this code and use and distribute the modified version, as long as you retain a notice\n         in your program or documentation which mentions my name and the URL shown above.\u003c/p\u003e\n\n    "
 }

@@ -169,7 +169,7 @@ public class BomResourceTest extends ResourceTest {
                 .isEqualTo(json("""
                 {
                     "bomFormat": "CycloneDX",
-                    "specVersion": "1.4",
+                    "specVersion": "1.5",
                     "serialNumber": "${json-unit.ignore}",
                     "version": 1,
                     "metadata": {
@@ -318,7 +318,7 @@ public class BomResourceTest extends ResourceTest {
                 .isEqualTo(json("""
                 {
                     "bomFormat": "CycloneDX",
-                    "specVersion": "1.4",
+                    "specVersion": "1.5",
                     "serialNumber": "${json-unit.ignore}",
                     "version": 1,
                     "metadata": {
@@ -511,7 +511,7 @@ public class BomResourceTest extends ResourceTest {
                 .isEqualTo(json("""
                 {
                     "bomFormat": "CycloneDX",
-                    "specVersion": "1.4",
+                    "specVersion": "1.5",
                     "serialNumber": "${json-unit.ignore}",
                     "version": 1,
                     "metadata": {

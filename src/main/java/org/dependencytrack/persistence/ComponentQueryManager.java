@@ -20,9 +20,6 @@ package org.dependencytrack.persistence;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
-import alpine.model.ApiKey;
-import alpine.model.Team;
-import alpine.model.UserPrincipal;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
@@ -30,7 +27,6 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;

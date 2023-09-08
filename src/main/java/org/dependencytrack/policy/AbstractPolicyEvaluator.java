@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractPolicyEvaluator implements PolicyEvaluator {
 
-    protected QueryManager qm = new QueryManager();
+    protected QueryManager qm;
 
     public void setQueryManager(final QueryManager qm) {
         this.qm = qm;

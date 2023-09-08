@@ -1,3 +1,21 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
 package org.dependencytrack.tasks;
 
 import alpine.common.logging.Logger;
@@ -6,7 +24,7 @@ import alpine.event.framework.LoggableSubscriber;
 import alpine.model.ConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import kong.unirest.json.JSONObject;
+import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -14,6 +32,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.OsvMirrorEvent;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -24,6 +43,7 @@ import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
+import org.json.JSONObject;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 
@@ -31,7 +51,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -41,9 +60,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
@@ -53,25 +75,28 @@ import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 public class OsvDownloadTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
-    private String ecosystemConfig;
-    private List<String> ecosystems;
+    private Set<String> ecosystems;
     private String osvBaseUrl;
-
-    public List<String> getEnabledEcosystems() {
-        return this.ecosystems;
-    }
+    private boolean aliasSyncEnabled;
 
     public OsvDownloadTask() {
         try (final QueryManager qm = new QueryManager()) {
             final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName());
             if (enabled != null) {
-                this.ecosystemConfig = enabled.getPropertyValue();
-                if (this.ecosystemConfig != null) {
-                    ecosystems = Arrays.stream(this.ecosystemConfig.split(";")).map(String::trim).toList();
+                final String ecosystemConfig = enabled.getPropertyValue();
+                if (ecosystemConfig != null) {
+                    ecosystems = Arrays.stream(ecosystemConfig.split(";")).map(String::trim).collect(Collectors.toSet());
                 }
                 this.osvBaseUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName()).getPropertyValue();
                 if (this.osvBaseUrl != null && !this.osvBaseUrl.endsWith("/")) {
                     this.osvBaseUrl += "/";
+                }
+                final ConfigProperty aliasSyncProperty = qm.getConfigProperty(
+                        VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getGroupName(),
+                        VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getPropertyName()
+                );
+                if (aliasSyncProperty != null) {
+                    this.aliasSyncEnabled = "true".equals(aliasSyncProperty.getPropertyValue());
                 }
             }
         }
@@ -90,7 +115,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     HttpUriRequest request = new HttpGet(url);
                     try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                         final StatusLine status = response.getStatusLine();
-                        if (status.getStatusCode() == 200) {
+                        if (status.getStatusCode() == HttpStatus.SC_OK) {
                             try (InputStream in = response.getEntity().getContent();
                                  ZipInputStream zipInput = new ZipInputStream(in)) {
                                 unzipFolder(zipInput);
@@ -133,14 +158,25 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
     public void updateDatasource(final OsvAdvisory advisory) {
 
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager().withL2CacheDisabled()) {
 
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
             final Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
             final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));
-            final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+            final Vulnerability existingVulnerability = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());;
+            final Vulnerability.Source vulnerabilitySource = extractSource(advisory.getId());
+            final ConfigPropertyConstants vulnAuthoritativeSourceToggle = switch (vulnerabilitySource) {
+                case NVD -> ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
+                case GITHUB -> ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
+                default -> VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+            };
+            final boolean vulnAuthoritativeSourceEnabled = Boolean.valueOf(qm.getConfigProperty(vulnAuthoritativeSourceToggle.getGroupName(), vulnAuthoritativeSourceToggle.getPropertyName()).getPropertyValue());
+            Vulnerability synchronizedVulnerability = existingVulnerability;
+            if (shouldUpdateExistingVulnerability(existingVulnerability, vulnerabilitySource, vulnAuthoritativeSourceEnabled)) {
+               synchronizedVulnerability  = qm.synchronizeVulnerability(vulnerability, false);
+            }
 
-            if (advisory.getAliases() != null) {
+            if (aliasSyncEnabled && advisory.getAliases() != null) {
                 for (int i = 0; i < advisory.getAliases().size(); i++) {
                     final String alias = advisory.getAliases().get(i);
                     final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
@@ -148,17 +184,16 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     // OSV will use IDs of other vulnerability databases for its
                     // primary advisory ID (e.g. GHSA-45hx-wfhj-473x). We need to ensure
                     // that we don't falsely report GHSA IDs as stemming from OSV.
-                    final Vulnerability.Source advisorySource = extractSource(advisory.getId());
-                    switch (advisorySource) {
+                    switch (vulnerabilitySource) {
                         case NVD -> vulnerabilityAlias.setCveId(advisory.getId());
                         case GITHUB -> vulnerabilityAlias.setGhsaId(advisory.getId());
                         default -> vulnerabilityAlias.setOsvId(advisory.getId());
                     }
 
-                    if (alias.startsWith("CVE") && Vulnerability.Source.NVD != advisorySource) {
+                    if (alias.startsWith("CVE") && Vulnerability.Source.NVD != vulnerabilitySource) {
                         vulnerabilityAlias.setCveId(alias);
                         qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
-                    } else if (alias.startsWith("GHSA") && Vulnerability.Source.GITHUB != advisorySource) {
+                    } else if (alias.startsWith("GHSA") && Vulnerability.Source.GITHUB != vulnerabilitySource) {
                         vulnerabilityAlias.setGhsaId(alias);
                         qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
                     }
@@ -181,6 +216,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
             qm.persist(synchronizedVulnerability);
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+    }
+
+    private boolean shouldUpdateExistingVulnerability(Vulnerability existingVulnerability, Vulnerability.Source vulnerabilitySource, boolean vulnAuthoritativeSourceEnabled) {
+        return (Vulnerability.Source.OSV == vulnerabilitySource) // Non GHSA nor NVD
+                || (existingVulnerability == null) // Vuln is not replicated yet or declared by authoritative source with appropriate state
+                || (existingVulnerability != null && !vulnAuthoritativeSourceEnabled); // Vuln has been replicated but authoritative source is disabled
     }
 
     public Vulnerability mapAdvisoryToVulnerability(final QueryManager qm, final OsvAdvisory advisory) {
@@ -318,7 +359,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
         HttpUriRequest request = new HttpGet(url);
         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             final StatusLine status = response.getStatusLine();
-            if (status.getStatusCode() == 200) {
+            if (status.getStatusCode() == HttpStatus.SC_OK) {
                 try (InputStream in = response.getEntity().getContent();
                      Scanner scanner = new Scanner(in, StandardCharsets.UTF_8)) {
                     while (scanner.hasNextLine()) {
@@ -336,4 +377,10 @@ public class OsvDownloadTask implements LoggableSubscriber {
         }
         return ecosystems;
     }
+
+    public Set<String> getEnabledEcosystems() {
+        return Optional.ofNullable(this.ecosystems)
+                .orElseGet(Collections::emptySet);
+    }
+
 }

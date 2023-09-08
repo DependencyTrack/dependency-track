@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Compose (w/ MSSQL)" type="docker-deploy" factoryName="docker-compose.yml" server-name="Docker">
+    <deployment type="docker-compose.yml">
+      <settings>
+        <option name="envFilePath" value="" />
+        <option name="secondarySourceFiles">
+          <list>
+            <option value="dev/docker-compose.mssql.yml" />
+          </list>
+        </option>
+        <option name="sourceFilePath" value="dev/docker-compose.yml" />
+      </settings>
+    </deployment>
+    <method v="2" />
+  </configuration>
+</component>

@@ -5,6 +5,93 @@ chapter: 1
 order: 12
 ---
 
+
+### Health
+
+Starting with v4.8.0, Dependency-Track exposes health information according to the [MicroProfile Health] specification.
+Refer to the specification for details on how the exposed endpoints behave (i.e. [MicroProfile Health REST interfaces specifications]).
+
+Currently, only a single [readiness check] is included. The *database* check verifies that database connections can be
+acquired and used successfully. The check spans both connection pools (see [Connection Pooling]).
+
+```json
+{
+    "status": "UP",
+    "checks": [
+        {
+            "name": "database",
+            "status": "UP",
+            "data": {
+                "nontx_connection_pool": "UP",
+                "tx_connection_pool": "UP"
+            }
+        }
+    ]
+}
+```
+
+### Logging
+
+Logging of the API server is configured via [Logback]. All distributions of the API server ship with
+a [default Logback configuration]. It defines the following behavior:
+
+1. Log messages from the embedded Jetty server to:
+   * `$HOME/.dependency-track/server.<NUMBER>.log`
+2. Log messages from Dependency-Track and the underlying Alpine framework to:
+   * `$HOME/.dependency-track/dependency-track.<NUMBER>.log`
+   * Standard Output
+3. Log security-related messages to:
+   * `$HOME/.dependency-track/dependency-track-audit.<NUMBER>.log`
+   * Standard Output
+4. For log files:
+   * Create a new log file once the current one exceeds 10MB in size
+   * Retain a history of up to 9 files per log before overwriting them
+5. Output logs in a human-friendly format
+
+> For containerized deployments, `$HOME` will refer to the `/data` directory.
+ 
+#### Custom Logging Configuration
+
+When operating Dependency-Track in container-centric environments, where logs are typically forwarded
+from containers' standard output to a centralized log aggregator (e.g. ElasticSearch, OpenSearch, Splunk),
+it is desirable to disable logging to disk, and even change the output to a more machine-readable format.
+
+Starting with Dependency-Track v4.9.0, it is possible to provide a custom Logback configuration,
+and configure JSON as output format (powered by [logstash-logback-encoder]). 
+
+An example configuration file for JSON logging to standard output ([`logback-json.xml`]) is included
+in the API server container image, and can be enabled using the `LOGGING_CONFIG_PATH` environment variable:
+
+```shell
+# (Other configuration options omitted for brevity)
+docker run -it --rm \
+  -e "LOGGING_CONFIG_PATH=logback-json.xml" \
+  dependencytrack/apiserver:latest
+```
+
+Refer to the [logstash-logback-encoder documentation] for advanced customization details.
+
+In order to use a truly custom configuration file, it has to be mounted into the container, e.g.:
+
+```shell
+# (Other configuration options omitted for brevity)
+docker run -it --rm \
+  -v "./path/to/logback-custom.xml:/etc/dtrack/logback-custom.xml:ro" \
+  -e "LOGGING_CONFIG_PATH=/etc/dtrack/logback-custom.xml" \
+  dependencytrack/apiserver:latest
+```
+
+For non-containerized distributions of the API server, a custom configuration file may be provided
+via the `logback.configurationFile` JVM property:
+
+```shell
+# (Other configuration options omitted for brevity)
+java -Dlogback.configurationFile=/path/to/logback-custom.xml \
+  -jar dependency-track-apiserver.jar
+```
+
+### Metrics
+
 The API server can be configured to expose system metrics via the Prometheus [text-based exposition format].
 They can then be collected and visualized using tools like [Prometheus] and [Grafana]. Especially for containerized
 deployments where directly attaching to the underlying Java Virtual Machine (JVM) is not possible, monitoring 
@@ -15,17 +102,17 @@ system metrics via Prometheus is crucial for observability.
 > the application itself, not the data managed by it. If exposition of portfolio statistics via Prometheus is desired,
 > refer to [community integrations] like Jetstack's [dependency-track-exporter].
 
-To enable metrics exposition, set the `alpine.metrics.enable` property to `true` (see [Configuration]). 
+To enable metrics exposition, set the `alpine.metrics.enabled` property to `true` (see [Configuration]).
 Metrics will be exposed in the `/metrics` endpoint, and can optionally be protected using 
 basic authentication via `alpine.metrics.auth.username` and `alpine.metrics.auth.password`.
 
-### Exposed Metrics
+#### Exposed Metrics
 
 Exposed metrics include various general purpose system and JVM statistics (CPU and Heap usage, thread states, 
 garbage collector activity etc.), but also some related to Dependency-Track's internal event and notification system.
 More metrics covering other areas of Dependency-Track will be added in future versions.
 
-#### Database
+##### Database
 
 Metrics of the ORM used by the Dependency-Track API server are exposed under the `datanucleus` namespace. 
 They provide a high-level overview of how many, and which kind of persistence operations are performend:
@@ -145,7 +232,7 @@ hikaricp_connections_acquire_seconds_max{pool="non-transactional",} 1.41889E-4
 hikaricp_connections_acquire_seconds_max{pool="transactional",} 1.77837E-4
 ```
 
-#### Event and Notification System
+##### Event and Notification System
 
 Event and notification metrics include the following:
 
@@ -216,7 +303,7 @@ doing keeping up with the work it's being exposed to. For example, a constantly 
 value combined with a high number of `executor_queued_tasks` may indicate that the configured `alpine.worker.pool.size` 
 is too small for the workload at hand.
 
-#### Retries
+##### Retries
 
 Dependency-Track will occasionally retry requests to external services. Metrics about this behavior are
 exposed in the following format:
@@ -230,7 +317,7 @@ resilience4j_retry_calls_total{kind="successful_without_retry",name="snyk-api",}
 
 Where `name` describes the remote endpoint that Dependency-Track uses retries for.
 
-### Grafana Dashboard
+#### Grafana Dashboard
 
 Because [Micrometer](https://micrometer.io/) is used to collect and expose metrics, common Grafana dashboards for
 Micrometer should just work.
@@ -248,12 +335,20 @@ An [example dashboard] is provided as a quickstart. Refer to the [Grafana docume
 [community integrations]: {{ site.baseurl }}{% link _docs/integrations/community-integrations.md %}
 [Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration.md %}
 [Connection Pooling]: {{ site.baseurl }}{% link _docs/getting-started/database-support.md %}#connection-pooling
+[default Logback configuration]: https://github.com/DependencyTrack/dependency-track/blob/master/src/main/docker/logback.xml
 [dependency-track-exporter]: https://github.com/jetstack/dependency-track-exporter
 [example dashboard]: {{ site.baseurl }}/files/grafana-dashboard.json
 [executors]: https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html
 [Grafana]: https://grafana.com/
 [Grafana documentation]: https://grafana.com/docs/grafana/latest/dashboards/export-import/#import-dashboard
+[Logback]: https://logback.qos.ch/
+[`logback-json.xml`]: https://github.com/DependencyTrack/dependency-track/blob/master/src/main/docker/logback-json.xml
+[logstash-logback-encoder]: https://github.com/logfellow/logstash-logback-encoder
+[logstash-logback-encoder documentation]: https://github.com/logfellow/logstash-logback-encoder/tree/logstash-logback-encoder-7.3#loggingevent-fields
+[MicroProfile Health]: https://download.eclipse.org/microprofile/microprofile-health-3.1/microprofile-health-spec-3.1.html
+[MicroProfile Health REST interfaces specifications]: https://download.eclipse.org/microprofile/microprofile-health-3.1/microprofile-health-spec-3.1.html#_appendix_a_rest_interfaces_specifications
 [Prometheus]: https://prometheus.io/
+[readiness check]: https://download.eclipse.org/microprofile/microprofile-health-3.1/microprofile-health-spec-3.1.html#_readiness_check
 [Snyk]: {{ site.baseurl }}{% link _docs/datasources/snyk.md %}
 [text-based exposition format]: https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format
 [thread states]: https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Thread.State.html

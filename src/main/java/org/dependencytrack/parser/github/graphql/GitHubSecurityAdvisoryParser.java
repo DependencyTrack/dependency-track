@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.parser.github.graphql;
 
-import kong.unirest.json.JSONArray;
-import kong.unirest.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
 import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;

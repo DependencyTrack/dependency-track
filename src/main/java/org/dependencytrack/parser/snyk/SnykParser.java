@@ -1,11 +1,27 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
 package org.dependencytrack.parser.snyk;
 
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import kong.unirest.json.JSONArray;
-import kong.unirest.json.JSONObject;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
@@ -16,6 +32,8 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -30,7 +48,7 @@ public class SnykParser {
 
     private static final Logger LOGGER = Logger.getLogger(SnykParser.class);
 
-    public Vulnerability parse(JSONArray data, QueryManager qm, String purl, int count) {
+    public Vulnerability parse(JSONArray data, QueryManager qm, String purl, int count, boolean syncAliases) {
         Vulnerability synchronizedVulnerability = new Vulnerability();
         Vulnerability vulnerability = new Vulnerability();
         List<VulnerableSoftware> vsList = new ArrayList<>();
@@ -41,15 +59,21 @@ public class SnykParser {
         if (vulnAttributes != null && vulnAttributes.optString("type").equalsIgnoreCase("package_vulnerability")) {
             // get the references of the data record (vulnerability)
             final JSONObject slots = vulnAttributes.optJSONObject("slots");
-            if (slots != null && slots.optJSONArray("references") != null) {
-                vulnerability.setReferences(addReferences(slots));
+            if (slots != null) {
+                var publishedTime = jsonStringToTimestamp(slots.optString("publication_time"));
+                if (publishedTime != null) {
+                    vulnerability.setPublished(Date.from(publishedTime.toInstant()));
+                }
+                if (slots.optJSONArray("references") != null) {
+                    vulnerability.setReferences(addReferences(slots));
+                }
             }
             vulnerability.setTitle(vulnAttributes.optString("title", null));
             vulnerability.setDescription(vulnAttributes.optString("description", null));
             vulnerability.setCreated(Date.from(jsonStringToTimestamp(vulnAttributes.optString("created_at")).toInstant()));
             vulnerability.setUpdated(Date.from(jsonStringToTimestamp(vulnAttributes.optString("updated_at")).toInstant()));
             final JSONArray problems = vulnAttributes.optJSONArray("problems");
-            if (problems != null) {
+            if (syncAliases && problems != null) {
                 vulnerability.setAliases(computeAliases(vulnerability, qm, problems));
             }
             final JSONArray cvssArray = vulnAttributes.optJSONArray("severities");
@@ -63,6 +87,16 @@ public class SnykParser {
                         LOGGER.debug("Range only contains *. Will not compute vulnerable software for this range. Purl is: "+purl);
                     } else {
                         vsList = parseVersionRanges(qm, purl, representation);
+                    }
+
+                    JSONArray remedies = coordinates.getJSONObject(countCoordinates).optJSONArray("remedies");
+                    if (remedies != null) {
+                        var recommendation = "";
+                        for (int remedyCount = 0; remedyCount < remedies.length(); remedyCount++) {
+                            var remedy = remedies.getJSONObject(remedyCount).optString("description");
+                            recommendation += remedy + System.lineSeparator();
+                        }
+                        vulnerability.setRecommendation(recommendation);
                     }
                 }
             }

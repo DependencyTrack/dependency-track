@@ -275,8 +275,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
             final Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String)finding.getVulnerability().get("uuid"));
             final Analysis analysis = getAnalysis(component, vulnerability);
             final List<VulnerabilityAlias> aliases = detach(getVulnerabilityAliases(vulnerability));
-            aliases.forEach(alias -> alias.setUuid(null));
-            finding.getVulnerability().put("aliases", aliases);
+            finding.addVulnerabilityAliases(aliases);
             if (includeSuppressed || analysis == null || !analysis.isSuppressed()) { // do not add globally suppressed findings
                 // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)
                 finding.getVulnerability().put("description", vulnerability.getDescription());

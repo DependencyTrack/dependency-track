@@ -50,22 +50,47 @@ public final class BomSubmitRequest {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The project version may only contain printable characters")
     private final String projectVersion;
 
+    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The parent UUID must be a valid 36 character UUID")
+    private final String parentUUID;
+
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The parent name may only contain printable characters")
+    private final String parentName;
+
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The parent version may only contain printable characters")
+    private final String parentVersion;
+
     @NotNull
     @Pattern(regexp = "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$", message = "The BOM must be Base64 encoded")
     private final String bom;
 
     private final boolean autoCreate;
 
+    public BomSubmitRequest(String project,
+                            String projectName,
+                            String projectVersion,
+                            boolean autoCreate,
+                            String bom) {
+        this(project, projectName, projectVersion, autoCreate, null, null, null, bom);
+    }
+
     @JsonCreator
     public BomSubmitRequest(@JsonProperty(value = "project", required = false) String project,
                             @JsonProperty(value = "projectName", required = false) String projectName,
                             @JsonProperty(value = "projectVersion", required = false) String projectVersion,
                             @JsonProperty(value = "autoCreate", required = false) boolean autoCreate,
+                            @JsonProperty(value = "parentUUID", required = false) String parentUUID,
+                            @JsonProperty(value = "parentName", required = false) String parentName,
+                            @JsonProperty(value = "parentVersion", required = false) String parentVersion,
                             @JsonProperty(value = "bom", required = true) String bom) {
         this.project = project;
         this.projectName = projectName;
         this.projectVersion = projectVersion;
         this.autoCreate = autoCreate;
+        this.parentUUID = parentUUID;
+        this.parentName = parentName;
+        this.parentVersion = parentVersion;
         this.bom = bom;
     }
 
@@ -79,6 +104,18 @@ public final class BomSubmitRequest {
 
     public String getProjectVersion() {
         return projectVersion;
+    }
+
+    public String getParentUUID() {
+        return parentUUID;
+    }
+
+    public String getParentName() {
+        return parentName;
+    }
+
+    public String getParentVersion() {
+        return parentVersion;
     }
 
     public boolean isAutoCreate() {

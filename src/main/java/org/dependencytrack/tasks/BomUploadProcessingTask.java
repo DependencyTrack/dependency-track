@@ -27,6 +27,7 @@ import org.cyclonedx.BomParserFactory;
 import org.cyclonedx.parsers.Parser;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
+import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Bom;
@@ -39,11 +40,11 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
+import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
-
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
@@ -64,13 +65,24 @@ public class BomUploadProcessingTask implements Subscriber {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void inform(final Event e) {
         if (e instanceof BomUploadEvent) {
+            Project bomProcessingFailedProject = null;
+            Bom.Format bomProcessingFailedBomFormat = null;
+            String bomProcessingFailedBomVersion = null;
             final BomUploadEvent event = (BomUploadEvent) e;
             final byte[] bomBytes = CompressUtil.optionallyDecompress(event.getBom());
             final QueryManager qm = new QueryManager();
             try {
-                final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
+                final Project project =  qm.getObjectByUuid(Project.class, event.getProjectUuid());
+                bomProcessingFailedProject = project;
+
+                if (project == null) {
+                    LOGGER.warn("Ignoring BOM Upload event for no longer existing project " + event.getProjectUuid());
+                    return;
+                }
+
                 final List<Component> components;
                 final List<Component> newComponents = new ArrayList<>();
                 final List<Component> flattenedComponents = new ArrayList<>();
@@ -89,9 +101,11 @@ public class BomUploadProcessingTask implements Subscriber {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
                         LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProjectUuid());
                         bomFormat = Bom.Format.CYCLONEDX;
+                        bomProcessingFailedBomFormat = bomFormat;
                         final Parser parser = BomParserFactory.createParser(bomBytes);
                         cycloneDxBom = parser.parse(bomBytes);
                         bomSpecVersion = cycloneDxBom.getSpecVersion();
+                        bomProcessingFailedBomVersion = bomSpecVersion;
                         bomVersion = cycloneDxBom.getVersion();
                         if (project.getClassifier() == null) {
                             final var classifier = Optional.ofNullable(cycloneDxBom.getMetadata())
@@ -133,7 +147,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 }
                 if (Bom.Format.CYCLONEDX == bomFormat) {
                     LOGGER.info("Processing CycloneDX dependency graph for project: " + event.getProjectUuid());
-                    ModelConverter.generateDependencies(qm, cycloneDxBom, project, components);
+                    ModelConverter.generateDependencies(cycloneDxBom, project, components);
                 }
                 LOGGER.debug("Reconciling components for project " + event.getProjectUuid());
                 qm.reconcileComponents(project, existingProjectComponents, flattenedComponents);
@@ -155,8 +169,17 @@ public class BomUploadProcessingTask implements Subscriber {
                     // vulnerability analysis completed.
                     vae.onSuccess(new NewVulnerableDependencyAnalysisEvent(newComponents));
                 }
+                // Start PolicyEvaluationEvent when VulnerabilityAnalysisEvent is succesful
+                vae.onSuccess(new PolicyEvaluationEvent(detachedFlattenedComponent).project(detachedProject));
                 Event.dispatch(vae);
-                Event.dispatch(new RepositoryMetaEvent(detachedFlattenedComponent));
+
+                // Repository Metadata analysis
+                final var rme = new RepositoryMetaEvent(detachedFlattenedComponent);
+                // Start PolicyEvaluationEvent again when RepositoryMetaEvent is succesful,
+                // as it might trigger new violations
+                rme.onSuccess(new PolicyEvaluationEvent(detachedFlattenedComponent).project(detachedProject));
+                Event.dispatch(rme);
+
                 LOGGER.info("Processed " + flattenedComponents.size() + " components and " + flattenedServices.size() + " services uploaded to project " + event.getProjectUuid());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)
@@ -167,6 +190,16 @@ public class BomUploadProcessingTask implements Subscriber {
                         .subject(new BomConsumedOrProcessed(detachedProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom", ex);
+                if (bomProcessingFailedProject != null) {
+                    bomProcessingFailedProject = qm.detach(Project.class, bomProcessingFailedProject.getId());
+                }
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.PORTFOLIO)
+                        .group(NotificationGroup.BOM_PROCESSING_FAILED)
+                        .title(NotificationConstants.Title.BOM_PROCESSING_FAILED)
+                        .level(NotificationLevel.ERROR)
+                        .content("An error occurred while processing a BOM")
+                        .subject(new BomProcessingFailed(bomProcessingFailedProject, Base64.getEncoder().encodeToString(bomBytes), ex.getMessage(), bomProcessingFailedBomFormat, bomProcessingFailedBomVersion)));
             } finally {
                 qm.commitSearchIndex(true, Component.class);
                 qm.commitSearchIndex(true, ServiceComponent.class);

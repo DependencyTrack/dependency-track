@@ -48,17 +48,28 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
+import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
+import org.dependencytrack.parser.spdx.expression.model.SpdxExpression;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import org.dependencytrack.util.PurlUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.json.JSONArray;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 public class ModelConverter {
 
@@ -147,17 +158,58 @@ public class ModelConverter {
         }
 
         final LicenseChoice licenseChoice = cycloneDxComponent.getLicenseChoice();
-        if (licenseChoice != null && licenseChoice.getLicenses() != null && !licenseChoice.getLicenses().isEmpty()) {
-            for (final org.cyclonedx.model.License cycloneLicense : licenseChoice.getLicenses()) {
-                if (cycloneLicense != null) {
-                    if (StringUtils.isNotBlank(cycloneLicense.getId())) {
-                        final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
-                        if (license != null) {
-                            component.setResolvedLicense(license);
-                        }
+        if (licenseChoice != null) {
+            final List<org.cyclonedx.model.License> licenseOptions = new ArrayList<>();
+            if (licenseChoice.getExpression() != null) {
+                final var expressionParser = new SpdxExpressionParser();
+                final SpdxExpression parsedExpression = expressionParser.parse(licenseChoice.getExpression());
+                if (!Objects.equals(parsedExpression, SpdxExpression.INVALID)) {
+                    // store license expression, but don't overwrite manual changes to the field
+                    if (component.getLicenseExpression() == null) {
+                        component.setLicenseExpression(licenseChoice.getExpression());
                     }
-                    component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
-                    component.setLicenseUrl(StringUtils.trimToNull(cycloneLicense.getUrl()));
+                    // if the expression just consists of one license id, we can add it as another license option
+                    if (parsedExpression.getSpdxLicenseId() != null) {
+                        org.cyclonedx.model.License expressionLicense = new org.cyclonedx.model.License();
+                        expressionLicense.setId(parsedExpression.getSpdxLicenseId());
+                        licenseOptions.add(expressionLicense);
+                    }
+                } else {
+                    LOGGER.warn("""
+                            Encountered invalid license expression "%s" for \
+                            Component{group=%s, name=%s, version=%s, bomRef=%s}; Skipping\
+                            """.formatted(licenseChoice.getExpression(), component.getGroup(),
+                            component.getName(), component.getVersion(), component.getBomRef()));
+                }
+            }
+            // add license options from the component's license array. These will have higher priority
+            // than the one from the parsed expression, because the following loop iterates through all
+            // the options and does not stop once it found a match.
+            if (licenseChoice.getLicenses() != null && !licenseChoice.getLicenses().isEmpty()) {
+                licenseOptions.addAll(licenseChoice.getLicenses());
+            }
+
+            // try to find a license in the database among the license options, but only if none has been
+            // selected previously.
+            if (component.getResolvedLicense() == null) {
+                for (final org.cyclonedx.model.License cycloneLicense : licenseOptions) {
+                    if (cycloneLicense != null) {
+                        if (StringUtils.isNotBlank(cycloneLicense.getId())) {
+                            final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
+                            if (license != null) {
+                                component.setResolvedLicense(license);
+                            }
+                        }
+                        else if (StringUtils.isNotBlank(cycloneLicense.getName()))
+                        {
+                            final License license = qm.getCustomLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                            if (license != null) {
+                                component.setResolvedLicense(license);
+                            }
+                        }
+                        component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                        component.setLicenseUrl(StringUtils.trimToNull(cycloneLicense.getUrl()));
+                    }
                 }
             }
         }
@@ -238,25 +290,27 @@ public class ModelConverter {
             cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA3_512, component.getSha3_512()));
         }
 
+        final LicenseChoice licenseChoice = new LicenseChoice();
         if (component.getResolvedLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setId(component.getResolvedLicense().getLicenseId());
             license.setUrl(component.getLicenseUrl());
-            final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
             cycloneComponent.setLicenseChoice(licenseChoice);
         } else if (component.getLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setName(component.getLicense());
             license.setUrl(component.getLicenseUrl());
-            final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
             cycloneComponent.setLicenseChoice(licenseChoice);
         } else if (StringUtils.isNotEmpty(component.getLicenseUrl())) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setUrl(component.getLicenseUrl());
-            final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
+            cycloneComponent.setLicenseChoice(licenseChoice);
+        }
+        if (component.getLicenseExpression() != null) {
+            licenseChoice.setExpression(component.getLicenseExpression());
             cycloneComponent.setLicenseChoice(licenseChoice);
         }
 
@@ -663,11 +717,14 @@ public class ModelConverter {
     }
 
     /**
-     * Converts a parsed Bom to a native list of Dependency-Track component object
-     * @param bom the Bom to convert
+     * Converts a parsed Bom to a native list of Dependency-Track component objects
+     *
+     * @param bom        the Bom to convert
+     * @param project    The project based on the BOM
+     * @param components All known {@link Component}s from the BOM
      * @return a List of Component object
      */
-    public static void generateDependencies(final QueryManager qm, final Bom bom, final Project project, final List<Component> components) {
+    public static void generateDependencies(final Bom bom, final Project project, final List<Component> components) {
         // Get direct dependencies first
         if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null && bom.getMetadata().getComponent().getBomRef() != null) {
             final String targetBomRef = bom.getMetadata().getComponent().getBomRef();
@@ -675,7 +732,7 @@ public class ModelConverter {
             final JSONArray jsonArray = new JSONArray();
             if (targetDep != null && targetDep.getDependencies() != null) {
                 for (final org.cyclonedx.model.Dependency directDep : targetDep.getDependencies()) {
-                    final Component c = getComponentFromBomRef(directDep.getRef(), components);
+                    final Component c = getComponentFromBomRef(directDep.getRef(), components, false);
                     if (c != null) {
                         final ComponentIdentity ci = new ComponentIdentity(c);
                         jsonArray.put(ci.toJSON());
@@ -690,13 +747,17 @@ public class ModelConverter {
         }
         // Get transitive last. It is possible that some CycloneDX implementations may not properly specify direct
         // dependencies. As a result, it is not possible to distinguish between direct and transitive.
-        for (final Component c1: components) {
-            if (c1.getBomRef() != null) {
+
+        // Flatten the components to remove and need for repeated recursion
+        Map<String, Component> flatComponents = flattenComponents(components);
+
+        for (final Map.Entry<String, Component> c1: flatComponents.entrySet()) {
+            if (c1.getKey() != null) {
                 final JSONArray jsonArray = new JSONArray();
-                final org.cyclonedx.model.Dependency d1 = getDependencyFromBomRef(c1.getBomRef(), bom.getDependencies());
+                final org.cyclonedx.model.Dependency d1 = getDependencyFromBomRef(c1.getKey(), bom.getDependencies());
                 if (d1 != null && d1.getDependencies() != null) {
                     for (final org.cyclonedx.model.Dependency d2: d1.getDependencies()) {
-                        final Component c2 = getComponentFromBomRef(d2.getRef(), components);
+                        final Component c2 = flatComponents.get(d2.getRef());
                         if (c2 != null) {
                             final ComponentIdentity ci = new ComponentIdentity(c2);
                             jsonArray.put(ci.toJSON());
@@ -704,12 +765,62 @@ public class ModelConverter {
                     }
                 }
                 if (jsonArray.isEmpty()) {
-                    c1.setDirectDependencies(null);
+                    c1.getValue().setDirectDependencies(null);
                 } else {
-                    c1.setDirectDependencies(jsonArray.toString());
+                    c1.getValue().setDirectDependencies(jsonArray.toString());
                 }
             }
         }
+    }
+
+    /**
+     * Converts {@link Project#getDirectDependencies()} and {@link Component#getDirectDependencies()}
+     * references to a CycloneDX dependency graph.
+     *
+     * @param project    The {@link Project} to generate the graph for
+     * @param components The {@link Component}s belonging to {@code project}
+     * @return The CycloneDX representation of the {@link Project}'s dependency graph
+     */
+    public static List<Dependency> generateDependencies(final Project project, final List<Component> components) {
+        if (project == null) {
+            return Collections.emptyList();
+        }
+
+        final var dependencies = new ArrayList<Dependency>();
+        final var rootDependency = new Dependency(project.getUuid().toString());
+        rootDependency.setDependencies(convertDirectDependencies(project.getDirectDependencies(), components));
+        dependencies.add(rootDependency);
+
+        for (final Component component : components) {
+            final var dependency = new Dependency(component.getUuid().toString());
+            dependency.setDependencies(convertDirectDependencies(component.getDirectDependencies(), components));
+            dependencies.add(dependency);
+        }
+
+        return dependencies;
+    }
+
+    private static List<Dependency> convertDirectDependencies(final String directDependenciesRaw, final List<Component> components) {
+        if (directDependenciesRaw == null || directDependenciesRaw.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        final var dependencies = new ArrayList<Dependency>();
+        final JsonValue directDependenciesJson = Json
+                .createReader(new StringReader(directDependenciesRaw))
+                .readValue();
+        if (directDependenciesJson instanceof final JsonArray directDependenciesJsonArray) {
+            for (final JsonValue directDependency : directDependenciesJsonArray) {
+                if (directDependency instanceof final JsonObject directDependencyObject) {
+                    final String componentUuid = directDependencyObject.getString("uuid", null);
+                    if (componentUuid != null && components.stream().map(Component::getUuid).map(UUID::toString).anyMatch(componentUuid::equals)) {
+                        dependencies.add(new Dependency(directDependencyObject.getString("uuid")));
+                    }
+                }
+            }
+        }
+
+        return dependencies;
     }
 
     public static List<ExternalReference> convertBomMetadataExternalReferences(Bom bom) {
@@ -733,11 +844,23 @@ public class ModelConverter {
         }
     }
 
-    private static Component getComponentFromBomRef(final String bomRef, final List<Component> components) {
-        if (components != null) {
+    /**
+     * Attempts to find a component from the bom-ref, optionally scanning through and children to do so
+     * @param bomRef The bom-ref to search for
+     * @param components The list of components to search within
+     * @param recursive Whether to recurse through any child components
+     * @return The component with the target bom-ref, or <code>null</code> is it is not found
+     */
+    private static Component getComponentFromBomRef(final String bomRef, final Collection<Component> components, boolean recursive) {
+        if (components != null && bomRef != null) {
             for (Component c : components) {
-                if (bomRef != null && bomRef.equals(c.getBomRef())) {
+                if (bomRef.equals(c.getBomRef())) {
                     return c;
+                } else if (recursive) {
+                    Component result = getComponentFromBomRef(bomRef, c.getChildren(), false);
+                    if (result != null) {
+                        return result;
+                    }
                 }
             }
         }
@@ -924,5 +1047,23 @@ public class ModelConverter {
             default:
                 return AnalysisJustification.NOT_SET;
         }
+    }
+
+    /**
+     * Recurse through the list of components to generate a map keyed on their bom-ref
+     * @param components The components to process
+     * @return A Map of every component found keyed on their bom-ref
+     */
+    private static Map<String, Component> flattenComponents(final Collection<Component> components) {
+        Map<String, Component> result = new HashMap<>(components.size());
+
+        for (Component comp : components) {
+            result.put(comp.getBomRef(), comp);
+            if (comp.getChildren() != null) {
+                result.putAll(flattenComponents(comp.getChildren()));
+            }
+        }
+
+        return result;
     }
 }

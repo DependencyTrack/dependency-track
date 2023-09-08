@@ -21,15 +21,12 @@ package org.dependencytrack.tasks.repositories;
 import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
 import org.apache.http.HttpEntity;
-import org.apache.http.StatusLine;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.dependencytrack.common.HttpClientPool;
+import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.util.DateUtil;
-import org.dependencytrack.util.HttpUtil;
 import org.dependencytrack.util.XmlUtil;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -81,44 +78,38 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
         if (component.getPurl() != null) {
             final String mavenGavUrl = component.getPurl().getNamespace().replaceAll("\\.", "/") + "/" + component.getPurl().getName();
             final String url = String.format(baseUrl + REPO_METADATA_URL, mavenGavUrl);
-            try {
-                final HttpUriRequest request = new HttpGet(url);
+            try (final CloseableHttpResponse response = processHttpRequest(url)) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    final HttpEntity entity = response.getEntity();
+                    if (entity != null) {
+                        try (InputStream in = entity.getContent()) {
+                            final Document document = XmlUtil.buildSecureDocumentBuilder().parse(in);
+                            final var xpathFactory = XPathFactory.newInstance();
+                            final XPath xpath = xpathFactory.newXPath();
 
-                if (username != null || password != null) {
-                    request.setHeader("Authorization", HttpUtil.basicAuthHeaderValue(username, password));
-                }
+                            final XPathExpression releaseExpression = xpath.compile("/metadata/versioning/release");
+                            final XPathExpression latestExpression = xpath.compile("/metadata/versioning/latest");
+                            final var release = (String) releaseExpression.evaluate(document, XPathConstants.STRING);
+                            final String latest = (String) latestExpression.evaluate(document, XPathConstants.STRING);
 
-                try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                    final StatusLine status = response.getStatusLine();
-                    if (status.getStatusCode() == 200) {
-                        final HttpEntity entity = response.getEntity();
-                        if (entity != null) {
-                            try (InputStream in = entity.getContent()) {
-                                final Document document = XmlUtil.buildSecureDocumentBuilder().parse(in);
-                                final XPathFactory xpathFactory = XPathFactory.newInstance();
-                                final XPath xpath = xpathFactory.newXPath();
+                            final XPathExpression lastUpdatedExpression = xpath.compile("/metadata/versioning/lastUpdated");
+                            final var lastUpdated = (String) lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
 
-                                final XPathExpression releaseExpression = xpath.compile("/metadata/versioning/release");
-                                final XPathExpression latestExpression = xpath.compile("/metadata/versioning/latest");
-                                final String release = (String) releaseExpression.evaluate(document, XPathConstants.STRING);
-                                final String latest = (String) latestExpression.evaluate(document, XPathConstants.STRING);
-
-                                final XPathExpression lastUpdatedExpression = xpath.compile("/metadata/versioning/lastUpdated");
-                                final String lastUpdated = (String) lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
-
-                                meta.setLatestVersion(release != null ? release: latest);
-                                if (lastUpdated != null) {
-                                    meta.setPublishedTimestamp(DateUtil.parseDate(lastUpdated));
-                                }
+                            meta.setLatestVersion(release != null ? release : latest);
+                            if (lastUpdated != null) {
+                                meta.setPublishedTimestamp(DateUtil.parseDate(lastUpdated));
                             }
                         }
-                    } else {
-                        handleUnexpectedHttpResponse(LOGGER, url, status.getStatusCode(), status.getReasonPhrase(), component);
                     }
+                } else {
+                    handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
                 }
             } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
                 handleRequestException(LOGGER, e);
+            } catch (Exception ex) {
+                throw new MetaAnalyzerException(ex);
             }
+
         }
         return meta;
     }

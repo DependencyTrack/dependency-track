@@ -33,6 +33,7 @@ import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
+import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -399,6 +400,31 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         assertThat(router.resolveRules(notification)).isEmpty();
 
         notification.setSubject(new BomConsumedOrProcessed(projectA, "", Bom.Format.CYCLONEDX, ""));
+        assertThat(router.resolveRules(notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testBomProcessingFailedLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.BOM_PROCESSING_FAILED));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.BOM_PROCESSING_FAILED.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new BomProcessingFailed(projectB, "", null, Bom.Format.CYCLONEDX, ""));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
+
+        notification.setSubject(new BomProcessingFailed(projectA, "", null, Bom.Format.CYCLONEDX, ""));
         assertThat(router.resolveRules(notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }

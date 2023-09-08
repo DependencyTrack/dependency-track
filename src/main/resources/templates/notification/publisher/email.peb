@@ -18,10 +18,10 @@ Project URL:       {{ baseUrl }}/projects/{{ subject.component.project.uuid }}
 Other affected projects:
 {% for affectedProject in notification.subject.affectedProjects %}{% if not (affectedProject.uuid == subject.component.project.uuid) %}
 Project:           [{{ affectedProject.name }} : {{ affectedProject.version }}]
-Project URL:       {{ baseUrl }}/project/{{ affectedProject.uuid }}
+Project URL:       {{ baseUrl }}/projects/{{ affectedProject.uuid }}
 {% endif %}{% endfor %}{% endif %}{% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
 Project:           {{ subject.component.project.toString }}
-Project URL:       {{ baseUrl }}/project/?uuid={{ subject.component.project.uuid }}
+Project URL:       {{ baseUrl }}/projects/?uuid={{ subject.component.project.uuid }}
 Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
 
@@ -75,6 +75,16 @@ Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}
 Description:       {{ subject.project.description }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "BOM_PROCESSING_FAILED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+
+--------------------------------------------------------------------------------
+
+Cause:
+{{ subject.cause }}
 {% elseif notification.group == "VEX_CONSUMED" %}
 Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}

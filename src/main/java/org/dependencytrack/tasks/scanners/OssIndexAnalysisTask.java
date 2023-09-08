@@ -33,18 +33,17 @@ import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
-import kong.unirest.HttpRequestWithBody;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.UnirestException;
-import kong.unirest.UnirestInstance;
-import kong.unirest.json.JSONObject;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.ConfigKey;
+import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.common.ManagedHttpClientFactory;
-import org.dependencytrack.common.UnirestFactory;
-import org.dependencytrack.event.ComponentMetricsUpdateEvent;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -57,12 +56,15 @@ import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.HttpUtil;
 import org.dependencytrack.util.NotificationUtil;
+import org.json.JSONObject;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
 import us.springett.cvss.Score;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +83,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     private static final Logger LOGGER = Logger.getLogger(OssIndexAnalysisTask.class);
     private String apiUsername;
     private String apiToken;
-
+    private boolean aliasSyncEnabled;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     private static Retry ossIndexRetryer;
@@ -111,7 +113,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     public AnalyzerIdentity getAnalyzerIdentity() {
         return AnalyzerIdentity.OSSINDEX_ANALYZER;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -141,8 +143,9 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                         return;
                     }
                 }
+                aliasSyncEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ALIAS_SYNC_ENABLED);
             }
-            final OssIndexAnalysisEvent event = (OssIndexAnalysisEvent)e;
+            final var event = (OssIndexAnalysisEvent) e;
             LOGGER.info("Starting Sonatype OSS Index analysis task");
             vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
             if (event.getComponents().size() > 0) {
@@ -185,6 +188,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
 
     /**
      * Analyzes a list of Components.
+     *
      * @param components a list of Components
      */
     public void analyze(final List<Component> components) {
@@ -203,11 +207,13 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                 final JSONObject json = new JSONObject();
                 json.put("coordinates", coordinates);
                 try {
-                    final List<ComponentReport> report = ossIndexRetryer.executeSupplier(() -> submit(json));
+                    final List<ComponentReport> report = ossIndexRetryer.executeCheckedSupplier(() -> submit(json));
                     processResults(report, paginatedList);
-                } catch (UnirestException e) {
-                    handleRequestException(LOGGER, e);
+                } catch (Throwable ex) {
+                    handleRequestException(LOGGER, ex);
+                    return;
                 }
+
                 LOGGER.info("Analyzing " + coordinates.size() + " component(s)");
             }
             paginatedComponents.nextPage();
@@ -219,15 +225,16 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * HTTP POST is used and PackageURL is specified that contains qualifiers (and possibly a subpath).
      * Therefore, this method will return a String representation of a PackageURL without qualifier
      * or subpath.
-     *
+     * <p>
      * Additionally, as of October 2021, versions prefixed with "v" (as commonly done in the Go and PHP ecosystems)
      * are triggering a bug in OSS Index that causes all vulnerabilities for the given component to be returned,
      * not just the ones for the requested version: https://github.com/OSSIndex/vulns/issues/129#issuecomment-740666614
      * As a result, this method will remove "v" prefixes from versions.
-     *
+     * <p>
      * This method should be removed at a future date when OSSIndex resolves the issues.
-     *
+     * <p>
      * TODO: Delete this method and workaround for OSSIndex bugs once Sonatype resolves them.
+     *
      * @since 3.4.0
      */
     @Deprecated
@@ -249,29 +256,33 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     /**
      * Submits the payload to the Sonatype OSS Index service
      */
-    private List<ComponentReport> submit(final JSONObject payload) throws UnirestException {
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HttpRequestWithBody request = ui.post(API_BASE_URL)
-                .header(HttpHeaders.ACCEPT, "application/json")
-                .header(HttpHeaders.CONTENT_TYPE, "application/json")
-                .header(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
+    private List<ComponentReport> submit(final JSONObject payload) throws IOException {
+        HttpPost request = new HttpPost(API_BASE_URL);
+        request.addHeader(HttpHeaders.ACCEPT, "application/json");
+        request.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+        request.addHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
+        request.setEntity(new StringEntity(payload.toString()));
         if (apiUsername != null && apiToken != null) {
-            request.basicAuth(apiUsername, apiToken);
+            request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(apiUsername, apiToken));
         }
-        final HttpResponse<JsonNode> jsonResponse = request.body(payload).asJson();
-        if (jsonResponse.getStatus() == 200) {
-            final OssIndexParser parser = new OssIndexParser();
-            return parser.parse(jsonResponse.getBody());
-        } else {
-            handleUnexpectedHttpResponse(LOGGER, API_BASE_URL, jsonResponse.getStatus(), jsonResponse.getStatusText());
+        try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+            HttpEntity responseEntity = response.getEntity();
+            String responseString = EntityUtils.toString(responseEntity);
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                final OssIndexParser parser = new OssIndexParser();
+                return parser.parse(responseString);
+            } else {
+                handleUnexpectedHttpResponse(LOGGER, API_BASE_URL, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+            }
         }
         return new ArrayList<>();
+
     }
 
     private void processResults(final List<ComponentReport> report, final List<Component> componentsScanned) {
         try (QueryManager qm = new QueryManager()) {
-            for (final ComponentReport componentReport: report) {
-                for (final Component c: componentsScanned) {
+            for (final ComponentReport componentReport : report) {
+                for (final Component c : componentsScanned) {
                     //final String componentPurl = component.getPurl().canonicalize(); // todo: put this back when minimizePurl() is removed
                     final String componentPurl = minimizePurl(c.getPurl());
                     final PackageURL sonatypePurl = oldPurlResolver(componentReport.getCoordinates());
@@ -283,7 +294,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                          */
                         final Component component = qm.getObjectByUuid(Component.class, c.getUuid()); // Refresh component and attach to current pm.
                         if (component == null) continue;
-                        for (final ComponentReportVulnerability reportedVuln: componentReport.getVulnerabilities()) {
+                        for (final ComponentReportVulnerability reportedVuln : componentReport.getVulnerabilities()) {
                             if (reportedVuln.getCve() != null) {
                                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(
                                         Vulnerability.Source.NVD, reportedVuln.getCve());
@@ -315,7 +326,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 // a later time, the vulnerability will be published to the NVD. Therefore, add an alias.
                                 // The "startsWith CVE" is unforntuantly necessary as of 11 June 2022, OSS Index has
                                 // multiple vulnerabilities with sonatype identifiers in the cve field.
-                                if (reportedVuln.getCve() != null && reportedVuln.getCve().startsWith("CVE-")) {
+                                if (aliasSyncEnabled && reportedVuln.getCve() != null && reportedVuln.getCve().startsWith("CVE-")) {
                                     LOGGER.debug("Updating vulnerability alias for " + reportedVuln.getId());
                                     final VulnerabilityAlias alias = new VulnerabilityAlias();
                                     alias.setSonatypeId(reportedVuln.getId());
@@ -327,7 +338,6 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 addVulnerabilityToCache(component, vulnerability);
                             }
                         }
-                        Event.dispatch(new ComponentMetricsUpdateEvent(component.getUuid()));
                         updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
                     }
                 }
@@ -362,7 +372,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         if (reference != null) {
             sb.append("* [").append(reference).append("](").append(reference).append(")\n");
         }
-        for (String externalReference: reportedVuln.getExternalReferences()) {
+        for (String externalReference : reportedVuln.getExternalReferences()) {
             sb.append("* [").append(externalReference).append("](").append(externalReference).append(")\n");
         }
         final String references = sb.toString();

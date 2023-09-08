@@ -34,20 +34,22 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonValue;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
-import javax.json.Json;
-import javax.json.JsonValue;
-import javax.json.JsonArray;
+import java.util.UUID;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
 
@@ -133,17 +135,49 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     /**
      * Returns a List of Dependency for the specified Project.
      * @param project the Project to retrieve dependencies of
+     * @param includeMetrics Optionally includes third-party metadata about the component from external repositories
      * @return a List of Dependency objects
      */
     public PaginatedResult getComponents(final Project project, final boolean includeMetrics) {
+        return getComponents(project, includeMetrics, false, false);
+    }
+    /**
+     * Returns a List of Dependency for the specified Project.
+     * @param project the Project to retrieve dependencies of
+     * @param includeMetrics Optionally includes third-party metadata about the component from external repositories
+     * @param onlyOutdated Optionally exclude recent components so only outdated components are shown
+     * @param onlyDirect Optionally exclude transitive dependencies so only direct dependencies are shown
+     * @return a List of Dependency objects
+     */
+    public PaginatedResult getComponents(final Project project, final boolean includeMetrics, final boolean onlyOutdated, final boolean onlyDirect) {
         final PaginatedResult result;
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project");
+        String querySring ="SELECT FROM org.dependencytrack.model.Component WHERE project == :project ";
+        if (filter != null) {
+            querySring += " && (project == :project) && name.toLowerCase().matches(:name)";
+        }
+        if (onlyOutdated) {
+            // Components are considered outdated when metadata does exists, but the version is different than latestVersion
+            // Different should always mean version < latestVersion
+            // Hack JDO using % instead of .* to get the SQL LIKE clause working:
+            querySring +=
+                " && !("+
+                " SELECT FROM org.dependencytrack.model.RepositoryMetaComponent m " +
+                " WHERE m.name == this.name " +
+                " && m.namespace == this.group " +
+                " && m.latestVersion != this.version " +
+                " && this.purl.matches('pkg:' + m.repositoryType.toString().toLowerCase() + '/%') " +
+                " ).isEmpty()";
+        }
+        if (onlyDirect) {
+            querySring +=
+                " && this.project.directDependencies.matches('%\"uuid\":\"'+this.uuid+'\"%') "; // only direct dependencies
+        }
+        final Query<Component> query = pm.newQuery(querySring);
         query.getFetchPlan().setMaxFetchDepth(2);
         if (orderBy == null) {
             query.setOrdering("name asc, version desc");
         }
         if (filter != null) {
-            query.setFilter("project == :project && name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             result = execute(query, project, filterString);
         } else {
@@ -186,8 +220,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             default -> "(blake3 == :hash)";
         };
 
-        final Query<Component> query = pm.newQuery(Component.class);;
-        final Map<String, Object> params = Map.of("hash", hash);
+        final Query<Component> query = pm.newQuery(Component.class);
+        final var params = new HashMap<String, Object>();
+        params.put("hash", hash);
         preprocessACLs(query, queryFilter, params, false);
         return execute(query, params);
     }
@@ -336,6 +371,8 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setDescription(sourceComponent.getDescription());
         component.setCopyright(sourceComponent.getCopyright());
         component.setLicense(sourceComponent.getLicense());
+        component.setLicenseExpression(sourceComponent.getLicenseExpression());
+        component.setLicenseUrl(sourceComponent.getLicenseUrl());
         component.setResolvedLicense(sourceComponent.getResolvedLicense());
         component.setAuthor(sourceComponent.getAuthor());
         // TODO Add support for parent component and children components
@@ -364,6 +401,8 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setDescription(transientComponent.getDescription());
         component.setCopyright(transientComponent.getCopyright());
         component.setLicense(transientComponent.getLicense());
+        component.setLicenseExpression(transientComponent.getLicenseExpression());
+        component.setLicenseUrl(transientComponent.getLicenseUrl());
         component.setResolvedLicense(transientComponent.getResolvedLicense());
         component.setParent(transientComponent.getParent());
         component.setCpe(transientComponent.getCpe());
@@ -548,12 +587,36 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             transientComponent.setUuid(entry.getValue().getUuid());
             transientComponent.setName(entry.getValue().getName());
             transientComponent.setVersion(entry.getValue().getVersion());
+            transientComponent.setPurl(entry.getValue().getPurl());
             transientComponent.setPurlCoordinates(entry.getValue().getPurlCoordinates());
             transientComponent.setDependencyGraph(entry.getValue().getDependencyGraph());
             transientComponent.setExpandDependencyGraph(entry.getValue().isExpandDependencyGraph());
+            if (transientComponent.getPurl() != null) {
+                final RepositoryType type = RepositoryType.resolve(transientComponent.getPurl());
+                if (RepositoryType.UNSUPPORTED != type) {
+                    final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, transientComponent.getPurl().getNamespace(), transientComponent.getPurl().getName());
+                    if (repoMetaComponent != null) {
+                        RepositoryMetaComponent transientRepoMetaComponent = new RepositoryMetaComponent();
+                        transientRepoMetaComponent.setLatestVersion(repoMetaComponent.getLatestVersion());
+                        transientComponent.setRepositoryMeta(transientRepoMetaComponent);
+                    }
+                }
+            }
             dependencyGraph.put(entry.getKey(), transientComponent);
         }
         return dependencyGraph;
+    }
+
+    /**
+     * Returns a list of all {@link DependencyGraphResponse} objects by {@link Component} UUID.
+     * @param uuids a list of {@link Component} UUIDs
+     * @return a list of {@link DependencyGraphResponse} objects
+     * @since 4.9.0
+     */
+    public List<DependencyGraphResponse> getDependencyGraphByUUID(final List<UUID> uuids) {
+        final Query<Component> query = this.getObjectsByUuidsQuery(Component.class, uuids);
+        query.setResult("uuid, name, version, purl, directDependencies, null");
+        return List.copyOf(query.executeResultList(DependencyGraphResponse.class));
     }
 
     private void getParentDependenciesOfComponent(Project project, Component parentNode, Map<String, Component> dependencyGraph, Component searchedComponent) {

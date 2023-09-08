@@ -23,6 +23,7 @@ import org.dependencytrack.RequirementsVerifier;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import java.util.Arrays;
 
 /**
  * Build lucene indexes if needed.
@@ -53,6 +54,11 @@ public class IndexSubsystemInitializer implements ServletContextListener {
      */
     @Override
     public void contextDestroyed(final ServletContextEvent event) {
-        // Nothing to be done
+        LOGGER.info("Closing search indexes");
+
+        Arrays.stream(IndexManager.IndexType.values())
+                .map(IndexManager.IndexType::getClazz)
+                .map(IndexManagerFactory::getIndexManager)
+                .forEach(IndexManager::close);
     }
 }

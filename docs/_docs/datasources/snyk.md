@@ -12,6 +12,8 @@ It is a developer security platform. Integrating directly into development tools
 Dependency-Track integrates with Snyk using its [REST API](https://apidocs.snyk.io/). Dependency-Track does not mirror Snyk entirely,
 but it does consume vulnerabilities on a 'as-identified' basis.
 
+> Access to the Snyk REST API requires an enterprise [plan](https://snyk.io/plans/) subscription. API keys may be tested against Snyk's REST API using their [interactive API documentation](https://apidocs.snyk.io/?version=2023-06-22#auth).
+
 The Snyk integration is disabled by default.
 
 ### Configuration
@@ -25,6 +27,26 @@ To configure the Snyk integration, navigate to *Analyzers* -> *Snyk (Beta)* in t
 | API Version | Version of the Snyk REST API to use. |
 
 ![Snyk Configuration](../../images/screenshots/snyk-configuration.png)
+
+### Vulnerability Aliases
+
+As Snyk vulnerabilities have their own identifier format (e.g. `SNYK-JAVA-ORGECLIPSEJETTY-2945452`),
+Snyk may additionally report identifiers of the same vulnerability in other databases, if applicable.
+
+This makes it possible to correlate Snyk's vulnerabilities with CVEs in the NVD, or GHSAs in GitHub Security Advisories, 
+for example. While oftentimes there will be a one-to-one relationship between Snyk vulnerability and CVEs or GHSAs,
+Snyk does not guarantee that the reported identifiers actually refer to the same vulnerability. Additionally, it was
+observed that:
+
+* some Snyk vulnerabilities may refer to multiple CVEs, or multiple GHSAs
+* multiple Snyk vulnerabilities may refer to the same CVEs and GHSAs
+
+Alias support in Dependency-Track however is based on the assumption that vulnerabilities reported as aliases are indeed
+identical. Given the data Snyk currently provides, it is not possible to guarantee that this assumption will hold true.
+
+Thus, as of Dependency-Track v4.8.0, synchronization of alias information from Snyk (and other sources that provide it),
+can be selectively turned off. For Snyk, synchronization is disabled per default. Enabling it is not recommended at this
+point in time.
 
 ### Rate Limiting
 

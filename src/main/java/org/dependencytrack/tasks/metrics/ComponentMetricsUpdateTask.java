@@ -184,7 +184,7 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                             && a.suppressed == true).isEmpty()
                 """)) {
             query.setParameters(component);
-            query.getFetchPlan().setGroup(Vulnerability.FetchGroup.COMPONENT_METRICS_UPDATE.name());
+            query.getFetchPlan().setGroup(Vulnerability.FetchGroup.METRICS_UPDATE.name());
             return List.copyOf((List<Vulnerability>) query.executeList());
         }
     }

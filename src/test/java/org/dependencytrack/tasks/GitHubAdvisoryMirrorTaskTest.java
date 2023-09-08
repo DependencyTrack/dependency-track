@@ -18,9 +18,11 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.model.IConfigProperty;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AffectedVersionAttribution;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.Vulnerability.Source;
@@ -40,6 +42,14 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testUpdateDatasource() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(),
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                null
+        );
+
         final var ghVuln1 = new GitHubVulnerability();
         ghVuln1.setPackageEcosystem("maven");
         ghVuln1.setPackageName("com.fasterxml.jackson.core:jackson-databind");
@@ -78,6 +88,39 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
 
         final List<VulnerableSoftware> vsList = vuln.getVulnerableSoftware();
         assertThat(vsList).hasSize(2);
+    }
+
+    @Test
+    public void testUpdateDatasourceWithAliasSyncDisabled() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(),
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName(),
+                "false",
+                IConfigProperty.PropertyType.BOOLEAN,
+                null
+        );
+
+        final var ghVuln1 = new GitHubVulnerability();
+        ghVuln1.setPackageEcosystem("maven");
+        ghVuln1.setPackageName("com.fasterxml.jackson.core:jackson-databind");
+        ghVuln1.setVulnerableVersionRange(">=2.13.0,<=2.13.2.0");
+
+        final var ghAdvisory = new GitHubSecurityAdvisory();
+        ghAdvisory.setId("GHSA-57j2-w4cx-62h2");
+        ghAdvisory.setGhsaId("GHSA-57j2-w4cx-62h2");
+        ghAdvisory.setIdentifiers(List.of(Pair.of("CVE", "CVE-2020-36518")));
+        ghAdvisory.setSeverity("HIGH");
+        ghAdvisory.setVulnerabilities(List.of(ghVuln1));
+        ghAdvisory.setPublishedAt(ZonedDateTime.of(2022, 3, 12, 0, 0, 0, 0, ZoneOffset.UTC));
+        ghAdvisory.setUpdatedAt(ZonedDateTime.of(2022, 8, 11, 0, 0, 0, 0, ZoneOffset.UTC));
+
+        final var task = new GitHubAdvisoryMirrorTask();
+        task.updateDatasource(List.of(ghAdvisory));
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.GITHUB, "GHSA-57j2-w4cx-62h2");
+        assertThat(vuln).isNotNull();
+        final List<VulnerabilityAlias> aliases = qm.getVulnerabilityAliases(vuln);
+        assertThat(aliases).isEmpty();
     }
 
     @Test

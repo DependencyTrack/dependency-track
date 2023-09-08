@@ -479,12 +479,6 @@ public abstract class IndexManager implements AutoCloseable {
         Arrays.stream(IndexType.values()).forEach(indexType -> {
             try (QueryManager qm = new QueryManager()) {
                 LOGGER.info("Checking the index " + indexType.name().toLowerCase());
-                if (!isIndexHealthy(indexType)) {
-                    LOGGER.info("(Re)Building index "+indexType.name().toLowerCase());
-                    LOGGER.debug("Dispatching event to reindex "+indexType.name().toLowerCase());
-                    Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, indexType.getClazz()));
-                    return;
-                }
                 final ConfigProperty deltaThresholdProperty = qm.getConfigProperty(
                         SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getGroupName(), SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getPropertyName());
                 double deltaThreshold = Double.parseDouble(deltaThresholdProperty.getPropertyValue());

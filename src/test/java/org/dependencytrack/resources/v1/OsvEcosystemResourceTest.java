@@ -52,7 +52,7 @@ public class OsvEcosystemResourceTest extends ResourceTest {
         super.before();
         qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(),
-                "Maven;DWF",
+                "Maven;npm;Maven",
                 IConfigProperty.PropertyType.STRING,
                 "List of ecosystems");
         qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(),
@@ -63,7 +63,7 @@ public class OsvEcosystemResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getAllEcosystemsTest() {
+    public void getEcosystemsTest() {
         Response response = target(V1_OSV_ECOSYSTEM).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -72,5 +72,14 @@ public class OsvEcosystemResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
         Assert.assertFalse(json.isEmpty());
+        var total = json.size();
+
+        response = target(V1_OSV_ECOSYSTEM + "/inactive").request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(total-2, json.size());
     }
 }

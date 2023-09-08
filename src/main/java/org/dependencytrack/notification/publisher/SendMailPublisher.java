@@ -33,6 +33,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.json.JsonObject;
+import javax.json.JsonString;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -122,17 +123,21 @@ public class SendMailPublisher implements Publisher {
     }
 
     static String[] parseDestination(final JsonObject config) {
-        String destinationString = config.getString("destination");
-        if ((destinationString == null) || destinationString.isEmpty()) {
+        JsonString destinationString = config.getJsonString("destination");
+        if ((destinationString == null) || destinationString.getString().isEmpty()) {
           return null;
         }
-        return destinationString.split(",");
+        return destinationString.getString().split(",");
     }
 
     static String[] parseDestination(final JsonObject config, final List<Team> teams) {
         String[] destination = teams.stream().flatMap(
                 team -> Stream.of(
-                                Arrays.stream(config.getString("destination").split(",")).filter(Predicate.not(String::isEmpty)),
+                                Optional.ofNullable(config.getJsonString("destination"))
+                                        .map(JsonString::getString)
+                                        .stream()
+                                        .flatMap(dest -> Arrays.stream(dest.split(",")))
+                                        .filter(Predicate.not(String::isEmpty)),
                                 Optional.ofNullable(team.getManagedUsers()).orElseGet(Collections::emptyList).stream().map(ManagedUser::getEmail).filter(Objects::nonNull),
                                 Optional.ofNullable(team.getLdapUsers()).orElseGet(Collections::emptyList).stream().map(LdapUser::getEmail).filter(Objects::nonNull),
                                 Optional.ofNullable(team.getOidcUsers()).orElseGet(Collections::emptyList).stream().map(OidcUser::getEmail).filter(Objects::nonNull)

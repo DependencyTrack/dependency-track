@@ -30,6 +30,7 @@ import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
+import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -116,7 +117,7 @@ public class NotificationRouter implements Subscriber {
     }
 
     private boolean canRestrictNotificationToRuleProjects(Notification initialNotification, NotificationRule rule) {
-        return (initialNotification.getSubject() instanceof NewVulnerabilityIdentified || initialNotification.getSubject() instanceof AnalysisDecisionChange) &&
+        return initialNotification.getSubject() instanceof NewVulnerabilityIdentified &&
                 rule.getProjects() != null
                 && rule.getProjects().size() > 0;
     }
@@ -174,6 +175,9 @@ public class NotificationRouter implements Subscriber {
                 limitToProject(rules, result, notification, subject.getComponent().getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final BomConsumedOrProcessed subject) {
+                limitToProject(rules, result, notification, subject.getProject());
+            } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
+                    && notification.getSubject() instanceof final BomProcessingFailed subject) {
                 limitToProject(rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final VexConsumedOrProcessed subject) {

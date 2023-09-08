@@ -147,7 +147,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         );
     }
 
-    protected void handleRequestException(final Logger logger, final Exception e) {
+    protected void handleRequestException(final Logger logger, final Throwable e) {
         logger.error("Request failure", e);
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)

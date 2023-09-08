@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.model.validation.ValidSpdxExpression;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 
 import javax.jdo.annotations.Column;
@@ -105,8 +106,7 @@ public class Component implements Serializable {
     private long id;
 
     @Persistent
-    @Column(name = "AUTHOR", jdbcType = "VARCHAR")
-    @Size(max = 255)
+    @Column(name = "AUTHOR", jdbcType = "CLOB")
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
     private String author;
 
@@ -283,6 +283,12 @@ public class Component implements Serializable {
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license may only contain printable characters")
     private String license;
+
+    @Persistent
+    @Column(name = "LICENSE_EXPRESSION", jdbcType = "CLOB", allowsNull = "true")
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license expression may only contain printable characters")
+    @ValidSpdxExpression
+    private String licenseExpression;
 
     @Persistent
     @Column(name = "LICENSE_URL", jdbcType = "VARCHAR")
@@ -624,6 +630,14 @@ public class Component implements Serializable {
 
     public void setLicense(String license) {
         this.license = StringUtils.abbreviate(license, 255);
+    }
+
+    public String getLicenseExpression() {
+        return licenseExpression;
+    }
+
+    public void setLicenseExpression(String licenseExpression) {
+        this.licenseExpression = licenseExpression;
     }
 
     public String getLicenseUrl() {

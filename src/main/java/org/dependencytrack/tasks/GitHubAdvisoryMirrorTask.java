@@ -29,12 +29,13 @@ import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURLBuilder;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.UnirestInstance;
-import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.tuple.Pair;
-import org.dependencytrack.common.UnirestFactory;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
+import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
@@ -51,6 +52,7 @@ import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
 import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.github.graphql.model.PageableList;
 import org.dependencytrack.persistence.QueryManager;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -64,6 +66,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
 
 public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
@@ -74,13 +77,17 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
     private static final String GITHUB_GRAPHQL_URL = "https://api.github.com/graphql";
 
     private final boolean isEnabled;
+    private final boolean isAliasSyncEnabled;
     private String accessToken;
     private boolean mirroredWithoutErrors = true;
 
     public GitHubAdvisoryMirrorTask() {
         try (final QueryManager qm = new QueryManager()) {
             final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getPropertyName());
-            this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
+            this.isEnabled = enabled != null && Boolean.parseBoolean(enabled.getPropertyValue());
+
+            final ConfigProperty aliasSyncEnabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName());
+            isAliasSyncEnabled = aliasSyncEnabled != null && Boolean.parseBoolean(aliasSyncEnabled.getPropertyValue());
 
             final ConfigProperty accessToken = qm.getConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN.getGroupName(), VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN.getPropertyName());
             if (accessToken != null) {
@@ -97,7 +104,11 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             if (this.accessToken != null) {
                 final long start = System.currentTimeMillis();
                 LOGGER.info("Starting GitHub Advisory mirroring task");
-                retrieveAdvisories(null);
+                try {
+                    retrieveAdvisories(null);
+                } catch (IOException ex) {
+                    handleRequestException(LOGGER, ex);
+                }
                 final long end = System.currentTimeMillis();
                 LOGGER.info("GitHub Advisory mirroring complete");
                 LOGGER.info("Time spent (total): " + (end - start) + "ms");
@@ -123,73 +134,81 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         }
     }
 
-    private void retrieveAdvisories(final String advisoriesEndCursor) {
+    private void retrieveAdvisories(final String advisoriesEndCursor) throws IOException {
         final String queryTemplate = generateQueryTemplate(advisoriesEndCursor);
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HttpResponse<JsonNode> response = ui.post(GITHUB_GRAPHQL_URL)
-                .header("Authorization", "bearer " + accessToken)
-                .header("content-type", "application/json")
-                .header("accept", "application/json")
-                .body(new JSONObject().put("query", queryTemplate))
-                .asJson();
-        if (response.getStatus() < 200 || response.getStatus() > 299) {
-            LOGGER.error("An error was encountered retrieving advisories");
-            LOGGER.error("HTTP Status : " + response.getStatus() + " " + response.getStatusText());
-            LOGGER.debug(queryTemplate);
-            mirroredWithoutErrors = false;
-        } else {
-            GitHubSecurityAdvisoryParser parser = new GitHubSecurityAdvisoryParser();
-            final PageableList pageableList = parser.parse(response.getBody().getObject());
-            updateDatasource(pageableList.getAdvisories());
-            if (pageableList.isHasNextPage()) {
-                retrieveAdvisories(pageableList.getEndCursor());
+        HttpPost request = new HttpPost(GITHUB_GRAPHQL_URL);
+        request.addHeader("Authorization", "bearer " + accessToken);
+        request.addHeader("content-type", "application/json");
+        request.addHeader("accept", "application/json");
+        var jsonBody = new JSONObject();
+        jsonBody.put("query", queryTemplate);
+        var stringEntity = new StringEntity(jsonBody.toString());
+        request.setEntity(stringEntity);
+        try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+            if (response.getStatusLine().getStatusCode() < HttpStatus.SC_OK || response.getStatusLine().getStatusCode() >= HttpStatus.SC_MULTIPLE_CHOICES) {
+                LOGGER.error("An error was encountered retrieving advisories with HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
+                LOGGER.debug(queryTemplate);
+                mirroredWithoutErrors = false;
+            } else {
+                var parser = new GitHubSecurityAdvisoryParser();
+                String responseString = EntityUtils.toString(response.getEntity());
+                var jsonObject = new JSONObject(responseString);
+                final PageableList pageableList = parser.parse(jsonObject);
+                updateDatasource(pageableList.getAdvisories());
+                if (pageableList.isHasNextPage()) {
+                    retrieveAdvisories(pageableList.getEndCursor());
+                }
             }
-        }
-        if (mirroredWithoutErrors) {
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.DATASOURCE_MIRRORING)
-                    .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
-                    .content("Mirroring of GitHub Advisories completed successfully")
-                    .level(NotificationLevel.INFORMATIONAL)
-            );
-        } else {
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.DATASOURCE_MIRRORING)
-                    .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
-                    .content("An error occurred mirroring the contents of GitHub Advisories. Check log for details.")
-                    .level(NotificationLevel.ERROR)
-            );
+
+            if (mirroredWithoutErrors) {
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.DATASOURCE_MIRRORING)
+                        .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
+                        .content("Mirroring of GitHub Advisories completed successfully")
+                        .level(NotificationLevel.INFORMATIONAL)
+                );
+            } else {
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.DATASOURCE_MIRRORING)
+                        .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
+                        .content("An error occurred mirroring the contents of GitHub Advisories. Check log for details.")
+                        .level(NotificationLevel.ERROR)
+                );
+            }
         }
     }
 
     /**
      * Synchronizes the advisories that were downloaded with the internal Dependency-Track database.
+     *
      * @param advisories the results to synchronize
      */
     void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
-        LOGGER.info("Updating datasource with GitHub advisories");
-        try (QueryManager qm = new QueryManager()) {
-            for (final GitHubSecurityAdvisory advisory: advisories) {
+        LOGGER.debug("Updating datasource with GitHub advisories");
+        try (QueryManager qm = new QueryManager().withL2CacheDisabled()) {
+            for (final GitHubSecurityAdvisory advisory : advisories) {
                 LOGGER.debug("Synchronizing GitHub advisory: " + advisory.getGhsaId());
                 final Vulnerability mappedVulnerability = mapAdvisoryToVulnerability(qm, advisory);
                 final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(mappedVulnerability.getSource(), mappedVulnerability.getVulnId()));
                 final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mappedVulnerability, false);
                 List<VulnerableSoftware> vsList = new ArrayList<>();
-                for (GitHubVulnerability ghvuln: advisory.getVulnerabilities()) {
+                for (GitHubVulnerability ghvuln : advisory.getVulnerabilities()) {
                     final VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, ghvuln, advisory);
                     if (vs != null) {
                         vsList.add(vs);
                     }
-                    for (Pair<String,String> identifier: advisory.getIdentifiers()) {
-                        if (identifier != null && identifier.getLeft() != null
-                                && "CVE".equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
-                            LOGGER.debug("Updating vulnerability alias for " + advisory.getGhsaId());
-                            final VulnerabilityAlias alias = new VulnerabilityAlias();
-                            alias.setGhsaId(advisory.getGhsaId());
-                            alias.setCveId(identifier.getRight());
-                            qm.synchronizeVulnerabilityAlias(alias);
+                    if (isAliasSyncEnabled) {
+                        for (Pair<String, String> identifier : advisory.getIdentifiers()) {
+                            if (identifier != null && identifier.getLeft() != null
+                                    && "CVE".equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
+                                LOGGER.debug("Updating vulnerability alias for " + advisory.getGhsaId());
+                                final VulnerabilityAlias alias = new VulnerabilityAlias();
+                                alias.setGhsaId(advisory.getGhsaId());
+                                alias.setCveId(identifier.getRight());
+                                qm.synchronizeVulnerabilityAlias(alias);
+                            }
                         }
                     }
                 }
@@ -206,6 +225,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
     /**
      * Helper method that maps an GitHub SecurityAdvisory object to a Dependency-Track vulnerability object.
+     *
      * @param advisory the GitHub SecurityAdvisory to map
      * @return a Dependency-Track Vulnerability object
      */
@@ -230,7 +250,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         //vuln.setVulnerableVersions(advisory.getVulnerableVersions());
         //vuln.setPatchedVersions(advisory.getPatchedVersions());
         if (advisory.getCwes() != null) {
-            for (int i=0; i<advisory.getCwes().size(); i++) {
+            for (int i = 0; i < advisory.getCwes().size(); i++) {
                 final Cwe cwe = CweResolver.getInstance().resolve(qm, advisory.getCwes().get(i));
                 if (cwe != null) {
                     vuln.addCwe(cwe);
@@ -258,7 +278,8 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
     /**
      * Helper method that maps an GitHub Vulnerability object to a Dependency-Track VulnerableSoftware object.
-     * @param qm a QueryManager
+     *
+     * @param qm   a QueryManager
      * @param vuln the GitHub Vulnerability to map
      * @return a Dependency-Track VulnerableSoftware object
      */
@@ -272,7 +293,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             String versionEndExcluding = null;
             if (vuln.getVulnerableVersionRange() != null) {
                 final String[] parts = Arrays.stream(vuln.getVulnerableVersionRange().split(",")).map(String::trim).toArray(String[]::new);
-                for (String part: parts) {
+                for (String part : parts) {
                     if (part.startsWith(">=")) {
                         versionStartIncluding = part.replace(">=", "").trim();
                     } else if (part.startsWith(">")) {
@@ -312,17 +333,33 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         return null;
     }
 
+    /**
+     * Map GitHub ecosystem to PackageURL type
+     *
+     * @param ecosystem GitHub ecosystem
+     * @return the PackageURL for the ecosystem
+     * @see https://github.com/github/advisory-database
+     */
     private String mapGitHubEcosystemToPurlType(final String ecosystem) {
         switch (ecosystem.toUpperCase()) {
-            case "MAVEN":  return PackageURL.StandardTypes.MAVEN;
-            case "RUST":  return PackageURL.StandardTypes.CARGO;
-            case "PIP":  return PackageURL.StandardTypes.PYPI;
-            case "RUBYGEMS":  return PackageURL.StandardTypes.GEM;
-            case "GO":  return PackageURL.StandardTypes.GOLANG;
-            case "NPM":  return PackageURL.StandardTypes.NPM;
-            case "COMPOSER":  return PackageURL.StandardTypes.COMPOSER;
-            case "NUGET":  return PackageURL.StandardTypes.NUGET;
-            default: return null;
+            case "MAVEN":
+                return PackageURL.StandardTypes.MAVEN;
+            case "RUST":
+                return PackageURL.StandardTypes.CARGO;
+            case "PIP":
+                return PackageURL.StandardTypes.PYPI;
+            case "RUBYGEMS":
+                return PackageURL.StandardTypes.GEM;
+            case "GO":
+                return PackageURL.StandardTypes.GOLANG;
+            case "NPM":
+                return PackageURL.StandardTypes.NPM;
+            case "COMPOSER":
+                return PackageURL.StandardTypes.COMPOSER;
+            case "NUGET":
+                return PackageURL.StandardTypes.NUGET;
+            default:
+                return null;
         }
     }
 
@@ -346,4 +383,14 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         return null;
     }
 
+    protected void handleRequestException(final Logger logger, final Exception e) {
+        logger.error("Request failure", e);
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.ANALYZER)
+                .title(NotificationConstants.Title.ANALYZER_ERROR)
+                .content("An error occurred while communicating with a vulnerability intelligence source. Check log for details. " + e.getMessage())
+                .level(NotificationLevel.ERROR)
+        );
+    }
 }

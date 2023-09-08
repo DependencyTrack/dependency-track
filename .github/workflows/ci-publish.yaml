@@ -21,13 +21,13 @@ jobs:
             exit 1
           fi
       - name: Checkout Repository
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.6.0
 
       - name: Parse Version from POM
         id: parse
         run: |-
           VERSION=`yq -p=xml '.project.version' pom.xml`
-          echo "::set-output name=version::${VERSION}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
   call-build:
     needs:
@@ -47,10 +47,10 @@ jobs:
       - call-build
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.6.0
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v3.0.1
+        uses: actions/download-artifact@v3.0.2
         with:
           name: assembled-wars
           path: target

@@ -7,7 +7,7 @@ updates:
   - package-ecosystem: docker
     directory: /src/main/docker
     schedule:
-      interval: weekly
+      interval: daily
   - package-ecosystem: github-actions
     directory: /
     schedule:

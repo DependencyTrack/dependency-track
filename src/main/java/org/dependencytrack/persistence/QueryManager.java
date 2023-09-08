@@ -30,6 +30,8 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
+import com.google.common.collect.Lists;
+import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
@@ -75,17 +77,21 @@ import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-
+import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 import javax.json.JsonObject;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -313,6 +319,22 @@ public class QueryManager extends AlpineQueryManager {
         return cacheQueryManager;
     }
 
+    /**
+     * Disables the second level cache for this {@link QueryManager} instance.
+     * <p>
+     * Disabling the L2 cache is useful in situations where large amounts of objects
+     * are created or updated in close succession, and it's unlikely that they'll be
+     * accessed again anytime soon. Keeping those objects in cache would unnecessarily
+     * blow up heap usage.
+     *
+     * @return This {@link QueryManager} instance
+     * @see <a href="https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#cache_level2">L2 Cache docs</a>
+     */
+    public QueryManager withL2CacheDisabled() {
+        pm.setProperty(PropertyNames.PROPERTY_CACHE_L2_TYPE, "none");
+        return this;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// BEGIN WRAPPER METHODS                                                                                      ////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,6 +364,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getProjects(final String name, final boolean excludeInactive, final boolean onlyRoot) {
         return getProjectQueryManager().getProjects(name, excludeInactive, onlyRoot);
+    }
+
+    public Project getProject(final String uuid) {
+        return getProjectQueryManager().getProject(uuid);
     }
 
     public Project getProject(final String name, final String version) {
@@ -531,6 +557,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public License getLicense(String licenseId) {
         return getLicenseQueryManager().getLicense(licenseId);
+    }
+
+    public License getCustomLicense(String licenseName) {
+        return getLicenseQueryManager().getCustomLicense(licenseName);
     }
 
     License synchronizeLicense(License license, boolean commitIndex) {
@@ -866,6 +896,10 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().getComponents(project, includeMetrics);
     }
 
+    public PaginatedResult getComponents(final Project project, final boolean includeMetrics, final boolean onlyOutdated, final boolean onlyDirect) {
+        return getComponentQueryManager().getComponents(project, includeMetrics, onlyOutdated, onlyDirect);
+    }
+
     public ServiceComponent matchServiceIdentity(final Project project, final ComponentIdentity cid) {
         return getServiceComponentQueryManager().matchServiceIdentity(project, cid);
     }
@@ -1056,8 +1090,8 @@ public class QueryManager extends AlpineQueryManager {
         return getMetricsQueryManager().getDependencyMetricsSince(component, since);
     }
 
-    public void synchronizeVulnerabilityMetrics(VulnerabilityMetrics metric) {
-        getMetricsQueryManager().synchronizeVulnerabilityMetrics(metric);
+    public void synchronizeVulnerabilityMetrics(List<VulnerabilityMetrics> metrics) {
+        getMetricsQueryManager().synchronizeVulnerabilityMetrics(metrics);
     }
 
     void deleteMetrics(Project project) {
@@ -1258,6 +1292,65 @@ public class QueryManager extends AlpineQueryManager {
         }
     }
 
+    /**
+     * Detach a persistent object using the provided fetch groups.
+     * <p>
+     * {@code fetchGroups} will override any other fetch groups set on the {@link PersistenceManager},
+     * even the default one. If inclusion of the default fetch group is desired, it must be
+     * included in {@code fetchGroups} explicitly.
+     * <p>
+     * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
+     *
+     * @param object      The persistent object to detach
+     * @param fetchGroups Fetch groups to use for this operation
+     * @param <T>         Type of the object
+     * @return The detached object
+     * @since 4.8.0
+     */
+    public <T> T detachWithGroups(final T object, final List<String> fetchGroups) {
+        final int origDetachOptions = pm.getFetchPlan().getDetachmentOptions();
+        final Set<?> origFetchGroups = pm.getFetchPlan().getGroups();
+        try {
+            pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+            pm.getFetchPlan().setGroups(fetchGroups);
+            return pm.detachCopy(object);
+        } finally {
+            // Restore previous settings to not impact other operations performed
+            // by this persistence manager.
+            pm.getFetchPlan().setDetachmentOptions(origDetachOptions);
+            pm.getFetchPlan().setGroups(origFetchGroups);
+        }
+    }
+
+    /**
+     * Fetch a list of object from the datastore by theirs {@link UUID}
+     *
+     * @param clazz Class of the object to fetch
+     * @param uuids {@link UUID} list of uuids to fetch
+     * @return The list of objects found
+     * @param <T> Type of the object
+     * @since 4.9.0
+     */
+    public <T> List<T> getObjectsByUuids(final Class<T> clazz, final List<UUID> uuids) {
+        final Query<T> query = getObjectsByUuidsQuery(clazz, uuids);
+        return query.executeList();
+    }
+
+    /**
+     * Create the query to fetch a list of object from the datastore by theirs {@link UUID}
+     *
+     * @param clazz Class of the object to fetch
+     * @param uuids {@link UUID} list of uuids to fetch
+     * @return The query to execute
+     * @param <T> Type of the object
+     * @since 4.9.0
+     */
+    public <T> Query<T> getObjectsByUuidsQuery(final Class<T> clazz, final List<UUID> uuids) {
+        final Query<T> query = pm.newQuery(clazz, ":uuids.contains(uuid)");
+        query.setParameters(uuids);
+        return query;
+    }
+
     private static List<Team> getTeams(final Principal principal) {
         if (principal instanceof UserPrincipal) {
             final UserPrincipal userPrincipal = ((UserPrincipal) principal);
@@ -1331,13 +1424,52 @@ public class QueryManager extends AlpineQueryManager {
         }
     }
 
+    /**
+     * Convenience method to execute a given {@link Supplier} within the context of a {@link Transaction}.
+     * <p>
+     * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
+     *
+     * @param supplier The {@link Supplier} to execute
+     * @since 4.9.0
+     */
+    public <T> T runInTransaction(final Supplier<T> supplier) {
+        final Transaction trx = pm.currentTransaction();
+        try {
+            trx.begin();
+            final T result = supplier.get();
+            trx.commit();
+            return result;
+        } finally {
+            if (trx.isActive()) {
+                trx.rollback();
+            }
+        }
+    }
+
+    /**
+     * Convenience method to ensure that any active transaction is rolled back.
+     * <p>
+     * Calling this method may sometimes be necessary due to {@link AlpineQueryManager#persist(Object)}
+     * no performing a rollback in case committing the transaction fails. This can impact other persistence
+     * operations performed in the same session (e.g. {@code NucleusTransactionException: Invalid state. Transaction has already started}).
+     *
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2677">Issue 2677</a>
+     * @since 4.8.0
+     */
+    public void ensureNoActiveTransaction() {
+        final Transaction trx = pm.currentTransaction();
+        if (trx != null && trx.isActive()) {
+            trx.rollback();
+        }
+    }
+
     public void recursivelyDeleteTeam(Team team) {
         pm.setProperty("datanucleus.query.sql.allowAll", true);
         final Transaction trx = pm.currentTransaction();
         pm.currentTransaction().begin();
         pm.deletePersistentAll(team.getApiKeys());
         String aclDeleteQuery = """
-            DELETE FROM PROJECT_ACCESS_TEAMS WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?      
+            DELETE FROM \"PROJECT_ACCESS_TEAMS\" WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?
         """;
         final Query query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, aclDeleteQuery);
         query.executeWithArray(team.getId());
@@ -1345,4 +1477,51 @@ public class QueryManager extends AlpineQueryManager {
         pm.currentTransaction().commit();
     }
 
+    /**
+     * Returns a list of all {@link DependencyGraphResponse} objects by {@link Component} UUID.
+     * @param uuids a list of {@link Component} UUIDs
+     * @return a list of {@link DependencyGraphResponse} objects
+     * @since 4.9.0
+     */
+    public List<DependencyGraphResponse> getComponentDependencyGraphByUuids(final List<UUID> uuids) {
+        return this.getComponentQueryManager().getDependencyGraphByUUID(uuids);
+    }
+
+    /**
+     * Returns a list of all {@link DependencyGraphResponse} objects by {@link ServiceComponent} UUID.
+     * @param uuids a list of {@link ServiceComponent} UUIDs
+     * @return a list of {@link DependencyGraphResponse} objects
+     * @since 4.9.0
+     */
+    public List<DependencyGraphResponse> getServiceDependencyGraphByUuids(final List<UUID> uuids) {
+        return this.getServiceComponentQueryManager().getDependencyGraphByUUID(uuids);
+    }
+
+    /**
+     * Returns a list of all {@link RepositoryMetaComponent} objects by {@link RepositoryQueryManager.RepositoryMetaComponentSearch} with batchSize 10.
+     * @param list a list of {@link RepositoryQueryManager.RepositoryMetaComponentSearch}
+     * @return a list of {@link RepositoryMetaComponent} objects
+     * @since 4.9.0
+     */
+    public List<RepositoryMetaComponent> getRepositoryMetaComponentsBatch(final List<RepositoryQueryManager.RepositoryMetaComponentSearch> list) {
+        return getRepositoryMetaComponentsBatch(list, 10);
+    }
+
+    /**
+     * Returns a list of all {@link RepositoryMetaComponent} objects by {@link RepositoryQueryManager.RepositoryMetaComponentSearch} UUID.
+     * @param list a list of {@link RepositoryQueryManager.RepositoryMetaComponentSearch}
+     * @param batchSize the batch size
+     * @return a list of {@link RepositoryMetaComponent} objects
+     * @since 4.9.0
+     */
+    public List<RepositoryMetaComponent> getRepositoryMetaComponentsBatch(final List<RepositoryQueryManager.RepositoryMetaComponentSearch> list, final int batchSize) {
+        final List<RepositoryMetaComponent> results = new ArrayList<>(list.size());
+
+        // Split the list into batches
+        for (List<RepositoryQueryManager.RepositoryMetaComponentSearch> batch : Lists.partition(list, batchSize)) {
+            results.addAll(this.getRepositoryQueryManager().getRepositoryMetaComponents(batch));
+        }
+
+        return results;
+    }
 }

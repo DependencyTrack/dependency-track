@@ -39,6 +39,9 @@
         <listener-class>alpine.server.persistence.PersistenceManagerFactory</listener-class>
     </listener>
     <listener>
+        <listener-class>org.dependencytrack.health.HealthCheckInitializer</listener-class>
+    </listener>
+    <listener>
         <listener-class>org.dependencytrack.persistence.DefaultObjectGenerator</listener-class>
     </listener>
     <listener>
@@ -50,13 +53,16 @@
     <listener>
         <listener-class>org.dependencytrack.search.IndexSubsystemInitializer</listener-class>
     </listener>
+    <listener>
+        <listener-class>org.dependencytrack.persistence.H2WebConsoleInitializer</listener-class>
+    </listener>
 
     <filter>
         <filter-name>WhitelistUrlFilter</filter-name>
         <filter-class>alpine.server.filters.WhitelistUrlFilter</filter-class>
         <init-param>
             <param-name>allowUrls</param-name>
-            <param-value>/index.html,/css,/fonts,/img,/js,/static,/favicon.ico,/api,/metrics,/mirror,/.well-known</param-value>
+            <param-value>/index.html,/css,/fonts,/img,/js,/static,/favicon.ico,/api,/health,/metrics,/mirror,/.well-known</param-value>
         </init-param>
         <init-param>
             <param-name>forwardTo</param-name>
@@ -64,7 +70,7 @@
         </init-param>
         <init-param>
             <param-name>forwardExcludes</param-name>
-            <param-value>/api,/metrics,/mirror</param-value>
+            <param-value>/api,/health,/metrics,/mirror</param-value>
         </init-param>
     </filter>
     <filter-mapping>
@@ -126,6 +132,16 @@
     <servlet-mapping>
         <servlet-name>DependencyTrack</servlet-name>
         <url-pattern>/api/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Health</servlet-name>
+        <servlet-class>alpine.server.servlets.HealthServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Health</servlet-name>
+        <url-pattern>/health/*</url-pattern>
     </servlet-mapping>
 
     <servlet>

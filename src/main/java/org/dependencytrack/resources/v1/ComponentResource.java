@@ -34,18 +34,17 @@ import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
+import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
-
-import java.util.List;
-import java.util.Map;
-
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -58,6 +57,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
+import java.util.Map;
 
 /**
  * JAX-RS resources for processing components.
@@ -84,12 +85,18 @@ public class ComponentResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getAllComponents(@PathParam("uuid") String uuid) {
+    public Response getAllComponents(
+            @ApiParam(value = "The UUID of the project to retrieve components for", required = true)
+            @PathParam("uuid") String uuid,
+            @ApiParam(value = "Optionally exclude recent components so only outdated components are returned", required = false)
+            @QueryParam("onlyOutdated") boolean onlyOutdated,
+            @ApiParam(value = "Optionally exclude transitive dependencies so only direct dependencies are returned", required = false)
+            @QueryParam("onlyDirect") boolean onlyDirect)  {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                    final PaginatedResult result = qm.getComponents(project, true);
+                    final PaginatedResult result = qm.getComponents(project, true, onlyOutdated, onlyDirect);
                     return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
@@ -115,13 +122,22 @@ public class ComponentResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByUuid(
             @ApiParam(value = "The UUID of the component to retrieve", required = true)
-            @PathParam("uuid") String uuid) {
+            @PathParam("uuid") String uuid,
+            @ApiParam(value = "Optionally includes third-party metadata about the component from external repositories", required = false)
+            @QueryParam("includeRepositoryMetaData") boolean includeRepositoryMetaData) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
                 final Project project = component.getProject();
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     final Component detachedComponent = qm.detach(Component.class, component.getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
+                    if (includeRepositoryMetaData && detachedComponent.getPurl() != null) {
+                        final RepositoryType type = RepositoryType.resolve(detachedComponent.getPurl());
+                        if (RepositoryType.UNSUPPORTED != type) {
+                            final RepositoryMetaComponent repoMetaComponent = qm.getRepositoryMetaComponent(type, detachedComponent.getPurl().getNamespace(), detachedComponent.getPurl().getName());
+                            detachedComponent.setRepositoryMeta(repoMetaComponent);
+                        }
+                    }
                     return Response.ok(detachedComponent).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();
@@ -236,6 +252,8 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "group"),
                 validator.validateProperty(jsonComponent, "description"),
                 validator.validateProperty(jsonComponent, "license"),
+                validator.validateProperty(jsonComponent, "licenseExpression"),
+                validator.validateProperty(jsonComponent, "licenseUrl"),
                 validator.validateProperty(jsonComponent, "filename"),
                 validator.validateProperty(jsonComponent, "classifier"),
                 validator.validateProperty(jsonComponent, "cpe"),
@@ -289,18 +307,31 @@ public class ComponentResource extends AlpineResource {
             component.setSha3_512(StringUtils.trimToNull(jsonComponent.getSha3_512()));
             if (resolvedLicense != null) {
                 component.setLicense(null);
+                component.setLicenseExpression(null);
+                component.setLicenseUrl(StringUtils.trimToNull(jsonComponent.getLicenseUrl()));
                 component.setResolvedLicense(resolvedLicense);
-            } else {
-                component.setLicense(StringUtils.trimToNull(jsonComponent.getLicense()));
+            } else if (StringUtils.trimToNull(jsonComponent.getLicense()) != null) {
+                component.setLicense(StringUtils.trim(jsonComponent.getLicense()));
+                component.setLicenseExpression(null);
+                component.setLicenseUrl(StringUtils.trimToNull(jsonComponent.getLicenseUrl()));
+                component.setResolvedLicense(null);
+            } else if (StringUtils.trimToNull(jsonComponent.getLicenseExpression()) != null) {
+                component.setLicense(null);
+                component.setLicenseExpression(StringUtils.trim(jsonComponent.getLicenseExpression()));
+                component.setLicenseUrl(null);
                 component.setResolvedLicense(null);
             }
-            component.setLicenseUrl(StringUtils.trimToNull(jsonComponent.getLicenseUrl()));
             component.setParent(parent);
             component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
             component = qm.createComponent(component, true);
-            Event.dispatch(new VulnerabilityAnalysisEvent(component));
-            Event.dispatch(new RepositoryMetaEvent(List.of(component)));
+            Event.dispatch(
+                new VulnerabilityAnalysisEvent(component)
+                // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
+                // as both might be needed in policy evaluation
+                .onSuccess(new RepositoryMetaEvent(List.of(component)))
+                .onSuccess(new PolicyEvaluationEvent(component))
+            );
             return Response.status(Response.Status.CREATED).entity(component).build();
         }
     }
@@ -326,6 +357,7 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "group"),
                 validator.validateProperty(jsonComponent, "description"),
                 validator.validateProperty(jsonComponent, "license"),
+                validator.validateProperty(jsonComponent, "licenseExpression"),
                 validator.validateProperty(jsonComponent, "licenseUrl"),
                 validator.validateProperty(jsonComponent, "filename"),
                 validator.validateProperty(jsonComponent, "classifier"),
@@ -374,17 +406,35 @@ public class ComponentResource extends AlpineResource {
                 final License resolvedLicense = qm.getLicense(jsonComponent.getLicense());
                 if (resolvedLicense != null) {
                     component.setLicense(null);
+                    component.setLicenseExpression(null);
+                    component.setLicenseUrl(StringUtils.trimToNull(jsonComponent.getLicenseUrl()));
                     component.setResolvedLicense(resolvedLicense);
+                } else if (StringUtils.trimToNull(jsonComponent.getLicense()) != null) {
+                    component.setLicense(StringUtils.trim(jsonComponent.getLicense()));
+                    component.setLicenseExpression(null);
+                    component.setLicenseUrl(StringUtils.trimToNull(jsonComponent.getLicenseUrl()));
+                    component.setResolvedLicense(null);
+                } else if (StringUtils.trimToNull(jsonComponent.getLicenseExpression()) != null) {
+                    component.setLicense(null);
+                    component.setLicenseExpression(StringUtils.trim(jsonComponent.getLicenseExpression()));
+                    component.setLicenseUrl(null);
+                    component.setResolvedLicense(null);
                 } else {
-                    component.setLicense(StringUtils.trimToNull(jsonComponent.getLicense()));
+                    component.setLicense(null);
+                    component.setLicenseExpression(null);
+                    component.setLicenseUrl(null);
                     component.setResolvedLicense(null);
                 }
-                component.setLicenseUrl(StringUtils.trimToNull(jsonComponent.getLicenseUrl()));
                 component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
                 component = qm.updateComponent(component, true);
-                Event.dispatch(new VulnerabilityAnalysisEvent(component));
-                Event.dispatch(new RepositoryMetaEvent(List.of(component)));
+                Event.dispatch(
+                    new VulnerabilityAnalysisEvent(component)
+                    // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
+// as both might be needed in policy evaluation
+                    .onSuccess(new RepositoryMetaEvent(List.of(component)))
+                    .onSuccess(new PolicyEvaluationEvent(component))
+                );
                 return Response.ok(component).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();

@@ -30,7 +30,11 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.InputStream;
 
-import static org.apache.xerces.jaxp.JAXPConstants.*;
+import static org.apache.xerces.jaxp.JAXPConstants.JAXP_SCHEMA_LANGUAGE;
+
+import static org.apache.xerces.jaxp.JAXPConstants.JAXP_SCHEMA_SOURCE;
+import static org.apache.xerces.jaxp.JAXPConstants.W3C_XML_SCHEMA;
+
 
 public final class XmlUtil {
 

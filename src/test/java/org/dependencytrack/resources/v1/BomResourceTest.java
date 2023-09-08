@@ -112,12 +112,14 @@ public class BomResourceTest extends ResourceTest {
         componentWithoutVuln.setProject(project);
         componentWithoutVuln.setName("acme-lib-a");
         componentWithoutVuln.setVersion("1.0.0");
+        componentWithoutVuln.setDirectDependencies("[]");
         componentWithoutVuln = qm.createComponent(componentWithoutVuln, false);
 
         var componentWithVuln = new Component();
         componentWithVuln.setProject(project);
         componentWithVuln.setName("acme-lib-b");
         componentWithVuln.setVersion("1.0.0");
+        componentWithVuln.setDirectDependencies("[]");
         componentWithVuln = qm.createComponent(componentWithVuln, false);
         qm.addVulnerability(vulnerability, componentWithVuln, AnalyzerIdentity.INTERNAL_ANALYZER);
 
@@ -125,9 +127,31 @@ public class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setProject(project);
         componentWithVulnAndAnalysis.setName("acme-lib-c");
         componentWithVulnAndAnalysis.setVersion("1.0.0");
+        componentWithVulnAndAnalysis.setDirectDependencies("[]");
         componentWithVulnAndAnalysis = qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, AnalyzerIdentity.INTERNAL_ANALYZER);
         qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+
+        // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
+        componentWithoutVuln.setDirectDependencies("""
+                [
+                    {"uuid": "%s"}
+                ]
+                """.formatted(componentWithVuln.getUuid()));
+
+        // Make project depend on componentWithoutVuln (acme-lib-a)
+        // and componentWithVulnAndAnalysis (acme-lib-c)
+        project.setDirectDependencies("""
+                [
+                    {"uuid": "%s"},
+                    {"uuid": "%s"}
+                ]
+                """
+                .formatted(
+                        componentWithoutVuln.getUuid(),
+                        componentWithVulnAndAnalysis.getUuid()
+                ));
+        qm.persist(project);
 
         final Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .queryParam("variant", "inventory")
@@ -145,7 +169,7 @@ public class BomResourceTest extends ResourceTest {
                 .isEqualTo(json("""
                 {
                     "bomFormat": "CycloneDX",
-                    "specVersion": "1.4",
+                    "specVersion": "1.5",
                     "serialNumber": "${json-unit.ignore}",
                     "version": 1,
                     "metadata": {
@@ -183,9 +207,40 @@ public class BomResourceTest extends ResourceTest {
                             "name": "acme-lib-c",
                             "version": "1.0.0"
                         }
+                    ],
+                    "dependencies": [
+                        {
+                            "ref": "${json-unit.matches:projectUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithoutVulnUuid}",
+                                "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithoutVulnUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithVulnUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnUuid}",
+                            "dependsOn": []
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
+                            "dependsOn": []
+                        }
                     ]
                 }
                 """));
+
+        // Ensure the dependency graph did not get deleted during export.
+        // https://github.com/DependencyTrack/dependency-track/issues/2494
+        qm.getPersistenceManager().refreshAll(project, componentWithoutVuln, componentWithVuln, componentWithVulnAndAnalysis);
+        assertThat(project.getDirectDependencies()).isNotNull();
+        assertThat(componentWithoutVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVulnAndAnalysis.getDirectDependencies()).isNotNull();
     }
 
     @Test
@@ -205,12 +260,14 @@ public class BomResourceTest extends ResourceTest {
         componentWithoutVuln.setProject(project);
         componentWithoutVuln.setName("acme-lib-a");
         componentWithoutVuln.setVersion("1.0.0");
+        componentWithoutVuln.setDirectDependencies("[]");
         componentWithoutVuln = qm.createComponent(componentWithoutVuln, false);
 
         var componentWithVuln = new Component();
         componentWithVuln.setProject(project);
         componentWithVuln.setName("acme-lib-b");
         componentWithVuln.setVersion("1.0.0");
+        componentWithVuln.setDirectDependencies("[]");
         componentWithVuln = qm.createComponent(componentWithVuln, false);
         qm.addVulnerability(vulnerability, componentWithVuln, AnalyzerIdentity.INTERNAL_ANALYZER);
 
@@ -218,9 +275,31 @@ public class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setProject(project);
         componentWithVulnAndAnalysis.setName("acme-lib-c");
         componentWithVulnAndAnalysis.setVersion("1.0.0");
+        componentWithVulnAndAnalysis.setDirectDependencies("[]");
         componentWithVulnAndAnalysis = qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, AnalyzerIdentity.INTERNAL_ANALYZER);
         qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+
+        // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
+        componentWithoutVuln.setDirectDependencies("""
+                [
+                    {"uuid": "%s"}
+                ]
+                """.formatted(componentWithVuln.getUuid()));
+
+        // Make project depend on componentWithoutVuln (acme-lib-a)
+        // and componentWithVulnAndAnalysis (acme-lib-c)
+        project.setDirectDependencies("""
+                [
+                    {"uuid": "%s"},
+                    {"uuid": "%s"}
+                ]
+                """
+                .formatted(
+                        componentWithoutVuln.getUuid(),
+                        componentWithVulnAndAnalysis.getUuid()
+                ));
+        qm.persist(project);
 
         final Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .queryParam("variant", "withVulnerabilities")
@@ -239,7 +318,7 @@ public class BomResourceTest extends ResourceTest {
                 .isEqualTo(json("""
                 {
                     "bomFormat": "CycloneDX",
-                    "specVersion": "1.4",
+                    "specVersion": "1.5",
                     "serialNumber": "${json-unit.ignore}",
                     "version": 1,
                     "metadata": {
@@ -276,6 +355,29 @@ public class BomResourceTest extends ResourceTest {
                             "bom-ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
                             "name": "acme-lib-c",
                             "version": "1.0.0"
+                        }
+                    ],
+                    "dependencies": [
+                        {
+                            "ref": "${json-unit.matches:projectUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithoutVulnUuid}",
+                                "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithoutVulnUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithVulnUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnUuid}",
+                            "dependsOn": []
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
+                            "dependsOn": []
                         }
                     ],
                     "vulnerabilities": [
@@ -324,6 +426,14 @@ public class BomResourceTest extends ResourceTest {
                     ]
                 }
                 """));
+
+        // Ensure the dependency graph did not get deleted during export.
+        // https://github.com/DependencyTrack/dependency-track/issues/2494
+        qm.getPersistenceManager().refreshAll(project, componentWithoutVuln, componentWithVuln, componentWithVulnAndAnalysis);
+        assertThat(project.getDirectDependencies()).isNotNull();
+        assertThat(componentWithoutVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVulnAndAnalysis.getDirectDependencies()).isNotNull();
     }
 
     @Test
@@ -343,12 +453,14 @@ public class BomResourceTest extends ResourceTest {
         componentWithoutVuln.setProject(project);
         componentWithoutVuln.setName("acme-lib-a");
         componentWithoutVuln.setVersion("1.0.0");
+        componentWithoutVuln.setDirectDependencies("[]");
         componentWithoutVuln = qm.createComponent(componentWithoutVuln, false);
 
         var componentWithVuln = new Component();
         componentWithVuln.setProject(project);
         componentWithVuln.setName("acme-lib-b");
         componentWithVuln.setVersion("1.0.0");
+        componentWithVuln.setDirectDependencies("[]");
         componentWithVuln = qm.createComponent(componentWithVuln, false);
         qm.addVulnerability(vulnerability, componentWithVuln, AnalyzerIdentity.INTERNAL_ANALYZER);
 
@@ -356,9 +468,31 @@ public class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setProject(project);
         componentWithVulnAndAnalysis.setName("acme-lib-c");
         componentWithVulnAndAnalysis.setVersion("1.0.0");
+        componentWithVulnAndAnalysis.setDirectDependencies("[]");
         componentWithVulnAndAnalysis = qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, AnalyzerIdentity.INTERNAL_ANALYZER);
         qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+
+        // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
+        componentWithoutVuln.setDirectDependencies("""
+                [
+                    {"uuid": "%s"}
+                ]
+                """.formatted(componentWithVuln.getUuid()));
+
+        // Make project depend on componentWithoutVuln (acme-lib-a)
+        // and componentWithVulnAndAnalysis (acme-lib-c)
+        project.setDirectDependencies("""
+                [
+                    {"uuid": "%s"},
+                    {"uuid": "%s"}
+                ]
+                """
+                .formatted(
+                        componentWithoutVuln.getUuid(),
+                        componentWithVulnAndAnalysis.getUuid()
+                ));
+        qm.persist(project);
 
         final Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .queryParam("variant", "vdr")
@@ -377,7 +511,7 @@ public class BomResourceTest extends ResourceTest {
                 .isEqualTo(json("""
                 {
                     "bomFormat": "CycloneDX",
-                    "specVersion": "1.4",
+                    "specVersion": "1.5",
                     "serialNumber": "${json-unit.ignore}",
                     "version": 1,
                     "metadata": {
@@ -399,12 +533,6 @@ public class BomResourceTest extends ResourceTest {
                     "components": [
                         {
                             "type": "library",
-                            "bom-ref": "${json-unit.matches:componentWithoutVulnUuid}",
-                            "name": "acme-lib-a",
-                            "version": "1.0.0"
-                        },
-                        {
-                            "type": "library",
                             "bom-ref": "${json-unit.matches:componentWithVulnUuid}",
                             "name": "acme-lib-b",
                             "version": "1.0.0"
@@ -414,6 +542,22 @@ public class BomResourceTest extends ResourceTest {
                             "bom-ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
                             "name": "acme-lib-c",
                             "version": "1.0.0"
+                        }
+                    ],
+                    "dependencies": [
+                        {
+                            "ref": "${json-unit.matches:projectUuid}",
+                            "dependsOn": [
+                                "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
+                            ]
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnUuid}",
+                            "dependsOn": []
+                        },
+                        {
+                            "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
+                            "dependsOn": []
                         }
                     ],
                     "vulnerabilities": [
@@ -468,6 +612,14 @@ public class BomResourceTest extends ResourceTest {
                     ]
                 }
                 """));
+
+        // Ensure the dependency graph did not get deleted during export.
+        // https://github.com/DependencyTrack/dependency-track/issues/2494
+        qm.getPersistenceManager().refreshAll(project, componentWithoutVuln, componentWithVuln, componentWithVulnAndAnalysis);
+        assertThat(project.getDirectDependencies()).isNotNull();
+        assertThat(componentWithoutVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVuln.getDirectDependencies()).isNotNull();
+        assertThat(componentWithVulnAndAnalysis.getDirectDependencies()).isNotNull();
     }
 
     @Test
@@ -559,6 +711,92 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertEquals(401, response.getStatus(), 0);
         String body = getPlainTextBody(response);
         Assert.assertEquals("The principal does not have permission to create project.", body);
+    }
+
+    @Test
+    public void uploadBomAutoCreateTestWithParentTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        File file = new File(Thread.currentThread().getContextClassLoader().getResource("bom-1.xml").toURI());
+        String bomString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
+        // Upload parent project
+        BomSubmitRequest request = new BomSubmitRequest(null, "Acme Parent", "1.0", true, bomString);
+        Response response = target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Project parent = qm.getProject("Acme Parent", "1.0");
+        Assert.assertNotNull(parent);
+        String parentUUID = parent.getUuid().toString();
+
+        // Upload first child, search parent by UUID
+        request = new BomSubmitRequest(null, "Acme Example", "1.0", true, parentUUID, null, null, bomString);
+        response = target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertNotNull(json.getString("token"));
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        Project child = qm.getProject("Acme Example", "1.0");
+        Assert.assertNotNull(child);
+        Assert.assertNotNull(child.getParent());
+        Assert.assertEquals(parentUUID, child.getParent().getUuid().toString());
+
+
+        // Upload second child, search parent by name+ver
+        request = new BomSubmitRequest(null, "Acme Example", "2.0", true, null, "Acme Parent", "1.0", bomString);
+        response = target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertNotNull(json.getString("token"));
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        child = qm.getProject("Acme Example", "2.0");
+        Assert.assertNotNull(child);
+        Assert.assertNotNull(child.getParent());
+        Assert.assertEquals(parentUUID, child.getParent().getUuid().toString());
+
+        // Upload third child, specify parent's UUID, name, ver. Name and ver are ignored when UUID is specified.
+        request = new BomSubmitRequest(null, "Acme Example", "3.0", true, parentUUID, "Non-existent parent", "1.0", bomString);
+        response = target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertNotNull(json.getString("token"));
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        child = qm.getProject("Acme Example", "3.0");
+        Assert.assertNotNull(child);
+        Assert.assertNotNull(child.getParent());
+        Assert.assertEquals(parentUUID, child.getParent().getUuid().toString());
+    }
+
+    @Test
+    public void uploadBomInvalidParentTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        File file = new File(Thread.currentThread().getContextClassLoader().getResource("bom-1.xml").toURI());
+        String bomString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
+        BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", true, UUID.randomUUID().toString(), null, null, bomString);
+        Response response = target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(404, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("The parent component could not be found.", body);
+
+        request = new BomSubmitRequest(null, "Acme Example", "2.0", true, null, "Non-existent parent", null, bomString);
+        response = target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(404, response.getStatus(), 0);
+        body = getPlainTextBody(response);
+        Assert.assertEquals("The parent component could not be found.", body);
     }
 
 }

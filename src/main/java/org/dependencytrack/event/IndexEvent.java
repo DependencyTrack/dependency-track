@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.AbstractChainableEvent;
 import alpine.event.framework.SingletonCapableEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Cpe;

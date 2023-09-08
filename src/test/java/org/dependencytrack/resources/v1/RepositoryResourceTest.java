@@ -18,8 +18,10 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
+import java.util.Date;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.ws.rs.core.Response;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
@@ -31,11 +33,8 @@ import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.core.Response;
-import java.util.Date;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
 
 public class RepositoryResourceTest extends ResourceTest {
 
@@ -61,10 +60,10 @@ public class RepositoryResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(13), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(14), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(13, json.size());
+        Assert.assertEquals(14, json.size());
         for (int i=0; i<json.size(); i++) {
             Assert.assertNotNull(json.getJsonObject(i).getString("type"));
             Assert.assertNotNull(json.getJsonObject(i).getString("identifier"));

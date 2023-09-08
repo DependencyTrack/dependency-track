@@ -18,13 +18,12 @@
  */
 package org.dependencytrack.policy;
 
-import alpine.common.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-
-import java.util.ArrayList;
-import java.util.List;
+import alpine.common.logging.Logger;
 
 /**
  * Evaluates a components Common Platform Enumeration (CPE) against a policy.
@@ -50,17 +49,14 @@ public class CpePolicyEvaluator extends AbstractPolicyEvaluator {
     @Override
     public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
         final List<PolicyConditionViolation> violations = new ArrayList<>();
-        if (component.getCpe() == null) {
-            return violations;
-        }
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             if (PolicyCondition.Operator.MATCHES == condition.getOperator()) {
-                if (component.getCpe() != null && component.getCpe().contains(condition.getValue())) {
+                if (Matcher.matches(component.getCpe(), condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
             } else if (PolicyCondition.Operator.NO_MATCH == condition.getOperator()) {
-                if (component.getCpe() != null && !component.getCpe().contains(condition.getValue())) {
+                if (!Matcher.matches(component.getCpe(), condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
             }

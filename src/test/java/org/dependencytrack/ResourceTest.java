@@ -29,10 +29,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.grizzly.connector.GrizzlyConnectorProvider;
-import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.JerseyTest;
-import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
-import org.glassfish.jersey.test.spi.TestContainer;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -54,6 +51,7 @@ public abstract class ResourceTest extends JerseyTest {
     protected final String V1_BOM = "/v1/bom";
     protected final String V1_CALCULATOR = "/v1/calculator";
     protected final String V1_COMPONENT = "/v1/component";
+    protected final String V1_DEPENDENCY_GRAPH = "/v1/dependencyGraph";
     protected final String V1_CONFIG_PROPERTY = "/v1/configProperty";
     protected final String V1_CWE = "/v1/cwe";
     protected final String V1_DEPENDENCY = "/v1/dependency";

@@ -73,3 +73,17 @@ curl -X "POST" "http://dtrack.example.com/api/v1/bom" \
      -F "projectVersion=xxxx" \
      -F "bom=@target/bom.xml"
 ```
+
+You can also create a project as a child to some other project if you add `parentUUID` or `parentName` parameters.
+
+```bash
+curl -X "POST" "http://dtrack.example.com/api/v1/bom" \
+     -H 'Content-Type: multipart/form-data' \
+     -H "X-Api-Key: xxxxxxx" \
+     -F "autoCreate=true" \
+     -F "projectName=xxxx" \
+     -F "projectVersion=xxxx.SNAPSHOT" \
+     -F "parentName=xxxx" \
+     -F "parentVersion=xxxx" \
+     -F "bom=@target/bom.xml"
+```

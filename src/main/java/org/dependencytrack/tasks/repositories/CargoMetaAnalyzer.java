@@ -20,18 +20,18 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
-import kong.unirest.GetRequest;
-import kong.unirest.HttpRequest;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.UnirestException;
-import kong.unirest.UnirestInstance;
-import kong.unirest.json.JSONArray;
-import kong.unirest.json.JSONObject;
-import org.dependencytrack.common.UnirestFactory;
+import org.dependencytrack.exception.MetaAnalyzerException;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.util.DateUtil;
+
+import java.io.IOException;
 
 /**
  * An IMetaAnalyzer implementation that supports Cargo via crates.io compatible repos
@@ -67,35 +67,30 @@ public class CargoMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public MetaModel analyze(final Component component) {
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             final String url = String.format(baseUrl + API_URL, component.getPurl().getName());
-            try {
-                final HttpRequest<GetRequest> request = ui.get(url)
-                        .header("accept", "application/json");
-                if (username != null || password != null) {
-                    request.basicAuth(username, password);
-                }
-                final HttpResponse<JsonNode> response = request.asJson();
-
-                if (response.getStatus() == 200) {
-                    if (response.getBody() != null && response.getBody().getObject() != null) {
-                        final JSONObject crate = response.getBody().getObject().optJSONObject("crate");
+            try (final CloseableHttpResponse response = processHttpRequest(url)) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    final HttpEntity entity = response.getEntity();
+                    if (entity != null) {
+                        String responseString = EntityUtils.toString(entity);
+                        var jsonObject = new JSONObject(responseString);
+                        final JSONObject crate = jsonObject.optJSONObject("crate");
                         if (crate != null) {
                             final String latest = crate.getString("newest_version");
                             meta.setLatestVersion(latest);
                         }
-                        final JSONArray versions = response.getBody().getObject().optJSONArray("versions");
+                        final JSONArray versions = jsonObject.optJSONArray("versions");
                         if (versions != null) {
-                            for (int i=0; i<versions.length(); i++) {
-                                final JSONObject version =  versions.getJSONObject(i);
+                            for (int i = 0; i < versions.length(); i++) {
+                                final JSONObject version = versions.getJSONObject(i);
                                 final String versionString = version.optString("num");
                                 if (meta.getLatestVersion() != null && meta.getLatestVersion().equals(versionString)) {
                                     final String publishedTimestamp = version.optString("created_at");
                                     try {
                                         meta.setPublishedTimestamp(DateUtil.fromISO8601(publishedTimestamp));
-                                    } catch (IllegalArgumentException  e) {
+                                    } catch (IllegalArgumentException e) {
                                         LOGGER.warn("An error occurred while parsing published time", e);
                                     }
                                 }
@@ -103,10 +98,12 @@ public class CargoMetaAnalyzer extends AbstractMetaAnalyzer {
                         }
                     }
                 } else {
-                    handleUnexpectedHttpResponse(LOGGER, url, response.getStatus(), response.getStatusText(), component);
+                    handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
                 }
-            } catch (UnirestException e) {
-                handleRequestException(LOGGER, e);
+            } catch (IOException ex) {
+                handleRequestException(LOGGER, ex);
+            } catch (Exception ex) {
+                throw new MetaAnalyzerException(ex);
             }
         }
         return meta;

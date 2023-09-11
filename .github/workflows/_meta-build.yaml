@@ -49,7 +49,7 @@ jobs:
           mvn cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: assembled-wars
           path: |-

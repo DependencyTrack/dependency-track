@@ -18,17 +18,17 @@
  */
 package org.dependencytrack.policy;
 
- import alpine.common.logging.Logger;
- import org.apache.commons.collections4.CollectionUtils;
- import org.dependencytrack.model.Component;
- import org.dependencytrack.model.Policy;
- import org.dependencytrack.model.PolicyCondition;
- import org.dependencytrack.model.Vulnerability;
- import org.dependencytrack.parser.common.resolver.CweResolver;
+import alpine.common.logging.Logger;
+import org.apache.commons.collections4.CollectionUtils;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.parser.common.resolver.CweResolver;
 
- import java.util.ArrayList;
- import java.util.Arrays;
- import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Evaluates the Common Weakness Enumeration of component vulnerabilities against a policy.
@@ -51,7 +51,12 @@ public class CwePolicyEvaluator extends AbstractPolicyEvaluator {
     @Override
     public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
         final List<PolicyConditionViolation> violations = new ArrayList<>();
+
         final List<PolicyCondition> policyConditions = super.extractSupportedConditions(policy);
+        if (policyConditions.isEmpty()) {
+            return violations;
+        }
+
         for (final Vulnerability vulnerability : qm.getAllVulnerabilities(component, false)) {
             for (final PolicyCondition condition: policyConditions) {
                 LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");

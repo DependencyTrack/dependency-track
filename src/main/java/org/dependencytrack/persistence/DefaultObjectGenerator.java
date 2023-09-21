@@ -23,12 +23,12 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import org.apache.commons.lang3.SystemUtils;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
 import org.dependencytrack.util.NotificationUtil;
@@ -47,6 +47,24 @@ import alpine.server.auth.PasswordService;
 public class DefaultObjectGenerator implements ServletContextListener {
 
     private static final Logger LOGGER = Logger.getLogger(DefaultObjectGenerator.class);
+
+    static final String DEFAULT_ADMIN_USERNAME = "admin";
+
+    static final String ADMIN_USERNAME_ENV_VARIABLE = "DT_INIT_ADMIN_USERNAME";
+
+    static final String DEFAULT_ADMIN_PASSWORD = "admin";
+
+    static final String ADMIN_PASSWORD_ENV_VARIABLE = "DT_INIT_ADMIN_PASSWORD";
+
+    static final String DEFAULT_ADMIN_FULL_NAME = "Administrator";
+
+    static final String ADMIN_FULL_NAME_ENV_VARIABLE = "DT_INIT_ADMIN_FULL_NAME";
+
+    static final String DEFAULT_ADMIN_EMAIL = "admin@localhost";
+
+    static final String ADMIN_EMAIL_ENV_VARIABLE = "DT_INIT_ADMIN_EMAIL";
+
+    static final String ENV_VARIABLE_NAME_PREFIX = "DT_INIT";
 
     /**
      * {@inheritDoc}
@@ -147,9 +165,14 @@ public class DefaultObjectGenerator implements ServletContextListener {
                 return;
             }
             LOGGER.info("Adding default users and teams to datastore");
-            LOGGER.debug("Creating user: admin");
-            ManagedUser admin = qm.createManagedUser("admin", "Administrator", "admin@localhost",
-                    new String(PasswordService.createHash("admin".toCharArray())), true, true, false);
+            String adminUsername = SystemUtils.getEnvironmentVariable(ADMIN_USERNAME_ENV_VARIABLE, DEFAULT_ADMIN_USERNAME);
+            String adminPassword = SystemUtils.getEnvironmentVariable(ADMIN_PASSWORD_ENV_VARIABLE, DEFAULT_ADMIN_PASSWORD);
+            String adminFullName = SystemUtils.getEnvironmentVariable(ADMIN_FULL_NAME_ENV_VARIABLE, DEFAULT_ADMIN_FULL_NAME);
+            String adminEmail = SystemUtils.getEnvironmentVariable(ADMIN_EMAIL_ENV_VARIABLE, DEFAULT_ADMIN_EMAIL);
+
+            LOGGER.debug("Creating user: "+adminUsername);
+            ManagedUser admin = qm.createManagedUser(adminUsername, adminFullName, adminEmail,
+                    new String(PasswordService.createHash(adminPassword.toCharArray())), DEFAULT_ADMIN_PASSWORD.equals(adminPassword), true, false);
 
             LOGGER.debug("Creating team: Administrators");
             final Team sysadmins = qm.createTeam("Administrators", false);
@@ -231,8 +254,9 @@ public class DefaultObjectGenerator implements ServletContextListener {
             LOGGER.info("Synchronizing config properties to datastore");
             for (final ConfigPropertyConstants cpc : ConfigPropertyConstants.values()) {
                 LOGGER.debug("Creating config property: " + cpc.getGroupName() + " / " + cpc.getPropertyName());
+
                 if (qm.getConfigProperty(cpc.getGroupName(), cpc.getPropertyName()) == null) {
-                    qm.createConfigProperty(cpc.getGroupName(), cpc.getPropertyName(), cpc.getDefaultPropertyValue(), cpc.getPropertyType(), cpc.getDescription());
+                    qm.createConfigProperty(cpc.getGroupName(), cpc.getPropertyName(), SystemUtils.getEnvironmentVariable(generateEnvVariableName(cpc), cpc.getDefaultPropertyValue()), cpc.getPropertyType(), cpc.getDescription());
                 }
             }
         }
@@ -244,13 +268,19 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private void loadDefaultNotificationPublishers() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing notification publishers to datastore");
-            for (final DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {
-                try {
-                    NotificationUtil.loadDefaultNotificationPublishers(qm);
-                } catch (IOException e) {
-                    LOGGER.error("An error occurred while synchronizing a default notification publisher", e);
-                }
-            }
+            NotificationUtil.loadDefaultNotificationPublishers(qm);
+        } catch (IOException e) {
+            LOGGER.error("An error occurred while synchronizing a default notification publisher", e);
         }
+    }
+
+    String generateEnvVariableName(ConfigPropertyConstants configProperty) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ENV_VARIABLE_NAME_PREFIX).append("_");
+        sb.append(configProperty.getGroupName().toUpperCase().replaceAll("[\\-\\.]", "_"));
+        sb.append("_");
+        sb.append(configProperty.getPropertyName().toUpperCase().replaceAll("[\\-\\.]", "_"));
+        LOGGER.debug("Environment variable name for property group "+configProperty.getGroupName()+" and property name "+configProperty.getPropertyName()+" is "+sb);
+        return sb.toString();
     }
 }

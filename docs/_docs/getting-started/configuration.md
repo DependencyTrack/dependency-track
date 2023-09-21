@@ -68,6 +68,12 @@ alpine.data.directory=~/.dependency-track
 # Default is "<alpine.data.directory>/keys/secret.key".
 # alpine.secret.key.path=/var/run/secrets/secret.key
 
+# Optional
+# Defines the prefix to be used for API keys. A maximum prefix length of 251
+# characters is supported.
+# The prefix may also be left empty.
+alpine.api.key.prefix=odt_
+
 # Required
 # Defines the interval (in seconds) to log general heath information. If value
 # equals 0, watchdog logging will be disabled.

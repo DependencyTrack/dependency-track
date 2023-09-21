@@ -409,6 +409,10 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects(tag);
     }
 
+    public boolean doesProjectExist(final String name, final String version) {
+        return getProjectQueryManager().doesProjectExist(name, version);
+    }
+
     public Tag getTagByName(final String name) {
         return getProjectQueryManager().getTagByName(name);
     }

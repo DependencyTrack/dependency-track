@@ -1,22 +1,23 @@
 {
   "isDeprecatedLicenseId": false,
   "licenseText": "(c) Jim Davies, January 1995\nYou may copy and distribute this file freely.  Any queries and complaints should be forwarded to Jim.Davies@comlab.ox.ac.uk.\nIf you make any changes to this file, please do not distribute the results under the name `zed-csp.sty\u0027.\n",
-  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"(c) Jim Davies, January 1995\";match\u003d\".{0,1000}\"\u003e\u003e\n\nYou may copy and distribute this file freely. Any queries and complaints should be forwarded to Jim.Davies@comlab.ox.ac.uk.\n\nIf you make any changes to this file, please do not distribute the results under the name `zed-csp.sty\u0027.",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"(c) Jim Davies, January 1995  \";match\u003d\".{0,5000}\"\u003e\u003e\n\nYou may copy and distribute this file freely. Any queries and complaints should be forwarded to Jim.Davies@comlab.ox.ac.uk.\n\nIf you make any changes to this file, please do not distribute the results under the name `zed-csp.sty\u0027.\n\n",
   "name": "Zed License",
   "licenseId": "Zed",
   "crossRef": [
     {
-      "isLive": true,
-      "isValid": true,
-      "isWayBackLink": false,
       "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing/Zed",
-      "order": 0,
-      "timestamp": "2020-11-25 - 21:49:55"
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-06-18T16:51:55Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/Zed"
   ],
-  "isOsiApproved": false
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e \n         \u003cp\u003e(c) Jim Davies, January 1995\u003c/p\u003e\n\n      \u003c/div\u003e\n\n      \u003cp\u003eYou may copy and distribute this file freely. Any queries and complaints should be forwarded to\n         Jim.Davies@comlab.ox.ac.uk.\u003c/p\u003e\n\n      \u003cp\u003eIf you make any changes to this file, please do not distribute the results under the name `zed-csp.sty\u0026apos;.\u003c/p\u003e\n\n    "
 }

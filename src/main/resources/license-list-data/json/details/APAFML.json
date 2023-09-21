@@ -1,22 +1,23 @@
 {
   "isDeprecatedLicenseId": false,
   "licenseText": "Copyright (c) 1985, 1987, 1989, 1990, 1991, 1992, 1993, 1997 Adobe Systems Incorporated. All Rights Reserved.\n\nThis file and the 14 PostScript(R) AFM files it accompanies may be used, copied, and distributed for any purpose and without charge, with or without modification, provided that all copyright notices are retained; that the AFM files are not distributed without this file; that all modifications to this file or any of the AFM files are prominently noted in the modified file(s); and that this paragraph is not modified. Adobe Systems has no responsibility or obligation to support the use of the AFM files.\n",
-  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 1985, 1987, 1989, 1990, 1991, 1992, 1993, 1997 Adobe Systems Incorporated. All Rights Reserved.\";match\u003d\".{0,1000}\"\u003e\u003e\n\nThis file and the 14 PostScript(R) AFM files it accompanies may be used, copied, and distributed for any purpose and without charge, with or without modification, provided that all copyright notices are retained; that the AFM files are not distributed without this file; that all modifications to this file or any of the AFM files are prominently noted in the modified file(s); and that this paragraph is not modified. Adobe Systems has no responsibility or obligation to support the use of the AFM files.",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 1985, 1987, 1989, 1990, 1991, 1992, 1993, 1997 Adobe Systems Incorporated. All Rights Reserved.  \";match\u003d\".{0,5000}\"\u003e\u003e\n\nThis file and the 14 PostScript(R) AFM files it accompanies may be used, copied, and distributed for any purpose and without charge, with or without modification, provided that all copyright notices are retained; that the AFM files are not distributed without this file; that all modifications to this file or any of the AFM files are prominently noted in the modified file(s); and that this paragraph is not modified. Adobe Systems has no responsibility or obligation to support the use of the AFM files.\n\n",
   "name": "Adobe Postscript AFM License",
   "licenseId": "APAFML",
   "crossRef": [
     {
-      "isLive": true,
-      "isValid": true,
-      "isWayBackLink": false,
-      "match": "true",
+      "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing/AdobePostscriptAFM",
-      "order": 0,
-      "timestamp": "2020-11-25 - 21:52:44"
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-06-18T16:37:34Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/AdobePostscriptAFM"
   ],
-  "isOsiApproved": false
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e \n         \u003cp\u003eCopyright (c) 1985, 1987, 1989, 1990, 1991, 1992, 1993, 1997 Adobe Systems Incorporated. All Rights\n         Reserved.\u003c/p\u003e\n\n      \u003c/div\u003e\n\n      \u003cp\u003eThis file and the 14 PostScript(R) AFM files it accompanies may be used, copied, and distributed for any\n         purpose and without charge, with or without modification, provided that all copyright notices are\n         retained; that the AFM files are not distributed without this file; that all modifications to this\n         file or any of the AFM files are prominently noted in the modified file(s); and that this paragraph is\n         not modified. Adobe Systems has no responsibility or obligation to support the use of the AFM\n         files.\u003c/p\u003e\n\n    "
 }

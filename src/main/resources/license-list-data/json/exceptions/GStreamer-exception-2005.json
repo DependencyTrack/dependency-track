@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "The Totem project hereby grant permission for non-gpl compatible GStreamer plugins to be used and distributed together with GStreamer and Totem. This permission are above and beyond the permissions granted by the GPL license Totem is covered by.\n",
+  "name": "GStreamer Exception (2005)",
+  "licenseComments": "This exception is the original exception added to the GNOME Videos (né totem\") project in 2005. Use GStreamer-exception-2008 instead.",
+  "seeAlso": [
+    "https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/licensing.html?gi-language\u003dc#licensing-of-applications-using-gstreamer"
+  ],
+  "licenseExceptionId": "GStreamer-exception-2005",
+  "licenseExceptionTemplate": "The Totem project hereby grant permission for non-gpl compatible GStreamer plugins to be used and distributed together with GStreamer and Totem. This permission are above and beyond the permissions granted by the GPL license Totem is covered by.\n\n",
+  "exceptionTextHtml": "\n      \u003cp\u003e\n\tThe Totem project hereby grant permission for non-gpl compatible GStreamer plugins to be used and distributed together with GStreamer and Totem. This permission are above and beyond the permissions granted by the GPL license Totem is covered by.\n      \u003c/p\u003e\n\n    "
+}

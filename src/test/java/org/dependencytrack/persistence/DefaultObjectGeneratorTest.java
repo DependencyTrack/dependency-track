@@ -22,9 +22,12 @@ import java.lang.reflect.Method;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.License;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.junit.Assert;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
 
@@ -44,7 +47,34 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultLicenses");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(489, qm.getAllLicensesConcise().size());
+        Assert.assertEquals(613, qm.getAllLicensesConcise().size());
+    }
+
+    @Test
+    public void testLoadDefaultLicensesUpdatesExistingLicenses() throws Exception {
+        final var license = new License();
+        license.setLicenseId("LGPL-2.1+");
+        license.setName("name");
+        license.setComment("comment");
+        license.setHeader("header");
+        license.setSeeAlso("seeAlso");
+        license.setTemplate("template");
+        license.setText("text");
+        qm.persist(license);
+
+        final var generator = new DefaultObjectGenerator();
+        final Method method = generator.getClass().getDeclaredMethod("loadDefaultLicenses");
+        method.setAccessible(true);
+        method.invoke(generator);
+
+        qm.getPersistenceManager().refresh(license);
+        assertThat(license.getLicenseId()).isEqualTo("LGPL-2.1+");
+        assertThat(license.getName()).isEqualTo("GNU Lesser General Public License v2.1 or later");
+        assertThat(license.getComment()).isNotEqualTo("comment");
+        assertThat(license.getHeader()).isNotEqualTo("header");
+        assertThat(license.getSeeAlso()).isNotEqualTo(new String[]{"seeAlso"});
+        assertThat(license.getTemplate()).isNotEqualTo("template");
+        assertThat(license.getText()).isNotEqualTo("text");
     }
 
     @Test

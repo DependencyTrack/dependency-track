@@ -162,18 +162,6 @@ alpine.database.pool.max.lifetime=600000
 # DO NOT CHANGE UNLESS THERE IS A GOOD REASON TO.
 # alpine.datanucleus.cache.level2.type=
 
-# Optional
-# When authentication is enforced, API keys are required for automation, and
-# the user interface will prevent anonymous access by prompting for login
-# credentials.
-alpine.enforce.authentication=true
-
-# Optional
-# When authorization is enforced, team membership for both API keys and user
-# accounts are restricted to what the team itself has access to. To enforce 
-# authorization, the enforce.authentication property (above) must be true.
-alpine.enforce.authorization=true
-
 # Required
 # Specifies the number of bcrypt rounds to use when hashing a users password.
 # The higher the number the more secure the password, at the expense of

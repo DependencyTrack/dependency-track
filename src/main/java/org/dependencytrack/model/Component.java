@@ -357,12 +357,8 @@ public class Component implements Serializable {
     private transient DependencyMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
     private transient int usedBy;
-
-    @JsonIgnore
     private transient JsonObject cacheResult;
-
     private transient Set<String> dependencyGraph;
-
     private transient boolean expandDependencyGraph;
 
     public long getId() {
@@ -778,10 +774,12 @@ public class Component implements Serializable {
         this.usedBy = usedBy;
     }
 
+    @JsonIgnore
     public JsonObject getCacheResult() {
         return cacheResult;
     }
 
+    @JsonIgnore
     public void setCacheResult(JsonObject cacheResult) {
         this.cacheResult = cacheResult;
     }

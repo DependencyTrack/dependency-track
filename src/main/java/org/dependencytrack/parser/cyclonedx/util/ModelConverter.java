@@ -98,6 +98,7 @@ public class ModelConverter {
         return components;
     }
 
+    /**Convert from CycloneDX to DT */
     @SuppressWarnings("deprecation")
     public static Component convert(final QueryManager qm, final org.cyclonedx.model.Component cycloneDxComponent, final Project project) {
         Component component = qm.matchSingleIdentity(project, new ComponentIdentity(cycloneDxComponent));
@@ -108,6 +109,7 @@ public class ModelConverter {
         component.setAuthor(StringUtils.trimToNull(cycloneDxComponent.getAuthor()));
         component.setBomRef(StringUtils.trimToNull(cycloneDxComponent.getBomRef()));
         component.setPublisher(StringUtils.trimToNull(cycloneDxComponent.getPublisher()));
+        component.setSupplier(cycloneDxComponent.getSupplier());/**Issue #2373, #2737 */
         component.setGroup(StringUtils.trimToNull(cycloneDxComponent.getGroup()));
         component.setName(StringUtils.trimToNull(cycloneDxComponent.getName()));
         component.setVersion(StringUtils.trimToNull(cycloneDxComponent.getVersion()));
@@ -242,7 +244,8 @@ public class ModelConverter {
         }
         return component;
     }
-
+    
+    /**Convert from DT to CycloneDX */
     @SuppressWarnings("deprecation")
     public static org.cyclonedx.model.Component convert(final QueryManager qm, final Component component) {
         final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
@@ -395,6 +398,31 @@ public class ModelConverter {
                 });
                 cycloneComponent.setExternalReferences(references);
             }
+            /*Issue #2737:  Adding Supplier contact functionality */
+            if (project.getSupplier() != null) {
+                OrganizationalEntity supplier = new OrganizationalEntity();
+                supplier.setName(project.getSupplier().getName());
+            
+                if (project.getSupplier().getUrls() != null) {
+                    supplier.setUrls(project.getSupplier().getUrls());
+                } else {
+                    supplier.setUrls(null);
+                }
+                if (project.getSupplier().getContacts() != null) {
+                    List<OrganizationalContact> contacts = new ArrayList<>();
+                    for (OrganizationalContact organizationalContact: project.getSupplier().getContacts()) {
+                        OrganizationalContact contact = new OrganizationalContact();
+                        contact.setName(organizationalContact.getName());
+                        contact.setEmail(organizationalContact.getEmail());
+                        contact.setPhone(organizationalContact.getPhone());
+                        contacts.add(contact);
+                    }
+                    supplier.setContacts(contacts);
+                }
+                cycloneComponent.setSupplier(supplier);
+            } else {
+                cycloneComponent.setSupplier(null);
+            }
             metadata.setComponent(cycloneComponent);
         }
         return metadata;
@@ -425,7 +453,7 @@ public class ModelConverter {
             service.setProject(project);
         }
         service.setBomRef(StringUtils.trimToNull(cycloneDxService.getBomRef()));
-        if (cycloneDxService.getProvider() != null) {
+               if (cycloneDxService.getProvider() != null) {
             OrganizationalEntity provider = new OrganizationalEntity();;
             provider.setName(cycloneDxService.getProvider().getName());
             if (cycloneDxService.getProvider().getUrls() != null && cycloneDxService.getProvider().getUrls().size() > 0) {

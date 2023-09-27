@@ -117,14 +117,14 @@ public class Component implements Serializable {
     private String publisher;
 
     @Persistent /**Issue #2373, #2737 */
-    @Column(name = "MANUFACTURE", jdbcType = "VARCHAR")
+    @Column(name = "MANUFACTURE", jdbcType = "BLOB")
     @Serialized
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The manufacture may only contain printable characters")
     private OrganizationalEntity manufacture;
 
     @Persistent /**Issue #2373, #2737 */
-    @Column(name = "SUPPLIER", jdbcType = "VARCHAR")
+    @Column(name = "SUPPLIER", jdbcType = "BLOB")
     @Serialized
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The supplier may only contain printable characters")

@@ -131,7 +131,7 @@ public class Project implements Serializable {
     private String publisher;
 
     @Persistent /**Issue #2373, #2737 */
-    @Column(name = "SUPPLIER", jdbcType = "VARCHAR")
+    @Column(name = "SUPPLIER", jdbcType = "BLOB")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The supplier may only contain printable characters")
     private OrganizationalEntity supplier;

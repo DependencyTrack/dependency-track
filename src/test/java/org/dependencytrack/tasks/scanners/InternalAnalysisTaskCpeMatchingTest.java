@@ -66,7 +66,7 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 // Note: CPEs with uppercase "part" are considered invalid by the cpe-parser library.
                 {"cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:LiNuX:LiNuX_kErNeL:5.15.37:*:*:*:*:*:*:*"},
                 // #1832: "version" of source is NA, "version" of target is "2.4.54" -> DISJOINT.
-                {"cpe:2.3:a:apache:http_server:-:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:apache:http_server:2.4.53:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:apache:http_server:-:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:apache:http_server:2.4.53:*:*:*:*:*:*:*"},
                 // #1832: "version" of source is NA, "version" of target is ANY -> SUBSET.
                 {"cpe:2.3:a:apache:http_server:-:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*"},
                 // #2188: "update" of source is NA, "update" of target is ANY -> SUBSET.

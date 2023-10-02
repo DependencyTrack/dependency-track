@@ -28,6 +28,7 @@ import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.h2.util.StringUtils;
+import us.springett.parsers.cpe.values.LogicalValue;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -35,6 +36,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static us.springett.parsers.cpe.util.Convert.wellFormedToPattern;
 
 final class VulnerableSoftwareQueryManager extends QueryManager implements IQueryManager {
 
@@ -57,7 +62,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
 
     /**
      * Synchronize a Cpe, updating it if it needs updating, or creating it if it doesn't exist.
-     * @param cpe the Cpe object to synchronize
+     * @param cpe         the Cpe object to synchronize
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a synchronize Cpe object
      */
@@ -106,7 +111,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     @SuppressWarnings("unchecked")
     public List<Cpe> getCpes(final String cpeString) {
         final Query<Cpe> query = pm.newQuery(Cpe.class, "cpe23 == :cpeString || cpe22 == :cpeString");
-        return (List<Cpe>)query.execute(cpeString);
+        return (List<Cpe>) query.execute(cpeString);
     }
 
     /**
@@ -117,7 +122,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     public List<Cpe> getCpes(final String part, final String vendor, final String product, final String version) {
         final Query<Cpe> query = pm.newQuery(Cpe.class);
         query.setFilter("part == :part && vendor == :vendor && product == :product && version == :version");
-        return (List<Cpe>)query.executeWithArray(part, vendor, product, version);
+        return (List<Cpe>) query.executeWithArray(part, vendor, product, version);
     }
 
     /**
@@ -192,7 +197,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     @SuppressWarnings("unchecked")
     public List<VulnerableSoftware> getAllVulnerableSoftwareByCpe(final String cpeString) {
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class, "cpe23 == :cpeString || cpe22 == :cpeString");
-        return (List<VulnerableSoftware>)query.execute(cpeString);
+        return (List<VulnerableSoftware>) query.execute(cpeString);
     }
 
     /**
@@ -201,8 +206,8 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      */
     @SuppressWarnings("unchecked")
     public VulnerableSoftware getVulnerableSoftwareByPurl(String purlType, String purlNamespace, String purlName,
-                                                                   String versionEndExcluding, String versionEndIncluding,
-                                                                   String versionStartExcluding, String versionStartIncluding) {
+                                                          String versionEndExcluding, String versionEndIncluding,
+                                                          String versionStartExcluding, String versionStartIncluding) {
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class, "purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && versionEndExcluding == :versionEndExcluding && versionEndIncluding == :versionEndIncluding && versionStartExcluding == :versionStartExcluding && versionStartIncluding == :versionStartIncluding");
         query.setRange(0, 1);
         return singleResult(query.executeWithArray(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding));
@@ -235,7 +240,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     @SuppressWarnings("unchecked")
     public List<VulnerableSoftware> getAllVulnerableSoftwareByPurl(final PackageURL purl) {
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class, "(purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && purlVersion == :purlVersion)");
-        return (List<VulnerableSoftware>)query.executeWithArray(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion());
+        return (List<VulnerableSoftware>) query.executeWithArray(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion());
     }
 
     /**
@@ -246,7 +251,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final String cpeVersion, final PackageURL purl) {
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
         query.setFilter("(part == :part && vendor == :vendor && product == :product && version == :version) || (purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && purlVersion == :purlVersion)");
-        return (List<VulnerableSoftware>)query.executeWithArray(cpePart, cpeVendor, cpeProduct, cpeVersion, purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion());
+        return (List<VulnerableSoftware>) query.executeWithArray(cpePart, cpeVendor, cpeProduct, cpeVersion, purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion());
     }
 
     /**
@@ -279,11 +284,142 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
         }
     }
 
+    private static final Pattern UNQUOTED_CPE_WILDCARD_PATTERN = Pattern.compile("(?<!\\\\)[?*]");
+
+    public List<VulnerableSoftware> getAllVulnerableSoftwareX(final String cpePart, final String cpeVendor,
+                                                              final String cpeProduct, final PackageURL purl) {
+        var filterParts = new ArrayList<String>();
+        var params = new HashMap<String, Object>();
+
+        if (cpePart != null && cpeVendor != null && cpeProduct != null) {
+            final var cpeFilterParts = new ArrayList<String>();
+
+            // CPE parts can contain both "*" and "?" wildcards, where "*" matches multiple
+            // arbitrary characters, and "?" matches only one. Further, comparison of parts
+            // must be case-insensitive.
+
+            if (!LogicalValue.ANY.getAbbreviation().equals(cpePart)
+                    && !LogicalValue.NA.getAbbreviation().equals(cpePart)) {
+                final Matcher partWildcardMatcher = UNQUOTED_CPE_WILDCARD_PATTERN.matcher(cpePart);
+                if (partWildcardMatcher.matches()) {
+                    // | No. | Source A-V      | Target A-V      | Relation   |
+                    // | :-- | :-------------- | :-------------- | :--------- |
+                    // | 4   | ANY             | m + wild cards  | undefined  |
+                    // | 8   | NA              | m + wild cards  | undefined  |
+                    // | 11  | i               | m + wild cards  | undefined  |
+                    // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
+                    cpeFilterParts.add("part.matches(:partPattern)");
+                    params.put("partPattern", "(?i)" + wellFormedToPattern(cpePart).pattern());
+                } else {
+                    // | No. | Source A-V      | Target A-V | Relation             |
+                    // | :-- | :-------------- | :--------- | :------------------- |
+                    // | 3   | ANY             | i          | SUPERSET             |
+                    // | 7   | NA              | i          | DISJOINT             |
+                    // | 9   | i               | i          | EQUAL                |
+                    // | 10  | i               | k          | DISJOINT             |
+                    // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
+                    cpeFilterParts.add("part.equalsIgnoreCase(:part)");
+                    params.put("part", cpePart);
+                }
+            } else if (LogicalValue.NA.getAbbreviation().equals(cpePart)) {
+                // | No. | Source A-V     | Target A-V | Relation |
+                // | :-- | :------------- | :--------- | :------- |
+                // | 2   | ANY            | NA         | SUPERSET |
+                // | 6   | NA             | NA         | EQUAL    |
+                // | 12  | i              | NA         | DISJOINT |
+                // | 16  | m + wild cards | NA         | DISJOINT |
+                cpeFilterParts.add("(part == '*' || part == '-')");
+            }  else {
+                // | No. | Source A-V     | Target A-V | Relation |
+                // | :-- | :------------- | :--------- | :------- |
+                // | 1   | ANY            | ANY        | EQUAL    |
+                // | 5   | NA             | ANY        | SUBSET   |
+                // | 13  | i              | ANY        | SUPERSET |
+                // | 15  | m + wild cards | ANY        | SUPERSET |
+            }
+
+            if (!LogicalValue.ANY.getAbbreviation().equals(cpeVendor)
+                    && !LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
+                final Matcher vendorWildcardMatcher = UNQUOTED_CPE_WILDCARD_PATTERN.matcher(cpeVendor);
+                if (vendorWildcardMatcher.matches()) {
+                    cpeFilterParts.add("vendor.matches(:vendorPattern)");
+                    params.put("vendorPattern", "(?i)" + wellFormedToPattern(cpeVendor).pattern());
+                } else {
+                    cpeFilterParts.add("vendor.equalsIgnoreCase(:vendor)");
+                    params.put("vendor", cpeVendor);
+                }
+            } else if (LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
+                cpeFilterParts.add("(vendor == '*' || vendor == '-')");
+            }
+
+            if (!LogicalValue.ANY.getAbbreviation().equals(cpeProduct)
+                    && !LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
+                final Matcher productWildcardMatcher = UNQUOTED_CPE_WILDCARD_PATTERN.matcher(cpeProduct);
+                if (productWildcardMatcher.matches()) {
+                    cpeFilterParts.add("product.matches(:productPattern)");
+                    params.put("productPattern", "(?i)" + wellFormedToPattern(cpeProduct).pattern());
+                } else {
+                    cpeFilterParts.add("product.equalsIgnoreCase(:product)");
+                    params.put("product", cpeProduct);
+                }
+            } else if (LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
+                cpeFilterParts.add("(product == '*' || product == '-')");
+            }
+
+            if (!cpeFilterParts.isEmpty()) {
+                // cpeFilterParts will be empty, when all CPE parts where ANY.
+                filterParts.add("(%s)".formatted(String.join(" && ", cpeFilterParts)));
+            }
+        }
+
+        if (purl != null) {
+            final var purlFilterParts = new ArrayList<String>();
+
+            // When building the query filter, ensure that null values are
+            // not passed as parameters, as this would bypass the query compilation
+            // cache. This method is called very frequently during vulnerability analysis,
+            // we should avoid the overhead of repeated re-compilation if possible.
+            // See also: https://github.com/DependencyTrack/dependency-track/issues/2540
+
+            if (purl.getType() != null) {
+                purlFilterParts.add("purlType == :purlType");
+                params.put("purlType", purl.getType());
+            } else {
+                purlFilterParts.add("purlType == null");
+            }
+
+            if (purl.getNamespace() != null) {
+                purlFilterParts.add("purlNamespace == :purlNamespace");
+                params.put("purlNamespace", purl.getNamespace());
+            } else {
+                purlFilterParts.add("purlNamespace == null");
+            }
+
+            if (purl.getName() != null) {
+                purlFilterParts.add("purlName == :purlName");
+                params.put("purlName", purl.getName());
+            } else {
+                purlFilterParts.add("purlName == null");
+            }
+
+            filterParts.add("(%s)".formatted(String.join(" && ", purlFilterParts)));
+        }
+
+        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
+        query.setFilter(String.join(" || ", filterParts));
+        query.setNamedParameters(params);
+        try {
+            return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
+        }
+    }
+
     /**
      * Checks if the specified CWE id exists or not. If not, creates
      * a new CWE with the specified ID and name. In both cases, the
      * CWE will be returned.
-     * @param id the CWE ID
+     * @param id   the CWE ID
      * @param name the name of the CWE
      * @return a CWE object
      */

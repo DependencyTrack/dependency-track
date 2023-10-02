@@ -154,9 +154,6 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         if (targetUpdate != null && targetUpdate.equals(vs.getUpdate())) {
             return true;
         }
-        if (LogicalValue.NA.getAbbreviation().equals(vs.getUpdate())) {
-            return false;
-        }
         if (vs.getUpdate() == null && targetUpdate == null) {
             return true;
         }

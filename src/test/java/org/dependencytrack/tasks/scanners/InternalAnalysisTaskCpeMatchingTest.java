@@ -52,23 +52,25 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 // ---
                 // Regression tests
                 // ---
-                // #2988: "other" attribute of source is NA, "other" attribute of target is ANY.
+                // #2988: "other" attribute of source is NA, "other" attribute of target is ANY -> SUBSET.
                 {"cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:NA", MATCHES, "cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:*"},
-                // #2988: "target_hw" of source if x64, "target_hw" of target is ANY.
+                // #2988: "target_hw" of source if x64, "target_hw" of target is ANY -> SUBSET.
                 {"cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:x86:*", MATCHES, "cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:*"},
-                // #2988: "vendor" of source contains wildcard, "vendor" of target is ANY.
+                // #2988: "vendor" of source contains wildcard, "vendor" of target is ANY -> SUBSET.
                 {"cpe:2.3:o:linu*:linux_kernel:5.15.37:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:*:linux_kernel:5.15.37:*:*:*:*:*:*:*"},
-                // #2580: Source vendor is , target vendor is wildcard.
+                // #2580: "vendor" of source is "linux", "vendor" of target ANY -> SUBSET.
                 {"cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:*:linux_kernel:4.19.139:*:*:*:*:*:*:*"},
-                // #2994: "part" of source is "a", "part" of target is ANY.
+                // #2994: "part" of source is "a", "part" of target is ANY -> SUBSET.
                 {"cpe:2.3:a:busybox:busybox:1.34.1:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:*:busybox:busybox:1.34.1:*:*:*:*:*:*:*"},
-                // #2894: "vendor" and "product" with different casing.
+                // #2894: "vendor" and "product" with different casing -> EQUAL.
                 // Note: CPEs with uppercase "part" are considered invalid by the cpe-parser library.
                 {"cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:LiNuX:LiNuX_kErNeL:5.15.37:*:*:*:*:*:*:*"},
-                // #1832: "version" of source is NA, "version" of target is "2.4.54".
+                // #1832: "version" of source is NA, "version" of target is "2.4.54" -> DISJOINT.
                 {"cpe:2.3:a:apache:http_server:-:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:apache:http_server:2.4.53:*:*:*:*:*:*:*"},
-                // #1832: "version" of source is NA, "version" of target is ANY.
+                // #1832: "version" of source is NA, "version" of target is ANY -> SUBSET.
                 {"cpe:2.3:a:apache:http_server:-:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*"},
+                // #2188: "update" of source is NA, "update" of target is ANY -> SUBSET.
+                {"cpe:2.3:a:xiph:speex:1.2:-:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:xiph:speex:1.2:*:*:*:*:*:*:*"}
         });
     }
 

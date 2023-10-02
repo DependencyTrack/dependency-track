@@ -49,7 +49,9 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:rodnev:product:1.0.0:*:*:*:*:*:*:*"},
                 {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:tcudorp:1.0.0:*:*:*:*:*:*:*"},
                 {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.1.1:*:*:*:*:*:*:*"},
-
+                // ---
+                // Regression tests
+                // ---
                 // #2988: "other" attribute of source is NA, "other" attribute of target is ANY.
                 {"cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:NA", MATCHES, "cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:*"},
                 // #2988: "target_hw" of source if x64, "target_hw" of target is ANY.

@@ -139,9 +139,9 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
         }
 
         if (parsedCpe != null) {
-            vsList = qm.getAllVulnerableSoftwareX(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(), parsedCpe.getProduct(), component.getPurl());
+            vsList = qm.getAllVulnerableSoftware(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(), parsedCpe.getProduct(), component.getPurl());
         } else {
-            vsList = qm.getAllVulnerableSoftwareX(null, null, null, component.getPurl());
+            vsList = qm.getAllVulnerableSoftware(null, null, null, component.getPurl());
         }
 
         if (fuzzyEnabled && vsList.isEmpty()) {

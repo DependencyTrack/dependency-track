@@ -138,6 +138,9 @@ public class NistMirrorTask implements LoggableSubscriber {
             doDownload(json11BaseUrl, ResourceType.CVE_YEAR_DATA);
             doDownload(cve11BaseMetaUrl, ResourceType.CVE_META);
         }
+
+        // Modified feeds must be mirrored last, otherwise we risk more recent data being
+        // overwritten by old or stale data: https://github.com/DependencyTrack/dependency-track/pull/1929#issuecomment-1743579226
         doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_URL, ResourceType.CVE_MODIFIED_DATA);
         doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_META, ResourceType.CVE_META);
 

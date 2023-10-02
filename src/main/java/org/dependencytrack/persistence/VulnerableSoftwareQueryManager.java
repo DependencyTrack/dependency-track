@@ -36,10 +36,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static us.springett.parsers.cpe.util.Convert.wellFormedToPattern;
 
 final class VulnerableSoftwareQueryManager extends QueryManager implements IQueryManager {
 
@@ -284,43 +280,47 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
         }
     }
 
-    private static final Pattern UNQUOTED_CPE_WILDCARD_PATTERN = Pattern.compile("(?<!\\\\)[?*]");
-
     public List<VulnerableSoftware> getAllVulnerableSoftwareX(final String cpePart, final String cpeVendor,
                                                               final String cpeProduct, final PackageURL purl) {
-        var filterParts = new ArrayList<String>();
-        var params = new HashMap<String, Object>();
+        var queryFilterParts = new ArrayList<String>();
+        var queryParams = new HashMap<String, Object>();
 
         if (cpePart != null && cpeVendor != null && cpeProduct != null) {
-            final var cpeFilterParts = new ArrayList<String>();
+            final var cpeQueryFilterParts = new ArrayList<String>();
 
-            // CPE parts can contain both "*" and "?" wildcards, where "*" matches multiple
-            // arbitrary characters, and "?" matches only one. Further, comparison of parts
-            // must be case-insensitive.
+            // The query composition below represents a partial implementation of the CPE
+            // matching logic. It makes references to table 6-2 of the CPE name matching
+            // specification: https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf
+            //
+            // In CPE matching terms, the parameters of this method represent the target,
+            // and the `VulnerableSoftware`s in the database represent the source.
+            //
+            // While the source *can* contain wildcards ("*", "?"), there is currently (Oct. 2023)
+            // no occurrence of part, vendor, or product with wildcards in the NVD database.
+            // Evaluating wildcards in the source can only be done in-memory. If we wanted to do that,
+            // we'd have to fetch *all* records, which is not practical.
 
             if (!LogicalValue.ANY.getAbbreviation().equals(cpePart)
                     && !LogicalValue.NA.getAbbreviation().equals(cpePart)) {
-                final Matcher partWildcardMatcher = UNQUOTED_CPE_WILDCARD_PATTERN.matcher(cpePart);
-                if (partWildcardMatcher.matches()) {
-                    // | No. | Source A-V      | Target A-V      | Relation   |
-                    // | :-- | :-------------- | :-------------- | :--------- |
-                    // | 4   | ANY             | m + wild cards  | undefined  |
-                    // | 8   | NA              | m + wild cards  | undefined  |
-                    // | 11  | i               | m + wild cards  | undefined  |
-                    // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
-                    cpeFilterParts.add("part.matches(:partPattern)");
-                    params.put("partPattern", "(?i)" + wellFormedToPattern(cpePart).pattern());
-                } else {
-                    // | No. | Source A-V      | Target A-V | Relation             |
-                    // | :-- | :-------------- | :--------- | :------------------- |
-                    // | 3   | ANY             | i          | SUPERSET             |
-                    // | 7   | NA              | i          | DISJOINT             |
-                    // | 9   | i               | i          | EQUAL                |
-                    // | 10  | i               | k          | DISJOINT             |
-                    // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
-                    cpeFilterParts.add("part.equalsIgnoreCase(:part)");
-                    params.put("part", cpePart);
-                }
+                // | No. | Source A-V      | Target A-V | Relation             |
+                // | :-- | :-------------- | :--------- | :------------------- |
+                // | 3   | ANY             | i          | SUPERSET             |
+                // | 7   | NA              | i          | DISJOINT             |
+                // | 9   | i               | i          | EQUAL                |
+                // | 10  | i               | k          | DISJOINT             |
+                // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
+                cpeQueryFilterParts.add("part.equalsIgnoreCase(:part)");
+                queryParams.put("part", cpePart);
+
+                // NOTE: Target *could* include wildcard, but the relation
+                // for those cases is undefined:
+                //
+                // | No. | Source A-V      | Target A-V      | Relation   |
+                // | :-- | :-------------- | :-------------- | :--------- |
+                // | 4   | ANY             | m + wild cards  | undefined  |
+                // | 8   | NA              | m + wild cards  | undefined  |
+                // | 11  | i               | m + wild cards  | undefined  |
+                // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
             } else if (LogicalValue.NA.getAbbreviation().equals(cpePart)) {
                 // | No. | Source A-V     | Target A-V | Relation |
                 // | :-- | :------------- | :--------- | :------- |
@@ -328,86 +328,73 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                 // | 6   | NA             | NA         | EQUAL    |
                 // | 12  | i              | NA         | DISJOINT |
                 // | 16  | m + wild cards | NA         | DISJOINT |
-                cpeFilterParts.add("(part == '*' || part == '-')");
-            }  else {
+                cpeQueryFilterParts.add("(part == '*' || part == '-')");
+            } else {
                 // | No. | Source A-V     | Target A-V | Relation |
                 // | :-- | :------------- | :--------- | :------- |
                 // | 1   | ANY            | ANY        | EQUAL    |
                 // | 5   | NA             | ANY        | SUBSET   |
                 // | 13  | i              | ANY        | SUPERSET |
                 // | 15  | m + wild cards | ANY        | SUPERSET |
+                cpeQueryFilterParts.add("part != null");
             }
 
             if (!LogicalValue.ANY.getAbbreviation().equals(cpeVendor)
                     && !LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
-                final Matcher vendorWildcardMatcher = UNQUOTED_CPE_WILDCARD_PATTERN.matcher(cpeVendor);
-                if (vendorWildcardMatcher.matches()) {
-                    cpeFilterParts.add("vendor.matches(:vendorPattern)");
-                    params.put("vendorPattern", "(?i)" + wellFormedToPattern(cpeVendor).pattern());
-                } else {
-                    cpeFilterParts.add("vendor.equalsIgnoreCase(:vendor)");
-                    params.put("vendor", cpeVendor);
-                }
+                cpeQueryFilterParts.add("vendor.equalsIgnoreCase(:vendor)");
+                queryParams.put("vendor", cpeVendor);
             } else if (LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
-                cpeFilterParts.add("(vendor == '*' || vendor == '-')");
+                cpeQueryFilterParts.add("(vendor == '*' || vendor == '-')");
+            } else {
+                cpeQueryFilterParts.add("vendor != null");
             }
 
             if (!LogicalValue.ANY.getAbbreviation().equals(cpeProduct)
                     && !LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
-                final Matcher productWildcardMatcher = UNQUOTED_CPE_WILDCARD_PATTERN.matcher(cpeProduct);
-                if (productWildcardMatcher.matches()) {
-                    cpeFilterParts.add("product.matches(:productPattern)");
-                    params.put("productPattern", "(?i)" + wellFormedToPattern(cpeProduct).pattern());
-                } else {
-                    cpeFilterParts.add("product.equalsIgnoreCase(:product)");
-                    params.put("product", cpeProduct);
-                }
+                cpeQueryFilterParts.add("product.equalsIgnoreCase(:product)");
+                queryParams.put("product", cpeProduct);
             } else if (LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
-                cpeFilterParts.add("(product == '*' || product == '-')");
+                cpeQueryFilterParts.add("(product == '*' || product == '-')");
+            } else {
+                cpeQueryFilterParts.add("product != null");
             }
 
-            if (!cpeFilterParts.isEmpty()) {
-                // cpeFilterParts will be empty, when all CPE parts where ANY.
-                filterParts.add("(%s)".formatted(String.join(" && ", cpeFilterParts)));
-            }
+            queryFilterParts.add("(%s)".formatted(String.join(" && ", cpeQueryFilterParts)));
         }
 
         if (purl != null) {
             final var purlFilterParts = new ArrayList<String>();
 
-            // When building the query filter, ensure that null values are
-            // not passed as parameters, as this would bypass the query compilation
-            // cache. This method is called very frequently during vulnerability analysis,
-            // we should avoid the overhead of repeated re-compilation if possible.
-            // See also: https://github.com/DependencyTrack/dependency-track/issues/2540
+            // Use explicit null matching to avoid bypassing of the query compilation cache.
+            // https://github.com/DependencyTrack/dependency-track/issues/2540
 
             if (purl.getType() != null) {
                 purlFilterParts.add("purlType == :purlType");
-                params.put("purlType", purl.getType());
+                queryParams.put("purlType", purl.getType());
             } else {
                 purlFilterParts.add("purlType == null");
             }
 
             if (purl.getNamespace() != null) {
                 purlFilterParts.add("purlNamespace == :purlNamespace");
-                params.put("purlNamespace", purl.getNamespace());
+                queryParams.put("purlNamespace", purl.getNamespace());
             } else {
                 purlFilterParts.add("purlNamespace == null");
             }
 
             if (purl.getName() != null) {
                 purlFilterParts.add("purlName == :purlName");
-                params.put("purlName", purl.getName());
+                queryParams.put("purlName", purl.getName());
             } else {
                 purlFilterParts.add("purlName == null");
             }
 
-            filterParts.add("(%s)".formatted(String.join(" && ", purlFilterParts)));
+            queryFilterParts.add("(%s)".formatted(String.join(" && ", purlFilterParts)));
         }
 
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
-        query.setFilter(String.join(" || ", filterParts));
-        query.setNamedParameters(params);
+        query.setFilter(String.join(" || ", queryFilterParts));
+        query.setNamedParameters(queryParams);
         try {
             return List.copyOf(query.executeList());
         } finally {

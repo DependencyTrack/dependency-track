@@ -1151,13 +1151,23 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     @Override
     public boolean doesProjectExist(final String name, final String version) {
         final Query<Project> query = pm.newQuery(Project.class);
-        try {
+        if (version != null) {
             query.setFilter("name == :name && version == :version");
             query.setNamedParameters(Map.of(
                     "name", name,
                     "version", version
             ));
-            query.setResult("count(this)");
+        } else {
+            // Version is optional for projects, but using null
+            // for parameter values bypasses the query compilation cache.
+            // https://github.com/DependencyTrack/dependency-track/issues/2540
+            query.setFilter("name == :name && version == null");
+            query.setNamedParameters(Map.of(
+                    "name", name
+            ));
+        }
+        query.setResult("count(this)");
+        try {
             return query.executeResultUnique(Long.class) > 0;
         } finally {
             query.closeAll();

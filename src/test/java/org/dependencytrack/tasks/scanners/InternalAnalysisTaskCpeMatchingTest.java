@@ -44,11 +44,128 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
     @Parameters(name = "{index} source={0}, target={2}, expectMatch={1}")
     public static Collection<Object[]> parameters() {
         return Arrays.asList(new Object[][]{
+                // | No. | Source A-V | Target A-V | Relation |
+                // | :-- | :--------- | :--------- | :------- |
+                // | 1   | ANY        | ANY        | EQUAL    |
+                {"cpe:2.3:*:*:*:*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:*:*:*:*:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V | Relation |
+                // | :-- | :--------- | :--------- | :------- |
+                // | 2   | ANY        | NA         | SUPERSET |
+                {"cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V | Relation |
+                // | :-- | :--------- | :--------- | :------- |
+                // | 3   | ANY        | i          | SUPERSET |
+                {"cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V     | Relation   |
+                // | :-- | :--------- | :------------- | :--------- |
+                // | 4   | ANY        | m + wild cards | undefined  |
+                // {"cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                //   cpe-parser library does not allow wildcards for the part attribute.
+                {"cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V | Relation |
+                // | :-- | :--------- | :--------- | :------- |
+                // | 5   | NA         | ANY        | SUBSET   |
+                {"cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V | Relation |
+                // | :-- | :--------- | :--------- | :------- |
+                // | 6   | NA         | NA         | EQUAL    |
+                {"cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V | Relation |
+                // | :-- | :--------- | :--------- | :------- |
+                // | 7   | NA         | i          | DISJOINT |
+                {"cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V      | Relation   |
+                // | :-- | :--------- | :-------------- | :--------- |
+                // | 8   | NA         | m + wild cards  | undefined  |
+                // {"cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                //   cpe-parser library does not allow wildcards for the part attribute.
+                {"cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V | Relation |
+                // | :-- | :--------- | :--------- | :------- |
+                // | 9   | i          | i          | EQUAL    |
                 {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V | Relation |
+                // | :-- | :--------- | :--------- | :------- |
+                // | 10  | i          | k          | DISJOINT |
                 {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:o:vendor:product:1.0.0:*:*:*:*:*:*:*"},
                 {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:rodnev:product:1.0.0:*:*:*:*:*:*:*"},
                 {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:tcudorp:1.0.0:*:*:*:*:*:*:*"},
                 {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.1.1:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V      | Relation   |
+                // | :-- | :--------- | :-------------- | :--------- |
+                // | 11  | i          | m + wild cards  | undefined  |
+                // {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                //   cpe-parser library does not allow wildcards for the part attribute.
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*"},
+                // | No. | Source A-V | Target A-V | Relation |
+                // | :-- | :--------- | :--------- | :------- |
+                // | 12  | i          | NA         | DISJOINT |
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*"},
+                // | No. | Source A-V     | Target A-V | Relation |
+                // | :-- | :------------- | :--------- | :------- |
+                // | 13  | i              | ANY        | SUPERSET |
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*"},
+                // | No. | Source A-V      | Target A-V | Relation             |
+                // | :-- | :-------------- | :--------- | :------------------- |
+                // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
+                // {"cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                //   cpe-parser library does not allow wildcards for the part attribute.
+                {"cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:ven:product:1.0.0:*:*:*:*:*:*:*"},
+                //   wildcard expansion in source vendor is currently not supported; *should* be SUPERSET.
+                {"cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:pro:1.0.0:*:*:*:*:*:*:*"},
+                //   wildcard expansion in source product is currently not supported; *should* be SUPERSET.
+                {"cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:1.:*:*:*:*:*:*:*"},
+                // | No. | Source A-V     | Target A-V | Relation |
+                // | :-- | :------------- | :--------- | :------- |
+                // | 15  | m + wild cards | ANY        | SUPERSET |
+                // {"cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                //   cpe-parser library does not allow wildcards for the part attribute.
+                {"cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*"},
+                // | No. | Source A-V     | Target A-V | Relation |
+                // | :-- | :------------- | :--------- | :------- |
+                // | 16  | m + wild cards | NA         | DISJOINT |
+                // {"cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                //   cpe-parser library does not allow wildcards for the part attribute.
+                {"cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*"},
+                // | No. | Source A-V      | Target A-V      | Relation   |
+                // | :-- | :-------------- | :-------------- | :--------- |
+                // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
+                // {"cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                //   cpe-parser library does not allow wildcards for the part attribute.
+                {"cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*"},
                 // ---
                 // Regression tests
                 // ---

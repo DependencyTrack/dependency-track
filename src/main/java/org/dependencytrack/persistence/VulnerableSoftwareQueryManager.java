@@ -277,7 +277,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                 // | 9   | i               | i          | EQUAL                |
                 // | 10  | i               | k          | DISJOINT             |
                 // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
-                cpeQueryFilterParts.add("part.equalsIgnoreCase(:part)");
+                cpeQueryFilterParts.add("(part == '*' || part.equalsIgnoreCase(:part))");
                 queryParams.put("part", cpePart);
 
                 // NOTE: Target *could* include wildcard, but the relation
@@ -309,7 +309,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
 
             if (!LogicalValue.ANY.getAbbreviation().equals(cpeVendor)
                     && !LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
-                cpeQueryFilterParts.add("vendor.equalsIgnoreCase(:vendor)");
+                cpeQueryFilterParts.add("(vendor == '*' || vendor.equalsIgnoreCase(:vendor))");
                 queryParams.put("vendor", cpeVendor);
             } else if (LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
                 cpeQueryFilterParts.add("(vendor == '*' || vendor == '-')");
@@ -319,7 +319,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
 
             if (!LogicalValue.ANY.getAbbreviation().equals(cpeProduct)
                     && !LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
-                cpeQueryFilterParts.add("product.equalsIgnoreCase(:product)");
+                cpeQueryFilterParts.add("(product == '*' || product.equalsIgnoreCase(:product))");
                 queryParams.put("product", cpeProduct);
             } else if (LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
                 cpeQueryFilterParts.add("(product == '*' || product == '-')");

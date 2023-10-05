@@ -33,6 +33,22 @@ dependencies like packages, libraries, and frameworks. In the local mirror there
 So the local mirror is used, but not for dependencies represented by PURL. Dependency Track will use the Analyzer best
 suited to analyze a given dependency.
 
+#### The NVD CPE search is showing significantly more CVEs than Dependency-Track
+
+The NVD allows users to [search CVEs by CPE](https://nvd.nist.gov/products/cpe/search). Naturally, users assume
+that CVEs returned by this search mechanism are CVEs *affecting* the given CPE. When comparing the number of results
+with those reported by Dependency-Track, it is common to find discrepancies. This does not necessarily mean that
+Dependency-Track is missing CVEs that the NVD search is able to identify.
+
+The NVD utilizes the concept of [Known Affected Software Configurations](https://nvd.nist.gov/vuln/vulnerability-detail-pages)
+to express more complex matching criteria. For example, [CVE-2016-8963](https://nvd.nist.gov/vuln/detail/CVE-2016-8963)
+affects `cpe:2.3:a:ibm:license_metric_tool:9.2.0:*:*:*:*:*:*:*` *running on* `cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*`.
+The Linux Kernel itself is *not* affected. But when searching the NVD for `cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*`,
+CVE-2016-8963 is returned as result.
+
+Dependency-Track will only flag a component as vulnerable when it itself is vulnerable. If it is merely part of a
+configuration like above, Dependency-Track will not report it as vulnerable.
+
 #### Dependency Track crashes when run as a container
 
 Make sure the container is allowed to allocate enough RAM. For memory requirements see

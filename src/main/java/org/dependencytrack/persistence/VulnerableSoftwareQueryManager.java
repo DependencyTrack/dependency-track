@@ -241,6 +241,9 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
 
     /**
      * Fetch all {@link VulnerableSoftware}s matching the given CPE part, vendor, product, or Package URL.
+     * <p>
+     * This method will not query for <em>exact</em> matches of the given CPE attributes,
+     * but instead follow the CPE name matching specification.
      *
      * @param cpePart    The part attribute of the target CPE
      * @param cpeVendor  The vendor attribute of the target CPE

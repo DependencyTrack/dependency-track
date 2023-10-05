@@ -169,25 +169,55 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 // ---
                 // Regression tests
                 // ---
-                // #2988: "other" attribute of source is NA, "other" attribute of target is ANY -> SUBSET.
-                {"cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:NA", MATCHES, "cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:*"},
-                // #2988: "target_hw" of source if x64, "target_hw" of target is ANY -> SUBSET.
-                {"cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:x86:*", MATCHES, "cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:*"},
-                // #2988: "vendor" of source contains wildcard, "vendor" of target is ANY -> SUBSET.
-                {"cpe:2.3:o:linu*:linux_kernel:5.15.37:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:*:linux_kernel:5.15.37:*:*:*:*:*:*:*"},
-                // #2580: "vendor" of source is "linux", "vendor" of target ANY -> SUBSET.
-                {"cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:*:linux_kernel:4.19.139:*:*:*:*:*:*:*"},
-                // #2994: "part" of source is "a", "part" of target is ANY -> SUBSET.
-                {"cpe:2.3:a:busybox:busybox:1.34.1:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:*:busybox:busybox:1.34.1:*:*:*:*:*:*:*"},
-                // #2894: "vendor" and "product" with different casing -> EQUAL.
-                // Note: CPEs with uppercase "part" are considered invalid by the cpe-parser library.
-                {"cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:LiNuX:LiNuX_kErNeL:5.15.37:*:*:*:*:*:*:*"},
-                // #1832: "version" of source is NA, "version" of target is "2.4.54" -> DISJOINT.
+                // Issue:     https://github.com/DependencyTrack/dependency-track/issues/1320
+                // Scenario:  "product" of source is "2000e_firmware", "version" of target is "2000e_firmware" -> EQUAL.
+                //            "version" of source is NA, "version" of target is NA -> EQUAL.
+                // Table No.: 6, 9
+                {"cpe:2.3:o:intel:2000e_firmware:-:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:intel:2000e_firmware:-:*:*:*:*:*:*:*"},
+                // Scenario:  "version" of source is ANY, "version" of target is "2000e" -> SUPERSET.
+                //            "update" of source is ANY, "update" of target is NA -> SUPERSET.
+                // Table No.: 3, 2
+                {"cpe:2.3:h:intel:*:*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:h:intel:2000e:-:*:*:*:*:*:*:*"},
+                // ---
+                // Issue:     https://github.com/DependencyTrack/dependency-track/issues/1832
+                // Scenario:  "version" of source is NA, "version" of target is "2.4.54" -> DISJOINT.
+                // Table No.: 7
                 {"cpe:2.3:a:apache:http_server:-:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:apache:http_server:2.4.53:*:*:*:*:*:*:*"},
-                // #1832: "version" of source is NA, "version" of target is ANY -> SUBSET.
+                // Scenario:  "version" of source is NA, "version" of target is ANY -> SUBSET.
+                // Table No.: 5
                 {"cpe:2.3:a:apache:http_server:-:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*"},
-                // #2188: "update" of source is NA, "update" of target is ANY -> SUBSET.
-                {"cpe:2.3:a:xiph:speex:1.2:-:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:xiph:speex:1.2:*:*:*:*:*:*:*"}
+                // ---
+                // Issue:     https://github.com/DependencyTrack/dependency-track/issues/2188
+                // Scenario:  "update" of source is NA, "update" of target is ANY -> SUBSET.
+                // Table No.: 5
+                {"cpe:2.3:a:xiph:speex:1.2:-:*:*:*:*:*:*", MATCHES, "cpe:2.3:a:xiph:speex:1.2:*:*:*:*:*:*:*"},
+                // ---
+                // Issue:     https://github.com/DependencyTrack/dependency-track/issues/2580
+                // Scenario:  "vendor" of source is "linux", "vendor" of target ANY -> SUBSET.
+                // Table No.: 13
+                {"cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:*:linux_kernel:4.19.139:*:*:*:*:*:*:*"},
+                // ---
+                // Issue:     https://github.com/DependencyTrack/dependency-track/issues/2894
+                // Scenario:  "vendor" and "product" with different casing -> EQUAL.
+                // Table No.: 9
+                // Note:      CPEs with uppercase "part" are considered invalid by the cpe-parser library.
+                {"cpe:2.3:o:lInUx:lInUx_KeRnEl:5.15.37:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:LiNuX:LiNuX_kErNeL:5.15.37:*:*:*:*:*:*:*"},
+                // ---
+                // Issue:     https://github.com/DependencyTrack/dependency-track/issues/2988
+                // Scenario:  "other" attribute of source is NA, "other" attribute of target is ANY -> SUBSET.
+                // Table No.: 5
+                {"cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:NA", MATCHES, "cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:*"},
+                // Scenario:  "target_hw" of source if x64, "target_hw" of target is ANY -> SUBSET.
+                // Table No.: 13
+                {"cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:x86:*", MATCHES, "cpe:2.3:o:linux:linux_kernel:5.15.37:*:*:*:*:*:*:*"},
+                // Scenario:  "vendor" of source contains wildcard, "vendor" of target is ANY -> SUBSET.
+                // Table No.: 15
+                {"cpe:2.3:o:linu*:linux_kernel:5.15.37:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:*:linux_kernel:5.15.37:*:*:*:*:*:*:*"},
+                // ---
+                // Issue:     https://github.com/DependencyTrack/dependency-track/issues/2994
+                // Scenario:  "part" of source is "a", "part" of target is ANY -> SUBSET.
+                // Table No.: 13
+                {"cpe:2.3:a:busybox:busybox:1.34.1:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:*:busybox:busybox:1.34.1:*:*:*:*:*:*:*"},
         });
     }
 

@@ -56,3 +56,25 @@ For auto-provisioned accounts, LDAP synchronization is performed on-demand and u
 Your Dependency-Track instance is most likely configured to connect to services that use TLS certificates
 that are either self-signed, or signed by your organization's internal certificate authority.
 Please refer to the [Internal Certificate Authority](./../getting-started/internal-ca/) documentation.
+
+#### Unrelated vulnerabilities are reported as aliases, how can this be fixed?
+
+This can be a problem either in the data that Dependency-Track ingests from any of the enabled vulnerability intelligence
+sources, or a bug in the way Dependency-Track correlates this data. Some data sources have been found to not report 
+reliable alias data. As of v4.8.0, alias synchronization can be disabled on a per-source basis. For the time being, 
+it is recommended to disable alias synchronization for OSV and Snyk.
+
+To reset alias data, do the following:
+1. Disable alias synchronization for sources that may report unreliable data
+2. Stop the API server application
+3. Delete all aliases from the database:
+```sql
+DELETE FROM "VULNERABILITYALIAS" WHERE "ID" > 0;
+```
+4. Restart the API server application
+
+Alias data will be re-populated the next time vulnerability intelligence sources are mirrored, or vulnerability
+analysis is taking place. If this does not solve the problem, please raise a [defect report] on GitHub, 
+as it is likely a bug in Dependency-Track.
+
+[defect report]: https://github.com/DependencyTrack/dependency-track/issues/new?assignees=&labels=defect%2Cin+triage&template=defect-report.yml

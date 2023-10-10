@@ -34,7 +34,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.VexUploadEvent;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;

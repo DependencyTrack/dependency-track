@@ -75,6 +75,49 @@ alpine.database.url=jdbc:mysql://localhost:3306/dtrack?autoReconnect=true&useSSL
 MySQL may erroneously report index key length violations ("Specified key was too long"), when in fact the multi-byte
 key length is lower than the actual value. **Do not use MySQL if don't know how to work around errors like this**!
 
+#### Cloud SQL
+
+Connecting to Cloud SQL with IAM and mTLS is supported using the Cloud SQL database connectors included.
+
+More information [here](https://github.com/GoogleCloudPlatform/cloud-sql-jdbc-socket-factory)
+
+##### CloudSQL PostgreSQL
+
+```
+jdbc:postgresql:///<DATABASE_NAME>?cloudSqlInstance=<INSTANCE_CONNECTION_NAME>&socketFactory=com.google.cloud.sql.postgres.SocketFactory
+```
+
+##### CloudSQL Microsoft SQL Server
+
+```
+jdbc:sqlserver://localhost;databaseName=<DATABASE_NAME>;socketFactoryClass=com.google.cloud.sql.sqlserver.SocketFactory;socketFactoryConstructorArg=<INSTANCE_CONNECTION_NAME>
+```
+
+##### CloudSQL MySQL
+
+```
+jdbc:mysql:///<DATABASE_NAME>?cloudSqlInstance=<INSTANCE_CONNECTION_NAME>&socketFactory=com.google.cloud.sql.mysql.SocketFactory
+```
+
+### Connection Pooling
+
+The Dependency-Track API server utilizes **two** database connection pools - one for *transactional* and one for 
+*non-transactional* operations. Roughly speaking, writing operations will make use of the transactional connection pool,
+while read-only operations will use the non-transactional pool. Under normal circumstances, Dependency-Track performs
+way more read-only than write operations. Per default, both pools are configured with a maximum size of 20 connections, 
+and a minimum amount of 10 idle connections. This may be adjusted via the `alpine.database.pool.*` properties,
+see [Configuration].
+
+As connection pool sizing highly depends on the deployment at hand, it is not possible to give general recommendations
+as to how big or small the pools should be. When in doubt, the default configuration should work for the majority of users.
+If customization of connection pool sizes is desired, it is recommended to read the [About Pool Sizing] article,
+published by the creator of [HikariCP], the connection pool implementation used by Dependency-Track.
+
+Additionally, meetrics about both connection pools are exposed via Prometheus, and it is strongly recommended to 
+monitor them (see [Monitoring]) before making any changes to the default configuration.
+
+![Connection Pool Metrics]({{ site.baseurl }}/images/screenshots/database-connection-pool-metrics.png)
+
 ### Migrating to H2 v2
 
 With Dependency-Track 4.6.0, the embedded H2 database has been upgraded to version 2.
@@ -137,5 +180,8 @@ java -cp h2-2.1.214.jar org.h2.tools.RunScript \
 8. That's it! It's now safe to start Dependency-Track 4.6.0
 
 
+[About Pool Sizing]: https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing
 [Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration.md %}
+[HikariCP]: https://github.com/brettwooldridge/HikariCP
+[Monitoring]: {{ site.baseurl }}{% link _docs/getting-started/monitoring.md %}
 [SQL mode]: https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html

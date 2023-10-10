@@ -28,6 +28,7 @@ import org.dependencytrack.event.ClearComponentAnalysisCacheEvent;
 import org.dependencytrack.event.DefectDojoUploadEventAbstract;
 import org.dependencytrack.event.FortifySscUploadEventAbstract;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
+import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.event.NistMirrorEvent;
@@ -44,6 +45,8 @@ import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABL
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_SYNC_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_SYNC_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_SYNC_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE;
@@ -112,6 +115,7 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         scheduleConfigurableTask(300000, FORTIFY_SSC_ENABLED, FORTIFY_SSC_SYNC_CADENCE, new FortifySscUploadEventAbstract());
         scheduleConfigurableTask(300000, DEFECTDOJO_ENABLED, DEFECTDOJO_SYNC_CADENCE, new DefectDojoUploadEventAbstract());
         scheduleConfigurableTask(300000, KENNA_ENABLED, KENNA_SYNC_CADENCE, new KennaSecurityUploadEventAbstract());
+        scheduleConfigurableTask(10800000, SEARCH_INDEXES_CONSISTENCY_CHECK_ENABLED, SEARCH_INDEXES_CONSISTENCY_CHECK_CADENCE, new IndexEvent(IndexEvent.Action.CHECK, Object.class));
     }
 
     /**

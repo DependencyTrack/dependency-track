@@ -23,11 +23,20 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
 public class CpePolicyEvaluatorTest extends PersistenceCapableTest {
+
+    private PolicyEvaluator evaluator;
+
+    @Before
+    public void initEvaluator() {
+        evaluator = new CpePolicyEvaluator();
+        evaluator.setQueryManager(qm);
+    }
 
     @Test
     public void hasMatch() {
@@ -35,7 +44,19 @@ public class CpePolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.CPE, PolicyCondition.Operator.MATCHES, "cpe:/a:acme:application:1.0.0");
         Component component = new Component();
         component.setCpe("cpe:/a:acme:application:1.0.0");
-        PolicyEvaluator evaluator = new CpePolicyEvaluator();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+        PolicyConditionViolation violation = violations.get(0);
+        Assert.assertEquals(component, violation.getComponent());
+        Assert.assertEquals(condition, violation.getPolicyCondition());
+    }
+
+    @Test
+    public void hasMatchNullCpe() {
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.CPE, PolicyCondition.Operator.NO_MATCH, ".+");
+        Component component = new Component();
+        component.setCpe(null);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
@@ -49,7 +70,6 @@ public class CpePolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.CPE, PolicyCondition.Operator.MATCHES, "cpe:/a:acme:application:1.0.0");
         Component component = new Component();
         component.setCpe("cpe:/a:acme:application:2.0.0");
-        PolicyEvaluator evaluator = new CpePolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -60,7 +80,6 @@ public class CpePolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, "cpe:/a:acme:application:1.0.0");
         Component component = new Component();
         component.setCpe("cpe:/a:acme:application:1.0.0");
-        PolicyEvaluator evaluator = new CpePolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -71,7 +90,6 @@ public class CpePolicyEvaluatorTest extends PersistenceCapableTest {
         qm.createPolicyCondition(policy, PolicyCondition.Subject.CPE, PolicyCondition.Operator.IS, "cpe:/a:acme:application:1.0.0");
         Component component = new Component();
         component.setCpe("cpe:/a:acme:application:1.0.0");
-        PolicyEvaluator evaluator = new CpePolicyEvaluator();
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }

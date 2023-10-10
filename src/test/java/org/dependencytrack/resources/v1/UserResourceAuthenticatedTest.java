@@ -235,8 +235,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         Assert.assertEquals("A user with the same username already exists. Cannot create new user.", body);
     }
 
-    //@Test
-    // TODO: The workaround for Jersey (DELETE with body) no longer throws an exception, but produces a 400. Unable to test at this time
+    @Test
     public void deleteLdapUserTest() {
         qm.createLdapUser("blackbeard");
         LdapUser user = new LdapUser();
@@ -457,8 +456,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         Assert.assertEquals("The user could not be found.", body);
     }
 
-    //@Test
-    // TODO: The workaround for Jersey (DELETE with body) no longer throws an exception, but produces a 400. Unable to test at this time
+    @Test
     public void deleteManagedUserTest() {
         String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
         qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
@@ -573,8 +571,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         //Assert.assertEquals("The user is already a member of the specified team.", body);
     }
 
-    //@Test
-    // TODO: The workaround for Jersey (DELETE with body) no longer throws an exception, but produces a 400. Unable to test at this time
+    @Test
     public void removeTeamFromUserTest() {
         String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
         Team team = qm.createTeam("Pirates", false);
@@ -587,6 +584,6 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(ido, MediaType.APPLICATION_JSON)); // HACK
         // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
-        Assert.assertEquals(204, response.getStatus(), 0);
+        Assert.assertEquals(200, response.getStatus(), 0);
     }
 }

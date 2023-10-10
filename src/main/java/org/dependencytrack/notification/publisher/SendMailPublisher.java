@@ -21,31 +21,35 @@ package org.dependencytrack.notification.publisher;
 import alpine.common.logging.Logger;
 import alpine.common.util.BooleanUtil;
 import alpine.model.ConfigProperty;
-import alpine.model.Team;
-import alpine.model.ManagedUser;
 import alpine.model.LdapUser;
+import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
+import alpine.model.Team;
 import alpine.notification.Notification;
 import alpine.security.crypto.DataEncryption;
 import alpine.server.mail.SendMail;
-import com.mitchellbosecke.pebble.PebbleEngine;
-import com.mitchellbosecke.pebble.loader.ClasspathLoader;
-import com.mitchellbosecke.pebble.loader.DelegatingLoader;
-import com.mitchellbosecke.pebble.loader.FileLoader;
-import com.mitchellbosecke.pebble.loader.Loader;
-import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.json.JsonObject;
-import java.util.List;
+import javax.json.JsonString;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.*;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_FROM_ADDR;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_PASSWORD;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_HOSTNAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_PORT;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SSLTLS;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_TRUSTCERT;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_USERNAME;
 
 public class SendMailPublisher implements Publisher {
 
@@ -119,17 +123,21 @@ public class SendMailPublisher implements Publisher {
     }
 
     static String[] parseDestination(final JsonObject config) {
-        String destinationString = config.getString("destination");
-        if ((destinationString == null) || destinationString.isEmpty()) {
+        JsonString destinationString = config.getJsonString("destination");
+        if ((destinationString == null) || destinationString.getString().isEmpty()) {
           return null;
         }
-        return destinationString.split(",");
+        return destinationString.getString().split(",");
     }
 
     static String[] parseDestination(final JsonObject config, final List<Team> teams) {
         String[] destination = teams.stream().flatMap(
                 team -> Stream.of(
-                                Arrays.stream(config.getString("destination").split(",")).filter(Predicate.not(String::isEmpty)),
+                                Optional.ofNullable(config.getJsonString("destination"))
+                                        .map(JsonString::getString)
+                                        .stream()
+                                        .flatMap(dest -> Arrays.stream(dest.split(",")))
+                                        .filter(Predicate.not(String::isEmpty)),
                                 Optional.ofNullable(team.getManagedUsers()).orElseGet(Collections::emptyList).stream().map(ManagedUser::getEmail).filter(Objects::nonNull),
                                 Optional.ofNullable(team.getLdapUsers()).orElseGet(Collections::emptyList).stream().map(LdapUser::getEmail).filter(Objects::nonNull),
                                 Optional.ofNullable(team.getOidcUsers()).orElseGet(Collections::emptyList).stream().map(OidcUser::getEmail).filter(Objects::nonNull)

@@ -19,11 +19,15 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
+import alpine.model.ConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.model.Team;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -165,10 +169,30 @@ public class TeamResourceTest extends ResourceTest {
         Assert.assertEquals("The team could not be found.", body);
     }
 
-    //@Test
-    // TODO: The workaround for Jersey (DELETE with body) no longer throws an exception, but produces a 400. Unable to test at this time
+    @Test
     public void deleteTeamTest() {
         Team team = qm.createTeam("My Team", false);
+        Response response = target(V1_TEAM).request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
+                .method("DELETE", Entity.entity(team, MediaType.APPLICATION_JSON)); // HACK
+        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+        Assert.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    public void deleteTeamWithAclTest() {
+        Team team = qm.createTeam("My Team", false);
+        ConfigProperty aclToogle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToogle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+             aclToogle.setPropertyValue("true");
+             qm.persist(aclToogle);
+        }
+        Project project = qm.createProject("Acme Example", null, "1", null, null, null, true, false);
+        project.addAccessTeam(team);
+        qm.persist(project);
         Response response = target(V1_TEAM).request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK

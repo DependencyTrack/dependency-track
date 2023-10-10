@@ -71,6 +71,20 @@ public class AffectedComponentTest {
         }
 
         @Test
+        public void shouldMapPurlToPurlIdentityEvenWhenNoNamespace() {
+            final var vs = new VulnerableSoftware();
+            vs.setPurlType(PackageURL.StandardTypes.GOLANG);
+            vs.setPurlName("bar");
+            vs.setPurlVersion("baz");
+            vs.setPurlQualifiers("{\"ping\":\"pong\"}");
+            vs.setPurlSubpath("1/2/3");
+
+            final var affectedComponent = new AffectedComponent(vs);
+            assertThat(affectedComponent.getIdentityType()).isEqualTo(AffectedComponent.IdentityType.PURL);
+            assertThat(affectedComponent.getIdentity()).isEqualTo("pkg:golang/bar@baz?ping=pong#1/2/3");
+        }
+
+        @Test
         public void shouldMapPurlFragmentsToPurlIdentity() {
             final var vs = new VulnerableSoftware();
             vs.setPurlType(PackageURL.StandardTypes.GOLANG);
@@ -144,6 +158,24 @@ public class AffectedComponentTest {
         @Test
         public void shouldUseVersionRangeWhenAvailable() {
             final var vs = new VulnerableSoftware();
+            vs.setVersionStartIncluding("foo");
+            vs.setVersionStartExcluding("bar");
+            vs.setVersionEndIncluding("baz");
+            vs.setVersionEndExcluding("qux");
+
+            final var affectedComponent = new AffectedComponent(vs);
+            assertThat(affectedComponent.getVersionType()).isEqualTo(AffectedComponent.VersionType.RANGE);
+            assertThat(affectedComponent.getVersion()).isNull();
+            assertThat(affectedComponent.getVersionStartIncluding()).isEqualTo("foo");
+            assertThat(affectedComponent.getVersionStartExcluding()).isEqualTo("bar");
+            assertThat(affectedComponent.getVersionEndIncluding()).isEqualTo("baz");
+            assertThat(affectedComponent.getVersionEndExcluding()).isEqualTo("qux");
+        }
+
+        @Test
+        public void shouldUseVersionRangeWhenBothRangeAndExactVersionAreAvailable() {
+            final var vs = new VulnerableSoftware();
+            vs.setVersion("*"); // CPEs will have a version wildcard when ranges are defined
             vs.setVersionStartIncluding("foo");
             vs.setVersionStartExcluding("bar");
             vs.setVersionEndIncluding("baz");

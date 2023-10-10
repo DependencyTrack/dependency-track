@@ -86,4 +86,12 @@ public class PolicyTest {
         Assert.assertEquals(1, policy.getTags().size());
         Assert.assertEquals(tag, policy.getTags().get(0));
     }
+
+    @Test
+    public void testIncludeChildren() {
+        Policy policy = new Policy();
+        Assert.assertFalse(policy.isIncludeChildren());
+        policy.setIncludeChildren(true);
+        Assert.assertTrue(policy.isIncludeChildren());
+    }
 }

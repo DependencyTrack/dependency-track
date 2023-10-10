@@ -33,6 +33,7 @@ Each scope contains a set of notification groups that can be used to subscribe t
 | PORTFOLIO | PROJECT_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                         |
 | PORTFOLIO | BOM_CONSUMED | Notifications generated whenever a supported BOM is ingested and identified                                                       |
 | PORTFOLIO | BOM_PROCESSED | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
+| PORTFOLIO | BOM_PROCESSING_FAILED | Notifications generated whenever a BOM upload process fails                                 |
 | PORTFOLIO | POLICY_VIOLATION | Notifications generated whenever a policy violation is identified                                                                 |
 
 ## Configuring Publishers
@@ -406,7 +407,7 @@ Once the alert is created it can be configured. Start with selecting from the li
 to notify on. Then specify the destination:
 - For the Email publisher: it's a comma separated list of email addresses
 - For Slack, Mattermost and Microsoft Teams: it's the incoming webhook URL generated from each respective
-- For Jira: it's the URL for the Jira instance. The Jira alert also asks for the Jira ticket type ('Task', 'Story', etc., refer to the Jira documentation for more details) to be created, along with the project key where the issue will be created
+- For Jira: it's the project key where the issue will be created. The Jira alert also asks for the Jira ticket type ('Task', 'Story', etc., refer to the Jira documentation for more details) to be created
 - For the Outbound Webhook publisher: it's a URL to which to publish the notification
 
 ![configure notification](/images/screenshots/notifications-configure.png)

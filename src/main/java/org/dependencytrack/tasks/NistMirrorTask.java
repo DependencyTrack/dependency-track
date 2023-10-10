@@ -26,7 +26,9 @@ import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -41,14 +43,13 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
 import org.dependencytrack.persistence.QueryManager;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
-import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -82,7 +83,7 @@ public class NistMirrorTask implements LoggableSubscriber {
     private static final String CVE_JSON_11_MODIFIED_META = "/json/cve/1.1/nvdcve-1.1-modified.meta";
     private static final String CVE_JSON_11_BASE_META = "/json/cve/1.1/nvdcve-1.1-%d.meta";
     private static final int START_YEAR = 2002;
-    private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
+    private final int endYear = Calendar.getInstance().get(Calendar.YEAR);
 
     private final boolean isEnabled;
     private String nvdFeedsUrl;
@@ -132,7 +133,7 @@ public class NistMirrorTask implements LoggableSubscriber {
         LOGGER.info("Downloading files at " + currentDate);
         doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_URL, ResourceType.CVE_MODIFIED_DATA);
         doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_META, ResourceType.CVE_META);
-        for (int i = END_YEAR; i >= START_YEAR; i--) {
+        for (int i = endYear; i >= START_YEAR; i--) {
             // Download JSON 1.1 year feeds in reverse order
             final String json11BaseUrl = this.nvdFeedsUrl + CVE_JSON_11_BASE_URL.replace("%d", String.valueOf(i));
             final String cve11BaseMetaUrl = this.nvdFeedsUrl + CVE_JSON_11_BASE_META.replace("%d", String.valueOf(i));
@@ -223,7 +224,7 @@ public class NistMirrorTask implements LoggableSubscriber {
                 final StatusLine status = response.getStatusLine();
                 final long end = System.currentTimeMillis();
                 metricDownloadTime += end - start;
-                if (status.getStatusCode() == 200) {
+                if (status.getStatusCode() == HttpStatus.SC_OK) {
                     LOGGER.info("Downloading...");
                     try (InputStream in = response.getEntity().getContent()) {
                         File temp = File.createTempFile(filename, null);
@@ -234,9 +235,6 @@ public class NistMirrorTask implements LoggableSubscriber {
                             // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
                             File timestampFile = new File(outputDir, filename + ".ts");
                             writeTimeStampFile(timestampFile, 0L);
-                        }
-                        if (file.getName().endsWith(".gz")) {
-                            uncompress(file, resourceType);
                         }
                     }
                 } else if (response.getStatusLine().getStatusCode() == 403) {
@@ -264,6 +262,10 @@ public class NistMirrorTask implements LoggableSubscriber {
                     );
                 }
             }
+
+            if (file.getName().endsWith(".gz")) {
+                uncompress(file, resourceType);
+            }
         } catch (IOException e) {
             mirroredWithoutErrors = false;
             LOGGER.error("Download failed : " + e.getMessage());
@@ -282,35 +284,26 @@ public class NistMirrorTask implements LoggableSubscriber {
      * @param file the file to extract
      */
     private void uncompress(final File file, final ResourceType resourceType) {
-        final byte[] buffer = new byte[1024];
-        GZIPInputStream gzis = null;
-        OutputStream out = null;
-        try {
+        final File uncompressedFile = new File(file.getAbsolutePath().replaceAll(".gz", ""));
+        try (final var gzis = new GZIPInputStream(Files.newInputStream(file.toPath()));
+             final var out = Files.newOutputStream(uncompressedFile.toPath())) {
             LOGGER.info("Uncompressing " + file.getName());
-            gzis = new GZIPInputStream(Files.newInputStream(file.toPath()));
-            final File uncompressedFile = new File(file.getAbsolutePath().replaceAll(".gz", ""));
-            out = Files.newOutputStream(uncompressedFile.toPath());
-            int len;
-            while ((len = gzis.read(buffer)) > 0) {
-                out.write(buffer, 0, len);
-            }
-            final long start = System.currentTimeMillis();
-            if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
-                final NvdParser parser = new NvdParser();
-                parser.parse(uncompressedFile);
-                // Update modification time
-                File timestampFile = new File( file.getAbsolutePath() + ".ts");
-                writeTimeStampFile(timestampFile, start);
-            }
-            final long end = System.currentTimeMillis();
-            metricParseTime += end - start;
+            IOUtils.copy(gzis, out);
         } catch (IOException ex) {
             mirroredWithoutErrors = false;
             LOGGER.error("An error occurred uncompressing NVD payload", ex);
-        } finally {
-            close(gzis);
-            close(out);
         }
+
+        final long start = System.currentTimeMillis();
+        if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
+            final NvdParser parser = new NvdParser();
+            parser.parse(uncompressedFile);
+            // Update modification time
+            File timestampFile = new File(file.getAbsolutePath() + ".ts");
+            writeTimeStampFile(timestampFile, start);
+        }
+        final long end = System.currentTimeMillis();
+        metricParseTime += end - start;
     }
 
     /**

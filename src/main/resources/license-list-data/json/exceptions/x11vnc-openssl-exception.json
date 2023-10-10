@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "In addition, as a special exception, Karl J. Runge\ngives permission to link the code of its release of x11vnc with the\nOpenSSL project\u0027s \"OpenSSL\" library (or with modified versions of it\nthat use the same license as the \"OpenSSL\" library), and distribute\nthe linked executables.  You must obey the GNU General Public License\nin all respects for all of the code used other than \"OpenSSL\".  If you\nmodify this file, you may extend this exception to your version of the\nfile, but you are not obligated to do so.  If you do not wish to do\nso, delete this exception statement from your version.\n",
+  "name": "x11vnc OpenSSL Exception",
+  "licenseComments": "This is very similar to openvpn-openssl-exception with a couple key differences.",
+  "seeAlso": [
+    "https://github.com/LibVNC/x11vnc/blob/master/src/8to24.c#L22"
+  ],
+  "licenseExceptionId": "x11vnc-openssl-exception",
+  "licenseExceptionTemplate": "In addition, as a special exception, Karl J. Runge gives permission to link the code of its release of x11vnc with the OpenSSL project\u0027s \"OpenSSL\" library (or with modified versions of it that use the same license as the \"OpenSSL\" library), and distribute the linked executables. You must obey the GNU General Public License in all respects for all of the code used other than \"OpenSSL\". If you modify this file, you may extend this exception to your version of the file, but you are not obligated to do so. If you do not wish to do so, delete this exception statement from your version.\n\n",
+  "exceptionTextHtml": "\n         \u003cp\u003e\n            In addition, as a special exception, Karl J. Runge gives permission\n            to link the code of its release of x11vnc with the OpenSSL project\u0026apos;s\n            \u0026quot;OpenSSL\u0026quot; library (or with modified versions of it that use the\n            same license as the \u0026quot;OpenSSL\u0026quot; library), and distribute the linked\n            executables. You must obey the GNU General Public License in all\n            respects for all of the code used other than \u0026quot;OpenSSL\u0026quot;. If you\n            modify this file, you may extend this exception to your version\n            of the file, but you are not obligated to do so. If you do not\n            wish to do so, delete this exception statement from your version.\n         \u003c/p\u003e\n\n      "
+}

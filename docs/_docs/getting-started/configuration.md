@@ -62,6 +62,18 @@ alpine.worker.thread.multiplier=4
 # directories.
 alpine.data.directory=~/.dependency-track
 
+# Optional
+# Defines the path to the secret key to be used for data encryption and decryption.
+# The key will be generated upon first startup if it does not exist.
+# Default is "<alpine.data.directory>/keys/secret.key".
+# alpine.secret.key.path=/var/run/secrets/secret.key
+
+# Optional
+# Defines the prefix to be used for API keys. A maximum prefix length of 251
+# characters is supported.
+# The prefix may also be left empty.
+alpine.api.key.prefix=odt_
+
 # Required
 # Defines the interval (in seconds) to log general heath information. If value
 # equals 0, watchdog logging will be disabled.
@@ -103,37 +115,58 @@ alpine.database.pool.enabled=true
 # Optional
 # This property controls the maximum size that the pool is allowed to reach,
 # including both idle and in-use connections.
+# The property can be set globally for both transactional and non-transactional
+# connection pools, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.max.size=20
+# alpine.database.pool.tx.max.size=
+# alpine.database.pool.nontx.max.size=
 
 # Optional
 # This property controls the minimum number of idle connections in the pool.
 # This value should be equal to or less than alpine.database.pool.max.size.
-# Warning: If the value is less than alpine.database.pool.max.size, 
+# Warning: If the value is less than alpine.database.pool.max.size,
 # alpine.database.pool.idle.timeout will have no effect.
+# The property can be set globally for both transactional and non-transactional
+# connection pools, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.min.idle=10
+# alpine.database.pool.tx.min.idle=
+# alpine.database.pool.nontx.min.idle=
 
 # Optional
 # This property controls the maximum amount of time that a connection is
 # allowed to sit idle in the pool.
+# The property can be set globally for both transactional and non-transactional
+# connection pools, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.idle.timeout=300000
+# alpine.database.pool.tx.idle.timeout=
+# alpine.database.pool.nontx.idle.timeout=
 
 # Optional
 # This property controls the maximum lifetime of a connection in the pool.
 # An in-use connection will never be retired, only when it is closed will
 # it then be removed.
+# The property can be set globally for both transactional and non-transactional
+# connection pools, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.max.lifetime=600000
+# alpine.database.pool.tx.max.lifetime=
+# alpine.database.pool.nontx.max.lifetime=
 
 # Optional
-# When authentication is enforced, API keys are required for automation, and
-# the user interface will prevent anonymous access by prompting for login
-# credentials.
-alpine.enforce.authentication=true
-
-# Optional
-# When authorization is enforced, team membership for both API keys and user
-# accounts are restricted to what the team itself has access to. To enforce 
-# authorization, the enforce.authentication property (above) must be true.
-alpine.enforce.authorization=true
+# Controls the 2nd level cache type used by DataNucleus, the Object Relational Mapper (ORM).
+# See https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#cache_level2
+# Values supported by Dependency-Track are "soft" (default), "weak", and "none".
+#
+# Setting this property to "none" may help in reducing the memory footprint of Dependency-Track,
+# but has the potential to slow down database operations.
+# Size of the cache may be monitored through the "datanucleus_cache_second_level_entries" metric,
+# refer to https://docs.dependencytrack.org/getting-started/monitoring/#metrics for details.
+#
+# DO NOT CHANGE UNLESS THERE IS A GOOD REASON TO.
+# alpine.datanucleus.cache.level2.type=
 
 # Required
 # Specifies the number of bcrypt rounds to use when hashing a users password.
@@ -309,6 +342,12 @@ alpine.metrics.auth.password=
 alpine.oidc.enabled=false
 
 # Optional
+# Defines the client ID to be used for OpenID Connect.
+# The client ID should be the same as the one configured for the frontend,
+# and will only be used to validate ID tokens.
+alpine.oidc.client.id=
+
+# Optional
 # Defines the issuer URL to be used for OpenID Connect.
 # This issuer MUST support provider configuration via the /.well-known/openid-configuration endpoint.
 # See also:
@@ -353,26 +392,29 @@ alpine.oidc.teams.claim=groups
 # Optional
 # Defines the size of the thread pool used to perform requests to the Snyk API in parallel.
 # The thread pool will only be used when Snyk integration is enabled.
-# A high number may result in a quicker excession of API rate limits, 
-# while a number that is too low may result in vulnerability analyses taking too long.
-snyk.thread.batch.size=10
+# A high number may result in quicker exceeding of API rate limits,
+# while a number that is too low may result in vulnerability analyses taking longer.
+snyk.thread.pool.size=10
 
 # Optional
-# Defines the maximum number of requests that the Snyk analyzer would make in a given period. 
-# The default value is 1500
-snyk.limit.for.period=1500
+# Defines the maximum amount of retries to perform for each request to the Snyk API.
+# Retries are performed with increasing delays between attempts using an exponential backoff strategy.
+# The initial duration defined in snyk.retry.exponential.backoff.initial.duration.seconds will be
+# multiplied with the value defined in snyk.retry.exponential.backoff.multiplier after each retry attempt,
+# until the maximum duration defined in snyk.retry.exponential.backoff.max.duration.seconds is reached.
+snyk.retry.max.attempts=6
 
 # Optional
-# Defines the maximum number of seconds the thread will wait before timing out.This value is in seconds.
-# Currently the Snyk Analyzer is multithreaded and each thread waits for the permission from the rate limiter.
-# The default value is 60
-snyk.thread.timeout.duration=60
+# Defines the multiplier for the exponential backoff retry strategy.
+snyk.retry.exponential.backoff.multiplier=2
 
 # Optional
-# Defines the time after which the number of permissions are refreshed to the set value by the rate limiter.
-# The rate limiter would refresh the number of permissions available after every "limit refresh period".
-# This value is in seconds. The default value is 60
-snyk.limit.refresh.period=60
+# Defines the duration in seconds to wait before attempting the first retry.
+snyk.retry.exponential.backoff.initial.duration.seconds=1
+
+# Optional
+# Defines the maximum duration in seconds to wait before attempting the next retry.
+snyk.retry.exponential.backoff.max.duration.seconds=60
 
 # Optional
 #Defines the maximum number of purl sent in a single request to OSS Index.
@@ -438,6 +480,50 @@ java -Xmx4G -DdependencyTrack.logging.level=DEBUG -jar dependency-track-embedded
 
 For Docker deployments, simply set the `LOGGING_LEVEL` environment variable to one of
 INFO, WARN, ERROR, DEBUG, or TRACE.
+
+#### Secret Key
+
+Dependency-Track will encrypt certain confidential data (e.g. access tokens for external service providers) with AES256
+prior to storing it in the database. The secret key used for encrypting and decrypting will be automatically generated
+when Dependency-Track starts for the first time, and is placed in `<alpine.data.directory>/keys/secret.key`
+(`/data/.dependency-track/keys/secret.key` for containerized deployments).
+
+Starting with Dependency-Track 4.7, it is possible to change the location of the secret key via the `alpine.secret.key.path`
+property. This makes it possible to use Kubernetes secrets for example, to mount secrets into the custom location.
+
+Secret keys may be generated manually upfront instead of relying on Dependency-Track to do it. This can be achieved
+with OpenSSL like this:
+
+```shell
+openssl rand 32 > secret.key
+```
+
+> Note that the default key format has changed in version 4.7. While existing keys using the old format will continue
+> to work, keys for new instances will be generated in the new format. Old keys may be converted using the following
+> [JShell](https://docs.oracle.com/en/java/javase/17/jshell/introduction-jshell.html) script:
+> ```java
+> import java.io.ObjectInputStream;
+> import java.nio.file.Files;
+> import java.nio.file.Paths;
+> import javax.crypto.SecretKey;
+> String inputFilePath = System.getProperty("secret.key.input")
+> String outputFilePath = System.getProperty("secret.key.output");
+> SecretKey secretKey = null;
+> System.out.println("Reading old key from " + inputFilePath);
+> try (var fis = Files.newInputStream(Paths.get(inputFilePath));
+>      var ois = new ObjectInputStream(fis)) {
+>     secretKey = (SecretKey) ois.readObject();
+> }
+> System.out.println("Writing new key to " + outputFilePath);
+> try (var fos = Files.newOutputStream(Paths.get(outputFilePath))) {
+>     fos.write(secretKey.getEncoded());
+> }
+> /exit
+> ```
+> Example execution:
+> ```shell
+> jshell -R"-Dsecret.key.input=$HOME/.dependency-track/keys/secret.key" -R"-Dsecret.key.output=secret.key.new" convert-key.jsh
+> ```
 
 ### Frontend
 

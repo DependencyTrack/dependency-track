@@ -18,15 +18,17 @@
  */
 package org.dependencytrack.upgrade;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.common.util.VersionComparator;
 import alpine.model.InstalledUpgrades;
 import alpine.model.SchemaVersion;
-import alpine.persistence.JdoProperties;
+import alpine.server.persistence.PersistenceManagerFactory;
 import alpine.server.upgrade.UpgradeException;
 import alpine.server.upgrade.UpgradeExecutor;
 import alpine.server.upgrade.UpgradeMetaProcessor;
 import org.datanucleus.PersistenceNucleusContext;
+import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.datanucleus.store.schema.SchemaAwareStoreManager;
 import org.dependencytrack.RequirementsVerifier;
@@ -63,28 +65,27 @@ public class UpgradeInitializer implements ServletContextListener {
             Runtime.getRuntime().halt(-1);
         }
 
-        final JDOPersistenceManagerFactory pmf  = (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(JdoProperties.get(), "Alpine");
+        try (final JDOPersistenceManagerFactory pmf = createPersistenceManagerFactory()) {
+            // Ensure that the UpgradeMetaProcessor and SchemaVersion tables are created NOW, not dynamically at runtime.
+            final PersistenceNucleusContext ctx = pmf.getNucleusContext();
+            final Set<String> classNames = new HashSet<>();
+            classNames.add(InstalledUpgrades.class.getCanonicalName());
+            classNames.add(SchemaVersion.class.getCanonicalName());
+            ((SchemaAwareStoreManager) ctx.getStoreManager()).createSchemaForClasses(classNames, new Properties());
 
-        // Ensure that the UpgradeMetaProcessor and SchemaVersion tables are created NOW, not dynamically at runtime.
-        final PersistenceNucleusContext ctx = pmf.getNucleusContext();
-        final Set<String> classNames = new HashSet<>();
-        classNames.add(InstalledUpgrades.class.getCanonicalName());
-        classNames.add(SchemaVersion.class.getCanonicalName());
-        ((SchemaAwareStoreManager)ctx.getStoreManager()).createSchemaForClasses(classNames, new Properties());
-
-        if (RequirementsVerifier.failedValidation()) {
-            return;
-        }
-        try (final PersistenceManager pm = pmf.getPersistenceManager();
-             final QueryManager qm = new QueryManager(pm)) {
-            final UpgradeExecutor executor = new UpgradeExecutor(qm);
-            try {
-                executor.executeUpgrades(UpgradeItems.getUpgradeItems());
-            } catch (UpgradeException e) {
-                LOGGER.error("An error occurred performing upgrade processing. " + e.getMessage());
+            if (RequirementsVerifier.failedValidation()) {
+                return;
+            }
+            try (final PersistenceManager pm = pmf.getPersistenceManager();
+                 final QueryManager qm = new QueryManager(pm)) {
+                final UpgradeExecutor executor = new UpgradeExecutor(qm);
+                try {
+                    executor.executeUpgrades(UpgradeItems.getUpgradeItems());
+                } catch (UpgradeException e) {
+                    LOGGER.error("An error occurred performing upgrade processing. " + e.getMessage());
+                }
             }
         }
-        pmf.close();
     }
 
     /**
@@ -93,6 +94,31 @@ public class UpgradeInitializer implements ServletContextListener {
     @Override
     public void contextDestroyed(final ServletContextEvent event) {
         /* Intentionally blank to satisfy interface */
+    }
+
+    /**
+     * Create a new, dedicated {@link javax.jdo.PersistenceManagerFactory} to be used for schema
+     * generation and execution of schema upgrades.
+     * <p>
+     * Necessary because {@link UpgradeInitializer} is executed before {@link PersistenceManagerFactory}
+     * on application startup. The PMF created by this method does not use connection pooling, as all
+     * operations are performed in serial order.
+     *
+     * @return A {@link JDOPersistenceManagerFactory}
+     */
+    private JDOPersistenceManagerFactory createPersistenceManagerFactory() {
+        final var dnProps = new Properties();
+        dnProps.put(PropertyNames.PROPERTY_CONNECTION_URL, Config.getInstance().getProperty(Config.AlpineKey.DATABASE_URL));
+        dnProps.put(PropertyNames.PROPERTY_CONNECTION_DRIVER_NAME, Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER));
+        dnProps.put(PropertyNames.PROPERTY_CONNECTION_USER_NAME, Config.getInstance().getProperty(Config.AlpineKey.DATABASE_USERNAME));
+        dnProps.put(PropertyNames.PROPERTY_CONNECTION_PASSWORD, Config.getInstance().getPropertyOrFile(Config.AlpineKey.DATABASE_PASSWORD));
+        dnProps.put(PropertyNames.PROPERTY_SCHEMA_AUTOCREATE_DATABASE, "true");
+        dnProps.put(PropertyNames.PROPERTY_SCHEMA_AUTOCREATE_TABLES, "true");
+        dnProps.put(PropertyNames.PROPERTY_SCHEMA_AUTOCREATE_COLUMNS, "true");
+        dnProps.put(PropertyNames.PROPERTY_SCHEMA_AUTOCREATE_CONSTRAINTS, "true");
+        dnProps.put(PropertyNames.PROPERTY_SCHEMA_GENERATE_DATABASE_MODE, "create");
+        dnProps.put(PropertyNames.PROPERTY_QUERY_JDOQL_ALLOWALL, "true");
+        return (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(dnProps, "Alpine");
     }
 
 }

@@ -18,12 +18,12 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
+import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.util.BomLink;
 import org.cyclonedx.util.ObjectLocator;
 import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -34,25 +34,27 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.AnalysisCommentUtil;
+
 import java.util.List;
 
 public class CycloneDXVexImporter {
+
+    private static final Logger LOGGER = Logger.getLogger(CycloneDXVexImporter.class);
 
     private static final String COMMENTER = "CycloneDX VEX";
 
     public void applyVex(final QueryManager qm, final Bom bom, final Project project) {
         if (bom.getVulnerabilities() == null) return;
-        for (org.cyclonedx.model.vulnerability.Vulnerability cdxVuln: bom.getVulnerabilities()) {
+        List<org.cyclonedx.model.vulnerability.Vulnerability> auditableVulnerabilities = bom.getVulnerabilities().stream().filter(
+                bomVuln -> bomVuln.getSource() == null || Vulnerability.Source.isKnownSource(bomVuln.getSource().getName())
+        ).toList();
+        for (org.cyclonedx.model.vulnerability.Vulnerability cdxVuln: auditableVulnerabilities) {
             if (cdxVuln.getAnalysis() == null) continue;
             final List<Vulnerability> vulns = qm.getVulnerabilities(project, true);
             if (vulns == null) continue;
             for (final Vulnerability vuln: vulns) {
                 // NOTE: These vulnerability objects are detached
-                if ((vuln.getSource().equals(Vulnerability.Source.NVD.name())
-                        || vuln.getSource().equals(Vulnerability.Source.OSSINDEX.name())
-                        || vuln.getSource().equals(Vulnerability.Source.GITHUB.name())
-                        || vuln.getSource().equals(Vulnerability.Source.INTERNAL.name()))
-                        && vuln.getVulnId().equals(cdxVuln.getId())) {
+                if (shouldAuditVulnerability(cdxVuln, vuln)) {
 
                     if (cdxVuln.getAffects() == null) continue;
                     for (org.cyclonedx.model.vulnerability.Vulnerability.Affect affect: cdxVuln.getAffects()) {
@@ -76,9 +78,19 @@ public class CycloneDXVexImporter {
                             // TODO add VEX support for services
                         }
                     }
+                } else {
+                    LOGGER.warn("Analysis data for vulnerability "+cdxVuln.getId()+" will be ignored because either the source is missing or there is a source/vulnid mismatch between VEX and Dependency Track database.");
                 }
             }
         }
+    }
+
+    private boolean shouldAuditVulnerability(org.cyclonedx.model.vulnerability.Vulnerability bomVulnerability, Vulnerability dtVulnerability) {
+        boolean result = true;
+        result = result && bomVulnerability.getSource() != null;
+        result = result && dtVulnerability.getVulnId().equals(bomVulnerability.getId());
+        result = result && dtVulnerability.getSource().equalsIgnoreCase(bomVulnerability.getSource().getName());
+        return result;
     }
 
     private void updateAnalysis(final QueryManager qm, final Component component, final Vulnerability vuln,

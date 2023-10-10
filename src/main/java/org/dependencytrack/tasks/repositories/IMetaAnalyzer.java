@@ -18,9 +18,10 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.PackageURL;
+import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import com.github.packageurl.PackageURL;
 
 /**
  * Interface that defines Repository Meta Analyzers.
@@ -65,6 +66,7 @@ public interface IMetaAnalyzer {
      * The component to analyze.
      * @param component the component to analyze
      * @return a MetaModel object
+     * @throws MetaAnalyzerException in case of any issue during metadata generation
      * @since 3.1.0
      */
     MetaModel analyze(Component component);
@@ -85,6 +87,11 @@ public interface IMetaAnalyzer {
                 }
             } else if (PackageURL.StandardTypes.NPM.equals(component.getPurl().getType())) {
                 IMetaAnalyzer analyzer = new NpmMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
+            } else if ("cpan".equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new CpanMetaAnalyzer();
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }

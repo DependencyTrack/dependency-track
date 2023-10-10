@@ -21,7 +21,11 @@ package org.dependencytrack.policy;
 import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Hash;
-import org.dependencytrack.model.*;
+
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.Component;
+
+import org.dependencytrack.model.PolicyCondition;
 import org.json.JSONObject;
 
 import java.util.ArrayList;

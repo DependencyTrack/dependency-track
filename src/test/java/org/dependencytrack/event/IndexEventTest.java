@@ -19,9 +19,11 @@
 package org.dependencytrack.event;
 
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -33,7 +35,7 @@ public class IndexEventTest {
         IndexEvent event = new IndexEvent(IndexEvent.Action.CREATE, project);
         Assert.assertEquals(IndexEvent.Action.CREATE, event.getAction());
         Assert.assertEquals(project, event.getObject());
-        Assert.assertNull(event.getIndexableClass());
+        Assert.assertEquals(Project.class,event.getIndexableClass());
     }
 
     @Test
@@ -42,7 +44,7 @@ public class IndexEventTest {
         IndexEvent event = new IndexEvent(IndexEvent.Action.UPDATE, component);
         Assert.assertEquals(IndexEvent.Action.UPDATE, event.getAction());
         Assert.assertEquals(component, event.getObject());
-        Assert.assertNull(event.getIndexableClass());
+        Assert.assertEquals(Component.class,event.getIndexableClass());
     }
 
     @Test
@@ -51,7 +53,7 @@ public class IndexEventTest {
         IndexEvent event = new IndexEvent(IndexEvent.Action.DELETE, vulnerability);
         Assert.assertEquals(IndexEvent.Action.DELETE, event.getAction());
         Assert.assertEquals(vulnerability, event.getObject());
-        Assert.assertNull(event.getIndexableClass());
+        Assert.assertEquals(Vulnerability.class, event.getIndexableClass());
     }
 
     @Test
@@ -60,7 +62,25 @@ public class IndexEventTest {
         IndexEvent event = new IndexEvent(IndexEvent.Action.COMMIT, license);
         Assert.assertEquals(IndexEvent.Action.COMMIT, event.getAction());
         Assert.assertEquals(license, event.getObject());
-        Assert.assertNull(event.getIndexableClass());
+        Assert.assertEquals(License.class, event.getIndexableClass());
+    }
+
+    @Test
+    public void testCpeEvent() {
+        Cpe cpe = new Cpe();
+        IndexEvent event = new IndexEvent(IndexEvent.Action.COMMIT, cpe);
+        Assert.assertEquals(IndexEvent.Action.COMMIT, event.getAction());
+        Assert.assertEquals(cpe, event.getObject());
+        Assert.assertEquals(Cpe.class, event.getIndexableClass());
+    }
+
+    @Test
+    public void testVulnerableSoftwareEvent() {
+        VulnerableSoftware vulnerableSoftware = new VulnerableSoftware();
+        IndexEvent event = new IndexEvent(IndexEvent.Action.COMMIT, vulnerableSoftware);
+        Assert.assertEquals(IndexEvent.Action.COMMIT, event.getAction());
+        Assert.assertEquals(vulnerableSoftware, event.getObject());
+        Assert.assertEquals(VulnerableSoftware.class, event.getIndexableClass());
     }
 
     @Test
@@ -74,11 +94,12 @@ public class IndexEventTest {
 
     @Test
     public void testActions() {
-        Assert.assertEquals(5, IndexEvent.Action.values().length);
+        Assert.assertEquals(6, IndexEvent.Action.values().length);
         Assert.assertEquals("CREATE", IndexEvent.Action.CREATE.name());
         Assert.assertEquals("UPDATE", IndexEvent.Action.UPDATE.name());
         Assert.assertEquals("DELETE", IndexEvent.Action.DELETE.name());
         Assert.assertEquals("COMMIT", IndexEvent.Action.COMMIT.name());
         Assert.assertEquals("REINDEX", IndexEvent.Action.REINDEX.name());
+        Assert.assertEquals("CHECK", IndexEvent.Action.CHECK.name());
     }
 }

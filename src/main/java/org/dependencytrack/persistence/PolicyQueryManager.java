@@ -268,16 +268,20 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
      */
     @SuppressWarnings("unchecked")
     public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
+        PaginatedResult result;
+        final String queryFilter = includeSuppressed ? "project.id == :pid" : "project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null)";
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
-        if (includeSuppressed) {
-            query.setFilter("project.id == :pid");
-        } else {
-            query.setFilter("project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null)");
-        }
         if (orderBy == null) {
             query.setOrdering("timestamp desc, component.name, component.version");
         }
-        final PaginatedResult result = execute(query, project.getId());
+        if (filter != null) {
+            query.setFilter(queryFilter + " && (policyCondition.policy.name.toLowerCase().matches(:filter) || component.name.toLowerCase().matches(:filter))");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            result = execute(query, project.getId(), filterString);
+        } else {
+            query.setFilter(queryFilter);
+            result = execute(query, project.getId());
+        }
         for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
             violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default

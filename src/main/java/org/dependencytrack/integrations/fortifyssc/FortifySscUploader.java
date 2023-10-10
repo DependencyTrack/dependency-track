@@ -34,7 +34,10 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.*;
+import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
+
+import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_TOKEN;
 
 public class FortifySscUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 

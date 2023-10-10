@@ -19,31 +19,61 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
+import alpine.event.framework.EventService;
+import alpine.model.IConfigProperty.PropertyType;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import org.cyclonedx.model.ExternalReference.Type;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.event.CloneProjectEvent;
+import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.AnalysisJustification;
+import org.dependencytrack.model.AnalysisResponse;
+import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.tasks.CloneProjectTask;
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
 public class ProjectResourceTest extends ResourceTest {
+
+    @After
+    public void tearDown() throws Exception {
+        EventService.getInstance().unsubscribe(CloneProjectTask.class);
+
+        super.tearDown();
+    }
 
     @Override
     protected DeploymentContext configureDeployment() {
@@ -70,6 +100,38 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertEquals(100, json.size());
         Assert.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
         Assert.assertEquals("999", json.getJsonObject(0).getString("version"));
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/2583
+    public void getProjectsWithAclEnabledTest() {
+        // Enable portfolio access control.
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                null
+        );
+
+        // Create project and give access to current principal's team.
+        final Project accessProject = qm.createProject("acme-app-a", null, "1.0.0", null, null, null, true, false);
+        accessProject.setAccessTeams(List.of(team));
+        qm.persist(accessProject);
+
+        // Create a second project that the current principal has no access to.
+        qm.createProject("acme-app-b", null, "2.0.0", null, null, null, true, false);
+
+        final Response response = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals("1", response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(1, json.size());
+        Assert.assertEquals("acme-app-a", json.getJsonObject(0).getString("name"));
+        Assert.assertEquals("1.0.0", json.getJsonObject(0).getString("version"));
     }
 
     @Test
@@ -130,6 +192,29 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getProjectLookupTest() {
+        for (int i=0; i<500; i++) {
+            qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, false, false);
+        }
+        Response response = target(V1_PROJECT+"/lookup")
+                .queryParam("name", "Acme Example")
+                .queryParam("version", "10")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+                Assert.assertEquals(200, response.getStatus(), 0);
+                Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Acme Example", json.getString("name"));
+        Assert.assertEquals("10", json.getString("version"));
+        Assert.assertEquals(500, json.getJsonArray("versions").size());
+        Assert.assertNotNull(json.getJsonArray("versions").getJsonObject(100).getString("uuid"));
+        Assert.assertNotEquals("", json.getJsonArray("versions").getJsonObject(100).getString("uuid"));
+        Assert.assertEquals("100", json.getJsonArray("versions").getJsonObject(100).getString("version"));
+    }
+
+    @Test
     public void getProjectsAscOrderedRequestTest() {
         qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         qm.createProject("DEF", null, "1.0", null, null, null, true, false);
@@ -175,6 +260,9 @@ public class ProjectResourceTest extends ResourceTest {
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
         Assert.assertEquals("ABC", json.getString("name"));
+        Assert.assertEquals(1, json.getJsonArray("versions").size());
+        Assert.assertEquals(project.getUuid().toString(), json.getJsonArray("versions").getJsonObject(0).getJsonString("uuid").getString());
+        Assert.assertEquals("1.0", json.getJsonArray("versions").getJsonObject(0).getJsonString("version").getString());
     }
 
     @Test
@@ -209,6 +297,24 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getProjectByCaseInsensitiveTagTest() {
+        List<Tag> tags = new ArrayList<>();
+        Tag tag = qm.createTag("PRODUCTION");
+        tags.add(tag);
+        qm.createProject("ABC", null, "1.0", tags, null, null, true, false);
+        qm.createProject("DEF", null, "1.0", null, null, null, true, false);
+        Response response = target(V1_PROJECT + "/tag/" + "production")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("ABC", json.getJsonObject(0).getString("name"));
+    }
+
+    @Test
     public void getProjectByUnknownTagTest() {
         List<Tag> tags = new ArrayList<>();
         Tag tag = qm.createTag("production");
@@ -227,7 +333,7 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createProjectTest() {
+    public void createProjectTest(){
         Project project = new Project();
         project.setName("Acme Example");
         project.setVersion("1.0");
@@ -266,6 +372,24 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    public void createProjectWithoutVersionDuplicateTest() {
+        Project project = new Project();
+        project.setName("Acme Example");
+        Response response = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus(), 0);
+        response = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(409, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("A project with the specified name already exists.", body);
+    }
+
+    @Test
     public void createProjectEmptyTest() {
         Project project = new Project();
         project.setName(" ");
@@ -280,6 +404,24 @@ public class ProjectResourceTest extends ResourceTest {
     public void updateProjectTest() {
         Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         project.setDescription("Test project");
+        Response response = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("ABC", json.getString("name"));
+        Assert.assertEquals("1.0", json.getString("version"));
+        Assert.assertEquals("Test project", json.getString("description"));
+    }
+
+    @Test
+    public void updateProjectTestIsActiveEqualsNull() {
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        project.setDescription("Test project");
+        project.setActive(null);
+        Assert.assertNull(project.isActive());
         Response response = target(V1_PROJECT)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -468,6 +610,93 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    public void patchProjectExternalReferencesTest() {
+        final var project = qm.createProject("referred-project", "ExtRef test project", "1.0", null, null, null, true, false);
+        final var ref1 = new ExternalReference();
+        ref1.setType(Type.VCS);
+        ref1.setUrl("https://github.com/DependencyTrack/awesomeness");
+        final var ref2 = new ExternalReference();
+        ref2.setType(Type.WEBSITE);
+        ref2.setUrl("https://dependencytrack.org");
+        ref2.setComment("Worth a visit!");
+        final var externalReferences = List.of(ref1, ref2);
+        final var jsonProject = new Project();
+        jsonProject.setExternalReferences(externalReferences);
+
+        final var response = target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .method("PATCH", Entity.json(jsonProject));
+
+        Assert.assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        final var json = parseJsonObject(response);
+        final var patchedExternalReferences = json.getJsonArray("externalReferences");
+        Assert.assertEquals(2, patchedExternalReferences.size());
+        final var patchedRef1 = patchedExternalReferences.getJsonObject(0);
+        final var patchedRef2 = patchedExternalReferences.getJsonObject(1);
+        Assert.assertEquals("vcs", patchedRef1.getString("type"));
+        Assert.assertEquals("https://github.com/DependencyTrack/awesomeness", patchedRef1.getString("url"));
+        Assert.assertEquals("website", patchedRef2.getString("type"));
+        Assert.assertEquals("https://dependencytrack.org", patchedRef2.getString("url"));
+        Assert.assertEquals("Worth a visit!", patchedRef2.getString("comment"));
+    }
+
+    @Test
+    public void patchProjectParentTest() {
+        final Project parent = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        final Project project = qm.createProject("DEF", null, "2.0", null, parent, null, true, false);
+        final Project newParent = qm.createProject("GHI", null, "3.0", null, null, null, true, false);
+
+        final JsonObject jsonProject = Json.createObjectBuilder()
+                .add("parent", Json.createObjectBuilder()
+                        .add("uuid", newParent.getUuid().toString()))
+                .build();
+
+        final Response response = target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .method(HttpMethod.PATCH, Entity.json(jsonProject.toString()));
+
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+
+        final JsonObject responseJson = parseJsonObject(response);
+        assertThat(responseJson.getString("uuid")).isEqualTo(project.getUuid().toString());
+        assertThat(responseJson.getJsonObject("parent")).isNull(); // Parents are currently not returned
+
+        // Ensure the parent was updated.
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getParent()).isNotNull();
+        assertThat(project.getParent().getUuid()).isEqualTo(newParent.getUuid());
+    }
+
+    @Test
+    public void patchProjectParentNotFoundTest() {
+        final Project parent = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        final Project project = qm.createProject("DEF", null, "2.0", null, parent, null, true, false);
+
+        final JsonObject jsonProject = Json.createObjectBuilder()
+                .add("parent", Json.createObjectBuilder()
+                        .add("uuid", UUID.randomUUID().toString()))
+                .build();
+
+        final Response response = target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .method(HttpMethod.PATCH, Entity.json(jsonProject.toString()));
+
+        assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
+        assertThat(getPlainTextBody(response)).isEqualTo("The UUID of the parent project could not be found.");
+
+        // Ensure the parent was not modified.
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getParent()).isNotNull();
+        assertThat(project.getParent().getUuid()).isEqualTo(parent.getUuid());
+    }
+
+    @Test
     public void getRootProjectsTest() {
         Project parent = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Project child = qm.createProject("DEF", null, "1.0", null, parent, null, true, false);
@@ -559,12 +788,178 @@ public class ProjectResourceTest extends ResourceTest {
                 .get(Response.class);
 
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
         Assert.assertEquals("ABC", json.getJsonObject(0).getString("name"));
-        Assert.assertEquals("DEF", json.getJsonObject(1).getString("name"));
     }
 
-    //todo: add clone tests
+    @Test
+    public void cloneProjectTest() {
+        EventService.getInstance().subscribe(CloneProjectEvent.class, CloneProjectTask.class);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setAccessTeams(List.of(team));
+        qm.persist(project);
+
+        final ProjectProperty projectProperty = qm.createProjectProperty(project, "group", "name", "value", PropertyType.STRING, "description");
+
+        qm.bind(project, List.of(
+                qm.createTag("tag-a"),
+                qm.createTag("tag-b")
+        ));
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        qm.persist(component);
+
+        final var service = new ServiceComponent();
+        service.setProject(project);
+        service.setName("acme-service");
+        service.setVersion("3.0.0");
+        qm.persist(service);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-123");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        final Analysis analysis = qm.makeAnalysis(component, vuln, AnalysisState.NOT_AFFECTED,
+                AnalysisJustification.REQUIRES_ENVIRONMENT, AnalysisResponse.WILL_NOT_FIX, "details", false);
+        qm.makeAnalysisComment(analysis, "comment", "commenter");
+
+        final Response response = target("%s/clone".formatted(V1_PROJECT)).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json("""
+                        {
+                          "project": "%s",
+                          "version": "1.1.0",
+                          "includeACL": true,
+                          "includeAuditHistory": true,
+                          "includeComponents": true,
+                          "includeProperties": true,
+                          "includeServices": true,
+                          "includeTags": true
+                        }
+                        """.formatted(project.getUuid())));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(getPlainTextBody(response)).isEmpty();
+
+        await("Cloning completion")
+                .atMost(Duration.ofSeconds(15))
+                .pollInterval(Duration.ofMillis(50))
+                .untilAsserted(() -> {
+                    final Project clonedProject = qm.getProject("acme-app", "1.1.0");
+                    assertThat(clonedProject).isNotNull();
+                    assertThat(clonedProject.getUuid()).isNotEqualTo(project.getUuid());
+                    assertThat(clonedProject.getAccessTeams()).containsOnly(team);
+
+                    final List<ProjectProperty> clonedProperties = qm.getProjectProperties(clonedProject);
+                    assertThat(clonedProperties).satisfiesExactly(clonedProperty -> {
+                        assertThat(clonedProperty.getId()).isNotEqualTo(projectProperty.getId());
+                        assertThat(clonedProperty.getGroupName()).isEqualTo("group");
+                        assertThat(clonedProperty.getPropertyName()).isEqualTo("name");
+                        assertThat(clonedProperty.getPropertyValue()).isEqualTo("value");
+                        assertThat(clonedProperty.getPropertyType()).isEqualTo(PropertyType.STRING);
+                        assertThat(clonedProperty.getDescription()).isEqualTo("description");
+                    });
+
+                    assertThat(clonedProject.getTags()).extracting(Tag::getName)
+                            .containsOnly("tag-a", "tag-b");
+
+                    assertThat(qm.getAllComponents(clonedProject)).satisfiesExactly(clonedComponent -> {
+                        assertThat(clonedComponent.getUuid()).isNotEqualTo(component.getUuid());
+                        assertThat(clonedComponent.getName()).isEqualTo("acme-lib");
+                        assertThat(clonedComponent.getVersion()).isEqualTo("2.0.0");
+
+                        assertThat(qm.getAllVulnerabilities(clonedComponent)).containsOnly(vuln);
+
+                        assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
+                            assertThat(clonedAnalysis.getId()).isNotEqualTo(analysis.getId());
+                            assertThat(clonedAnalysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_AFFECTED);
+                            assertThat(clonedAnalysis.getAnalysisJustification()).isEqualTo(AnalysisJustification.REQUIRES_ENVIRONMENT);
+                            assertThat(clonedAnalysis.getAnalysisResponse()).isEqualTo(AnalysisResponse.WILL_NOT_FIX);
+                            assertThat(clonedAnalysis.getAnalysisDetails()).isEqualTo("details");
+                            assertThat(clonedAnalysis.isSuppressed()).isFalse();
+                        });
+                    });
+
+                    assertThat(qm.getAllServiceComponents(clonedProject)).satisfiesExactly(clonedService -> {
+                        assertThat(clonedService.getUuid()).isNotEqualTo(service.getUuid());
+                        assertThat(clonedService.getName()).isEqualTo("acme-service");
+                        assertThat(clonedService.getVersion()).isEqualTo("3.0.0");
+                    });
+                });
+    }
+
+    @Test
+    public void cloneProjectConflictTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final Response response = target("%s/clone".formatted(V1_PROJECT)).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json("""
+                        {
+                          "project": "%s",
+                          "version": "1.0.0"
+                        }
+                        """.formatted(project.getUuid())));
+
+        assertThat(response.getStatus()).isEqualTo(409);
+        assertThat(getPlainTextBody(response)).isEqualTo("A project with the specified name and version already exists.");
+    }
+
+    @Test
+    public void cloneProjectWithAclTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                null
+        );
+
+        final var accessProject = new Project();
+        accessProject.setName("acme-app-a");
+        accessProject.setVersion("1.0.0");
+        accessProject.setAccessTeams(List.of(team));
+        qm.persist(accessProject);
+
+        final var noAccessProject = new Project();
+        noAccessProject.setName("acme-app-b");
+        noAccessProject.setVersion("2.0.0");
+        qm.persist(noAccessProject);
+
+        Response response = target("%s/clone".formatted(V1_PROJECT)).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json("""
+                        {
+                          "project": "%s",
+                          "version": "1.1.0"
+                        }
+                        """.formatted(noAccessProject.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThat(getPlainTextBody(response)).isEqualTo("Access to the specified project is forbidden");
+
+        response = target("%s/clone".formatted(V1_PROJECT)).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json("""
+                        {
+                          "project": "%s",
+                          "version": "1.1.0"
+                        }
+                        """.formatted(accessProject.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(getPlainTextBody(response)).isEmpty();
+    }
+
 }

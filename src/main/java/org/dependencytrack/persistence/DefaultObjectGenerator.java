@@ -18,33 +18,25 @@
  */
 package org.dependencytrack.persistence;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import org.dependencytrack.RequirementsVerifier;
+import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.License;
+import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
+import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
+import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
+import org.dependencytrack.util.NotificationUtil;
 import alpine.common.logging.Logger;
-import alpine.event.framework.Event;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.server.auth.PasswordService;
-import org.dependencytrack.RequirementsVerifier;
-import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.License;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
-import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
-import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
-import org.dependencytrack.search.IndexManager;
-import org.dependencytrack.util.NotificationUtil;
-
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Creates default objects on an empty database.
@@ -64,27 +56,6 @@ public class DefaultObjectGenerator implements ServletContextListener {
         LOGGER.info("Initializing default object generator");
         if (RequirementsVerifier.failedValidation()) {
             return;
-        }
-
-        if (!IndexManager.exists(IndexManager.IndexType.LICENSE)) {
-            LOGGER.info("Dispatching event to reindex licenses");
-            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, License.class));
-        }
-        if (!IndexManager.exists(IndexManager.IndexType.PROJECT)) {
-            LOGGER.info("Dispatching event to reindex projects");
-            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Project.class));
-        }
-        if (!IndexManager.exists(IndexManager.IndexType.COMPONENT)) {
-            LOGGER.info("Dispatching event to reindex components");
-            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Component.class));
-        }
-        if (!IndexManager.exists(IndexManager.IndexType.VULNERABILITY)) {
-            LOGGER.info("Dispatching event to reindex vulnerabilities");
-            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Vulnerability.class));
-        }
-        if (!IndexManager.exists(IndexManager.IndexType.VULNERABLESOFTWARE)) {
-            LOGGER.info("Dispatching event to reindex vulnerablesoftware");
-            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, VulnerableSoftware.class));
         }
 
         loadDefaultPermissions();
@@ -235,6 +206,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private void loadDefaultRepositories() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing default repositories to datastore");
+            qm.createRepository(RepositoryType.CPAN, "cpan-public-registry", "https://fastapi.metacpan.org/v1/", true, false);
             qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true, false);
             qm.createRepository(RepositoryType.HEX, "hex.pm", "https://hex.pm/", true, false);
             qm.createRepository(RepositoryType.MAVEN, "central", "https://repo1.maven.org/maven2/", true, false);

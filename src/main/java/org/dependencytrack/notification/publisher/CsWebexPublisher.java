@@ -19,15 +19,14 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
-import com.mitchellbosecke.pebble.PebbleEngine;
-import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import io.pebbletemplates.pebble.PebbleEngine;
 
 import javax.json.JsonObject;
 
 public class CsWebexPublisher extends AbstractWebhookPublisher implements Publisher {
 
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
-    
+
     public void inform(final Notification notification, final JsonObject config) {
         publish(DefaultNotificationPublishers.CS_WEBEX.getPublisherName(), getTemplate(config), notification, config);
     }

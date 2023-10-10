@@ -15,21 +15,21 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
-import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AffectedVersionAttribution;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
-import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.persistence.CweImporter;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,24 +39,24 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 
 public class OsvDownloadTaskTest extends PersistenceCapableTest {
     private JSONObject jsonObject;
     private final OsvAdvisoryParser parser = new OsvAdvisoryParser();
-    private OsvDownloadTask task;
 
     @Before
     public void setUp() {
         qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(),
-                "Maven;DWF",
+                "Maven;DWF;Maven",
                 IConfigProperty.PropertyType.STRING,
                 "List of ecosystems");
         qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(),
@@ -64,14 +64,30 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
                 "https://osv-vulnerabilities.storage.googleapis.com/",
                 IConfigProperty.PropertyType.URL,
                 "OSV Base URL");
-        task = new OsvDownloadTask();
-        Assert.assertNotNull(task.getEnabledEcosystems());
-        Assert.assertEquals(2, task.getEnabledEcosystems().size());
+        qm.createConfigProperty(VULNERABILITY_SOURCE_NVD_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_NVD_ENABLED.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                "");
+        qm.createConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                "");
     }
 
     @Test
     public void testParseOSVJsonToAdvisoryAndSave() throws Exception {
         new CweImporter().processCweDefinitions(); // Necessary for resolving CWEs
+
+        // Enable alias synchronization
+        qm.createConfigProperty(
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getGroupName(),
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getPropertyType(),
+                null
+        );
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
@@ -79,6 +95,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         Assert.assertEquals(8, advisory.getAffectedPackages().size());
 
         // pass the mapped advisory to OSV task to update the database
+        final var task = new OsvDownloadTask();
         task.updateDatasource(advisory);
 
         final Consumer<Vulnerability> assertVulnerability = (vulnerability) -> {
@@ -116,6 +133,14 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth2"));
         Assert.assertEquals(4, vulnerableSoftware.size());
 
+        final List<VulnerabilityAlias> aliases = qm.getVulnerabilityAliases(vulnerability);
+        assertThat(aliases).satisfiesExactly(
+                alias -> {
+                    assertThat(alias.getCveId()).isEqualTo("CVE-2019-3778");
+                    assertThat(alias.getGhsaId()).isEqualTo("GHSA-77rv-6vfw-x4gc");
+                }
+        );
+
         // incoming vulnerability when vulnerability with same ID already exists
         prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");
         advisory = parser.parse(jsonObject);
@@ -127,6 +152,32 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         Assert.assertEquals(1, vulnerability.getVulnerableSoftware().size());
         Assert.assertEquals("3.1.0", vulnerability.getVulnerableSoftware().get(0).getVersionStartIncluding());
         Assert.assertEquals("3.3.0", vulnerability.getVulnerableSoftware().get(0).getVersionEndExcluding());
+    }
+
+    @Test
+    public void testUpdateDatasourceWithAliasSyncDisabled() throws Exception {
+        // Disable alias synchronization
+        qm.createConfigProperty(
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getGroupName(),
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getPropertyName(),
+                "false",
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getPropertyType(),
+                null
+        );
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assert.assertNotNull(advisory);
+        Assert.assertEquals(8, advisory.getAffectedPackages().size());
+
+        // pass the mapped advisory to OSV task to update the database
+        final var task = new OsvDownloadTask();
+        task.updateDatasource(advisory);
+
+        Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", true);
+
+        final List<VulnerabilityAlias> aliases = qm.getVulnerabilityAliases(vulnerability);
+        assertThat(aliases).isEmpty();
     }
 
     @Test
@@ -169,6 +220,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         // No vulnerable version range matching vs3, but one additional range is reported.
         // Because vs3 was attributed to OSV, the association with the vulnerability
         // should be removed in the mirroring process.
+        final var task = new OsvDownloadTask();
         task.updateDatasource(parser.parse(new JSONObject("""
                 {
                    "id": "GHSA-57j2-w4cx-62h2",
@@ -304,6 +356,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
+        final var task = new OsvDownloadTask();
         Vulnerability vuln = task.mapAdvisoryToVulnerability(qm, advisory);
         Assert.assertNotNull(vuln);
         Assert.assertEquals("Skywalker, Solo", vuln.getCredits());
@@ -314,7 +367,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testParseAdvisoryToVulnerabilityWithInvalidPurl() throws IOException {
-
+        final var task = new OsvDownloadTask();
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-invalid-purl.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
         task.updateDatasource(advisory);
@@ -335,6 +388,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testSourceOfVulnerability() {
+        final var task = new OsvDownloadTask();
 
         String sourceTestId = "GHSA-77rv-6vfw-x4gc";
         Vulnerability.Source source = task.extractSource(sourceTestId);
@@ -354,7 +408,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testCalculateOSVSeverity() throws IOException {
-
+        final var task = new OsvDownloadTask();
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
@@ -380,6 +434,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testCommitHashRangesAndVersions() throws IOException {
+        final var task = new OsvDownloadTask();
 
         // insert a vulnerability in database
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-git-commit-hash-ranges.json");
@@ -394,10 +449,206 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testGetEcosystems() {
-
+        final var task = new OsvDownloadTask();
         List<String> ecosystems = task.getEcosystems();
         Assert.assertNotNull(ecosystems);
         Assert.assertTrue(ecosystems.contains("Maven"));
+    }
+
+    @Test
+    public void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromEnabledNvdSource() throws IOException {
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-existing-nvd-vuln-CVE-2021-34552.json");
+
+        var vulnerableSoftware = new VulnerableSoftware();
+        vulnerableSoftware.setPurlType("alpine");
+        vulnerableSoftware.setPurlName("py3-pillow");
+        vulnerableSoftware.setVersionStartIncluding("8.2.0");
+        vulnerableSoftware.setVersionEndExcluding("8.3.0-r0");
+        vulnerableSoftware.setVulnerable(true);
+        vulnerableSoftware = qm.persist(vulnerableSoftware);
+
+        var existingVuln = new Vulnerability();
+        existingVuln.setVulnId("CVE-2021-34552");
+        existingVuln.setDescription("Initial description");
+        existingVuln.setSource(Vulnerability.Source.NVD);
+        existingVuln.setSeverity(Severity.CRITICAL);
+        existingVuln.setVulnerableSoftware(List.of(vulnerableSoftware));
+        existingVuln = qm.createVulnerability(existingVuln, false);
+        qm.updateAffectedVersionAttribution(existingVuln, vulnerableSoftware, Vulnerability.Source.NVD);
+
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        final var task = new OsvDownloadTask();
+        task.updateDatasource(advisory);
+
+        // Reload from database to bypass first level cache
+        qm.getPersistenceManager().refreshAll();
+        Vulnerability vulnerability = qm.getVulnerabilityByVulnId("NVD", "CVE-2021-34552", false);
+        Assert.assertNotNull(vulnerability);
+        Assert.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
+        Assert.assertEquals(existingVuln.getDescription(), vulnerability.getDescription());
+
+        final List<VulnerableSoftware> vsList = vulnerability.getVulnerableSoftware();
+        assertThat(vsList).satisfiesExactlyInAnyOrder(
+                // The version range that was reported by Github must be retained.
+                // There must be no attribution to OSV for this range.
+                vs -> {
+                    assertThat(vs.getPurlType()).isEqualTo("alpine");
+                    assertThat(vs.getPurlName()).isEqualTo("py3-pillow");
+                    assertThat(vs.getPurlVersion()).isNull();
+                    assertThat(vs.getVersion()).isNull();
+                    assertThat(vs.getVersionStartIncluding()).isEqualTo("8.2.0");
+                    assertThat(vs.getVersionStartExcluding()).isNull();
+                    assertThat(vs.getVersionEndExcluding()).isEqualTo("8.3.0-r0");
+                    assertThat(vs.getVersionEndIncluding()).isNull();
+
+                    final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vulnerability, vs);
+                    assertThat(attributions).satisfiesExactly(
+                            attr -> assertThat(attr.getSource()).isEqualTo(Vulnerability.Source.NVD)
+                    );
+                },
+                // The version range newly reported by OSV must be attributed to only OSV.
+                vs -> {
+                    assertThat(vs.getPurlType()).isEqualTo("alpine");
+                    assertThat(vs.getPurlName()).isEqualTo("py3-pillow");
+                    assertThat(vs.getPurlVersion()).isNull();
+                    assertThat(vs.getVersion()).isNull();
+                    assertThat(vs.getVersionStartIncluding()).isNull();
+                    assertThat(vs.getVersionStartExcluding()).isNull();
+                    assertThat(vs.getVersionEndExcluding()).isEqualTo("8.3.0-r0");
+                    assertThat(vs.getVersionEndIncluding()).isNull();
+
+                    final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vulnerability, vs);
+                    assertThat(attributions).satisfiesExactly(
+                            attr -> assertThat(attr.getSource()).isEqualTo(Vulnerability.Source.OSV)
+                    );
+                }
+        );
+    }
+
+    @Test
+    public void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromDisabledNvdSource() throws IOException {
+
+        ConfigProperty property = qm.getConfigProperty(VULNERABILITY_SOURCE_NVD_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_NVD_ENABLED.getPropertyName());
+        property.setPropertyValue("false");
+        qm.getPersistenceManager().flush();
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-existing-nvd-vuln-CVE-2021-34552.json");
+
+        var vulnerableSoftware = new VulnerableSoftware();
+        vulnerableSoftware.setPurlType("alpine");
+        vulnerableSoftware.setPurlName("py3-pillow");
+        vulnerableSoftware.setVersionStartIncluding("8.2.0");
+        vulnerableSoftware.setVersionEndExcluding("8.3.0-r0");
+        vulnerableSoftware.setVulnerable(true);
+        vulnerableSoftware = qm.persist(vulnerableSoftware);
+
+        var existingVuln = new Vulnerability();
+        existingVuln.setVulnId("CVE-2021-34552");
+        existingVuln.setDescription("Initial description");
+        existingVuln.setSource(Vulnerability.Source.NVD);
+        existingVuln.setSeverity(Severity.CRITICAL);
+        existingVuln.setVulnerableSoftware(List.of(vulnerableSoftware));
+        existingVuln = qm.createVulnerability(existingVuln, false);
+        qm.updateAffectedVersionAttribution(existingVuln, vulnerableSoftware, Vulnerability.Source.NVD);
+
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        final var task = new OsvDownloadTask();
+        task.updateDatasource(advisory);
+
+        // Reload from database to bypass first level cache
+        qm.getPersistenceManager().refreshAll();
+        Vulnerability vulnerability = qm.getVulnerabilityByVulnId("NVD", "CVE-2021-34552", false);
+        Assert.assertNotNull(vulnerability);
+        Assert.assertEquals(Severity.UNASSIGNED, vulnerability.getSeverity());
+        Assert.assertEquals(jsonObject.getString("details"), vulnerability.getDescription());
+
+        final List<VulnerableSoftware> vsList = vulnerability.getVulnerableSoftware();
+        assertThat(vsList).satisfiesExactlyInAnyOrder(
+                // The version range that was reported by Github must be retained.
+                // There must be no attribution to OSV for this range.
+                vs -> {
+                    assertThat(vs.getPurlType()).isEqualTo("alpine");
+                    assertThat(vs.getPurlName()).isEqualTo("py3-pillow");
+                    assertThat(vs.getPurlVersion()).isNull();
+                    assertThat(vs.getVersion()).isNull();
+                    assertThat(vs.getVersionStartIncluding()).isEqualTo("8.2.0");
+                    assertThat(vs.getVersionStartExcluding()).isNull();
+                    assertThat(vs.getVersionEndExcluding()).isEqualTo("8.3.0-r0");
+                    assertThat(vs.getVersionEndIncluding()).isNull();
+
+                    final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vulnerability, vs);
+                    assertThat(attributions).satisfiesExactly(
+                            attr -> assertThat(attr.getSource()).isEqualTo(Vulnerability.Source.NVD)
+                    );
+                },
+                // The version range newly reported by OSV must be attributed to only OSV.
+                vs -> {
+                    assertThat(vs.getPurlType()).isEqualTo("alpine");
+                    assertThat(vs.getPurlName()).isEqualTo("py3-pillow");
+                    assertThat(vs.getPurlVersion()).isNull();
+                    assertThat(vs.getVersion()).isNull();
+                    assertThat(vs.getVersionStartIncluding()).isNull();
+                    assertThat(vs.getVersionStartExcluding()).isNull();
+                    assertThat(vs.getVersionEndExcluding()).isEqualTo("8.3.0-r0");
+                    assertThat(vs.getVersionEndIncluding()).isNull();
+
+                    final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vulnerability, vs);
+                    assertThat(attributions).satisfiesExactly(
+                            attr -> assertThat(attr.getSource()).isEqualTo(Vulnerability.Source.OSV)
+                    );
+                }
+        );
+    }
+
+    @Test
+    public void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromEnabledGithubSource() throws IOException {
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
+
+        var existingVuln = new Vulnerability();
+        existingVuln.setVulnId("GHSA-77rv-6vfw-x4gc");
+        existingVuln.setSource(Vulnerability.Source.GITHUB);
+        existingVuln.setSeverity(Severity.LOW);
+        qm.createVulnerability(existingVuln, false);
+
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        final var task = new OsvDownloadTask();
+        task.updateDatasource(advisory);
+
+        // Reload from database to bypass first level cache
+        qm.getPersistenceManager().refreshAll();
+        Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", false);
+        Assert.assertNotNull(vulnerability);
+        Assert.assertEquals(Severity.LOW, vulnerability.getSeverity());
+    }
+
+    @Test
+    public void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromDisabledGithubSource() throws IOException {
+
+        ConfigProperty property = qm.getConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getPropertyName());
+        property.setPropertyValue("false");
+        qm.getPersistenceManager().flush();
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
+
+        var existingVuln = new Vulnerability();
+        existingVuln.setVulnId("GHSA-77rv-6vfw-x4gc");
+        existingVuln.setSource(Vulnerability.Source.GITHUB);
+        existingVuln.setSeverity(Severity.LOW);
+        qm.createVulnerability(existingVuln, false);
+
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        final var task = new OsvDownloadTask();
+        task.updateDatasource(advisory);
+
+        // Reload from database to bypass first level cache
+        qm.getPersistenceManager().refreshAll();
+        Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", false);
+        Assert.assertNotNull(vulnerability);
+        Assert.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
     }
 
     private void prepareJsonObject(String filePath) throws IOException {

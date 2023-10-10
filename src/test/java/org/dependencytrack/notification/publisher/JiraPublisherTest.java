@@ -20,26 +20,29 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import org.apache.http.HttpHeaders;
+import alpine.security.crypto.DataEncryption;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import java.io.IOException;
+import javax.ws.rs.core.HttpHeaders;
+import java.util.Base64;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_PASSWORD;
+import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_USERNAME;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class JiraPublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider  {
+public class JiraPublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
 
     private static ClientAndServer mockServer;
 
@@ -55,33 +58,89 @@ public class JiraPublisherTest extends PersistenceCapableTest implements Notific
     }
 
     @Test
-    public void testPublish() throws IOException {
-        new MockServerClient("localhost", 1080)
-                .when(
-                        request()
-                                .withMethod("POST")
-                )
+    public void testPublishWithBasicAuth() throws Exception {
+        final var jiraUser = "jiraUser";
+        final var jiraPassword = "jiraPassword";
+
+        final var request = request()
+                .withMethod("POST")
+                .withHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString((jiraUser + ":" + jiraPassword).getBytes()));
+        mockServer.when(request)
                 .respond(
                         response()
                                 .withStatusCode(200)
                                 .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 );
-        JsonObject config = getConfig(DefaultNotificationPublishers.JIRA, "http://localhost:1080");
-        Notification notification = new Notification();
+        final JsonObject config = getConfig(DefaultNotificationPublishers.JIRA, "MyProjectKey");
+        final Notification notification = new Notification();
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         notification.setTitle("Test Notification");
         notification.setContent("This is only a test");
-        JiraPublisher publisher = new JiraPublisher();
+        final JiraPublisher publisher = new JiraPublisher();
+
+
+        qm.createConfigProperty(JIRA_URL.getGroupName(),
+                JIRA_URL.getPropertyName(),
+                "http://localhost:1080",
+                JIRA_URL.getPropertyType(), JIRA_URL.getDescription());
+
+        qm.createConfigProperty(JIRA_USERNAME.getGroupName(),
+                JIRA_USERNAME.getPropertyName(),
+                jiraUser,
+                JIRA_USERNAME.getPropertyType(), JIRA_USERNAME.getDescription());
+
+        qm.createConfigProperty(JIRA_PASSWORD.getGroupName(),
+                JIRA_PASSWORD.getPropertyName(),
+                DataEncryption.encryptAsString(jiraPassword),
+                JIRA_PASSWORD.getPropertyType(), JIRA_PASSWORD.getDescription());
+
         publisher.inform(notification, config);
+        mockServer.verify(request);
+    }
+
+    @Test
+    public void testPublishWithBearerToken() throws Exception {
+        final var jiraToken = "123456";
+
+        final var request = request()
+                .withMethod("POST")
+                .withHeader(HttpHeaders.AUTHORIZATION, "Bearer " + jiraToken);
+        mockServer.when(request)
+                .respond(
+                        response()
+                                .withStatusCode(200)
+                                .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                );
+        final JsonObject config = getConfig(DefaultNotificationPublishers.JIRA, "MyProjectKey");
+        final Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setTitle("Test Notification");
+        notification.setContent("This is only a test");
+        final JiraPublisher publisher = new JiraPublisher();
+
+
+        qm.createConfigProperty(JIRA_URL.getGroupName(),
+                JIRA_URL.getPropertyName(),
+                "http://localhost:1080",
+                JIRA_URL.getPropertyType(), JIRA_URL.getDescription());
+
+        qm.createConfigProperty(JIRA_PASSWORD.getGroupName(),
+                JIRA_PASSWORD.getPropertyName(),
+                DataEncryption.encryptAsString(jiraToken),
+                JIRA_PASSWORD.getPropertyType(), JIRA_PASSWORD.getDescription());
+
+        publisher.inform(notification, config);
+        mockServer.verify(request);
     }
 
     @Override
     public JsonObjectBuilder getExtraConfig() {
         return Json.createObjectBuilder()
-                .add("jiraTicketType", "Task")
-                .add("jiraProjectKey", "MyProject");
+                .add("jiraTicketType", "Task");
     }
 }
 

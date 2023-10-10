@@ -72,11 +72,9 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings("unchecked")
     public void inform(final Event e) {
-        if (e instanceof RepositoryMetaEvent) {
+        if (e instanceof final RepositoryMetaEvent event) {
             LOGGER.debug("Analyzing component repository metadata");
-            final RepositoryMetaEvent event = (RepositoryMetaEvent)e;
             // TODO - Remove when https://github.com/DependencyTrack/dependency-track/issues/2110 is implemented
             Timer timer = Timer.builder("repository_meta_analyzer_task")
                     .description("Repository meta analyzer task timer")
@@ -89,20 +87,23 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     // Refreshing the object by querying for it again is preventative
                     LOGGER.info("Performing component repository metadata analysis against " + components.size() + " components");
                     for (final Component component: components) {
+                        qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
                         analyze(qm, qm.getObjectById(Component.class, component.getId()));
                     }
                     LOGGER.info("Completed component repository metadata analysis against " + components.size() + " components");
                 }
             } else {
+                LOGGER.info("Analyzing portfolio component repository metadata");
                 try (final QueryManager qm = new QueryManager()) {
                     final List<Project> projects = qm.getAllProjects(true);
                     for (final Project project: projects) {
                         final List<Component> components = qm.getAllComponents(project);
-                        LOGGER.info("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+                        LOGGER.debug("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
                         for (final Component component: components) {
+                            qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
                             analyze(qm, component);
                         }
-                        LOGGER.info("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+                        LOGGER.debug("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
                     }
                 }
                 LOGGER.info("Portfolio component repository metadata analysis complete");
@@ -127,7 +128,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                 try {
                     cacheLoader.call();
                 } catch (Exception e) {
-                    LOGGER.error("Error while fetching component meta model for component(id="+component.getId()+"; purl="+component.getPurl()+") : "+e.getMessage());
+                    LOGGER.warn("Error while fetching component meta model for component(id="+component.getId()+"; purl="+component.getPurl()+") : "+e.getMessage(), e);
                 }
             }
         }

@@ -96,14 +96,12 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                     if (vulns != null) {
                         for (JsonNumber vulnId : vulns.getValuesAs(JsonNumber.class)) {
                             final Vulnerability vulnerability;
-                            if (vulnId.longValue() != 0) {
-                                vulnerability = qm.getObjectById(Vulnerability.class, vulnId.longValue());
-                                final Component c = qm.getObjectByUuid(Component.class, component.getUuid());
-                                if (c == null) continue;
-                                if (vulnerability != null) {
-                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
-                                    qm.addVulnerability(vulnerability, c, analyzerIdentity);
-                                }
+                            vulnerability = qm.getObjectById(Vulnerability.class, vulnId.longValue());
+                            final Component c = qm.getObjectByUuid(Component.class, component.getUuid());
+                            if (c == null) continue;
+                            if (vulnerability != null) {
+                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
+                                qm.addVulnerability(vulnerability, c, analyzerIdentity);
                             }
                         }
                     }
@@ -130,6 +128,12 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         }
     }
 
+    protected void addNoVulnerabilityToCache(final Component component) {
+        component.setCacheResult(Json.createObjectBuilder()
+                .add("vulnIds", Json.createArrayBuilder())
+                .build());
+    }
+
     protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode,
                                                 final String statusText) {
         logger.error("HTTP Status : " + statusCode + " " + statusText);
@@ -143,7 +147,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         );
     }
 
-    protected void handleRequestException(final Logger logger, final Exception e) {
+    protected void handleRequestException(final Logger logger, final Throwable e) {
         logger.error("Request failure", e);
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)

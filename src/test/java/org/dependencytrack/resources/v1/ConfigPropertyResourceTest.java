@@ -146,6 +146,19 @@ public class ConfigPropertyResourceTest extends ResourceTest {
     }
 
     @Test
+    public void updateBadIndexConsistencyThresholdConfigPropertyTest() {
+        ConfigProperty property = qm.createConfigProperty(ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getGroupName(), ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getPropertyName(), "24", IConfigProperty.PropertyType.INTEGER, ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getDescription());
+        ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
+        request.setPropertyValue("-1");
+        Response response = target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("Lucene index delta threshold ("+request.getPropertyName()+") cannot be inferior to 1 or superior to 100.A value of -1 was provided.", body);
+    }
+
+    @Test
     public void updateConfigPropertyUrlTest() {
         ConfigProperty property = qm.createConfigProperty("my.group", "my.url", "http://localhost", IConfigProperty.PropertyType.URL, "A url");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
@@ -225,5 +238,20 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         Assert.assertEquals("A string", modifiedProp.getString("description"));
         String body = json.getString(3);
         Assert.assertEquals("A Task scheduler cadence ("+prop4.getPropertyName()+") cannot be inferior to one hour.A value of -2 was provided.", body);
+    }
+
+    @Test
+    public void updateConfigPropertyOsvEcosystemTest() {
+        ConfigProperty property = qm.createConfigProperty("my.group", ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(), "maven;npm;maven", IConfigProperty.PropertyType.STRING, "List of ecosystems");
+        ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
+        request.setPropertyValue("maven;npm;maven");
+        Response response = target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(), json.getString("propertyName"));
+        Assert.assertEquals("maven;npm", json.getString("propertyValue"));
     }
 }

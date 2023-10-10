@@ -80,7 +80,7 @@ public final class IndexConstants {
     static final String CPE_PRODUCT = "product";
     static final String CPE_VERSION = "version";
     static final String[] CPE_SEARCH_FIELDS = {
-            CPE_22, CPE_23, CPE_VENDOR, CPE_PRODUCT, CPE_VERSION
+            CPE_UUID, CPE_22, CPE_23, CPE_VENDOR, CPE_PRODUCT, CPE_VERSION
     };
 
     static final String VULNERABLESOFTWARE_UUID = "uuid";
@@ -90,7 +90,7 @@ public final class IndexConstants {
     static final String VULNERABLESOFTWARE_PRODUCT = "product";
     static final String VULNERABLESOFTWARE_VERSION = "version";
     static final String[] VULNERABLESOFTWARE_SEARCH_FIELDS = {
-            VULNERABLESOFTWARE_CPE_22, VULNERABLESOFTWARE_CPE_23, VULNERABLESOFTWARE_VENDOR,
+            VULNERABILITY_UUID, VULNERABLESOFTWARE_CPE_22, VULNERABLESOFTWARE_CPE_23, VULNERABLESOFTWARE_VENDOR,
             VULNERABLESOFTWARE_PRODUCT, VULNERABLESOFTWARE_VERSION
     };
 

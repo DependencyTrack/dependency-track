@@ -31,7 +31,6 @@ import org.dependencytrack.notification.publisher.Publisher;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.List;
-import java.util.UUID;
 
 public class NotificationQueryManager extends QueryManager implements IQueryManager {
 

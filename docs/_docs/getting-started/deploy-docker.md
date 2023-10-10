@@ -18,6 +18,8 @@ other than a modern version of Docker.
 | 4.5GB RAM   | 16GB RAM    |
 | 2 CPU cores | 4 CPU cores |
 
+> These requirements can be disabled by setting the 'system.requirement.check.enabled' property or the 'SYSTEM_REQUIREMENT_CHECK_ENABLED' environment variable to 'false'. 
+
 ### Container Requirements (Front End)
 
 | Minimum     | Recommended |
@@ -146,6 +148,10 @@ services:
     # - ALPINE_CORS_ALLOW_CREDENTIALS=true
     # - ALPINE_CORS_MAX_AGE=3600
     #
+    # Optional logging configuration
+    # - LOGGING_LEVEL=INFO
+    # - LOGGING_CONFIG_PATH=logback.xml
+    #
     # Optional metrics properties
     # - ALPINE_METRICS_ENABLED=true
     # - ALPINE_METRICS_AUTH_USERNAME=
@@ -156,10 +162,11 @@ services:
     # - DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=/data
     #
     # Optional configuration for the Snyk analyzer
-    # - SNYK_THREAD_BATCH_SIZE=10
-    # - SNYK_LIMIT_FOR_PERIOD=1500
-    # - SNYK_THREAD_TIMEOUT_DURATION=60
-    # - SNYK_LIMIT_REFRESH_PERIOD=60
+    # - SNYK_THREAD_POOL_SIZE=10
+    # - SNYK_RETRY_MAX_ATTEMPTS=6
+    # - SNYK_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER=2
+    # - SNYK_RETRY_EXPONENTIAL_BACKOFF_INITIAL_DURATION_SECONDS=1
+    # - SNYK_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION_SECONDS=60
     #
     # Optional configuration for the OSS Index analyzer
     # - OSSINDEX_REQUEST_MAX_PURL=128
@@ -172,9 +179,11 @@ services:
     # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_LOCK_BUCKETS=1000
     # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_MAX_ATTEMPTS=10
     #
+    # Optional configuration for the system requirements
+    # - SYSTEM_REQUIREMENT_CHECK_ENABLED=true
     # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8"
     # - EXTRA_JAVA_OPTIONS=
-
+    
     deploy:
       resources:
         limits:

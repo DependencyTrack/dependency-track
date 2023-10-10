@@ -180,9 +180,9 @@ public class TeamResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid(), Team.FetchGroup.ALL.name());
             if (team != null) {
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Team deleted: " + team.getName());
-                qm.delete(team.getApiKeys());
-                qm.delete(team);
+                String teamName = team.getName();
+                qm.recursivelyDeleteTeam(team);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Team deleted: " + teamName);
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();

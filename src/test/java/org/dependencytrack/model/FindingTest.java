@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
@@ -37,7 +38,7 @@ public class FindingTest extends PersistenceCapableTest {
     private Date attributedOn = new Date();
     private Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
             "component-version", "component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
-            "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, "7.2", "8.4",
+            "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
             "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
 
 
@@ -66,6 +67,11 @@ public class FindingTest extends PersistenceCapableTest {
         Assert.assertEquals("vuln-subtitle", map.get("subtitle"));
         //Assert.assertEquals("vuln-description", map.get("description"));
         //Assert.assertEquals("vuln-recommendation", map.get("recommendation"));
+        Assert.assertEquals(BigDecimal.valueOf(7.2), map.get("cvssV2BaseScore"));
+        Assert.assertEquals(BigDecimal.valueOf(8.4), map.get("cvssV3BaseScore"));
+        Assert.assertEquals(BigDecimal.valueOf(1.25), map.get("owaspLikelihoodScore"));
+        Assert.assertEquals(BigDecimal.valueOf(1.75), map.get("owaspTechnicalImpactScore"));
+        Assert.assertEquals(BigDecimal.valueOf(1.3), map.get("owaspBusinessImpactScore"));
         Assert.assertEquals(Severity.HIGH.name(), map.get("severity"));
         Assert.assertEquals(1, map.get("severityRank"));
     }

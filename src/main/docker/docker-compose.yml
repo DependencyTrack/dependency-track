@@ -77,6 +77,10 @@ services:
     # - ALPINE_CORS_ALLOW_CREDENTIALS=true
     # - ALPINE_CORS_MAX_AGE=3600
     #
+    # Optional logging configuration
+    # - LOGGING_LEVEL=INFO
+    # - LOGGING_CONFIG_PATH=logback.xml
+    #
     # Optional metrics properties
     # - ALPINE_METRICS_ENABLED=true
     # - ALPINE_METRICS_AUTH_USERNAME=

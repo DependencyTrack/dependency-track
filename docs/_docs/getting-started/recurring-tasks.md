@@ -37,12 +37,14 @@ listed below will be reflected in those log messages.
 | FortifySscUploadTask<span style="color: red">\*</span>     | Publishes findings to [Fortify SSC]                                                             | 5m            | 1h                                 |
 | DefectDojoUploadTask<span style="color: red">\*</span>     | Publishes findings to [Defect Dojo]                                                             | 5m            | 1h                                 |
 | KennaSecurityUploadTask<span style="color: red">\*</span>  | Publishes findings to [Kenna Security]                                                          | 5m            | 1h                                 |
+| IndexTask<span style="color: red">\*</span>                | Perform existence, corruption and consistency checks on Apache Lucene indexes used for search   | 3h            | 72h                                |
 
 <span style="color: red">\*</span> *Is only executed when the corresponding feature is enabled and configured.*
 
 ### Configuration
 
-As of Dependency-Track v4.6.0, the interval of recurring tasks is configurable in the administration panel.
+As of Dependency-Track v4.6.0, the interval of recurring tasks is configurable in the administration panel. 
+Most of the intervals are configured in the _Task scheduler_ section but Lucene indexes task interval is configured in _Search_ section.
 
 Users are strongly encouraged to have proper [monitoring] in place before modifying these settings. Because some tasks
 can potentially put the system under high load, or take a long(er) time to complete, choosing intervals that are too 

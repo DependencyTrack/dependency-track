@@ -7,7 +7,7 @@
     {
       "activityTitle": "Dependency-Track",
       "activitySubtitle": "{{ timestamp }}",
-      "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-icon-dark-background.png",
+      "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
       {% if notification.group == "NEW_VULNERABILITY" %}
       "facts": [
         {
@@ -31,11 +31,11 @@
       "facts": [
         {
           "name": "Project",
-          "value": "{{ subject.dependency.project.toString | escape(strategy="json") }}"
+          "value": "{{ subject.component.project.toString | escape(strategy="json") }}"
         },
         {
           "name": "Component",
-          "value": "{{ subject.dependency.component.toString | escape(strategy="json") }}"
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
         }
       ],
       {% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}

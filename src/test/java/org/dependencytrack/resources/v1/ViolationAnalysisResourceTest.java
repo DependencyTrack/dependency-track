@@ -43,6 +43,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest;
+import org.dependencytrack.util.NotificationUtil;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -248,13 +249,15 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Some comment"))
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key;
 
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
+        final Notification projectNotification = NOTIFICATIONS.poll();
+        assertThat(projectNotification).isNotNull();
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
         assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-        assertThat(notification.getTitle()).isEqualTo(NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_APPROVED);
+        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_APPROVED, project));
         assertThat(notification.getContent()).isEqualTo("An violation analysis decision was made to a policy violation affecting a project");
     }
 
@@ -296,13 +299,15 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
         assertThat(jsonObject.getBoolean("isSuppressed")).isFalse();
         assertThat(jsonObject.getJsonArray("analysisComments")).isEmpty();
 
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
+        final Notification projectNotification = NOTIFICATIONS.poll();
+        assertThat(projectNotification).isNotNull();
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
         assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-        assertThat(notification.getTitle()).isEqualTo(NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_NOT_SET);
+        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_NOT_SET, project));
         assertThat(notification.getContent()).isEqualTo("An violation analysis decision was made to a policy violation affecting a project");
     }
 
@@ -362,18 +367,20 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Some comment"))
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key
 
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
+        final Notification projectNotification = NOTIFICATIONS.poll();
+        assertThat(projectNotification).isNotNull();
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
         assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-        assertThat(notification.getTitle()).isEqualTo(NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_REJECTED);
+        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_REJECTED, project));
         assertThat(notification.getContent()).isEqualTo("An violation analysis decision was made to a policy violation affecting a project");
     }
 
     @Test
-    public void updateAnalysisUpdateExistingNoChangesTest() {
+    public void updateAnalysisUpdateExistingNoChangesTest() throws Exception{
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -417,7 +424,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
         assertThat(jsonObject.getBoolean("isSuppressed")).isTrue();
         assertThat(jsonObject.getJsonArray("analysisComments")).isEmpty();
 
-        assertThat(NOTIFICATIONS).isEmpty();
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
     }
 
     @Test
@@ -468,13 +475,15 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("APPROVED → NOT_SET"))
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key
 
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
+        final Notification projectNotification = NOTIFICATIONS.poll();
+        assertThat(projectNotification).isNotNull();
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
         assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-        assertThat(notification.getTitle()).isEqualTo(NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_NOT_SET);
+        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_NOT_SET, project));
         assertThat(notification.getContent()).isEqualTo("An violation analysis decision was made to a policy violation affecting a project");
     }
 

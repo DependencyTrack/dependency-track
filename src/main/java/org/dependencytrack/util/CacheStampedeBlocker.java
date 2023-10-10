@@ -1,9 +1,28 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
 package org.dependencytrack.util;
 
 import alpine.common.logging.Logger;
 import alpine.common.metrics.Metrics;
 import com.google.common.util.concurrent.Striped;
 import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.core.predicate.PredicateCreator;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
@@ -110,7 +129,7 @@ public class CacheStampedeBlocker<K, V> {
         this(cacheName, nbBuckets, blockCompetingThreads, nbRetryMax, DEFAULT_CACHE_LOADER_ENTRY_TTL_MS);
     }
 
-    public CacheStampedeBlocker(String cacheName, int nbBuckets, boolean blockCompetingThreads, int nbRetryMax, long cacheLoaderEntryTTL) {
+    public CacheStampedeBlocker(String cacheName, int nbBuckets, boolean blockCompetingThreads, int nbRetryMax, long cacheLoaderEntryTTL, Class<? extends Exception>... retryableExceptions) {
         LOGGER.debug("Striped Lock is configured with "+nbBuckets+" buckets");
         this.cacheName = cacheName;
         stripedLock = Striped.lazyWeakReadWriteLock(nbBuckets);
@@ -122,6 +141,7 @@ public class CacheStampedeBlocker<K, V> {
         RetryConfig config = RetryConfig.custom()
                 .maxAttempts(this.nbRetryMax)
                 .intervalFunction(intervalWithCustomExponentialBackoff)
+                .retryOnException(PredicateCreator.createExceptionsPredicate(retryableExceptions).orElse(throwable -> false))
                 .failAfterMaxAttempts(true)
                 .build();
         RetryRegistry registry = RetryRegistry.of(config);
@@ -191,7 +211,7 @@ public class CacheStampedeBlocker<K, V> {
                     return Optional.ofNullable(result);
                 }
             } catch (Exception e) {
-                LOGGER.error("An error occurred while populating cache "+cacheName+" for key "+key+" : "+e.getMessage());
+                LOGGER.warn("An error occurred while populating cache "+cacheName+" for key "+key+" : "+e.getMessage(), e);
                 if (cachePopulationFuture != null && !cachePopulationFuture.future.isDone()) {
                     cachePopulationFuture.getFuture().completeExceptionally(e);
                     cacheLoaders.remove(key);
@@ -214,7 +234,7 @@ public class CacheStampedeBlocker<K, V> {
             try {
                 return Optional.ofNullable(cachePopulationFuture.getFuture().get());
             } catch (InterruptedException| ExecutionException e) {
-                LOGGER.error("An error occurred while populating cache "+cacheName+" for key "+key+" : "+e.getMessage());
+                LOGGER.warn("An error occurred while populating cache "+cacheName+" for key "+key+" : "+e.getMessage(), e);
                 return Optional.empty();
             }
         } else {

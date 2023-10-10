@@ -18,7 +18,9 @@
  */
 package org.dependencytrack;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
+import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.exception.RequirementsException;
 
 import javax.servlet.ServletContextEvent;
@@ -27,6 +29,7 @@ import javax.servlet.ServletContextListener;
 public class RequirementsVerifier implements ServletContextListener {
 
     private static final Logger LOGGER = Logger.getLogger(RequirementsVerifier.class);
+    private static final boolean systemRequirementCheckEnabled = Config.getInstance().getPropertyAsBoolean(ConfigKey.SYSTEM_REQUIREMENT_CHECK_ENABLED);
     private static boolean failedValidation = false;
 
     private static synchronized void setFailedValidation(boolean value) {
@@ -40,18 +43,28 @@ public class RequirementsVerifier implements ServletContextListener {
     public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Initializing requirements verifier");
         if (Runtime.getRuntime().maxMemory()/1024/1024 <= 3584) {
-            setFailedValidation(true);
-            // too complicated to calculate (Eden, Survivor, Tenured) and different type names between Java versions.
-            // Therefore, safely assume anything above 3.5GB available max memory is likely to be 4GB or higher.
-            final String message = "Dependency-Track requires a minimum of 4GB RAM (heap). Cannot continue. To fix, specify -Xmx4G (or higher) when executing Java.";
-            LOGGER.error(message);
-            throw new RequirementsException(message);
+            if (systemRequirementCheckEnabled) {
+                setFailedValidation(true);
+                // too complicated to calculate (Eden, Survivor, Tenured) and different type names between Java versions.
+                // Therefore, safely assume anything above 3.5GB available max memory is likely to be 4GB or higher.
+                final String message = "Dependency-Track requires a minimum of 4GB RAM (heap). Cannot continue. To fix, specify -Xmx4G (or higher) when executing Java.";
+                LOGGER.error(message);
+                throw new RequirementsException(message);
+            } else {
+                final String message = "Dependency-Track requires a minimum of 4GB RAM (heap). We highly recommand to use 4GB RAM. Dependency-Track will continue to start, but may not function properly. https://docs.dependencytrack.org/getting-started/deploy-docker/#container-requirements-api-server";
+                LOGGER.warn(message);
+            }
         }
         if (Runtime.getRuntime().availableProcessors() < 2) {
-            setFailedValidation(true);
-            final String message = "Dependency-Track requires a minimum of 2 CPU cores. Cannot continue.";
-            LOGGER.error(message);
-            throw new RequirementsException(message);
+            if (systemRequirementCheckEnabled) {
+                setFailedValidation(true);
+                final String message = "Dependency-Track requires a minimum of 2 CPU cores. Cannot continue. To fix, specify -Xmx4G (or higher) when executing Java.";
+                LOGGER.error(message);
+                throw new RequirementsException(message);
+            } else {
+                final String message = "Dependency-Track requires a minimum of 2 CPU cores. We highly recommand to use 2 CPU cores. Dependency-Track will continue to start, but may not function properly. https://docs.dependencytrack.org/getting-started/deploy-docker/#container-requirements-api-server";
+                LOGGER.warn(message);
+            }
         }
     }
 

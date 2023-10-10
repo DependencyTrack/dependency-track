@@ -30,6 +30,8 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.event.PolicyEvaluationEvent;
+import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.model.Component;
@@ -37,7 +39,6 @@ import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -46,7 +47,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -161,6 +161,10 @@ public class FindingResource extends AlpineResource {
                   final List<Component> detachedComponents = qm.detach(qm.getAllComponents(project));
                   final Project detachedProject = qm.detach(Project.class, project.getId());
                   final VulnerabilityAnalysisEvent vae = new VulnerabilityAnalysisEvent(detachedComponents).project(detachedProject);
+                  // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
+                  // as both might be needed in policy evaluation
+                  vae.onSuccess(new RepositoryMetaEvent(detachedComponents));
+                  vae.onSuccess(new PolicyEvaluationEvent(detachedComponents).project(detachedProject));
                   Event.dispatch(vae);
 
                   return Response.ok(Collections.singletonMap("token", vae.getChainIdentifier())).build();

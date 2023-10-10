@@ -21,8 +21,18 @@ package org.dependencytrack.auth;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.dependencytrack.auth.Permissions.Constants.*;
-
+import static org.dependencytrack.auth.Permissions.Constants.PORTFOLIO_MANAGEMENT;
+import static org.dependencytrack.auth.Permissions.Constants.BOM_UPLOAD;
+import static org.dependencytrack.auth.Permissions.Constants.VIEW_PORTFOLIO;
+import static org.dependencytrack.auth.Permissions.Constants.VIEW_VULNERABILITY;
+import static org.dependencytrack.auth.Permissions.Constants.VULNERABILITY_ANALYSIS;
+import static org.dependencytrack.auth.Permissions.Constants.VIEW_POLICY_VIOLATION;
+import static org.dependencytrack.auth.Permissions.Constants.VULNERABILITY_MANAGEMENT;
+import static org.dependencytrack.auth.Permissions.Constants.POLICY_VIOLATION_ANALYSIS;
+import static org.dependencytrack.auth.Permissions.Constants.ACCESS_MANAGEMENT;
+import static org.dependencytrack.auth.Permissions.Constants.SYSTEM_CONFIGURATION;
+import static org.dependencytrack.auth.Permissions.Constants.PROJECT_CREATION_UPLOAD;
+import static org.dependencytrack.auth.Permissions.Constants.POLICY_MANAGEMENT;
 public class PermissionsTest {
 
     @Test

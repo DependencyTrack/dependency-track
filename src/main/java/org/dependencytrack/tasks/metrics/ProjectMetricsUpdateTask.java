@@ -49,7 +49,9 @@ public class ProjectMetricsUpdateTask implements Subscriber {
     public void inform(final Event e) {
         if (e instanceof final ProjectMetricsUpdateEvent event) {
             try {
-                updateMetrics(event.getUuid());
+                final UUID uuid = event.getUuid();
+                LOGGER.info("Executing metrics update for project " + uuid);
+                updateMetrics(uuid);
             } catch (Exception ex) {
                 LOGGER.error("An unexpected error occurred while updating metrics for project " + event.getUuid(), ex);
             }
@@ -57,7 +59,6 @@ public class ProjectMetricsUpdateTask implements Subscriber {
     }
 
     private void updateMetrics(final UUID uuid) throws Exception {
-        LOGGER.info("Executing metrics update for project " + uuid);
         final var counters = new Counters();
 
         try (final QueryManager qm = new QueryManager()) {
@@ -146,7 +147,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             }
         }
 
-        LOGGER.info("Completed metrics update for project " + uuid + " in " +
+        LOGGER.debug("Completed metrics update for project " + uuid + " in " +
                 DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
     }
 

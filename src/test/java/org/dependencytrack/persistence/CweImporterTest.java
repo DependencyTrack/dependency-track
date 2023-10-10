@@ -31,6 +31,6 @@ public class CweImporterTest extends PersistenceCapableTest {
         importer.processCweDefinitions();
         Cwe cwe79 = qm.getCweById(79);
         Assert.assertEquals("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')", cwe79.getName());
-        Assert.assertEquals(1357, qm.getCwes().getTotal());
+        Assert.assertEquals(1420, qm.getCwes().getTotal());
     }
 }

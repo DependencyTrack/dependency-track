@@ -22,7 +22,6 @@ import alpine.common.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -63,7 +62,7 @@ public class PolicyCondition implements Serializable {
     }
 
     public enum Subject {
-        //AGE,
+        AGE,
         //ANALYZER,
         //BOM,
         COORDINATES,
@@ -76,7 +75,9 @@ public class PolicyCondition implements Serializable {
         SWID_TAGID,
         VERSION,
         COMPONENT_HASH,
-        CWE
+        CWE,
+        VULNERABILITY_ID,
+        VERSION_DISTANCE
     }
 
     @PrimaryKey

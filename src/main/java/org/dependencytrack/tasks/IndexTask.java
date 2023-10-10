@@ -19,9 +19,12 @@
 package org.dependencytrack.tasks;
 
 import alpine.common.logging.Logger;
+import alpine.common.metrics.Metrics;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import io.micrometer.core.instrument.Timer;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.search.IndexManager;
 import org.dependencytrack.search.IndexManagerFactory;
 import org.dependencytrack.search.ObjectIndexer;
 
@@ -43,6 +46,12 @@ public class IndexTask implements Subscriber {
 
         if (e instanceof IndexEvent) {
             final IndexEvent event = (IndexEvent) e;
+
+            if (IndexEvent.Action.CHECK == event.getAction()) {
+                IndexManager.checkIndexesConsistency();
+                return;
+            }
+
             final ObjectIndexer indexManager = IndexManagerFactory.getIndexManager(event);
 
             if (IndexEvent.Action.CREATE == event.getAction()) {
@@ -55,7 +64,13 @@ public class IndexTask implements Subscriber {
             } else if (IndexEvent.Action.COMMIT == event.getAction()) {
                 indexManager.commit();
             } else if (IndexEvent.Action.REINDEX == event.getAction()) {
+                Timer timer = Timer.builder("lucene_index_rebuild")
+                        .description("Lucene index rebuild")
+                        .tags("type", event.getIndexableClass().getName().toLowerCase())
+                        .register(Metrics.getRegistry());
+                Timer.Sample recording = Timer.start();
                 indexManager.reindex();
+                recording.stop(timer);
             }
         }
     }

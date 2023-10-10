@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.model.validation.ValidSpdxExpression;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 
 import javax.jdo.annotations.Column;
@@ -54,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.Set;
 
 /**
  * Model class for tracking individual components.
@@ -104,8 +106,7 @@ public class Component implements Serializable {
     private long id;
 
     @Persistent
-    @Column(name = "AUTHOR", jdbcType = "VARCHAR")
-    @Size(max = 255)
+    @Column(name = "AUTHOR", jdbcType = "CLOB")
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
     private String author;
 
@@ -283,6 +284,19 @@ public class Component implements Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license may only contain printable characters")
     private String license;
 
+    @Persistent
+    @Column(name = "LICENSE_EXPRESSION", jdbcType = "CLOB", allowsNull = "true")
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license expression may only contain printable characters")
+    @ValidSpdxExpression
+    private String licenseExpression;
+
+    @Persistent
+    @Column(name = "LICENSE_URL", jdbcType = "VARCHAR")
+    @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.URL, message = "The license URL must be a valid URL")
+    private String licenseUrl;
+
     @Persistent(defaultFetchGroup = "true", cacheable = "false")
     @Column(name = "LICENSE_ID")
     private License resolvedLicense;
@@ -343,9 +357,9 @@ public class Component implements Serializable {
     private transient DependencyMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
     private transient int usedBy;
-
-    @JsonIgnore
     private transient JsonObject cacheResult;
+    private transient Set<String> dependencyGraph;
+    private transient boolean expandDependencyGraph;
 
     public long getId() {
         return id;
@@ -614,6 +628,22 @@ public class Component implements Serializable {
         this.license = StringUtils.abbreviate(license, 255);
     }
 
+    public String getLicenseExpression() {
+        return licenseExpression;
+    }
+
+    public void setLicenseExpression(String licenseExpression) {
+        this.licenseExpression = licenseExpression;
+    }
+
+    public String getLicenseUrl() {
+        return licenseUrl;
+    }
+
+    public void setLicenseUrl(String licenseUrl) {
+        this.licenseUrl = StringUtils.abbreviate(licenseUrl, 255);
+    }
+
     public License getResolvedLicense() {
         return resolvedLicense;
     }
@@ -744,12 +774,30 @@ public class Component implements Serializable {
         this.usedBy = usedBy;
     }
 
+    @JsonIgnore
     public JsonObject getCacheResult() {
         return cacheResult;
     }
 
+    @JsonIgnore
     public void setCacheResult(JsonObject cacheResult) {
         this.cacheResult = cacheResult;
+    }
+
+    public Set<String> getDependencyGraph() {
+        return dependencyGraph;
+    }
+
+    public void setDependencyGraph(Set<String> dependencyGraph) {
+        this.dependencyGraph = dependencyGraph;
+    }
+
+    public boolean isExpandDependencyGraph() {
+        return expandDependencyGraph;
+    }
+
+    public void setExpandDependencyGraph(boolean expandDependencyGraph) {
+        this.expandDependencyGraph = expandDependencyGraph;
     }
 
     @Override

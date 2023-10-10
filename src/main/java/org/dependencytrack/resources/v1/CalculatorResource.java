@@ -27,6 +27,8 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
+import us.springett.owasp.riskrating.MissingFactorException;
+import us.springett.owasp.riskrating.OwaspRiskRating;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -65,6 +67,28 @@ public class CalculatorResource extends AlpineResource {
         } catch (NullPointerException e) {
             final String invalidVector = "An invalid CVSSv2 or CVSSv3 vector submitted.";
             return Response.status(Response.Status.BAD_REQUEST).entity(invalidVector).build();
+        }
+    }
+
+    @GET
+    @Path("/owasp")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns the OWASP Risk Rating likelihood score, technical impact score and business impact score",
+            response = us.springett.owasp.riskrating.Score.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    public Response getOwaspRRScores(
+            @ApiParam(value = "A valid OWASP Risk Rating vector", required = true)
+            @QueryParam("vector") String vector) {
+        try {
+            final OwaspRiskRating owaspRiskRating = OwaspRiskRating.fromVector(vector);
+            final us.springett.owasp.riskrating.Score score = owaspRiskRating.calculateScore();
+            return Response.ok(score).build();
+        } catch (IllegalArgumentException | MissingFactorException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
 

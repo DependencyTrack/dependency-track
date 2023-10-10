@@ -198,6 +198,10 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * <code>false</code>
      */
     private static boolean compareUpdate(VulnerableSoftware vs, String targetUpdate) {
+
+        if (targetUpdate != null && targetUpdate.equals(vs.getUpdate())) {
+            return true;
+        }
         if (LogicalValue.NA.getAbbreviation().equals(vs.getUpdate())) {
             return false;
         }

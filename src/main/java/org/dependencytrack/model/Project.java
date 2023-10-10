@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
-
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
@@ -45,6 +44,7 @@ import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Serialized;
 import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -91,6 +91,9 @@ import java.util.UUID;
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
                 @Persistent(name = "uuid")
+        }),
+        @FetchGroup(name = "PARENT", members = {
+                @Persistent(name = "parent")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -103,7 +106,8 @@ public class Project implements Serializable {
      */
     public enum FetchGroup {
         ALL,
-        METRICS_UPDATE
+        METRICS_UPDATE,
+        PARENT
     }
 
     @PrimaryKey
@@ -248,7 +252,14 @@ public class Project implements Serializable {
     @JsonIgnore
     private List<Team> accessTeams;
 
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "EXTERNAL_REFERENCES")
+    @Serialized
+    private List<ExternalReference> externalReferences;
+
     private transient ProjectMetrics metrics;
+    private transient List<ProjectVersion> versions;
+    private transient List<Component> dependencyGraph;
 
     public long getId() {
         return id;
@@ -423,6 +434,14 @@ public class Project implements Serializable {
         this.lastInheritedRiskScore = lastInheritedRiskScore;
     }
 
+    public List<ExternalReference> getExternalReferences() {
+        return externalReferences;
+    }
+
+    public void setExternalReferences(List<ExternalReference> externalReferences) {
+        this.externalReferences = externalReferences;
+    }
+
     public Boolean isActive() {
         return active;
     }
@@ -439,6 +458,14 @@ public class Project implements Serializable {
         this.metrics = metrics;
     }
 
+    public List<ProjectVersion> getVersions() {
+        return versions;
+    }
+
+    public void setVersions(List<ProjectVersion> versions) {
+        this.versions = versions;
+    }
+
     public List<Team> getAccessTeams() {
         return accessTeams;
     }
@@ -452,6 +479,16 @@ public class Project implements Serializable {
             this.accessTeams = new ArrayList<>();
         }
         this.accessTeams.add(accessTeam);
+    }
+
+    @JsonIgnore
+    public List<Component> getDependencyGraph() {
+        return dependencyGraph;
+    }
+
+    @JsonIgnore
+    public void setDependencyGraph(List<Component> dependencyGraph) {
+        this.dependencyGraph = dependencyGraph;
     }
 
     @Override
@@ -470,13 +507,13 @@ public class Project implements Serializable {
             return sb.toString();
         }
     }
-    
+
     private final static class BooleanDefaultTrueSerializer extends JsonSerializer<Boolean> {
 
         @Override
         public void serialize(Boolean value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeBoolean(value != null ? value : true);
         }
-        
+
     }
 }

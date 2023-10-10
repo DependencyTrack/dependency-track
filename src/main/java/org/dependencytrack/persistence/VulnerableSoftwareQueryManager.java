@@ -32,7 +32,9 @@ import org.h2.util.StringUtils;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 final class VulnerableSoftwareQueryManager extends QueryManager implements IQueryManager {
 
@@ -127,9 +129,43 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                                                            String versionEndExcluding, String versionEndIncluding,
                                                            String versionStartExcluding, String versionStartIncluding) {
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
-        query.setFilter("cpe23 == :cpe23 && versionEndExcluding == :versionEndExcluding && versionEndIncluding == :versionEndIncluding && versionStartExcluding == :versionStartExcluding && versionStartIncluding == :versionStartIncluding");
+        var filter = "cpe23 == :cpe23";
+        final var parameters = new HashMap<String, Object>();
+        parameters.put("cpe23", Objects.requireNonNull(cpe23));
+
+        // When building the query filter, ensure that null values are
+        // not passed as parameters, as this would bypass the query compilation
+        // cache. This method is called very frequently during NVD mirroring,
+        // we should avoid the overhead of repeated re-compilation if possible.
+        // See also: https://github.com/DependencyTrack/dependency-track/issues/2540
+        if (versionEndExcluding != null) {
+            filter += " && versionEndExcluding == :vee";
+            parameters.put("vee", versionEndExcluding);
+        } else {
+            filter += " && versionEndExcluding == null";
+        }
+        if (versionEndIncluding != null) {
+            filter += " && versionEndIncluding == :vei";
+            parameters.put("vei", versionEndIncluding);
+        } else {
+            filter += " && versionEndIncluding == null";
+        }
+        if (versionStartExcluding != null) {
+            filter += " && versionStartExcluding == :vse";
+            parameters.put("vse", versionStartExcluding);
+        } else {
+            filter += " && versionStartExcluding == null";
+        }
+        if (versionStartIncluding != null) {
+            filter += " && versionStartIncluding == :vsi";
+            parameters.put("vsi", versionStartIncluding);
+        } else {
+            filter += " && versionStartIncluding == null";
+        }
+        query.setFilter(filter);
+        query.setNamedParameters(parameters);
         query.setRange(0, 1);
-        return singleResult(query.executeWithArray(cpe23, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding));
+        return query.executeUnique();
     }
 
     /**

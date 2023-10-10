@@ -19,18 +19,25 @@
 package org.dependencytrack.integrations.fortifyssc;
 
 import alpine.common.logging.Logger;
-import kong.unirest.HttpRequestWithBody;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.UnirestInstance;
-import kong.unirest.json.JSONObject;
-import org.dependencytrack.common.UnirestFactory;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.util.EntityUtils;
+import org.dependencytrack.common.HttpClientPool;
+import org.json.JSONObject;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
 
 public class FortifySscClient {
 
@@ -45,49 +52,50 @@ public class FortifySscClient {
 
     public String generateOneTimeUploadToken(final String citoken) {
         LOGGER.debug("Generating one-time upload token");
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
+        var request = new HttpPost(baseURL + "/api/v1/fileTokens");
         final JSONObject payload = new JSONObject().put("fileTokenType", "UPLOAD");
-        final HttpRequestWithBody request = ui.post(baseURL + "/api/v1/fileTokens");
-        final HttpResponse<JsonNode> response = request
-                .header("Content-Type", "application/json")
-                .header("Authorization", "FortifyToken " + Base64.getEncoder().encodeToString(citoken.getBytes(StandardCharsets.UTF_8)))
-                .body(payload)
-                .asJson();
-        if (response.getStatus() == 201) {
-            if (response.getBody() != null) {
-                final JSONObject root = response.getBody().getObject();
-                LOGGER.debug("One-time upload token retrieved");
-                return root.getJSONObject("data").getString("token");
+        request.addHeader("Content-Type", "application/json");
+        request.addHeader("Authorization", "FortifyToken " + Base64.getEncoder().encodeToString(citoken.getBytes(StandardCharsets.UTF_8)));
+        try {
+            request.setEntity(new StringEntity(payload.toString()));
+            try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+                    if (response.getEntity() != null) {
+                        String responseString = EntityUtils.toString(response.getEntity());
+                        final JSONObject root = new JSONObject(responseString);
+                        LOGGER.debug("One-time upload token retrieved");
+                        return root.getJSONObject("data").getString("token");
+                    }
+                } else {
+                    uploader.handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                }
             }
-        } else {
-            LOGGER.warn("Fortify SSC Client did not receive expected response while attempting to generate a "
-                    + "one-time-use fileupload token. HTTP response code: "
-                    + response.getStatus() + " - " + response.getStatusText());
-            uploader.handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
+        } catch (IOException ex) {
+            uploader.handleException(LOGGER, ex);
         }
         return null;
     }
 
     public void uploadDependencyTrackFindings(final String token, final String applicationVersion, final InputStream findingsJson) {
-        LOGGER.debug("Uploading Dependency-Track findings to Fortify SSC");
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HashMap<String, Object> params = new HashMap<>();
-        params.put("engineType", "DEPENDENCY_TRACK");
-        params.put("mat", token);
-        params.put("entityId", applicationVersion);
-        final HttpRequestWithBody request = ui.post(baseURL + "/upload/resultFileUpload.html");
-        final HttpResponse<String> response = request
-                .header("accept", "application/xml")
-                .queryString(params)
-                .field("files[]", findingsJson, "findings.json")
-                .asString();
-        if (response.getStatus() == 200) {
-            LOGGER.debug("Successfully uploaded findings to Fortify SSC");
-        } else {
-            LOGGER.warn("Fortify SSC Client did not receive expected response while attempting to upload "
-                    + "Dependency-Track findings. HTTP response code: "
-                    + response.getStatus() + " - " + response.getStatusText());
-            uploader.handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
+        try {
+            LOGGER.debug("Uploading Dependency-Track findings to Fortify SSC");
+            var builder = new URIBuilder(baseURL + "/upload/resultFileUpload.html");
+            builder.setParameter("engineType", "DEPENDENCY_TRACK").setParameter("mat", token).setParameter("entityId", applicationVersion);
+            HttpPost request = new HttpPost(builder.build());
+            request.addHeader("accept", "application/xml");
+            HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+                    .addBinaryBody("files[]", findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json")
+                    .build();
+            request.setEntity(data);
+            try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    LOGGER.debug("Successfully uploaded findings to Fortify SSC");
+                } else {
+                    uploader.handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                }
+            }
+        } catch (URISyntaxException | IOException ex) {
+            uploader.handleException(LOGGER, ex);
         }
     }
 }

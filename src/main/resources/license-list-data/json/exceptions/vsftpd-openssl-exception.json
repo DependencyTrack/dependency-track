@@ -1,0 +1,13 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "vsftpd is licensed under version 2 of the GNU GPL.\nAs copyright holder, I give permission for vsftpd to be linked to the OpenSSL\nlibraries. This includes permission for vsftpd binaries to be distributed\nlinked against the OpenSSL libraries. All other obligations under the GPL v2\nremain intact.\n",
+  "name": "vsftpd OpenSSL exception",
+  "seeAlso": [
+    "https://git.stg.centos.org/source-git/vsftpd/blob/f727873674d9c9cd7afcae6677aa782eb54c8362/f/LICENSE",
+    "https://launchpad.net/debian/squeeze/+source/vsftpd/+copyright",
+    "https://github.com/richardcochran/vsftpd/blob/master/COPYING"
+  ],
+  "licenseExceptionId": "vsftpd-openssl-exception",
+  "licenseExceptionTemplate": "\u003c\u003cbeginOptional\u003e\u003evsftpd is licensed under version 2 of the GNU GPL.\u003c\u003cendOptional\u003e\u003e\n\nAs copyright holder, I give permission for vsftpd to be linked to the OpenSSL libraries. This includes permission for vsftpd binaries to be distributed linked against the OpenSSL libraries. All other obligations under the GPL v2 remain intact.\n\n",
+  "exceptionTextHtml": "\n      \u003cvar class\u003d\"optional-license-text\"\u003e \n         vsftpd is licensed under version 2 of the GNU GPL.\n      \u003c/var\u003e\n      \u003cp\u003e\n         As copyright holder, I give permission for vsftpd to be\n         linked to the OpenSSL libraries. This includes permission for\n         vsftpd binaries to be distributed linked against the OpenSSL\n         libraries. All other obligations under the GPL v2 remain intact.\n      \u003c/p\u003e\n\n   "
+}

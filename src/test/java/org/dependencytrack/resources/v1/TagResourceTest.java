@@ -45,7 +45,7 @@ public class TagResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
         Assert.assertEquals(4, json.size());
-        Assert.assertEquals("Tag 2", json.getJsonObject(0).getString("name"));
+        Assert.assertEquals("tag 2", json.getJsonObject(0).getString("name"));
     }
 
     @Test
@@ -70,6 +70,6 @@ public class TagResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
         Assert.assertEquals(3, json.size());
-        Assert.assertEquals("Tag 1", json.getJsonObject(0).getString("name"));
+        Assert.assertEquals("tag 1", json.getJsonObject(0).getString("name"));
     }
 }

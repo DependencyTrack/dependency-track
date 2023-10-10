@@ -1,6 +1,25 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
 package org.dependencytrack.search;
 
 import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import com.google.common.collect.Sets;
@@ -13,6 +32,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
@@ -25,7 +45,16 @@ import us.springett.parsers.cpe.exceptions.CpeValidationException;
 import us.springett.parsers.cpe.values.Part;
 
 import java.io.IOException;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class FuzzyVulnerableSoftwareSearchManager {
 
@@ -171,6 +200,8 @@ public class FuzzyVulnerableSoftwareSearchManager {
                     .content("Corrupted Lucene index detected. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)
             );
+            LOGGER.info("Trying to rebuild the corrupted index "+indexManager.getIndexType().name());
+            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, indexManager.getIndexType().getClazz()));
         } catch (IOException e) {
             LOGGER.error("An I/O Exception occurred while searching Lucene index", e);
             Notification.dispatch(new Notification()

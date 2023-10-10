@@ -69,4 +69,23 @@ public class IndexManagerFactory {
         throw new IllegalArgumentException("Unsupported indexer requested");
     }
 
+    public static IndexManager getIndexManager(final Class<?> clazz) {
+        if (Project.class == clazz) {
+            return ProjectIndexer.getInstance();
+        } else if (Component.class == clazz) {
+            return ComponentIndexer.getInstance();
+        } else if (ServiceComponent.class == clazz) {
+            return ServiceComponentIndexer.getInstance();
+        } else if (Vulnerability.class == clazz) {
+            return VulnerabilityIndexer.getInstance();
+        } else if (License.class == clazz) {
+            return LicenseIndexer.getInstance();
+        } else if (Cpe.class == clazz) {
+            return CpeIndexer.getInstance();
+        } else if (VulnerableSoftware.class == clazz) {
+            return VulnerableSoftwareIndexer.getInstance();
+        }
+        throw new IllegalArgumentException("Unsupported indexer requested");
+    }
+
 }

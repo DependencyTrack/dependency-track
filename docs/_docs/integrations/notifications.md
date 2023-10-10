@@ -28,6 +28,7 @@ Each scope contains a set of notification groups that can be used to subscribe t
 | SYSTEM | FILE_SYSTEM | Notifications generated as a result of a file system operation. These are typically only generated on error conditions            |
 | SYSTEM | REPOSITORY | Notifications generated as a result of interacting with one of the supported repositories such as Maven Central, RubyGems, or NPM |
 | PORTFOLIO | NEW_VULNERABILITY | Notifications generated whenever a new vulnerability is identified                                                                |
+| PORTFOLIO | VULNERABILITY_UPDATED | Notifications generated if the severity of a vulnerability changes after it has been created                                      |
 | PORTFOLIO | NEW_VULNERABLE_DEPENDENCY | Notifications generated as a result of a vulnerable component becoming a dependency of a project                                  |
 | PORTFOLIO | GLOBAL_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global)              |
 | PORTFOLIO | PROJECT_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                         |
@@ -138,6 +139,54 @@ This type of notification will always contain:
 ```
 
 > The `cwe` field is deprecated and will be removed in a later version. Please use `cwes` instead.
+
+
+#### VULNERABILITY_UPDATED
+This type of notification will always contain:
+* 1 component
+* 1 vulnerability
+* 1 or more affected projects
+
+```json
+{
+  "notification": {
+    "level": "INFORMATIONAL",
+    "scope": "PORTFOLIO",
+    "group": "VULNERABILITY_UPDATED",
+    "timestamp": "2018-08-27T23:26:22.961",
+    "title": "Change in Severity of a Vulnerability on Project: [Acme Example]",
+    "content": "The vulnerability CVE-2012-5784 on component axis has changed severity from LOW to MEDIUM",
+    "subject": {
+      "vulnerability": {
+        "uuid": "941a93f5-e06b-4304-84de-4d788eeb4969",
+        "old": {
+          "severity": "MEDIUM"
+        },
+        "new": {
+          "severity": "HIGH"
+        }
+      },
+      "component": {
+        "uuid": "4d5cd8df-cff7-4212-a038-91ae4ab79396",
+        "group": "apache",
+        "name": "axis",
+        "version": "1.4",
+        "md5": "03dcfdd88502505cc5a805a128bfdd8d",
+        "sha1": "94a9ce681a42d0352b3ad22659f67835e560d107",
+        "sha256": "05aebb421d0615875b4bf03497e041fe861bf0556c3045d8dda47e29241ffdd3",
+        "purl": "pkg:maven/apache/axis@1.4"
+      },
+      "affectedProjects": [
+        {
+          "uuid": "6fb1820f-5280-4577-ac51-40124aabe307",
+          "name": "Acme Example",
+          "version": "1.0.0"
+        }
+      ]
+    }
+  }
+}
+```
 
 #### NEW_VULNERABLE_DEPENDENCY
 This type of notification will always contain:

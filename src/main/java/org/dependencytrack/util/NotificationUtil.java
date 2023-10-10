@@ -37,6 +37,7 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.model.VulnerabilityUpdateDiff;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -49,6 +50,7 @@ import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
+import org.dependencytrack.notification.vo.VulnerabilityUpdate;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -101,6 +103,29 @@ public final class NotificationUtil {
                     .content(generateNotificationContent(detachedVuln))
                     .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values()), vulnerabilityAnalysisLevel))
             );
+        }
+    }
+
+    public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, VulnerabilityUpdateDiff vulnerabilityUpdateDiff) {
+        final Map<Long,Project> affectedProjects = new HashMap<>();
+        List<Component> components = vulnerability.getComponents();
+        if (components != null) {
+            for (final Component c : components) {
+                if (!affectedProjects.containsKey(c.getProject().getId())) {
+                    affectedProjects.put(c.getProject().getId(), qm.detach(Project.class, c.getProject().getId()));
+                }
+            }
+
+            for (final Component c : components) {
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.PORTFOLIO)
+                        .group(NotificationGroup.VULNERABILITY_UPDATED)
+                        .title(generateNotificationTitle(NotificationConstants.Title.VULNERABILITY_UPDATED, qm.detach(Project.class, c.getProject().getId())))
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content(generateNotificationContent(vulnerability, vulnerabilityUpdateDiff, c))
+                        .subject(new VulnerabilityUpdate(vulnerability, vulnerabilityUpdateDiff, c, new HashSet<>(affectedProjects.values())))
+                );
+            }
         }
     }
 
@@ -378,6 +403,39 @@ public final class NotificationUtil {
         return builder.build();
     }
 
+    public static JsonObject toJson(final VulnerabilityUpdate vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        if (vo.getVulnerability().getUuid() != null) {
+            Map<String, Object> vulnerabilityMap = new HashMap<>();
+            vulnerabilityMap.put("uuid", vo.getVulnerability().getUuid().toString());
+
+            if (vo.getVulnerabilityUpdateDiff() != null) {
+                Map<String, Object> oldVulnerabilityMap = new HashMap<>();
+                oldVulnerabilityMap.put("severity", vo.getVulnerabilityUpdateDiff().getOldSeverity().toString());
+                vulnerabilityMap.put("old", oldVulnerabilityMap);
+
+                Map<String, Object> newVulnerabilityMap = new HashMap<>();
+                newVulnerabilityMap.put("severity", vo.getVulnerabilityUpdateDiff().getNewSeverity().toString());
+                vulnerabilityMap.put("new", newVulnerabilityMap);
+            }
+
+            JsonObject vulnerabilityJson = Json.createObjectBuilder(vulnerabilityMap).build();
+            builder.add("vulnerability", vulnerabilityJson);
+        }
+
+        if (vo.getAffectedProjects() != null && vo.getAffectedProjects().size() > 0) {
+            final JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
+            for (final Project project: vo.getAffectedProjects()) {
+                projectsBuilder.add(toJson(project));
+            }
+            builder.add("affectedProjects", projectsBuilder.build());
+        }
+        if (vo.getComponent() != null) {
+            builder.add("component", toJson(vo.getComponent()));
+        }
+        return builder.build();
+    }
+
     public static JsonObject toJson(final NewVulnerableDependency vo) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent().getProject() != null) {
@@ -558,6 +616,10 @@ public final class NotificationUtil {
             content = (vulnerability.getTitle() != null) ? vulnerability.getVulnId() + ": " +vulnerability.getTitle() : vulnerability.getVulnId();
         }
         return content;
+    }
+
+    private static String generateNotificationContent(final Vulnerability vulnerability, final VulnerabilityUpdateDiff vulnerabilityUpdateDiff, final Component component){
+        return "The vulnerability " + vulnerability.getVulnId() + " on component " + component.getName() + " has changed severity from " + vulnerabilityUpdateDiff.getOldSeverity() + " to " + vulnerabilityUpdateDiff.getNewSeverity();
     }
 
     private static String generateNotificationContent(final PolicyViolation policyViolation) {

@@ -39,6 +39,7 @@ import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
+import org.dependencytrack.notification.vo.VulnerabilityUpdate;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -341,6 +342,40 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         assertThat(router.resolveRules(notification)).isEmpty();
 
         notification.setSubject(new NewVulnerabilityIdentified(null, componentA, Set.of(), null));
+        assertThat(router.resolveRules(notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testVulnerabilityUpdateLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA = qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB = qm.createComponent(componentB, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.VULNERABILITY_UPDATED));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.VULNERABILITY_UPDATED.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new VulnerabilityUpdate(null, null, componentB, Set.of()));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
+
+        notification.setSubject(new VulnerabilityUpdate(null, null, componentA, Set.of()));
         assertThat(router.resolveRules(notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }

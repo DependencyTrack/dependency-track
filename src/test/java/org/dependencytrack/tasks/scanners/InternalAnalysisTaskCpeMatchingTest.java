@@ -201,7 +201,9 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 // Scenario:  "vendor" and "product" with different casing -> EQUAL.
                 // Table No.: 9
                 // Note:      CPEs with uppercase "part" are considered invalid by the cpe-parser library.
-                {"cpe:2.3:o:lInUx:lInUx_KeRnEl:5.15.37:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:o:LiNuX:LiNuX_kErNeL:5.15.37:*:*:*:*:*:*:*"},
+                // TODO:      This should match, but can't currently support this as it would require an function index on UPPER("PART"),
+                //            UPPER("VENDOR"), and UPPER("PRODUCT"), which we cannot add through JDO annotations.
+                {"cpe:2.3:o:lInUx:lInUx_KeRnEl:5.15.37:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:o:LiNuX:LiNuX_kErNeL:5.15.37:*:*:*:*:*:*:*"},
                 // ---
                 // Issue:     https://github.com/DependencyTrack/dependency-track/issues/2988
                 // Scenario:  "other" attribute of source is NA, "other" attribute of target is ANY -> SUBSET.

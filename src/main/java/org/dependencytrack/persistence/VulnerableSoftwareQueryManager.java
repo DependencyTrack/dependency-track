@@ -280,7 +280,10 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                 // | 9   | i               | i          | EQUAL                |
                 // | 10  | i               | k          | DISJOINT             |
                 // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
-                cpeQueryFilterParts.add("(part == '*' || part.equalsIgnoreCase(:part))");
+                // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
+                //   Can't currently do this as it would require an index on UPPER("PART"),
+                //   which we cannot add through JDO annotations.
+                cpeQueryFilterParts.add("(part == '*' || part == :part)");
                 queryParams.put("part", cpePart);
 
                 // NOTE: Target *could* include wildcard, but the relation
@@ -312,7 +315,10 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
 
             if (!LogicalValue.ANY.getAbbreviation().equals(cpeVendor)
                     && !LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
-                cpeQueryFilterParts.add("(vendor == '*' || vendor.equalsIgnoreCase(:vendor))");
+                // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
+                //   Can't currently do this as it would require an index on UPPER("VENDOR"),
+                //   which we cannot add through JDO annotations.
+                cpeQueryFilterParts.add("(vendor == '*' || vendor == :vendor)");
                 queryParams.put("vendor", cpeVendor);
             } else if (LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
                 cpeQueryFilterParts.add("(vendor == '*' || vendor == '-')");
@@ -322,7 +328,10 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
 
             if (!LogicalValue.ANY.getAbbreviation().equals(cpeProduct)
                     && !LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
-                cpeQueryFilterParts.add("(product == '*' || product.equalsIgnoreCase(:product))");
+                // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
+                //   Can't currently do this as it would require an index on UPPER("PRODUCT"),
+                //   which we cannot add through JDO annotations.
+                cpeQueryFilterParts.add("(product == '*' || product == :product)");
                 queryParams.put("product", cpeProduct);
             } else if (LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
                 cpeQueryFilterParts.add("(product == '*' || product == '-')");

@@ -301,7 +301,7 @@
         <dependency>
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>cloud-sql-connector-jdbc-sqlserver</artifactId>
-            <version>1.14.0</version>
+            <version>1.14.1</version>
         </dependency>
         <!-- Xerces -->
         <dependency>

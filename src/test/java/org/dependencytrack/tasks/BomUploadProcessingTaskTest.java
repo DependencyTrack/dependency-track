@@ -147,6 +147,13 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(component.getSupplier().getContacts().get(0).getName()).isEqualTo("Foo Jr.");
         assertThat(component.getSupplier().getContacts().get(0).getEmail()).isEqualTo("foojr@bar.com");
         assertThat(component.getSupplier().getContacts().get(0).getPhone()).isEqualTo("123-456-7890");
+
+        assertThat(component.getManufacturer().getName()).isEqualTo("Foo Incorporated");
+        assertThat(component.getManufacturer().getUrls()).isEqualTo("https://foo.bar.com");
+        assertThat(component.getManufacturer().getContacts().get(0).getName()).isEqualTo("Foo Sr.");
+        assertThat(component.getManufacturer().getContacts().get(0).getEmail()).isEqualTo("foo@bar.com");
+        assertThat(component.getManufacturer().getContacts().get(0).getPhone()).isEqualTo("800-123-4567");
+
         
         assertThat(component.getAuthor()).isEqualTo("Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
         assertThat(component.getPublisher()).isEqualTo("Example Incorporated");

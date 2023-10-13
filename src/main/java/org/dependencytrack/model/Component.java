@@ -405,6 +405,15 @@ public class Component implements Serializable {
     public void setSupplier(OrganizationalEntity supplier) {/**Issue #2373, #2737 */
         this.supplier = supplier;
     }
+
+    public OrganizationalEntity getManufacturer() { /**Issue #2373, #2737 */
+        return manufacture;
+    }
+
+    public void setManufacturer(OrganizationalEntity manufacture) {/**Issue #2373, #2737 */
+        this.manufacture = manufacture;
+    }
+
     public String getGroup() {
         return group;
     }

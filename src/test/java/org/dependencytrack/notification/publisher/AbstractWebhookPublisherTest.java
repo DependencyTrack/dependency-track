@@ -35,8 +35,8 @@ public abstract class AbstractWebhookPublisherTest<T extends AbstractWebhookPubl
     @Rule
     public WireMockRule wireMock = new WireMockRule(options().dynamicPort());
 
-    AbstractWebhookPublisherTest(final DefaultNotificationPublishers publisher, final Class<T> publisherClass) {
-        super(publisher, publisherClass);
+    AbstractWebhookPublisherTest(final DefaultNotificationPublishers publisher, final T publisherInstance) {
+        super(publisher, publisherInstance);
     }
 
     @Before

@@ -27,7 +27,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 public class MattermostPublisherTest extends AbstractWebhookPublisherTest<MattermostPublisher> {
 
     public MattermostPublisherTest() {
-        super(DefaultNotificationPublishers.MATTERMOST, MattermostPublisher.class);
+        super(DefaultNotificationPublishers.MATTERMOST, new MattermostPublisher());
     }
 
     @Override

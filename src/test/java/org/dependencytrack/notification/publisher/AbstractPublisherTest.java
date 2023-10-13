@@ -39,7 +39,6 @@ import org.junit.Test;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
@@ -53,14 +52,9 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
     final DefaultNotificationPublishers publisher;
     final T publisherInstance;
 
-    AbstractPublisherTest(final DefaultNotificationPublishers publisher, final Class<T> publisherClass) {
+    AbstractPublisherTest(final DefaultNotificationPublishers publisher, final T publisherInstance) {
         this.publisher = publisher;
-        try {
-            this.publisherInstance = publisherClass.getDeclaredConstructor().newInstance();
-        } catch (IllegalAccessException | InstantiationException
-                 | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
+        this.publisherInstance = publisherInstance;
     }
 
     @Test

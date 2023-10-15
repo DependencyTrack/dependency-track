@@ -1,0 +1,33 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "version": 1,
+  "metadata" : {
+    "timestamp" : "2022-03-03T00:00:00Z",
+    "component" : {
+      "name" : "DEF",
+      "version": "1.0",
+      "type" : "application",
+      "bom-ref" : "product-DEF"
+    }
+  },
+  "vulnerabilities": [
+    {
+      "id": "CVE-2021-44228",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2021-44228"
+      },
+      "analysis": {
+        "state": "exploitable",
+        "response": ["will_not_fix", "update"],
+        "detail": "This version of Product DEF is affected by the vulnerability. Customers are advised to upgrade to the latest release."
+      },
+      "affects": [
+        {
+          "ref": "product-DEF"
+        }
+      ]
+    }
+  ]
+}

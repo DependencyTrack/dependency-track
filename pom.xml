@@ -84,6 +84,9 @@
         <frontend.version>4.8.1</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.2.0</lib.awaitility.version>
+        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.14.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
+        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.14.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.14.1</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
@@ -291,17 +294,17 @@
         <dependency>
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>mysql-socket-factory-connector-j-8</artifactId>
-            <version>1.11.0</version>
+            <version>${lib.cloud-sql-mysql-socket-factory-connector-j-8.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>postgres-socket-factory</artifactId>
-            <version>1.11.0</version>
+            <version>${lib.cloud-sql-postgres-socket-factory.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>cloud-sql-connector-jdbc-sqlserver</artifactId>
-            <version>1.14.1</version>
+            <version>${lib.cloud-sql-connector-jdbc-sqlserver.version}</version>
         </dependency>
         <!-- Xerces -->
         <dependency>

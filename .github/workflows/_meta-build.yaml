@@ -17,6 +17,8 @@ on:
       registry-0-psw:
         required: true
 
+permissions: { }
+
 jobs:
   build-java:
     runs-on: ubuntu-latest
@@ -58,6 +60,8 @@ jobs:
 
   build-container:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write # Required to upload trivy's SARIF output
     needs:
       - build-java
 

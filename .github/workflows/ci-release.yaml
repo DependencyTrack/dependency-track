@@ -9,6 +9,8 @@ on:
         description: 'Use this to overwrite the version number to release, otherwise uses the current SNAPSHOT version (expected format x.y.z)'
         type: string
 
+permissions: { }
+
 jobs:
   prepare-release:
     runs-on: ubuntu-latest

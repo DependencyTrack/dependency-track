@@ -20,17 +20,17 @@ package org.dependencytrack.tasks.scanners;
 
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.ComponentVersion;
 import org.dependencytrack.util.NotificationUtil;
-import us.springett.parsers.cpe.util.Convert;
+import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.values.LogicalValue;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Base analysis task for using the internal VulnerableSoftware model as the source of truth for
@@ -79,11 +79,6 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * Ported from Dependency-Check v5.2.1
      */
     private static boolean compareVersions(VulnerableSoftware vs, String targetVersion) {
-        // For VulnerableSoftware (could actually be hardware) without a version number.
-        // e.g. cpe:2.3:o:intel:2000e_firmware:-:*:*:*:*:*:*:*
-        if (LogicalValue.NA.getAbbreviation().equals(vs.getVersion())) {
-            return true;
-        }
         //if any of the four conditions will be evaluated - then true;
         boolean result = (vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty())
                 || (vs.getVersionStartExcluding() != null && !vs.getVersionStartExcluding().isEmpty())
@@ -119,72 +114,24 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         return result;
     }
 
-    /**
-     * This does not follow the spec precisely because ANY compared to NA is
-     * classified as undefined by the spec; however, in this implementation ANY
-     * will match NA and return true.
-     *
-     * This will compare the left value to the right value and return true if
-     * the left matches the right. Note that it is possible that the right would
-     * not match the left value.
-     *
-     * @param left the left value to compare
-     * @param right the right value to compare
-     * @return <code>true</code> if the left value matches the right value;
-     * otherwise <code>false</code>
-     *
-     * Ported from Dependency-Check v5.2.1
-     */
-    private static boolean compareAttributes(String left, String right) {
-        //the numbers below come from the CPE Matching standard
-        //Table 6-2: Enumeration of Attribute Comparison Set Relations
-        //https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf
+    private static final Method COMPARE_ATTRIBUTES_METHOD;
 
-        if (left.equalsIgnoreCase(right)) {
-            //1 6 9
-            return true;
-        } else if (LogicalValue.ANY.getAbbreviation().equals(left)) {
-            //2 3 4
-            return true;
-        } else if (LogicalValue.NA.getAbbreviation().equals(left)) {
-            //5 7 8
-            return false;
-        } else if (LogicalValue.NA.getAbbreviation().equals(right)) {
-            //12 16
-            return false;
-        } else if (LogicalValue.ANY.getAbbreviation().equals(right)) {
-            //13 15
-            return false;
+    static {
+        try {
+            // Workaround for the fact that Cpe#compareAttributes has protected visibility.
+            COMPARE_ATTRIBUTES_METHOD = Cpe.class.getDeclaredMethod("compareAttributes", String.class, String.class);
+            COMPARE_ATTRIBUTES_METHOD.setAccessible(true);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException("Failed to access compareAttributes method of %s".formatted(Cpe.class.getName()), e);
         }
-        //10 11 14 17
-        if (containsSpecialCharacter(left)) {
-            final Pattern p = Convert.wellFormedToPattern(left.toLowerCase());
-            final Matcher m = p.matcher(right.toLowerCase());
-            return m.matches();
-        }
-        return false;
     }
 
-    /**
-     * Determines if the string has an unquoted special character.
-     *
-     * @param value the string to check
-     * @return <code>true</code> if the string contains an unquoted special
-     * character; otherwise <code>false</code>
-     *
-     * Ported from Dependency-Check v5.2.1
-     */
-    private static boolean containsSpecialCharacter(String value) {
-        for (int x = 0; x < value.length(); x++) {
-            char c = value.charAt(x);
-            if (c == '?' || c == '*') {
-                return true;
-            } else if (c == '\\') {
-                //skip the next character because it is quoted
-                x += 1;
-            }
+    private static boolean compareAttributes(String left, String right) {
+        try {
+            return (Boolean) COMPARE_ATTRIBUTES_METHOD.invoke(null, left, right);
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
-        return false;
     }
 
     /**
@@ -201,9 +148,6 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
 
         if (targetUpdate != null && targetUpdate.equals(vs.getUpdate())) {
             return true;
-        }
-        if (LogicalValue.NA.getAbbreviation().equals(vs.getUpdate())) {
-            return false;
         }
         if (vs.getUpdate() == null && targetUpdate == null) {
             return true;

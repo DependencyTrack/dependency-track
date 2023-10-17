@@ -8,6 +8,8 @@ on:
       - released
   workflow_dispatch:
 
+permissions: { }
+
 jobs:
   read-version:
     runs-on: ubuntu-latest
@@ -36,6 +38,8 @@ jobs:
     with:
       app-version: ${{ needs.read-version.outputs.version }}
       publish-container: true
+    permissions:
+      security-events: write # Required to upload trivy's SARIF output
     secrets:
       registry-0-usr: ${{ secrets.HUB_USERNAME }}
       registry-0-psw: ${{ secrets.HUB_ACCESSS_TOKEN }}

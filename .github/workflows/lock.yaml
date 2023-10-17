@@ -4,13 +4,14 @@ on:
   schedule:
     - cron: '0 10 * * *'
 
-permissions:
-  issues: write
-  pull-requests: write
+permissions: { }
 
 jobs:
   action:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write # Required to lock issues
+      pull-requests: write # Required to lock PRs
     # don't run on forks
     if: ${{ contains(github.repository, 'DependencyTrack/') }}
     steps:

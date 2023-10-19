@@ -61,10 +61,9 @@ body:
       What version of Dependency-Track are you using?
     options:
     - 4.7.x
-    - 4.8.0
-    - 4.8.1
-    - 4.8.2
-    - 4.9.0-SNAPSHOT
+    - 4.8.x
+    - 4.9.0
+    - 4.10.0-SNAPSHOT
   validations:
     required: true
 - type: dropdown

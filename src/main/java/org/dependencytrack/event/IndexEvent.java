@@ -26,6 +26,13 @@ import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.search.IndexManager;
+import org.dependencytrack.search.document.ComponentDocument;
+import org.dependencytrack.search.document.LicenseDocument;
+import org.dependencytrack.search.document.ProjectDocument;
+import org.dependencytrack.search.document.SearchDocument;
+import org.dependencytrack.search.document.ServiceComponentDocument;
+import org.dependencytrack.search.document.VulnerabilityDocument;
+import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 
 /**
  * Defines various Lucene index events.
@@ -45,40 +52,40 @@ public class IndexEvent extends SingletonCapableEvent {
     }
 
     private final Action action;
-    private Object indexableObject;
-    private Class indexableClass;
+    private SearchDocument searchDocument;
+    private final Class<?> indexableClass;
 
     public IndexEvent(final Action action, final Project project) {
         this(action, Project.class);
-        this.indexableObject = project;
+        this.searchDocument = new ProjectDocument(project);
     }
 
     public IndexEvent(final Action action, final Component component) {
         this(action, Component.class);
-        this.indexableObject = component;
+        this.searchDocument = new ComponentDocument(component);
     }
 
     public IndexEvent(final Action action, final ServiceComponent service) {
         this(action, ServiceComponent.class);
-        this.indexableObject = service;
+        this.searchDocument = new ServiceComponentDocument(service);
     }
 
     public IndexEvent(final Action action, final Vulnerability vulnerability) {
         this(action, Vulnerability.class);
-        this.indexableObject = vulnerability;
+        this.searchDocument = new VulnerabilityDocument(vulnerability);
     }
 
     public IndexEvent(final Action action, final License license) {
         this(action, License.class);
-        this.indexableObject = license;
+        this.searchDocument = new LicenseDocument(license);
     }
 
     public IndexEvent(final Action action, final VulnerableSoftware vs) {
         this(action, VulnerableSoftware.class);
-        this.indexableObject = vs;
+        this.searchDocument = new VulnerableSoftwareDocument(vs);
     }
 
-    public IndexEvent(final Action action, final Class clazz) {
+    public IndexEvent(final Action action, final Class<?> clazz) {
         if(action == Action.REINDEX) {
             this.setSingleton(true);
             this.setChainIdentifier(IndexManager.IndexType.getUuid(clazz));
@@ -91,11 +98,11 @@ public class IndexEvent extends SingletonCapableEvent {
         return action;
     }
 
-    public Object getObject() {
-        return indexableObject;
+    public SearchDocument getObject() {
+        return searchDocument;
     }
 
-    public Class getIndexableClass() {
+    public Class<?> getIndexableClass() {
         return indexableClass;
     }
 }

@@ -31,6 +31,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.ComponentDocument;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,7 +42,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.0.0
  */
-public final class ComponentIndexer extends IndexManager implements ObjectIndexer<Component> {
+public final class ComponentIndexer extends IndexManager implements ObjectIndexer<ComponentDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(ComponentIndexer.class);
     private static final ComponentIndexer INSTANCE = new ComponentIndexer();
@@ -67,14 +68,14 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      *
      * @param component A persisted Component object.
      */
-    public void add(final Component component) {
+    public void add(final ComponentDocument component) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.COMPONENT_UUID, component.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.COMPONENT_NAME, component.getName(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_GROUP, component.getGroup(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_VERSION, component.getVersion(), Field.Store.YES, false);
-        addField(doc, IndexConstants.COMPONENT_SHA1, component.getSha1(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_DESCRIPTION, component.getDescription(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_UUID, component.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.COMPONENT_NAME, component.name(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_GROUP, component.group(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_VERSION, component.version(), Field.Store.YES, false);
+        addField(doc, IndexConstants.COMPONENT_SHA1, component.sha1(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_DESCRIPTION, component.description(), Field.Store.YES, true);
 
         try {
             getIndexWriter().addDocument(doc);
@@ -97,9 +98,9 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      *
      * @param component A persisted Component object.
      */
-    public void remove(final Component component) {
+    public void remove(final ComponentDocument component) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.getUuid().toString()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.uuid().toString()));
         } catch (CorruptIndexException e) {
             handleCorruptIndexException(e);
         } catch (IOException e) {

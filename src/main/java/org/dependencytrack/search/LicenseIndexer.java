@@ -31,6 +31,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.LicenseDocument;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,7 +42,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.0.0
  */
-public final class LicenseIndexer extends IndexManager implements ObjectIndexer<License> {
+public final class LicenseIndexer extends IndexManager implements ObjectIndexer<LicenseDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(LicenseIndexer.class);
     private static final LicenseIndexer INSTANCE = new LicenseIndexer();
@@ -67,11 +68,11 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param license A persisted License object.
      */
-    public void add(final License license) {
+    public void add(final LicenseDocument license) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.LICENSE_UUID, license.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.LICENSE_LICENSEID, license.getLicenseId(), Field.Store.YES, true);
-        addField(doc, IndexConstants.LICENSE_NAME, license.getName(), Field.Store.YES, true);
+        addField(doc, IndexConstants.LICENSE_UUID, license.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.LICENSE_LICENSEID, license.licenseId(), Field.Store.YES, true);
+        addField(doc, IndexConstants.LICENSE_NAME, license.name(), Field.Store.YES, true);
 
         try {
             getIndexWriter().addDocument(doc);
@@ -94,9 +95,9 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param license A persisted License object.
      */
-    public void remove(final License license) {
+    public void remove(final LicenseDocument license) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.LICENSE_UUID, license.getUuid().toString()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.LICENSE_UUID, license.uuid().toString()));
         } catch (CorruptIndexException e) {
             handleCorruptIndexException(e);
         } catch (IOException e) {

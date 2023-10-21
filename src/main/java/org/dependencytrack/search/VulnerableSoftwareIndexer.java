@@ -31,6 +31,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,7 +42,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.6.0
  */
-public final class VulnerableSoftwareIndexer extends IndexManager implements ObjectIndexer<VulnerableSoftware> {
+public final class VulnerableSoftwareIndexer extends IndexManager implements ObjectIndexer<VulnerableSoftwareDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(VulnerableSoftwareIndexer.class);
     private static final VulnerableSoftwareIndexer INSTANCE = new VulnerableSoftwareIndexer();
@@ -67,14 +68,14 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
      *
      * @param vs A persisted VulnerableSoftware object.
      */
-    public void add(final VulnerableSoftware vs) {
+    public void add(final VulnerableSoftwareDocument vs) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_UUID, vs.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_22, vs.getCpe22(), Field.Store.YES, false);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_23, vs.getCpe23(), Field.Store.YES, false);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_VENDOR, vs.getVendor(), Field.Store.YES, true);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_PRODUCT, vs.getProduct(), Field.Store.YES, true);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_VERSION, vs.getVersion(), Field.Store.YES, true);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_UUID, vs.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_22, vs.cpe22(), Field.Store.YES, false);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_23, vs.cpe23(), Field.Store.YES, false);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_VENDOR, vs.vendor(), Field.Store.YES, true);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_PRODUCT, vs.product(), Field.Store.YES, true);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_VERSION, vs.version(), Field.Store.YES, true);
         //todo: index the affected version range fields as well
 
         try {
@@ -98,9 +99,9 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
      *
      * @param vs A persisted VulnerableSoftware object.
      */
-    public void remove(final VulnerableSoftware vs) {
+    public void remove(final VulnerableSoftwareDocument vs) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.VULNERABLESOFTWARE_UUID, vs.getUuid().toString()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.VULNERABLESOFTWARE_UUID, vs.uuid().toString()));
         } catch (CorruptIndexException e) {
             handleCorruptIndexException(e);
         } catch (IOException e) {

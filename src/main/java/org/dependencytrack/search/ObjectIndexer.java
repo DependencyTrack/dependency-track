@@ -18,6 +18,13 @@
  */
 package org.dependencytrack.search;
 
+import org.dependencytrack.search.document.SearchDocument;
+
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Interface that defines Indexers.
  * @param <T> type of indexer
@@ -25,7 +32,7 @@ package org.dependencytrack.search;
  * @author Steve Springett
  * @since 3.0.0
  */
-public interface ObjectIndexer<T> {
+public interface ObjectIndexer<T extends SearchDocument> {
 
     /**
      * Search fields supported by the index.

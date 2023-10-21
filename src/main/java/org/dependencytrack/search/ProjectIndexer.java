@@ -31,6 +31,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.ProjectDocument;
 
 import java.io.IOException;
 
@@ -40,7 +41,7 @@ import java.io.IOException;
  * @author Steve Springett
  * @since 3.0.0
  */
-public final class ProjectIndexer extends IndexManager implements ObjectIndexer<Project> {
+public final class ProjectIndexer extends IndexManager implements ObjectIndexer<ProjectDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(ProjectIndexer.class);
     private static final ProjectIndexer INSTANCE = new ProjectIndexer();
@@ -66,12 +67,12 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param project A persisted Project object.
      */
-    public void add(final Project project) {
+    public void add(final ProjectDocument project) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.PROJECT_UUID, project.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.PROJECT_NAME, project.getName(), Field.Store.YES, true);
-        addField(doc, IndexConstants.PROJECT_VERSION, project.getVersion(), Field.Store.YES, false);
-        addField(doc, IndexConstants.PROJECT_DESCRIPTION, project.getDescription(), Field.Store.YES, true);
+        addField(doc, IndexConstants.PROJECT_UUID, project.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.PROJECT_NAME, project.name(), Field.Store.YES, true);
+        addField(doc, IndexConstants.PROJECT_VERSION, project.version(), Field.Store.YES, false);
+        addField(doc, IndexConstants.PROJECT_DESCRIPTION, project.description(), Field.Store.YES, true);
 
         /*
         // There's going to potentially be confidential information in the project properties. Do not index.
@@ -107,9 +108,9 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param project A persisted Project object.
      */
-    public void remove(final Project project) {
+    public void remove(final ProjectDocument project) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.getUuid().toString()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.uuid().toString()));
         } catch (CorruptIndexException e) {
             handleCorruptIndexException(e);
         } catch (IOException e) {

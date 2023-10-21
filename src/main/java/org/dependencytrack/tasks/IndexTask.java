@@ -27,6 +27,7 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.search.IndexManager;
 import org.dependencytrack.search.IndexManagerFactory;
 import org.dependencytrack.search.ObjectIndexer;
+import org.dependencytrack.search.document.SearchDocument;
 
 /**
  * Subscriber task that performs an action on an Index.
@@ -44,15 +45,13 @@ public class IndexTask implements Subscriber {
     @SuppressWarnings("unchecked")
     public void inform(final Event e) {
 
-        if (e instanceof IndexEvent) {
-            final IndexEvent event = (IndexEvent) e;
-
+        if (e instanceof final IndexEvent event) {
             if (IndexEvent.Action.CHECK == event.getAction()) {
                 IndexManager.checkIndexesConsistency();
                 return;
             }
 
-            final ObjectIndexer indexManager = IndexManagerFactory.getIndexManager(event);
+            final ObjectIndexer<? extends SearchDocument> indexManager = IndexManagerFactory.getIndexManager(event);
 
             if (IndexEvent.Action.CREATE == event.getAction()) {
                 indexManager.add((event).getObject());

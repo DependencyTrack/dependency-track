@@ -26,6 +26,8 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.search.document.DummyDocument;
+import org.dependencytrack.search.document.SearchDocument;
 
 /**
  * Creates IndexManager implementations based on event types.
@@ -35,15 +37,15 @@ import org.dependencytrack.model.VulnerableSoftware;
  */
 public class IndexManagerFactory {
 
-    public static ObjectIndexer getIndexManager(final IndexEvent event) {
+    public static ObjectIndexer<? extends SearchDocument> getIndexManager(final IndexEvent event) {
         if (Config.isUnitTestsEnabled()) {
-            return new ObjectIndexer() {
+            return new ObjectIndexer<DummyDocument>() {
                 @Override
                 public String[] getSearchFields() { return new String[0]; }
                 @Override
-                public void add(final Object object) { }
+                public void add(final DummyDocument object) { }
                 @Override
-                public void remove(final Object object) { }
+                public void remove(final DummyDocument object) { }
                 @Override
                 public void commit() { }
                 @Override

@@ -31,6 +31,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.ServiceComponentDocument;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,7 +42,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 4.2.0
  */
-public final class ServiceComponentIndexer extends IndexManager implements ObjectIndexer<ServiceComponent> {
+public final class ServiceComponentIndexer extends IndexManager implements ObjectIndexer<ServiceComponentDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(ServiceComponentIndexer.class);
     private static final ServiceComponentIndexer INSTANCE = new ServiceComponentIndexer();
@@ -67,14 +68,14 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
      *
      * @param service A persisted ServiceComponent object.
      */
-    public void add(final ServiceComponent service) {
+    public void add(final ServiceComponentDocument service) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.SERVICECOMPONENT_UUID, service.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.SERVICECOMPONENT_NAME, service.getName(), Field.Store.YES, true);
-        addField(doc, IndexConstants.SERVICECOMPONENT_GROUP, service.getGroup(), Field.Store.YES, true);
-        addField(doc, IndexConstants.SERVICECOMPONENT_VERSION, service.getVersion(), Field.Store.YES, false);
+        addField(doc, IndexConstants.SERVICECOMPONENT_UUID, service.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.SERVICECOMPONENT_NAME, service.name(), Field.Store.YES, true);
+        addField(doc, IndexConstants.SERVICECOMPONENT_GROUP, service.group(), Field.Store.YES, true);
+        addField(doc, IndexConstants.SERVICECOMPONENT_VERSION, service.version(), Field.Store.YES, false);
         // TODO: addField(doc, IndexConstants.SERVICECOMPONENT_URL, service.getUrl(), Field.Store.YES, true);
-        addField(doc, IndexConstants.SERVICECOMPONENT_DESCRIPTION, service.getDescription(), Field.Store.YES, true);
+        addField(doc, IndexConstants.SERVICECOMPONENT_DESCRIPTION, service.description(), Field.Store.YES, true);
 
         try {
             getIndexWriter().addDocument(doc);
@@ -97,9 +98,9 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
      *
      * @param service A persisted ServiceComponent object.
      */
-    public void remove(final ServiceComponent service) {
+    public void remove(final ServiceComponentDocument service) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.SERVICECOMPONENT_UUID, service.getUuid().toString()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.SERVICECOMPONENT_UUID, service.uuid().toString()));
         } catch (CorruptIndexException e) {
             handleCorruptIndexException(e);
         } catch (IOException e) {

@@ -1,0 +1,14 @@
+<configuration>
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <Target>System.out</Target>
+        <encoder>
+            <pattern>[%level] %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="console"/>
+    </root>
+    <logger name="DataNucleus.Datastore.Native" level="DEBUG" additivity="false">
+        <appender-ref ref="console"/>
+    </logger>
+</configuration>

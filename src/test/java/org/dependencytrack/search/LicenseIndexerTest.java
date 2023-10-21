@@ -20,6 +20,7 @@ package org.dependencytrack.search;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.License;
+import org.dependencytrack.search.document.LicenseDocument;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -47,7 +48,7 @@ public class LicenseIndexerTest extends PersistenceCapableTest {
         l.setUuid(UUID.randomUUID());
         l.setName("Acme License");
         l.setLicenseId("acme-license");
-        LicenseIndexer.getInstance().add(l);
+        LicenseIndexer.getInstance().add(new LicenseDocument(l));
         LicenseIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
         SearchResult result = searchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
@@ -61,10 +62,10 @@ public class LicenseIndexerTest extends PersistenceCapableTest {
         l.setUuid(UUID.randomUUID());
         l.setName("Acme License");
         l.setLicenseId("acme-license");
-        LicenseIndexer.getInstance().add(l);
+        LicenseIndexer.getInstance().add(new LicenseDocument(l));
         LicenseIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
-        LicenseIndexer.getInstance().remove(l);
+        LicenseIndexer.getInstance().remove(new LicenseDocument(l));
         LicenseIndexer.getInstance().commit();
         SearchResult result = searchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
         Assert.assertEquals(1, result.getResults().size());

@@ -105,7 +105,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
      */
     public ServiceComponent createServiceComponent(ServiceComponent service, boolean commitIndex) {
         final ServiceComponent result = persist(service);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, ServiceComponent.class);
         return result;
     }
@@ -228,7 +228,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
         service.setGroup(transientServiceComponent.getGroup());
         service.setDescription(transientServiceComponent.getDescription());
         final ServiceComponent result = persist(service);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, ServiceComponent.class);
         return result;
     }
@@ -255,7 +255,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final ServiceComponent result = pm.getObjectById(ServiceComponent.class, service.getId());
-        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, result));
         // TODO: Add these in when these features are supported by service components
         //deleteAnalysisTrail(service);
         //deleteViolationAnalysisTrail(service);

@@ -472,7 +472,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final List<Tag> resolvedTags = resolveTags(tags);
         bind(project, resolvedTags);
 
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.PORTFOLIO)
                 .group(NotificationGroup.PROJECT_CREATED)
@@ -501,7 +501,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final List<Tag> resolvedTags = resolveTags(tags);
         bind(project, resolvedTags);
 
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -535,7 +535,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         bind(project, resolvedTags);
 
         final Project result = persist(project);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -587,7 +587,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         bind(project, resolvedTags);
 
         final Project result = persist(project);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -712,7 +712,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
 
         project = getObjectById(Project.class, project.getId());
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(project)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, project));
         commitSearchIndex(true, Project.class);
         return project;
     }
@@ -731,7 +731,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Project result = pm.getObjectById(Project.class, project.getId());
-        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, result));
         commitSearchIndex(commitIndex, Project.class);
 
         deleteAnalysisTrail(project);

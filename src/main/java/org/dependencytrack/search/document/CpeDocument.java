@@ -23,14 +23,15 @@ import org.dependencytrack.model.Cpe;
 import java.util.UUID;
 
 /**
+ * A {@link SearchDocument} for {@link Cpe}s.
  *
- * @param id
- * @param uuid
- * @param cpe22
- * @param cpe23
- * @param vendor
- * @param product
- * @param version
+ * @param id      ID of the {@link Cpe}
+ * @param uuid    {@link UUID} of the {@link Cpe}
+ * @param cpe22   CPE 2.2 URI of the {@link Cpe}
+ * @param cpe23   CPE 2.3 formatted string of the {@link Cpe}
+ * @param vendor  Vendor attribute of the {@link Cpe}
+ * @param product Product attribute of the {@link Cpe}
+ * @param version Version attribute of the {@link Cpe}
  * @since 4.10.0
  */
 public record CpeDocument(Long id, UUID uuid, String cpe22, String cpe23, String vendor,

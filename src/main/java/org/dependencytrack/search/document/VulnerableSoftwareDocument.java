@@ -23,14 +23,15 @@ import org.dependencytrack.model.VulnerableSoftware;
 import java.util.UUID;
 
 /**
+ * A {@link SearchDocument} for {@link VulnerableSoftware}s.
  *
- * @param id
- * @param uuid
- * @param cpe22
- * @param cpe23
- * @param vendor
- * @param product
- * @param version
+ * @param id      ID of the {@link VulnerableSoftware}
+ * @param uuid    {@link UUID} of the {@link VulnerableSoftware}
+ * @param cpe22   CPE 2.2 URI of the {@link VulnerableSoftware}
+ * @param cpe23   CPE 2.3 formatted string of the {@link VulnerableSoftware}
+ * @param vendor  Vendor attribute of the {@link VulnerableSoftware}
+ * @param product Product attribute of the {@link VulnerableSoftware}
+ * @param version Version attribute of the {@link VulnerableSoftware}
  * @since 4.10.0
  */
 public record VulnerableSoftwareDocument(Long id, UUID uuid, String cpe22, String cpe23, String vendor,

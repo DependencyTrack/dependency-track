@@ -19,6 +19,8 @@
 package org.dependencytrack.search.document;
 
 /**
+ * Marker interface for classes representing index-able search documents.
+ *
  * @since 4.10.0
  */
 public interface SearchDocument {

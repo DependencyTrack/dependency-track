@@ -23,11 +23,12 @@ import org.dependencytrack.model.License;
 import java.util.UUID;
 
 /**
+ * A {@link SearchDocument} for {@link License}s.
  *
- * @param id
- * @param uuid
- * @param licenseId
- * @param name
+ * @param id        ID of the {@link License}
+ * @param uuid      {@link UUID} of the {@link License}
+ * @param licenseId License ID of the {@link License}
+ * @param name      Name of the {@link License}
  * @since 4.10.0
  */
 public record LicenseDocument(Long id, UUID uuid, String licenseId, String name) implements SearchDocument {

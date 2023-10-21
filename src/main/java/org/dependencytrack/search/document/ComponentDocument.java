@@ -23,14 +23,15 @@ import org.dependencytrack.model.Component;
 import java.util.UUID;
 
 /**
+ * A {@link SearchDocument} for {@link Component}s.
  *
- * @param id
- * @param uuid
- * @param group
- * @param name
- * @param version
- * @param description
- * @param sha1
+ * @param id          ID of the {@link Component}
+ * @param uuid        {@link UUID} of the {@link Component}
+ * @param group       Group of the {@link Component}
+ * @param name        Name of the {@link Component}
+ * @param version     Version of the {@link Component}
+ * @param description Description of the {@link Component}
+ * @param sha1        SHA1 hash of the {@link Component}
  * @since 4.10.0
  */
 public record ComponentDocument(Long id, UUID uuid, String group, String name, String version,

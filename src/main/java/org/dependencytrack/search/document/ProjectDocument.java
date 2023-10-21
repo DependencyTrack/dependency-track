@@ -23,15 +23,17 @@ import org.dependencytrack.model.Project;
 import java.util.UUID;
 
 /**
+ * A {@link SearchDocument} for {@link Project}s.
  *
- * @param id
- * @param uuid
- * @param name
- * @param version
- * @param description
+ * @param id          ID of the {@link Project}
+ * @param uuid        {@link UUID} of the {@link Project}
+ * @param name        Name of the {@link Project}
+ * @param version     Version of the {@link Project}
+ * @param description Description of the {@link Project}
  * @since 4.10.0
  */
-public record ProjectDocument(Long id, UUID uuid, String name, String version, String description) implements SearchDocument {
+public record ProjectDocument(Long id, UUID uuid, String name, String version,
+                              String description) implements SearchDocument {
 
     public ProjectDocument(final Project project) {
         this(project.getId(), project.getUuid(), project.getName(), project.getVersion(), project.getDescription());

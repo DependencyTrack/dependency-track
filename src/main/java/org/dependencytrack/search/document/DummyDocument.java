@@ -19,6 +19,8 @@
 package org.dependencytrack.search.document;
 
 /**
+ * A dummy {@link SearchDocument}.
+ *
  * @since 4.10.0
  */
 public final class DummyDocument implements SearchDocument {

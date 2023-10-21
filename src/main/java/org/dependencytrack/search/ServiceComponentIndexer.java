@@ -21,7 +21,6 @@ package org.dependencytrack.search;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
@@ -33,6 +32,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.document.ServiceComponentDocument;
 
+import javax.jdo.Query;
 import java.io.IOException;
 import java.util.List;
 
@@ -123,19 +123,30 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
         try (QueryManager qm = new QueryManager()) {
-            final long total = qm.getCount(ServiceComponent.class);
-            long count = 0;
-            while (count < total) {
-                final PaginatedResult result = qm.getServiceComponents();
-                final List<ServiceComponent> services = result.getList(ServiceComponent.class);
-                for (final ServiceComponent service: services) {
-                    add(service);
-                }
-                count += result.getObjects().size();
-                qm.advancePagination();
+            List<ServiceComponentDocument> serviceDocs = fetchNext(qm, null);
+            while (!serviceDocs.isEmpty()) {
+                serviceDocs.forEach(this::add);
+                serviceDocs = fetchNext(qm, serviceDocs.get(serviceDocs.size() - 1).id());
             }
             commit();
         }
         LOGGER.info("Reindexing complete");
     }
+
+    private static List<ServiceComponentDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<ServiceComponent> query = qm.getPersistenceManager().newQuery(ServiceComponent.class);
+        if (lastId != null) {
+            query.setFilter("id < :lastId");
+            query.setParameters(lastId);
+        }
+        query.setOrdering("id DESC");
+        query.setRange(0, 2500);
+        query.setResult("id, uuid, \"group\", name, version, description");
+        try {
+            return List.copyOf(query.executeResultList(ServiceComponentDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
 }

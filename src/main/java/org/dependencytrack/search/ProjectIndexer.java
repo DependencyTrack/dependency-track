@@ -21,7 +21,6 @@ package org.dependencytrack.search;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
@@ -33,7 +32,11 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.document.ProjectDocument;
 
+import javax.jdo.Query;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Indexer for operating on projects.
@@ -133,20 +136,35 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
         try (final QueryManager qm = new QueryManager()) {
-            final PaginatedResult result = qm.getProjects(false, true, false);
-            long count = 0;
-            boolean shouldContinue = true;
-            while (count < result.getTotal() && shouldContinue) {
-                for (final Project project: result.getList(Project.class)) {
-                    add(project);
-                }
-                int lastResult = result.getObjects().size();
-                count += lastResult;
-                shouldContinue = lastResult > 0;
-                qm.advancePagination();
+            List<ProjectDocument> projectDocs = fetchNext(qm, null);
+            while (!projectDocs.isEmpty()) {
+                projectDocs.forEach(this::add);
+                projectDocs = fetchNext(qm, projectDocs.get(projectDocs.size() - 1).id());
             }
             commit();
         }
         LOGGER.info("Reindexing complete");
     }
+
+    private static List<ProjectDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
+        var filterParts = new ArrayList<String>();
+        var params = new HashMap<String, Object>();
+        filterParts.add("(active == null || active)");
+        if (lastId != null) {
+            filterParts.add("id < :lastId");
+            params.put("lastId", lastId);
+        }
+        query.setFilter(String.join(" && ", filterParts));
+        query.setNamedParameters(params);
+        query.setOrdering("id DESC");
+        query.setRange(0, 2500);
+        query.setResult("id, uuid, name, version, description");
+        try {
+            return List.copyOf(query.executeResultList(ProjectDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
 }

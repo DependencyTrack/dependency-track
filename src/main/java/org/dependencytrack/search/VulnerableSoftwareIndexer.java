@@ -21,7 +21,6 @@ package org.dependencytrack.search;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
@@ -33,6 +32,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 
+import javax.jdo.Query;
 import java.io.IOException;
 import java.util.List;
 
@@ -123,19 +123,30 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
         try (QueryManager qm = new QueryManager()) {
-            final long total = qm.getCount(VulnerableSoftware.class);
-            long count = 0;
-            while (count < total) {
-                final PaginatedResult result = qm.getVulnerableSoftware();
-                final List<VulnerableSoftware> vsList = result.getList(VulnerableSoftware.class);
-                for (final VulnerableSoftware vs: vsList) {
-                    add(vs);
-                }
-                count += result.getObjects().size();
-                qm.advancePagination();
+            List<VulnerableSoftwareDocument> docs = fetchNext(qm, null);
+            while (!docs.isEmpty()) {
+                docs.forEach(this::add);
+                docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
             commit();
         }
         LOGGER.info("Reindexing complete");
     }
+
+    private static List<VulnerableSoftwareDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<VulnerableSoftware> query = qm.getPersistenceManager().newQuery(VulnerableSoftware.class);
+        if (lastId != null) {
+            query.setFilter("id < :lastId");
+            query.setParameters(lastId);
+        }
+        query.setOrdering("id DESC");
+        query.setRange(0, 2500);
+        query.setResult("id, uuid, cpe22, cpe23, vendor, product, version");
+        try {
+            return List.copyOf(query.executeResultList(VulnerableSoftwareDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
 }

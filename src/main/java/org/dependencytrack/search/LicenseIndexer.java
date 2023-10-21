@@ -21,7 +21,6 @@ package org.dependencytrack.search;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
@@ -33,6 +32,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.document.LicenseDocument;
 
+import javax.jdo.Query;
 import java.io.IOException;
 import java.util.List;
 
@@ -120,19 +120,30 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
         try (QueryManager qm = new QueryManager()) {
-            final long total = qm.getCount(License.class);
-            long count = 0;
-            while (count < total) {
-                final PaginatedResult result = qm.getLicenses();
-                final List<License> licenses = result.getList(License.class);
-                for (final License license: licenses) {
-                    add(license);
-                }
-                count += result.getObjects().size();
-                qm.advancePagination();
+            List<LicenseDocument> licenseDocs = fetchNext(qm, null);
+            while (!licenseDocs.isEmpty()) {
+                licenseDocs.forEach(this::add);
+                licenseDocs = fetchNext(qm, licenseDocs.get(licenseDocs.size() - 1).id());
             }
             commit();
         }
         LOGGER.info("Reindexing complete");
     }
+
+    private static List<LicenseDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<License> query = qm.getPersistenceManager().newQuery(License.class);
+        if (lastId != null) {
+            query.setParameters("id < :lastId");
+            query.setParameters(lastId);
+        }
+        query.setOrdering("id DESC");
+        query.setRange(0, 2500);
+        query.setResult("id, uuid, licenseId, name");
+        try {
+            return List.copyOf(query.executeResultList(LicenseDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
 }

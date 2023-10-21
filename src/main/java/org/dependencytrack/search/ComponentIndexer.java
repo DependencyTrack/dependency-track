@@ -26,14 +26,16 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.document.ComponentDocument;
 
+import javax.jdo.Query;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -123,17 +125,35 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
         try (final QueryManager qm = new QueryManager()) {
-            final List<Project> projects = qm.getAllProjects(true);
-            for (final Project project : projects) {
-                final List<Component> components = qm.getAllComponents(project);
-                LOGGER.info("Indexing " + components.size() + " components in project: " + project.getUuid());
-                for (final Component component: components) {
-                    add(component);
-                }
-                LOGGER.info("Completed indexing of " + components.size() + " components in project: " + project.getUuid());
+            List<ComponentDocument> componentDocs = fetchNext(qm, null);
+            while (!componentDocs.isEmpty()) {
+                componentDocs.forEach(this::add);
+                componentDocs = fetchNext(qm, componentDocs.get(componentDocs.size() - 1).id());
             }
             commit();
         }
         LOGGER.info("Reindexing complete");
     }
+
+    private static List<ComponentDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<Component> query = qm.getPersistenceManager().newQuery(Component.class);
+        var filterParts = new ArrayList<String>();
+        var params = new HashMap<String, Object>();
+        filterParts.add("(project.active == null || project.active)");
+        if (lastId != null) {
+            filterParts.add("id < :lastId");
+            params.put("lastId", lastId);
+        }
+        query.setFilter(String.join(" && ", filterParts));
+        query.setNamedParameters(params);
+        query.setOrdering("id DESC");
+        query.setRange(0, 2500);
+        query.setResult("id, uuid, \"group\", name, version, description, sha1");
+        try {
+            return List.copyOf(query.executeResultList(ComponentDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
 }

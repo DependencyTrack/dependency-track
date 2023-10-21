@@ -20,11 +20,6 @@ package org.dependencytrack.search;
 
 import org.dependencytrack.search.document.SearchDocument;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
-import java.util.List;
-import java.util.Map;
-
 /**
  * Interface that defines Indexers.
  * @param <T> type of indexer

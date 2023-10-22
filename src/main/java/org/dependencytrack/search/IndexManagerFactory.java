@@ -26,8 +26,14 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.search.document.ComponentDocument;
 import org.dependencytrack.search.document.DummyDocument;
+import org.dependencytrack.search.document.LicenseDocument;
+import org.dependencytrack.search.document.ProjectDocument;
 import org.dependencytrack.search.document.SearchDocument;
+import org.dependencytrack.search.document.ServiceComponentDocument;
+import org.dependencytrack.search.document.VulnerabilityDocument;
+import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 
 /**
  * Creates IndexManager implementations based on event types.
@@ -52,17 +58,17 @@ public class IndexManagerFactory {
                 public void reindex() { }
             };
         }
-        if (event.getDocument() instanceof Project || Project.class == event.getIndexableClass()) {
+        if (event.getDocument() instanceof ProjectDocument || Project.class == event.getIndexableClass()) {
             return ProjectIndexer.getInstance();
-        } else if (event.getDocument() instanceof Component || Component.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof ComponentDocument || Component.class == event.getIndexableClass()) {
             return ComponentIndexer.getInstance();
-        } else if (event.getDocument() instanceof ServiceComponent || ServiceComponent.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof ServiceComponentDocument || ServiceComponent.class == event.getIndexableClass()) {
             return ServiceComponentIndexer.getInstance();
-        } else if (event.getDocument() instanceof Vulnerability || Vulnerability.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof VulnerabilityDocument || Vulnerability.class == event.getIndexableClass()) {
             return VulnerabilityIndexer.getInstance();
-        } else if (event.getDocument() instanceof License || License.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof LicenseDocument || License.class == event.getIndexableClass()) {
             return LicenseIndexer.getInstance();
-        } else if (event.getDocument() instanceof VulnerableSoftware || VulnerableSoftware.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof VulnerableSoftwareDocument || VulnerableSoftware.class == event.getIndexableClass()) {
             return VulnerableSoftwareIndexer.getInstance();
         }
         throw new IllegalArgumentException("Unsupported indexer requested");

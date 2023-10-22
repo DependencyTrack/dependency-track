@@ -18,32 +18,68 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.event.framework.EventService;
+import alpine.event.framework.Event;
+import alpine.event.framework.SingleThreadedEventService;
+import alpine.event.framework.Subscriber;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.model.License;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.search.IndexManager;
-import org.dependencytrack.tasks.IndexTask;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.json.JsonObject;
 import javax.ws.rs.core.Response;
+import java.time.Duration;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 public class SearchResourceTest extends ResourceTest {
 
     @Override
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(SearchResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
+                        new ResourceConfig(SearchResource.class)
+                                .register(ApiFilter.class)
+                                .register(AuthenticationFilter.class)))
                 .build();
+    }
+
+    private static final ConcurrentLinkedQueue<Event> EVENTS = new ConcurrentLinkedQueue<>();
+
+    public static class EventSubscriber implements Subscriber {
+
+        @Override
+        public void inform(final Event event) {
+            EVENTS.add(event);
+        }
+
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+
+        SingleThreadedEventService.getInstance().subscribe(IndexEvent.class, EventSubscriber.class);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        super.tearDown();
+
+        SingleThreadedEventService.getInstance().unsubscribe(EventSubscriber.class);
+        EVENTS.clear();
     }
 
     @Test
@@ -116,23 +152,36 @@ public class SearchResourceTest extends ResourceTest {
     public void reindexWithBadIndexTypes() {
         Response response = target(V1_SEARCH + "/reindex").queryParam("type", "BAD_TYPE_1", "BAD_TYPE_2").request()
                 .header(X_API_KEY, apiKey)
-                .post(null,Response.class);
+                .post(null, Response.class);
         Assert.assertEquals(400, response.getStatus(), 0);
         String body = getPlainTextBody(response);
         Assert.assertEquals("No valid index type was provided", body);
+        assertThat(EVENTS).isEmpty();
     }
 
     @Test
     public void reindexWithMixedIndexTypes() {
-        EventService.getInstance().subscribe(IndexEvent.class, IndexTask.class);
         Response response = target(V1_SEARCH + "/reindex").queryParam("type", "BAD_TYPE_1", IndexManager.IndexType.VULNERABILITY.name(), IndexManager.IndexType.LICENSE).request()
                 .header(X_API_KEY, apiKey)
-                .post(null,Response.class);
+                .post(null, Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
         String token = json.getString("token");
         Assert.assertNotNull(token);
+
+        await("Index event dispatch")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(EVENTS).satisfiesExactlyInAnyOrder(
+                        event -> {
+                            assertThat(event).isInstanceOf(IndexEvent.class);
+                            assertThat(((IndexEvent) event).getIndexableClass()).isEqualTo(Vulnerability.class);
+                        },
+                        event -> {
+                            assertThat(event).isInstanceOf(IndexEvent.class);
+                            assertThat(((IndexEvent) event).getIndexableClass()).isEqualTo(License.class);
+                        }
+                ));
     }
 
 }

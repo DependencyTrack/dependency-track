@@ -18,14 +18,13 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.SingletonCapableEvent;
+import alpine.event.framework.AbstractChainableEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.search.IndexManager;
 import org.dependencytrack.search.document.ComponentDocument;
 import org.dependencytrack.search.document.LicenseDocument;
 import org.dependencytrack.search.document.ProjectDocument;
@@ -40,7 +39,7 @@ import org.dependencytrack.search.document.VulnerableSoftwareDocument;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class IndexEvent extends SingletonCapableEvent {
+public class IndexEvent extends AbstractChainableEvent {
 
     public enum Action {
         CREATE,
@@ -86,10 +85,6 @@ public class IndexEvent extends SingletonCapableEvent {
     }
 
     public IndexEvent(final Action action, final Class<?> clazz) {
-        if(action == Action.REINDEX) {
-            this.setSingleton(true);
-            this.setChainIdentifier(IndexManager.IndexType.getUuid(clazz));
-        }
         this.action = action;
         this.indexableClass = clazz;
     }

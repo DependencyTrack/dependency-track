@@ -34,6 +34,7 @@ import org.dependencytrack.search.document.ProjectDocument;
 
 import javax.jdo.Query;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -135,15 +136,21 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
+
+        long docsIndexed = 0;
+        final long startTimeNs = System.nanoTime();
         try (final QueryManager qm = new QueryManager()) {
-            List<ProjectDocument> projectDocs = fetchNext(qm, null);
-            while (!projectDocs.isEmpty()) {
-                projectDocs.forEach(this::add);
-                projectDocs = fetchNext(qm, projectDocs.get(projectDocs.size() - 1).id());
+            List<ProjectDocument> docs = fetchNext(qm, null);
+            while (!docs.isEmpty()) {
+                docs.forEach(this::add);
+                docsIndexed += docs.size();
+                commit();
+
+                docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
-            commit();
         }
-        LOGGER.info("Reindexing complete");
+        LOGGER.info("Reindexing of %d projects completed in %s"
+                .formatted(docsIndexed, Duration.ofNanos(System.nanoTime() - startTimeNs)));
     }
 
     private static List<ProjectDocument> fetchNext(final QueryManager qm, final Long lastId) {
@@ -152,13 +159,13 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
         var params = new HashMap<String, Object>();
         filterParts.add("(active == null || active)");
         if (lastId != null) {
-            filterParts.add("id < :lastId");
+            filterParts.add("id > :lastId");
             params.put("lastId", lastId);
         }
         query.setFilter(String.join(" && ", filterParts));
         query.setNamedParameters(params);
-        query.setOrdering("id DESC");
-        query.setRange(0, 2500);
+        query.setOrdering("id ASC");
+        query.setRange(0, 1000);
         query.setResult("id, uuid, name, version, description");
         try {
             return List.copyOf(query.executeResultList(ProjectDocument.class));

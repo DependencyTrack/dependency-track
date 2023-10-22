@@ -34,6 +34,7 @@ import org.dependencytrack.search.document.ServiceComponentDocument;
 
 import javax.jdo.Query;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -122,25 +123,31 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
+
+        long docsIndexed = 0;
+        final long startTimeNs = System.nanoTime();
         try (QueryManager qm = new QueryManager()) {
-            List<ServiceComponentDocument> serviceDocs = fetchNext(qm, null);
-            while (!serviceDocs.isEmpty()) {
-                serviceDocs.forEach(this::add);
-                serviceDocs = fetchNext(qm, serviceDocs.get(serviceDocs.size() - 1).id());
+            List<ServiceComponentDocument> docs = fetchNext(qm, null);
+            while (!docs.isEmpty()) {
+                docs.forEach(this::add);
+                docsIndexed += docs.size();
+                commit();
+
+                docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
-            commit();
         }
-        LOGGER.info("Reindexing complete");
+        LOGGER.info("Reindexing of %d services completed in %s"
+                .formatted(docsIndexed, Duration.ofNanos(System.nanoTime() - startTimeNs)));
     }
 
     private static List<ServiceComponentDocument> fetchNext(final QueryManager qm, final Long lastId) {
         final Query<ServiceComponent> query = qm.getPersistenceManager().newQuery(ServiceComponent.class);
         if (lastId != null) {
-            query.setFilter("id < :lastId");
+            query.setFilter("id > :lastId");
             query.setParameters(lastId);
         }
-        query.setOrdering("id DESC");
-        query.setRange(0, 2500);
+        query.setOrdering("id ASC");
+        query.setRange(0, 1000);
         query.setResult("id, uuid, \"group\", name, version, description");
         try {
             return List.copyOf(query.executeResultList(ServiceComponentDocument.class));

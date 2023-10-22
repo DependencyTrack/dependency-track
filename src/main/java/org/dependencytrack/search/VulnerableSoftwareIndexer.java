@@ -34,6 +34,7 @@ import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 
 import javax.jdo.Query;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -122,25 +123,31 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
+
+        long indexedDocs = 0;
+        final long startTimeNs = System.nanoTime();
         try (QueryManager qm = new QueryManager()) {
             List<VulnerableSoftwareDocument> docs = fetchNext(qm, null);
             while (!docs.isEmpty()) {
                 docs.forEach(this::add);
+                indexedDocs += docs.size();
+                commit();
+
                 docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
-            commit();
         }
-        LOGGER.info("Reindexing complete");
+        LOGGER.info("Reindexing of %d VulnerableSoftwares completed in %s"
+                .formatted(indexedDocs, Duration.ofNanos(System.nanoTime() - startTimeNs)));
     }
 
     private static List<VulnerableSoftwareDocument> fetchNext(final QueryManager qm, final Long lastId) {
         final Query<VulnerableSoftware> query = qm.getPersistenceManager().newQuery(VulnerableSoftware.class);
         if (lastId != null) {
-            query.setFilter("id < :lastId");
+            query.setFilter("id > :lastId");
             query.setParameters(lastId);
         }
-        query.setOrdering("id DESC");
-        query.setRange(0, 2500);
+        query.setOrdering("id ASC");
+        query.setRange(0, 1000);
         query.setResult("id, uuid, cpe22, cpe23, vendor, product, version");
         try {
             return List.copyOf(query.executeResultList(VulnerableSoftwareDocument.class));

@@ -34,6 +34,7 @@ import org.dependencytrack.search.document.ComponentDocument;
 
 import javax.jdo.Query;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -124,15 +125,21 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
+
+        long docsIndexed = 0;
+        final long startTimeNs = System.nanoTime();
         try (final QueryManager qm = new QueryManager()) {
-            List<ComponentDocument> componentDocs = fetchNext(qm, null);
-            while (!componentDocs.isEmpty()) {
-                componentDocs.forEach(this::add);
-                componentDocs = fetchNext(qm, componentDocs.get(componentDocs.size() - 1).id());
+            List<ComponentDocument> docs = fetchNext(qm, null);
+            while (!docs.isEmpty()) {
+                docs.forEach(this::add);
+                docsIndexed += docs.size();
+                commit();
+
+                docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
-            commit();
         }
-        LOGGER.info("Reindexing complete");
+        LOGGER.info("Reindexing of %d components completed in %s"
+                .formatted(docsIndexed, Duration.ofNanos(System.nanoTime() - startTimeNs)));
     }
 
     private static List<ComponentDocument> fetchNext(final QueryManager qm, final Long lastId) {
@@ -141,13 +148,13 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
         var params = new HashMap<String, Object>();
         filterParts.add("(project.active == null || project.active)");
         if (lastId != null) {
-            filterParts.add("id < :lastId");
+            filterParts.add("id > :lastId");
             params.put("lastId", lastId);
         }
         query.setFilter(String.join(" && ", filterParts));
         query.setNamedParameters(params);
-        query.setOrdering("id DESC");
-        query.setRange(0, 2500);
+        query.setOrdering("id ASC");
+        query.setRange(0, 1000);
         query.setResult("id, uuid, \"group\", name, version, description, sha1");
         try {
             return List.copyOf(query.executeResultList(ComponentDocument.class));

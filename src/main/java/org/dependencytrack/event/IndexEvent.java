@@ -20,7 +20,6 @@ package org.dependencytrack.event;
 
 import alpine.event.framework.SingletonCapableEvent;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
@@ -72,11 +71,6 @@ public class IndexEvent extends SingletonCapableEvent {
     public IndexEvent(final Action action, final License license) {
         this(action, License.class);
         this.indexableObject = license;
-    }
-
-    public IndexEvent(final Action action, final Cpe cpe) {
-        this(action, Cpe.class);
-        this.indexableObject = cpe;
     }
 
     public IndexEvent(final Action action, final VulnerableSoftware vs) {

@@ -93,7 +93,7 @@ public class IndexEvent extends AbstractChainableEvent {
         return action;
     }
 
-    public SearchDocument getObject() {
+    public SearchDocument getDocument() {
         return searchDocument;
     }
 

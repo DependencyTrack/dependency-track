@@ -33,7 +33,7 @@ public class IndexEventTest {
         Project project = new Project();
         IndexEvent event = new IndexEvent(IndexEvent.Action.CREATE, project);
         Assert.assertEquals(IndexEvent.Action.CREATE, event.getAction());
-        Assert.assertEquals(project, event.getObject());
+        Assert.assertEquals(project, event.getDocument());
         Assert.assertEquals(Project.class,event.getIndexableClass());
     }
 
@@ -42,7 +42,7 @@ public class IndexEventTest {
         Component component = new Component();
         IndexEvent event = new IndexEvent(IndexEvent.Action.UPDATE, component);
         Assert.assertEquals(IndexEvent.Action.UPDATE, event.getAction());
-        Assert.assertEquals(component, event.getObject());
+        Assert.assertEquals(component, event.getDocument());
         Assert.assertEquals(Component.class,event.getIndexableClass());
     }
 
@@ -51,7 +51,7 @@ public class IndexEventTest {
         Vulnerability vulnerability = new Vulnerability();
         IndexEvent event = new IndexEvent(IndexEvent.Action.DELETE, vulnerability);
         Assert.assertEquals(IndexEvent.Action.DELETE, event.getAction());
-        Assert.assertEquals(vulnerability, event.getObject());
+        Assert.assertEquals(vulnerability, event.getDocument());
         Assert.assertEquals(Vulnerability.class, event.getIndexableClass());
     }
 
@@ -60,7 +60,7 @@ public class IndexEventTest {
         License license = new License();
         IndexEvent event = new IndexEvent(IndexEvent.Action.COMMIT, license);
         Assert.assertEquals(IndexEvent.Action.COMMIT, event.getAction());
-        Assert.assertEquals(license, event.getObject());
+        Assert.assertEquals(license, event.getDocument());
         Assert.assertEquals(License.class, event.getIndexableClass());
     }
 
@@ -69,7 +69,7 @@ public class IndexEventTest {
         VulnerableSoftware vulnerableSoftware = new VulnerableSoftware();
         IndexEvent event = new IndexEvent(IndexEvent.Action.COMMIT, vulnerableSoftware);
         Assert.assertEquals(IndexEvent.Action.COMMIT, event.getAction());
-        Assert.assertEquals(vulnerableSoftware, event.getObject());
+        Assert.assertEquals(vulnerableSoftware, event.getDocument());
         Assert.assertEquals(VulnerableSoftware.class, event.getIndexableClass());
     }
 
@@ -78,7 +78,7 @@ public class IndexEventTest {
         Class clazz = License.class;
         IndexEvent event = new IndexEvent(IndexEvent.Action.REINDEX, clazz);
         Assert.assertEquals(IndexEvent.Action.REINDEX, event.getAction());
-        Assert.assertNull(event.getObject());
+        Assert.assertNull(event.getDocument());
         Assert.assertEquals(clazz, event.getIndexableClass());
     }
 

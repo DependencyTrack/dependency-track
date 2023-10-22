@@ -52,17 +52,17 @@ public class IndexManagerFactory {
                 public void reindex() { }
             };
         }
-        if (event.getObject() instanceof Project || Project.class == event.getIndexableClass()) {
+        if (event.getDocument() instanceof Project || Project.class == event.getIndexableClass()) {
             return ProjectIndexer.getInstance();
-        } else if (event.getObject() instanceof Component || Component.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof Component || Component.class == event.getIndexableClass()) {
             return ComponentIndexer.getInstance();
-        } else if (event.getObject() instanceof ServiceComponent || ServiceComponent.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof ServiceComponent || ServiceComponent.class == event.getIndexableClass()) {
             return ServiceComponentIndexer.getInstance();
-        } else if (event.getObject() instanceof Vulnerability || Vulnerability.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof Vulnerability || Vulnerability.class == event.getIndexableClass()) {
             return VulnerabilityIndexer.getInstance();
-        } else if (event.getObject() instanceof License || License.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof License || License.class == event.getIndexableClass()) {
             return LicenseIndexer.getInstance();
-        } else if (event.getObject() instanceof VulnerableSoftware || VulnerableSoftware.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof VulnerableSoftware || VulnerableSoftware.class == event.getIndexableClass()) {
             return VulnerableSoftwareIndexer.getInstance();
         }
         throw new IllegalArgumentException("Unsupported indexer requested");

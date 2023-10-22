@@ -18,12 +18,9 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.event.framework.Event;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
@@ -54,71 +51,6 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      */
     VulnerableSoftwareQueryManager(final PersistenceManager pm, final AlpineRequest request) {
         super(pm, request);
-    }
-
-    /**
-     * Synchronize a Cpe, updating it if it needs updating, or creating it if it doesn't exist.
-     * @param cpe the Cpe object to synchronize
-     * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @return a synchronize Cpe object
-     */
-    public Cpe synchronizeCpe(Cpe cpe, boolean commitIndex) {
-        Cpe result = getCpeBy23(cpe.getCpe23());
-        if (result == null) {
-            result = persist(cpe);
-            Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
-            commitSearchIndex(commitIndex, Cpe.class);
-        }
-        return result;
-    }
-
-    /**
-     * Returns a CPE by it's CPE v2.3 string.
-     * @param cpe23 the CPE 2.3 string
-     * @return a CPE object, or null if not found
-     */
-    public Cpe getCpeBy23(String cpe23) {
-        final Query<Cpe> query = pm.newQuery(Cpe.class, "cpe23 == :cpe23");
-        query.setRange(0, 1);
-        return singleResult(query.execute(cpe23));
-    }
-
-    /**
-     * Returns a List of all CPE objects.
-     * @return a List of all CPE objects
-     */
-    public PaginatedResult getCpes() {
-        final Query<Cpe> query = pm.newQuery(Cpe.class);
-        if (orderBy == null) {
-            query.setOrdering("id asc");
-        }
-        if (filter != null) {
-            query.setFilter("vendor.toLowerCase().matches(:filter) || product.toLowerCase().matches(:filter)");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, filterString);
-        }
-        return execute(query);
-    }
-
-    /**
-     * Returns a List of all CPE objects that match the specified CPE (v2.2 or v2.3) uri.
-     * @return a List of matching CPE objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<Cpe> getCpes(final String cpeString) {
-        final Query<Cpe> query = pm.newQuery(Cpe.class, "cpe23 == :cpeString || cpe22 == :cpeString");
-        return (List<Cpe>)query.execute(cpeString);
-    }
-
-    /**
-     * Returns a List of all CPE objects that match the specified vendor/product/version.
-     * @return a List of matching CPE objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<Cpe> getCpes(final String part, final String vendor, final String product, final String version) {
-        final Query<Cpe> query = pm.newQuery(Cpe.class);
-        query.setFilter("part == :part && vendor == :vendor && product == :product && version == :version");
-        return (List<Cpe>)query.executeWithArray(part, vendor, product, version);
     }
 
     /**

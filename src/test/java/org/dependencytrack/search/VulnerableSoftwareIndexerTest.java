@@ -19,7 +19,6 @@
 package org.dependencytrack.search;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.junit.Assert;
 import org.junit.Test;

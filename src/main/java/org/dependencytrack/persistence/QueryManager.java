@@ -45,7 +45,6 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Finding;
@@ -78,6 +77,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -797,26 +797,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public boolean contains(Vulnerability vulnerability, Component component) {
         return getVulnerabilityQueryManager().contains(vulnerability, component);
-    }
-
-    public Cpe synchronizeCpe(Cpe cpe, boolean commitIndex) {
-        return getVulnerableSoftwareQueryManager().synchronizeCpe(cpe, commitIndex);
-    }
-
-    public Cpe getCpeBy23(String cpe23) {
-        return getVulnerableSoftwareQueryManager().getCpeBy23(cpe23);
-    }
-
-    public PaginatedResult getCpes() {
-        return getVulnerableSoftwareQueryManager().getCpes();
-    }
-
-    public List<Cpe> getCpes(final String cpeString) {
-        return getVulnerableSoftwareQueryManager().getCpes(cpeString);
-    }
-
-    public List<Cpe> getCpes(final String part, final String vendor, final String product, final String version) {
-        return getVulnerableSoftwareQueryManager().getCpes(part, vendor, product, version);
     }
 
     public VulnerableSoftware getVulnerableSoftwareByCpe23(String cpe23,

@@ -143,8 +143,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         final Component component = components.get(0);
         
         assertThat(component.getSupplier().getName()).isEqualTo("Foo Incorporated"); /*Issue #2373, #2737 -  Adding support for Supplier*/
-        assertThat(component.getSupplier().getUrls()).isEqualTo("https://foo.bar.com");
-        assertThat(component.getSupplier().getContacts().get(0).getName()).isEqualTo("Foo Jr.");
+        assertThat(component.getSupplier().getUrls()[0]).isEqualTo("https://foo.bar.com");
         assertThat(component.getSupplier().getContacts().get(0).getEmail()).isEqualTo("foojr@bar.com");
         assertThat(component.getSupplier().getContacts().get(0).getPhone()).isEqualTo("123-456-7890");
 

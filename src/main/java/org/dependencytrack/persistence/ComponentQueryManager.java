@@ -27,6 +27,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -459,19 +460,10 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @return a Component object, or null if not found
      */
     public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
-        String purlString = null;
-        String purlCoordinates = null;
-        if (cid.getPurl() != null) {
-            try {
-                final PackageURL purl = cid.getPurl();
-                purlString = cid.getPurl().canonicalize();
-                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
-            } catch (MalformedPackageURLException e) { // throw it away
-            }
-        }
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version))");
+        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(project, cid);
+        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getLeft());
         query.setRange(0, 1);
-        return singleResult(query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()));
+        return singleResult(query.executeWithMap(queryFilterParamsPair.getRight()));
     }
 
     /**
@@ -482,6 +474,24 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      */
     @SuppressWarnings("unchecked")
     public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {
+        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(project, cid);
+        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getLeft());
+        return (List<Component>) query.executeWithMap(queryFilterParamsPair.getRight());
+    }
+
+    /**
+     * Returns a List of components by matching identity information.
+     * @param cid the identity values of the component
+     * @return a List of Component objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Component> matchIdentity(final ComponentIdentity cid) {
+        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(null, cid);
+        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getLeft());
+        return (List<Component>) query.executeWithMap(queryFilterParamsPair.getRight());
+    }
+
+    private static Pair<String, Map<String, Object>> buildComponentIdentityQuery(final Project project, final ComponentIdentity cid) {
         String purlString = null;
         String purlCoordinates = null;
         if (cid.getPurl() != null) {
@@ -492,29 +502,56 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             } catch (MalformedPackageURLException e) { // throw it away
             }
         }
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version))");
-        return (List<Component>) query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion());
-    }
 
-    /**
-     * Returns a List of components by matching identity information.
-     * @param cid the identity values of the component
-     * @return a List of Component objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<Component> matchIdentity(final ComponentIdentity cid) {
-        String purlString = null;
-        String purlCoordinates = null;
-        if (cid.getPurl() != null) {
-            purlString = cid.getPurl().canonicalize();
-            try {
-                final PackageURL purl = cid.getPurl();
-                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
-            } catch (MalformedPackageURLException e) { // throw it away
-            }
+        final var filterParts = new ArrayList<String>();
+        final var params = new HashMap<String, Object>();
+
+        if (purlString != null) {
+            filterParts.add("purl == :purl");
+            params.put("purl", purlString);
         }
-        final Query<Component> query = pm.newQuery(Component.class, "(purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version)");
-        return (List<Component>) query.executeWithArray(purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion());
+        if (purlCoordinates != null) {
+            filterParts.add("purlCoordinates == :purlCoordinates");
+            params.put("purlCoordinates", purlCoordinates);
+        }
+        if (cid.getCpe() != null) {
+            filterParts.add("cpe == :cpe");
+            params.put("cpe", cid.getCpe());
+        }
+        if (cid.getSwidTagId() != null) {
+            filterParts.add("swidTagId == :swidTagId");
+            params.put("swidTagId", cid.getSwidTagId());
+        }
+
+        final var coordinatesFilterParts = new ArrayList<String>();
+        if (cid.getGroup() != null) {
+            coordinatesFilterParts.add("group == :group");
+            params.put("group", cid.getGroup());
+        } else {
+            coordinatesFilterParts.add("group == null");
+        }
+        if (cid.getName() != null) {
+            coordinatesFilterParts.add("name == :name");
+            params.put("name", cid.getName());
+        } else {
+            coordinatesFilterParts.add("name == null");
+        }
+        if (cid.getVersion() != null) {
+            coordinatesFilterParts.add("version == :version");
+            params.put("version", cid.getVersion());
+        } else {
+            coordinatesFilterParts.add("version == null");
+        }
+        filterParts.add("(%s)".formatted(String.join(" && ", coordinatesFilterParts)));
+
+        if (project == null) {
+            final String filter = String.join(" || ", filterParts);
+            return Pair.of(filter, params);
+        }
+
+        final String filter = "project == :project && (%s)".formatted(String.join(" || ", filterParts));
+        params.put("project", project);
+        return Pair.of(filter, params);
     }
 
     /**

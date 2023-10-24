@@ -306,6 +306,15 @@ public class Project implements Serializable {
         this.supplier = supplier;
     }
 
+    public OrganizationalEntity getManufacturer() { /**Issue #2373, #2737 */
+        return manufacture;
+    }
+
+    public void setManufacturer(OrganizationalEntity manufacture) {/**Issue #2373, #2737 */
+        this.manufacture = manufacture;
+    }
+
+
     public String getGroup() {
         return group;
     }

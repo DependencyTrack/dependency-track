@@ -475,7 +475,7 @@ public class ModelConverter {
             service.setProject(project);
         }
         service.setBomRef(StringUtils.trimToNull(cycloneDxService.getBomRef()));
-               if (cycloneDxService.getProvider() != null) {
+        if (cycloneDxService.getProvider() != null) {
             OrganizationalEntity provider = new OrganizationalEntity();;
             provider.setName(cycloneDxService.getProvider().getName());
             if (cycloneDxService.getProvider().getUrls() != null && cycloneDxService.getProvider().getUrls().size() > 0) {

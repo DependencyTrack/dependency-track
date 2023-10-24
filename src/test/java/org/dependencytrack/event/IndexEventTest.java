@@ -19,7 +19,6 @@
 package org.dependencytrack.event;
 
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
@@ -63,15 +62,6 @@ public class IndexEventTest {
         Assert.assertEquals(IndexEvent.Action.COMMIT, event.getAction());
         Assert.assertEquals(license, event.getObject());
         Assert.assertEquals(License.class, event.getIndexableClass());
-    }
-
-    @Test
-    public void testCpeEvent() {
-        Cpe cpe = new Cpe();
-        IndexEvent event = new IndexEvent(IndexEvent.Action.COMMIT, cpe);
-        Assert.assertEquals(IndexEvent.Action.COMMIT, event.getAction());
-        Assert.assertEquals(cpe, event.getObject());
-        Assert.assertEquals(Cpe.class, event.getIndexableClass());
     }
 
     @Test

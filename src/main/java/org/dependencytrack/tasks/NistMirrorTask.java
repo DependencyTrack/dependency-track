@@ -131,8 +131,6 @@ public class NistMirrorTask implements LoggableSubscriber {
     private void getAllFiles() {
         final Date currentDate = new Date();
         LOGGER.info("Downloading files at " + currentDate);
-        doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_URL, ResourceType.CVE_MODIFIED_DATA);
-        doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_META, ResourceType.CVE_META);
         for (int i = endYear; i >= START_YEAR; i--) {
             // Download JSON 1.1 year feeds in reverse order
             final String json11BaseUrl = this.nvdFeedsUrl + CVE_JSON_11_BASE_URL.replace("%d", String.valueOf(i));
@@ -140,6 +138,11 @@ public class NistMirrorTask implements LoggableSubscriber {
             doDownload(json11BaseUrl, ResourceType.CVE_YEAR_DATA);
             doDownload(cve11BaseMetaUrl, ResourceType.CVE_META);
         }
+
+        // Modified feeds must be mirrored last, otherwise we risk more recent data being
+        // overwritten by old or stale data: https://github.com/DependencyTrack/dependency-track/pull/1929#issuecomment-1743579226
+        doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_URL, ResourceType.CVE_MODIFIED_DATA);
+        doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_META, ResourceType.CVE_META);
 
         if (mirroredWithoutErrors) {
             Notification.dispatch(new Notification()

@@ -31,7 +31,7 @@
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>4.9.0-SNAPSHOT</version>
+    <version>4.10.0-SNAPSHOT</version>
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>
@@ -81,15 +81,23 @@
 
     <properties>
         <!-- Dependency Versions -->
-        <frontend.version>4.8.1</frontend.version>
+        <frontend.version>4.9.0</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.2.0</lib.awaitility.version>
+        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.14.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
+        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.14.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.14.1</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.cyclonedx-java.version>8.0.0</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>8.0.2</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.8</lib.jaxb.runtime.version>
         <lib.json-unit.version>3.2.2</lib.json-unit.version>
+        <!--
+          Overriding logstash-logback-encoder version as a temporary workaround until
+          https://github.com/stevespringett/Alpine/pull/517 is merged and released.
+        -->
+        <lib.logstash-logback-encoder.version>7.3</lib.logstash-logback-encoder.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.2.0</lib.pebble.version>
@@ -191,7 +199,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20230618</version>
+            <version>20231013</version>
         </dependency>
         <!-- Package URL -->
         <dependency>
@@ -291,17 +299,17 @@
         <dependency>
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>mysql-socket-factory-connector-j-8</artifactId>
-            <version>1.11.0</version>
+            <version>${lib.cloud-sql-mysql-socket-factory-connector-j-8.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>postgres-socket-factory</artifactId>
-            <version>1.11.0</version>
+            <version>${lib.cloud-sql-postgres-socket-factory.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>cloud-sql-connector-jdbc-sqlserver</artifactId>
-            <version>1.14.1</version>
+            <version>${lib.cloud-sql-connector-jdbc-sqlserver.version}</version>
         </dependency>
         <!-- Xerces -->
         <dependency>

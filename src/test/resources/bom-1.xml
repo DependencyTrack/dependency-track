@@ -6,11 +6,9 @@
                 <name>Foo Incorporated</name>
                 <url>https://foo.bar.com</url>
                 <contact>
-                   <contact>
-                        <name>Foo Jr.</name>
-                        <email>foojr@bar.com</email>
-                        <phone>123-456-7890</phone>
-                    </contact>
+                    <name>Foo Jr.</name>
+                    <email>foojr@bar.com</email>
+                    <phone>123-456-7890</phone>
                 </contact>
             </supplier>
             <publisher>DependencyTrack</publisher>
@@ -34,22 +32,18 @@
             <name>Foo Incorporated</name>
             <url>https://foo.bar.com</url>
             <contact>
-                <contact>
-                    <name>Foo Sr.</name>
-                    <email>foo@bar.com</email>
-                    <phone>800-123-4567</phone>
-                </contact>
+                <name>Foo Sr.</name>
+                <email>foo@bar.com</email>
+                <phone>800-123-4567</phone>
             </contact>
         </manufacture>
         <supplier>
            <name>Foo Incorporated</name>
             <url>https://foo.bar.com</url>
             <contact>
-                <contact>
-                    <name>Foo Jr.</name>
-                    <email>foojr@bar.com</email>
-                    <phone>123-456-7890</phone>
-                </contact>
+                <name>Foo Jr.</name>
+                <email>foojr@bar.com</email>
+                <phone>123-456-7890</phone>
             </contact>
         </supplier>
     </metadata>
@@ -60,11 +54,9 @@
                 <name>Foo Incorporated</name>
                 <url>https://foo.bar.com</url>
                 <contact>
-                   <contact>
-                        <name>Foo Jr.</name>
-                        <email>foojr@bar.com</email>
-                        <phone>123-456-7890</phone>
-                    </contact>
+                    <name>Foo Jr.</name>
+                    <email>foojr@bar.com</email>
+                    <phone>123-456-7890</phone>
                 </contact>
             </supplier>
             <publisher>Example Incorporated</publisher>

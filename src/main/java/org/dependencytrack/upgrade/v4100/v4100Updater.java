@@ -48,20 +48,20 @@ public class v4100Updater extends AbstractUpgradeItem {
         LOGGER.info("Updating all null severities from database");
         try (final Statement stmt = connection.createStatement()) {
             final ResultSet rs = stmt.executeQuery("""
-                    SELECT *
+                    SELECT CVSSV2BASESCORE, CVSSV3BASESCORE, OWASPRRLIKELIHOODSCORE, OWASPRRTECHNICALIMPACTSCORE, OWASPRRBUSINESSIMPACTSCORE, VULNID
                     FROM "VULNERABILITY"
                     WHERE "SEVERITY" is NULL
                     """);
             while(rs.next()){
-                String vulnID = rs.getString(32);
+                String vulnID = rs.getString(6);
                 Severity severity = VulnerabilityUtil.getSeverity(
-                    rs.getBigDecimal(4),
-                    rs.getBigDecimal(8),
-                    rs.getBigDecimal(19),
-                    rs.getBigDecimal(18), 
-                    rs.getBigDecimal(20)
+                    rs.getBigDecimal(1),
+                    rs.getBigDecimal(2),
+                    rs.getBigDecimal(3),
+                    rs.getBigDecimal(4), 
+                    rs.getBigDecimal(5)
                     );
-                final String severityString = severity.getSeverityAsString();
+                final String severityString = severity.name();
                 final PreparedStatement ps = connection.prepareStatement("""
                         UPDATE "VULNERABILITY" SET "SEVERITY" = ? WHERE "VULNID" = ?
                         """);

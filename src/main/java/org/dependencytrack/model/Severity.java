@@ -48,25 +48,4 @@ public enum Severity {
         return Arrays.stream(values()).filter(value -> value.level == level).findFirst().orElse(UNASSIGNED);
     }
 
-    public String getSeverityAsString(){
-        if(level == 0){
-            return "UNASSIGNED";
-        }
-        if(level == 1){
-            return "INFO";
-        }
-        if(level == 2){
-            return "LOW";
-        }
-        if(level == 3){
-            return "MEDIUM";
-        }
-        if(level == 4){
-            return "HIGH";
-        }
-        if(level == 5){
-            return "CRITICAL";
-        }
-        return null;
-    }
 }

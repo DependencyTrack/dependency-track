@@ -111,26 +111,29 @@ public class ModelConverter {
         component.setPublisher(StringUtils.trimToNull(cycloneDxComponent.getPublisher()));
 
         /**Issue #2373, #2737 */
-        OrganizationalEntity deptrackOrgEntity = new OrganizationalEntity();
-        deptrackOrgEntity.setName(cycloneDxComponent.getSupplier().getName());
-        deptrackOrgEntity.setUrls(cycloneDxComponent.getSupplier().getUrls().toArray(new String[0]));
-        // to do convert contacts
-        // deptrackOrgEntity.setContacts(cycloneDxComponent.getSupplier().getContacts());
+        if (cycloneDxComponent.getSupplier() != null) {
+            OrganizationalEntity deptrackOrgEntity = new OrganizationalEntity();
+            deptrackOrgEntity.setName(cycloneDxComponent.getSupplier().getName());
+            deptrackOrgEntity.setUrls(cycloneDxComponent.getSupplier().getUrls().toArray(new String[0]));
+            // to do convert contacts
+            // deptrackOrgEntity.setContacts(cycloneDxComponent.getSupplier().getContacts());
 
-        if (cycloneDxComponent.getSupplier().getContacts() != null) {
-            List<OrganizationalContact> contacts = new ArrayList<>();
-            for (org.cyclonedx.model.OrganizationalContact organizationalContact: cycloneDxComponent.getSupplier().getContacts()) {
-                OrganizationalContact contact = new OrganizationalContact();
-                contact.setName(organizationalContact.getName());
-                contact.setEmail(organizationalContact.getEmail());
-                contact.setPhone(organizationalContact.getPhone());
-                contacts.add(contact);
+            if (cycloneDxComponent.getSupplier().getContacts() != null) {
+                List<OrganizationalContact> contacts = new ArrayList<>();
+                for (org.cyclonedx.model.OrganizationalContact organizationalContact: cycloneDxComponent.getSupplier().getContacts()) {
+                    OrganizationalContact contact = new OrganizationalContact();
+                    contact.setName(organizationalContact.getName());
+                    contact.setEmail(organizationalContact.getEmail());
+                    contact.setPhone(organizationalContact.getPhone());
+                    contacts.add(contact);
+                }
+                deptrackOrgEntity.setContacts(contacts);
+            } else {
+                deptrackOrgEntity.setContacts(null);
             }
-            deptrackOrgEntity.setContacts(contacts);
-        } else {
-            deptrackOrgEntity.setContacts(null);
-        }
-        component.setSupplier(deptrackOrgEntity);/**Issue #2373, #2737 */
+            component.setSupplier(deptrackOrgEntity);
+        } /**Issue #2373, #2737 */
+        
 
         component.setGroup(StringUtils.trimToNull(cycloneDxComponent.getGroup()));
         component.setName(StringUtils.trimToNull(cycloneDxComponent.getName()));

@@ -141,7 +141,7 @@ public class BomUploadProcessingTask implements Subscriber {
                                 manufacturer.setContacts(null);
                             }
                             project.setManufacturer(manufacturer);
-                        }
+                        } /**Issue #2373, #2737 */
                     } else {
                         LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");
                         return;

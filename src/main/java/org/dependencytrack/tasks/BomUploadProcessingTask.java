@@ -123,25 +123,28 @@ public class BomUploadProcessingTask implements Subscriber {
                         components = ModelConverter.convertComponents(qm, cycloneDxBom, project);
                         services = ModelConverter.convertServices(qm, cycloneDxBom, project);
                         /**Issue #2373, #2737 */
-                        if (cycloneDxBom.getMetadata().getManufacture() != null) {
-                            OrganizationalEntity manufacturer = new OrganizationalEntity();
-                            manufacturer.setName(cycloneDxBom.getMetadata().getManufacture().getName());
-                            manufacturer.setUrls(cycloneDxBom.getMetadata().getManufacture().getUrls().toArray(new String[0]));
-                            if (cycloneDxBom.getMetadata().getManufacture().getContacts() != null){
-                                List<OrganizationalContact> contacts = new ArrayList<>();
-                                for (org.cyclonedx.model.OrganizationalContact organizationalContact: cycloneDxBom.getMetadata().getManufacture().getContacts()) {
-                                    OrganizationalContact contact = new OrganizationalContact();
-                                    contact.setName(organizationalContact.getName());
-                                    contact.setEmail(organizationalContact.getEmail());
-                                    contact.setPhone(organizationalContact.getPhone());
-                                    contacts.add(contact);
+                        if (cycloneDxBom.getMetadata() != null) {
+                            if (cycloneDxBom.getMetadata().getManufacture() != null) {
+                                OrganizationalEntity manufacturer = new OrganizationalEntity();
+                                manufacturer.setName(cycloneDxBom.getMetadata().getManufacture().getName());
+                                manufacturer.setUrls(cycloneDxBom.getMetadata().getManufacture().getUrls().toArray(new String[0]));
+                                if (cycloneDxBom.getMetadata().getManufacture().getContacts() != null){
+                                    List<OrganizationalContact> contacts = new ArrayList<>();
+                                    for (org.cyclonedx.model.OrganizationalContact organizationalContact: cycloneDxBom.getMetadata().getManufacture().getContacts()) {
+                                        OrganizationalContact contact = new OrganizationalContact();
+                                        contact.setName(organizationalContact.getName());
+                                        contact.setEmail(organizationalContact.getEmail());
+                                        contact.setPhone(organizationalContact.getPhone());
+                                        contacts.add(contact);
+                                    }
+                                    manufacturer.setContacts(contacts);
+                                } else {
+                                    manufacturer.setContacts(null);
                                 }
-                                manufacturer.setContacts(contacts);
-                            } else {
-                                manufacturer.setContacts(null);
-                            }
-                            project.setManufacturer(manufacturer);
+                                project.setManufacturer(manufacturer);
+                            } 
                         } /**Issue #2373, #2737 */
+
                     } else {
                         LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");
                         return;

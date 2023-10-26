@@ -90,7 +90,7 @@
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.cyclonedx-java.version>8.0.2</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>8.0.3</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.8</lib.jaxb.runtime.version>
         <lib.json-unit.version>3.2.2</lib.json-unit.version>
         <!--

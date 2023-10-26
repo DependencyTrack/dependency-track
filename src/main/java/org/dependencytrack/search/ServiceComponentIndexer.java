@@ -21,7 +21,6 @@ package org.dependencytrack.search;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
@@ -31,8 +30,11 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.ServiceComponentDocument;
 
+import javax.jdo.Query;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -41,7 +43,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 4.2.0
  */
-public final class ServiceComponentIndexer extends IndexManager implements ObjectIndexer<ServiceComponent> {
+public final class ServiceComponentIndexer extends IndexManager implements ObjectIndexer<ServiceComponentDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(ServiceComponentIndexer.class);
     private static final ServiceComponentIndexer INSTANCE = new ServiceComponentIndexer();
@@ -67,14 +69,14 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
      *
      * @param service A persisted ServiceComponent object.
      */
-    public void add(final ServiceComponent service) {
+    public void add(final ServiceComponentDocument service) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.SERVICECOMPONENT_UUID, service.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.SERVICECOMPONENT_NAME, service.getName(), Field.Store.YES, true);
-        addField(doc, IndexConstants.SERVICECOMPONENT_GROUP, service.getGroup(), Field.Store.YES, true);
-        addField(doc, IndexConstants.SERVICECOMPONENT_VERSION, service.getVersion(), Field.Store.YES, false);
+        addField(doc, IndexConstants.SERVICECOMPONENT_UUID, service.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.SERVICECOMPONENT_NAME, service.name(), Field.Store.YES, true);
+        addField(doc, IndexConstants.SERVICECOMPONENT_GROUP, service.group(), Field.Store.YES, true);
+        addField(doc, IndexConstants.SERVICECOMPONENT_VERSION, service.version(), Field.Store.YES, false);
         // TODO: addField(doc, IndexConstants.SERVICECOMPONENT_URL, service.getUrl(), Field.Store.YES, true);
-        addField(doc, IndexConstants.SERVICECOMPONENT_DESCRIPTION, service.getDescription(), Field.Store.YES, true);
+        addField(doc, IndexConstants.SERVICECOMPONENT_DESCRIPTION, service.description(), Field.Store.YES, true);
 
         try {
             getIndexWriter().addDocument(doc);
@@ -97,9 +99,9 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
      *
      * @param service A persisted ServiceComponent object.
      */
-    public void remove(final ServiceComponent service) {
+    public void remove(final ServiceComponentDocument service) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.SERVICECOMPONENT_UUID, service.getUuid().toString()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.SERVICECOMPONENT_UUID, service.uuid().toString()));
         } catch (CorruptIndexException e) {
             handleCorruptIndexException(e);
         } catch (IOException e) {
@@ -121,20 +123,37 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
+
+        long docsIndexed = 0;
+        final long startTimeNs = System.nanoTime();
         try (QueryManager qm = new QueryManager()) {
-            final long total = qm.getCount(ServiceComponent.class);
-            long count = 0;
-            while (count < total) {
-                final PaginatedResult result = qm.getServiceComponents();
-                final List<ServiceComponent> services = result.getList(ServiceComponent.class);
-                for (final ServiceComponent service: services) {
-                    add(service);
-                }
-                count += result.getObjects().size();
-                qm.advancePagination();
+            List<ServiceComponentDocument> docs = fetchNext(qm, null);
+            while (!docs.isEmpty()) {
+                docs.forEach(this::add);
+                docsIndexed += docs.size();
+                commit();
+
+                docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
-            commit();
         }
-        LOGGER.info("Reindexing complete");
+        LOGGER.info("Reindexing of %d services completed in %s"
+                .formatted(docsIndexed, Duration.ofNanos(System.nanoTime() - startTimeNs)));
     }
+
+    private static List<ServiceComponentDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<ServiceComponent> query = qm.getPersistenceManager().newQuery(ServiceComponent.class);
+        if (lastId != null) {
+            query.setFilter("id > :lastId");
+            query.setParameters(lastId);
+        }
+        query.setOrdering("id ASC");
+        query.setRange(0, 1000);
+        query.setResult("id, uuid, \"group\", name, version, description");
+        try {
+            return List.copyOf(query.executeResultList(ServiceComponentDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
 }

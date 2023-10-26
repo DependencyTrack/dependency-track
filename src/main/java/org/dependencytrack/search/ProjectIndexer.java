@@ -21,7 +21,6 @@ package org.dependencytrack.search;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
@@ -31,8 +30,14 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.ProjectDocument;
 
+import javax.jdo.Query;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Indexer for operating on projects.
@@ -40,7 +45,7 @@ import java.io.IOException;
  * @author Steve Springett
  * @since 3.0.0
  */
-public final class ProjectIndexer extends IndexManager implements ObjectIndexer<Project> {
+public final class ProjectIndexer extends IndexManager implements ObjectIndexer<ProjectDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(ProjectIndexer.class);
     private static final ProjectIndexer INSTANCE = new ProjectIndexer();
@@ -66,12 +71,12 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param project A persisted Project object.
      */
-    public void add(final Project project) {
+    public void add(final ProjectDocument project) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.PROJECT_UUID, project.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.PROJECT_NAME, project.getName(), Field.Store.YES, true);
-        addField(doc, IndexConstants.PROJECT_VERSION, project.getVersion(), Field.Store.YES, false);
-        addField(doc, IndexConstants.PROJECT_DESCRIPTION, project.getDescription(), Field.Store.YES, true);
+        addField(doc, IndexConstants.PROJECT_UUID, project.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.PROJECT_NAME, project.name(), Field.Store.YES, true);
+        addField(doc, IndexConstants.PROJECT_VERSION, project.version(), Field.Store.YES, false);
+        addField(doc, IndexConstants.PROJECT_DESCRIPTION, project.description(), Field.Store.YES, true);
 
         /*
         // There's going to potentially be confidential information in the project properties. Do not index.
@@ -107,9 +112,9 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param project A persisted Project object.
      */
-    public void remove(final Project project) {
+    public void remove(final ProjectDocument project) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.getUuid().toString()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.uuid().toString()));
         } catch (CorruptIndexException e) {
             handleCorruptIndexException(e);
         } catch (IOException e) {
@@ -131,21 +136,42 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
+
+        long docsIndexed = 0;
+        final long startTimeNs = System.nanoTime();
         try (final QueryManager qm = new QueryManager()) {
-            final PaginatedResult result = qm.getProjects(false, true, false);
-            long count = 0;
-            boolean shouldContinue = true;
-            while (count < result.getTotal() && shouldContinue) {
-                for (final Project project: result.getList(Project.class)) {
-                    add(project);
-                }
-                int lastResult = result.getObjects().size();
-                count += lastResult;
-                shouldContinue = lastResult > 0;
-                qm.advancePagination();
+            List<ProjectDocument> docs = fetchNext(qm, null);
+            while (!docs.isEmpty()) {
+                docs.forEach(this::add);
+                docsIndexed += docs.size();
+                commit();
+
+                docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
-            commit();
         }
-        LOGGER.info("Reindexing complete");
+        LOGGER.info("Reindexing of %d projects completed in %s"
+                .formatted(docsIndexed, Duration.ofNanos(System.nanoTime() - startTimeNs)));
     }
+
+    private static List<ProjectDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
+        var filterParts = new ArrayList<String>();
+        var params = new HashMap<String, Object>();
+        filterParts.add("(active == null || active)");
+        if (lastId != null) {
+            filterParts.add("id > :lastId");
+            params.put("lastId", lastId);
+        }
+        query.setFilter(String.join(" && ", filterParts));
+        query.setNamedParameters(params);
+        query.setOrdering("id ASC");
+        query.setRange(0, 1000);
+        query.setResult("id, uuid, name, version, description");
+        try {
+            return List.copyOf(query.executeResultList(ProjectDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
 }

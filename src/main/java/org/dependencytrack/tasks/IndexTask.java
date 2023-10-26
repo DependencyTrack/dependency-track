@@ -44,9 +44,7 @@ public class IndexTask implements Subscriber {
     @SuppressWarnings("unchecked")
     public void inform(final Event e) {
 
-        if (e instanceof IndexEvent) {
-            final IndexEvent event = (IndexEvent) e;
-
+        if (e instanceof final IndexEvent event) {
             if (IndexEvent.Action.CHECK == event.getAction()) {
                 IndexManager.checkIndexesConsistency();
                 return;
@@ -55,12 +53,12 @@ public class IndexTask implements Subscriber {
             final ObjectIndexer indexManager = IndexManagerFactory.getIndexManager(event);
 
             if (IndexEvent.Action.CREATE == event.getAction()) {
-                indexManager.add((event).getObject());
+                indexManager.add((event).getDocument());
             } else if (IndexEvent.Action.UPDATE == event.getAction()) {
-                indexManager.remove((event).getObject());
-                indexManager.add((event).getObject());
+                indexManager.remove((event).getDocument());
+                indexManager.add((event).getDocument());
             } else if (IndexEvent.Action.DELETE == event.getAction()) {
-                indexManager.remove((event).getObject());
+                indexManager.remove((event).getDocument());
             } else if (IndexEvent.Action.COMMIT == event.getAction()) {
                 indexManager.commit();
             } else if (IndexEvent.Action.REINDEX == event.getAction()) {

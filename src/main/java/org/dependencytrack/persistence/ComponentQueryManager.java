@@ -340,7 +340,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      */
     public Component createComponent(Component component, boolean commitIndex) {
         final Component result = persist(component);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, Component.class);
         return result;
     }
@@ -411,7 +411,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setInternal(transientComponent.isInternal());
         component.setAuthor(transientComponent.getAuthor());
         final Component result = persist(component);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, Component.class);
         return result;
     }
@@ -439,7 +439,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         try {
             final Component result = pm.getObjectById(Component.class, component.getId());
-            Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+            Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, result));
             deleteAnalysisTrail(component);
             deleteViolationAnalysisTrail(component);
             deleteMetrics(component);

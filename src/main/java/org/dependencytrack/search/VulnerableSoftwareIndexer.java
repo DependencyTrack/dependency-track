@@ -21,7 +21,6 @@ package org.dependencytrack.search;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
@@ -31,8 +30,11 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 
+import javax.jdo.Query;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -41,7 +43,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.6.0
  */
-public final class VulnerableSoftwareIndexer extends IndexManager implements ObjectIndexer<VulnerableSoftware> {
+public final class VulnerableSoftwareIndexer extends IndexManager implements ObjectIndexer<VulnerableSoftwareDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(VulnerableSoftwareIndexer.class);
     private static final VulnerableSoftwareIndexer INSTANCE = new VulnerableSoftwareIndexer();
@@ -67,14 +69,14 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
      *
      * @param vs A persisted VulnerableSoftware object.
      */
-    public void add(final VulnerableSoftware vs) {
+    public void add(final VulnerableSoftwareDocument vs) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_UUID, vs.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_22, vs.getCpe22(), Field.Store.YES, false);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_23, vs.getCpe23(), Field.Store.YES, false);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_VENDOR, vs.getVendor(), Field.Store.YES, true);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_PRODUCT, vs.getProduct(), Field.Store.YES, true);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_VERSION, vs.getVersion(), Field.Store.YES, true);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_UUID, vs.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_22, vs.cpe22(), Field.Store.YES, false);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_23, vs.cpe23(), Field.Store.YES, false);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_VENDOR, vs.vendor(), Field.Store.YES, true);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_PRODUCT, vs.product(), Field.Store.YES, true);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_VERSION, vs.version(), Field.Store.YES, true);
         //todo: index the affected version range fields as well
 
         try {
@@ -98,9 +100,9 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
      *
      * @param vs A persisted VulnerableSoftware object.
      */
-    public void remove(final VulnerableSoftware vs) {
+    public void remove(final VulnerableSoftwareDocument vs) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.VULNERABLESOFTWARE_UUID, vs.getUuid().toString()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.VULNERABLESOFTWARE_UUID, vs.uuid().toString()));
         } catch (CorruptIndexException e) {
             handleCorruptIndexException(e);
         } catch (IOException e) {
@@ -121,20 +123,37 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
+
+        long indexedDocs = 0;
+        final long startTimeNs = System.nanoTime();
         try (QueryManager qm = new QueryManager()) {
-            final long total = qm.getCount(VulnerableSoftware.class);
-            long count = 0;
-            while (count < total) {
-                final PaginatedResult result = qm.getVulnerableSoftware();
-                final List<VulnerableSoftware> vsList = result.getList(VulnerableSoftware.class);
-                for (final VulnerableSoftware vs: vsList) {
-                    add(vs);
-                }
-                count += result.getObjects().size();
-                qm.advancePagination();
+            List<VulnerableSoftwareDocument> docs = fetchNext(qm, null);
+            while (!docs.isEmpty()) {
+                docs.forEach(this::add);
+                indexedDocs += docs.size();
+                commit();
+
+                docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
-            commit();
         }
-        LOGGER.info("Reindexing complete");
+        LOGGER.info("Reindexing of %d VulnerableSoftwares completed in %s"
+                .formatted(indexedDocs, Duration.ofNanos(System.nanoTime() - startTimeNs)));
     }
+
+    private static List<VulnerableSoftwareDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<VulnerableSoftware> query = qm.getPersistenceManager().newQuery(VulnerableSoftware.class);
+        if (lastId != null) {
+            query.setFilter("id > :lastId");
+            query.setParameters(lastId);
+        }
+        query.setOrdering("id ASC");
+        query.setRange(0, 1000);
+        query.setResult("id, uuid, cpe22, cpe23, vendor, product, version");
+        try {
+            return List.copyOf(query.executeResultList(VulnerableSoftwareDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
 }

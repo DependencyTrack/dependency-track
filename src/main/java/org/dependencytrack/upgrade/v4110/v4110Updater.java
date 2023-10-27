@@ -17,7 +17,7 @@
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
 
-package org.dependencytrack.upgrade.v4100;
+package org.dependencytrack.upgrade.v4110;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,13 +32,13 @@ import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
 
-public class v4100Updater extends AbstractUpgradeItem {
+public class v4110Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v410Updater.class);
 
     @Override
     public String getSchemaVersion() {
-        return "4.10.0";
+        return "4.11.0";
     }
 
     @Override

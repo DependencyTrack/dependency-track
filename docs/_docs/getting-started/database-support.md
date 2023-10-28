@@ -47,6 +47,14 @@ alpine.database.username=dtrack
 alpine.database.password=password
 ```
 
+It is recommended to set the default transaction isolation for the Dependency-Track database to
+`READ_COMMITTED_SNAPSHOT` in order to avoid deadlocks. This can be achieved by executing the following
+SQL statement:
+
+```sql
+ALTER DATABASE dtrack SET READ_COMMITTED_SNAPSHOT ON;
+```
+
 #### MySQL
 
 ```ini

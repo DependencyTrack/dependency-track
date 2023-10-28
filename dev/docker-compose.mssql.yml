@@ -59,7 +59,7 @@ services:
     - -P
     - DTrack1234#
     - -Q
-    - CREATE DATABASE dtrack
+    - CREATE DATABASE dtrack; ALTER DATABASE dtrack SET READ_COMMITTED_SNAPSHOT ON;
     restart: on-failure
 
 volumes:

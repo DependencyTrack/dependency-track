@@ -63,6 +63,7 @@ body:
     - 4.7.x
     - 4.8.x
     - 4.9.0
+    - 4.9.1
     - 4.10.0-SNAPSHOT
   validations:
     required: true

@@ -96,7 +96,7 @@ as it is likely a bug in Dependency-Track.
 #### Received a 413 Request Entity Too Large error while uploading SBOM
 
 If you encounter the `413 Request Entity Too Large` error while uploading SBOMs in your Kubernetes environment where
-DependencyTrack is running, you can try to expand the maximum upload size by including the subsequent annotations:
+DependencyTrack is running served with nginx, you can try to expand the maximum upload size by including the subsequent annotations:
 
 ```yaml
 nginx.ingress.kubernetes.io/proxy-body-size: "100m"

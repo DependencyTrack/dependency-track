@@ -20,11 +20,16 @@ package org.dependencytrack.tasks;
 
 import alpine.Config;
 import alpine.common.logging.Logger;
+import alpine.common.metrics.Metrics;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
@@ -34,6 +39,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.event.NistMirrorEvent;
@@ -50,13 +56,17 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
+import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_FEEDS_URL;
 
@@ -92,6 +102,32 @@ public class NistMirrorTask implements LoggableSubscriber {
     private long metricDownloadTime;
 
     private static final Logger LOGGER = Logger.getLogger(NistMirrorTask.class);
+    private static final Retry RETRY;
+
+    static {
+        final RetryRegistry retryRegistry = RetryRegistry.of(RetryConfig.<CloseableHttpResponse>custom()
+                .intervalFunction(ofExponentialBackoff(
+                        /* initialInterval */ Duration.ofSeconds(1),
+                        /* multiplier */ 2,
+                        /* maxInterval */ Duration.ofSeconds(32)
+                ))
+                .failAfterMaxAttempts(true)
+                .maxAttempts(6)
+                .retryOnException(exception -> exception instanceof ConnectTimeoutException
+                        || exception instanceof NoRouteToHostException
+                        || exception instanceof SocketTimeoutException)
+                .retryOnResult(response -> 403 == response.getStatusLine().getStatusCode()
+                        || 429 == response.getStatusLine().getStatusCode())
+                .build());
+        RETRY = retryRegistry.retry("nvd-feeds");
+        RETRY.getEventPublisher()
+                .onRetry(event -> LOGGER.warn("Encountered retryable exception; Will execute retry #%d in %s"
+                        .formatted(event.getNumberOfRetryAttempts(), event.getWaitInterval()), event.getLastThrowable()))
+                .onError(event -> LOGGER.error("Failed after %d retry attempts"
+                        .formatted(event.getNumberOfRetryAttempts()), event.getLastThrowable()));
+        TaggedRetryMetrics.ofRetryRegistry(retryRegistry)
+                .bindTo(Metrics.getRegistry());
+    }
 
     private boolean mirroredWithoutErrors = true;
 
@@ -223,7 +259,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             final long start = System.currentTimeMillis();
             LOGGER.info("Initiating download of " + url.toExternalForm());
             final HttpUriRequest request = new HttpGet(urlString);
-            try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+            try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
                 final StatusLine status = response.getStatusLine();
                 final long end = System.currentTimeMillis();
                 metricDownloadTime += end - start;
@@ -269,7 +305,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             if (file.getName().endsWith(".gz")) {
                 uncompress(file, resourceType);
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
             mirroredWithoutErrors = false;
             LOGGER.error("Download failed : " + e.getMessage());
             Notification.dispatch(new Notification()

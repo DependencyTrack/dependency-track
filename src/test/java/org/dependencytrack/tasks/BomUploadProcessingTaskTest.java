@@ -141,6 +141,19 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(components).hasSize(1);
 
         final Component component = components.get(0);
+        
+        assertThat(component.getSupplier().getName()).isEqualTo("Foo Incorporated"); /*Issue #2373, #2737 -  Adding support for Supplier*/
+        assertThat(component.getSupplier().getUrls()[0]).isEqualTo("https://foo.bar.com");
+        assertThat(component.getSupplier().getContacts().get(0).getEmail()).isEqualTo("foojr@bar.com");
+        assertThat(component.getSupplier().getContacts().get(0).getPhone()).isEqualTo("123-456-7890");
+
+        assertThat(project.getManufacturer().getName()).isEqualTo("Foo Incorporated");
+        assertThat(project.getManufacturer().getUrls()[0]).isEqualTo("https://foo.bar.com");
+        assertThat(project.getManufacturer().getContacts().get(0).getName()).isEqualTo("Foo Sr.");
+        assertThat(project.getManufacturer().getContacts().get(0).getEmail()).isEqualTo("foo@bar.com");
+        assertThat(project.getManufacturer().getContacts().get(0).getPhone()).isEqualTo("800-123-4567");
+
+        
         assertThat(component.getAuthor()).isEqualTo("Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
         assertThat(component.getPublisher()).isEqualTo("Example Incorporated");
         assertThat(component.getGroup()).isEqualTo("com.example");

@@ -30,7 +30,6 @@ import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.validation.ValidSpdxExpression;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
-
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
@@ -115,6 +114,20 @@ public class Component implements Serializable {
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
     private String publisher;
+
+    @Persistent /**Issue #2373, #2737 */
+    @Column(name = "MANUFACTURE", allowsNull = "true")
+    @Serialized
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The manufacture may only contain printable characters")
+    private OrganizationalEntity manufacture;
+
+    @Persistent /**Issue #2373, #2737 */
+    @Column(name = "SUPPLIER", allowsNull = "true")
+    @Serialized
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The supplier may only contain printable characters")
+    private OrganizationalEntity supplier;
 
     @Persistent
     @Column(name = "GROUP", jdbcType = "VARCHAR")
@@ -383,6 +396,22 @@ public class Component implements Serializable {
 
     public void setPublisher(String publisher) {
         this.publisher = publisher;
+    }
+
+    public OrganizationalEntity getSupplier() { /**Issue #2373, #2737 */
+        return supplier;
+    }
+
+    public void setSupplier(OrganizationalEntity supplier) {/**Issue #2373, #2737 */
+        this.supplier = supplier;
+    }
+
+    public OrganizationalEntity getManufacturer() { /**Issue #2373, #2737 */
+        return manufacture;
+    }
+
+    public void setManufacturer(OrganizationalEntity manufacture) {/**Issue #2373, #2737 */
+        this.manufacture = manufacture;
     }
 
     public String getGroup() {

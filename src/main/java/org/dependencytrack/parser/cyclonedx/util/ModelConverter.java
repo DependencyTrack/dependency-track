@@ -98,6 +98,7 @@ public class ModelConverter {
         return components;
     }
 
+    /**Convert from CycloneDX to DT */
     @SuppressWarnings("deprecation")
     public static Component convert(final QueryManager qm, final org.cyclonedx.model.Component cycloneDxComponent, final Project project) {
         Component component = qm.matchSingleIdentity(project, new ComponentIdentity(cycloneDxComponent));
@@ -108,6 +109,32 @@ public class ModelConverter {
         component.setAuthor(StringUtils.trimToNull(cycloneDxComponent.getAuthor()));
         component.setBomRef(StringUtils.trimToNull(cycloneDxComponent.getBomRef()));
         component.setPublisher(StringUtils.trimToNull(cycloneDxComponent.getPublisher()));
+
+        /**Issue #2373, #2737 */
+        if (cycloneDxComponent.getSupplier() != null) {
+            OrganizationalEntity deptrackOrgEntity = new OrganizationalEntity();
+            deptrackOrgEntity.setName(cycloneDxComponent.getSupplier().getName());
+            deptrackOrgEntity.setUrls(cycloneDxComponent.getSupplier().getUrls().toArray(new String[0]));
+            // to do convert contacts
+            // deptrackOrgEntity.setContacts(cycloneDxComponent.getSupplier().getContacts());
+
+            if (cycloneDxComponent.getSupplier().getContacts() != null) {
+                List<OrganizationalContact> contacts = new ArrayList<>();
+                for (org.cyclonedx.model.OrganizationalContact organizationalContact: cycloneDxComponent.getSupplier().getContacts()) {
+                    OrganizationalContact contact = new OrganizationalContact();
+                    contact.setName(organizationalContact.getName());
+                    contact.setEmail(organizationalContact.getEmail());
+                    contact.setPhone(organizationalContact.getPhone());
+                    contacts.add(contact);
+                }
+                deptrackOrgEntity.setContacts(contacts);
+            } else {
+                deptrackOrgEntity.setContacts(null);
+            }
+            component.setSupplier(deptrackOrgEntity);
+        } /**Issue #2373, #2737 */
+        
+
         component.setGroup(StringUtils.trimToNull(cycloneDxComponent.getGroup()));
         component.setName(StringUtils.trimToNull(cycloneDxComponent.getName()));
         component.setVersion(StringUtils.trimToNull(cycloneDxComponent.getVersion()));
@@ -242,7 +269,8 @@ public class ModelConverter {
         }
         return component;
     }
-
+    
+    /**Convert from DT to CycloneDX */
     @SuppressWarnings("deprecation")
     public static org.cyclonedx.model.Component convert(final QueryManager qm, final Component component) {
         final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
@@ -394,6 +422,31 @@ public class ModelConverter {
                     references.add(ref);
                 });
                 cycloneComponent.setExternalReferences(references);
+            }
+            /*Issue #2737:  Adding Supplier contact functionality */
+            if (project.getSupplier() != null) {
+                org.cyclonedx.model.OrganizationalEntity supplier = new org.cyclonedx.model.OrganizationalEntity();
+                supplier.setName(project.getSupplier().getName());
+            
+                if (project.getSupplier().getUrls() != null) {
+                    supplier.setUrls(Arrays.asList(project.getSupplier().getUrls()));
+                } else {
+                    supplier.setUrls(null);
+                }
+                if (project.getSupplier().getContacts() != null) {
+                    List<org.cyclonedx.model.OrganizationalContact> contacts = new ArrayList<>();
+                    for (OrganizationalContact organizationalContact: project.getSupplier().getContacts()) {
+                        org.cyclonedx.model.OrganizationalContact contact = new org.cyclonedx.model.OrganizationalContact();
+                        contact.setName(organizationalContact.getName());
+                        contact.setEmail(organizationalContact.getEmail());
+                        contact.setPhone(organizationalContact.getPhone());
+                        contacts.add(contact);
+                    }
+                    supplier.setContacts(contacts);
+                }
+                cycloneComponent.setSupplier(supplier);
+            } else {
+                cycloneComponent.setSupplier(null);
             }
             metadata.setComponent(cycloneComponent);
         }

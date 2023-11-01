@@ -93,4 +93,15 @@ Alias data will be re-populated the next time vulnerability intelligence sources
 analysis is taking place. If this does not solve the problem, please raise a [defect report] on GitHub, 
 as it is likely a bug in Dependency-Track.
 
+#### Received a 413 Request Entity Too Large error while uploading SBOM
+
+If you encounter the `413 Request Entity Too Large` error while uploading SBOMs in your Kubernetes environment where
+DependencyTrack is running served with nginx, you can try to expand the maximum upload size by including the subsequent annotations:
+
+```yaml
+nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+```
+
+Please consult the [official documentation](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#custom-max-body-size)
+
 [defect report]: https://github.com/DependencyTrack/dependency-track/issues/new?assignees=&labels=defect%2Cin+triage&template=defect-report.yml

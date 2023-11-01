@@ -30,12 +30,16 @@ import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
 import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
+import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -47,9 +51,14 @@ import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Subscriber task that performs processing of bill-of-material (bom)
@@ -88,6 +97,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 final List<Component> flattenedComponents = new ArrayList<>();
                 final List<ServiceComponent> services;
                 final List<ServiceComponent> flattenedServices = new ArrayList<>();
+                final List<Vulnerability> vulnerabilities;
 
                 // Holds a list of all Components that are existing dependencies of the specified project
                 final List<Component> existingProjectComponents = qm.getAllComponents(project);
@@ -120,6 +130,7 @@ public class BomUploadProcessingTask implements Subscriber {
                         serialNumnber = (cycloneDxBom.getSerialNumber() != null) ? cycloneDxBom.getSerialNumber().replaceFirst("urn:uuid:", "") : null;
                         components = ModelConverter.convertComponents(qm, cycloneDxBom, project);
                         services = ModelConverter.convertServices(qm, cycloneDxBom, project);
+                        vulnerabilities = ModelConverter.convertVulnerabilities(cycloneDxBom, components, services);
                     } else {
                         LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");
                         return;
@@ -137,13 +148,13 @@ public class BomUploadProcessingTask implements Subscriber {
                         .content("A " + bomFormat.getFormatShortName() + " BOM was consumed and will be processed")
                         .subject(new BomConsumedOrProcessed(copyOfProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
                 final Date date = new Date();
-                final Bom bom = qm.createBom(project, date, bomFormat, bomSpecVersion, bomVersion, serialNumnber);
+                qm.createBom(project, date, bomFormat, bomSpecVersion, bomVersion, serialNumnber);
                 for (final Component component: components) {
                     processComponent(qm, component, flattenedComponents, newComponents);
                 }
                 LOGGER.info("Identified " + newComponents.size() + " new components");
                 for (final ServiceComponent service: services) {
-                    processService(qm, bom, service, flattenedServices);
+                    processService(qm, service, flattenedServices);
                 }
                 if (Bom.Format.CYCLONEDX == bomFormat) {
                     LOGGER.info("Processing CycloneDX dependency graph for project: " + event.getProjectUuid());
@@ -153,6 +164,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 qm.reconcileComponents(project, existingProjectComponents, flattenedComponents);
                 LOGGER.debug("Reconciling services for project " + event.getProjectUuid());
                 qm.reconcileServiceComponents(project, existingProjectServices, flattenedServices);
+                processVulnerabilities(qm, vulnerabilities, flattenedComponents, flattenedServices);
                 LOGGER.debug("Updating last import date for project " + event.getProjectUuid());
                 qm.updateLastBomImport(project, date, bomFormat.getFormatShortName() + " " + bomSpecVersion);
                 // Instead of firing off a new VulnerabilityAnalysisEvent, chain the VulnerabilityAnalysisEvent to
@@ -228,7 +240,7 @@ public class BomUploadProcessingTask implements Subscriber {
         }
     }
 
-    private void processService(final QueryManager qm, final Bom bom, ServiceComponent service,
+    private void processService(final QueryManager qm, ServiceComponent service,
                                   final List<ServiceComponent> flattenedServices) {
         service = qm.createServiceComponent(service, false);
         final long oid = service.getId();
@@ -236,8 +248,148 @@ public class BomUploadProcessingTask implements Subscriber {
         flattenedServices.add(qm.getObjectById(ServiceComponent.class, oid));
         if (service.getChildren() != null) {
             for (final ServiceComponent child : service.getChildren()) {
-                processService(qm, bom, child, flattenedServices);
+                processService(qm, child, flattenedServices);
             }
+        }
+    }
+
+    private List<Vulnerability> processVulnerabilities(final QueryManager qm, final List<Vulnerability> vulnerabilitiesTransient,
+            final List<Component> componentsHollow, final List<ServiceComponent> servicesHollow) {
+        filterUnknownCwes(qm, vulnerabilitiesTransient);
+
+        class VulnerabilityPair {
+            Vulnerability oldV;
+            Vulnerability newV;
+            VulnerabilityPair(Vulnerability o, Vulnerability n) {
+                oldV = o; newV = n;
+            }
+        }
+        Stream<VulnerabilityPair> stream = vulnerabilitiesTransient.stream()
+                .map(v -> new VulnerabilityPair(qm.getVulnerabilityByVulnId(v.getSource(), v.getVulnId()), v));
+
+        Map<ComponentIdentity, Component> newComponents = componentsHollow.stream().collect(Collectors.toMap(
+                c -> new ComponentIdentity(c), c -> c));
+        Map<ComponentIdentity, ServiceComponent> newServices = servicesHollow.stream().collect(Collectors.toMap(
+                s -> new ComponentIdentity(s), s -> s));
+
+        Stream<Vulnerability> mergedVulns = stream.map(pair -> {
+            // Merge the transient vulnerability to the hollow one.
+            final Vulnerability merged;
+            final List<Component> mergedComponents = new ArrayList<Component>();
+            final List<ServiceComponent> mergedServiceComponents = new ArrayList<ServiceComponent>();
+            if (pair.oldV == null) {
+                // No matching already persisted vulnerability found. Persist the transient one.
+                merged = pair.newV;
+
+                // Switch the possibly transient components and services to matching persisted ones.
+                mergedComponents.addAll(Optional.ofNullable(merged.getComponents()).orElse(Collections.emptyList())
+                        .stream().map(c -> newComponents.get(new ComponentIdentity(c))).filter(Objects::nonNull).toList());
+                mergedServiceComponents.addAll(Optional.ofNullable(merged.getComponents()).orElse(Collections.emptyList())
+                        .stream().map(s -> newServices.get(new ComponentIdentity(s))).filter(Objects::nonNull).toList());
+            } else {
+                merged = pair.oldV;
+                Optional.ofNullable(pair.newV.getCreated()).ifPresent(value -> merged.setCreated(value));
+                Optional.ofNullable(pair.newV.getPublished()).ifPresent(value -> merged.setPublished(value));
+                Optional.ofNullable(pair.newV.getUpdated()).ifPresent(value -> merged.setUpdated(value));
+                Optional.ofNullable(pair.newV.getVulnId()).ifPresent(value -> merged.setVulnId(value));
+                Optional.ofNullable(pair.newV.getSource()).ifPresent(value -> merged.setSource(value));
+                Optional.ofNullable(pair.newV.getCredits()).ifPresent(value -> merged.setCredits(value));
+                Optional.ofNullable(pair.newV.getVulnerableVersions()).ifPresent(value -> merged.setVulnerableVersions(value));
+                Optional.ofNullable(pair.newV.getPatchedVersions()).ifPresent(value -> merged.setPatchedVersions(value));
+                Optional.ofNullable(pair.newV.getDescription()).ifPresent(value -> merged.setDescription(value));
+                Optional.ofNullable(pair.newV.getDetail()).ifPresent(value -> merged.setDetail(value));
+                Optional.ofNullable(pair.newV.getTitle()).ifPresent(value -> merged.setTitle(value));
+                Optional.ofNullable(pair.newV.getSubTitle()).ifPresent(value -> merged.setSubTitle(value));
+                Optional.ofNullable(pair.newV.getReferences()).ifPresent(value -> merged.setReferences(value));
+                Optional.ofNullable(pair.newV.getRecommendation()).ifPresent(value -> merged.setRecommendation(value));
+                Optional.ofNullable(pair.newV.getSeverity()).ifPresent(value -> merged.setSeverity(value));
+                Optional.ofNullable(pair.newV.getCvssV2Vector()).ifPresent(value -> merged.setCvssV2Vector(value));
+                Optional.ofNullable(pair.newV.getCvssV2BaseScore()).ifPresent(value -> merged.setCvssV2BaseScore(value));
+                Optional.ofNullable(pair.newV.getCvssV2ImpactSubScore()).ifPresent(value -> merged.setCvssV2ImpactSubScore(value));
+                Optional.ofNullable(pair.newV.getCvssV2ExploitabilitySubScore()).ifPresent(value -> merged.setCvssV2ExploitabilitySubScore(value));
+                Optional.ofNullable(pair.newV.getCvssV3Vector()).ifPresent(value -> merged.setCvssV3Vector(value));
+                Optional.ofNullable(pair.newV.getCvssV3BaseScore()).ifPresent(value -> merged.setCvssV3BaseScore(value));
+                Optional.ofNullable(pair.newV.getCvssV3ImpactSubScore()).ifPresent(value -> merged.setCvssV3ImpactSubScore(value));
+                Optional.ofNullable(pair.newV.getCvssV3ExploitabilitySubScore()).ifPresent(value -> merged.setCvssV3ExploitabilitySubScore(value));
+                Optional.ofNullable(pair.newV.getOwaspRRLikelihoodScore()).ifPresent(value -> merged.setOwaspRRLikelihoodScore(value));
+                Optional.ofNullable(pair.newV.getOwaspRRBusinessImpactScore()).ifPresent(value -> merged.setOwaspRRBusinessImpactScore(value));
+                Optional.ofNullable(pair.newV.getOwaspRRTechnicalImpactScore()).ifPresent(value -> merged.setOwaspRRTechnicalImpactScore(value));
+                Optional.ofNullable(pair.newV.getOwaspRRVector()).ifPresent(value -> merged.setOwaspRRVector(value));
+                Optional.ofNullable(pair.newV.getCwes()).ifPresent(value -> merged.setCwes(value));
+
+                {
+                    final Map<ComponentIdentity, Component> existingComponents =
+                            Optional.ofNullable(merged.getComponents()).orElse(Collections.emptyList())
+                            .stream().collect(Collectors.toMap(c -> new ComponentIdentity(c), c -> c));
+                    mergedComponents.addAll(existingComponents.values());
+                    for (Component c : Optional.ofNullable(pair.newV.getComponents()).orElse(Collections.emptyList())) {
+                        ComponentIdentity identity = new ComponentIdentity(c);
+                        Component existingComponent = existingComponents.get(identity);
+                        if (existingComponent != null) continue;
+                        Component newComponent = newComponents.get(identity);
+                        if (newComponent != null)
+                            mergedComponents.add(newComponent);
+                    }
+                }
+
+                {
+                    final Map<ComponentIdentity, ServiceComponent> existingServices =
+                            Optional.ofNullable(merged.getServiceComponents()).orElse(Collections.emptyList())
+                            .stream().collect(Collectors.toMap(s -> new ComponentIdentity(s), s -> s));
+                    mergedServiceComponents.addAll(existingServices.values());
+                    for (ServiceComponent s : Optional.ofNullable(pair.newV.getServiceComponents()).orElse(Collections.emptyList())) {
+                        ComponentIdentity identity = new ComponentIdentity(s);
+                        ServiceComponent existingService = existingServices.get(identity);
+                        if (existingService != null) continue;
+                        ServiceComponent newService = newServices.get(identity);
+                        if (newService != null)
+                            mergedServiceComponents.add(newService);
+                    }
+                }
+
+                // Merge Vulnerable Software.
+                List<VulnerableSoftware> mergedVulnerableSoftwares = Stream.concat(
+                        Optional.ofNullable(merged.getVulnerableSoftware()).orElse(Collections.emptyList()).stream(),
+                        Optional.ofNullable(pair.newV.getVulnerableSoftware()).orElse(Collections.emptyList()).stream()).toList();
+                if (!mergedVulnerableSoftwares.isEmpty()) merged.setVulnerableSoftware(mergedVulnerableSoftwares);
+            }
+
+            if (!mergedComponents.isEmpty()) merged.setComponents(mergedComponents);
+            if (!mergedServiceComponents.isEmpty()) merged.setServiceComponents(mergedServiceComponents);
+
+            return merged;
+        });
+
+        List<Vulnerability> mergedVulnerabilities = mergedVulns.toList();
+        class SearchIndexInfo {
+            Vulnerability vulnerability;
+            IndexEvent.Action action;
+            SearchIndexInfo(Vulnerability v, IndexEvent.Action a) {
+                vulnerability = v; action = a;
+            }
+        }
+        final List<SearchIndexInfo> searchIndexInfo = mergedVulnerabilities.stream().map(v -> new SearchIndexInfo(
+                v, v.getUuid() == null ? IndexEvent.Action.CREATE : IndexEvent.Action.UPDATE )).toList();
+        mergedVulnerabilities = qm.persist(mergedVulnerabilities).stream().map(o -> (Vulnerability)o).toList();
+        for (SearchIndexInfo info : searchIndexInfo)
+            Event.dispatch(new IndexEvent(info.action, qm.getPersistenceManager().detachCopy(info.vulnerability)));
+        return mergedVulnerabilities;
+    }
+
+    private void filterUnknownCwes(final QueryManager qm, final List<Vulnerability> vulnerabilities) {
+        // Get CWEs that were included in the vulnerabilities and have been persisted.
+        // TODO: This could be faster if CWEs were fetched with a single query.
+        final Stream<Integer> cwes = vulnerabilities.stream().map(v -> v.getCwes())
+                .filter(Objects::nonNull).map(cs -> cs.stream())
+                .reduce(Stream.empty(), (a, b) -> Stream.concat(a, b));
+        final java.util.Set<Integer> existingCwes = cwes.map(cwe -> qm.getCweById(cwe))
+                .filter(Objects::nonNull).map(cwe -> cwe.getCweId()).collect(Collectors.toUnmodifiableSet());
+
+        // Filter out unknown CWEs from the vulnerabilities as is done in VulnerabilityResource
+        for (final Vulnerability vulnerability : vulnerabilities) {
+            final List<Integer> current = vulnerability.getCwes();
+            if(current != null)
+                vulnerability.setCwes(current.stream().filter(i -> existingCwes.contains(i)).toList());
         }
     }
 }

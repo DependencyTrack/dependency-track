@@ -54,6 +54,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -130,7 +131,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         final byte[] bomBytes = Files.readAllBytes(Paths.get(getClass().getClassLoader().getResource("bom-1.xml").toURI()));
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 6, Duration.ofSeconds(5));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 7, Duration.ofSeconds(5));
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
         assertThat(project.getLastBomImport()).isNotNull();
@@ -151,7 +152,10 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(component.getPurl().canonicalize()).isEqualTo("pkg:maven/com.example/xmlutil@1.0.0?packaging=jar");
         assertThat(component.getLicenseUrl()).isEqualTo("https://www.apache.org/licenses/LICENSE-2.0.txt");
 
-        assertThat(qm.getAllVulnerabilities(component)).hasSize(2);
+        final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
+        assertThat(vulnerabilities).hasSize(3);
+        Optional<Vulnerability> bomVulnerability = vulnerabilities.stream().filter(v -> v.getVulnId().equals("BOMVULN-01")).findAny();
+        assertThat(bomVulnerability).isNotEmpty();
         assertThat(NOTIFICATIONS).satisfiesExactly(
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name()),
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.BOM_CONSUMED.name()),
@@ -164,7 +168,12 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 n -> {
                     assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name());
                     NewVulnerabilityIdentified nvi = (NewVulnerabilityIdentified) n.getSubject();
-                    assertThat(nvi.getVulnerabilityAnalysisLevel().toString().equals(VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
+                    assertThat(nvi.getVulnerabilityAnalysisLevel().equals(VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
+                },
+                n -> {
+                    assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name());
+                    NewVulnerabilityIdentified nvi = (NewVulnerabilityIdentified) n.getSubject();
+                    assertThat(nvi.getVulnerabilityAnalysisLevel().toString().equals(VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS.name()));
                 },
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name())
         );

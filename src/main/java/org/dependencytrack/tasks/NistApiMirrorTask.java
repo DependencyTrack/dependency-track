@@ -296,7 +296,7 @@ public class NistApiMirrorTask implements Subscriber {
                     try {
                         return Pair.of(CpeParser.parse(cpeMatch.getCriteria()), cpeMatch);
                     } catch (CpeParsingException e) {
-                        LOGGER.warn("Failed to parse CPE of %s; Skipping".formatted(cveId), e);
+                        LOGGER.warn("Failed to parse CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId), e);
                         return null;
                     }
                 })
@@ -348,10 +348,10 @@ public class NistApiMirrorTask implements Subscriber {
 
             return vs;
         } catch (CpeParsingException e) {
-            LOGGER.warn("Failed to parse CPE of %s; Skipping".formatted(cveId));
+            LOGGER.warn("Failed to parse CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId));
             return null;
         } catch (CpeEncodingException e) {
-            LOGGER.warn("Failed to encode CPE of %s; Skipping".formatted(cveId));
+            LOGGER.warn("Failed to encode CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId));
             return null;
         }
     }

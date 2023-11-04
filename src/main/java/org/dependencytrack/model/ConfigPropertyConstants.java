@@ -58,10 +58,9 @@ public enum ConfigPropertyConstants {
     SCANNER_SNYK_API_VERSION("scanner", "snyk.api.version", "2023-06-22", PropertyType.STRING, "Snyk API version"),
     SCANNER_SNYK_CVSS_SOURCE("scanner", "snyk.cvss.source", "NVD", PropertyType.STRING, "Type of source to be prioritized for cvss calculation"),
     SCANNER_SNYK_BASE_URL("scanner", "snyk.base.url", "https://api.snyk.io", PropertyType.URL, "Base Url pointing to the hostname and path for Snyk analysis"),
-    @Deprecated(forRemoval = true, since = "4.10.0")
     VULNERABILITY_SOURCE_NVD_ENABLED("vuln-source", "nvd.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable National Vulnerability Database"),
-    @Deprecated(forRemoval = true, since = "4.10.0")
     VULNERABILITY_SOURCE_NVD_FEEDS_URL("vuln-source", "nvd.feeds.url", "https://nvd.nist.gov/feeds", PropertyType.URL, "A base URL pointing to the hostname and path of the NVD feeds"),
+    VULNERABILITY_SOURCE_NVD_API_ENABLED("vuln-source", "nvd.api.enabled", "false", PropertyType.BOOLEAN, ""),
     VULNERABILITY_SOURCE_NVD_API_URL("vuln-source", "nvd.api.url", "https://services.nvd.nist.gov/rest/json/cves/2.0", PropertyType.URL, ""),
     VULNERABILITY_SOURCE_NVD_API_KEY("vuln-source", "nvd.api.key", null, PropertyType.ENCRYPTEDSTRING, ""),
     VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS("vuln-source", "nvd.api.last.modified.epoch.seconds", null, PropertyType.INTEGER, ""),

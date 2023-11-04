@@ -23,7 +23,6 @@ import alpine.common.logging.Logger;
 import alpine.common.metrics.Metrics;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
-import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
@@ -67,6 +66,7 @@ import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
 import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_FEEDS_URL;
 
@@ -96,6 +96,7 @@ public class NistMirrorTask implements LoggableSubscriber {
     private final int endYear = Calendar.getInstance().get(Calendar.YEAR);
 
     private final boolean isEnabled;
+    private final boolean isApiEnabled;
     private String nvdFeedsUrl;
     private File outputDir;
     private long metricParseTime;
@@ -133,9 +134,12 @@ public class NistMirrorTask implements LoggableSubscriber {
 
     public NistMirrorTask() {
         try (final QueryManager qm = new QueryManager()) {
-            final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_NVD_ENABLED.getGroupName(), VULNERABILITY_SOURCE_NVD_ENABLED.getPropertyName());
-            this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
-            this.nvdFeedsUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_NVD_FEEDS_URL.getGroupName(), VULNERABILITY_SOURCE_NVD_FEEDS_URL.getPropertyName()).getPropertyValue();
+            this.isEnabled = qm.isEnabled(VULNERABILITY_SOURCE_NVD_ENABLED);
+            this.isApiEnabled = qm.isEnabled(VULNERABILITY_SOURCE_NVD_API_ENABLED);
+            this.nvdFeedsUrl = qm.getConfigProperty(
+                    VULNERABILITY_SOURCE_NVD_FEEDS_URL.getGroupName(),
+                    VULNERABILITY_SOURCE_NVD_FEEDS_URL.getPropertyName()
+            ).getPropertyValue();
             if (this.nvdFeedsUrl.endsWith("/")) {
                 this.nvdFeedsUrl = this.nvdFeedsUrl.substring(0, this.nvdFeedsUrl.length()-1);
             }
@@ -147,16 +151,21 @@ public class NistMirrorTask implements LoggableSubscriber {
      */
     public void inform(final Event e) {
         if (e instanceof NistMirrorEvent && this.isEnabled) {
-            final long start = System.currentTimeMillis();
-            LOGGER.info("Starting NIST mirroring task");
-            final File mirrorPath = new File(NVD_MIRROR_DIR);
-            setOutputDir(mirrorPath.getAbsolutePath());
-            getAllFiles();
-            final long end = System.currentTimeMillis();
-            LOGGER.info("NIST mirroring complete");
-            LOGGER.info("Time spent (d/l):   " + metricDownloadTime + "ms");
-            LOGGER.info("Time spent (parse): " + metricParseTime + "ms");
-            LOGGER.info("Time spent (total): " + (end - start) + "ms");
+            if (isApiEnabled) {
+                LOGGER.info("Delegating to %s".formatted(NistApiMirrorTask.class.getSimpleName()));
+                new NistApiMirrorTask().inform(e);
+            } else {
+                final long start = System.currentTimeMillis();
+                LOGGER.info("Starting NIST mirroring task");
+                final File mirrorPath = new File(NVD_MIRROR_DIR);
+                setOutputDir(mirrorPath.getAbsolutePath());
+                getAllFiles();
+                final long end = System.currentTimeMillis();
+                LOGGER.info("NIST mirroring complete");
+                LOGGER.info("Time spent (d/l):   " + metricDownloadTime + "ms");
+                LOGGER.info("Time spent (parse): " + metricParseTime + "ms");
+                LOGGER.info("Time spent (total): " + (end - start) + "ms");
+            }
             Event.dispatch(new EpssMirrorEvent());
         }
     }

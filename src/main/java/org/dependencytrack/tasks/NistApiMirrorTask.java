@@ -34,6 +34,7 @@ import io.github.jeremylong.openvulnerability.client.nvd.Weakness;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.event.IndexEvent.Action;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.Vulnerability.Source;
@@ -79,6 +80,9 @@ public class NistApiMirrorTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(NistApiMirrorTask.class);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void inform(final Event e) {
         if (!(e instanceof NistMirrorEvent)) {
@@ -88,8 +92,6 @@ public class NistApiMirrorTask implements Subscriber {
         final String apiUrl, apiKey;
         final long lastModifiedEpochSeconds;
         try (final var qm = new QueryManager()) {
-            qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
-
             final ConfigProperty apiUrlProperty = qm.getConfigProperty(
                     VULNERABILITY_SOURCE_NVD_API_URL.getGroupName(),
                     VULNERABILITY_SOURCE_NVD_API_URL.getPropertyName()
@@ -119,22 +121,7 @@ public class NistApiMirrorTask implements Subscriber {
                     .orElse(0L);
         }
 
-        final NvdCveClientBuilder clientBuilder = aNvdCveApi().withEndpoint(apiUrl);
-        if (apiKey != null) {
-            clientBuilder.withApiKey(apiKey);
-        } else {
-            LOGGER.warn("No API key configured; Aggressive rate limiting to be expected");
-        }
-        if (lastModifiedEpochSeconds > 0) {
-            final var start = ZonedDateTime.ofInstant(Instant.ofEpochSecond(lastModifiedEpochSeconds), ZoneOffset.UTC);
-            clientBuilder.withLastModifiedFilter(start, start.minusDays(-120));
-            LOGGER.info("Mirroring CVEs that were modified since %s".formatted(start));
-        } else {
-            LOGGER.info("Mirroring CVEs that were modified since %s"
-                    .formatted(ZonedDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)));
-        }
-
-        try (final NvdCveClient client = clientBuilder.build()) {
+        try (final NvdCveClient client = createApiClient(apiUrl, apiKey, lastModifiedEpochSeconds)) {
             while (client.hasNext()) {
                 for (final DefCveItem defCveItem : client.next()) {
                     if (defCveItem.getCve() != null) {
@@ -143,7 +130,9 @@ public class NistApiMirrorTask implements Subscriber {
                 }
             }
 
-            updateLastModified(client.getLastUpdated());
+            if (updateLastModified(client.getLastUpdated())) {
+                Event.dispatch(new IndexEvent(Action.COMMIT, Vulnerability.class));
+            }
         } catch (Exception ex) {
             LOGGER.error("An unexpected error occurred while mirroring the contents of the National Vulnerability Database", ex);
         }
@@ -169,8 +158,6 @@ public class NistApiMirrorTask implements Subscriber {
             try {
                 trx.begin();
 
-                final IndexEvent indexEvent;
-
                 final Query<Vulnerability> query = pm.newQuery(Vulnerability.class);
                 query.setFilter("source == :source && vulnId == :vulnId");
                 query.setNamedParameters(Map.of(
@@ -184,9 +171,10 @@ public class NistApiMirrorTask implements Subscriber {
                     query.closeAll();
                 }
 
+                final IndexEvent indexEvent;
                 if (persistentVuln == null) {
                     persistentVuln = pm.makePersistent(vuln);
-                    indexEvent = new IndexEvent(IndexEvent.Action.CREATE, vuln);
+                    indexEvent = new IndexEvent(Action.CREATE, vuln);
                 } else {
                     var updated = false;
                     updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getTitle, persistentVuln::setTitle);
@@ -224,7 +212,7 @@ public class NistApiMirrorTask implements Subscriber {
 
                     if (updated) {
                         LOGGER.debug("%s has changed".formatted(vuln.getVulnId()));
-                        indexEvent = new IndexEvent(IndexEvent.Action.UPDATE, persistentVuln);
+                        indexEvent = new IndexEvent(Action.UPDATE, persistentVuln);
                     } else {
                         LOGGER.debug("%s has not changed".formatted(vuln.getVulnId()));
                         indexEvent = null;
@@ -368,10 +356,29 @@ public class NistApiMirrorTask implements Subscriber {
         }
     }
 
-    private static void updateLastModified(final ZonedDateTime lastModifiedDateTime) {
+    private static NvdCveClient createApiClient(final String apiUrl, final String apiKey, final long lastModifiedEpochSeconds) {
+        final NvdCveClientBuilder clientBuilder = aNvdCveApi().withEndpoint(apiUrl);
+        if (apiKey != null) {
+            clientBuilder.withApiKey(apiKey);
+        } else {
+            LOGGER.warn("No API key configured; Aggressive rate limiting to be expected");
+        }
+        if (lastModifiedEpochSeconds > 0) {
+            final var start = ZonedDateTime.ofInstant(Instant.ofEpochSecond(lastModifiedEpochSeconds), ZoneOffset.UTC);
+            clientBuilder.withLastModifiedFilter(start, start.minusDays(-120));
+            LOGGER.info("Mirroring CVEs that were modified since %s".formatted(start));
+        } else {
+            LOGGER.info("Mirroring CVEs that were modified since %s"
+                    .formatted(ZonedDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)));
+        }
+
+        return clientBuilder.build();
+    }
+
+    private static boolean updateLastModified(final ZonedDateTime lastModifiedDateTime) {
         if (lastModifiedDateTime == null) {
             // Nothing has changed.
-            return;
+            return false;
         }
 
         try (final var qm = new QueryManager().withL2CacheDisabled()) {
@@ -384,6 +391,8 @@ public class NistApiMirrorTask implements Subscriber {
                 property.setPropertyValue(String.valueOf(lastModifiedDateTime.toEpochSecond()));
             });
         }
+
+        return true;
     }
 
 }

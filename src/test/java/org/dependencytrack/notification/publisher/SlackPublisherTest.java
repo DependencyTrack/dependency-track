@@ -31,17 +31,194 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
+    public void testInformWithBomConsumedNotification() {
+        super.testInformWithBomConsumedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "BOM_CONSUMED"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*INFORMATIONAL*  |  *PORTFOLIO*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "Bill of Materials Consumed",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "A CycloneDX BOM was consumed and will be processed",
+                                "type": "plain_text"
+                              }
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
     public void testInformWithDataSourceMirroringNotification() {
         super.testInformWithDataSourceMirroringNotification();
 
-        // TODO
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "DATASOURCE_MIRRORING"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*ERROR*  |  *SYSTEM*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "GitHub Advisory Mirroring",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "An error occurred mirroring the contents of GitHub Advisories. Check log for details.",
+                                "type": "plain_text"
+                              }
+                            }
+                          ]
+                        }
+                        """)));
     }
 
     @Override
     public void testInformWithNewVulnerabilityNotification() {
         super.testInformWithNewVulnerabilityNotification();
 
-        // TODO
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "New Vulnerability"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*INFORMATIONAL*  |  *PORTFOLIO*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "New Vulnerability Identified",
+                                "type": "mrkdwn"
+                              },
+                              "fields": [
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*VulnID*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "INT-001"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Severity*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "MEDIUM"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Source*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "INTERNAL"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Component*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "componentName : componentVersion"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "actions",
+                              "elements": [
+                                {
+                                  "type": "button",
+                                  "text": {
+                                    "type": "plain_text",
+                                    "text": "View Vulnerability"
+                                  },
+                                  "action_id": "actionId-1",
+                                  "url": "https://example.com/vulnerabilities/INTERNAL/INT-001"
+                                },
+                                {
+                                  "type": "button",
+                                  "text": {
+                                    "type": "plain_text",
+                                    "text": "View Component"
+                                  },
+                                  "action_id": "actionId-2",
+                                  "url": "https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                        """)));
     }
 
     @Override

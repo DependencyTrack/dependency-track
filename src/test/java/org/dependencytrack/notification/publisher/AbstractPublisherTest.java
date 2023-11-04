@@ -24,6 +24,7 @@ import org.apache.commons.io.IOUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
@@ -33,6 +34,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
+import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.junit.Test;
 
@@ -55,6 +57,22 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
     AbstractPublisherTest(final DefaultNotificationPublishers publisher, final T publisherInstance) {
         this.publisher = publisher;
         this.publisherInstance = publisherInstance;
+    }
+
+    @Test
+    public void testInformWithBomConsumedNotification() {
+        final var subject = new BomConsumedOrProcessed(createProject(), "bomContent", Bom.Format.CYCLONEDX, "1.5");
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.BOM_CONSUMED)
+                .title(NotificationConstants.Title.BOM_CONSUMED)
+                .content("A CycloneDX BOM was consumed and will be processed")
+                .level(NotificationLevel.INFORMATIONAL)
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(notification, createConfig()));
     }
 
     @Test

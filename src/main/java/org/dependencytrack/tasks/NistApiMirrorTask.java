@@ -50,6 +50,9 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 import java.sql.Date;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -62,11 +65,14 @@ import java.util.stream.Stream;
 import static io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder.aNvdCveApi;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_KEY;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_URL;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.applyIfNonNullAndChanged;
 
 /**
+ * A {@link Subscriber} that mirrors the content of the NVD through the NVD API 2.0.
+ *
  * @since 4.10.0
  */
 public class NistApiMirrorTask implements Subscriber {
@@ -75,13 +81,12 @@ public class NistApiMirrorTask implements Subscriber {
 
     @Override
     public void inform(final Event e) {
-        if (e instanceof NistMirrorEvent) {
-            doMirror();
+        if (!(e instanceof NistMirrorEvent)) {
+            return;
         }
-    }
 
-    private void doMirror() {
         final String apiUrl, apiKey;
+        final long lastModifiedEpochSeconds;
         try (final var qm = new QueryManager()) {
             qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
 
@@ -93,6 +98,10 @@ public class NistApiMirrorTask implements Subscriber {
                     VULNERABILITY_SOURCE_NVD_API_KEY.getGroupName(),
                     VULNERABILITY_SOURCE_NVD_API_KEY.getPropertyName()
             );
+            final ConfigProperty lastModifiedProperty = qm.getConfigProperty(
+                    VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS.getGroupName(),
+                    VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS.getPropertyName()
+            );
 
             apiUrl = Optional.ofNullable(apiUrlProperty)
                     .map(ConfigProperty::getPropertyValue)
@@ -102,13 +111,27 @@ public class NistApiMirrorTask implements Subscriber {
                     .map(ConfigProperty::getPropertyValue)
                     .map(StringUtils::trimToNull)
                     .orElse(null);
+            lastModifiedEpochSeconds = Optional.ofNullable(lastModifiedProperty)
+                    .map(ConfigProperty::getPropertyValue)
+                    .map(StringUtils::trimToNull)
+                    .filter(StringUtils::isNumeric)
+                    .map(Long::parseLong)
+                    .orElse(0L);
         }
 
         final NvdCveClientBuilder clientBuilder = aNvdCveApi().withEndpoint(apiUrl);
         if (apiKey != null) {
             clientBuilder.withApiKey(apiKey);
         } else {
-            LOGGER.error("No API key provided");
+            LOGGER.warn("No API key configured; Aggressive rate limiting to be expected");
+        }
+        if (lastModifiedEpochSeconds > 0) {
+            final var start = ZonedDateTime.ofInstant(Instant.ofEpochSecond(lastModifiedEpochSeconds), ZoneOffset.UTC);
+            clientBuilder.withLastModifiedFilter(start, start.minusDays(-120));
+            LOGGER.info("Mirroring CVEs that were modified since %s".formatted(start));
+        } else {
+            LOGGER.info("Mirroring CVEs that were modified since %s"
+                    .formatted(ZonedDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)));
         }
 
         try (final NvdCveClient client = clientBuilder.build()) {
@@ -119,8 +142,10 @@ public class NistApiMirrorTask implements Subscriber {
                     }
                 }
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+
+            updateLastModified(client.getLastUpdated());
+        } catch (Exception ex) {
+            LOGGER.error("An unexpected error occurred while mirroring the contents of the National Vulnerability Database", ex);
         }
     }
 
@@ -340,6 +365,24 @@ public class NistApiMirrorTask implements Subscriber {
         } catch (CpeEncodingException e) {
             LOGGER.warn("Failed to encode CPE of %s; Skipping".formatted(cveId));
             return null;
+        }
+    }
+
+    private static void updateLastModified(final ZonedDateTime lastModifiedDateTime) {
+        if (lastModifiedDateTime == null) {
+            // Nothing has changed.
+            return;
+        }
+
+        try (final var qm = new QueryManager().withL2CacheDisabled()) {
+            qm.runInTransaction(() -> {
+                final ConfigProperty property = qm.getConfigProperty(
+                        VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS.getGroupName(),
+                        VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS.getPropertyName()
+                );
+
+                property.setPropertyValue(String.valueOf(lastModifiedDateTime.toEpochSecond()));
+            });
         }
     }
 

@@ -31,6 +31,21 @@ public class MattermostPublisherTest extends AbstractWebhookPublisherTest<Matter
     }
 
     @Override
+    public void testInformWithBomConsumedNotification() {
+        super.testInformWithBomConsumedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "username": "Dependency Track",
+                          "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                          "text": "#### Bill of Materials Consumed\\nA CycloneDX BOM was consumed and will be processed\\n**Project**: pkg:maven/org.acme/projectName@projectVersion\\n[View Project](https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95)"
+                        }
+                        """)));
+    }
+
+    @Override
     public void testInformWithDataSourceMirroringNotification() {
         super.testInformWithDataSourceMirroringNotification();
 

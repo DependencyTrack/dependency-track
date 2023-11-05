@@ -1328,12 +1328,17 @@ public class QueryManager extends AlpineQueryManager {
      */
     public void runInTransaction(final Runnable runnable) {
         final Transaction trx = pm.currentTransaction();
+        final boolean isJoiningExisting = trx.isActive();
         try {
-            trx.begin();
+            if (!isJoiningExisting) {
+                trx.begin();
+            }
             runnable.run();
-            trx.commit();
+            if (!isJoiningExisting) {
+                trx.commit();
+            }
         } finally {
-            if (trx.isActive()) {
+            if (!isJoiningExisting && trx.isActive()) {
                 trx.rollback();
             }
         }

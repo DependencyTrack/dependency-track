@@ -49,7 +49,6 @@ import us.springett.parsers.cpe.values.Part;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.Transaction;
 import java.sql.Date;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -125,7 +124,10 @@ public class NistApiMirrorTask implements Subscriber {
             while (client.hasNext()) {
                 for (final DefCveItem defCveItem : client.next()) {
                     if (defCveItem.getCve() != null) {
-                        processCve(defCveItem.getCve());
+                        try (final var qm = new QueryManager().withL2CacheDisabled()) {
+                            qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+                            processCve(qm, defCveItem.getCve());
+                        }
                     }
                 }
             }
@@ -138,100 +140,102 @@ public class NistApiMirrorTask implements Subscriber {
         }
     }
 
-    private void processCve(final CveItem cveItem) {
-        Vulnerability vuln = convertVulnerability(cveItem);
-
+    private static void processCve(final QueryManager qm, final CveItem cveItem) {
+        final Vulnerability vuln = convertVulnerability(cveItem);
         final List<VulnerableSoftware> vsList = extractCpeMatches(cveItem.getId(), cveItem.getConfigurations())
                 .map(cpeMatch -> convertCpeMatch(cveItem.getId(), cpeMatch))
                 .filter(Objects::nonNull)
                 .toList();
 
-        vuln = synchronizeVulnerability(vuln);
+        final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
+        synchronizeVulnerableSoftware(qm, persistentVuln, vsList);
     }
 
-    private static Vulnerability synchronizeVulnerability(final Vulnerability vuln) {
-        try (final var qm = new QueryManager().withL2CacheDisabled()) {
+    private static Vulnerability synchronizeVulnerability(final QueryManager qm, final Vulnerability vuln) {
+        final Pair<Vulnerability, IndexEvent> vulnIndexEventPair = qm.runInTransaction(() -> {
             final PersistenceManager pm = qm.getPersistenceManager();
-            pm.setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
-
-            Transaction trx = pm.currentTransaction();
+            final Query<Vulnerability> query = pm.newQuery(Vulnerability.class);
+            query.setFilter("source == :source && vulnId == :vulnId");
+            query.setNamedParameters(Map.of(
+                    "source", Source.NVD.name(),
+                    "vulnId", vuln.getVulnId()
+            ));
+            Vulnerability persistentVuln;
             try {
-                trx.begin();
-
-                final Query<Vulnerability> query = pm.newQuery(Vulnerability.class);
-                query.setFilter("source == :source && vulnId == :vulnId");
-                query.setNamedParameters(Map.of(
-                        "source", Source.NVD.name(),
-                        "vulnId", vuln.getVulnId()
-                ));
-                Vulnerability persistentVuln;
-                try {
-                    persistentVuln = query.executeUnique();
-                } finally {
-                    query.closeAll();
-                }
-
-                final IndexEvent indexEvent;
-                if (persistentVuln == null) {
-                    persistentVuln = pm.makePersistent(vuln);
-                    indexEvent = new IndexEvent(Action.CREATE, vuln);
-                } else {
-                    var updated = false;
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getTitle, persistentVuln::setTitle);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getSubTitle, persistentVuln::setSubTitle);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getDescription, persistentVuln::setDescription);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getDetail, persistentVuln::setDetail);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getRecommendation, persistentVuln::setRecommendation);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getReferences, persistentVuln::setReferences);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCredits, persistentVuln::setCredits);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCreated, persistentVuln::setCreated);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getPublished, persistentVuln::setPublished);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getUpdated, persistentVuln::setUpdated);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCwes, persistentVuln::setCwes);
-                    // Calling setSeverity nulls all CVSS and OWASP RR fields. getSeverity calculates the severity on-the-fly,
-                    // and will return UNASSIGNED even when no severity is set explicitly. Thus, calling setSeverity
-                    // must happen before CVSS and OWASP RR fields are set, to avoid null-ing them again.
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getSeverity, persistentVuln::setSeverity);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV2BaseScore, persistentVuln::setCvssV2BaseScore);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV2ImpactSubScore, persistentVuln::setCvssV2ImpactSubScore);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV2ExploitabilitySubScore, persistentVuln::setCvssV2ExploitabilitySubScore);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV2Vector, persistentVuln::setCvssV2Vector);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV3BaseScore, persistentVuln::setCvssV3BaseScore);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV3ImpactSubScore, persistentVuln::setCvssV3ImpactSubScore);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV3ExploitabilitySubScore, persistentVuln::setCvssV3ExploitabilitySubScore);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV3Vector, persistentVuln::setCvssV3Vector);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getOwaspRRLikelihoodScore, persistentVuln::setOwaspRRLikelihoodScore);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getOwaspRRTechnicalImpactScore, persistentVuln::setOwaspRRTechnicalImpactScore);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getOwaspRRBusinessImpactScore, persistentVuln::setOwaspRRBusinessImpactScore);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getOwaspRRVector, persistentVuln::setOwaspRRVector);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getVulnerableVersions, persistentVuln::setVulnerableVersions);
-                    updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getPatchedVersions, persistentVuln::setPatchedVersions);
-                    // EPSS is an additional enrichment that no source currently provides natively. We don't want EPSS scores of CVEs to be purged.
-                    updated |= applyIfNonNullAndChanged(persistentVuln, vuln, Vulnerability::getEpssScore, persistentVuln::setEpssScore);
-                    updated |= applyIfNonNullAndChanged(persistentVuln, vuln, Vulnerability::getEpssPercentile, persistentVuln::setEpssPercentile);
-
-                    if (updated) {
-                        LOGGER.debug("%s has changed".formatted(vuln.getVulnId()));
-                        indexEvent = new IndexEvent(Action.UPDATE, persistentVuln);
-                    } else {
-                        LOGGER.debug("%s has not changed".formatted(vuln.getVulnId()));
-                        indexEvent = null;
-                    }
-                }
-
-                trx.commit();
-
-                if (indexEvent != null) {
-                    Event.dispatch(indexEvent);
-                }
-
-                return persistentVuln;
+                persistentVuln = query.executeUnique();
             } finally {
-                if (trx.isActive()) {
-                    trx.rollback();
-                }
+                query.closeAll();
             }
+
+            if (persistentVuln == null) {
+                persistentVuln = pm.makePersistent(vuln);
+                return Pair.of(persistentVuln, new IndexEvent(Action.CREATE, persistentVuln));
+            } else {
+                var updated = false;
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getTitle, persistentVuln::setTitle);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getSubTitle, persistentVuln::setSubTitle);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getDescription, persistentVuln::setDescription);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getDetail, persistentVuln::setDetail);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getRecommendation, persistentVuln::setRecommendation);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getReferences, persistentVuln::setReferences);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCredits, persistentVuln::setCredits);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCreated, persistentVuln::setCreated);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getPublished, persistentVuln::setPublished);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getUpdated, persistentVuln::setUpdated);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCwes, persistentVuln::setCwes);
+                // Calling setSeverity nulls all CVSS and OWASP RR fields. getSeverity calculates the severity on-the-fly,
+                // and will return UNASSIGNED even when no severity is set explicitly. Thus, calling setSeverity
+                // must happen before CVSS and OWASP RR fields are set, to avoid null-ing them again.
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getSeverity, persistentVuln::setSeverity);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV2BaseScore, persistentVuln::setCvssV2BaseScore);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV2ImpactSubScore, persistentVuln::setCvssV2ImpactSubScore);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV2ExploitabilitySubScore, persistentVuln::setCvssV2ExploitabilitySubScore);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV2Vector, persistentVuln::setCvssV2Vector);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV3BaseScore, persistentVuln::setCvssV3BaseScore);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV3ImpactSubScore, persistentVuln::setCvssV3ImpactSubScore);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV3ExploitabilitySubScore, persistentVuln::setCvssV3ExploitabilitySubScore);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getCvssV3Vector, persistentVuln::setCvssV3Vector);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getOwaspRRLikelihoodScore, persistentVuln::setOwaspRRLikelihoodScore);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getOwaspRRTechnicalImpactScore, persistentVuln::setOwaspRRTechnicalImpactScore);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getOwaspRRBusinessImpactScore, persistentVuln::setOwaspRRBusinessImpactScore);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getOwaspRRVector, persistentVuln::setOwaspRRVector);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getVulnerableVersions, persistentVuln::setVulnerableVersions);
+                updated |= applyIfChanged(persistentVuln, vuln, Vulnerability::getPatchedVersions, persistentVuln::setPatchedVersions);
+                // EPSS is an additional enrichment that no source currently provides natively. We don't want EPSS scores of CVEs to be purged.
+                updated |= applyIfNonNullAndChanged(persistentVuln, vuln, Vulnerability::getEpssScore, persistentVuln::setEpssScore);
+                updated |= applyIfNonNullAndChanged(persistentVuln, vuln, Vulnerability::getEpssPercentile, persistentVuln::setEpssPercentile);
+
+                if (updated) {
+                    LOGGER.debug("%s has changed".formatted(vuln.getVulnId()));
+                    return Pair.of(persistentVuln, new IndexEvent(Action.UPDATE, persistentVuln));
+                }
+
+                LOGGER.debug("%s has not changed".formatted(vuln.getVulnId()));
+                return Pair.of(persistentVuln, null);
+            }
+        });
+
+        final IndexEvent indexEvent = vulnIndexEventPair.getRight();
+        final Vulnerability persistentVuln = vulnIndexEventPair.getLeft();
+
+        if (indexEvent != null) {
+            Event.dispatch(indexEvent);
         }
+
+        return persistentVuln;
+    }
+
+    private static void synchronizeVulnerableSoftware(final QueryManager qm, final Vulnerability persistentVuln,
+                                                      final List<VulnerableSoftware> vsList) {
+        qm.runInTransaction(() -> {
+            final PersistenceManager pm = qm.getPersistenceManager();
+            final List<VulnerableSoftware> persistentVsListOld = List.copyOf(pm.detachCopyAll(qm.getVulnerableSoftwareByVulnId(Source.NVD.name(), persistentVuln.getVulnId())));
+            final List<VulnerableSoftware> persistentVsList = (List<VulnerableSoftware>) pm.makePersistentAll(vsList);
+            qm.updateAffectedVersionAttributions(persistentVuln, persistentVsList, Source.NVD);
+            final List<VulnerableSoftware> reconciledPersistentVsList =
+                    qm.reconcileVulnerableSoftware(persistentVuln, persistentVsList, persistentVsListOld, Source.NVD);
+            persistentVuln.setVulnerableSoftware(reconciledPersistentVsList);
+        });
     }
 
     private static Vulnerability convertVulnerability(final CveItem cveItem) {

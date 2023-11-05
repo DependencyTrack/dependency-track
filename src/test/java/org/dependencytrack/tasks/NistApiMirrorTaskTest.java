@@ -21,14 +21,23 @@ package org.dependencytrack.tasks;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_URL;
 
 public class NistApiMirrorTaskTest extends PersistenceCapableTest {
 
     @Before
     public void setUp() {
+        qm.createConfigProperty(
+                VULNERABILITY_SOURCE_NVD_API_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_NVD_API_ENABLED.getPropertyName(),
+                "true",
+                VULNERABILITY_SOURCE_NVD_API_ENABLED.getPropertyType(),
+                VULNERABILITY_SOURCE_NVD_API_ENABLED.getDescription()
+        );
         qm.createConfigProperty(
                 VULNERABILITY_SOURCE_NVD_API_URL.getGroupName(),
                 VULNERABILITY_SOURCE_NVD_API_URL.getPropertyName(),
@@ -39,6 +48,7 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    @Ignore // For manual testing only
     public void test() {
         new NistApiMirrorTask().inform(new NistMirrorEvent());
     }

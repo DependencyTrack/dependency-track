@@ -1,0 +1,10 @@
+---
+scrape_configs:
+- job_name: apiserver
+  scrape_interval: 15s
+  scheme: http
+  dns_sd_configs:
+  - names:
+    - apiserver
+    type: A
+    port: 8080

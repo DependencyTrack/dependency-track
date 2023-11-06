@@ -26,6 +26,7 @@ import com.github.packageurl.PackageURL;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
@@ -35,6 +36,7 @@ import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
@@ -44,6 +46,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ComponentResourceTest extends ResourceTest {
@@ -431,6 +435,42 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getComponentByHashWithAclTest() {
+        // Enable portfolio access control.
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                null
+        );
+
+        // Create project and give access to current principal's team.
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setActive(true);
+        project.setAccessTeams(List.of(team));
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
+        qm.persist(component);
+
+        final Response response = target("%s/hash/%s".formatted(V1_COMPONENT, component.getSha1()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[0].name")
+                .isEqualTo("acme-lib");
+    }
+
+    @Test
     public void createComponentTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
@@ -515,6 +555,48 @@ public class ComponentResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(component, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
+    }
+
+    @Test
+    public void updateComponentInvalidLicenseExpressionTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var jsonComponent = new Component();
+        jsonComponent.setName("acme-lib");
+        jsonComponent.setVersion("1.0.0");
+        jsonComponent.setLicenseExpression("(invalid");
+
+        final Response response = target(V1_COMPONENT).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity("""
+                        {
+                          "uuid": "%s",
+                          "name": "acme-lib",
+                          "version": "1.0.0",
+                          "licenseExpression": "(invalid"
+                        }
+                        """.formatted(component.getUuid()), MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).
+                isEqualTo("""
+                        [
+                          {
+                            "message": "The license expression must be a valid SPDX expression",
+                            "messageTemplate": "The license expression must be a valid SPDX expression",
+                            "path": "licenseExpression",
+                            "invalidValue": "(invalid"
+                          }
+                        ]
+                        """);
     }
 
     @Test

@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
+import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.util.BomLink;
@@ -37,6 +38,8 @@ import org.dependencytrack.util.AnalysisCommentUtil;
 import java.util.List;
 
 public class CycloneDXVexImporter {
+
+    private static final Logger LOGGER = Logger.getLogger(CycloneDXVexImporter.class);
 
     private static final String COMMENTER = "CycloneDX VEX";
 
@@ -75,6 +78,8 @@ public class CycloneDXVexImporter {
                             // TODO add VEX support for services
                         }
                     }
+                } else {
+                    LOGGER.warn("Analysis data for vulnerability "+cdxVuln.getId()+" will be ignored because either the source is missing or there is a source/vulnid mismatch between VEX and Dependency Track database.");
                 }
             }
         }

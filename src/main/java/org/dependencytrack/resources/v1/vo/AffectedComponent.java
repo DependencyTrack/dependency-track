@@ -96,15 +96,18 @@ public class AffectedComponent {
                 LOGGER.warn("Error assembling PURL", e);
             }
         }
-        if (vs.getVersion() != null) {
-            versionType = VersionType.EXACT;
-            version = vs.getVersion();
-        } else {
+        if (vs.getVersionStartIncluding() != null
+                || vs.getVersionStartExcluding() != null
+                || vs.getVersionEndIncluding() != null
+                || vs.getVersionEndExcluding() != null) {
             versionType = VersionType.RANGE;
             versionEndExcluding = vs.getVersionEndExcluding();
             versionEndIncluding = vs.getVersionEndIncluding();
             versionStartExcluding = vs.getVersionStartExcluding();
             versionStartIncluding = vs.getVersionStartIncluding();
+        } else if (vs.getVersion() != null) {
+            versionType = VersionType.EXACT;
+            version = vs.getVersion();
         }
         if (vs.getAffectedVersionAttributions() != null) {
             affectedVersionAttributions = vs.getAffectedVersionAttributions();

@@ -2,15 +2,14 @@ name: Dependency Review
 on:
   pull_request:
 
-permissions:
-  contents: read
+permissions: { }
 
 jobs:
   dependency-review:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # tag=v4.1.1
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@v3
+        uses: actions/dependency-review-action@9f45b2463b475767b61721ccfef113fef513e6aa # tag=v3.1.1

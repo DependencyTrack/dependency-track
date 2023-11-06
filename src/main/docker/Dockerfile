@@ -1,6 +1,6 @@
-FROM eclipse-temurin:17.0.7_7-jre-focal@sha256:20534a45cc565ac436593164c7f986f9499aa981b5bb8d936a11fcc25e41c55a AS jre-build
+FROM eclipse-temurin:21.0.1_12-jre-jammy@sha256:8e6ea561ce4b5e02960b16f2578b3db4758f1d47a479de2194cd10f8e25df2d1 AS jre-build
 
-FROM debian:bullseye-20230612-slim@sha256:924df86f8aad741a0134b2de7d8e70c5c6863f839caadef62609c1be1340daf5
+FROM debian:stable-slim@sha256:1529b15b786397b4695b1685d4e37b3dde62420862c0546fa364d0e889473c20
 
 # Arguments that can be passed at build time
 # Directory names must end with / to avoid errors when ADDing and COPYing
@@ -32,7 +32,8 @@ ENV TZ=Etc/UTC \
     HOME=${DATA_DIR} \
     # Default notification publisher templates override environment variables
     DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false \
-    DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=${DATA_DIR}
+    DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=${DATA_DIR} \
+    LOGGING_CONFIG_PATH="logback.xml"
 
 # Create the directories where the WAR will be deployed to (${APP_DIR}) and Dependency-Track will store its data (${DATA_DIR})
 # Create a user and assign home directory to a ${DATA_DIR}
@@ -52,7 +53,7 @@ RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
 COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
 
 # Copy the compiled WAR to the application directory created above
-COPY ./target/${WAR_FILENAME} ${APP_DIR}
+COPY ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ${APP_DIR}
 
 # Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
 USER ${UID}
@@ -61,7 +62,12 @@ USER ${UID}
 WORKDIR ${APP_DIR}
 
 # Launch Dependency-Track
-CMD exec java ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} --add-opens java.base/java.util.concurrent=ALL-UNNAMED -DdependencyTrack.logging.level=${LOGGING_LEVEL} -jar ${WAR_FILENAME} -context ${CONTEXT}
+CMD exec java ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
+    --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
+    -Dlogback.configurationFile=${LOGGING_CONFIG_PATH} \
+    -DdependencyTrack.logging.level=${LOGGING_LEVEL} \
+    -jar ${WAR_FILENAME} \
+    -context ${CONTEXT}
 
 # Specify which port Dependency-Track listens on
 EXPOSE 8080

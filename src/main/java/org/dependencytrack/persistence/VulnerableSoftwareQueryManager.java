@@ -18,16 +18,14 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.event.framework.Event;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.h2.util.StringUtils;
+import us.springett.parsers.cpe.values.LogicalValue;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -53,71 +51,6 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      */
     VulnerableSoftwareQueryManager(final PersistenceManager pm, final AlpineRequest request) {
         super(pm, request);
-    }
-
-    /**
-     * Synchronize a Cpe, updating it if it needs updating, or creating it if it doesn't exist.
-     * @param cpe the Cpe object to synchronize
-     * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @return a synchronize Cpe object
-     */
-    public Cpe synchronizeCpe(Cpe cpe, boolean commitIndex) {
-        Cpe result = getCpeBy23(cpe.getCpe23());
-        if (result == null) {
-            result = persist(cpe);
-            Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
-            commitSearchIndex(commitIndex, Cpe.class);
-        }
-        return result;
-    }
-
-    /**
-     * Returns a CPE by it's CPE v2.3 string.
-     * @param cpe23 the CPE 2.3 string
-     * @return a CPE object, or null if not found
-     */
-    public Cpe getCpeBy23(String cpe23) {
-        final Query<Cpe> query = pm.newQuery(Cpe.class, "cpe23 == :cpe23");
-        query.setRange(0, 1);
-        return singleResult(query.execute(cpe23));
-    }
-
-    /**
-     * Returns a List of all CPE objects.
-     * @return a List of all CPE objects
-     */
-    public PaginatedResult getCpes() {
-        final Query<Cpe> query = pm.newQuery(Cpe.class);
-        if (orderBy == null) {
-            query.setOrdering("id asc");
-        }
-        if (filter != null) {
-            query.setFilter("vendor.toLowerCase().matches(:filter) || product.toLowerCase().matches(:filter)");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, filterString);
-        }
-        return execute(query);
-    }
-
-    /**
-     * Returns a List of all CPE objects that match the specified CPE (v2.2 or v2.3) uri.
-     * @return a List of matching CPE objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<Cpe> getCpes(final String cpeString) {
-        final Query<Cpe> query = pm.newQuery(Cpe.class, "cpe23 == :cpeString || cpe22 == :cpeString");
-        return (List<Cpe>)query.execute(cpeString);
-    }
-
-    /**
-     * Returns a List of all CPE objects that match the specified vendor/product/version.
-     * @return a List of matching CPE objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<Cpe> getCpes(final String part, final String vendor, final String product, final String version) {
-        final Query<Cpe> query = pm.newQuery(Cpe.class);
-        query.setFilter("part == :part && vendor == :vendor && product == :product && version == :version");
-        return (List<Cpe>)query.executeWithArray(part, vendor, product, version);
     }
 
     /**
@@ -239,43 +172,145 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     }
 
     /**
-     * Returns a List of all VulnerableSoftware objects that match the specified vendor/product/version.
-     * @return a List of matching VulnerableSoftware objects
+     * Fetch all {@link VulnerableSoftware}s matching the given CPE part, vendor, product, or Package URL.
+     * <p>
+     * This method will not query for <em>exact</em> matches of the given CPE attributes,
+     * but instead follow the CPE name matching specification.
+     *
+     * @param cpePart    The part attribute of the target CPE
+     * @param cpeVendor  The vendor attribute of the target CPE
+     * @param cpeProduct The product attribute of the target CPE
+     * @param purl       The Package URL
+     * @return A {@link List} of all matching {@link VulnerableSoftware}s
      */
-    @SuppressWarnings("unchecked")
-    public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final String cpeVersion, final PackageURL purl) {
-        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
-        query.setFilter("(part == :part && vendor == :vendor && product == :product && version == :version) || (purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && purlVersion == :purlVersion)");
-        return (List<VulnerableSoftware>)query.executeWithArray(cpePart, cpeVendor, cpeProduct, cpeVersion, purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion());
-    }
+    public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor,
+                                                             final String cpeProduct, final PackageURL purl) {
+        var queryFilterParts = new ArrayList<String>();
+        var queryParams = new HashMap<String, Object>();
 
-    /**
-     * Returns a List of all VulnerableSoftware objects that match the specified vendor/product.
-     * @return a List of matching VulnerableSoftware objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<VulnerableSoftware> getAllVulnerableSoftware(final String part, final String vendor, final String product, final PackageURL purl) {
-        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
-        String filter = "";
-        boolean cpeSpecified = (part != null && vendor != null && product != null);
-        if (cpeSpecified) {
-            filter += "(part == :part && vendor == :vendor && product == :product)";
+        if (cpePart != null && cpeVendor != null && cpeProduct != null) {
+            final var cpeQueryFilterParts = new ArrayList<String>();
+
+            // The query composition below represents a partial implementation of the CPE
+            // matching logic. It makes references to table 6-2 of the CPE name matching
+            // specification: https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf
+            //
+            // In CPE matching terms, the parameters of this method represent the target,
+            // and the `VulnerableSoftware`s in the database represent the source.
+            //
+            // While the source *can* contain wildcards ("*", "?"), there is currently (Oct. 2023)
+            // no occurrence of part, vendor, or product with wildcards in the NVD database.
+            // Evaluating wildcards in the source can only be done in-memory. If we wanted to do that,
+            // we'd have to fetch *all* records, which is not practical.
+
+            if (!LogicalValue.ANY.getAbbreviation().equals(cpePart)
+                    && !LogicalValue.NA.getAbbreviation().equals(cpePart)) {
+                // | No. | Source A-V      | Target A-V | Relation             |
+                // | :-- | :-------------- | :--------- | :------------------- |
+                // | 3   | ANY             | i          | SUPERSET             |
+                // | 7   | NA              | i          | DISJOINT             |
+                // | 9   | i               | i          | EQUAL                |
+                // | 10  | i               | k          | DISJOINT             |
+                // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
+                // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
+                //   Can't currently do this as it would require an index on UPPER("PART"),
+                //   which we cannot add through JDO annotations.
+                cpeQueryFilterParts.add("(part == '*' || part == :part)");
+                queryParams.put("part", cpePart);
+
+                // NOTE: Target *could* include wildcard, but the relation
+                // for those cases is undefined:
+                //
+                // | No. | Source A-V      | Target A-V      | Relation   |
+                // | :-- | :-------------- | :-------------- | :--------- |
+                // | 4   | ANY             | m + wild cards  | undefined  |
+                // | 8   | NA              | m + wild cards  | undefined  |
+                // | 11  | i               | m + wild cards  | undefined  |
+                // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
+            } else if (LogicalValue.NA.getAbbreviation().equals(cpePart)) {
+                // | No. | Source A-V     | Target A-V | Relation |
+                // | :-- | :------------- | :--------- | :------- |
+                // | 2   | ANY            | NA         | SUPERSET |
+                // | 6   | NA             | NA         | EQUAL    |
+                // | 12  | i              | NA         | DISJOINT |
+                // | 16  | m + wild cards | NA         | DISJOINT |
+                cpeQueryFilterParts.add("(part == '*' || part == '-')");
+            } else {
+                // | No. | Source A-V     | Target A-V | Relation |
+                // | :-- | :------------- | :--------- | :------- |
+                // | 1   | ANY            | ANY        | EQUAL    |
+                // | 5   | NA             | ANY        | SUBSET   |
+                // | 13  | i              | ANY        | SUPERSET |
+                // | 15  | m + wild cards | ANY        | SUPERSET |
+                cpeQueryFilterParts.add("part != null");
+            }
+
+            if (!LogicalValue.ANY.getAbbreviation().equals(cpeVendor)
+                    && !LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
+                // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
+                //   Can't currently do this as it would require an index on UPPER("VENDOR"),
+                //   which we cannot add through JDO annotations.
+                cpeQueryFilterParts.add("(vendor == '*' || vendor == :vendor)");
+                queryParams.put("vendor", cpeVendor);
+            } else if (LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
+                cpeQueryFilterParts.add("(vendor == '*' || vendor == '-')");
+            } else {
+                cpeQueryFilterParts.add("vendor != null");
+            }
+
+            if (!LogicalValue.ANY.getAbbreviation().equals(cpeProduct)
+                    && !LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
+                // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
+                //   Can't currently do this as it would require an index on UPPER("PRODUCT"),
+                //   which we cannot add through JDO annotations.
+                cpeQueryFilterParts.add("(product == '*' || product == :product)");
+                queryParams.put("product", cpeProduct);
+            } else if (LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
+                cpeQueryFilterParts.add("(product == '*' || product == '-')");
+            } else {
+                cpeQueryFilterParts.add("product != null");
+            }
+
+            queryFilterParts.add("(%s)".formatted(String.join(" && ", cpeQueryFilterParts)));
         }
-        if (cpeSpecified && purl != null) {
-            filter += " || ";
-        }
+
         if (purl != null) {
-            filter += "(purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName)";
+            final var purlFilterParts = new ArrayList<String>();
+
+            // Use explicit null matching to avoid bypassing of the query compilation cache.
+            // https://github.com/DependencyTrack/dependency-track/issues/2540
+
+            if (purl.getType() != null) {
+                purlFilterParts.add("purlType == :purlType");
+                queryParams.put("purlType", purl.getType());
+            } else {
+                purlFilterParts.add("purlType == null");
+            }
+
+            if (purl.getNamespace() != null) {
+                purlFilterParts.add("purlNamespace == :purlNamespace");
+                queryParams.put("purlNamespace", purl.getNamespace());
+            } else {
+                purlFilterParts.add("purlNamespace == null");
+            }
+
+            if (purl.getName() != null) {
+                purlFilterParts.add("purlName == :purlName");
+                queryParams.put("purlName", purl.getName());
+            } else {
+                purlFilterParts.add("purlName == null");
+            }
+
+            queryFilterParts.add("(%s)".formatted(String.join(" && ", purlFilterParts)));
         }
-        query.setFilter(filter);
-        if (cpeSpecified && purl != null) {
-            return (List<VulnerableSoftware>)query.executeWithArray(part, vendor, product, purl.getType(), purl.getNamespace(), purl.getName());
-        } else if (cpeSpecified) {
-            return (List<VulnerableSoftware>)query.executeWithArray(part, vendor, product);
-        } else if (purl != null) {
-            return (List<VulnerableSoftware>)query.executeWithArray(purl.getType(), purl.getNamespace(), purl.getName());
-        } else {
-            return new ArrayList<>();
+
+        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
+        query.setFilter(String.join(" || ", queryFilterParts));
+        query.setNamedParameters(queryParams);
+        try {
+            return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
         }
     }
 

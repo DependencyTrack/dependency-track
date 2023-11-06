@@ -21,41 +21,26 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.37.8
-    entrypoint: /bin/sh
-    command:
-    - -c
-    - >-
-      echo -e "$$PROMETHEUS_CONFIG_FILE" > /etc/prometheus/prometheus.yml;
-      /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus
-    environment:
-      PROMETHEUS_CONFIG_FILE: |-
-        scrape_configs:
-        - job_name: dtrack-apiserver
-          scrape_interval: 15s
-          scheme: http
-          dns_sd_configs:
-          - names:
-            - apiserver
-            type: A
-            port: 8080
     ports:
     - "127.0.0.1:9090:9090"
     volumes:
+    - "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
     - "prometheus-data:/prometheus"
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana-oss:9.5.2
+    image: grafana/grafana-oss:9.5.5
     depends_on:
     - prometheus
     environment:
-      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
-      GF_AUTH_ANONYMOUS_ENABLED: "true"
-      GF_AUTH_BASIC_ENABLED: "false"
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
     ports:
     - "127.0.0.1:3000:3000"
     volumes:
     - "grafana-data:/var/lib/grafana"
+    - "./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"
+    - "./monitoring/grafana/dashboards:/etc/dashboards:ro"
     restart: unless-stopped
 
 volumes:

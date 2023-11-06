@@ -117,6 +117,50 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
+    public void createPolicySpecifyOperatorAndViolationStateTest() {
+        final Policy policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ALL);
+        policy.setViolationState(Policy.ViolationState.FAIL);
+
+        final Response response = target(V1_POLICY)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(policy, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+        assertThat(json.getString("name")).isEqualTo("policy");
+        assertThat(json.getString("operator")).isEqualTo("ALL");
+        assertThat(json.getString("violationState")).isEqualTo("FAIL");
+        assertThat(UuidUtil.isValidUUID(json.getString("uuid")));
+        assertThat(json.getBoolean("includeChildren")).isEqualTo(false);
+    }
+
+    @Test
+    public void createPolicyUseDefaultValueTest() {
+        final Policy policy = new Policy();
+        policy.setName("policy");
+
+        final Response response = target(V1_POLICY)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(policy, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+        assertThat(json.getString("name")).isEqualTo("policy");
+        assertThat(json.getString("operator")).isEqualTo("ANY");
+        assertThat(json.getString("violationState")).isEqualTo("INFO");
+        assertThat(UuidUtil.isValidUUID(json.getString("uuid")));
+        assertThat(json.getBoolean("includeChildren")).isEqualTo(false);
+    }
+
+    @Test
     public void updatePolicyTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
 

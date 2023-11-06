@@ -63,6 +63,11 @@ public class ComponentAgePolicyEvaluator extends AbstractPolicyEvaluator {
             return violations;
         }
 
+        final List<PolicyCondition> policyConditions = super.extractSupportedConditions(policy);
+        if (policyConditions.isEmpty()) {
+            return violations;
+        }
+
         final RepositoryType repoType = RepositoryType.resolve(component.getPurl());
         if (RepositoryType.UNSUPPORTED == repoType) {
             return violations;
@@ -111,7 +116,7 @@ public class ComponentAgePolicyEvaluator extends AbstractPolicyEvaluator {
             case NUMERIC_EQUAL -> ageDate.isEqual(today);
             case NUMERIC_NOT_EQUAL -> !ageDate.isEqual(today);
             case NUMERIC_LESSER_THAN_OR_EQUAL -> ageDate.isEqual(today) || ageDate.isAfter(today);
-            case NUMERIC_LESS_THAN -> ageDate.isAfter(LocalDate.now());
+            case NUMERIC_LESS_THAN -> ageDate.isAfter(today);
             default -> {
                 LOGGER.warn("Operator %s is not supported for component age conditions".formatted(condition.getOperator()));
                 yield false;

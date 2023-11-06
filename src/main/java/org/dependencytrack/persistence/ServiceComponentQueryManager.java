@@ -25,12 +25,14 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
+import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 final class ServiceComponentQueryManager extends QueryManager implements IQueryManager {
 
@@ -103,7 +105,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
      */
     public ServiceComponent createServiceComponent(ServiceComponent service, boolean commitIndex) {
         final ServiceComponent result = persist(service);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, ServiceComponent.class);
         return result;
     }
@@ -210,7 +212,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
         service.setNotes(sourceService.getNotes());
         service.setVulnerabilities(sourceService.getVulnerabilities());
         service.setProject(destinationProject);
-        return createServiceComponent(sourceService, commitIndex);
+        return createServiceComponent(service, commitIndex);
     }
 
     /**
@@ -226,7 +228,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
         service.setGroup(transientServiceComponent.getGroup());
         service.setDescription(transientServiceComponent.getDescription());
         final ServiceComponent result = persist(service);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, ServiceComponent.class);
         return result;
     }
@@ -253,7 +255,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final ServiceComponent result = pm.getObjectById(ServiceComponent.class, service.getId());
-        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, result));
         // TODO: Add these in when these features are supported by service components
         //deleteAnalysisTrail(service);
         //deleteViolationAnalysisTrail(service);
@@ -262,5 +264,17 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
         //deletePolicyViolations(service);
         delete(service);
         commitSearchIndex(commitIndex, ServiceComponent.class);
+    }
+
+    /**
+     * Returns a list of all {@link DependencyGraphResponse} objects by {@link ServiceComponent} UUID.
+     * @param uuids a list of {@link ServiceComponent} UUIDs
+     * @return a list of {@link DependencyGraphResponse} objects
+     * @since 4.9.0
+     */
+    public List<DependencyGraphResponse> getDependencyGraphByUUID(final List<UUID> uuids) {
+        final Query<ServiceComponent> query = this.getObjectsByUuidsQuery(ServiceComponent.class, uuids);
+        query.setResult("uuid, name, version, null, null, null");
+        return List.copyOf(query.executeResultList(DependencyGraphResponse.class));
     }
 }

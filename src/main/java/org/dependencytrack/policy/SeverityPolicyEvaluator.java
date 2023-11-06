@@ -52,6 +52,9 @@ public class SeverityPolicyEvaluator extends AbstractPolicyEvaluator {
     public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
         final List<PolicyConditionViolation> violations = new ArrayList<>();
         final List<PolicyCondition> policyConditions = super.extractSupportedConditions(policy);
+        if (policyConditions.isEmpty()) {
+            return violations;
+        }
         //final Component component = qm.getObjectById(Component.class, c.getId());
         for (final Vulnerability vulnerability : qm.getAllVulnerabilities(component, false)) {
             for (final PolicyCondition condition: policyConditions) {

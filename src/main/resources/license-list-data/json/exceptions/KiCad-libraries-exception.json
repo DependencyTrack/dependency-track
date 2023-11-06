@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "To the extent that the creation of electronic designs that use \u0027Licensed Material\u0027 can be considered to be \u0027Adapted Material\u0027, then the copyright holder waives article 3 of the license with respect to these designs and any generated files which use data provided as part of the \u0027Licensed Material\u0027.\n",
+  "name": "KiCad Libraries Exception",
+  "licenseComments": "Typically used with CC-BY-SA-4.0",
+  "seeAlso": [
+    "https://www.kicad.org/libraries/license/"
+  ],
+  "licenseExceptionId": "KiCad-libraries-exception",
+  "licenseExceptionTemplate": "To the extent that the creation of electronic designs that use \u0027Licensed Material\u0027 can be considered to be \u0027Adapted Material\u0027, then the copyright holder waives article 3 of the license with respect to these designs and any generated files which use data provided as part of the \u0027Licensed Material\u0027.\n\n",
+  "exceptionTextHtml": "\n      \u003cp\u003eTo the extent that the creation of electronic designs that use \u0026apos;Licensed Material\u0026apos; can be considered to be \u0026apos;Adapted Material\u0026apos;, then the copyright holder waives article 3 of the license with respect to these designs and any generated files which use data provided as part of the \u0026apos;Licensed Material\u0026apos;.\u003c/p\u003e\n\n    "
+}

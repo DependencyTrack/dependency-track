@@ -52,7 +52,7 @@ public class CweImporter {
 
     public void processCweDefinitions() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException {
         try (QueryManager qm = new QueryManager();
-                InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("nist/cwec_v4.6.xml")) {
+                InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("nist/cwec_v4.12.xml")) {
 
             LOGGER.info("Synchronizing CWEs with datastore");
 

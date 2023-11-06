@@ -67,8 +67,15 @@ public class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
         license.setUuid(UUID.randomUUID());
         license = qm.persist(license);
 
+        License otherLicense = new License();
+        otherLicense.setName("WTFPL");
+        otherLicense.setLicenseId("WTFPL");
+        otherLicense.setUuid(UUID.randomUUID());
+        otherLicense = qm.persist(otherLicense);
+
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, UUID.randomUUID().toString());
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS,
+                otherLicense.getUuid().toString());
         Component component = new Component();
         component.setResolvedLicense(license);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);

@@ -72,7 +72,12 @@ public class CycloneDXExporter {
         return create(components, null, null, null);
     }
 
-    private Bom create(final List<Component>components, final List<ServiceComponent> services, final List<Finding> findings, final Project project) {
+    private Bom create(List<Component> components, final List<ServiceComponent> services, final List<Finding> findings, final Project project) {
+        if (Variant.VDR == variant) {
+            components = components.stream()
+                    .filter(component -> !component.getVulnerabilities().isEmpty())
+                    .toList();
+        }
         final List<org.cyclonedx.model.Component> cycloneComponents = (Variant.VEX != variant && components != null) ? components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList()) : null;
         final List<org.cyclonedx.model.Service> cycloneServices = (Variant.VEX != variant && services != null) ? services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList()) : null;
         final List<org.cyclonedx.model.vulnerability.Vulnerability> cycloneVulnerabilities = (findings != null) ? findings.stream().map(finding -> ModelConverter.convert(qm, variant, finding)).collect(Collectors.toList()) : null;
@@ -83,7 +88,7 @@ public class CycloneDXExporter {
         bom.setComponents(cycloneComponents);
         bom.setServices(cycloneServices);
         bom.setVulnerabilities(cycloneVulnerabilities);
-        if (components != null) {
+        if (cycloneComponents != null) {
             bom.setDependencies(ModelConverter.generateDependencies(project, components));
         }
         return bom;

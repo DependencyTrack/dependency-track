@@ -113,7 +113,7 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
      */
     private License createLicense(License license, boolean commitIndex) {
         final License result = persist(license);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, License.class);
         return result;
     }
@@ -145,7 +145,7 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
             license.setSeeAlso(transientLicense.getSeeAlso());
 
             final License result = persist(license);
-            Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+            Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
             commitSearchIndex(commitIndex, License.class);
             return result;
         }
@@ -175,7 +175,7 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
     public License createCustomLicense(License license, boolean commitIndex) {
         license.setCustomLicense(true);
         final License result = persist(license);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, License.class);
         return result;
     }

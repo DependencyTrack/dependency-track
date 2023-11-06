@@ -24,7 +24,7 @@ There are a few things you'll need on your journey:
 * Docker (optional)
 
 > We provide common [run configurations](https://www.jetbrains.com/help/idea/run-debug-configuration.html) for IntelliJ 
-> in the [`.run`](./.run) directory for convenience. IntelliJ will automatically pick those up when you open this repository.
+> in the [`.idea/runConfigurations`](./.idea/runConfigurations) directory for convenience. IntelliJ will automatically pick those up when you open this repository.
 
 ## Core Technologies
 
@@ -84,7 +84,7 @@ mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 > Note that the `bundle-ui` profile has no effect using this method. 
 > It works only for the API server, not the bundled distribution.
 
-The above command is also suitable for debugging. For IntelliJ, simply *Debug* the [Jetty](./.run/Jetty.run.xml) run configuration.
+The above command is also suitable for debugging. For IntelliJ, simply *Debug* the [Jetty](./.idea/runConfigurations/Jetty.run.xml) run configuration.
 
 ### Inspecting the database
 
@@ -257,8 +257,14 @@ cd dev
 docker compose -f docker-compose.yml -f docker-compose.postgres.yml -f docker-compose.monitoring.yml up -d
 ```
 
-Prometheus should automatically discover the API server's metrics. To visualize them, follow the instructions
-for setting up the sample Grafana dashboard in the [docs](https://docs.dependencytrack.org/getting-started/monitoring/#grafana-dashboard).
+Prometheus will automatically discover the API server's metrics. Grafana is configured to provision Prometheus
+as datasource, and import the [sample dashboard](https://docs.dependencytrack.org/getting-started/monitoring/#grafana-dashboard)
+on startup.
+
+To view the dashboard, visit http://localhost:3000 in your browser. The initial Grafana credentials are:
+
+* Username: `admin`
+* Password: `admin`
 
 ## DataNucleus Bytecode Enhancement
 

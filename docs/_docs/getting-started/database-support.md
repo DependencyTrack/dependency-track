@@ -47,6 +47,14 @@ alpine.database.username=dtrack
 alpine.database.password=password
 ```
 
+It is recommended to set the default transaction isolation for the Dependency-Track database to
+`READ_COMMITTED_SNAPSHOT` in order to avoid deadlocks. This can be achieved by executing the following
+SQL statement:
+
+```sql
+ALTER DATABASE dtrack SET READ_COMMITTED_SNAPSHOT ON;
+```
+
 #### MySQL
 
 ```ini
@@ -74,6 +82,30 @@ alpine.database.url=jdbc:mysql://localhost:3306/dtrack?autoReconnect=true&useSSL
 
 MySQL may erroneously report index key length violations ("Specified key was too long"), when in fact the multi-byte
 key length is lower than the actual value. **Do not use MySQL if don't know how to work around errors like this**!
+
+#### Cloud SQL
+
+Connecting to Cloud SQL with IAM and mTLS is supported using the Cloud SQL database connectors included.
+
+More information [here](https://github.com/GoogleCloudPlatform/cloud-sql-jdbc-socket-factory)
+
+##### CloudSQL PostgreSQL
+
+```
+jdbc:postgresql:///<DATABASE_NAME>?cloudSqlInstance=<INSTANCE_CONNECTION_NAME>&socketFactory=com.google.cloud.sql.postgres.SocketFactory
+```
+
+##### CloudSQL Microsoft SQL Server
+
+```
+jdbc:sqlserver://localhost;databaseName=<DATABASE_NAME>;socketFactoryClass=com.google.cloud.sql.sqlserver.SocketFactory;socketFactoryConstructorArg=<INSTANCE_CONNECTION_NAME>
+```
+
+##### CloudSQL MySQL
+
+```
+jdbc:mysql:///<DATABASE_NAME>?cloudSqlInstance=<INSTANCE_CONNECTION_NAME>&socketFactory=com.google.cloud.sql.mysql.SocketFactory
+```
 
 ### Connection Pooling
 

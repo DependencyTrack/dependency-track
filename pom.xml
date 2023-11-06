@@ -24,14 +24,14 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>2.2.3-SNAPSHOT</version>
+        <version>2.2.4-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>4.9.0-SNAPSHOT</version>
+    <version>4.10.0-SNAPSHOT</version>
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>
@@ -81,14 +81,23 @@
 
     <properties>
         <!-- Dependency Versions -->
-        <frontend.version>4.8.1</frontend.version>
+        <frontend.version>4.9.1</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
+        <lib.awaitility.version>4.2.0</lib.awaitility.version>
+        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.14.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
+        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.14.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.14.1</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.cyclonedx-java.version>7.3.2</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>8.0.3</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.8</lib.jaxb.runtime.version>
-        <lib.json-unit.version>2.38.0</lib.json-unit.version>
+        <lib.json-unit.version>3.2.2</lib.json-unit.version>
+        <!--
+          Overriding logstash-logback-encoder version as a temporary workaround until
+          https://github.com/stevespringett/Alpine/pull/517 is merged and released.
+        -->
+        <lib.logstash-logback-encoder.version>7.3</lib.logstash-logback-encoder.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.2.0</lib.pebble.version>
@@ -97,9 +106,9 @@
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
-        <lib.log4j-over-slf4j.version>2.0.7</lib.log4j-over-slf4j.version>
+        <lib.log4j-over-slf4j.version>2.0.9</lib.log4j-over-slf4j.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>12.2.0.jre11</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>12.4.2.jre11</lib.jdbc-driver.mssql.version>
         <!-- Upgrading to 8.0.33 as https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
         <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.6.0</lib.jdbc-driver.postgresql.version>
@@ -108,7 +117,7 @@
         <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
         <!-- Keep Jetty at 10.0.15 until migration plan is planned/resolved per Steve in https://github.com/DependencyTrack/dependency-track/pull/2725#issuecomment-1532417022! -->
-        <plugin.jetty.version>10.0.15</plugin.jetty.version>
+        <plugin.jetty.version>10.0.18</plugin.jetty.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
         <!-- CycloneDX CLI -->
@@ -190,7 +199,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20230227</version>
+            <version>20231013</version>
         </dependency>
         <!-- Package URL -->
         <dependency>
@@ -259,7 +268,7 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
-            <version>3.9.2</version>
+            <version>3.9.5</version>
         </dependency>
         <!-- Bundle JDBC drivers -->
         <dependency>
@@ -287,17 +296,38 @@
             <artifactId>postgresql</artifactId>
             <version>${lib.jdbc-driver.postgresql.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>mysql-socket-factory-connector-j-8</artifactId>
+            <version>${lib.cloud-sql-mysql-socket-factory-connector-j-8.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>postgres-socket-factory</artifactId>
+            <version>${lib.cloud-sql-postgres-socket-factory.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>cloud-sql-connector-jdbc-sqlserver</artifactId>
+            <version>${lib.cloud-sql-connector-jdbc-sqlserver.version}</version>
+        </dependency>
         <!-- Xerces -->
         <dependency>
             <groupId>xerces</groupId>
             <artifactId>xercesImpl</artifactId>
             <version>2.12.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- Commons Compress -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.23.0</version>
+            <version>1.24.0</version>
         </dependency>
         <!-- Resilience4J -->
         <dependency>
@@ -356,7 +386,7 @@
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-jre8</artifactId>
-            <version>2.35.0</version>
+            <version>2.35.1</version>
             <scope>test</scope>
         </dependency>
 
@@ -383,6 +413,12 @@
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-netty</artifactId>
             <version>5.15.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${lib.awaitility.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -412,7 +448,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
                 <configuration>
                     <configLocation>${project.basedir}/.checkstyle.xml</configLocation>
                     <includeResources>false</includeResources>
@@ -511,7 +547,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-clean-plugin</artifactId>
-                        <version>3.3.1</version>
+                        <version>3.3.2</version>
                         <configuration>
                             <excludeDefaultDirectories>true</excludeDefaultDirectories>
                             <filesets>

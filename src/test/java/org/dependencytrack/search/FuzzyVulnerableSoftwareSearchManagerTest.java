@@ -5,8 +5,9 @@ import org.apache.commons.io.FileUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
-import org.junit.Before;
+import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -23,9 +24,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
@@ -58,7 +59,7 @@ public class FuzzyVulnerableSoftwareSearchManagerTest {
         vs.setUuid(UUID.randomUUID());
         vs.setCpe23("cpe:2.3:a:libexpat_project:libexpat:2.2.2:*:*:*:*:*:*:*");
         vs.setProduct("libexpat");
-        VulnerableSoftwareIndexer.getInstance().add(vs);
+        VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vs));
         VulnerableSoftwareIndexer.getInstance().commit();
     }
     @AfterClass

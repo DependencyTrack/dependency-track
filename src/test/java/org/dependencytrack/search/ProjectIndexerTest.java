@@ -20,6 +20,7 @@ package org.dependencytrack.search;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.search.document.ProjectDocument;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -49,7 +50,7 @@ public class ProjectIndexerTest extends PersistenceCapableTest {
         p.setUuid(UUID.randomUUID());
         p.setName("Acme Application");
         p.setVersion("1.0.0");
-        ProjectIndexer.getInstance().add(p);
+        ProjectIndexer.getInstance().add(new ProjectDocument(p));
         ProjectIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
         SearchResult result = searchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
@@ -63,10 +64,10 @@ public class ProjectIndexerTest extends PersistenceCapableTest {
         p.setUuid(UUID.randomUUID());
         p.setName("Acme Application");
         p.setVersion("1.0.0");
-        ProjectIndexer.getInstance().add(p);
+        ProjectIndexer.getInstance().add(new ProjectDocument(p));
         ProjectIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
-        ProjectIndexer.getInstance().remove(p);
+        ProjectIndexer.getInstance().remove(new ProjectDocument(p));
         ProjectIndexer.getInstance().commit();
         SearchResult result = searchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
         Assert.assertEquals(1, result.getResults().size());

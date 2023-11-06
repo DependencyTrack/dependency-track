@@ -1,22 +1,23 @@
 {
   "isDeprecatedLicenseId": false,
   "licenseText": "Copyright (C) 1995-2009 Gerd Neugebauer\n\ncwpuzzle.dtx is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or distributor  accepts responsibility to anyone for the consequences of using it or for whether it serves any particular purpose  or works at all, unless he says so in writing.\n.\nEveryone is granted permission to copy, modify and redistribute cwpuzzle.dtx, provided this copyright notice is preserved and any modifications are indicated.\n",
-  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e Copyright (C) 1995-2009 Gerd Neugebauer\u003c\u003cendOptional\u003e\u003e\n\ncwpuzzle.dtx is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or distributor accepts responsibility to anyone for the consequences of using it or for whether it serves any particular purpose or works at all, unless he says so in writing.\n\n.\n\nEveryone is granted permission to copy, modify and redistribute cwpuzzle.dtx, provided this copyright notice is preserved and any modifications are indicated.",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eCopyright (C) 1995-2009 Gerd Neugebauer\n\n\u003c\u003cendOptional\u003e\u003e\n\ncwpuzzle.dtx is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or distributor accepts responsibility to anyone for the consequences of using it or for whether it serves any particular purpose or works at all, unless he says so in writing.\n\n.\n\nEveryone is granted permission to copy, modify and redistribute cwpuzzle.dtx, provided this copyright notice is preserved and any modifications are indicated.\n\n",
   "name": "Crossword License",
   "licenseId": "Crossword",
   "crossRef": [
     {
-      "isLive": true,
-      "isValid": true,
-      "isWayBackLink": false,
       "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing/Crossword",
-      "order": 0,
-      "timestamp": "2020-11-25 - 21:49:44"
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-06-18T16:38:50Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/Crossword"
   ],
-  "isOsiApproved": false
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eCopyright (C) 1995-2009 Gerd Neugebauer\u003c/p\u003e\n\n      \u003c/div\u003e\n\n      \u003cp\u003ecwpuzzle.dtx is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or\n         distributor accepts responsibility to anyone for the consequences of using it or for whether it serves\n         any particular purpose or works at all, unless he says so in writing.\n        \u003cbr /\u003e\n\n.\n        \u003cbr /\u003e\n\nEveryone is granted permission to copy, modify and redistribute cwpuzzle.dtx, provided this\n             copyright notice is preserved and any modifications are indicated.\n      \u003c/p\u003e\n\n    "
 }

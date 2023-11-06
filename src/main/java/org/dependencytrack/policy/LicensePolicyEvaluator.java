@@ -21,8 +21,10 @@ package org.dependencytrack.policy;
 import alpine.common.logging.Logger;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
+import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.parser.spdx.expression.model.SpdxExpression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,28 +53,32 @@ public class LicensePolicyEvaluator extends AbstractPolicyEvaluator {
     @Override
     public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
         final List<PolicyConditionViolation> violations = new ArrayList<>();
-        final License license = component.getResolvedLicense();
 
+        final List<PolicyCondition> policyConditions = super.extractSupportedConditions(policy);
+        if (policyConditions.isEmpty()) {
+            return violations;
+        }
+
+        // use spdx expression checking logic from the license group policy evaluator
+        final SpdxExpression expression = LicenseGroupPolicyEvaluator.getSpdxExpressionFromComponent(component);
+
+        boolean allPoliciesViolated = true;
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
-            if (condition.getValue().equals("unresolved")) {
-                if (license == null && PolicyCondition.Operator.IS == condition.getOperator()) {
-                    violations.add(new PolicyConditionViolation(condition, component));
-                } else if (license != null && PolicyCondition.Operator.IS_NOT == condition.getOperator()) {
-                    violations.add(new PolicyConditionViolation(condition, component));
-                }
-            } else if (license != null) {
-                final License l = qm.getObjectByUuid(License.class, condition.getValue());
-                if (l != null && PolicyCondition.Operator.IS == condition.getOperator()) {
-                    if (component.getResolvedLicense().getId() == l.getId()) {
-                        violations.add(new PolicyConditionViolation(condition, component));
-                    }
-                } else if (l != null && PolicyCondition.Operator.IS_NOT == condition.getOperator()) {
-                    if (component.getResolvedLicense().getId() != l.getId()) {
-                        violations.add(new PolicyConditionViolation(condition, component));
-                    }
-                }
+
+            LicenseGroup licenseGroup = null;
+            // lg will stay null if we are checking for "unresolved"
+            if (!condition.getValue().equals("unresolved")) {
+                License conditionLicense = qm.getObjectByUuid(License.class, condition.getValue());
+                licenseGroup = LicenseGroupPolicyEvaluator.getTemporaryLicenseGroupForLicense(conditionLicense);
             }
+
+            boolean addedViolation = LicenseGroupPolicyEvaluator.evaluateCondition(qm, condition, expression,
+                    licenseGroup, component, violations);
+            if (addedViolation == false) {
+                allPoliciesViolated = false;
+            }
+
         }
         return violations;
     }

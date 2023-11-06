@@ -21,12 +21,19 @@ package org.dependencytrack.search;
 import alpine.Config;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.search.document.ComponentDocument;
+import org.dependencytrack.search.document.DummyDocument;
+import org.dependencytrack.search.document.LicenseDocument;
+import org.dependencytrack.search.document.ProjectDocument;
+import org.dependencytrack.search.document.SearchDocument;
+import org.dependencytrack.search.document.ServiceComponentDocument;
+import org.dependencytrack.search.document.VulnerabilityDocument;
+import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 
 /**
  * Creates IndexManager implementations based on event types.
@@ -36,34 +43,32 @@ import org.dependencytrack.model.VulnerableSoftware;
  */
 public class IndexManagerFactory {
 
-    public static ObjectIndexer getIndexManager(final IndexEvent event) {
+    public static ObjectIndexer<? extends SearchDocument> getIndexManager(final IndexEvent event) {
         if (Config.isUnitTestsEnabled()) {
-            return new ObjectIndexer() {
+            return new ObjectIndexer<DummyDocument>() {
                 @Override
                 public String[] getSearchFields() { return new String[0]; }
                 @Override
-                public void add(final Object object) { }
+                public void add(final DummyDocument object) { }
                 @Override
-                public void remove(final Object object) { }
+                public void remove(final DummyDocument object) { }
                 @Override
                 public void commit() { }
                 @Override
                 public void reindex() { }
             };
         }
-        if (event.getObject() instanceof Project || Project.class == event.getIndexableClass()) {
+        if (event.getDocument() instanceof ProjectDocument || Project.class == event.getIndexableClass()) {
             return ProjectIndexer.getInstance();
-        } else if (event.getObject() instanceof Component || Component.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof ComponentDocument || Component.class == event.getIndexableClass()) {
             return ComponentIndexer.getInstance();
-        } else if (event.getObject() instanceof ServiceComponent || ServiceComponent.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof ServiceComponentDocument || ServiceComponent.class == event.getIndexableClass()) {
             return ServiceComponentIndexer.getInstance();
-        } else if (event.getObject() instanceof Vulnerability || Vulnerability.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof VulnerabilityDocument || Vulnerability.class == event.getIndexableClass()) {
             return VulnerabilityIndexer.getInstance();
-        } else if (event.getObject() instanceof License || License.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof LicenseDocument || License.class == event.getIndexableClass()) {
             return LicenseIndexer.getInstance();
-        } else if (event.getObject() instanceof Cpe || Cpe.class == event.getIndexableClass()) {
-            return CpeIndexer.getInstance();
-        } else if (event.getObject() instanceof VulnerableSoftware || VulnerableSoftware.class == event.getIndexableClass()) {
+        } else if (event.getDocument() instanceof VulnerableSoftwareDocument || VulnerableSoftware.class == event.getIndexableClass()) {
             return VulnerableSoftwareIndexer.getInstance();
         }
         throw new IllegalArgumentException("Unsupported indexer requested");
@@ -80,8 +85,6 @@ public class IndexManagerFactory {
             return VulnerabilityIndexer.getInstance();
         } else if (License.class == clazz) {
             return LicenseIndexer.getInstance();
-        } else if (Cpe.class == clazz) {
-            return CpeIndexer.getInstance();
         } else if (VulnerableSoftware.class == clazz) {
             return VulnerableSoftwareIndexer.getInstance();
         }

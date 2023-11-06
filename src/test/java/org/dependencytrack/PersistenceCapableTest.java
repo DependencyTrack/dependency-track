@@ -41,6 +41,15 @@ public abstract class PersistenceCapableTest {
 
     @After
     public void after() {
+        // PersistenceManager will refuse to close when there's an active transaction
+        // that was neither committed nor rolled back. Unfortunately some areas of the
+        // code base can leave such a broken state behind if they run into unexpected
+        // errors. See: https://github.com/DependencyTrack/dependency-track/issues/2677
+        if (!qm.getPersistenceManager().isClosed()
+                && qm.getPersistenceManager().currentTransaction().isActive()) {
+            qm.getPersistenceManager().currentTransaction().rollback();
+        }
+
         PersistenceManagerFactory.tearDown();
     }
 

@@ -29,6 +29,7 @@ import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
+import com.google.common.collect.Lists;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
@@ -44,7 +45,6 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Finding;
@@ -75,6 +75,7 @@ import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
 import javax.jdo.FetchPlan;
@@ -83,6 +84,7 @@ import javax.jdo.Query;
 import javax.jdo.Transaction;
 import javax.json.JsonObject;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -423,6 +425,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getProjects(final Tag tag) {
         return getProjectQueryManager().getProjects(tag);
+    }
+
+    public boolean doesProjectExist(final String name, final String version) {
+        return getProjectQueryManager().doesProjectExist(name, version);
     }
 
     public Tag getTagByName(final String name) {
@@ -811,26 +817,6 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().contains(vulnerability, component);
     }
 
-    public Cpe synchronizeCpe(Cpe cpe, boolean commitIndex) {
-        return getVulnerableSoftwareQueryManager().synchronizeCpe(cpe, commitIndex);
-    }
-
-    public Cpe getCpeBy23(String cpe23) {
-        return getVulnerableSoftwareQueryManager().getCpeBy23(cpe23);
-    }
-
-    public PaginatedResult getCpes() {
-        return getVulnerableSoftwareQueryManager().getCpes();
-    }
-
-    public List<Cpe> getCpes(final String cpeString) {
-        return getVulnerableSoftwareQueryManager().getCpes(cpeString);
-    }
-
-    public List<Cpe> getCpes(final String part, final String vendor, final String product, final String version) {
-        return getVulnerableSoftwareQueryManager().getCpes(part, vendor, product, version);
-    }
-
     public VulnerableSoftware getVulnerableSoftwareByCpe23(String cpe23,
                                                            String versionEndExcluding, String versionEndIncluding,
                                                            String versionStartExcluding, String versionStartIncluding) {
@@ -857,10 +843,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<VulnerableSoftware> getAllVulnerableSoftwareByPurl(final PackageURL purl) {
         return getVulnerableSoftwareQueryManager().getAllVulnerableSoftwareByPurl(purl);
-    }
-
-    public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final String cpeVersion, final PackageURL purl) {
-        return getVulnerableSoftwareQueryManager().getAllVulnerableSoftware(cpePart, cpeVendor, cpeProduct, cpeVersion, purl);
     }
 
     public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final PackageURL purl) {
@@ -1329,6 +1311,35 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Fetch a list of object from the datastore by theirs {@link UUID}
+     *
+     * @param clazz Class of the object to fetch
+     * @param uuids {@link UUID} list of uuids to fetch
+     * @return The list of objects found
+     * @param <T> Type of the object
+     * @since 4.9.0
+     */
+    public <T> List<T> getObjectsByUuids(final Class<T> clazz, final List<UUID> uuids) {
+        final Query<T> query = getObjectsByUuidsQuery(clazz, uuids);
+        return query.executeList();
+    }
+
+    /**
+     * Create the query to fetch a list of object from the datastore by theirs {@link UUID}
+     *
+     * @param clazz Class of the object to fetch
+     * @param uuids {@link UUID} list of uuids to fetch
+     * @return The query to execute
+     * @param <T> Type of the object
+     * @since 4.9.0
+     */
+    public <T> Query<T> getObjectsByUuidsQuery(final Class<T> clazz, final List<UUID> uuids) {
+        final Query<T> query = pm.newQuery(clazz, ":uuids.contains(uuid)");
+        query.setParameters(uuids);
+        return query;
+    }
+
+    /**
      * Convenience method to execute a given {@link Runnable} within the context of a {@link Transaction}.
      * <p>
      * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
@@ -1402,4 +1413,51 @@ public class QueryManager extends AlpineQueryManager {
         pm.currentTransaction().commit();
     }
 
+    /**
+     * Returns a list of all {@link DependencyGraphResponse} objects by {@link Component} UUID.
+     * @param uuids a list of {@link Component} UUIDs
+     * @return a list of {@link DependencyGraphResponse} objects
+     * @since 4.9.0
+     */
+    public List<DependencyGraphResponse> getComponentDependencyGraphByUuids(final List<UUID> uuids) {
+        return this.getComponentQueryManager().getDependencyGraphByUUID(uuids);
+    }
+
+    /**
+     * Returns a list of all {@link DependencyGraphResponse} objects by {@link ServiceComponent} UUID.
+     * @param uuids a list of {@link ServiceComponent} UUIDs
+     * @return a list of {@link DependencyGraphResponse} objects
+     * @since 4.9.0
+     */
+    public List<DependencyGraphResponse> getServiceDependencyGraphByUuids(final List<UUID> uuids) {
+        return this.getServiceComponentQueryManager().getDependencyGraphByUUID(uuids);
+    }
+
+    /**
+     * Returns a list of all {@link RepositoryMetaComponent} objects by {@link RepositoryQueryManager.RepositoryMetaComponentSearch} with batchSize 10.
+     * @param list a list of {@link RepositoryQueryManager.RepositoryMetaComponentSearch}
+     * @return a list of {@link RepositoryMetaComponent} objects
+     * @since 4.9.0
+     */
+    public List<RepositoryMetaComponent> getRepositoryMetaComponentsBatch(final List<RepositoryQueryManager.RepositoryMetaComponentSearch> list) {
+        return getRepositoryMetaComponentsBatch(list, 10);
+    }
+
+    /**
+     * Returns a list of all {@link RepositoryMetaComponent} objects by {@link RepositoryQueryManager.RepositoryMetaComponentSearch} UUID.
+     * @param list a list of {@link RepositoryQueryManager.RepositoryMetaComponentSearch}
+     * @param batchSize the batch size
+     * @return a list of {@link RepositoryMetaComponent} objects
+     * @since 4.9.0
+     */
+    public List<RepositoryMetaComponent> getRepositoryMetaComponentsBatch(final List<RepositoryQueryManager.RepositoryMetaComponentSearch> list, final int batchSize) {
+        final List<RepositoryMetaComponent> results = new ArrayList<>(list.size());
+
+        // Split the list into batches
+        for (List<RepositoryQueryManager.RepositoryMetaComponentSearch> batch : Lists.partition(list, batchSize)) {
+            results.addAll(this.getRepositoryQueryManager().getRepositoryMetaComponents(batch));
+        }
+
+        return results;
+    }
 }

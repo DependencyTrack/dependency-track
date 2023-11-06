@@ -30,6 +30,66 @@ acquired and used successfully. The check spans both connection pools (see [Conn
 }
 ```
 
+### Logging
+
+Logging of the API server is configured via [Logback]. All distributions of the API server ship with
+a [default Logback configuration]. It defines the following behavior:
+
+1. Log messages from the embedded Jetty server to:
+   * `$HOME/.dependency-track/server.<NUMBER>.log`
+2. Log messages from Dependency-Track and the underlying Alpine framework to:
+   * `$HOME/.dependency-track/dependency-track.<NUMBER>.log`
+   * Standard Output
+3. Log security-related messages to:
+   * `$HOME/.dependency-track/dependency-track-audit.<NUMBER>.log`
+   * Standard Output
+4. For log files:
+   * Create a new log file once the current one exceeds 10MB in size
+   * Retain a history of up to 9 files per log before overwriting them
+5. Output logs in a human-friendly format
+
+> For containerized deployments, `$HOME` will refer to the `/data` directory.
+ 
+#### Custom Logging Configuration
+
+When operating Dependency-Track in container-centric environments, where logs are typically forwarded
+from containers' standard output to a centralized log aggregator (e.g. ElasticSearch, OpenSearch, Splunk),
+it is desirable to disable logging to disk, and even change the output to a more machine-readable format.
+
+Starting with Dependency-Track v4.9.0, it is possible to provide a custom Logback configuration,
+and configure JSON as output format (powered by [logstash-logback-encoder]). 
+
+An example configuration file for JSON logging to standard output ([`logback-json.xml`]) is included
+in the API server container image, and can be enabled using the `LOGGING_CONFIG_PATH` environment variable:
+
+```shell
+# (Other configuration options omitted for brevity)
+docker run -it --rm \
+  -e "LOGGING_CONFIG_PATH=logback-json.xml" \
+  dependencytrack/apiserver:latest
+```
+
+Refer to the [logstash-logback-encoder documentation] for advanced customization details.
+
+In order to use a truly custom configuration file, it has to be mounted into the container, e.g.:
+
+```shell
+# (Other configuration options omitted for brevity)
+docker run -it --rm \
+  -v "./path/to/logback-custom.xml:/etc/dtrack/logback-custom.xml:ro" \
+  -e "LOGGING_CONFIG_PATH=/etc/dtrack/logback-custom.xml" \
+  dependencytrack/apiserver:latest
+```
+
+For non-containerized distributions of the API server, a custom configuration file may be provided
+via the `logback.configurationFile` JVM property:
+
+```shell
+# (Other configuration options omitted for brevity)
+java -Dlogback.configurationFile=/path/to/logback-custom.xml \
+  -jar dependency-track-apiserver.jar
+```
+
 ### Metrics
 
 The API server can be configured to expose system metrics via the Prometheus [text-based exposition format].
@@ -275,11 +335,16 @@ An [example dashboard] is provided as a quickstart. Refer to the [Grafana docume
 [community integrations]: {{ site.baseurl }}{% link _docs/integrations/community-integrations.md %}
 [Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration.md %}
 [Connection Pooling]: {{ site.baseurl }}{% link _docs/getting-started/database-support.md %}#connection-pooling
+[default Logback configuration]: https://github.com/DependencyTrack/dependency-track/blob/master/src/main/docker/logback.xml
 [dependency-track-exporter]: https://github.com/jetstack/dependency-track-exporter
 [example dashboard]: {{ site.baseurl }}/files/grafana-dashboard.json
 [executors]: https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html
 [Grafana]: https://grafana.com/
 [Grafana documentation]: https://grafana.com/docs/grafana/latest/dashboards/export-import/#import-dashboard
+[Logback]: https://logback.qos.ch/
+[`logback-json.xml`]: https://github.com/DependencyTrack/dependency-track/blob/master/src/main/docker/logback-json.xml
+[logstash-logback-encoder]: https://github.com/logfellow/logstash-logback-encoder
+[logstash-logback-encoder documentation]: https://github.com/logfellow/logstash-logback-encoder/tree/logstash-logback-encoder-7.3#loggingevent-fields
 [MicroProfile Health]: https://download.eclipse.org/microprofile/microprofile-health-3.1/microprofile-health-spec-3.1.html
 [MicroProfile Health REST interfaces specifications]: https://download.eclipse.org/microprofile/microprofile-health-3.1/microprofile-health-spec-3.1.html#_appendix_a_rest_interfaces_specifications
 [Prometheus]: https://prometheus.io/

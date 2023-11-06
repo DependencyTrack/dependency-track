@@ -25,6 +25,7 @@ import alpine.notification.NotificationService;
 import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import net.jcip.annotations.NotThreadSafe;
+import org.apache.commons.io.IOUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
@@ -33,6 +34,7 @@ import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -43,9 +45,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
 @NotThreadSafe
@@ -72,22 +73,10 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
 
-    @BeforeClass
-    public static void setUpClass() {
-        EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
-        EventService.getInstance().subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
-        NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-        EventService.getInstance().unsubscribe(VulnerabilityAnalysisTask.class);
-        EventService.getInstance().unsubscribe(NewVulnerableDependencyAnalysisTask.class);
-        NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
-    }
-
     @Before
     public void setUp() {
+        NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
+
         // Enable processing of CycloneDX BOMs
         qm.createConfigProperty(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX.getGroupName(),
                 ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX.getPropertyName(), "true",
@@ -104,10 +93,17 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @After
     public void tearDown() {
         NOTIFICATIONS.clear();
+
+        EventService.getInstance().unsubscribe(VulnerabilityAnalysisTask.class);
+        EventService.getInstance().unsubscribe(NewVulnerableDependencyAnalysisTask.class);
+        NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
     }
 
     @Test
     public void informTest() throws Exception {
+        EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
+        EventService.getInstance().subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
+
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         final VulnerableSoftware vs = new VulnerableSoftware();
@@ -134,7 +130,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         final byte[] bomBytes = Files.readAllBytes(Paths.get(getClass().getClassLoader().getResource("bom-1.xml").toURI()));
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 5, Duration.ofSeconds(5));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 6, Duration.ofSeconds(5));
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
         assertThat(project.getLastBomImport()).isNotNull();
@@ -145,6 +141,19 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(components).hasSize(1);
 
         final Component component = components.get(0);
+        
+        assertThat(component.getSupplier().getName()).isEqualTo("Foo Incorporated"); /*Issue #2373, #2737 -  Adding support for Supplier*/
+        assertThat(component.getSupplier().getUrls()[0]).isEqualTo("https://foo.bar.com");
+        assertThat(component.getSupplier().getContacts().get(0).getEmail()).isEqualTo("foojr@bar.com");
+        assertThat(component.getSupplier().getContacts().get(0).getPhone()).isEqualTo("123-456-7890");
+
+        assertThat(project.getManufacturer().getName()).isEqualTo("Foo Incorporated");
+        assertThat(project.getManufacturer().getUrls()[0]).isEqualTo("https://foo.bar.com");
+        assertThat(project.getManufacturer().getContacts().get(0).getName()).isEqualTo("Foo Sr.");
+        assertThat(project.getManufacturer().getContacts().get(0).getEmail()).isEqualTo("foo@bar.com");
+        assertThat(project.getManufacturer().getContacts().get(0).getPhone()).isEqualTo("800-123-4567");
+
+        
         assertThat(component.getAuthor()).isEqualTo("Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
         assertThat(component.getPublisher()).isEqualTo("Example Incorporated");
         assertThat(component.getGroup()).isEqualTo("com.example");
@@ -207,6 +216,139 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isNull();
         assertThat(project.getLastBomImport()).isNull();
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/2859
+    public void informIssue2859Test() throws Exception {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        final byte[] bomBytes = IOUtils.resourceToByteArray("/unit/bom-issue2859.xml");
+
+        assertThatNoException()
+                .isThrownBy(() -> new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes)));
+    }
+
+    @Test
+    public void informWithBomContainingLicenseExpressionTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "tomcat-catalina",
+                      "version": "9.0.14",
+                      "licenses": [
+                        {
+                          "expression": "EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getLicense()).isNull();
+            assertThat(component.getLicenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
+            assertThat(component.getResolvedLicense()).isNull();
+        });
+    }
+
+    @Test
+    public void informWithBomContainingLicenseExpressionWithSingleIdTest() throws Exception {
+        final var license = new License();
+        license.setLicenseId("EPL-2.0");
+        license.setName("Eclipse Public License 2.0");
+        qm.persist(license);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "tomcat-catalina",
+                      "version": "9.0.14",
+                      "licenses": [
+                        {
+                          "expression": "EPL-2.0"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getResolvedLicense()).isNotNull();
+            assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("EPL-2.0");
+            assertThat(component.getLicense()).isNull();
+            assertThat(component.getLicenseExpression()).isEqualTo("EPL-2.0");
+        });
+    }
+
+    @Test
+    public void informWithBomContainingInvalidLicenseExpressionTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "tomcat-catalina",
+                      "version": "9.0.14",
+                      "licenses": [
+                        {
+                          "expression": "(invalid"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getLicense()).isNull();
+            assertThat(component.getLicenseExpression()).isNull();
+            assertThat(component.getResolvedLicense()).isNull();
+        });
     }
 
 }

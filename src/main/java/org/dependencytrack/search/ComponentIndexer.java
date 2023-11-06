@@ -26,13 +26,17 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.ComponentDocument;
 
+import javax.jdo.Query;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -41,7 +45,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.0.0
  */
-public final class ComponentIndexer extends IndexManager implements ObjectIndexer<Component> {
+public final class ComponentIndexer extends IndexManager implements ObjectIndexer<ComponentDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(ComponentIndexer.class);
     private static final ComponentIndexer INSTANCE = new ComponentIndexer();
@@ -67,14 +71,14 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      *
      * @param component A persisted Component object.
      */
-    public void add(final Component component) {
+    public void add(final ComponentDocument component) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.COMPONENT_UUID, component.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.COMPONENT_NAME, component.getName(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_GROUP, component.getGroup(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_VERSION, component.getVersion(), Field.Store.YES, false);
-        addField(doc, IndexConstants.COMPONENT_SHA1, component.getSha1(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_DESCRIPTION, component.getDescription(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_UUID, component.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.COMPONENT_NAME, component.name(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_GROUP, component.group(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_VERSION, component.version(), Field.Store.YES, false);
+        addField(doc, IndexConstants.COMPONENT_SHA1, component.sha1(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_DESCRIPTION, component.description(), Field.Store.YES, true);
 
         try {
             getIndexWriter().addDocument(doc);
@@ -97,9 +101,9 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      *
      * @param component A persisted Component object.
      */
-    public void remove(final Component component) {
+    public void remove(final ComponentDocument component) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.getUuid().toString()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.uuid().toString()));
         } catch (CorruptIndexException e) {
             handleCorruptIndexException(e);
         } catch (IOException e) {
@@ -121,18 +125,42 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
+
+        long docsIndexed = 0;
+        final long startTimeNs = System.nanoTime();
         try (final QueryManager qm = new QueryManager()) {
-            final List<Project> projects = qm.getAllProjects(true);
-            for (final Project project : projects) {
-                final List<Component> components = qm.getAllComponents(project);
-                LOGGER.info("Indexing " + components.size() + " components in project: " + project.getUuid());
-                for (final Component component: components) {
-                    add(component);
-                }
-                LOGGER.info("Completed indexing of " + components.size() + " components in project: " + project.getUuid());
+            List<ComponentDocument> docs = fetchNext(qm, null);
+            while (!docs.isEmpty()) {
+                docs.forEach(this::add);
+                docsIndexed += docs.size();
+                commit();
+
+                docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
-            commit();
         }
-        LOGGER.info("Reindexing complete");
+        LOGGER.info("Reindexing of %d components completed in %s"
+                .formatted(docsIndexed, Duration.ofNanos(System.nanoTime() - startTimeNs)));
     }
+
+    private static List<ComponentDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<Component> query = qm.getPersistenceManager().newQuery(Component.class);
+        var filterParts = new ArrayList<String>();
+        var params = new HashMap<String, Object>();
+        filterParts.add("(project.active == null || project.active)");
+        if (lastId != null) {
+            filterParts.add("id > :lastId");
+            params.put("lastId", lastId);
+        }
+        query.setFilter(String.join(" && ", filterParts));
+        query.setNamedParameters(params);
+        query.setOrdering("id ASC");
+        query.setRange(0, 1000);
+        query.setResult("id, uuid, \"group\", name, version, description, sha1");
+        try {
+            return List.copyOf(query.executeResultList(ComponentDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
 }

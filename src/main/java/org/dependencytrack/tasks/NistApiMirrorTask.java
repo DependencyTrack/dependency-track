@@ -22,6 +22,7 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
+import alpine.security.crypto.DataEncryption;
 import io.github.jeremylong.openvulnerability.client.nvd.Config;
 import io.github.jeremylong.openvulnerability.client.nvd.CpeMatch;
 import io.github.jeremylong.openvulnerability.client.nvd.CveItem;
@@ -50,6 +51,7 @@ import us.springett.parsers.cpe.values.Part;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.sql.Date;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -111,6 +113,14 @@ public class NistApiMirrorTask implements Subscriber {
             apiKey = Optional.ofNullable(apiKeyProperty)
                     .map(ConfigProperty::getPropertyValue)
                     .map(StringUtils::trimToNull)
+                    .map(encryptedApiKey -> {
+                        try {
+                            return DataEncryption.decryptAsString(encryptedApiKey);
+                        } catch (Exception ex) {
+                            LOGGER.warn("Failed to decrypt API key; Continuing without authentication", ex);
+                            return null;
+                        }
+                    })
                     .orElse(null);
             lastModifiedEpochSeconds = Optional.ofNullable(lastModifiedProperty)
                     .map(ConfigProperty::getPropertyValue)
@@ -120,6 +130,7 @@ public class NistApiMirrorTask implements Subscriber {
                     .orElse(0L);
         }
 
+        final long startTimeNs = System.nanoTime();
         try (final NvdCveClient client = createApiClient(apiUrl, apiKey, lastModifiedEpochSeconds)) {
             while (client.hasNext()) {
                 for (final DefCveItem defCveItem : client.next()) {
@@ -137,6 +148,8 @@ public class NistApiMirrorTask implements Subscriber {
             }
         } catch (Exception ex) {
             LOGGER.error("An unexpected error occurred while mirroring the contents of the National Vulnerability Database", ex);
+        } finally {
+            LOGGER.info("Mirroring completed in %s".formatted(Duration.ofNanos(System.nanoTime() - startTimeNs)));
         }
     }
 

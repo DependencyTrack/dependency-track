@@ -48,9 +48,11 @@ import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Subscriber task that performs processing of bill-of-material (bom)
@@ -116,7 +118,14 @@ public class BomUploadProcessingTask implements Subscriber {
                             if (cycloneDxBom.getMetadata().getComponent() != null) {
                                 final org.cyclonedx.model.Component cdxMetadataComponent = cycloneDxBom.getMetadata().getComponent();
                                 if (cdxMetadataComponent.getType() != null && project.getClassifier() == null) {
-                                    project.setClassifier(Classifier.valueOf(cdxMetadataComponent.getType().name()));
+                                    try {
+                                        project.setClassifier(Classifier.valueOf(cdxMetadataComponent.getType().name()));
+                                    } catch (IllegalArgumentException ex) {
+                                        LOGGER.warn("""
+                                                The metadata.component element of the BOM is of unknown type %s. \
+                                                Known types are %s.""".formatted(cdxMetadataComponent.getType(),
+                                                Arrays.stream(Classifier.values()).map(Enum::name).collect(Collectors.joining(", "))));
+                                    }
                                 }
                                 if (cdxMetadataComponent.getSupplier() != null) {
                                     project.setSupplier(ModelConverter.convert(cdxMetadataComponent.getSupplier()));

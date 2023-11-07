@@ -313,6 +313,7 @@ public class ModelConverter {
         cycloneComponent.setCopyright(StringUtils.trimToNull(component.getCopyright()));
         cycloneComponent.setCpe(StringUtils.trimToNull(component.getCpe()));
         cycloneComponent.setAuthor(StringUtils.trimToNull(component.getAuthor()));
+        cycloneComponent.setSupplier(convert(component.getSupplier()));
 
         if (component.getSwidTagId() != null) {
             final Swid swid = new Swid();

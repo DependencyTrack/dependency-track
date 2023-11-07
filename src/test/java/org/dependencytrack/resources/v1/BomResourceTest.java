@@ -29,6 +29,7 @@ import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -103,15 +104,23 @@ public class BomResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability = qm.createVulnerability(vulnerability, false);
 
+        final var projectSupplier = new OrganizationalEntity();
+        projectSupplier.setName("projectSupplier");
+
         var project = new Project();
         project.setName("acme-app");
         project.setClassifier(Classifier.APPLICATION);
+        project.setSupplier(projectSupplier);
         project = qm.createProject(project, null, false);
+
+        final var componentSupplier = new OrganizationalEntity();
+        componentSupplier.setName("componentSupplier");
 
         var componentWithoutVuln = new Component();
         componentWithoutVuln.setProject(project);
         componentWithoutVuln.setName("acme-lib-a");
         componentWithoutVuln.setVersion("1.0.0");
+        componentWithoutVuln.setSupplier(componentSupplier);
         componentWithoutVuln.setDirectDependencies("[]");
         componentWithoutVuln = qm.createComponent(componentWithoutVuln, false);
 
@@ -177,6 +186,9 @@ public class BomResourceTest extends ResourceTest {
                         "component": {
                             "type": "application",
                             "bom-ref": "${json-unit.matches:projectUuid}",
+                            "supplier": {
+                              "name": "projectSupplier"
+                            },
                             "name": "acme-app",
                             "version": "SNAPSHOT"
                         },
@@ -192,6 +204,9 @@ public class BomResourceTest extends ResourceTest {
                         {
                             "type": "library",
                             "bom-ref": "${json-unit.matches:componentWithoutVulnUuid}",
+                            "supplier": {
+                              "name": "componentSupplier"
+                            },
                             "name": "acme-lib-a",
                             "version": "1.0.0"
                         },

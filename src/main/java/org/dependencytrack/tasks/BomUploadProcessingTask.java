@@ -35,7 +35,6 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.OrganizationalEntity;
-import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.NotificationConstants;
@@ -47,11 +46,11 @@ import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
+
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Subscriber task that performs processing of bill-of-material (bom)
@@ -98,6 +97,8 @@ public class BomUploadProcessingTask implements Subscriber {
                 final String bomSpecVersion;
                 final Integer bomVersion;
                 final String serialNumnber;
+                OrganizationalEntity bomSupplier = null;
+                OrganizationalEntity bomManufacturer = null;
                 org.cyclonedx.model.Bom cycloneDxBom = null;
                 if (BomParserFactory.looksLikeCycloneDX(bomBytes)) {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
@@ -109,42 +110,26 @@ public class BomUploadProcessingTask implements Subscriber {
                         bomSpecVersion = cycloneDxBom.getSpecVersion();
                         bomProcessingFailedBomVersion = bomSpecVersion;
                         bomVersion = cycloneDxBom.getVersion();
+                        if (cycloneDxBom.getMetadata() != null) {
+                            bomSupplier = ModelConverter.convert(cycloneDxBom.getMetadata().getSupplier());
+                            bomManufacturer = ModelConverter.convert(cycloneDxBom.getMetadata().getManufacture());
+                            if (cycloneDxBom.getMetadata().getComponent() != null) {
+                                final org.cyclonedx.model.Component cdxMetadataComponent = cycloneDxBom.getMetadata().getComponent();
+                                if (cdxMetadataComponent.getType() != null && project.getClassifier() == null) {
+                                    project.setClassifier(Classifier.valueOf(cdxMetadataComponent.getType().name()));
+                                }
+                                if (cdxMetadataComponent.getSupplier() != null) {
+                                    project.setSupplier(ModelConverter.convert(cdxMetadataComponent.getSupplier()));
+                                }
+                            }
+                        }
                         if (project.getClassifier() == null) {
-                            final var classifier = Optional.ofNullable(cycloneDxBom.getMetadata())
-                                .map(org.cyclonedx.model.Metadata::getComponent)
-                                .map(org.cyclonedx.model.Component::getType)
-                                .map(org.cyclonedx.model.Component.Type::name)
-                                .map(Classifier::valueOf)
-                                .orElse(Classifier.APPLICATION);
-                            project.setClassifier(classifier);
+                            project.setClassifier(Classifier.APPLICATION);
                         }
                         project.setExternalReferences(ModelConverter.convertBomMetadataExternalReferences(cycloneDxBom));
                         serialNumnber = (cycloneDxBom.getSerialNumber() != null) ? cycloneDxBom.getSerialNumber().replaceFirst("urn:uuid:", "") : null;
                         components = ModelConverter.convertComponents(qm, cycloneDxBom, project);
                         services = ModelConverter.convertServices(qm, cycloneDxBom, project);
-                        /**Issue #2373, #2737 */
-                        if (cycloneDxBom.getMetadata() != null) {
-                            if (cycloneDxBom.getMetadata().getManufacture() != null) {
-                                OrganizationalEntity manufacturer = new OrganizationalEntity();
-                                manufacturer.setName(cycloneDxBom.getMetadata().getManufacture().getName());
-                                manufacturer.setUrls(cycloneDxBom.getMetadata().getManufacture().getUrls().toArray(new String[0]));
-                                if (cycloneDxBom.getMetadata().getManufacture().getContacts() != null){
-                                    List<OrganizationalContact> contacts = new ArrayList<>();
-                                    for (org.cyclonedx.model.OrganizationalContact organizationalContact: cycloneDxBom.getMetadata().getManufacture().getContacts()) {
-                                        OrganizationalContact contact = new OrganizationalContact();
-                                        contact.setName(organizationalContact.getName());
-                                        contact.setEmail(organizationalContact.getEmail());
-                                        contact.setPhone(organizationalContact.getPhone());
-                                        contacts.add(contact);
-                                    }
-                                    manufacturer.setContacts(contacts);
-                                } else {
-                                    manufacturer.setContacts(null);
-                                }
-                                project.setManufacturer(manufacturer);
-                            } 
-                        } /**Issue #2373, #2737 */
-
                     } else {
                         LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");
                         return;
@@ -162,7 +147,7 @@ public class BomUploadProcessingTask implements Subscriber {
                         .content("A " + bomFormat.getFormatShortName() + " BOM was consumed and will be processed")
                         .subject(new BomConsumedOrProcessed(copyOfProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
                 final Date date = new Date();
-                final Bom bom = qm.createBom(project, date, bomFormat, bomSpecVersion, bomVersion, serialNumnber);
+                final Bom bom = qm.createBom(project, date, bomFormat, bomSpecVersion, bomVersion, serialNumnber, bomSupplier, bomManufacturer);
                 for (final Component component: components) {
                     processComponent(qm, component, flattenedComponents, newComponents);
                 }

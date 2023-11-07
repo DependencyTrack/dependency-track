@@ -53,6 +53,7 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -472,8 +473,9 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjectProperties(project);
     }
 
-    public Bom createBom(Project project, Date imported, Bom.Format format, String specVersion, Integer bomVersion, String serialNumber) {
-        return getBomQueryManager().createBom(project, imported, format, specVersion, bomVersion, serialNumber);
+    public Bom createBom(Project project, Date imported, Bom.Format format, String specVersion, Integer bomVersion,
+                         String serialNumber, OrganizationalEntity manufacturer, OrganizationalEntity supplier) {
+        return getBomQueryManager().createBom(project, imported, format, specVersion, bomVersion, serialNumber, manufacturer, supplier);
     }
 
     public List<Bom> getAllBoms(Project project) {

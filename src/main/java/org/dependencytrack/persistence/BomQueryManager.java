@@ -20,6 +20,7 @@ package org.dependencytrack.persistence;
 
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.Bom;
+import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
 
 import javax.jdo.PersistenceManager;
@@ -52,7 +53,8 @@ final class BomQueryManager extends QueryManager implements IQueryManager {
      * @param imported the Date when the bom was imported
      * @return a new Bom object
      */
-    public Bom createBom(Project project, Date imported, Bom.Format format, String specVersion, Integer bomVersion, String serialNumber) {
+    public Bom createBom(Project project, Date imported, Bom.Format format, String specVersion, Integer bomVersion,
+                         String serialNumber, OrganizationalEntity manufacturer, OrganizationalEntity supplier) {
         final Bom bom = new Bom();
         bom.setImported(imported);
         bom.setProject(project);
@@ -60,6 +62,8 @@ final class BomQueryManager extends QueryManager implements IQueryManager {
         bom.setSpecVersion(specVersion);
         bom.setBomVersion(bomVersion);
         bom.setSerialNumber(serialNumber);
+        bom.setManufacturer(manufacturer);
+        bom.setSupplier(supplier);
         return persist(bom);
     }
 

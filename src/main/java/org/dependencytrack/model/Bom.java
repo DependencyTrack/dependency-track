@@ -92,6 +92,14 @@ public class Bom implements Serializable {
     private String serialNumber;
 
     @Persistent(defaultFetchGroup = "true")
+    @Column(name = "SUPPLIER", allowsNull = "true")
+    private OrganizationalEntity supplier;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "MANUFACTURER", allowsNull = "true")
+    private OrganizationalEntity manufacturer;
+
+    @Persistent
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
     private Project project;
@@ -148,6 +156,22 @@ public class Bom implements Serializable {
 
     public void setSerialNumber(String serialNumber) {
         this.serialNumber = serialNumber;
+    }
+
+    public OrganizationalEntity getSupplier() {
+        return supplier;
+    }
+
+    public void setSupplier(final OrganizationalEntity supplier) {
+        this.supplier = supplier;
+    }
+
+    public OrganizationalEntity getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(final OrganizationalEntity manufacturer) {
+        this.manufacturer = manufacturer;
     }
 
     public Project getProject() {

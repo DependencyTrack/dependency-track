@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
+
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
@@ -130,17 +131,9 @@ public class Project implements Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
     private String publisher;
 
-    @Persistent /**Issue #2373, #2737 */
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "SUPPLIER", allowsNull = "true")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The supplier may only contain printable characters")
     private OrganizationalEntity supplier;
-
-    @Persistent /**Issue #2373, #2737 */
-    @Column(name = "MANUFACTURE", allowsNull = "true")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The manufacturer may only contain printable characters")
-    private OrganizationalEntity manufacture;
 
     @Persistent
     @Column(name = "GROUP", jdbcType = "VARCHAR")
@@ -305,15 +298,6 @@ public class Project implements Serializable {
     public void setSupplier(OrganizationalEntity supplier) {
         this.supplier = supplier;
     }
-
-    public OrganizationalEntity getManufacturer() { /**Issue #2373, #2737 */
-        return manufacture;
-    }
-
-    public void setManufacturer(OrganizationalEntity manufacture) {/**Issue #2373, #2737 */
-        this.manufacture = manufacture;
-    }
-
 
     public String getGroup() {
         return group;

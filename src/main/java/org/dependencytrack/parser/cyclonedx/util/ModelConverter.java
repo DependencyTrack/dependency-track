@@ -261,6 +261,14 @@ public class ModelConverter {
         return dtEntity;
     }
 
+    public static List<OrganizationalContact> convertCdxContacts(final List<org.cyclonedx.model.OrganizationalContact> cdxContacts) {
+        if (cdxContacts == null) {
+            return null;
+        }
+
+        return cdxContacts.stream().map(ModelConverter::convert).toList();
+    }
+
     private static OrganizationalContact convert(final org.cyclonedx.model.OrganizationalContact cdxContact) {
         if (cdxContact == null) {
             return null;
@@ -271,6 +279,14 @@ public class ModelConverter {
         dtContact.setEmail(StringUtils.trimToNull(cdxContact.getEmail()));
         dtContact.setPhone(StringUtils.trimToNull(cdxContact.getPhone()));
         return dtContact;
+    }
+
+    private static List<org.cyclonedx.model.OrganizationalContact> convertContacts(final List<OrganizationalContact> dtContacts) {
+        if (dtContacts == null) {
+            return null;
+        }
+
+        return dtContacts.stream().map(ModelConverter::convert).toList();
     }
 
     private static org.cyclonedx.model.OrganizationalEntity convert(final OrganizationalEntity dtEntity) {
@@ -457,6 +473,12 @@ public class ModelConverter {
             }
             cycloneComponent.setSupplier(convert(project.getSupplier()));
             metadata.setComponent(cycloneComponent);
+
+            if (project.getMetadata() != null) {
+                metadata.setAuthors(convertContacts(project.getMetadata().getAuthors()));
+                metadata.setManufacture(convert(project.getMetadata().getManufacturer()));
+                metadata.setSupplier(convert(project.getMetadata().getSupplier()));
+            }
         }
         return metadata;
     }

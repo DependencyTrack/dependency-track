@@ -31,9 +31,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Convert;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
@@ -89,6 +91,9 @@ import java.util.UUID;
                 @Persistent(name = "tags"),
                 @Persistent(name = "accessTeams")
         }),
+        @FetchGroup(name = "METADATA", members = {
+                @Persistent(name = "metadata")
+        }),
         @FetchGroup(name = "METRICS_UPDATE", members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
@@ -108,6 +113,7 @@ public class Project implements Serializable {
      */
     public enum FetchGroup {
         ALL,
+        METADATA,
         METRICS_UPDATE,
         PARENT
     }
@@ -132,7 +138,8 @@ public class Project implements Serializable {
     private String publisher;
 
     @Persistent(defaultFetchGroup = "true")
-    @Column(name = "SUPPLIER", allowsNull = "true")
+    @Convert(OrganizationalEntityJsonConverter.class)
+    @Column(name = "SUPPLIER", jdbcType = "CLOB", allowsNull = "true")
     private OrganizationalEntity supplier;
 
     @Persistent
@@ -262,6 +269,9 @@ public class Project implements Serializable {
     @Column(name = "EXTERNAL_REFERENCES")
     @Serialized
     private List<ExternalReference> externalReferences;
+
+    @Persistent(mappedBy = "project")
+    private ProjectMetadata metadata;
 
     private transient ProjectMetrics metrics;
     private transient List<ProjectVersion> versions;
@@ -493,6 +503,14 @@ public class Project implements Serializable {
             this.accessTeams = new ArrayList<>();
         }
         this.accessTeams.add(accessTeam);
+    }
+
+    public ProjectMetadata getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(final ProjectMetadata metadata) {
+        this.metadata = metadata;
     }
 
     @JsonIgnore

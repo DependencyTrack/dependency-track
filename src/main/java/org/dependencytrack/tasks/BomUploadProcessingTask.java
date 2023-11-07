@@ -34,8 +34,8 @@ import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -47,6 +47,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 
+import javax.jdo.FetchPlan;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -78,7 +79,8 @@ public class BomUploadProcessingTask implements Subscriber {
             final byte[] bomBytes = CompressUtil.optionallyDecompress(event.getBom());
             final QueryManager qm = new QueryManager();
             try {
-                final Project project =  qm.getObjectByUuid(Project.class, event.getProjectUuid());
+                final Project project =  qm.getObjectByUuid(Project.class, event.getProjectUuid(),
+                        List.of(FetchPlan.DEFAULT, Project.FetchGroup.METADATA.name()));
                 bomProcessingFailedProject = project;
 
                 if (project == null) {
@@ -99,8 +101,6 @@ public class BomUploadProcessingTask implements Subscriber {
                 final String bomSpecVersion;
                 final Integer bomVersion;
                 final String serialNumnber;
-                OrganizationalEntity bomSupplier = null;
-                OrganizationalEntity bomManufacturer = null;
                 org.cyclonedx.model.Bom cycloneDxBom = null;
                 if (BomParserFactory.looksLikeCycloneDX(bomBytes)) {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
@@ -113,8 +113,23 @@ public class BomUploadProcessingTask implements Subscriber {
                         bomProcessingFailedBomVersion = bomSpecVersion;
                         bomVersion = cycloneDxBom.getVersion();
                         if (cycloneDxBom.getMetadata() != null) {
-                            bomSupplier = ModelConverter.convert(cycloneDxBom.getMetadata().getSupplier());
-                            bomManufacturer = ModelConverter.convert(cycloneDxBom.getMetadata().getManufacture());
+                            final var projectMetadata = new ProjectMetadata();
+                            projectMetadata.setManufacturer(ModelConverter.convert(cycloneDxBom.getMetadata().getManufacture()));
+                            projectMetadata.setSupplier(ModelConverter.convert(cycloneDxBom.getMetadata().getSupplier()));
+                            projectMetadata.setAuthors(ModelConverter.convertCdxContacts(cycloneDxBom.getMetadata().getAuthors()));
+                            if (project.getMetadata() != null) {
+                                qm.runInTransaction(() -> {
+                                    project.getMetadata().setManufacturer(projectMetadata.getManufacturer());
+                                    project.getMetadata().setSupplier(projectMetadata.getSupplier());
+                                    project.getMetadata().setAuthors(projectMetadata.getAuthors());
+                                });
+                            } else {
+                                qm.runInTransaction(() -> {
+                                    projectMetadata.setProject(project);
+                                    qm.getPersistenceManager().makePersistent(projectMetadata);
+                                });
+                            }
+
                             if (cycloneDxBom.getMetadata().getComponent() != null) {
                                 final org.cyclonedx.model.Component cdxMetadataComponent = cycloneDxBom.getMetadata().getComponent();
                                 if (cdxMetadataComponent.getType() != null && project.getClassifier() == null) {
@@ -156,7 +171,7 @@ public class BomUploadProcessingTask implements Subscriber {
                         .content("A " + bomFormat.getFormatShortName() + " BOM was consumed and will be processed")
                         .subject(new BomConsumedOrProcessed(copyOfProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
                 final Date date = new Date();
-                final Bom bom = qm.createBom(project, date, bomFormat, bomSpecVersion, bomVersion, serialNumnber, bomSupplier, bomManufacturer);
+                final Bom bom = qm.createBom(project, date, bomFormat, bomSpecVersion, bomVersion, serialNumnber);
                 for (final Component component: components) {
                     processComponent(qm, component, flattenedComponents, newComponents);
                 }

@@ -91,7 +91,7 @@ public class Bom implements Serializable {
     @Column(name = "SERIAL_NUMBER")
     private String serialNumber;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
     private Project project;

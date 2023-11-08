@@ -195,6 +195,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
         final Repository repository = getObjectByUuid(Repository.class, uuid);
         repository.setIdentifier(identifier);
         repository.setUrl(url);
+        repository.setInternal(internal);
         repository.setAuthenticationRequired(authenticationRequired);
         if (!authenticationRequired) {
             repository.setUsername(null);

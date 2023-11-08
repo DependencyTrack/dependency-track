@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.CloneProjectEvent;
 import org.dependencytrack.model.Classifier;
+import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
@@ -55,8 +56,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -401,6 +404,10 @@ public class ProjectResource extends AlpineResource {
                    modified = true;
                    project.setExternalReferences(jsonProject.getExternalReferences());
                 }
+                if (isOrganizationalEntityModified(jsonProject.getSupplier(), project.getSupplier())) {
+                    modified = true;
+                    project.setSupplier(jsonProject.getSupplier());
+                }
                 if (modified) {
                     try {
                         project = qm.updateProject(project, true);
@@ -417,6 +424,24 @@ public class ProjectResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }
         }
+    }
+
+    private static boolean isOrganizationalEntityModified(final OrganizationalEntity updated, final OrganizationalEntity original) {
+        if (updated == null) {
+            return false;
+        }
+        if (original == null) {
+            return true;
+        }
+
+        if (!Objects.equals(updated.getName(), original.getName())) {
+            return true;
+        }
+        if (!Arrays.equals(updated.getUrls(), original.getUrls())) {
+            return true;
+        }
+
+        return !Collections.isEmpty(updated.getContacts()) || !Collections.isEmpty(original.getContacts());
     }
 
     /**

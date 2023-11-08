@@ -49,6 +49,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.NotificationUtil;
+
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -611,6 +612,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         Project project = new Project();
         project.setAuthor(source.getAuthor());
+        project.setSupplier(source.getSupplier());
         project.setPublisher(source.getPublisher());
         project.setGroup(source.getGroup());
         project.setName(source.getName());
@@ -748,6 +750,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         deleteVexs(project);
         removeProjectFromNotificationRules(project);
         removeProjectFromPolicies(project);
+        delete(project.getMetadata());
         delete(project.getProperties());
         delete(getAllBoms(project));
         delete(project.getChildren());

@@ -33,6 +33,7 @@ import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.ExternalReference;
+import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ServiceComponent;
@@ -798,9 +799,13 @@ public class ProjectResourceTest extends ResourceTest {
     public void cloneProjectTest() {
         EventService.getInstance().subscribe(CloneProjectEvent.class, CloneProjectTask.class);
 
+        final var projectSupplier = new OrganizationalEntity();
+        projectSupplier.setName("projectSupplier");
+
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
+        project.setSupplier(projectSupplier);
         project.setAccessTeams(List.of(team));
         qm.persist(project);
 
@@ -811,10 +816,14 @@ public class ProjectResourceTest extends ResourceTest {
                 qm.createTag("tag-b")
         ));
 
+        final var componentSupplier = new OrganizationalEntity();
+        componentSupplier.setName("componentSupplier");
+
         final var component = new Component();
         component.setProject(project);
         component.setName("acme-lib");
         component.setVersion("2.0.0");
+        component.setSupplier(componentSupplier);
         qm.persist(component);
 
         final var service = new ServiceComponent();
@@ -858,6 +867,8 @@ public class ProjectResourceTest extends ResourceTest {
                     final Project clonedProject = qm.getProject("acme-app", "1.1.0");
                     assertThat(clonedProject).isNotNull();
                     assertThat(clonedProject.getUuid()).isNotEqualTo(project.getUuid());
+                    assertThat(clonedProject.getSupplier()).isNotNull();
+                    assertThat(clonedProject.getName()).isEqualTo("projectSupplier");
                     assertThat(clonedProject.getAccessTeams()).containsOnly(team);
 
                     final List<ProjectProperty> clonedProperties = qm.getProjectProperties(clonedProject);
@@ -877,6 +888,8 @@ public class ProjectResourceTest extends ResourceTest {
                         assertThat(clonedComponent.getUuid()).isNotEqualTo(component.getUuid());
                         assertThat(clonedComponent.getName()).isEqualTo("acme-lib");
                         assertThat(clonedComponent.getVersion()).isEqualTo("2.0.0");
+                        assertThat(clonedComponent.getSupplier()).isNotNull();
+                        assertThat(clonedComponent.getSupplier().getName()).isEqualTo("componentSupplier");
 
                         assertThat(qm.getAllVulnerabilities(clonedComponent)).containsOnly(vuln);
 

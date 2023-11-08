@@ -18,22 +18,21 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.PackageURL;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
+import com.github.packageurl.PackageURL;
 
 public class NugetMetaAnalyzerTest {
 
@@ -60,6 +59,26 @@ public class NugetMetaAnalyzerTest {
 
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+    }
+
+
+    @Test
+    public void testAnalyzerMicrosoftGraph() throws Exception {
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:nuget/Microsoft.Graph@3.35.0"));
+
+        NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
+
+        analyzer.setRepositoryBaseUrl("https://api.nuget.org");
+        MetaModel metaModel = analyzer.analyze(component);
+
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
+        Assert.assertFalse(metaModel.getLatestVersion().startsWith("5.0.0-preview"));
+        Assert.assertFalse(metaModel.getLatestVersion().startsWith("5.0.0-rc"));
+        Assert.assertTrue(ComponentVersion.compareVersions("4.0.0",metaModel.getLatestVersion()) < 0);
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }

@@ -18,22 +18,23 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.PackageURL;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.json.JSONArray;
+import org.dependencytrack.util.ComponentVersion;
 import org.json.JSONObject;
-
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.github.packageurl.PackageURL;
+import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports Pypi.
@@ -75,28 +76,10 @@ public class PypiMetaAnalyzer extends AbstractMetaAnalyzer {
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                     if (response.getEntity() != null) {
-                        String stringResponse = EntityUtils.toString(response.getEntity());
-                        JSONObject jsonObject = new JSONObject(stringResponse);
-                        final JSONObject info = jsonObject.getJSONObject("info");
-                        final String latest = info.optString("version", null);
-                        if (latest != null) {
-                            meta.setLatestVersion(latest);
-                            final JSONObject releases = jsonObject.getJSONObject("releases");
-                            final JSONArray latestArray = releases.getJSONArray(latest);
-                            if (latestArray.length() > 0) {
-                                final JSONObject release = latestArray.getJSONObject(0);
-                                final String updateTime = release.optString("upload_time", null);
-                                if (updateTime != null) {
-                                    final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                                    try {
-                                        final Date published = dateFormat.parse(updateTime);
-                                        meta.setPublishedTimestamp(published);
-                                    } catch (ParseException e) {
-                                        LOGGER.warn("An error occurred while parsing upload time", e);
-                                    }
-                                }
-                            }
-                        }
+                        final String stringResponse = EntityUtils.toString(response.getEntity());
+                        final JSONObject jsonObject = new JSONObject(stringResponse);
+                        final JSONObject releases = jsonObject.getJSONObject("releases");
+                        analyzeReleases(meta, releases);
                     }
                 } else {
                     handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
@@ -108,5 +91,30 @@ public class PypiMetaAnalyzer extends AbstractMetaAnalyzer {
             }
         }
         return meta;
+    }
+
+    private void analyzeReleases(final MetaModel meta, final JSONObject releases) {
+        List<String> versions = new ArrayList<>(releases.keySet());
+        final String highestVersion = ComponentVersion.findHighestVersion(versions);
+        meta.setLatestVersion(highestVersion);
+        if (highestVersion != null) {
+            final JSONObject release = releases.getJSONArray(highestVersion).getJSONObject(0);
+            final String updateTime = release.optString("upload_time", null);
+            if (updateTime != null) {
+                Date published = getPublishedTimestamp(updateTime);
+                meta.setPublishedTimestamp(published);
+            }
+        }
+    }
+
+    private Date getPublishedTimestamp(final String updateTime) {
+        final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        Date published = null;
+        try {
+            published = dateFormat.parse(updateTime);
+        } catch (ParseException e) {
+            LOGGER.warn("An error occurred while parsing upload time", e);
+        }
+        return published;
     }
 }

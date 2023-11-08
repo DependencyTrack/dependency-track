@@ -18,16 +18,17 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.junit.Assert;
 import org.junit.Test;
+import com.github.packageurl.PackageURL;
 
 public class HexMetaAnalyzerTest {
 
     @Test
-    public void testAnalyzer() throws Exception {
+    public void testAnalyzerForPhoenix() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:hex/phoenix@1.4.10"));
 
@@ -35,6 +36,23 @@ public class HexMetaAnalyzerTest {
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.HEX, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertTrue(ComponentVersion.isStableVersion(metaModel.getLatestVersion()));
+        Assert.assertTrue(ComponentVersion.compareVersions("1.6.15", metaModel.getLatestVersion()) < 0);
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+    }
+
+    @Test
+    public void testAnalyzerForPartisan() throws Exception {
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:hex/partisan@1.4.10"));
+
+        HexMetaAnalyzer analyzer = new HexMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.HEX, analyzer.supportedRepositoryType());
+        MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertTrue(ComponentVersion.isStableVersion(metaModel.getLatestVersion()));
+        Assert.assertTrue(ComponentVersion.compareVersions("4.0.9", metaModel.getLatestVersion()) < 0);
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }

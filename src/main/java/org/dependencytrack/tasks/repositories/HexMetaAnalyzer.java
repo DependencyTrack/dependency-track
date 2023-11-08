@@ -18,22 +18,25 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.PackageURL;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.github.packageurl.PackageURL;
+import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports Hex.
@@ -72,12 +75,7 @@ public class HexMetaAnalyzer extends AbstractMetaAnalyzer {
         final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
 
-            final String packageName;
-            if (component.getPurl().getNamespace() != null) {
-                packageName = component.getPurl().getNamespace().replace("@", "%40") + "%2F" + component.getPurl().getName();
-            } else {
-                packageName = component.getPurl().getName();
-            }
+            final String packageName = getPackageName(component.getPurl());
 
             final String url = String.format(baseUrl + API_URL, packageName);
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
@@ -85,23 +83,8 @@ public class HexMetaAnalyzer extends AbstractMetaAnalyzer {
                     if (response.getEntity()!=null) {
                         String responseString = EntityUtils.toString(response.getEntity());
                         var jsonObject = new JSONObject(responseString);
-                        final JSONArray releasesArray = jsonObject.getJSONArray("releases");
-                        if (releasesArray.length() > 0) {
-                            // The first one in the array is always the latest version
-                            final JSONObject release = releasesArray.getJSONObject(0);
-                            final String latest = release.optString("version", null);
-                            meta.setLatestVersion(latest);
-                            final String insertedAt = release.optString("inserted_at", null);
-                            if (insertedAt != null) {
-                                final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                                try {
-                                    final Date published = dateFormat.parse(insertedAt);
-                                    meta.setPublishedTimestamp(published);
-                                } catch (ParseException e) {
-                                    LOGGER.warn("An error occurred while parsing published time", e);
-                                }
-                            }
-                        }
+                        var releasesArray = jsonObject.getJSONArray("releases");
+                        analyzeReleases(meta, releasesArray);
                     }
                 } else {
                     handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
@@ -113,6 +96,41 @@ public class HexMetaAnalyzer extends AbstractMetaAnalyzer {
             }
         }
         return meta;
+    }
+
+    private String getPackageName(final PackageURL pUrl) {
+        if (pUrl.getNamespace() != null) {
+            return pUrl.getNamespace().replace("@", "%40") + "%2F" + pUrl.getName();
+        } else {
+            return pUrl.getName();
+        }
+    }
+
+    private void analyzeReleases(final MetaModel meta, final JSONArray releasesArray) {
+        // get list of versions and published timestamps
+        Map<String, String> versions = new HashMap<>();
+        for (int i = 0; i<releasesArray.length(); i++) {
+            JSONObject release = releasesArray.getJSONObject(i);
+            final String version = release.optString("version", null);
+            final String insertedAt = release.optString("inserted_at", null);
+            versions.put(version, insertedAt);
+        }
+        final String highestVersion = ComponentVersion.findHighestVersion(new ArrayList<>(versions.keySet()));
+        meta.setLatestVersion(highestVersion);
+
+        final String insertedAt = versions.get(highestVersion);
+        meta.setPublishedTimestamp(getPublishedTimestamp(insertedAt));
+    }
+
+    private Date getPublishedTimestamp(final String insertedAt) {
+        final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        Date publishedTimestamp = null;
+        try {
+            publishedTimestamp = dateFormat.parse(insertedAt);
+        } catch (ParseException e) {
+            LOGGER.warn("An error occurred while parsing published time", e);
+        }
+        return publishedTimestamp;
     }
 
 }

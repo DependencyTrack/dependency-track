@@ -18,16 +18,17 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.util.ComponentVersion;
 import org.junit.Assert;
 import org.junit.Test;
+import com.github.packageurl.PackageURL;
 
 public class PypiMetaAnalyzerTest {
 
     @Test
-    public void testAnalyzer() throws Exception {
+    public void testAnalyzerForFlask() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:pypi/Flask@1.0.0"));
 
@@ -35,6 +36,23 @@ public class PypiMetaAnalyzerTest {
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.PYPI, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertTrue(ComponentVersion.isStableVersion(metaModel.getLatestVersion()));
+        Assert.assertTrue(ComponentVersion.compareVersions("2.2.2", metaModel.getLatestVersion()) < 0);
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+    }
+
+    @Test
+    public void testAnalyzerForNumPi() throws Exception {
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:pypi/NumPi@1.0.0"));
+
+        PypiMetaAnalyzer analyzer = new PypiMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.PYPI, analyzer.supportedRepositoryType());
+        MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertTrue(ComponentVersion.isStableVersion(metaModel.getLatestVersion()));
+        Assert.assertTrue(metaModel.getLatestVersion().startsWith("0") || ComponentVersion.compareVersions("0.3.0", metaModel.getLatestVersion()) < 0); // 0 is considered unstable in SemVer
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }

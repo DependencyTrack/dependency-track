@@ -51,17 +51,17 @@ public class ProjectMetadata {
     @JsonIgnore
     private Project project;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Convert(OrganizationalEntityJsonConverter.class)
     @Column(name = "MANUFACTURER", jdbcType = "CLOB", allowsNull = "true")
     private OrganizationalEntity manufacturer;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Convert(OrganizationalEntityJsonConverter.class)
     @Column(name = "SUPPLIER", jdbcType = "CLOB", allowsNull = "true")
     private OrganizationalEntity supplier;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Convert(OrganizationalContactsJsonConverter.class)
     @Column(name = "AUTHORS", jdbcType = "CLOB", allowsNull = "true")
     private List<OrganizationalContact> authors;

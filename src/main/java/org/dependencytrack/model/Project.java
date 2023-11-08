@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import io.swagger.annotations.ApiModelProperty;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 
@@ -89,7 +90,8 @@ import java.util.UUID;
                 @Persistent(name = "children"),
                 @Persistent(name = "properties"),
                 @Persistent(name = "tags"),
-                @Persistent(name = "accessTeams")
+                @Persistent(name = "accessTeams"),
+                @Persistent(name = "metadata")
         }),
         @FetchGroup(name = "METADATA", members = {
                 @Persistent(name = "metadata")
@@ -271,6 +273,7 @@ public class Project implements Serializable {
     private List<ExternalReference> externalReferences;
 
     @Persistent(mappedBy = "project")
+    @ApiModelProperty(accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private ProjectMetadata metadata;
 
     private transient ProjectMetrics metrics;

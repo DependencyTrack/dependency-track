@@ -177,7 +177,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         component.setName("junit");
         component.setPurl(new PackageURL("pkg:maven/test2/test2@4.12"));
         qm.createComponent(component, false);
-        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, null, null);
+        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, false, null, null);
         new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test2", "test2");
         qm.getPersistenceManager().refresh(metaComponent);

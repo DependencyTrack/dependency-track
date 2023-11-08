@@ -162,21 +162,17 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     LOGGER.debug("Analyzing component: " + component.getUuid() + " using repository: "
                             + repository.getIdentifier() + " (" + repository.getType() + ")");
 
-
-                    try {
-                        String encryptedPassword = null;
-                        if (repository.getPassword() != null) {
-                            encryptedPassword = DataEncryption.decryptAsString(repository.getPassword());
-                        }
-                        if (repository.getUsername() != null || encryptedPassword != null) {
+                    if (Boolean.TRUE.equals(repository.isAuthenticationRequired())) {
+                        try {
+                            String encryptedPassword = null;
+                            if (repository.getPassword() != null) {
+                                encryptedPassword = DataEncryption.decryptAsString(repository.getPassword());
+                            }
                             analyzer.setRepositoryUsernameAndPassword(repository.getUsername(), encryptedPassword);
+                        } catch (Exception e) {
+                            LOGGER.error("Failed decrypting password for repository: " + repository.getIdentifier(), e);
                         }
-
-
-                    } catch (Exception e) {
-                        LOGGER.error("Failed decrypting password for repository: " + repository.getIdentifier(), e);
                     }
-
                     analyzer.setRepositoryBaseUrl(repository.getUrl());
                     model = analyzer.analyze(component);
                     qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.REPOSITORY, repository.getUrl(), repository.getType().name(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl()).toString(), new Date(), buildRepositoryComponentAnalysisCacheResult(model));

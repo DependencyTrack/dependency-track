@@ -1,0 +1,31 @@
+name: SBOM Reachables
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cdxgen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4.1.1
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'maven'
+      - name: Run cdxgen
+        run: |
+          npm install -g @cyclonedx/cdxgen
+          mvn clean compile -DskipTests -Dmaven.test.skip=true
+          cdxgen -p -t java --profile research .
+          mkdir -p bomresults
+          cp bom.json *.slices.json bomresults
+      - uses: actions/upload-artifact@v3
+        with:
+          name: bomresults
+          path: bomresults

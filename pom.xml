@@ -99,7 +99,7 @@
         -->
         <lib.logstash-logback-encoder.version>7.3</lib.logstash-logback-encoder.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
-        <lib.open-vulnerability-clients.version>5.0.0</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>5.0.1</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.2.0</lib.pebble.version>
         <lib.resilience4j.version>2.0.2</lib.resilience4j.version>

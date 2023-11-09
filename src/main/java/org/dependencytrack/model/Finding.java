@@ -81,6 +81,7 @@ public class Finding implements Serializable {
             "\"FINDINGATTRIBUTION\".\"ALT_ID\"," +
             "\"FINDINGATTRIBUTION\".\"REFERENCE_URL\"," +
             "\"ANALYSIS\".\"STATE\"," +
+            "\"ANALYSIS\".\"DETAILS\"," +
             "\"ANALYSIS\".\"SUPPRESSED\" " +
             "FROM \"COMPONENT\" " +
             "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
@@ -141,7 +142,8 @@ public class Finding implements Serializable {
         optValue(attribution, "referenceUrl", o[25]);
 
         optValue(analysis, "state", o[26]);
-        optValue(analysis, "isSuppressed", o[27], false);
+        //optValue(analysis, "details", o[27]); // CLOB - handle this in QueryManager
+        optValue(analysis, "isSuppressed", o[28], false);
     }
 
     public Map getComponent() {

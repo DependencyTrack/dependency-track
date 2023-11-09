@@ -39,7 +39,7 @@ public class FindingTest extends PersistenceCapableTest {
     private Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
             "component-version", "component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
             "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-            "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
+            "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED,  "details-comment", true);
 
 
     @Before
@@ -80,6 +80,7 @@ public class FindingTest extends PersistenceCapableTest {
     public void testAnalysis() {
         Map map = finding.getAnalysis();
         Assert.assertEquals(AnalysisState.NOT_AFFECTED, map.get("state"));
+        Assert.assertEquals("details-comment", map.get("details"));
         Assert.assertEquals(true, map.get("isSuppressed"));
     }
 

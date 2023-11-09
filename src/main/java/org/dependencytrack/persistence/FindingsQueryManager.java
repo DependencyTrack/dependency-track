@@ -280,6 +280,10 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
                 // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)
                 finding.getVulnerability().put("description", vulnerability.getDescription());
                 finding.getVulnerability().put("recommendation", vulnerability.getRecommendation());
+                if(analysis != null) {
+                    finding.getAnalysis().put("details", analysis.getAnalysisDetails());
+                    finding.getAnalysis().put("comments", analysis.getAnalysisComments());
+                }
                 final PackageURL purl = component.getPurl();
                 if (purl != null) {
                     final RepositoryType type = RepositoryType.resolve(purl);

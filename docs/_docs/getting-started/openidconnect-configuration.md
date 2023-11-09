@@ -15,6 +15,8 @@ If configured properly, users will be able to sign in by clicking the _OpenID_ b
 
 ![Login page with OpenID button](/images/screenshots/oidc-login-page.png)
 
+> **NOTE:** the front-end will *not* display the OIDC login button if the Dependency-Track service is unable to connect to your OIDC server's `.well-known/openid-configuration` endpoint. The server logs can help you identify whether this is an issue with firewall rules, internal TLS certificates, or other errors which may be preventing that communication.
+
 > Before v4.3.0, Dependency-Track exclusively used the `/userinfo` endpoint of the IdP to get user information.  
 > Since v4.3.0, [ID tokens](https://openid.net/specs/openid-connect-core-1_0.html#IDToken) are validated and evaluated as well. They even take precedence over `/userinfo`,  
 > which means that Dependency-Track will no longer request the `/userinfo` endpoint if all required claims  

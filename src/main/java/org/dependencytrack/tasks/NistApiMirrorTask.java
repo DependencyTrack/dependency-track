@@ -22,7 +22,6 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
 import io.github.jeremylong.openvulnerability.client.nvd.Config;
 import io.github.jeremylong.openvulnerability.client.nvd.CpeMatch;
 import io.github.jeremylong.openvulnerability.client.nvd.CveItem;
@@ -37,6 +36,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.IndexEvent.Action;
 import org.dependencytrack.event.NistMirrorEvent;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.Vulnerability.Source;
 import org.dependencytrack.model.VulnerableSoftware;
@@ -55,12 +55,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -80,6 +82,9 @@ import static org.dependencytrack.util.PersistenceUtil.applyIfNonNullAndChanged;
 public class NistApiMirrorTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(NistApiMirrorTask.class);
+
+    public NistApiMirrorTask() {
+    }
 
     /**
      * {@inheritDoc}
@@ -115,7 +120,9 @@ public class NistApiMirrorTask implements Subscriber {
                     .map(StringUtils::trimToNull)
                     .map(encryptedApiKey -> {
                         try {
-                            return DataEncryption.decryptAsString(encryptedApiKey);
+                            // TODO: Skipping decryption for easier local testing. Add this back in.
+                            // DataEncryption.decryptAsString(encryptedApiKey);
+                            return encryptedApiKey;
                         } catch (Exception ex) {
                             LOGGER.warn("Failed to decrypt API key; Continuing without authentication", ex);
                             return null;
@@ -165,7 +172,9 @@ public class NistApiMirrorTask implements Subscriber {
     }
 
     private static Vulnerability synchronizeVulnerability(final QueryManager qm, final Vulnerability vuln) {
-        final Pair<Vulnerability, IndexEvent> vulnIndexEventPair = qm.runInTransaction(() -> {
+        final Pair<Vulnerability, IndexEvent> vulnIndexEventPair = qm.runInTransaction(trx -> {
+            trx.setSerializeRead(true); // SELECT ... FOR UPDATE
+
             final PersistenceManager pm = qm.getPersistenceManager();
             final Query<Vulnerability> query = pm.newQuery(Vulnerability.class);
             query.setFilter("source == :source && vulnId == :vulnId");
@@ -238,17 +247,185 @@ public class NistApiMirrorTask implements Subscriber {
         return persistentVuln;
     }
 
-    private static void synchronizeVulnerableSoftware(final QueryManager qm, final Vulnerability persistentVuln,
-                                                      final List<VulnerableSoftware> vsList) {
+    private static void synchronizeVulnerableSoftware(final QueryManager qm, final Vulnerability persistentVuln, final List<VulnerableSoftware> vsList) {
         qm.runInTransaction(() -> {
-            final PersistenceManager pm = qm.getPersistenceManager();
-            final List<VulnerableSoftware> persistentVsListOld = List.copyOf(pm.detachCopyAll(qm.getVulnerableSoftwareByVulnId(Source.NVD.name(), persistentVuln.getVulnId())));
-            final List<VulnerableSoftware> persistentVsList = (List<VulnerableSoftware>) pm.makePersistentAll(vsList);
-            qm.updateAffectedVersionAttributions(persistentVuln, persistentVsList, Source.NVD);
-            final List<VulnerableSoftware> reconciledPersistentVsList =
-                    qm.reconcileVulnerableSoftware(persistentVuln, persistentVsList, persistentVsListOld, Source.NVD);
-            persistentVuln.setVulnerableSoftware(reconciledPersistentVsList);
+            final var startTime = new java.util.Date();
+
+            // Get all `VulnerableSoftware`s that are currently associated with the `Vulnerability`.
+            // Also fetch attributions as we will need to update those.
+            final Query<VulnerableSoftware> oldVsListQuery = qm.getPersistenceManager().newQuery(VulnerableSoftware.class);
+            oldVsListQuery.getFetchPlan().addGroup(VulnerableSoftware.FetchGroups.ATTRIBUTIONS);
+            oldVsListQuery.setFilter("vulnerability == :vuln");
+            oldVsListQuery.setParameters(persistentVuln);
+            final List<VulnerableSoftware> oldVsList;
+            try {
+                oldVsList = List.copyOf(oldVsListQuery.executeList());
+            } finally {
+                oldVsListQuery.closeAll();
+            }
+            LOGGER.debug("%s: Existing VS: %d".formatted(persistentVuln.getVulnId(), oldVsList.size()));
+
+            // Based on the lists of currently reported, and previously reported `VulnerableSoftware`s,
+            // divide the previously reported ones into lists of items to keep, and items to remove.
+            // Remaining items in vsList are entirely new.
+            final var vsListToRemove = new ArrayList<VulnerableSoftware>();
+            final var vsListToKeep = new ArrayList<VulnerableSoftware>();
+            for (final VulnerableSoftware oldVs : oldVsList) {
+                if (vsList.removeIf(isEqualTo(oldVs))) {
+                    vsListToKeep.add(oldVs);
+                } else {
+                    final List<AffectedVersionAttribution> attributions = oldVs.getAffectedVersionAttributions();
+                    if (attributions == null) {
+                        // DT versions prior to 4.7.0 did not record attributions.
+                        // Drop the VulnerableSoftware for now. If it was previously
+                        // reported by another source, it will be recorded and attributed
+                        // whenever that source is mirrored again.
+                        vsListToRemove.add(oldVs);
+                        continue;
+                    }
+
+                    final boolean previouslyReportedBySource = attributions.stream()
+                            .anyMatch(attr -> attr.getSource() == Source.NVD);
+                    final boolean previouslyReportedByOthers = attributions.stream()
+                            .anyMatch(attr -> attr.getSource() != Source.NVD);
+
+                    if (previouslyReportedByOthers) {
+                        // Reported by another source, keep it.
+                        vsListToKeep.add(oldVs);
+                    } else if (previouslyReportedBySource) {
+                        // Not reported anymore, remove attribution.
+                        vsListToRemove.add(oldVs);
+                    }
+                }
+            }
+            LOGGER.debug("%s: vsListToKeep: %d".formatted(persistentVuln.getVulnId(), vsListToKeep.size()));
+            LOGGER.debug("%s: vsListToRemove: %d".formatted(persistentVuln.getVulnId(), vsListToRemove.size()));
+
+            // Remove attributions from `VulnerableSoftware`s that are no longer reported.
+            if (!vsListToRemove.isEmpty()) {
+                final Query<AffectedVersionAttribution> deleteAttributionQuery = qm.getPersistenceManager().newQuery(AffectedVersionAttribution.class);
+                deleteAttributionQuery.setFilter(":vsListToRemove.contains(vulnerableSoftware) && source == :source");
+                deleteAttributionQuery.setNamedParameters(Map.of(
+                        "vsListToRemove", vsListToRemove,
+                        "source", Source.NVD
+                ));
+                try {
+                    deleteAttributionQuery.deletePersistentAll();
+                } finally {
+                    deleteAttributionQuery.closeAll();
+                }
+            }
+
+            // For `VulnerableSoftware`s that existed before, update the lastSeen timestamp.
+            for (final VulnerableSoftware oldVs : vsListToKeep) {
+                oldVs.getAffectedVersionAttributions().stream()
+                        .filter(attribution -> attribution.getSource() == Source.NVD)
+                        .findAny()
+                        .ifPresent(attribution -> attribution.setLastSeen(startTime));
+            }
+
+            // For `VulnerableSoftware`s that are newly reported for this `Vulnerability`, check if any matching
+            // records exist in the database that are currently associated with other `Vulnerability`s.
+            for (final VulnerableSoftware vs : vsList) {
+                final Query<VulnerableSoftware> query = qm.getPersistenceManager().newQuery(VulnerableSoftware.class);
+                query.getFetchPlan().addGroup(VulnerableSoftware.FetchGroups.ATTRIBUTIONS);
+                query.setFilter("""
+                        purl == :purl
+                          && purlType == :purlType
+                          && purlNamespace == :purlNamespace
+                          && purlName == :purlName
+                          && purlVersion == :purlVersion
+                          && purlQualifiers == :purlQualifiers
+                          && purlSubpath == :purlSubpath
+                          && cpe22 == :cpe22
+                          && cpe23 == :cpe23
+                          && part == :part
+                          && vendor == :vendor
+                          && product == :product
+                          && version == :version
+                          && update == :update
+                          && edition == :edition
+                          && language == :language
+                          && swEdition == :swEdition
+                          && targetSw == :targetSw
+                          && targetHw == :targetHw
+                          && other == :other
+                          && versionEndExcluding == :versionEndExcluding
+                          && versionEndIncluding == :versionEndIncluding
+                          && versionStartExcluding == :versionStartExcluding
+                          && versionStartIncluding == :versionStartIncluding
+                          && vulnerable == :vulnerable
+                        """);
+                query.setNamedParameters(Map.ofEntries(
+                        Map.entry("purl", vs.getPurl()),
+                        Map.entry("purlType", vs.getPurlType()),
+                        Map.entry("purlNamespace", vs.getPurlNamespace()),
+                        Map.entry("purlName", vs.getPurlName()),
+                        Map.entry("purlVersion", vs.getPurlVersion()),
+                        Map.entry("purlQualifiers", vs.getPurlQualifiers()),
+                        Map.entry("purlSubpath", vs.getPurlSubpath()),
+                        Map.entry("cpe22", vs.getCpe22()),
+                        Map.entry("cpe23", vs.getCpe23()),
+                        Map.entry("part", vs.getPart()),
+                        Map.entry("vendor", vs.getVendor()),
+                        Map.entry("product", vs.getProduct()),
+                        Map.entry("version", vs.getVersion()),
+                        Map.entry("update", vs.getUpdate()),
+                        Map.entry("edition", vs.getEdition()),
+                        Map.entry("language", vs.getLanguage()),
+                        Map.entry("swEdition", vs.getSwEdition()),
+                        Map.entry("targetSw", vs.getTargetSw()),
+                        Map.entry("targetHw", vs.getTargetHw()),
+                        Map.entry("other", vs.getOther()),
+                        Map.entry("versionEndExcluding", vs.getVersionEndExcluding()),
+                        Map.entry("versionEndIncluding", vs.getVersionEndIncluding()),
+                        Map.entry("versionStartExcluding", vs.getVersionStartExcluding()),
+                        Map.entry("versionStartIncluding", vs.getVersionStartIncluding()),
+                        Map.entry("vulnerable", vs.isVulnerable())
+                ));
+                final VulnerableSoftware existingVs;
+                try {
+                    existingVs = query.executeUnique();
+                } finally {
+                    query.closeAll();
+                }
+                if (existingVs != null) {
+                    final boolean hasAttribution = existingVs.getAffectedVersionAttributions().stream()
+                            .anyMatch(attribution -> attribution.getSource() == Source.NVD);
+                    if (!hasAttribution) {
+                        LOGGER.info("%s: Adding attribution".formatted(persistentVuln.getVulnId()));
+                        final var attribution = new AffectedVersionAttribution();
+                        attribution.setSource(Source.NVD);
+                        attribution.setVulnerability(persistentVuln);
+                        attribution.setVulnerableSoftware(existingVs);
+                        attribution.setLastSeen(startTime);
+                        qm.getPersistenceManager().makePersistent(attribution);
+
+                        existingVs.getAffectedVersionAttributions().add(attribution);
+                    }
+                    vsListToKeep.add(existingVs);
+                } else {
+                    LOGGER.debug("%s: Creating new VS".formatted(persistentVuln.getVulnId()));
+                    final VulnerableSoftware persistentVs = qm.getPersistenceManager().makePersistent(vs);
+
+                    final var attribution = new AffectedVersionAttribution();
+                    attribution.setSource(Source.NVD);
+                    attribution.setVulnerability(persistentVuln);
+                    attribution.setVulnerableSoftware(persistentVs);
+                    attribution.setLastSeen(startTime);
+                    qm.getPersistenceManager().makePersistent(attribution);
+
+                    vsListToKeep.add(persistentVs);
+                }
+            }
+
+            LOGGER.debug("%s: Final vsList: %d".formatted(persistentVuln.getVulnId(), vsListToKeep.size()));
+            persistentVuln.setVulnerableSoftware(vsListToKeep);
         });
+    }
+
+    private static Predicate<VulnerableSoftware> isEqualTo(final VulnerableSoftware vsOld) {
+        return vs -> Objects.equals(vsOld.getPurl(), vs.getPurl()); // TODO: Add remaining comparisons.
     }
 
     private static Vulnerability convertVulnerability(final CveItem cveItem) {
@@ -394,10 +571,11 @@ public class NistApiMirrorTask implements Subscriber {
 
     private static boolean updateLastModified(final ZonedDateTime lastModifiedDateTime) {
         if (lastModifiedDateTime == null) {
-            // Nothing has changed.
+            LOGGER.debug("Encountered no modified CVEs");
             return false;
         }
 
+        LOGGER.debug("Latest captured modification date: %s".formatted(lastModifiedDateTime));
         try (final var qm = new QueryManager().withL2CacheDisabled()) {
             qm.runInTransaction(() -> {
                 final ConfigProperty property = qm.getConfigProperty(

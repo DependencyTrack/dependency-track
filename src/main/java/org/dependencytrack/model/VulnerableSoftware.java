@@ -57,6 +57,10 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     private static final long serialVersionUID = -3987946408457131098L;
 
+    public static final class FetchGroups {
+        public static final String ATTRIBUTIONS = "VULNERABLESOFTWARE_ATTRIBUTIONS";
+    }
+
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
@@ -173,7 +177,8 @@ public class VulnerableSoftware implements ICpe, Serializable {
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     private UUID uuid;
 
-    private transient List<AffectedVersionAttribution> affectedVersionAttributions;
+    @Persistent(mappedBy = "vulnerableSoftware")
+    private List<AffectedVersionAttribution> affectedVersionAttributions;
 
     public long getId() {
         return id;

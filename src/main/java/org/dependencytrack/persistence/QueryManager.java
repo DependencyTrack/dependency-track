@@ -90,6 +90,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -1327,21 +1329,17 @@ public class QueryManager extends AlpineQueryManager {
      * @since 4.6.0
      */
     public void runInTransaction(final Runnable runnable) {
-        final Transaction trx = pm.currentTransaction();
-        final boolean isJoiningExisting = trx.isActive();
-        try {
-            if (!isJoiningExisting) {
-                trx.begin();
-            }
+        runInTransaction((Function<Transaction, Void>) trx -> {
             runnable.run();
-            if (!isJoiningExisting) {
-                trx.commit();
-            }
-        } finally {
-            if (!isJoiningExisting && trx.isActive()) {
-                trx.rollback();
-            }
-        }
+            return null;
+        });
+    }
+
+    public void runInTransaction(final Consumer<Transaction> consumer) {
+        runInTransaction((Function<Transaction, Void>) trx -> {
+            consumer.accept(trx);
+            return null;
+        });
     }
 
     /**
@@ -1353,14 +1351,23 @@ public class QueryManager extends AlpineQueryManager {
      * @since 4.9.0
      */
     public <T> T runInTransaction(final Supplier<T> supplier) {
+        return runInTransaction((Function<Transaction, T>) trx -> supplier.get());
+    }
+
+    public <T> T runInTransaction(final Function<Transaction, T> function) {
         final Transaction trx = pm.currentTransaction();
+        final boolean isJoiningExisting = trx.isActive();
         try {
-            trx.begin();
-            final T result = supplier.get();
-            trx.commit();
+            if (!isJoiningExisting) {
+                trx.begin();
+            }
+            final T result = function.apply(trx);
+            if (!isJoiningExisting) {
+                trx.commit();
+            }
             return result;
         } finally {
-            if (trx.isActive()) {
+            if (!isJoiningExisting && trx.isActive()) {
                 trx.rollback();
             }
         }

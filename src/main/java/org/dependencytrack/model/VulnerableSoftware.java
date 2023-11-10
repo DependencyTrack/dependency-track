@@ -25,6 +25,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
+import javax.jdo.annotations.FetchGroup;
+import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
@@ -48,6 +50,11 @@ import java.util.UUID;
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@FetchGroups({
+        @FetchGroup(name = "VULNERABLESOFTWARE_ATTRIBUTIONS", members = {
+                @Persistent(name = "affectedVersionAttributions")
+        })
+})
 @Index(name = "VULNERABLESOFTWARE_CPE23_VERSION_RANGE_IDX", members = {"cpe23", "versionEndExcluding", "versionEndIncluding", "versionStartExcluding", "versionStartIncluding"})
 @Index(name = "VULNERABLESOFTWARE_PART_VENDOR_PRODUCT_IDX", members = {"part", "vendor", "product"})
 @Index(name = "VULNERABLESOFTWARE_CPE_PURL_PARTS_IDX", members = {"part", "vendor", "product", "purlType", "purlNamespace", "purlName"})

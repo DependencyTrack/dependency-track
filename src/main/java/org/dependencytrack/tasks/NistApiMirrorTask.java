@@ -33,6 +33,7 @@ import io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder;
 import io.github.jeremylong.openvulnerability.client.nvd.Weakness;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.datanucleus.flush.FlushMode;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.IndexEvent.Action;
 import org.dependencytrack.event.NistMirrorEvent;
@@ -58,15 +59,19 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder.aNvdCveApi;
+import static org.datanucleus.PropertyNames.PROPERTY_FLUSH_MODE;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS;
@@ -165,7 +170,8 @@ public class NistApiMirrorTask implements Subscriber {
         final List<VulnerableSoftware> vsList = extractCpeMatches(cveItem.getId(), cveItem.getConfigurations())
                 .map(cpeMatch -> convertCpeMatch(cveItem.getId(), cpeMatch))
                 .filter(Objects::nonNull)
-                .toList();
+                .filter(distinctIgnoringDatastoreIdentity())
+                .collect(Collectors.toList());
 
         final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
         synchronizeVulnerableSoftware(qm, persistentVuln, vsList);
@@ -248,14 +254,17 @@ public class NistApiMirrorTask implements Subscriber {
     }
 
     private static void synchronizeVulnerableSoftware(final QueryManager qm, final Vulnerability persistentVuln, final List<VulnerableSoftware> vsList) {
-        qm.runInTransaction(() -> {
-            final var startTime = new java.util.Date();
+        // Delay flushes to the datastore until commit.
+        qm.getPersistenceManager().setProperty(PROPERTY_FLUSH_MODE, FlushMode.MANUAL.name());
+
+        qm.runInTransaction(tx -> {
+            tx.setSerializeRead(false);
 
             // Get all `VulnerableSoftware`s that are currently associated with the `Vulnerability`.
             // Also fetch attributions as we will need to update those.
             final Query<VulnerableSoftware> oldVsListQuery = qm.getPersistenceManager().newQuery(VulnerableSoftware.class);
             oldVsListQuery.getFetchPlan().addGroup(VulnerableSoftware.FetchGroups.ATTRIBUTIONS);
-            oldVsListQuery.setFilter("vulnerability == :vuln");
+            oldVsListQuery.setFilter("vulnerabilities.contains(:vuln)");
             oldVsListQuery.setParameters(persistentVuln);
             final List<VulnerableSoftware> oldVsList;
             try {
@@ -271,7 +280,7 @@ public class NistApiMirrorTask implements Subscriber {
             final var vsListToRemove = new ArrayList<VulnerableSoftware>();
             final var vsListToKeep = new ArrayList<VulnerableSoftware>();
             for (final VulnerableSoftware oldVs : oldVsList) {
-                if (vsList.removeIf(isEqualTo(oldVs))) {
+                if (vsList.removeIf(isEqualToIgnoringDatastoreIdentity(oldVs))) {
                     vsListToKeep.add(oldVs);
                 } else {
                     final List<AffectedVersionAttribution> attributions = oldVs.getAffectedVersionAttributions();
@@ -295,6 +304,9 @@ public class NistApiMirrorTask implements Subscriber {
                     } else if (previouslyReportedBySource) {
                         // Not reported anymore, remove attribution.
                         vsListToRemove.add(oldVs);
+                    } else {
+                        // Should never happen, but better safe than sorry.
+                        vsListToRemove.add(oldVs);
                     }
                 }
             }
@@ -316,12 +328,14 @@ public class NistApiMirrorTask implements Subscriber {
                 }
             }
 
+            final var attributionDate = new java.util.Date();
+
             // For `VulnerableSoftware`s that existed before, update the lastSeen timestamp.
             for (final VulnerableSoftware oldVs : vsListToKeep) {
                 oldVs.getAffectedVersionAttributions().stream()
                         .filter(attribution -> attribution.getSource() == Source.NVD)
                         .findAny()
-                        .ifPresent(attribution -> attribution.setLastSeen(startTime));
+                        .ifPresent(attribution -> attribution.setLastSeen(attributionDate));
             }
 
             // For `VulnerableSoftware`s that are newly reported for this `Vulnerability`, check if any matching
@@ -329,60 +343,26 @@ public class NistApiMirrorTask implements Subscriber {
             for (final VulnerableSoftware vs : vsList) {
                 final Query<VulnerableSoftware> query = qm.getPersistenceManager().newQuery(VulnerableSoftware.class);
                 query.getFetchPlan().addGroup(VulnerableSoftware.FetchGroups.ATTRIBUTIONS);
-                query.setFilter("""
-                        purl == :purl
-                          && purlType == :purlType
-                          && purlNamespace == :purlNamespace
-                          && purlName == :purlName
-                          && purlVersion == :purlVersion
-                          && purlQualifiers == :purlQualifiers
-                          && purlSubpath == :purlSubpath
-                          && cpe22 == :cpe22
-                          && cpe23 == :cpe23
-                          && part == :part
-                          && vendor == :vendor
-                          && product == :product
-                          && version == :version
-                          && update == :update
-                          && edition == :edition
-                          && language == :language
-                          && swEdition == :swEdition
-                          && targetSw == :targetSw
-                          && targetHw == :targetHw
-                          && other == :other
-                          && versionEndExcluding == :versionEndExcluding
-                          && versionEndIncluding == :versionEndIncluding
-                          && versionStartExcluding == :versionStartExcluding
-                          && versionStartIncluding == :versionStartIncluding
-                          && vulnerable == :vulnerable
-                        """);
-                query.setNamedParameters(Map.ofEntries(
-                        Map.entry("purl", vs.getPurl()),
-                        Map.entry("purlType", vs.getPurlType()),
-                        Map.entry("purlNamespace", vs.getPurlNamespace()),
-                        Map.entry("purlName", vs.getPurlName()),
-                        Map.entry("purlVersion", vs.getPurlVersion()),
-                        Map.entry("purlQualifiers", vs.getPurlQualifiers()),
-                        Map.entry("purlSubpath", vs.getPurlSubpath()),
-                        Map.entry("cpe22", vs.getCpe22()),
-                        Map.entry("cpe23", vs.getCpe23()),
-                        Map.entry("part", vs.getPart()),
-                        Map.entry("vendor", vs.getVendor()),
-                        Map.entry("product", vs.getProduct()),
-                        Map.entry("version", vs.getVersion()),
-                        Map.entry("update", vs.getUpdate()),
-                        Map.entry("edition", vs.getEdition()),
-                        Map.entry("language", vs.getLanguage()),
-                        Map.entry("swEdition", vs.getSwEdition()),
-                        Map.entry("targetSw", vs.getTargetSw()),
-                        Map.entry("targetHw", vs.getTargetHw()),
-                        Map.entry("other", vs.getOther()),
-                        Map.entry("versionEndExcluding", vs.getVersionEndExcluding()),
-                        Map.entry("versionEndIncluding", vs.getVersionEndIncluding()),
-                        Map.entry("versionStartExcluding", vs.getVersionStartExcluding()),
-                        Map.entry("versionStartIncluding", vs.getVersionStartIncluding()),
-                        Map.entry("vulnerable", vs.isVulnerable())
-                ));
+                final var queryFilter = new StringBuilder();
+                final var queryParams = new HashMap<String, Object>();
+                final BiConsumer<String, Object> foo = (name, value) -> {
+                    if (!queryFilter.isEmpty()) {
+                        queryFilter.append(" && ");
+                    }
+                    if (value == null) {
+                        queryFilter.append("%s == null".formatted(name));
+                    } else {
+                        queryFilter.append("%s == :%s".formatted(name, name));
+                        queryParams.put(name, value);
+                    }
+                };
+                foo.accept("cpe23", vs.getCpe23());
+                foo.accept("versionEndExcluding", vs.getVersionEndExcluding());
+                foo.accept("versionEndIncluding", vs.getVersionEndIncluding());
+                foo.accept("versionStartExcluding", vs.getVersionStartExcluding());
+                foo.accept("versionStartIncluding", vs.getVersionStartIncluding());
+                query.setFilter(queryFilter.toString());
+                query.setNamedParameters(queryParams);
                 final VulnerableSoftware existingVs;
                 try {
                     existingVs = query.executeUnique();
@@ -398,9 +378,9 @@ public class NistApiMirrorTask implements Subscriber {
                         attribution.setSource(Source.NVD);
                         attribution.setVulnerability(persistentVuln);
                         attribution.setVulnerableSoftware(existingVs);
-                        attribution.setLastSeen(startTime);
+                        attribution.setFirstSeen(attributionDate);
+                        attribution.setLastSeen(attributionDate);
                         qm.getPersistenceManager().makePersistent(attribution);
-
                         existingVs.getAffectedVersionAttributions().add(attribution);
                     }
                     vsListToKeep.add(existingVs);
@@ -412,9 +392,9 @@ public class NistApiMirrorTask implements Subscriber {
                     attribution.setSource(Source.NVD);
                     attribution.setVulnerability(persistentVuln);
                     attribution.setVulnerableSoftware(persistentVs);
-                    attribution.setLastSeen(startTime);
+                    attribution.setFirstSeen(attributionDate);
+                    attribution.setLastSeen(attributionDate);
                     qm.getPersistenceManager().makePersistent(attribution);
-
                     vsListToKeep.add(persistentVs);
                 }
             }
@@ -424,8 +404,67 @@ public class NistApiMirrorTask implements Subscriber {
         });
     }
 
-    private static Predicate<VulnerableSoftware> isEqualTo(final VulnerableSoftware vsOld) {
-        return vs -> Objects.equals(vsOld.getPurl(), vs.getPurl()); // TODO: Add remaining comparisons.
+    private static Predicate<VulnerableSoftware> isEqualToIgnoringDatastoreIdentity(final VulnerableSoftware vsOld) {
+        return vs -> Objects.equals(vsOld.getPurl(), vs.getPurl())
+                && Objects.equals(vsOld.getPurlType(), vs.getPurlType())
+                && Objects.equals(vsOld.getPurlNamespace(), vs.getPurlNamespace())
+                && Objects.equals(vsOld.getPurlName(), vs.getPurlName())
+                && Objects.equals(vsOld.getPurlVersion(), vs.getPurlVersion())
+                && Objects.equals(vsOld.getPurlQualifiers(), vs.getPurlQualifiers())
+                && Objects.equals(vsOld.getPurlSubpath(), vs.getPurlSubpath())
+                && Objects.equals(vsOld.getCpe22(), vs.getCpe22())
+                && Objects.equals(vsOld.getCpe23(), vs.getCpe23())
+                && Objects.equals(vsOld.getPart(), vs.getPart())
+                && Objects.equals(vsOld.getVendor(), vs.getVendor())
+                && Objects.equals(vsOld.getProduct(), vs.getProduct())
+                && Objects.equals(vsOld.getVersion(), vs.getVersion())
+                && Objects.equals(vsOld.getUpdate(), vs.getUpdate())
+                && Objects.equals(vsOld.getEdition(), vs.getEdition())
+                && Objects.equals(vsOld.getLanguage(), vs.getLanguage())
+                && Objects.equals(vsOld.getSwEdition(), vs.getSwEdition())
+                && Objects.equals(vsOld.getTargetSw(), vs.getTargetSw())
+                && Objects.equals(vsOld.getTargetHw(), vs.getTargetHw())
+                && Objects.equals(vsOld.getOther(), vs.getOther())
+                && Objects.equals(vsOld.getVersionEndExcluding(), vs.getVersionEndExcluding())
+                && Objects.equals(vsOld.getVersionEndIncluding(), vs.getVersionEndIncluding())
+                && Objects.equals(vsOld.getVersionStartExcluding(), vs.getVersionStartExcluding())
+                && Objects.equals(vsOld.getVersionStartIncluding(), vs.getVersionStartIncluding())
+                && Objects.equals(vsOld.isVulnerable(), vs.isVulnerable());
+    }
+
+    private static int hashCodeWithoutDatastoreIdentity(final VulnerableSoftware vs) {
+        return Objects.hash(
+                vs.getPurl(),
+                vs.getPurlType(),
+                vs.getPurlNamespace(),
+                vs.getPurlName(),
+                vs.getPurlVersion(),
+                vs.getPurlQualifiers(),
+                vs.getPurlSubpath(),
+                vs.getCpe22(),
+                vs.getCpe23(),
+                vs.getPart(),
+                vs.getVendor(),
+                vs.getProduct(),
+                vs.getVersion(),
+                vs.getUpdate(),
+                vs.getEdition(),
+                vs.getLanguage(),
+                vs.getSwEdition(),
+                vs.getTargetSw(),
+                vs.getTargetHw(),
+                vs.getOther(),
+                vs.getVersionEndExcluding(),
+                vs.getVersionEndIncluding(),
+                vs.getVersionStartExcluding(),
+                vs.getVersionStartIncluding(),
+                vs.isVulnerable()
+        );
+    }
+
+    private static Predicate<VulnerableSoftware> distinctIgnoringDatastoreIdentity() {
+        final var seen = new HashSet<Integer>();
+        return vs -> seen.add(hashCodeWithoutDatastoreIdentity(vs));
     }
 
     private static Vulnerability convertVulnerability(final CveItem cveItem) {
@@ -469,17 +508,27 @@ public class NistApiMirrorTask implements Subscriber {
             return Stream.empty();
         }
 
-        return cveConfigs.stream()
+        final var cpeMatches = new ArrayList<CpeMatch>();
+        for (final Config config : cveConfigs) {
+            if (config.getNegate() != null && config.getNegate()) {
                 // We can't compute negation.
-                .filter(config -> config.getNegate() == null || !config.getNegate())
-                .map(Config::getNodes)
-                .flatMap(Collection::stream)
-                // We can't compute negation.
-                .filter(node -> node.getNegate() == null || !node.getNegate())
-                .filter(node -> node.getCpeMatch() != null)
-                .flatMap(node -> extractCpeMatchesFromNode(cveId, node))
-                // We currently have no interest in non-vulnerable versions.
-                .filter(cpeMatch -> cpeMatch.getVulnerable() == null || cpeMatch.getVulnerable());
+                continue;
+            }
+            if (config.getNodes() == null || config.getNodes().isEmpty()) {
+                continue;
+            }
+
+            config.getNodes().stream()
+                    // We can't compute negation.
+                    .filter(node -> node.getNegate() == null || !node.getNegate())
+                    .filter(node -> node.getCpeMatch() != null)
+                    .flatMap(node -> extractCpeMatchesFromNode(cveId, node))
+                    // We currently have no interest in non-vulnerable versions.
+                    .filter(cpeMatch -> cpeMatch.getVulnerable() == null || cpeMatch.getVulnerable())
+                    .forEach(cpeMatches::add);
+        }
+
+        return cpeMatches.stream();
     }
 
     private static Stream<CpeMatch> extractCpeMatchesFromNode(final String cveId, final Node node) {
@@ -534,6 +583,13 @@ public class NistApiMirrorTask implements Subscriber {
             vs.setProduct(cpe.getProduct());
             vs.setVersion(cpe.getVersion());
             vs.setUpdate(cpe.getUpdate());
+            vs.setEdition(cpe.getEdition());
+            vs.setLanguage(cpe.getLanguage());
+            vs.setSwEdition(cpe.getSwEdition());
+            vs.setTargetSw(cpe.getTargetSw());
+            vs.setTargetHw(cpe.getTargetHw());
+            vs.setOther(cpe.getOther());
+            vs.setVulnerable(true);
 
             vs.setVersionStartIncluding(cpeMatch.getVersionStartIncluding());
             vs.setVersionStartExcluding(cpeMatch.getVersionStartExcluding());

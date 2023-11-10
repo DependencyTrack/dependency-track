@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.datanucleus.PropertyNames;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
@@ -48,8 +49,12 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 
 /**
  * Parser and processor of NVD data feeds.
@@ -77,42 +82,76 @@ public final class NvdParser {
         }
 
         LOGGER.info("Parsing " + file.getName());
-
-        try (final InputStream in = Files.newInputStream(file.toPath());
-             final JsonParser jsonParser = objectMapper.createParser(in)) {
-            jsonParser.nextToken(); // Position cursor at first token
-
-            // Due to JSON feeds being rather large, do not parse them completely,
-            // but "stream" through them. Parsing individual CVE items
-            // one-by-one allows for garbage collection to kick in sooner,
-            // keeping the overall memory footprint low.
-            JsonToken currentToken;
-            while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-                final String fieldName = jsonParser.getCurrentName();
-                currentToken = jsonParser.nextToken();
-                if ("CVE_Items".equals(fieldName)) {
-                    if (currentToken == JsonToken.START_ARRAY) {
-                        while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
-                            final ObjectNode cveItem = jsonParser.readValueAsTree();
-                            parseCveItem(cveItem);
-                        }
-                    } else {
-                        jsonParser.skipChildren();
-                    }
-                } else {
+        try (final QueryManager qm = new QueryManager().withL2CacheDisabled()) {
+            qm.getPersistenceManager().setProperty(PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+            Map<Vulnerability, List<VulnerableSoftware>> vsList = new HashMap<Vulnerability, List<VulnerableSoftware>>();
+	    int pendingCount = 0;
+	    try (final InputStream in = Files.newInputStream(file.toPath());
+		 final JsonParser jsonParser = objectMapper.createParser(in)) {
+		jsonParser.nextToken(); // Position cursor at first token
+		
+		// Due to JSON feeds being rather large, do not parse them completely,
+		// but "stream" through them. Parsing individual CVE items
+		// one-by-one allows for garbage collection to kick in sooner,
+		// keeping the overall memory footprint low.
+		JsonToken currentToken;
+		while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+		    final String fieldName = jsonParser.getCurrentName();
+		    currentToken = jsonParser.nextToken();
+		    if ("CVE_Items".equals(fieldName)) {
+			if (currentToken == JsonToken.START_ARRAY) {
+			    while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
+				final ObjectNode cveItem = jsonParser.readValueAsTree();
+				Pair<Vulnerability, List<VulnerableSoftware>> parsedCveItem = parseCveItem(cveItem, qm);
+				vsList.put(parsedCveItem.getLeft(), parsedCveItem.getRight());
+				if (pendingCount == 500) {
+				    final Map<Vulnerability, List<VulnerableSoftware>> vsListOld = synchronizeVulnerabilities(qm, vsList);
+				    commit(qm, vsList, vsListOld);
+				    pendingCount = 0;
+				} else {
+				    pendingCount++;
+				}
+			    }
+			} else {
+			    jsonParser.skipChildren();
+			}
+		    } else {
                     jsonParser.skipChildren();
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("An error occurred while parsing NVD JSON data", e);
-        }
+		    }
+		}
+		if (pendingCount > 0) {
+		    final Map<Vulnerability, List<VulnerableSoftware>> vsListOld = synchronizeVulnerabilities(qm, vsList);
+		    commit(qm, vsList, vsListOld);
+		}
+	    } catch (Exception e) {
+		LOGGER.error("An error occurred while parsing NVD JSON data", e);
+	    }	    
+	}
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
-    private void parseCveItem(final ObjectNode cveItem) {
-        try (QueryManager qm = new QueryManager().withL2CacheDisabled()) {
-            qm.getPersistenceManager().setProperty(PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+    private void commit(QueryManager qm, Map<Vulnerability, List<VulnerableSoftware>> vsList, Map<Vulnerability, List<VulnerableSoftware>> vsListOld) {
+	List<VulnerableSoftware> allVsList = new ArrayList<>();
+	for (Map.Entry<Vulnerability, List<VulnerableSoftware>> vs : vsList.entrySet()) {
+	    allVsList.addAll(vs.getValue());
+	}
+	qm.persist(allVsList);
+	Map<Vulnerability, List<VulnerableSoftware>> newVsList = new HashMap<Vulnerability, List<VulnerableSoftware>>();
 
+	qm.runInTransaction(() -> {
+		for (Map.Entry<Vulnerability, List<VulnerableSoftware>> vs : vsList.entrySet()) {
+		    qm.updateAffectedVersionAttributions(vs.getKey(), vs.getValue(), Vulnerability.Source.NVD);
+		    List<VulnerableSoftware> newVs = qm.reconcileVulnerableSoftware(vs.getKey(), vsListOld.get(vs.getKey()), vs.getValue(), Vulnerability.Source.NVD);
+		    newVsList.put(vs.getKey(), newVs);
+		    vs.getKey().setVulnerableSoftware(newVs);
+		}
+	    });
+	qm.persist(newVsList.keySet());
+	vsList.clear();
+	vsListOld.clear();
+    }
+    
+    private Pair<Vulnerability, List<VulnerableSoftware>> parseCveItem(final ObjectNode cveItem, QueryManager qm) {
             final Vulnerability vulnerability = new Vulnerability();
             vulnerability.setSource(Vulnerability.Source.NVD);
 
@@ -196,13 +235,8 @@ public final class NvdParser {
                 vulnerability.setReferences(references.substring(0, references.lastIndexOf("\n")));
             }
 
-            // Update the vulnerability
-            LOGGER.debug("Synchronizing: " + vulnerability.getVulnId());
-            final Vulnerability synchronizeVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-            final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(synchronizeVulnerability.getSource(), synchronizeVulnerability.getVulnId()));
-
             // CPE
-            List<VulnerableSoftware> vsList = new ArrayList<>();
+	    List<VulnerableSoftware> vsList = new ArrayList<>();
             final var configurations = (ObjectNode) cveItem.get("configurations");
             final var nodes = (ArrayNode) configurations.get("nodes");
             for (int j = 0; j < nodes.size(); j++) {
@@ -223,14 +257,25 @@ public final class NvdParser {
                 } else {
                     vulnerableSoftwareInNode.addAll(parseCpes(qm, node));
                 }
-                vsList.addAll(reconcile(vulnerableSoftwareInNode, nodeOperator));
+		vsList.addAll(reconcile(vulnerableSoftwareInNode, nodeOperator));
             }
-            qm.persist(vsList);
-            qm.updateAffectedVersionAttributions(synchronizeVulnerability, vsList, Vulnerability.Source.NVD);
-            vsList = qm.reconcileVulnerableSoftware(synchronizeVulnerability, vsListOld, vsList, Vulnerability.Source.NVD);
-            synchronizeVulnerability.setVulnerableSoftware(vsList);
-            qm.persist(synchronizeVulnerability);
-        }
+	    return Pair.of(vulnerability, vsList);
+    }
+
+    
+    private Map<Vulnerability, List<VulnerableSoftware>> synchronizeVulnerabilities(QueryManager qm, Map<Vulnerability, List<VulnerableSoftware>> vsList) {
+            // Update the vulnerability
+	LOGGER.debug("Synchronizing: " + vsList.keySet().stream().map(x->x.getVulnId()).collect(Collectors.toList()));
+	final List<Vulnerability> transientVulnerabilities = new ArrayList<>(vsList.keySet());
+	final List<Vulnerability> synchronizedVulnerabilities = qm.synchronizeVulnerabilities(transientVulnerabilities, false);
+	
+	final Map<Vulnerability, List<VulnerableSoftware>> vsListOld = new HashMap<Vulnerability, List<VulnerableSoftware>>();
+	for (int i = 0;i < synchronizedVulnerabilities.size();i++) {
+	    Vulnerability synchronizeVulnerability = synchronizedVulnerabilities.get(i);
+	    vsListOld.put(synchronizeVulnerability, qm.detach(qm.getVulnerableSoftwareByVulnId(synchronizeVulnerability.getSource(), synchronizeVulnerability.getVulnId())));
+	    vsList.put(synchronizeVulnerability, vsList.remove(transientVulnerabilities.get(i)));
+	    }
+	return vsListOld;
     }
 
     /**

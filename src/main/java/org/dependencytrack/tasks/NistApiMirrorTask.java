@@ -245,10 +245,10 @@ public class NistApiMirrorTask implements Subscriber {
             tx.setSerializeRead(false);
 
             // Get all `VulnerableSoftware`s that are currently associated with the vulnerability.
-            final List<VulnerableSoftware> oldVsList = qm.getVulnerableSoftwareByVulnId(Source.NVD.name(), persistentVuln.getVulnId());
-            LOGGER.trace("%s: Existing VS: %d".formatted(persistentVuln.getVulnId(), oldVsList.size()));
+            final List<VulnerableSoftware> vsOldList = persistentVuln.getVulnerableSoftware();
+            LOGGER.trace("%s: Existing VS: %d".formatted(persistentVuln.getVulnId(), vsOldList.size()));
 
-            for (final VulnerableSoftware vsOld : oldVsList) {
+            for (final VulnerableSoftware vsOld : vsOldList) {
                 vsOld.setAffectedVersionAttributions(qm.getAffectedVersionAttributions(persistentVuln, vsOld));
             }
 
@@ -257,17 +257,17 @@ public class NistApiMirrorTask implements Subscriber {
             // Remaining items in vsList are entirely new.
             final var vsListToRemove = new ArrayList<VulnerableSoftware>();
             final var vsListToKeep = new ArrayList<VulnerableSoftware>();
-            for (final VulnerableSoftware oldVs : oldVsList) {
-                if (vsList.removeIf(oldVs::equalsIgnoringDatastoreIdentity)) {
-                    vsListToKeep.add(oldVs);
+            for (final VulnerableSoftware vsOld : vsOldList) {
+                if (vsList.removeIf(vsOld::equalsIgnoringDatastoreIdentity)) {
+                    vsListToKeep.add(vsOld);
                 } else {
-                    final List<AffectedVersionAttribution> attributions = oldVs.getAffectedVersionAttributions();
+                    final List<AffectedVersionAttribution> attributions = vsOld.getAffectedVersionAttributions();
                     if (attributions == null) {
                         // DT versions prior to 4.7.0 did not record attributions.
                         // Drop the VulnerableSoftware for now. If it was previously
                         // reported by another source, it will be recorded and attributed
                         // whenever that source is mirrored again.
-                        vsListToRemove.add(oldVs);
+                        vsListToRemove.add(vsOld);
                         continue;
                     }
 
@@ -278,13 +278,13 @@ public class NistApiMirrorTask implements Subscriber {
 
                     if (previouslyReportedByOthers) {
                         // Reported by another source, keep it.
-                        vsListToKeep.add(oldVs);
+                        vsListToKeep.add(vsOld);
                     } else if (previouslyReportedBySource) {
                         // Not reported anymore, remove attribution.
-                        vsListToRemove.add(oldVs);
+                        vsListToRemove.add(vsOld);
                     } else {
                         // Should never happen, but better safe than sorry.
-                        vsListToRemove.add(oldVs);
+                        vsListToRemove.add(vsOld);
                     }
                 }
             }
@@ -317,8 +317,8 @@ public class NistApiMirrorTask implements Subscriber {
                         vs.getVersionStartIncluding()
                 );
                 if (existingVs != null) {
-                    // final boolean hasAttribution = qm.hasAffectedVersionAttribution(persistentVuln, vs, Source.NVD);
-                    if (true) {
+                    final boolean hasAttribution = qm.hasAffectedVersionAttribution(persistentVuln, vs, Source.NVD);
+                    if (!hasAttribution) {
                         LOGGER.trace("%s: Adding attribution".formatted(persistentVuln.getVulnId()));
                         final AffectedVersionAttribution attribution = createAttribution(persistentVuln, existingVs, attributionDate);
                         qm.getPersistenceManager().makePersistent(attribution);

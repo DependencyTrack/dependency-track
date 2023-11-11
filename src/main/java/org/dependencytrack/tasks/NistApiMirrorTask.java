@@ -52,7 +52,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -144,33 +143,57 @@ public class NistApiMirrorTask implements Subscriber {
                 .namingPattern(getClass().getSimpleName() + "-%d")
                 .uncaughtExceptionHandler(new LoggableUncaughtExceptionHandler())
                 .build();
+        final var executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), factory);
 
         final long startTimeNs = System.nanoTime();
         ZonedDateTime lastModified;
-        try (final NvdCveClient client = createApiClient(apiUrl, apiKey, lastModifiedEpochSeconds);
-             final ExecutorService executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), factory)) {
-            while (client.hasNext()) {
-                for (final DefCveItem defCveItem : client.next()) {
-                    final CveItem cveItem = defCveItem.getCve();
-                    if (cveItem == null) {
-                        continue;
-                    }
-
-                    final Vulnerability vuln = convert(cveItem);
-                    final List<VulnerableSoftware> vsList = convertConfigurations(cveItem.getId(), cveItem.getConfigurations());
-
-                    executor.submit(() -> {
-                        try (final var qm = new QueryManager().withL2CacheDisabled()) {
-                            // Delay flushes to the datastore until commit.
-                            qm.getPersistenceManager().setProperty(PROPERTY_FLUSH_MODE, FlushMode.MANUAL.name());
-                            qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
-
-                            // Note: persistentVuln is in HOLLOW state (all fields except ID are unloaded).
-                            // https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#lifecycle
-                            final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
-                            synchronizeVulnerableSoftware(qm, persistentVuln, vsList);
+        try (final NvdCveClient client = createApiClient(apiUrl, apiKey, lastModifiedEpochSeconds)) {
+            try {
+                while (client.hasNext()) {
+                    for (final DefCveItem defCveItem : client.next()) {
+                        final CveItem cveItem = defCveItem.getCve();
+                        if (cveItem == null) {
+                            continue;
                         }
-                    });
+
+                        final Vulnerability vuln = convert(cveItem);
+                        final List<VulnerableSoftware> vsList = convertConfigurations(cveItem.getId(), cveItem.getConfigurations());
+
+                        executor.submit(() -> {
+                            try (final var qm = new QueryManager().withL2CacheDisabled()) {
+                                // Delay flushes to the datastore until commit.
+                                qm.getPersistenceManager().setProperty(PROPERTY_FLUSH_MODE, FlushMode.MANUAL.name());
+                                qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+
+                                // Note: persistentVuln is in HOLLOW state (all fields except ID are unloaded).
+                                // https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#lifecycle
+                                final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
+                                synchronizeVulnerableSoftware(qm, persistentVuln, vsList);
+                            }
+                        });
+                    }
+                }
+            } finally {
+                // Copied from ExecutorService#close (available since JDK 19).
+                // This code can be replaced with try-with-resources after upgrade to Java 21.
+                // https://github.com/openjdk/jdk/blob/890adb6410dab4606a4f26a942aed02fb2f55387/src/java.base/share/classes/java/util/concurrent/ExecutorService.java#L410-L429
+                boolean terminated = executor.isTerminated();
+                if (!terminated) {
+                    executor.shutdown();
+                    boolean interrupted = false;
+                    while (!terminated) {
+                        try {
+                            terminated = executor.awaitTermination(1L, TimeUnit.DAYS);
+                        } catch (InterruptedException ex) {
+                            if (!interrupted) {
+                                executor.shutdownNow();
+                                interrupted = true;
+                            }
+                        }
+                    }
+                    if (interrupted) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
             }
 
@@ -378,7 +401,7 @@ public class NistApiMirrorTask implements Subscriber {
      */
     private static Vulnerability getVulnerabilityByCveId(final QueryManager qm, final String cveId) {
         final Query<Vulnerability> query = qm.getPersistenceManager().newQuery(Vulnerability.class);
-        query.setFilter("source == :source && cveId == :cveId");
+        query.setFilter("source == :source && vulnId == :cveId");
         query.setNamedParameters(Map.of(
                 "source", Source.NVD.name(),
                 "cveId", cveId

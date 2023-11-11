@@ -25,8 +25,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
-import javax.jdo.annotations.FetchGroup;
-import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
@@ -38,6 +36,7 @@ import javax.jdo.annotations.Unique;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -50,11 +49,6 @@ import java.util.UUID;
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@FetchGroups({
-        @FetchGroup(name = "VULNERABLESOFTWARE_ATTRIBUTIONS", members = {
-                @Persistent(name = "affectedVersionAttributions")
-        })
-})
 @Index(name = "VULNERABLESOFTWARE_CPE23_VERSION_RANGE_IDX", members = {"cpe23", "versionEndExcluding", "versionEndIncluding", "versionStartExcluding", "versionStartIncluding"})
 @Index(name = "VULNERABLESOFTWARE_PART_VENDOR_PRODUCT_IDX", members = {"part", "vendor", "product"})
 @Index(name = "VULNERABLESOFTWARE_CPE_PURL_PARTS_IDX", members = {"part", "vendor", "product", "purlType", "purlNamespace", "purlName"})
@@ -63,10 +57,6 @@ import java.util.UUID;
 public class VulnerableSoftware implements ICpe, Serializable {
 
     private static final long serialVersionUID = -3987946408457131098L;
-
-    public static final class FetchGroups {
-        public static final String ATTRIBUTIONS = "VULNERABLESOFTWARE_ATTRIBUTIONS";
-    }
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
@@ -184,8 +174,7 @@ public class VulnerableSoftware implements ICpe, Serializable {
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     private UUID uuid;
 
-    @Persistent(mappedBy = "vulnerableSoftware")
-    private List<AffectedVersionAttribution> affectedVersionAttributions;
+    private transient List<AffectedVersionAttribution> affectedVersionAttributions;
 
     public long getId() {
         return id;
@@ -421,7 +410,82 @@ public class VulnerableSoftware implements ICpe, Serializable {
     public List<AffectedVersionAttribution> getAffectedVersionAttributions() {
         return affectedVersionAttributions;
     }
+
     public void setAffectedVersionAttributions(List<AffectedVersionAttribution> affectedVersionAttributions) {
         this.affectedVersionAttributions = affectedVersionAttributions;
     }
+
+    /**
+     * Implementation of {@link Object#equals(Object)} that does <em>not</em> include datastore identity fields
+     * * like {@link #id} and {@link #uuid}.
+     *
+     * @param otherVs The {@link VulnerableSoftware} to compare with
+     * @return {@link true} when equal, otherwise {@code false}
+     * @since 4.10.0
+     */
+    public boolean equalsIgnoringDatastoreIdentity(final VulnerableSoftware otherVs) {
+        return Objects.equals(otherVs.getPurl(), this.getPurl())
+                && Objects.equals(otherVs.getPurlType(), this.getPurlType())
+                && Objects.equals(otherVs.getPurlNamespace(), this.getPurlNamespace())
+                && Objects.equals(otherVs.getPurlName(), this.getPurlName())
+                && Objects.equals(otherVs.getPurlVersion(), this.getPurlVersion())
+                && Objects.equals(otherVs.getPurlQualifiers(), this.getPurlQualifiers())
+                && Objects.equals(otherVs.getPurlSubpath(), this.getPurlSubpath())
+                && Objects.equals(otherVs.getCpe22(), this.getCpe22())
+                && Objects.equals(otherVs.getCpe23(), this.getCpe23())
+                && Objects.equals(otherVs.getPart(), this.getPart())
+                && Objects.equals(otherVs.getVendor(), this.getVendor())
+                && Objects.equals(otherVs.getProduct(), this.getProduct())
+                && Objects.equals(otherVs.getVersion(), this.getVersion())
+                && Objects.equals(otherVs.getUpdate(), this.getUpdate())
+                && Objects.equals(otherVs.getEdition(), this.getEdition())
+                && Objects.equals(otherVs.getLanguage(), this.getLanguage())
+                && Objects.equals(otherVs.getSwEdition(), this.getSwEdition())
+                && Objects.equals(otherVs.getTargetSw(), this.getTargetSw())
+                && Objects.equals(otherVs.getTargetHw(), this.getTargetHw())
+                && Objects.equals(otherVs.getOther(), this.getOther())
+                && Objects.equals(otherVs.getVersionEndExcluding(), this.getVersionEndExcluding())
+                && Objects.equals(otherVs.getVersionEndIncluding(), this.getVersionEndIncluding())
+                && Objects.equals(otherVs.getVersionStartExcluding(), this.getVersionStartExcluding())
+                && Objects.equals(otherVs.getVersionStartIncluding(), this.getVersionStartIncluding())
+                && Objects.equals(otherVs.isVulnerable(), this.isVulnerable());
+    }
+
+    /**
+     * Implementation of {@link Object#hashCode()} that does <em>not</em> include datastore identity fields
+     * like {@link #id} and {@link #uuid}.
+     *
+     * @return The calculated hash code
+     * @since 4.10.0
+     */
+    public int hashCodeWithoutDatastoreIdentity() {
+        return Objects.hash(
+                this.getPurl(),
+                this.getPurlType(),
+                this.getPurlNamespace(),
+                this.getPurlName(),
+                this.getPurlVersion(),
+                this.getPurlQualifiers(),
+                this.getPurlSubpath(),
+                this.getCpe22(),
+                this.getCpe23(),
+                this.getPart(),
+                this.getVendor(),
+                this.getProduct(),
+                this.getVersion(),
+                this.getUpdate(),
+                this.getEdition(),
+                this.getLanguage(),
+                this.getSwEdition(),
+                this.getTargetSw(),
+                this.getTargetHw(),
+                this.getOther(),
+                this.getVersionEndExcluding(),
+                this.getVersionEndIncluding(),
+                this.getVersionStartExcluding(),
+                this.getVersionStartIncluding(),
+                this.isVulnerable()
+        );
+    }
+
 }

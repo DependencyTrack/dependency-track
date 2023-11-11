@@ -787,6 +787,12 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().updateAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
+    public void deleteAffectedVersionAttributions(final Vulnerability vulnerability,
+                                                  final List<VulnerableSoftware> vulnerableSoftwares,
+                                                  final Vulnerability.Source source) {
+        getVulnerableSoftwareQueryManager().deleteAffectedVersionAttributions(vulnerability, vulnerableSoftwares, source);
+    }
+
     public void deleteAffectedVersionAttribution(final Vulnerability vulnerability,
                                                  final VulnerableSoftware vulnerableSoftware,
                                                  final Vulnerability.Source source) {
@@ -795,6 +801,12 @@ public class QueryManager extends AlpineQueryManager {
 
     public void deleteAffectedVersionAttributions(final Vulnerability vulnerability) {
         getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability);
+    }
+
+    public boolean hasAffectedVersionAttribution(final Vulnerability vulnerability,
+                                                 final VulnerableSoftware vulnerableSoftware,
+                                                 final Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().hasAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
     public boolean contains(Vulnerability vulnerability, Component component) {

@@ -111,18 +111,14 @@ public final class ModelConverter {
             return null;
         }
 
-        final List<Integer> cwes = weaknesses.stream()
+        return weaknesses.stream()
                 .map(Weakness::getDescription)
                 .flatMap(Collection::stream)
                 .filter(description -> "en".equalsIgnoreCase(description.getLang()))
                 .map(LangString::getValue)
                 .map(CweResolver.getInstance()::parseCweString)
+                .distinct()
                 .toList();
-        if (cwes.isEmpty()) {
-            return null;
-        }
-
-        return cwes;
     }
 
     private static void convertCvssMetrics(final Metrics metrics, final Vulnerability vuln) {
@@ -257,7 +253,7 @@ public final class ModelConverter {
 
             final var vs = new VulnerableSoftware();
             vs.setCpe22(cpe.toCpe22Uri());
-            vs.setCpe23(cpe.toCpe23FS());
+            vs.setCpe23(cpeMatch.getCriteria());
             vs.setPart(cpe.getPart().getAbbreviation());
             vs.setVendor(cpe.getVendor());
             vs.setProduct(cpe.getProduct());

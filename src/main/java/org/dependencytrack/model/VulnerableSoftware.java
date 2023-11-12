@@ -21,6 +21,7 @@ package org.dependencytrack.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
@@ -488,4 +489,28 @@ public class VulnerableSoftware implements ICpe, Serializable {
         );
     }
 
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .omitNullValues()
+                .add("cpe22", cpe22)
+                .add("cpe23", cpe23)
+                .add("part", part)
+                .add("vendor", vendor)
+                .add("product", product)
+                .add("version", version)
+                .add("update", update)
+                .add("edition", edition)
+                .add("language", language)
+                .add("swEdition", swEdition)
+                .add("targetSw", targetSw)
+                .add("targetHw", targetHw)
+                .add("other", other)
+                .add("versionEndExcluding", versionEndExcluding)
+                .add("versionEndIncluding", versionEndIncluding)
+                .add("versionStartExcluding", versionStartExcluding)
+                .add("versionStartIncluding", versionStartIncluding)
+                .add("vulnerable", vulnerable)
+                .toString();
+    }
 }

@@ -23,6 +23,7 @@ import alpine.event.framework.Event;
 import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
+import alpine.security.crypto.DataEncryption;
 import io.github.jeremylong.openvulnerability.client.nvd.CveItem;
 import io.github.jeremylong.openvulnerability.client.nvd.DefCveItem;
 import io.github.jeremylong.openvulnerability.client.nvd.NvdCveClient;
@@ -111,9 +112,7 @@ public class NistApiMirrorTask implements Subscriber {
                     .map(StringUtils::trimToNull)
                     .map(encryptedApiKey -> {
                         try {
-                            // TODO: Skipping decryption for easier local testing. Add this back in.
-                            // DataEncryption.decryptAsString(encryptedApiKey);
-                            return encryptedApiKey;
+                            return DataEncryption.decryptAsString(encryptedApiKey);
                         } catch (Exception ex) {
                             LOGGER.warn("Failed to decrypt API key; Continuing without authentication", ex);
                             return null;
@@ -168,6 +167,8 @@ public class NistApiMirrorTask implements Subscriber {
                                 // https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#lifecycle
                                 final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
                                 synchronizeVulnerableSoftware(qm, persistentVuln, vsList);
+                            } catch (Exception ex) {
+                                LOGGER.error("An unexpected error occurred while processing %s".formatted(vuln.getVulnId()), ex);
                             }
                         });
                     }
@@ -244,7 +245,10 @@ public class NistApiMirrorTask implements Subscriber {
             tx.setSerializeRead(false);
 
             // Get all VulnerableSoftware records that are currently associated with the vulnerability.
-            final List<VulnerableSoftware> vsOldList = persistentVuln.getVulnerableSoftware();
+            // Note: For SOME ODD REASON, duplicate (as in, same database ID and all) VulnerableSoftware
+            // records are returned, when operating on data that was originally created by the feed-based
+            // NistMirrorTask. We thus have to deduplicate here.
+            final List<VulnerableSoftware> vsOldList = persistentVuln.getVulnerableSoftware().stream().distinct().toList();
             LOGGER.trace("%s: Existing VS: %d".formatted(persistentVuln.getVulnId(), vsOldList.size()));
 
             // Get attributions for all existing VulnerableSoftware records.
@@ -265,7 +269,7 @@ public class NistApiMirrorTask implements Subscriber {
                     vsListToKeep.add(vsOld);
                 } else {
                     final List<AffectedVersionAttribution> attributions = vsOld.getAffectedVersionAttributions();
-                    if (attributions == null) {
+                    if (attributions == null || attributions.isEmpty()) {
                         // DT versions prior to 4.7.0 did not record attributions.
                         // Drop the VulnerableSoftware for now. If it was previously
                         // reported by another source, it will be recorded and attributed
@@ -274,19 +278,13 @@ public class NistApiMirrorTask implements Subscriber {
                         continue;
                     }
 
-                    final boolean previouslyReportedBySource = attributions.stream()
+                    final boolean previouslyReportedByNvd = attributions.stream()
                             .anyMatch(attr -> attr.getSource() == Source.NVD);
-                    final boolean previouslyReportedByOthers = attributions.stream()
-                            .anyMatch(attr -> attr.getSource() != Source.NVD);
+                    final boolean previouslyReportedByOthers = !previouslyReportedByNvd;
 
                     if (previouslyReportedByOthers) {
-                        // Reported by another source, keep it.
                         vsListToKeep.add(vsOld);
-                    } else if (previouslyReportedBySource) {
-                        // Not reported anymore, remove attribution.
-                        vsListToRemove.add(vsOld);
                     } else {
-                        // Should never happen, but better safe than sorry.
                         vsListToRemove.add(vsOld);
                     }
                 }
@@ -310,7 +308,7 @@ public class NistApiMirrorTask implements Subscriber {
             }
 
             // For VulnerableSoftware records that are newly reported for this vulnerability, check if any matching
-            // records exist in the database that are currently associated with other vulnerabilities.
+            // records exist in the database that are currently associated with other (or no) vulnerabilities.
             for (final VulnerableSoftware vs : vsList) {
                 final VulnerableSoftware existingVs = qm.getVulnerableSoftwareByCpe23(
                         vs.getCpe23(),
@@ -320,11 +318,16 @@ public class NistApiMirrorTask implements Subscriber {
                         vs.getVersionStartIncluding()
                 );
                 if (existingVs != null) {
-                    final boolean hasAttribution = qm.hasAffectedVersionAttribution(persistentVuln, vs, Source.NVD);
+                    final boolean hasAttribution = qm.hasAffectedVersionAttribution(persistentVuln, existingVs, Source.NVD);
                     if (!hasAttribution) {
                         LOGGER.trace("%s: Adding attribution".formatted(persistentVuln.getVulnId()));
                         final AffectedVersionAttribution attribution = createAttribution(persistentVuln, existingVs, attributionDate);
                         qm.getPersistenceManager().makePersistent(attribution);
+                    } else {
+                        LOGGER.debug("%s: Encountered dangling attribution; Re-using by updating firstSeen and lastSeen timestamps".formatted(persistentVuln.getVulnId()));
+                        final AffectedVersionAttribution existingAttribution = qm.getAffectedVersionAttribution(persistentVuln, existingVs, Source.NVD);
+                        existingAttribution.setFirstSeen(attributionDate);
+                        existingAttribution.setLastSeen(attributionDate);
                     }
                     vsListToKeep.add(existingVs);
                 } else {
@@ -338,7 +341,7 @@ public class NistApiMirrorTask implements Subscriber {
 
             LOGGER.trace("%s: Final vsList: %d".formatted(persistentVuln.getVulnId(), vsListToKeep.size()));
             if (!Objects.equals(persistentVuln.getVulnerableSoftware(), vsListToKeep)) {
-                LOGGER.debug("%s: vsList has changed".formatted(persistentVuln.getVulnId()));
+                LOGGER.trace("%s: vsList has changed: %s".formatted(persistentVuln.getVulnId(), new Diff(persistentVuln.getVulnerableSoftware(), vsListToKeep)));
                 persistentVuln.setVulnerableSoftware(vsListToKeep);
             }
         });
@@ -353,11 +356,10 @@ public class NistApiMirrorTask implements Subscriber {
         }
         if (lastModifiedEpochSeconds > 0) {
             final var start = ZonedDateTime.ofInstant(Instant.ofEpochSecond(lastModifiedEpochSeconds), ZoneOffset.UTC);
-            clientBuilder.withLastModifiedFilter(start, start.minusDays(-120));
+            clientBuilder.withLastModifiedFilter(start, start.plusDays(120));
             LOGGER.info("Mirroring CVEs that were modified since %s".formatted(start));
         } else {
-            LOGGER.info("Mirroring CVEs that were modified since %s"
-                    .formatted(ZonedDateTime.ofInstant(Instant.EPOCH, ZoneOffset.UTC)));
+            LOGGER.info("CVEs were not previously mirrored via NVD API; Will mirror all CVEs");
         }
 
         return clientBuilder.build();
@@ -444,7 +446,7 @@ public class NistApiMirrorTask implements Subscriber {
         differ.applyIfChanged("created", Vulnerability::getCreated, existingVuln::setCreated);
         differ.applyIfChanged("published", Vulnerability::getPublished, existingVuln::setPublished);
         differ.applyIfChanged("updated", Vulnerability::getUpdated, existingVuln::setUpdated);
-        differ.applyIfChanged("cwes", Vulnerability::getCwes, existingVuln::setCwes);
+        differ.applyIfNonEmptyAndChanged("cwes", Vulnerability::getCwes, existingVuln::setCwes);
         // Calling setSeverity nulls all CVSS and OWASP RR fields. getSeverity calculates the severity on-the-fly,
         // and will return UNASSIGNED even when no severity is set explicitly. Thus, calling setSeverity
         // must happen before CVSS and OWASP RR fields are set, to avoid null-ing them again.

@@ -795,7 +795,7 @@ public class QueryManager extends AlpineQueryManager {
     public void deleteAffectedVersionAttributions(final Vulnerability vulnerability,
                                                   final List<VulnerableSoftware> vulnerableSoftwares,
                                                   final Vulnerability.Source source) {
-        getVulnerableSoftwareQueryManager().deleteAffectedVersionAttributions(vulnerability, vulnerableSoftwares, source);
+        getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability, vulnerableSoftwares, source);
     }
 
     public void deleteAffectedVersionAttribution(final Vulnerability vulnerability,

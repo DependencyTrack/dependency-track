@@ -18,8 +18,11 @@
  */
 package org.dependencytrack.util;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import javax.jdo.JDOHelper;
 import javax.jdo.ObjectState;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -27,6 +30,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.util.Collections.unmodifiableMap;
+import static java.util.Objects.requireNonNull;
 import static javax.jdo.ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL;
 import static javax.jdo.ObjectState.PERSISTENT_CLEAN;
 import static javax.jdo.ObjectState.PERSISTENT_DIRTY;
@@ -38,6 +42,14 @@ public final class PersistenceUtil {
     public record Diff(Object before, Object after) {
     }
 
+    /**
+     * A utility class to apply changed values from one object to another object of the same type.
+     * <p>
+     * Changed values are recorded in a diff-like structure.
+     *
+     * @param <T> Type of the objects to compare
+     * @since 4.10.0
+     */
     public static final class Differ<T> {
 
         private final T existingObject;
@@ -45,11 +57,20 @@ public final class PersistenceUtil {
         private final Map<String, Diff> diffs;
 
         public Differ(final T existingObject, final T newObject) {
-            this.existingObject = existingObject;
-            this.newObject = newObject;
+            this.existingObject = requireNonNull(existingObject, "existingObject must not be null");
+            this.newObject = requireNonNull(newObject, "newObject must not be null");
             this.diffs = new HashMap<>();
         }
 
+        /**
+         * Apply value of {@code newObject}'s field to value of {@code existingObject}'s field, if both values are different.
+         *
+         * @param fieldName Name of the field
+         * @param getter    The getter to access current values with
+         * @param setter    The setter on {@code existingObject}
+         * @param <V>       Type of the values being compared
+         * @return {@code true} when changed, otherwise {@code false}
+         */
         public <V> boolean applyIfChanged(final String fieldName, final Function<T, V> getter, final Consumer<V> setter) {
             final V existingValue = getter.apply(existingObject);
             final V newValue = getter.apply(newObject);
@@ -63,11 +84,49 @@ public final class PersistenceUtil {
             return false;
         }
 
+        /**
+         * Apply value of {@code newObject}'s field to value of {@code existingObject}'s field, if {@code newObject}'s
+         * value is not {@code null}, and both values are different.
+         *
+         * @param fieldName Name of the field
+         * @param getter    The getter to access current values with
+         * @param setter    The setter on {@code existingObject}
+         * @param <V>       Type of the values being compared
+         * @return {@code true} when changed, otherwise {@code false}
+         */
         public <V> boolean applyIfNonNullAndChanged(final String fieldName, final Function<T, V> getter, final Consumer<V> setter) {
             final V existingValue = getter.apply(existingObject);
             final V newValue = getter.apply(newObject);
 
             if (newValue != null && !Objects.equals(existingValue, newValue)) {
+                diffs.put(fieldName, new Diff(existingValue, newValue));
+                setter.accept(newValue);
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         * Apply value of {@code newObject}'s field to value of {@code existingObject}'s field, if both values are
+         * different, but not {@code null} or empty. In other words, {@code null} and empty are considered equal.
+         *
+         * @param fieldName Name of the field
+         * @param getter    The getter to access current values with
+         * @param setter    The setter on {@code existingObject}
+         * @param <V>       Type of the items inside the {@link Collection} being compared
+         * @param <C>       Type of the {@link Collection} being compared
+         * @return
+         */
+        public <V, C extends Collection<V>> boolean applyIfNonEmptyAndChanged(final String fieldName, final Function<T, C> getter, final Consumer<C> setter) {
+            final C existingValue = getter.apply(existingObject);
+            final C newValue = getter.apply(newObject);
+
+            if (CollectionUtils.isEmpty(existingValue) && CollectionUtils.isEmpty(newValue)) {
+                return false;
+            }
+
+            if (!Objects.equals(existingValue, newValue)) {
                 diffs.put(fieldName, new Diff(existingValue, newValue));
                 setter.accept(newValue);
                 return true;
@@ -98,6 +157,7 @@ public final class PersistenceUtil {
      * @param message Message to use for the exception, if object is not persistent
      * @throws IllegalStateException When the object is not in a persistent state
      * @see <a href="https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#lifecycle">Object Lifecycle</a>
+     * @since 4.10.0
      */
     public static void assertPersistent(final Object object, final String message) {
         final ObjectState objectState = JDOHelper.getObjectState(object);

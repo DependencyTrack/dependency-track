@@ -771,6 +771,11 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftware);
     }
 
+    public List<AffectedVersionAttribution> getAffectedVersionAttributions(final Vulnerability vulnerability,
+                                                                           final List<VulnerableSoftware> vulnerableSoftwares) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftwares);
+    }
+
     public AffectedVersionAttribution getAffectedVersionAttribution(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware, Vulnerability.Source source) {
         return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }

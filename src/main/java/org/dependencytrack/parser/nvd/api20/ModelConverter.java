@@ -22,19 +22,25 @@ import alpine.common.logging.Logger;
 import io.github.jeremylong.openvulnerability.client.nvd.Config;
 import io.github.jeremylong.openvulnerability.client.nvd.CpeMatch;
 import io.github.jeremylong.openvulnerability.client.nvd.CveItem;
+import io.github.jeremylong.openvulnerability.client.nvd.CvssV2;
+import io.github.jeremylong.openvulnerability.client.nvd.CvssV3;
 import io.github.jeremylong.openvulnerability.client.nvd.LangString;
+import io.github.jeremylong.openvulnerability.client.nvd.Metrics;
 import io.github.jeremylong.openvulnerability.client.nvd.Node;
+import io.github.jeremylong.openvulnerability.client.nvd.Reference;
 import io.github.jeremylong.openvulnerability.client.nvd.Weakness;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
+import us.springett.cvss.Cvss;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 import us.springett.parsers.cpe.values.Part;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,6 +52,8 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.Comparator.comparingInt;
 
 /**
  * Utility class for conversions between the NVD's 2.0 API, and Dependency-Track's internal model.
@@ -64,6 +72,7 @@ public final class ModelConverter {
         vuln.setVulnId(cveItem.getId());
         vuln.setSource(Vulnerability.Source.NVD);
         vuln.setDescription(convertDescriptions(cveItem.getDescriptions()));
+        vuln.setReferences(convertReferences(cveItem.getReferences()));
         vuln.setCwes(convertWeaknesses(cveItem.getWeaknesses()));
         if (cveItem.getPublished() != null) {
             vuln.setPublished(Date.from(cveItem.getPublished().toInstant()));
@@ -71,11 +80,12 @@ public final class ModelConverter {
         if (cveItem.getLastModified() != null) {
             vuln.setUpdated(Date.from(cveItem.getLastModified().toInstant()));
         }
+        convertCvssMetrics(cveItem.getMetrics(), vuln);
         return vuln;
     }
 
     private static String convertDescriptions(final List<LangString> descriptions) {
-        if (descriptions == null) {
+        if (descriptions == null || descriptions.isEmpty()) {
             return null;
         }
 
@@ -83,6 +93,17 @@ public final class ModelConverter {
                 .filter(description -> "en".equalsIgnoreCase(description.getLang()))
                 .map(LangString::getValue)
                 .collect(Collectors.joining("\n\n"));
+    }
+
+    private static String convertReferences(final List<Reference> references) {
+        if (references == null || references.isEmpty()) {
+            return null;
+        }
+
+        return references.stream()
+                .map(Reference::getUrl)
+                .map(url -> "* [%s](%s)".formatted(url, url))
+                .collect(Collectors.joining("\n"));
     }
 
     private static List<Integer> convertWeaknesses(final List<Weakness> weaknesses) {
@@ -102,6 +123,51 @@ public final class ModelConverter {
         }
 
         return cwes;
+    }
+
+    private static void convertCvssMetrics(final Metrics metrics, final Vulnerability vuln) {
+        if (metrics == null) {
+            return;
+        }
+
+        if (metrics.getCvssMetricV2() != null && !metrics.getCvssMetricV2().isEmpty()) {
+            metrics.getCvssMetricV2().sort(comparingInt(metric -> metric.getType().ordinal()));
+
+            for (final CvssV2 metric : metrics.getCvssMetricV2()) {
+                final Cvss cvss = Cvss.fromVector(metric.getCvssData().getVectorString());
+                vuln.setCvssV2Vector(cvss.getVector());
+                vuln.setCvssV2BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
+                vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
+                vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
+                break;
+            }
+        }
+
+        if (metrics.getCvssMetricV31() != null && !metrics.getCvssMetricV31().isEmpty()) {
+            metrics.getCvssMetricV31().sort(comparingInt(metric -> metric.getType().ordinal()));
+
+            for (final CvssV3 metric : metrics.getCvssMetricV31()) {
+                final Cvss cvss = Cvss.fromVector(metric.getCvssData().getVectorString());
+                vuln.setCvssV3Vector(cvss.getVector());
+                vuln.setCvssV3BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
+                vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
+                vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
+                return;
+            }
+        }
+
+        if (metrics.getCvssMetricV30() != null && !metrics.getCvssMetricV30().isEmpty()) {
+            metrics.getCvssMetricV30().sort(comparingInt(metric -> metric.getType().ordinal()));
+
+            for (final CvssV3 metric : metrics.getCvssMetricV30()) {
+                final Cvss cvss = Cvss.fromVector(metric.getCvssData().getVectorString());
+                vuln.setCvssV3Vector(cvss.getVector());
+                vuln.setCvssV3BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
+                vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
+                vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
+                break;
+            }
+        }
     }
 
     public static List<VulnerableSoftware> convertConfigurations(final String cveId, final List<Config> configurations) {

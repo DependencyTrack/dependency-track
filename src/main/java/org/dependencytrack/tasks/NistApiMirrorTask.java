@@ -51,12 +51,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder.aNvdCveApi;
+import static java.util.stream.Collectors.groupingBy;
 import static org.datanucleus.PropertyNames.PROPERTY_FLUSH_MODE;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_KEY;
@@ -74,9 +76,6 @@ import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 public class NistApiMirrorTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(NistApiMirrorTask.class);
-
-    public NistApiMirrorTask() {
-    }
 
     /**
      * {@inheritDoc}
@@ -244,17 +243,21 @@ public class NistApiMirrorTask implements Subscriber {
         qm.runInTransaction(tx -> {
             tx.setSerializeRead(false);
 
-            // Get all `VulnerableSoftware`s that are currently associated with the vulnerability.
+            // Get all VulnerableSoftware records that are currently associated with the vulnerability.
             final List<VulnerableSoftware> vsOldList = persistentVuln.getVulnerableSoftware();
             LOGGER.trace("%s: Existing VS: %d".formatted(persistentVuln.getVulnId(), vsOldList.size()));
 
+            // Get attributions for all existing VulnerableSoftware records.
+            final Map<Long, List<AffectedVersionAttribution>> attributionsByVsId =
+                    qm.getAffectedVersionAttributions(persistentVuln, vsOldList).stream()
+                            .collect(groupingBy(attribution -> attribution.getVulnerableSoftware().getId()));
             for (final VulnerableSoftware vsOld : vsOldList) {
-                vsOld.setAffectedVersionAttributions(qm.getAffectedVersionAttributions(persistentVuln, vsOld));
+                vsOld.setAffectedVersionAttributions(attributionsByVsId.get(vsOld.getId()));
             }
 
-            // Based on the lists of currently reported, and previously reported `VulnerableSoftware`s,
-            // divide the previously reported ones into lists of items to keep, and items to remove.
-            // Remaining items in vsList are entirely new.
+            // Based on the lists of currently reported, and previously reported VulnerableSoftware records,
+            // divide the previously reported ones into lists of records to keep, and records to remove.
+            // Records to keep are removed from vsList. Remaining records in vsList thus are entirely new.
             final var vsListToRemove = new ArrayList<VulnerableSoftware>();
             final var vsListToKeep = new ArrayList<VulnerableSoftware>();
             for (final VulnerableSoftware vsOld : vsOldList) {
@@ -291,14 +294,14 @@ public class NistApiMirrorTask implements Subscriber {
             LOGGER.trace("%s: vsListToKeep: %d".formatted(persistentVuln.getVulnId(), vsListToKeep.size()));
             LOGGER.trace("%s: vsListToRemove: %d".formatted(persistentVuln.getVulnId(), vsListToRemove.size()));
 
-            // Remove attributions from `VulnerableSoftware`s that are no longer reported.
+            // Remove attributions for VulnerableSoftware records that are no longer reported.
             if (!vsListToRemove.isEmpty()) {
                 qm.deleteAffectedVersionAttributions(persistentVuln, vsListToRemove, Source.NVD);
             }
 
             final var attributionDate = new Date();
 
-            // For `VulnerableSoftware`s that existed before, update the lastSeen timestamp.
+            // For VulnerableSoftware records that existed before, update the lastSeen timestamp.
             for (final VulnerableSoftware oldVs : vsListToKeep) {
                 oldVs.getAffectedVersionAttributions().stream()
                         .filter(attribution -> attribution.getSource() == Source.NVD)
@@ -306,8 +309,8 @@ public class NistApiMirrorTask implements Subscriber {
                         .ifPresent(attribution -> attribution.setLastSeen(attributionDate));
             }
 
-            // For `VulnerableSoftware`s that are newly reported for this `Vulnerability`, check if any matching
-            // records exist in the database that are currently associated with other `Vulnerability`s.
+            // For VulnerableSoftware records that are newly reported for this vulnerability, check if any matching
+            // records exist in the database that are currently associated with other vulnerabilities.
             for (final VulnerableSoftware vs : vsList) {
                 final VulnerableSoftware existingVs = qm.getVulnerableSoftwareByCpe23(
                         vs.getCpe23(),
@@ -334,7 +337,10 @@ public class NistApiMirrorTask implements Subscriber {
             }
 
             LOGGER.trace("%s: Final vsList: %d".formatted(persistentVuln.getVulnId(), vsListToKeep.size()));
-            persistentVuln.setVulnerableSoftware(vsListToKeep);
+            if (!Objects.equals(persistentVuln.getVulnerableSoftware(), vsListToKeep)) {
+                LOGGER.debug("%s: vsList has changed".formatted(persistentVuln.getVulnId()));
+                persistentVuln.setVulnerableSoftware(vsListToKeep);
+            }
         });
     }
 

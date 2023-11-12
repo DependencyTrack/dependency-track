@@ -493,6 +493,14 @@ public class VulnerableSoftware implements ICpe, Serializable {
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .omitNullValues()
+                .add("id", id)
+                .add("purl", purl)
+                .add("purlType", purlType)
+                .add("purlNamespace", purlNamespace)
+                .add("purlName", purlName)
+                .add("purlVersion", purlVersion)
+                .add("purlQualifiers", purlQualifiers)
+                .add("purlSubpath", purlSubpath)
                 .add("cpe22", cpe22)
                 .add("cpe23", cpe23)
                 .add("part", part)
@@ -511,6 +519,8 @@ public class VulnerableSoftware implements ICpe, Serializable {
                 .add("versionStartExcluding", versionStartExcluding)
                 .add("versionStartIncluding", versionStartIncluding)
                 .add("vulnerable", vulnerable)
+                .add("uuid", uuid)
                 .toString();
     }
+
 }

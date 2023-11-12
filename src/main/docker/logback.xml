@@ -65,10 +65,6 @@
         <appender-ref ref="SECURITY_CONSOLE" />
     </logger>
 
-    <logger name="org.dependencytrack.tasks.NistApiMirrorTask" level="DEBUG" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-
     <logger name="org.eclipse.jetty" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
         <appender-ref ref="EMBEDDED_SERVER" />
     </logger>

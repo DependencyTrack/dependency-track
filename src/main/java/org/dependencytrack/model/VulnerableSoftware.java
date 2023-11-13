@@ -21,6 +21,7 @@ package org.dependencytrack.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
@@ -36,6 +37,7 @@ import javax.jdo.annotations.Unique;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -409,7 +411,116 @@ public class VulnerableSoftware implements ICpe, Serializable {
     public List<AffectedVersionAttribution> getAffectedVersionAttributions() {
         return affectedVersionAttributions;
     }
+
     public void setAffectedVersionAttributions(List<AffectedVersionAttribution> affectedVersionAttributions) {
         this.affectedVersionAttributions = affectedVersionAttributions;
     }
+
+    /**
+     * Implementation of {@link Object#equals(Object)} that does <em>not</em> include datastore identity fields
+     * * like {@link #id} and {@link #uuid}.
+     *
+     * @param otherVs The {@link VulnerableSoftware} to compare with
+     * @return {@link true} when equal, otherwise {@code false}
+     * @since 4.10.0
+     */
+    public boolean equalsIgnoringDatastoreIdentity(final VulnerableSoftware otherVs) {
+        return Objects.equals(otherVs.getPurl(), this.getPurl())
+                && Objects.equals(otherVs.getPurlType(), this.getPurlType())
+                && Objects.equals(otherVs.getPurlNamespace(), this.getPurlNamespace())
+                && Objects.equals(otherVs.getPurlName(), this.getPurlName())
+                && Objects.equals(otherVs.getPurlVersion(), this.getPurlVersion())
+                && Objects.equals(otherVs.getPurlQualifiers(), this.getPurlQualifiers())
+                && Objects.equals(otherVs.getPurlSubpath(), this.getPurlSubpath())
+                && Objects.equals(otherVs.getCpe22(), this.getCpe22())
+                && Objects.equals(otherVs.getCpe23(), this.getCpe23())
+                && Objects.equals(otherVs.getPart(), this.getPart())
+                && Objects.equals(otherVs.getVendor(), this.getVendor())
+                && Objects.equals(otherVs.getProduct(), this.getProduct())
+                && Objects.equals(otherVs.getVersion(), this.getVersion())
+                && Objects.equals(otherVs.getUpdate(), this.getUpdate())
+                && Objects.equals(otherVs.getEdition(), this.getEdition())
+                && Objects.equals(otherVs.getLanguage(), this.getLanguage())
+                && Objects.equals(otherVs.getSwEdition(), this.getSwEdition())
+                && Objects.equals(otherVs.getTargetSw(), this.getTargetSw())
+                && Objects.equals(otherVs.getTargetHw(), this.getTargetHw())
+                && Objects.equals(otherVs.getOther(), this.getOther())
+                && Objects.equals(otherVs.getVersionEndExcluding(), this.getVersionEndExcluding())
+                && Objects.equals(otherVs.getVersionEndIncluding(), this.getVersionEndIncluding())
+                && Objects.equals(otherVs.getVersionStartExcluding(), this.getVersionStartExcluding())
+                && Objects.equals(otherVs.getVersionStartIncluding(), this.getVersionStartIncluding())
+                && Objects.equals(otherVs.isVulnerable(), this.isVulnerable());
+    }
+
+    /**
+     * Implementation of {@link Object#hashCode()} that does <em>not</em> include datastore identity fields
+     * like {@link #id} and {@link #uuid}.
+     *
+     * @return The calculated hash code
+     * @since 4.10.0
+     */
+    public int hashCodeWithoutDatastoreIdentity() {
+        return Objects.hash(
+                this.getPurl(),
+                this.getPurlType(),
+                this.getPurlNamespace(),
+                this.getPurlName(),
+                this.getPurlVersion(),
+                this.getPurlQualifiers(),
+                this.getPurlSubpath(),
+                this.getCpe22(),
+                this.getCpe23(),
+                this.getPart(),
+                this.getVendor(),
+                this.getProduct(),
+                this.getVersion(),
+                this.getUpdate(),
+                this.getEdition(),
+                this.getLanguage(),
+                this.getSwEdition(),
+                this.getTargetSw(),
+                this.getTargetHw(),
+                this.getOther(),
+                this.getVersionEndExcluding(),
+                this.getVersionEndIncluding(),
+                this.getVersionStartExcluding(),
+                this.getVersionStartIncluding(),
+                this.isVulnerable()
+        );
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .omitNullValues()
+                .add("id", id)
+                .add("purl", purl)
+                .add("purlType", purlType)
+                .add("purlNamespace", purlNamespace)
+                .add("purlName", purlName)
+                .add("purlVersion", purlVersion)
+                .add("purlQualifiers", purlQualifiers)
+                .add("purlSubpath", purlSubpath)
+                .add("cpe22", cpe22)
+                .add("cpe23", cpe23)
+                .add("part", part)
+                .add("vendor", vendor)
+                .add("product", product)
+                .add("version", version)
+                .add("update", update)
+                .add("edition", edition)
+                .add("language", language)
+                .add("swEdition", swEdition)
+                .add("targetSw", targetSw)
+                .add("targetHw", targetHw)
+                .add("other", other)
+                .add("versionEndExcluding", versionEndExcluding)
+                .add("versionEndIncluding", versionEndIncluding)
+                .add("versionStartExcluding", versionStartExcluding)
+                .add("versionStartIncluding", versionStartIncluding)
+                .add("vulnerable", vulnerable)
+                .add("uuid", uuid)
+                .toString();
+    }
+
 }

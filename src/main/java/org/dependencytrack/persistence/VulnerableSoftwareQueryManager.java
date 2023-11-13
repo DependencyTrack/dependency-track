@@ -32,6 +32,7 @@ import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 final class VulnerableSoftwareQueryManager extends QueryManager implements IQueryManager {
@@ -98,7 +99,11 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
         query.setFilter(filter);
         query.setNamedParameters(parameters);
         query.setRange(0, 1);
-        return query.executeUnique();
+        try {
+            return query.executeUnique();
+        } finally {
+            query.closeAll();
+        }
     }
 
     /**
@@ -149,16 +154,19 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      * @return a {@link List} of {@link VulnerableSoftware}s
      */
     @Override
-    @SuppressWarnings("unchecked")
     public List<VulnerableSoftware> getVulnerableSoftwareByVulnId(final String source, final String vulnId) {
-        final Query<?> query = pm.newQuery(Query.JDOQL, """
-                SELECT FROM org.dependencytrack.model.VulnerableSoftware
-                WHERE vulnerabilities.contains(vuln)
-                    && vuln.source == :source && vuln.vulnId == :vulnId
-                VARIABLES org.dependencytrack.model.Vulnerability vuln
-                """);
-        query.setParameters(source, vulnId);
-        return (List<VulnerableSoftware>) query.executeList();
+        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
+        query.setFilter("vulnerabilities.contains(vuln) && vuln.source == :source && vuln.vulnId == :vulnId");
+        query.declareVariables("org.dependencytrack.model.Vulnerability vuln");
+        query.setNamedParameters(Map.of(
+                "source", source,
+                "vulnId", vulnId
+        ));
+        try {
+            return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
+        }
     }
 
     /**

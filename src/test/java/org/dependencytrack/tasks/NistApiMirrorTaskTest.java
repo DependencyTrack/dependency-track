@@ -20,7 +20,7 @@ package org.dependencytrack.tasks;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.NistMirrorEvent;
+import org.dependencytrack.event.NistApiMirrorEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -81,7 +81,7 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2022-1954.json"))));
 
-        new NistApiMirrorTask().inform(new NistMirrorEvent());
+        new NistApiMirrorTask().inform(new NistApiMirrorEvent());
 
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.NVD, "CVE-2022-1954", true);
         assertThat(vuln).isNotNull();
@@ -254,7 +254,7 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2022-1954.json"))));
 
-        new NistApiMirrorTask().inform(new NistMirrorEvent());
+        new NistApiMirrorTask().inform(new NistApiMirrorEvent());
 
         qm.getPersistenceManager().refresh(vuln);
         assertThat(vuln).isNotNull();
@@ -339,7 +339,7 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2022-1954.json"))));
 
-        new NistApiMirrorTask().inform(new NistMirrorEvent());
+        new NistApiMirrorTask().inform(new NistApiMirrorEvent());
 
         // Clear L1 cache to force objects that were modified by NistApiMirrorTask
         // to be reloaded when running assertions on them.
@@ -398,7 +398,7 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2015-0312.json"))));
 
-        new NistApiMirrorTask().inform(new NistMirrorEvent());
+        new NistApiMirrorTask().inform(new NistApiMirrorEvent());
 
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.NVD, "CVE-2015-0312");
         assertThat(vuln).isNotNull();

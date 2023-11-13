@@ -31,10 +31,9 @@ import io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.commons.lang3.tuple.Pair;
-import org.datanucleus.flush.FlushMode;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.IndexEvent.Action;
-import org.dependencytrack.event.NistMirrorEvent;
+import org.dependencytrack.event.NistApiMirrorEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.Vulnerability.Source;
@@ -60,7 +59,6 @@ import java.util.concurrent.TimeUnit;
 
 import static io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder.aNvdCveApi;
 import static java.util.stream.Collectors.groupingBy;
-import static org.datanucleus.PropertyNames.PROPERTY_FLUSH_MODE;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS;
@@ -83,7 +81,7 @@ public class NistApiMirrorTask implements Subscriber {
      */
     @Override
     public void inform(final Event e) {
-        if (!(e instanceof NistMirrorEvent)) {
+        if (!(e instanceof NistApiMirrorEvent)) {
             return;
         }
 
@@ -159,8 +157,6 @@ public class NistApiMirrorTask implements Subscriber {
 
                         executor.submit(() -> {
                             try (final var qm = new QueryManager().withL2CacheDisabled()) {
-                                // Delay flushes to the datastore until commit.
-                                qm.getPersistenceManager().setProperty(PROPERTY_FLUSH_MODE, FlushMode.MANUAL.name());
                                 qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
 
                                 // Note: persistentVuln is in HOLLOW state (all fields except ID are unloaded).

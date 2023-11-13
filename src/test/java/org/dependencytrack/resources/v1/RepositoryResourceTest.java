@@ -60,10 +60,10 @@ public class RepositoryResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(14), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(15), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(14, json.size());
+        Assert.assertEquals(15, json.size());
         for (int i=0; i<json.size(); i++) {
             Assert.assertNotNull(json.getJsonObject(i).getString("type"));
             Assert.assertNotNull(json.getJsonObject(i).getString("identifier"));

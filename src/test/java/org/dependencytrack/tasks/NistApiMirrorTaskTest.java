@@ -95,9 +95,9 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
         assertThat(vuln.getDetail()).isNull();
         assertThat(vuln.getRecommendation()).isNull();
         assertThat(vuln.getReferences()).isEqualTo("""
-                * [https://hackerone.com/reports/1531958](https://hackerone.com/reports/1531958)
+                * [https://gitlab.com/gitlab-org/cves/-/blob/master/2022/CVE-2022-1954.json](https://gitlab.com/gitlab-org/cves/-/blob/master/2022/CVE-2022-1954.json)
                 * [https://gitlab.com/gitlab-org/gitlab/-/issues/358160](https://gitlab.com/gitlab-org/gitlab/-/issues/358160)
-                * [https://gitlab.com/gitlab-org/cves/-/blob/master/2022/CVE-2022-1954.json](https://gitlab.com/gitlab-org/cves/-/blob/master/2022/CVE-2022-1954.json)""");
+                * [https://hackerone.com/reports/1531958](https://hackerone.com/reports/1531958)""");
         assertThat(vuln.getCredits()).isNull();
         assertThat(vuln.getCreated()).isNull();
         assertThat(vuln.getPublished()).isEqualTo("2022-07-01T18:15:08.570Z");

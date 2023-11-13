@@ -31,3 +31,27 @@ Directory listing is prohibited, but the index consists of identical content ava
 * nvdcve-1.1-%d.meta
 
 (Where %d is a four digit year starting with 2002)
+
+### Mirroring via NVD REST API
+
+The NVD [announced](https://nvd.nist.gov/General/News/changes-to-feeds-and-apis) their plan to retire their file-based
+data feeds in favour of the 2.0 REST API. As per [the timeline](https://nvd.nist.gov/General/News/change-timeline)
+published by the NVD, file feeds will be made unavailable on December 15th 2023. Users relying on NVD data are
+encouraged to make the switch from file-based, to API-based mirroring.
+
+Starting with Dependency-Track v4.10.0, it is possible to switch NVD mirroring to the aforementioned API.
+Note that when mirroring via API is enabled, Dependency-Track will no longer update the files for its
+[internal NVD mirror](#nvd-mirror), unless the *Additionally download feeds* option is enabled.
+
+Usage of the NVD REST API can be enabled in the administration panel:
+
+![NVD API Configuration](../../images/screenshots/nvd-api-configuration.png)
+
+Usage of the NVD APIs does not require an API key. However, unauthenticated usage is subject to aggressive
+rate limiting, which can cause initial mirroring operations to take significantly more time to complete.
+An API key may be requested via form on the NVD's website: 
+[https://nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key)
+
+In contrast to feed-based mirroring, mirroring via REST API is incremental. After an initial mirror of the entire
+NVD database, all following mirror operations will only download data that was modified since the last successful
+execution. This last modification timestamp can be viewed, and if necessary altered, in the UI.

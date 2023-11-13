@@ -31,6 +31,7 @@ import io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.commons.lang3.tuple.Pair;
+import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.IndexEvent.Action;
 import org.dependencytrack.event.NistApiMirrorEvent;
@@ -204,6 +205,8 @@ public class NistApiMirrorTask implements Subscriber {
         if (updateLastModified(lastModified)) {
             Event.dispatch(new IndexEvent(Action.COMMIT, Vulnerability.class));
         }
+
+        Event.dispatch(new EpssMirrorEvent());
     }
 
     private static Vulnerability synchronizeVulnerability(final QueryManager qm, final Vulnerability vuln) {

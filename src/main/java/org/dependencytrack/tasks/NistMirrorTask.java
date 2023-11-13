@@ -67,8 +67,8 @@ import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
 import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_DOWNLOAD_FEEDS;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_FEEDS_URL;
 
@@ -156,9 +156,7 @@ public class NistMirrorTask implements LoggableSubscriber {
     public void inform(final Event e) {
         if (e instanceof NistMirrorEvent && this.isEnabled) {
             if (isApiEnabled) {
-                final var nistApiMirrorEvent = new NistApiMirrorEvent();
-                nistApiMirrorEvent.onSuccess(new EpssMirrorEvent());
-                Event.dispatch(nistApiMirrorEvent);
+                Event.dispatch(new NistApiMirrorEvent());
 
                 if (!isApiDownloadFeeds) {
                     LOGGER.debug("""

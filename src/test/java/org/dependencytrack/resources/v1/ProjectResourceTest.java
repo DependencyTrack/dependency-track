@@ -33,8 +33,10 @@ import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.ExternalReference;
+import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
@@ -816,6 +818,19 @@ public class ProjectResourceTest extends ResourceTest {
                 qm.createTag("tag-b")
         ));
 
+        final var metadataAuthor = new OrganizationalContact();
+        metadataAuthor.setName("metadataAuthor");
+        final var metadataManufacturer = new OrganizationalEntity();
+        metadataManufacturer.setName("metadataManufacturer");
+        final var metadataSupplier = new OrganizationalEntity();
+        metadataSupplier.setName("metadataSupplier");
+        final var metadata = new ProjectMetadata();
+        metadata.setProject(project);
+        metadata.setAuthors(List.of(metadataAuthor));
+        metadata.setManufacturer(metadataManufacturer);
+        metadata.setSupplier(metadataSupplier);
+        qm.persist(metadata);
+
         final var componentSupplier = new OrganizationalEntity();
         componentSupplier.setName("componentSupplier");
 
@@ -883,6 +898,15 @@ public class ProjectResourceTest extends ResourceTest {
 
                     assertThat(clonedProject.getTags()).extracting(Tag::getName)
                             .containsOnly("tag-a", "tag-b");
+
+                    final ProjectMetadata clonedMetadata = clonedProject.getMetadata();
+                    assertThat(clonedMetadata).isNotNull();
+                    assertThat(clonedMetadata.getAuthors())
+                            .satisfiesExactly(contact -> assertThat(contact.getName()).isEqualTo("metadataAuthor"));
+                    assertThat(clonedMetadata.getManufacturer())
+                            .satisfies(entity -> assertThat(entity.getName()).isEqualTo("metadataManufacturer"));
+                    assertThat(clonedMetadata.getSupplier())
+                            .satisfies(entity -> assertThat(entity.getName()).isEqualTo("metadataSupplier"));
 
                     assertThat(qm.getAllComponents(clonedProject)).satisfiesExactly(clonedComponent -> {
                         assertThat(clonedComponent.getUuid()).isNotEqualTo(component.getUuid());

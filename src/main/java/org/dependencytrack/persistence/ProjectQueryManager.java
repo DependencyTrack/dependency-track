@@ -40,6 +40,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.ServiceComponent;
@@ -628,6 +629,15 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         project.setParent(source.getParent());
         project = persist(project);
+
+        if (source.getMetadata() != null) {
+            final var metadata = new ProjectMetadata();
+            metadata.setProject(project);
+            metadata.setAuthors(source.getMetadata().getAuthors());
+            metadata.setManufacturer(source.getMetadata().getManufacturer());
+            metadata.setSupplier(source.getMetadata().getSupplier());
+            persist(metadata);
+        }
 
         if (includeTags) {
             for (final Tag tag: source.getTags()) {

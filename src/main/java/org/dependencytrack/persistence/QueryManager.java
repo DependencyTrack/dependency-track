@@ -651,7 +651,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public ViolationAnalysis makeViolationAnalysis(Component component, PolicyViolation policyViolation,
-                                 ViolationAnalysisState violationAnalysisState, Boolean isSuppressed) {
+                                                   ViolationAnalysisState violationAnalysisState, Boolean isSuppressed) {
         return getPolicyQueryManager().makeViolationAnalysis(component, policyViolation, violationAnalysisState, isSuppressed);
     }
 
@@ -781,14 +781,14 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public void updateAffectedVersionAttributions(final Vulnerability vulnerability,
-                                                                              final List<VulnerableSoftware> vsList,
-                                                                              final Vulnerability.Source source) {
+                                                  final List<VulnerableSoftware> vsList,
+                                                  final Vulnerability.Source source) {
         getVulnerabilityQueryManager().updateAffectedVersionAttributions(vulnerability, vsList, source);
     }
 
     public void updateAffectedVersionAttribution(final Vulnerability vulnerability,
-                                                                       final VulnerableSoftware vulnerableSoftware,
-                                                                       final Vulnerability.Source source) {
+                                                 final VulnerableSoftware vulnerableSoftware,
+                                                 final Vulnerability.Source source) {
         getVulnerabilityQueryManager().updateAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
@@ -833,8 +833,8 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public VulnerableSoftware getVulnerableSoftwareByPurl(String purlType, String purlNamespace, String purlName,
-                                                           String versionEndExcluding, String versionEndIncluding,
-                                                           String versionStartExcluding, String versionStartIncluding) {
+                                                          String versionEndExcluding, String versionEndIncluding,
+                                                          String versionStartExcluding, String versionStartIncluding) {
         return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
     }
 
@@ -1120,12 +1120,12 @@ public class QueryManager extends AlpineQueryManager {
         return getRepositoryQueryManager().repositoryExist(type, identifier);
     }
 
-    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal) {
-        return getRepositoryQueryManager().createRepository(type, identifier, url, enabled, internal);
+    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal, boolean isAuthenticationRequired, String username, String password) {
+        return getRepositoryQueryManager().createRepository(type, identifier, url, enabled, internal, isAuthenticationRequired, username, password);
     }
 
-    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, String username, String password, boolean enabled) {
-        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, username, password, enabled);
+    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean authenticationRequired, String username, String password, boolean enabled) {
+        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, authenticationRequired, username, password, enabled);
     }
 
     public RepositoryMetaComponent getRepositoryMetaComponent(RepositoryType repositoryType, String namespace, String name) {

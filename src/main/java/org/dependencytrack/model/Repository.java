@@ -86,6 +86,11 @@ public class Repository implements Serializable {
     @NotNull
     private Boolean internal; // New column, must allow nulls on existing databases
 
+    //New column to determine if authentication is required for a repository
+    @Persistent
+    @Column(name = "AUTHENTICATIONREQUIRED", allowsNull = "true")
+    private Boolean authenticationRequired;
+
     @Persistent
     @Column(name = "USERNAME")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
@@ -97,7 +102,8 @@ public class Repository implements Serializable {
 
     @Persistent(customValueStrategy = "uuid")
     @Index(name = "REPOSITORY_UUID_IDX") // Cannot be @Unique. Microsoft SQL Server throws an exception
-    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "true")  // New column, must allow nulls on existing databases
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "true")
+    // New column, must allow nulls on existing databases
     @NotNull
     private UUID uuid;
 
@@ -155,6 +161,14 @@ public class Repository implements Serializable {
 
     public void setInternal(Boolean internal) {
         this.internal = internal;
+    }
+
+    public Boolean isAuthenticationRequired() {
+        return authenticationRequired;
+    }
+
+    public void setAuthenticationRequired(Boolean authenticationRequired) {
+        this.authenticationRequired = authenticationRequired;
     }
 
     public String getUsername() {

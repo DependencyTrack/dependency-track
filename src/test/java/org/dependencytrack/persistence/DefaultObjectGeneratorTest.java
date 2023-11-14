@@ -101,7 +101,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultRepositories");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(14, qm.getAllRepositories().size());
+        Assert.assertEquals(15, qm.getAllRepositories().size());
     }
 
     @Test

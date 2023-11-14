@@ -90,6 +90,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -769,6 +771,11 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftware);
     }
 
+    public List<AffectedVersionAttribution> getAffectedVersionAttributions(final Vulnerability vulnerability,
+                                                                           final List<VulnerableSoftware> vulnerableSoftwares) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftwares);
+    }
+
     public AffectedVersionAttribution getAffectedVersionAttribution(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware, Vulnerability.Source source) {
         return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
@@ -785,6 +792,12 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().updateAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
+    public void deleteAffectedVersionAttributions(final Vulnerability vulnerability,
+                                                  final List<VulnerableSoftware> vulnerableSoftwares,
+                                                  final Vulnerability.Source source) {
+        getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability, vulnerableSoftwares, source);
+    }
+
     public void deleteAffectedVersionAttribution(final Vulnerability vulnerability,
                                                  final VulnerableSoftware vulnerableSoftware,
                                                  final Vulnerability.Source source) {
@@ -793,6 +806,12 @@ public class QueryManager extends AlpineQueryManager {
 
     public void deleteAffectedVersionAttributions(final Vulnerability vulnerability) {
         getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability);
+    }
+
+    public boolean hasAffectedVersionAttribution(final Vulnerability vulnerability,
+                                                 final VulnerableSoftware vulnerableSoftware,
+                                                 final Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().hasAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
     public boolean contains(Vulnerability vulnerability, Component component) {
@@ -1327,16 +1346,17 @@ public class QueryManager extends AlpineQueryManager {
      * @since 4.6.0
      */
     public void runInTransaction(final Runnable runnable) {
-        final Transaction trx = pm.currentTransaction();
-        try {
-            trx.begin();
+        runInTransaction((Function<Transaction, Void>) trx -> {
             runnable.run();
-            trx.commit();
-        } finally {
-            if (trx.isActive()) {
-                trx.rollback();
-            }
-        }
+            return null;
+        });
+    }
+
+    public void runInTransaction(final Consumer<Transaction> consumer) {
+        runInTransaction((Function<Transaction, Void>) trx -> {
+            consumer.accept(trx);
+            return null;
+        });
     }
 
     /**
@@ -1348,14 +1368,23 @@ public class QueryManager extends AlpineQueryManager {
      * @since 4.9.0
      */
     public <T> T runInTransaction(final Supplier<T> supplier) {
+        return runInTransaction((Function<Transaction, T>) trx -> supplier.get());
+    }
+
+    public <T> T runInTransaction(final Function<Transaction, T> function) {
         final Transaction trx = pm.currentTransaction();
+        final boolean isJoiningExisting = trx.isActive();
         try {
-            trx.begin();
-            final T result = supplier.get();
-            trx.commit();
+            if (!isJoiningExisting) {
+                trx.begin();
+            }
+            final T result = function.apply(trx);
+            if (!isJoiningExisting) {
+                trx.commit();
+            }
             return result;
         } finally {
-            if (trx.isActive()) {
+            if (!isJoiningExisting && trx.isActive()) {
                 trx.rollback();
             }
         }

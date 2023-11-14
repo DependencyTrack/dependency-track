@@ -99,6 +99,7 @@
         -->
         <lib.logstash-logback-encoder.version>7.3</lib.logstash-logback-encoder.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
+        <lib.open-vulnerability-clients.version>5.0.1</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.2.0</lib.pebble.version>
         <lib.resilience4j.version>2.0.2</lib.resilience4j.version>
@@ -107,6 +108,7 @@
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.log4j-over-slf4j.version>2.0.9</lib.log4j-over-slf4j.version>
+        <lib.org-kohsuke-github-api.version>1.316</lib.org-kohsuke-github-api.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.4.2.jre11</lib.jdbc-driver.mssql.version>
         <!-- Upgrading to 8.0.33 as https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
@@ -232,6 +234,13 @@
             <artifactId>lucene-sandbox</artifactId>
             <version>${lib.lucene.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.github.jeremylong</groupId>
+            <artifactId>open-vulnerability-clients</artifactId>
+            <version>${lib.open-vulnerability-clients.version}</version>
+        </dependency>
+
         <!-- Pebble templating engine -->
         <dependency>
             <groupId>io.pebbletemplates</groupId>
@@ -350,6 +359,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>log4j-over-slf4j</artifactId>
             <version>${lib.log4j-over-slf4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.kohsuke</groupId>
+            <artifactId>github-api</artifactId>
+            <version>${lib.org-kohsuke-github-api.version}</version>
         </dependency>
 
         <!-- Test Dependencies -->

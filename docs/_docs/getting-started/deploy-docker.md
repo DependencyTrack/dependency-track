@@ -52,6 +52,8 @@ docker stack deploy -c docker-compose.yml dtrack
 
 ### Quickstart (Manual Execution)
 
+> **NOTE:** the bundled container does _not_ support [OpenID Connect authentication]({{ site.baseurl }}{% link _docs/getting-started/openidconnect-configuration.md %}).
+
 ```bash
 # Pull the image from the Docker Hub OWASP repo
 docker pull dependencytrack/bundled

@@ -150,7 +150,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
         }
         int order = 0;
         final List<Repository> existingRepos = getAllRepositoriesOrdered(type);
-        if (existingRepos != null) {
+        if (existingRepos != null && !existingRepos.isEmpty()) {
             for (final Repository existing : existingRepos) {
                 if (existing.getResolutionOrder() > order) {
                     order = existing.getResolutionOrder();
@@ -250,6 +250,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
 
     /**
      * Returns a list of {@link RepositoryMetaComponent} objects from the specified type, group, and name.
+     *
      * @param list a list of {@link RepositoryQueryManager.RepositoryMetaComponentSearch} used to filter
      * @return a List of {@link RepositoryMetaComponent} objects
      * @since 4.9.0
@@ -258,7 +259,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
         final Query<RepositoryMetaComponent> query = pm.newQuery(RepositoryMetaComponent.class);
 
         // Dynamically build the filter string and populate the parameters
-        final String filterTemplate  = "(repositoryType == :%s && name == :%s && namespace == :%s)";
+        final String filterTemplate = "(repositoryType == :%s && name == :%s && namespace == :%s)";
 
         // List with all the filters
         final List<String> filters = new ArrayList<>(list.size());
@@ -302,5 +303,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
      * @author Nathan Mittelette <mittelette.nathan@gmail.com>
      * @since 4.9.0
      */
-    public record RepositoryMetaComponentSearch(RepositoryType type, String namespace, String name) implements Serializable { }
+    public record RepositoryMetaComponentSearch(RepositoryType type, String namespace,
+                                                String name) implements Serializable {
+    }
 }

@@ -147,4 +147,14 @@ public class OsvAdvisoryParserTest {
         Assert.assertEquals(22, advisory.getAffectedPackages().size());
         Assert.assertEquals("4.4.0", advisory.getAffectedPackages().get(0).getVersion());
     }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3185
+    public void testIssue3185() throws Exception {
+        String jsonFile = "src/test/resources/unit/osv.jsons/osv-CVE-2016-10012.json";
+        String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
+        JSONObject jsonObject = new JSONObject(jsonString);
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assert.assertNotNull(advisory);
+    }
+
 }

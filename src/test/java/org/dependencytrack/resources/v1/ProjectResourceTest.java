@@ -868,7 +868,7 @@ public class ProjectResourceTest extends ResourceTest {
                     assertThat(clonedProject).isNotNull();
                     assertThat(clonedProject.getUuid()).isNotEqualTo(project.getUuid());
                     assertThat(clonedProject.getSupplier()).isNotNull();
-                    assertThat(clonedProject.getName()).isEqualTo("projectSupplier");
+                    assertThat(clonedProject.getSupplier().getName()).isEqualTo("projectSupplier");
                     assertThat(clonedProject.getAccessTeams()).containsOnly(team);
 
                     final List<ProjectProperty> clonedProperties = qm.getProjectProperties(clonedProject);

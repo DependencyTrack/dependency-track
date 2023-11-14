@@ -18,60 +18,268 @@
  */
 package org.dependencytrack.notification.publisher;
 
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
-import org.apache.http.HttpHeaders;
-import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.integration.ClientAndServer;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 
-import javax.json.JsonObject;
-import java.io.IOException;
+public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPublisher> {
 
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-
-public class MsTeamsPublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
-
-    private static ClientAndServer mockServer;
-
-    @BeforeClass
-    public static void beforeClass() {
-        mockServer = startClientAndServer(1080);
+    public MsTeamsPublisherTest() {
+        super(DefaultNotificationPublishers.MS_TEAMS, new MsTeamsPublisher());
     }
 
-    @AfterClass
-    public static void afterClass() {
-        mockServer.stop();
+    @Override
+    public void testInformWithBomConsumedNotification() {
+        super.testInformWithBomConsumedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "Bill of Materials Consumed",
+                          "title": "Bill of Materials Consumed",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Level",
+                                  "value": "INFORMATIONAL"
+                                },
+                                {
+                                  "name": "Scope",
+                                  "value": "PORTFOLIO"
+                                },
+                                {
+                                  "name": "Group",
+                                  "value": "BOM_CONSUMED"
+                                }
+                              ],
+                              "text": "A CycloneDX BOM was consumed and will be processed"
+                            }
+                          ]
+                        }
+                        """)));
     }
 
-    @Test
-    public void testPublish() throws IOException {
-        new MockServerClient("localhost", 1080)
-                .when(
-                        request()
-                                .withMethod("POST")
-                                .withPath("/mychannel")
-                )
-                .respond(
-                        response()
-                                .withStatusCode(200)
-                                .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                );
-        JsonObject config = getConfig(DefaultNotificationPublishers.MS_TEAMS, "http://localhost:1080/mychannel");
-        Notification notification = new Notification();
-        notification.setScope(NotificationScope.PORTFOLIO.name());
-        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
-        notification.setLevel(NotificationLevel.INFORMATIONAL);
-        notification.setTitle("Test Notification");
-        notification.setContent("This is only a test");
-        MsTeamsPublisher publisher = new MsTeamsPublisher();
-        publisher.inform(notification, config);
+    @Override
+    public void testInformWithBomProcessingFailedNotification() {
+        super.testInformWithBomProcessingFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "Bill of Materials Processing Failed",
+                          "title": "Bill of Materials Processing Failed",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Level",
+                                  "value": "ERROR"
+                                },
+                                {
+                                  "name": "Scope",
+                                  "value": "PORTFOLIO"
+                                },
+                                {
+                                  "name": "Group",
+                                  "value": "BOM_PROCESSING_FAILED"
+                                }
+                              ],
+                              "text": "An error occurred while processing a BOM"
+                            }
+                          ]
+                        }
+                        """)));
     }
+
+    @Override
+    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
+        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "Bill of Materials Processing Failed",
+                          "title": "Bill of Materials Processing Failed",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Level",
+                                  "value": "ERROR"
+                                },
+                                {
+                                  "name": "Scope",
+                                  "value": "PORTFOLIO"
+                                },
+                                {
+                                  "name": "Group",
+                                  "value": "BOM_PROCESSING_FAILED"
+                                }
+                              ],
+                              "text": "An error occurred while processing a BOM"
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithDataSourceMirroringNotification() {
+        super.testInformWithDataSourceMirroringNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "GitHub Advisory Mirroring",
+                          "title": "GitHub Advisory Mirroring",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Level",
+                                  "value": "ERROR"
+                                },
+                                {
+                                  "name": "Scope",
+                                  "value": "SYSTEM"
+                                },
+                                {
+                                  "name": "Group",
+                                  "value": "DATASOURCE_MIRRORING"
+                                }
+                              ],
+                              "text": "An error occurred mirroring the contents of GitHub Advisories. Check log for details."
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithNewVulnerabilityNotification() {
+        super.testInformWithNewVulnerabilityNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "New Vulnerability Identified",
+                          "title": "New Vulnerability Identified",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "VulnID",
+                                  "value": "INT-001"
+                                },
+                                {
+                                  "name": "Severity",
+                                  "value": "MEDIUM"
+                                },
+                                {
+                                  "name": "Source",
+                                  "value": "INTERNAL"
+                                },
+                                {
+                                  "name": "Component",
+                                  "value": "componentName : componentVersion"
+                                }
+                              ],
+                              "text": ""
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithProjectAuditChangeNotification() {
+        super.testInformWithProjectAuditChangeNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "Analysis Decision: Finding Suppressed",
+                          "title": "Analysis Decision: Finding Suppressed",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Analysis Type",
+                                  "value": "Project Analysis"
+                                },
+                                {
+                                  "name": "Analysis State",
+                                  "value": "FALSE_POSITIVE"
+                                },
+                                {
+                                  "name": "Suppressed",
+                                  "value": "true"
+                                },
+                                {
+                                  "name": "VulnID",
+                                  "value": "INT-001"
+                                },
+                                {
+                                  "name": "Severity",
+                                  "value": "MEDIUM"
+                                },
+                                {
+                                  "name": "Source",
+                                  "value": "INTERNAL"
+                                },
+                                {
+                                  "name": "Component",
+                                  "value": "componentName : componentVersion"
+                                },
+                                {
+                                  "name": "Project",
+                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                }
+                              ],
+                              "text": ""
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
 }

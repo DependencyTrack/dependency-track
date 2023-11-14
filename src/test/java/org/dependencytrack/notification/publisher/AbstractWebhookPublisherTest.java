@@ -25,6 +25,7 @@ import org.junit.Rule;
 import javax.json.JsonObjectBuilder;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
@@ -40,7 +41,7 @@ public abstract class AbstractWebhookPublisherTest<T extends AbstractWebhookPubl
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         qm.createConfigProperty(
                 GENERAL_BASE_URL.getGroupName(),
                 GENERAL_BASE_URL.getPropertyName(),
@@ -49,7 +50,7 @@ public abstract class AbstractWebhookPublisherTest<T extends AbstractWebhookPubl
                 GENERAL_BASE_URL.getDescription()
         );
 
-        stubFor(post("/")
+        stubFor(post(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(200)));
     }

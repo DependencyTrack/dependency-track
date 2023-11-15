@@ -78,6 +78,100 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
+    public void testInformWithBomProcessingFailedNotification() {
+        super.testInformWithBomProcessingFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "BOM_PROCESSING_FAILED"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*ERROR*  |  *PORTFOLIO*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "Bill of Materials Processing Failed",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "An error occurred while processing a BOM",
+                                "type": "plain_text"
+                              }
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
+        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "BOM_PROCESSING_FAILED"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*ERROR*  |  *PORTFOLIO*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "Bill of Materials Processing Failed",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "An error occurred while processing a BOM",
+                                "type": "plain_text"
+                              }
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
     public void testInformWithDataSourceMirroringNotification() {
         super.testInformWithDataSourceMirroringNotification();
 

@@ -18,14 +18,14 @@
  */
 package org.dependencytrack.resources.v1;
 
-import java.util.Date;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.core.Response;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
+import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -33,17 +33,23 @@ import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
+
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.Date;
+import java.util.List;
 
 public class RepositoryResourceTest extends ResourceTest {
 
     @Override
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(RepositoryResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
+                        new ResourceConfig(RepositoryResource.class)
+                                .register(ApiFilter.class)
+                                .register(AuthenticationFilter.class)))
                 .build();
     }
 
@@ -60,11 +66,11 @@ public class RepositoryResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(14), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(15), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(14, json.size());
-        for (int i=0; i<json.size(); i++) {
+        Assert.assertEquals(15, json.size());
+        for (int i = 0; i < json.size(); i++) {
             Assert.assertNotNull(json.getJsonObject(i).getString("type"));
             Assert.assertNotNull(json.getJsonObject(i).getString("identifier"));
             Assert.assertNotNull(json.getJsonObject(i).getString("url"));
@@ -83,7 +89,7 @@ public class RepositoryResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
         Assert.assertEquals(5, json.size());
-        for (int i=0; i<json.size(); i++) {
+        for (int i = 0; i < json.size(); i++) {
             Assert.assertEquals("MAVEN", json.getJsonObject(i).getString("type"));
             Assert.assertNotNull(json.getJsonObject(i).getString("identifier"));
             Assert.assertNotNull(json.getJsonObject(i).getString("url"));
@@ -167,5 +173,135 @@ public class RepositoryResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("The repository metadata for the specified component cannot be found.", body);
+    }
+
+
+    @Test
+    public void createRepositoryTest() {
+        Repository repository = new Repository();
+        repository.setAuthenticationRequired(true);
+        repository.setEnabled(true);
+        repository.setUsername("testuser");
+        repository.setPassword("testPassword");
+        repository.setInternal(true);
+        repository.setIdentifier("test");
+        repository.setUrl("www.foobar.com");
+        repository.setType(RepositoryType.MAVEN);
+        Response response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus());
+
+
+        response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(16), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(16, json.size());
+        Assert.assertEquals("MAVEN", json.getJsonObject(12).getString("type"));
+        Assert.assertEquals("test", json.getJsonObject(12).getString("identifier"));
+        Assert.assertEquals("www.foobar.com", json.getJsonObject(12).getString("url"));
+        Assert.assertTrue(json.getJsonObject(12).getInt("resolutionOrder") > 0);
+        Assert.assertTrue(json.getJsonObject(12).getBoolean("authenticationRequired"));
+        Assert.assertEquals("testuser", json.getJsonObject(12).getString("username"));
+        Assert.assertTrue(json.getJsonObject(12).getBoolean("enabled"));
+    }
+
+    @Test
+    public void createNonInternalRepositoryTest() {
+        Repository repository = new Repository();
+        repository.setAuthenticationRequired(true);
+        repository.setEnabled(true);
+        repository.setUsername("testuser");
+        repository.setPassword("testPassword");
+        repository.setInternal(false);
+        repository.setIdentifier("test");
+        repository.setUrl("www.foobar.com");
+        repository.setType(RepositoryType.MAVEN);
+        RepositoryResource repositoryResource = new RepositoryResource();
+        Response response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus());
+
+
+        response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(16), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(16, json.size());
+        Assert.assertEquals("MAVEN", json.getJsonObject(12).getString("type"));
+        Assert.assertEquals("test", json.getJsonObject(12).getString("identifier"));
+        Assert.assertEquals("www.foobar.com", json.getJsonObject(12).getString("url"));
+        Assert.assertTrue(json.getJsonObject(12).getInt("resolutionOrder") > 0);
+        Assert.assertTrue(json.getJsonObject(12).getBoolean("authenticationRequired"));
+        Assert.assertFalse(json.getJsonObject(12).getBoolean("internal"));
+        Assert.assertEquals("testuser", json.getJsonObject(12).getString("username"));
+        Assert.assertTrue(json.getJsonObject(12).getBoolean("enabled"));
+    }
+
+    @Test
+    public void createRepositoryAuthFalseTest() {
+        Repository repository = new Repository();
+        repository.setAuthenticationRequired(false);
+        repository.setEnabled(true);
+        repository.setInternal(true);
+        repository.setIdentifier("test");
+        repository.setUrl("www.foobar.com");
+        repository.setType(RepositoryType.MAVEN);
+        Response response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus());
+
+
+        response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(16), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(16, json.size());
+        Assert.assertEquals("MAVEN", json.getJsonObject(12).getString("type"));
+        Assert.assertEquals("test", json.getJsonObject(12).getString("identifier"));
+        Assert.assertEquals("www.foobar.com", json.getJsonObject(12).getString("url"));
+        Assert.assertTrue(json.getJsonObject(12).getInt("resolutionOrder") > 0);
+        Assert.assertFalse(json.getJsonObject(12).getBoolean("authenticationRequired"));
+        Assert.assertTrue(json.getJsonObject(12).getBoolean("enabled"));
+
+    }
+
+    @Test
+    public void updateRepositoryTest() throws Exception {
+        Repository repository = new Repository();
+        repository.setAuthenticationRequired(true);
+        repository.setEnabled(true);
+        repository.setUsername("testuser");
+        repository.setPassword("testPassword");
+        repository.setInternal(true);
+        repository.setIdentifier("test");
+        repository.setUrl("www.foobar.com");
+        repository.setType(RepositoryType.MAVEN);
+        Response response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus());
+        try (QueryManager qm = new QueryManager()) {
+            List<Repository> repositoryList = qm.getRepositories(RepositoryType.MAVEN).getList(Repository.class);
+            for (Repository repository1 : repositoryList) {
+                if (repository1.getIdentifier().equals("test")) {
+                    repository1.setAuthenticationRequired(false);
+                    response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                            .post(Entity.entity(repository1, MediaType.APPLICATION_JSON));
+                    Assert.assertEquals(200, response.getStatus());
+                    break;
+                }
+            }
+            repositoryList = qm.getRepositories(RepositoryType.MAVEN).getList(Repository.class);
+            for (Repository repository1 : repositoryList) {
+                if (repository1.getIdentifier().equals("test")) {
+                    Assert.assertEquals(false, repository1.isAuthenticationRequired());
+                    break;
+                }
+            }
+        }
+
     }
 }

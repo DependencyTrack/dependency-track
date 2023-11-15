@@ -23,6 +23,7 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
 import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -66,6 +67,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -450,9 +452,9 @@ public final class NotificationUtil {
         }
         if (vo.getBom() != null) {
             builder.add("bom", Json.createObjectBuilder()
-                    .add("content", vo.getBom())
-                    .add("format", vo.getFormat().getFormatShortName())
-                    .add("specVersion", vo.getSpecVersion()).build()
+                    .add("content", Optional.ofNullable(vo.getBom()).orElse("Unknown"))
+                    .add("format", Optional.ofNullable(vo.getFormat()).map(Bom.Format::getFormatShortName).orElse("Unknown"))
+                    .add("specVersion", Optional.ofNullable(vo.getSpecVersion()).orElse("Unknown")).build()
             );
         }
         if (vo.getCause() != null) {

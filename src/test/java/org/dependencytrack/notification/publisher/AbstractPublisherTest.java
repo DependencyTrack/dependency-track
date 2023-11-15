@@ -35,6 +35,7 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
+import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.junit.Test;
 
@@ -42,6 +43,8 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -69,6 +72,41 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .title(NotificationConstants.Title.BOM_CONSUMED)
                 .content("A CycloneDX BOM was consumed and will be processed")
                 .level(NotificationLevel.INFORMATIONAL)
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(notification, createConfig()));
+    }
+
+    @Test
+    public void testInformWithBomProcessingFailedNotification() {
+        final var subject = new BomProcessingFailed(createProject(), "bomContent", "cause", Bom.Format.CYCLONEDX, "1.5");
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.BOM_PROCESSING_FAILED)
+                .title(NotificationConstants.Title.BOM_PROCESSING_FAILED)
+                .content("An error occurred while processing a BOM")
+                .level(NotificationLevel.ERROR)
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(notification, createConfig()));
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3197
+    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
+        final var subject = new BomProcessingFailed(createProject(), "bomContent", "cause", Bom.Format.CYCLONEDX, null);
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.BOM_PROCESSING_FAILED)
+                .title(NotificationConstants.Title.BOM_PROCESSING_FAILED)
+                .content("An error occurred while processing a BOM")
+                .level(NotificationLevel.ERROR)
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
                 .subject(subject);
 
         assertThatNoException()
@@ -82,7 +120,8 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .group(NotificationGroup.DATASOURCE_MIRRORING)
                 .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
                 .content("An error occurred mirroring the contents of GitHub Advisories. Check log for details.")
-                .level(NotificationLevel.ERROR);
+                .level(NotificationLevel.ERROR)
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC));
 
         assertThatNoException()
                 .isThrownBy(() -> publisherInstance.inform(notification, createConfig()));
@@ -103,6 +142,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .level(NotificationLevel.INFORMATIONAL)
                 .title(NotificationConstants.Title.NEW_VULNERABILITY)
                 .content("")
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
                 .subject(subject);
 
         assertThatNoException()
@@ -124,6 +164,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .level(NotificationLevel.INFORMATIONAL)
                 .title(NotificationConstants.Title.ANALYSIS_DECISION_SUPPRESSED)
                 .content("")
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
                 .subject(subject);
 
         assertThatNoException()

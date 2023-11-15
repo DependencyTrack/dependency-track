@@ -18,60 +18,261 @@
  */
 package org.dependencytrack.notification.publisher;
 
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
-import org.apache.http.HttpHeaders;
-import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.integration.ClientAndServer;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 
-import javax.json.JsonObject;
-import java.io.IOException;
+public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPublisher> {
 
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-
-public class WebhookPublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
-
-    private static ClientAndServer mockServer;
-
-    @BeforeClass
-    public static void beforeClass() {
-        mockServer = startClientAndServer(1080);
+    public WebhookPublisherTest() {
+        super(DefaultNotificationPublishers.WEBHOOK, new WebhookPublisher());
     }
 
-    @AfterClass
-    public static void afterClass() {
-        mockServer.stop();
+    @Override
+    public void testInformWithBomConsumedNotification() {
+        super.testInformWithBomConsumedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "notification" : {
+                            "level" : "INFORMATIONAL",
+                            "scope" : "PORTFOLIO",
+                            "group" : "BOM_CONSUMED",
+                            "timestamp" : "1970-01-01T18:31:06.000000666",
+                            "title" : "Bill of Materials Consumed",
+                            "content" : "A CycloneDX BOM was consumed and will be processed",
+                            "subject" : {
+                              "project" : {
+                                "uuid" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                "name" : "projectName",
+                                "version" : "projectVersion",
+                                "description" : "projectDescription",
+                                "purl" : "pkg:maven/org.acme/projectName@projectVersion",
+                                "tags" : "tag1,tag2"
+                              },
+                              "bom" : {
+                                "content" : "bomContent",
+                                "format" : "CycloneDX",
+                                "specVersion" : "1.5"
+                              }
+                            }
+                          }
+                        }
+                        """)));
     }
 
-    @Test
-    public void testPublish() throws IOException {
-        new MockServerClient("localhost", 1080)
-                .when(
-                        request()
-                                .withMethod("POST")
-                                .withPath("/mychannel")
-                )
-                .respond(
-                        response()
-                                .withStatusCode(200)
-                                .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                );
-        JsonObject config = getConfig(DefaultNotificationPublishers.WEBHOOK, "http://localhost:1080/mychannel");
-        Notification notification = new Notification();
-        notification.setScope(NotificationScope.PORTFOLIO.name());
-        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
-        notification.setLevel(NotificationLevel.INFORMATIONAL);
-        notification.setTitle("Test Notification");
-        notification.setContent("This is only a test");
-        WebhookPublisher publisher = new WebhookPublisher();
-        publisher.inform(notification, config);
+    @Override
+    public void testInformWithBomProcessingFailedNotification() {
+        super.testInformWithBomProcessingFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "notification" : {
+                            "level" : "ERROR",
+                            "scope" : "PORTFOLIO",
+                            "group" : "BOM_PROCESSING_FAILED",
+                            "timestamp" : "1970-01-01T18:31:06.000000666",
+                            "title" : "Bill of Materials Processing Failed",
+                            "content" : "An error occurred while processing a BOM",
+                            "subject" : {
+                              "project" : {
+                                "uuid" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                "name" : "projectName",
+                                "version" : "projectVersion",
+                                "description" : "projectDescription",
+                                "purl" : "pkg:maven/org.acme/projectName@projectVersion",
+                                "tags" : "tag1,tag2"
+                              },
+                              "bom" : {
+                                "content" : "bomContent",
+                                "format" : "CycloneDX",
+                                "specVersion" : "1.5"
+                              },
+                              "cause" : "cause"
+                            }
+                          }
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
+        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "notification" : {
+                            "level" : "ERROR",
+                            "scope" : "PORTFOLIO",
+                            "group" : "BOM_PROCESSING_FAILED",
+                            "timestamp" : "1970-01-01T18:31:06.000000666",
+                            "title" : "Bill of Materials Processing Failed",
+                            "content" : "An error occurred while processing a BOM",
+                            "subject" : {
+                              "project" : {
+                                "uuid" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                "name" : "projectName",
+                                "version" : "projectVersion",
+                                "description" : "projectDescription",
+                                "purl" : "pkg:maven/org.acme/projectName@projectVersion",
+                                "tags" : "tag1,tag2"
+                              },
+                              "bom" : {
+                                "content" : "bomContent",
+                                "format" : "CycloneDX",
+                                "specVersion" : "Unknown"
+                              },
+                              "cause" : "cause"
+                            }
+                          }
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithDataSourceMirroringNotification() {
+        super.testInformWithDataSourceMirroringNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "notification": {
+                            "level": "ERROR",
+                            "scope": "SYSTEM",
+                            "group": "DATASOURCE_MIRRORING",
+                            "timestamp": "1970-01-01T18:31:06.000000666",
+                            "title": "GitHub Advisory Mirroring",
+                            "content": "An error occurred mirroring the contents of GitHub Advisories. Check log for details.",
+                            "subject": null
+                          }
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithNewVulnerabilityNotification() {
+        super.testInformWithNewVulnerabilityNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "notification" : {
+                            "level" : "INFORMATIONAL",
+                            "scope" : "PORTFOLIO",
+                            "group" : "NEW_VULNERABILITY",
+                            "timestamp" : "1970-01-01T18:31:06.000000666",
+                            "title" : "New Vulnerability Identified",
+                            "content" : "",
+                            "subject" : {
+                              "component" : {
+                                "uuid" : "94f87321-a5d1-4c2f-b2fe-95165debebc6",
+                                "name" : "componentName",
+                                "version" : "componentVersion"
+                              },
+                              "vulnerabilityAnalysisLevel" : "BOM_UPLOAD_ANALYSIS",
+                              "vulnerability" : {
+                                "uuid" : "bccec5d5-ec21-4958-b3e8-22a7a866a05a",
+                                "vulnId" : "INT-001",
+                                "source" : "INTERNAL",
+                                "aliases" : [ {
+                                  "source" : "OSV",
+                                  "vulnId" : "OSV-001"
+                                } ],
+                                "title" : "vulnerabilityTitle",
+                                "subtitle" : "vulnerabilitySubTitle",
+                                "description" : "vulnerabilityDescription",
+                                "recommendation" : "vulnerabilityRecommendation",
+                                "cvssv2" : 5.5,
+                                "cvssv3" : 6.6,
+                                "owaspRRLikelihood" : 1.1,
+                                "owaspRRTechnicalImpact" : 2.2,
+                                "owaspRRBusinessImpact" : 3.3,
+                                "severity" : "MEDIUM",
+                                "cwes" : [ ]
+                              },
+                              "affectedProjects" : [ {
+                                "uuid" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                "name" : "projectName",
+                                "version" : "projectVersion",
+                                "description" : "projectDescription",
+                                "purl" : "pkg:maven/org.acme/projectName@projectVersion",
+                                "tags" : "tag1,tag2"
+                              } ]
+                            }
+                          }
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithProjectAuditChangeNotification() {
+        super.testInformWithProjectAuditChangeNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "notification" : {
+                            "level" : "INFORMATIONAL",
+                            "scope" : "PORTFOLIO",
+                            "group" : "PROJECT_AUDIT_CHANGE",
+                            "timestamp" : "1970-01-01T18:31:06.000000666",
+                            "title" : "Analysis Decision: Finding Suppressed",
+                            "content" : "",
+                            "subject" : {
+                              "component" : {
+                                "uuid" : "94f87321-a5d1-4c2f-b2fe-95165debebc6",
+                                "name" : "componentName",
+                                "version" : "componentVersion"
+                              },
+                              "vulnerability" : {
+                                "uuid" : "bccec5d5-ec21-4958-b3e8-22a7a866a05a",
+                                "vulnId" : "INT-001",
+                                "source" : "INTERNAL",
+                                "aliases" : [ {
+                                  "source" : "OSV",
+                                  "vulnId" : "OSV-001"
+                                } ],
+                                "title" : "vulnerabilityTitle",
+                                "subtitle" : "vulnerabilitySubTitle",
+                                "description" : "vulnerabilityDescription",
+                                "recommendation" : "vulnerabilityRecommendation",
+                                "cvssv2" : 5.5,
+                                "cvssv3" : 6.6,
+                                "owaspRRLikelihood" : 1.1,
+                                "owaspRRTechnicalImpact" : 2.2,
+                                "owaspRRBusinessImpact" : 3.3,
+                                "severity" : "MEDIUM",
+                                "cwes" : [ ]
+                              },
+                              "analysis" : {
+                                "suppressed" : true,
+                                "state" : "FALSE_POSITIVE",
+                                "project" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                "component" : "94f87321-a5d1-4c2f-b2fe-95165debebc6",
+                                "vulnerability" : "bccec5d5-ec21-4958-b3e8-22a7a866a05a"
+                              },
+                              "affectedProjects" : [ {
+                                "uuid" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                "name" : "projectName",
+                                "version" : "projectVersion",
+                                "description" : "projectDescription",
+                                "purl" : "pkg:maven/org.acme/projectName@projectVersion",
+                                "tags" : "tag1,tag2"
+                              } ]
+                            }
+                          }
+                        }
+                        """)));
     }
 }

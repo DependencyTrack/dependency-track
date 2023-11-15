@@ -46,6 +46,36 @@ public class MattermostPublisherTest extends AbstractWebhookPublisherTest<Matter
     }
 
     @Override
+    public void testInformWithBomProcessingFailedNotification() {
+        super.testInformWithBomProcessingFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "username": "Dependency Track",
+                          "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                          "text": "#### Bill of Materials Processing Failed\\nAn error occurred while processing a BOM\\n"
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
+        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "username": "Dependency Track",
+                          "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                          "text": "#### Bill of Materials Processing Failed\\nAn error occurred while processing a BOM\\n"
+                        }
+                        """)));
+    }
+
+    @Override
     public void testInformWithDataSourceMirroringNotification() {
         super.testInformWithDataSourceMirroringNotification();
 

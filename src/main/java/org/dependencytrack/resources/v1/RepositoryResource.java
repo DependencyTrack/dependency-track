@@ -51,6 +51,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import static org.dependencytrack.resources.v1.AbstractConfigPropertyResource.ENCRYPTED_PLACEHOLDER;
+
 /**
  * JAX-RS resources for processing repositories.
  *
@@ -96,7 +98,7 @@ public class RepositoryResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getRepositoriesByType(
             @ApiParam(value = "The type of repositories to retrieve", required = true)
-            @PathParam("type")RepositoryType type) {
+            @PathParam("type") RepositoryType type) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getRepositories(type);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
@@ -162,24 +164,15 @@ public class RepositoryResource extends AlpineResource {
 
         try (QueryManager qm = new QueryManager()) {
             final boolean exists = qm.repositoryExist(jsonRepository.getType(), StringUtils.trimToNull(jsonRepository.getIdentifier()));
-            if (! exists) {
+            if (!exists) {
                 final Repository repository = qm.createRepository(
                         jsonRepository.getType(),
                         StringUtils.trimToNull(jsonRepository.getIdentifier()),
                         StringUtils.trimToNull(jsonRepository.getUrl()),
                         jsonRepository.isEnabled(),
-                        jsonRepository.isInternal());
-
-                if (Boolean.TRUE.equals(jsonRepository.isInternal()) && (jsonRepository.getUsername() != null || jsonRepository.getPassword() != null)) {
-                    repository.setUsername(StringUtils.trimToNull(jsonRepository.getUsername()));
-                    try {
-                        if (jsonRepository.getPassword() != null) {
-                            repository.setPassword(DataEncryption.encryptAsString(jsonRepository.getPassword()));
-                        }
-                    } catch (Exception e) {
-                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The specified repository password could not be encrypted.").build();
-                    }
-                }
+                        jsonRepository.isInternal(),
+                        jsonRepository.isAuthenticationRequired(),
+                        jsonRepository.getUsername(), jsonRepository.getPassword());
 
                 return Response.status(Response.Status.CREATED).entity(repository).build();
             } else {
@@ -202,7 +195,7 @@ public class RepositoryResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response updateRepository(Repository jsonRepository) {
         final Validator validator = super.getValidator();
-        failOnValidationError(
+        failOnValidationError(validator.validateProperty(jsonRepository, "identifier"),
                 validator.validateProperty(jsonRepository, "url")
         );
 
@@ -211,13 +204,13 @@ public class RepositoryResource extends AlpineResource {
             if (repository != null) {
                 final String url = StringUtils.trimToNull(jsonRepository.getUrl());
                 try {
-                    // The password is not passed to the front-end, so it should only be overwritten if it is not null.
-                    final String updatedPassword = jsonRepository.getPassword() != null
+                    // The password is not passed to the front-end, so it should only be overwritten if it is not null or not set to default value coming from ui
+                    final String updatedPassword = jsonRepository.getPassword()!=null && !jsonRepository.getPassword().equals(ENCRYPTED_PLACEHOLDER)
                             ? DataEncryption.encryptAsString(jsonRepository.getPassword())
                             : repository.getPassword();
 
                     repository = qm.updateRepository(jsonRepository.getUuid(), repository.getIdentifier(), url,
-                            jsonRepository.isInternal(), jsonRepository.getUsername(), updatedPassword, jsonRepository.isEnabled());
+                            jsonRepository.isInternal(), jsonRepository.isAuthenticationRequired(), jsonRepository.getUsername(), updatedPassword, jsonRepository.isEnabled());
                     return Response.ok(repository).build();
                 } catch (Exception e) {
                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The specified repository password could not be encrypted.").build();

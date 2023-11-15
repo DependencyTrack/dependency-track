@@ -23,7 +23,6 @@ import alpine.common.logging.Logger;
 import alpine.common.metrics.Metrics;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
-import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
@@ -42,6 +41,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.EpssMirrorEvent;
+import org.dependencytrack.event.NistApiMirrorEvent;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -67,6 +67,8 @@ import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
 import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_DOWNLOAD_FEEDS;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_FEEDS_URL;
 
@@ -96,6 +98,8 @@ public class NistMirrorTask implements LoggableSubscriber {
     private final int endYear = Calendar.getInstance().get(Calendar.YEAR);
 
     private final boolean isEnabled;
+    private final boolean isApiEnabled;
+    private final boolean isApiDownloadFeeds;
     private String nvdFeedsUrl;
     private File outputDir;
     private long metricParseTime;
@@ -133,9 +137,13 @@ public class NistMirrorTask implements LoggableSubscriber {
 
     public NistMirrorTask() {
         try (final QueryManager qm = new QueryManager()) {
-            final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_NVD_ENABLED.getGroupName(), VULNERABILITY_SOURCE_NVD_ENABLED.getPropertyName());
-            this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
-            this.nvdFeedsUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_NVD_FEEDS_URL.getGroupName(), VULNERABILITY_SOURCE_NVD_FEEDS_URL.getPropertyName()).getPropertyValue();
+            this.isEnabled = qm.isEnabled(VULNERABILITY_SOURCE_NVD_ENABLED);
+            this.isApiEnabled = qm.isEnabled(VULNERABILITY_SOURCE_NVD_API_ENABLED);
+            this.isApiDownloadFeeds = qm.isEnabled(VULNERABILITY_SOURCE_NVD_API_DOWNLOAD_FEEDS);
+            this.nvdFeedsUrl = qm.getConfigProperty(
+                    VULNERABILITY_SOURCE_NVD_FEEDS_URL.getGroupName(),
+                    VULNERABILITY_SOURCE_NVD_FEEDS_URL.getPropertyName()
+            ).getPropertyValue();
             if (this.nvdFeedsUrl.endsWith("/")) {
                 this.nvdFeedsUrl = this.nvdFeedsUrl.substring(0, this.nvdFeedsUrl.length()-1);
             }
@@ -147,6 +155,23 @@ public class NistMirrorTask implements LoggableSubscriber {
      */
     public void inform(final Event e) {
         if (e instanceof NistMirrorEvent && this.isEnabled) {
+            if (isApiEnabled) {
+                Event.dispatch(new NistApiMirrorEvent());
+
+                if (!isApiDownloadFeeds) {
+                    LOGGER.debug("""
+                            Not downloading feeds because mirroring via NVD is enabled,\
+                            but additional feed download is not; It can be enabled in \
+                            the settings if desired""");
+                    return;
+                }
+            } else {
+                LOGGER.warn("""
+                        The NVD is planning to retire the legacy data feeds used by Dependency-Track \
+                        (https://nvd.nist.gov/General/News/change-timeline); Consider enabling mirroring \
+                        via NVD REST API in the settings: https://docs.dependencytrack.org/datasources/nvd/#mirroring-via-nvd-rest-api""");
+            }
+
             final long start = System.currentTimeMillis();
             LOGGER.info("Starting NIST mirroring task");
             final File mirrorPath = new File(NVD_MIRROR_DIR);
@@ -155,9 +180,11 @@ public class NistMirrorTask implements LoggableSubscriber {
             final long end = System.currentTimeMillis();
             LOGGER.info("NIST mirroring complete");
             LOGGER.info("Time spent (d/l):   " + metricDownloadTime + "ms");
-            LOGGER.info("Time spent (parse): " + metricParseTime + "ms");
+            if (!isApiEnabled) {
+                LOGGER.info("Time spent (parse): " + metricParseTime + "ms");
+                Event.dispatch(new EpssMirrorEvent());
+            }
             LOGGER.info("Time spent (total): " + (end - start) + "ms");
-            Event.dispatch(new EpssMirrorEvent());
         }
     }
 
@@ -335,8 +362,14 @@ public class NistMirrorTask implements LoggableSubscriber {
 
         final long start = System.currentTimeMillis();
         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
-            final NvdParser parser = new NvdParser();
-            parser.parse(uncompressedFile);
+            if (!isApiEnabled) {
+                final NvdParser parser = new NvdParser();
+                parser.parse(uncompressedFile);
+            } else {
+                LOGGER.debug("""
+                        %s was successfully downloaded and uncompressed, but will not be parsed because \
+                        mirroring via NVD REST API is enabled""".formatted(uncompressedFile.getName()));
+            }
             // Update modification time
             File timestampFile = new File(file.getAbsolutePath() + ".ts");
             writeTimeStampFile(timestampFile, start);

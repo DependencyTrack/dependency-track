@@ -169,6 +169,17 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 {"cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*"},
                 {"cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*"},
                 // ---
+                // Required CPE name comparison relations (as per table 6-4 in the spec)
+                // ---
+                // Scenario:  All attributes are EQUAL
+                {"cpe:2.3:*:*:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:*:*:*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:-:-:-:-:-:-:-:-:-:-:-", WITHOUT_RANGE, MATCHES, "cpe:2.3:-:-:-:-:-:-:-:-:-:-:-"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                // Scenario:  All attributes of source are SUPERSET of target
+                {"cpe:2.3:*:*:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                // Scenario:  All attributes of source are SUBSET of target
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:*:*:*:*:*:*:*:*:*:*"},
+                // ---
                 // Regression tests
                 // ---
                 // Issue:     https://github.com/DependencyTrack/dependency-track/issues/1320
@@ -197,7 +208,8 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 // Issue:     https://github.com/DependencyTrack/dependency-track/issues/2580
                 // Scenario:  "vendor" of source is "linux", "vendor" of target ANY -> SUBSET.
                 // Table No.: 13
-                {"cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:o:*:linux_kernel:4.19.139:*:*:*:*:*:*:*"},
+                {"cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:o:*:linux_kernel:*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:o:*:linux_kernel:4.19.139:*:*:*:*:*:*:*"},
                 // ---
                 // Issue:     https://github.com/DependencyTrack/dependency-track/issues/2894
                 // Scenario:  "vendor" and "product" with different casing -> EQUAL.
@@ -224,8 +236,21 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 {"cpe:2.3:a:busybox:busybox:1.34.1:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:busybox:busybox:1.34.1:*:*:*:*:*:*:*"},
                 // ---
                 // Issue:     https://github.com/DependencyTrack/dependency-track/pull/1929#issuecomment-1759411976
-                {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:*:nginx:1.20.1:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", withRange().havingEndExcluding("1.21.0"), MATCHES, "cpe:2.3:*:*:nginx:1.20.1:*:*:*:*:*:*:*"},
+                // Scenario:  "part" and "vendor" of source are i, "part" and "vendor" of target are ANY -> SUBSET
+                // Table No.: 13
+                {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:*:nginx:*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", withRange().havingEndExcluding("1.21.0"), MATCHES, "cpe:2.3:*:*:nginx:*:*:*:*:*:*:*:*"},
+                // Scenario:  Same as above, but "version" of target is i, which evaluates to SUPERSET for the "version" attribute
+                //            As per matching spec, SUBSET and SUPERSET can not appear in the same comparison across all attributes
+                // Table No.: 3, 13
+                {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:*:*:nginx:1.20.1:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", withRange().havingEndExcluding("1.21.0"), DOES_NOT_MATCH, "cpe:2.3:*:*:nginx:1.20.1:*:*:*:*:*:*:*"},
+                // ---
+                // Issue:     https://github.com/DependencyTrack/dependency-track/issues/3178#issuecomment-1812809295
+                // Scenario:  "vendor" of source is i, "product" of source is ANY, "vendor" of target is ANY, "product" of target is i
+                //            As SUBSET and SUPERSET are mixed, this is not a match according to the spec
+                // Table No.: 3, 13
+                {"cpe:2.3:a:pascom_cloud_phone_system:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:*:util-linux-setarch:2.37.4:*:*:*:*:*:*:*"}
         });
     }
 

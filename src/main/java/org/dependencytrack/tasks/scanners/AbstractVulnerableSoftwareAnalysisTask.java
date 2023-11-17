@@ -26,10 +26,8 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.ComponentVersion;
 import org.dependencytrack.util.NotificationUtil;
 import us.springett.parsers.cpe.Cpe;
-import us.springett.parsers.cpe.values.LogicalValue;
+import us.springett.parsers.cpe.util.Relation;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -52,10 +50,34 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * @param component the component being analyzed
      */
     protected void analyzeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
-                                       final String targetVersion, final String targetUpdate, final Component component,
+                                       final Cpe targetCpe, final String targetVersion, final Component component,
                                        final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         for (final VulnerableSoftware vs: vsList) {
-            if (compareVersions(vs, targetVersion) && compareUpdate(vs, targetUpdate)) {
+            Boolean isCpeMatch = null; // null means no CPE to compare
+            if (targetCpe != null && vs.getCpe23() != null) {
+                final List<Relation> relations = List.of(
+                        Cpe.compareAttribute(vs.getPart(), targetCpe.getPart().getAbbreviation()),
+                        Cpe.compareAttribute(vs.getVendor(), targetCpe.getVendor()),
+                        Cpe.compareAttribute(vs.getProduct(), targetCpe.getProduct()),
+                        Cpe.compareAttribute(vs.getVersion(), targetVersion),
+                        Cpe.compareAttribute(vs.getUpdate(), targetCpe.getUpdate()),
+                        Cpe.compareAttribute(vs.getEdition(), targetCpe.getEdition()),
+                        Cpe.compareAttribute(vs.getLanguage(), targetCpe.getLanguage()),
+                        Cpe.compareAttribute(vs.getSwEdition(), targetCpe.getSwEdition()),
+                        Cpe.compareAttribute(vs.getTargetSw(), targetCpe.getTargetSw()),
+                        Cpe.compareAttribute(vs.getTargetHw(), targetCpe.getTargetHw()),
+                        Cpe.compareAttribute(vs.getOther(), targetCpe.getOther())
+                );
+                if (relations.contains(Relation.DISJOINT)) {
+                    isCpeMatch = false;
+                } else {
+                    isCpeMatch = relations.stream().allMatch(Relation.EQUAL::equals)
+                            || relations.stream().allMatch(relation -> relation == Relation.EQUAL || relation == Relation.SUBSET)
+                            || relations.stream().allMatch(relation -> relation == Relation.EQUAL || relation == Relation.SUPERSET);
+                }
+            }
+
+            if ((isCpeMatch == null || isCpeMatch) && compareVersions(vs, targetVersion)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
@@ -87,7 +109,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
 
         // Modified from original by Steve Springett
         // Added null check: vs.getVersion() != null as purl sources that use version ranges may not have version populated.
-        if (!result && vs.getVersion() != null && compareAttributes(vs.getVersion(), targetVersion)) {
+        if (!result && vs.getVersion() != null && Cpe.compareAttribute(vs.getVersion(), targetVersion) != Relation.DISJOINT) {
             return true;
         }
 
@@ -114,53 +136,4 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         return result;
     }
 
-    private static final Method COMPARE_ATTRIBUTES_METHOD;
-
-    static {
-        try {
-            // Workaround for the fact that Cpe#compareAttributes has protected visibility.
-            COMPARE_ATTRIBUTES_METHOD = Cpe.class.getDeclaredMethod("compareAttributes", String.class, String.class);
-            COMPARE_ATTRIBUTES_METHOD.setAccessible(true);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException("Failed to access compareAttributes method of %s".formatted(Cpe.class.getName()), e);
-        }
-    }
-
-    private static boolean compareAttributes(String left, String right) {
-        try {
-            return (Boolean) COMPARE_ATTRIBUTES_METHOD.invoke(null, left, right);
-        } catch (InvocationTargetException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Evaluates the target update against the vulnerable software. The update
-     * field is optional and if the value is ANY (*), then it will return true.
-     * Otherwise, the updates are compared against each other.
-
-     * @param vs a reference to the vulnerable software to compare
-     * @param targetUpdate the update to compare
-     * @return <code>true</code> if the target update is matched; otherwise
-     * <code>false</code>
-     */
-    private static boolean compareUpdate(VulnerableSoftware vs, String targetUpdate) {
-
-        if (targetUpdate != null && targetUpdate.equals(vs.getUpdate())) {
-            return true;
-        }
-        if (vs.getUpdate() == null && targetUpdate == null) {
-            return true;
-        }
-        // Moving this above the null OR check to reflect method comments (ANY should mean ANY)
-        // This is necessary for fuzz matching when a PURL which assumes null
-        // is matched to a CPE which defaults to ANY
-        if (LogicalValue.ANY.getAbbreviation().equals(targetUpdate) || LogicalValue.ANY.getAbbreviation().equals(vs.getUpdate())) {
-            return true;
-        }
-        if (vs.getUpdate() == null || targetUpdate == null) {
-            return false;
-        }
-        return compareAttributes(vs.getUpdate(), targetUpdate);
-    }
 }

@@ -16,13 +16,13 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.model; 
+package org.dependencytrack.model;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 public class RepositoryTest {
-    
+
     @Test
     public void testId() {
         Repository repo = new Repository();
@@ -35,7 +35,7 @@ public class RepositoryTest {
         Repository repo = new Repository();
         repo.setType(RepositoryType.MAVEN);
         Assert.assertEquals(RepositoryType.MAVEN, repo.getType());
-    } 
+    }
 
     @Test
     public void testIdentifier() {
@@ -49,19 +49,33 @@ public class RepositoryTest {
         Repository repo = new Repository();
         repo.setUrl("https://repo.maven.apache.org/maven2");
         Assert.assertEquals("https://repo.maven.apache.org/maven2", repo.getUrl());
-    } 
+    }
 
     @Test
     public void testResolutionOrder() {
         Repository repo = new Repository();
         repo.setResolutionOrder(5);
         Assert.assertEquals(5, repo.getResolutionOrder());
-    } 
+    }
 
     @Test
     public void testEnabled() {
         Repository repo = new Repository();
         repo.setEnabled(true);
         Assert.assertTrue(repo.isEnabled());
+    }
+
+    @Test
+    public void testAuthenticationRequiredTrue() {
+        Repository repo = new Repository();
+        repo.setAuthenticationRequired(true);
+        Assert.assertTrue(repo.isAuthenticationRequired());
+    }
+
+    @Test
+    public void testAuthenticationRequiredFalse() {
+        Repository repo = new Repository();
+        repo.setAuthenticationRequired(false);
+        Assert.assertFalse(repo.isAuthenticationRequired());
     }
 } 

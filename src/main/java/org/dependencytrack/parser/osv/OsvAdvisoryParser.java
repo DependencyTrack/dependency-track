@@ -139,13 +139,19 @@ public class OsvAdvisoryParser {
         if (osvAffectedPackageList.size() == 0 && versions != null && versions.length() > 0) {
             for (int j=0; j<versions.length(); j++) {
                 OsvAffectedPackage vuln = createAffectedPackage(affected);
+                if (vuln == null) {
+                    continue;
+                }
                 vuln.setVersion(versions.getString(j));
                 osvAffectedPackageList.add(vuln);
             }
         }
         // if no parsable range or version is available, add vulnerability without version
         else if (osvAffectedPackageList.size() == 0) {
-            osvAffectedPackageList.add(createAffectedPackage(affected));
+            final OsvAffectedPackage affectedPackage = createAffectedPackage(affected);
+            if (affectedPackage != null) {
+                osvAffectedPackageList.add(affectedPackage);
+            }
         }
         return osvAffectedPackageList;
     }
@@ -185,6 +191,9 @@ public class OsvAdvisoryParser {
             }
 
             final OsvAffectedPackage affectedPackage = createAffectedPackage(vulnerability);
+            if (affectedPackage == null) {
+                continue;
+            }
             affectedPackage.setLowerVersionRange(introduced);
 
             if (i + 1 < rangeEvents.length()) {
@@ -230,6 +239,9 @@ public class OsvAdvisoryParser {
 
         OsvAffectedPackage osvAffectedPackage = new OsvAffectedPackage();
         final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
+        if (affectedPackageJson == null) {
+            return null;
+        }
         final JSONObject ecosystemSpecific = vulnerability.optJSONObject("ecosystem_specific");
         final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
         Severity ecosystemSeverity = parseEcosystemSeverity(ecosystemSpecific, databaseSpecific);

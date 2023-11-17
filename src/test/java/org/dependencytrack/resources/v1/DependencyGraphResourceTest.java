@@ -22,6 +22,7 @@ package org.dependencytrack.resources.v1;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import com.github.packageurl.PackageURL;
+import net.javacrumbs.jsonunit.core.Option;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.*;
@@ -40,7 +41,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
 
 public class DependencyGraphResourceTest extends ResourceTest {
 
@@ -313,4 +316,68 @@ public class DependencyGraphResourceTest extends ResourceTest {
 
         assertThat(json.size()).isEqualTo(nbIteration * 2);
     }
+
+    @Test
+    public void getComponentsAndServicesByProjectUuidWithComponentsWithoutPurlTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var componentWithPurl = new Component();
+        componentWithPurl.setProject(project);
+        componentWithPurl.setName("acme-lib-a");
+        componentWithPurl.setVersion("2.0.0");
+        componentWithPurl.setPurl("pkg:pypi/acme-lib-a@2.0.0");
+        qm.persist(componentWithPurl);
+
+        final var componentWithoutPurl = new Component();
+        componentWithoutPurl.setProject(project);
+        componentWithoutPurl.setName("acme-lib-b");
+        componentWithoutPurl.setVersion("3.0.0");
+        qm.persist(componentWithoutPurl);
+
+        final var componentWithPurlRepoMeta = new RepositoryMetaComponent();
+        componentWithPurlRepoMeta.setRepositoryType(RepositoryType.PYPI);
+        componentWithPurlRepoMeta.setName("acme-lib-a");
+        componentWithPurlRepoMeta.setLatestVersion("2.0.2");
+        componentWithPurlRepoMeta.setPublished(new Date());
+        componentWithPurlRepoMeta.setLastCheck(new Date());
+        qm.persist(componentWithPurlRepoMeta);
+
+        project.setDirectDependencies("""
+                [
+                  {"uuid": "%s"},
+                  {"uuid": "%s"}
+                ]
+                """.formatted(componentWithPurl.getUuid(), componentWithoutPurl.getUuid()));
+        qm.persist(project);
+
+        final Response response = target("%s/project/%s/directDependencies".formatted(V1_DEPENDENCY_GRAPH, project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .withMatcher("componentWithPurlUuid", equalTo(componentWithPurl.getUuid().toString()))
+                .withMatcher("componentWithoutPurlUuid", equalTo(componentWithoutPurl.getUuid().toString()))
+                .isEqualTo("""
+                        [
+                          {
+                            "uuid": "${json-unit.matches:componentWithoutPurlUuid}",
+                            "name": "acme-lib-b",
+                            "version": "3.0.0"
+                          },
+                          {
+                            "uuid": "${json-unit.matches:componentWithPurlUuid}",
+                            "name": "acme-lib-a",
+                            "version":"2.0.0",
+                            "purl": "pkg:pypi/acme-lib-a@2.0.0",
+                            "latestVersion":"2.0.2"
+                          }
+                        ]
+                        """);
+    }
+
 }

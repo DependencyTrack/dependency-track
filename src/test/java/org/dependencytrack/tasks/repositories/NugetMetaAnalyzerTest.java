@@ -52,7 +52,7 @@ public class NugetMetaAnalyzerTest {
     @Test
     public void testAnalyzer() throws Exception {
         Component component = new Component();
-        component.setPurl(new PackageURL("pkg:nuget/NUnit@3.8.0"));
+        component.setPurl(new PackageURL("pkg:nuget/CycloneDX.Core@5.4.0"));
         NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
 
         analyzer.setRepositoryBaseUrl("https://api.nuget.org");

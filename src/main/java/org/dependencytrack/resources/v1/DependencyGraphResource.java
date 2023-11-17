@@ -172,13 +172,12 @@ public class DependencyGraphResource extends AlpineResource {
         // Set of unique repository meta components
         final HashSet<RepositoryQueryManager.RepositoryMetaComponentSearch> repoMetaComponentSearches = new HashSet<>(components.size());
 
-
         PackageURL purl = null;
         RepositoryType type = null;
-        RepositoryQueryManager.RepositoryMetaComponentSearch repositoryMetaComponentSearch = null;
 
         // Fetch all the latest versions for the components
         for (DependencyGraphResponse dependencyGraphResponse : components) {
+            RepositoryQueryManager.RepositoryMetaComponentSearch repositoryMetaComponentSearch = null;
 
             // Only components that got a purl can be searched for latest version
             if (dependencyGraphResponse.purl() != null) {

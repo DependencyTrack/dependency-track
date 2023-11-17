@@ -45,7 +45,6 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Finding;
@@ -78,6 +77,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -90,6 +90,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -649,7 +651,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public ViolationAnalysis makeViolationAnalysis(Component component, PolicyViolation policyViolation,
-                                 ViolationAnalysisState violationAnalysisState, Boolean isSuppressed) {
+                                                   ViolationAnalysisState violationAnalysisState, Boolean isSuppressed) {
         return getPolicyQueryManager().makeViolationAnalysis(component, policyViolation, violationAnalysisState, isSuppressed);
     }
 
@@ -769,20 +771,31 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftware);
     }
 
+    public List<AffectedVersionAttribution> getAffectedVersionAttributions(final Vulnerability vulnerability,
+                                                                           final List<VulnerableSoftware> vulnerableSoftwares) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftwares);
+    }
+
     public AffectedVersionAttribution getAffectedVersionAttribution(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware, Vulnerability.Source source) {
         return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
     public void updateAffectedVersionAttributions(final Vulnerability vulnerability,
-                                                                              final List<VulnerableSoftware> vsList,
-                                                                              final Vulnerability.Source source) {
+                                                  final List<VulnerableSoftware> vsList,
+                                                  final Vulnerability.Source source) {
         getVulnerabilityQueryManager().updateAffectedVersionAttributions(vulnerability, vsList, source);
     }
 
     public void updateAffectedVersionAttribution(final Vulnerability vulnerability,
-                                                                       final VulnerableSoftware vulnerableSoftware,
-                                                                       final Vulnerability.Source source) {
+                                                 final VulnerableSoftware vulnerableSoftware,
+                                                 final Vulnerability.Source source) {
         getVulnerabilityQueryManager().updateAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
+    }
+
+    public void deleteAffectedVersionAttributions(final Vulnerability vulnerability,
+                                                  final List<VulnerableSoftware> vulnerableSoftwares,
+                                                  final Vulnerability.Source source) {
+        getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability, vulnerableSoftwares, source);
     }
 
     public void deleteAffectedVersionAttribution(final Vulnerability vulnerability,
@@ -795,28 +808,14 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability);
     }
 
+    public boolean hasAffectedVersionAttribution(final Vulnerability vulnerability,
+                                                 final VulnerableSoftware vulnerableSoftware,
+                                                 final Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().hasAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
+    }
+
     public boolean contains(Vulnerability vulnerability, Component component) {
         return getVulnerabilityQueryManager().contains(vulnerability, component);
-    }
-
-    public Cpe synchronizeCpe(Cpe cpe, boolean commitIndex) {
-        return getVulnerableSoftwareQueryManager().synchronizeCpe(cpe, commitIndex);
-    }
-
-    public Cpe getCpeBy23(String cpe23) {
-        return getVulnerableSoftwareQueryManager().getCpeBy23(cpe23);
-    }
-
-    public PaginatedResult getCpes() {
-        return getVulnerableSoftwareQueryManager().getCpes();
-    }
-
-    public List<Cpe> getCpes(final String cpeString) {
-        return getVulnerableSoftwareQueryManager().getCpes(cpeString);
-    }
-
-    public List<Cpe> getCpes(final String part, final String vendor, final String product, final String version) {
-        return getVulnerableSoftwareQueryManager().getCpes(part, vendor, product, version);
     }
 
     public VulnerableSoftware getVulnerableSoftwareByCpe23(String cpe23,
@@ -834,8 +833,8 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public VulnerableSoftware getVulnerableSoftwareByPurl(String purlType, String purlNamespace, String purlName,
-                                                           String versionEndExcluding, String versionEndIncluding,
-                                                           String versionStartExcluding, String versionStartIncluding) {
+                                                          String versionEndExcluding, String versionEndIncluding,
+                                                          String versionStartExcluding, String versionStartIncluding) {
         return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
     }
 
@@ -845,10 +844,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<VulnerableSoftware> getAllVulnerableSoftwareByPurl(final PackageURL purl) {
         return getVulnerableSoftwareQueryManager().getAllVulnerableSoftwareByPurl(purl);
-    }
-
-    public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final String cpeVersion, final PackageURL purl) {
-        return getVulnerableSoftwareQueryManager().getAllVulnerableSoftware(cpePart, cpeVendor, cpeProduct, cpeVersion, purl);
     }
 
     public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final PackageURL purl) {
@@ -1125,12 +1120,12 @@ public class QueryManager extends AlpineQueryManager {
         return getRepositoryQueryManager().repositoryExist(type, identifier);
     }
 
-    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal) {
-        return getRepositoryQueryManager().createRepository(type, identifier, url, enabled, internal);
+    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal, boolean isAuthenticationRequired, String username, String password) {
+        return getRepositoryQueryManager().createRepository(type, identifier, url, enabled, internal, isAuthenticationRequired, username, password);
     }
 
-    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, String username, String password, boolean enabled) {
-        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, username, password, enabled);
+    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean authenticationRequired, String username, String password, boolean enabled) {
+        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, authenticationRequired, username, password, enabled);
     }
 
     public RepositoryMetaComponent getRepositoryMetaComponent(RepositoryType repositoryType, String namespace, String name) {
@@ -1351,16 +1346,17 @@ public class QueryManager extends AlpineQueryManager {
      * @since 4.6.0
      */
     public void runInTransaction(final Runnable runnable) {
-        final Transaction trx = pm.currentTransaction();
-        try {
-            trx.begin();
+        runInTransaction((Function<Transaction, Void>) trx -> {
             runnable.run();
-            trx.commit();
-        } finally {
-            if (trx.isActive()) {
-                trx.rollback();
-            }
-        }
+            return null;
+        });
+    }
+
+    public void runInTransaction(final Consumer<Transaction> consumer) {
+        runInTransaction((Function<Transaction, Void>) trx -> {
+            consumer.accept(trx);
+            return null;
+        });
     }
 
     /**
@@ -1372,14 +1368,23 @@ public class QueryManager extends AlpineQueryManager {
      * @since 4.9.0
      */
     public <T> T runInTransaction(final Supplier<T> supplier) {
+        return runInTransaction((Function<Transaction, T>) trx -> supplier.get());
+    }
+
+    public <T> T runInTransaction(final Function<Transaction, T> function) {
         final Transaction trx = pm.currentTransaction();
+        final boolean isJoiningExisting = trx.isActive();
         try {
-            trx.begin();
-            final T result = supplier.get();
-            trx.commit();
+            if (!isJoiningExisting) {
+                trx.begin();
+            }
+            final T result = function.apply(trx);
+            if (!isJoiningExisting) {
+                trx.commit();
+            }
             return result;
         } finally {
-            if (trx.isActive()) {
+            if (!isJoiningExisting && trx.isActive()) {
                 trx.rollback();
             }
         }

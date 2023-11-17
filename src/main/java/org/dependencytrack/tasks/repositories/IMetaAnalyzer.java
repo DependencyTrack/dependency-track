@@ -125,6 +125,11 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
+            } else if (PackageURL.StandardTypes.GITHUB.equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new GithubMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
             }
         }
 

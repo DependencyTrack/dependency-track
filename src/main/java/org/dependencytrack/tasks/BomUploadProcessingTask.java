@@ -34,6 +34,8 @@ import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.OrganizationalEntity;
+import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.NotificationConstants;
@@ -120,6 +122,29 @@ public class BomUploadProcessingTask implements Subscriber {
                         serialNumnber = (cycloneDxBom.getSerialNumber() != null) ? cycloneDxBom.getSerialNumber().replaceFirst("urn:uuid:", "") : null;
                         components = ModelConverter.convertComponents(qm, cycloneDxBom, project);
                         services = ModelConverter.convertServices(qm, cycloneDxBom, project);
+                        /**Issue #2373, #2737 */
+                        if (cycloneDxBom.getMetadata() != null) {
+                            if (cycloneDxBom.getMetadata().getManufacture() != null) {
+                                OrganizationalEntity manufacturer = new OrganizationalEntity();
+                                manufacturer.setName(cycloneDxBom.getMetadata().getManufacture().getName());
+                                manufacturer.setUrls(cycloneDxBom.getMetadata().getManufacture().getUrls().toArray(new String[0]));
+                                if (cycloneDxBom.getMetadata().getManufacture().getContacts() != null){
+                                    List<OrganizationalContact> contacts = new ArrayList<>();
+                                    for (org.cyclonedx.model.OrganizationalContact organizationalContact: cycloneDxBom.getMetadata().getManufacture().getContacts()) {
+                                        OrganizationalContact contact = new OrganizationalContact();
+                                        contact.setName(organizationalContact.getName());
+                                        contact.setEmail(organizationalContact.getEmail());
+                                        contact.setPhone(organizationalContact.getPhone());
+                                        contacts.add(contact);
+                                    }
+                                    manufacturer.setContacts(contacts);
+                                } else {
+                                    manufacturer.setContacts(null);
+                                }
+                                project.setManufacturer(manufacturer);
+                            } 
+                        } /**Issue #2373, #2737 */
+
                     } else {
                         LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");
                         return;

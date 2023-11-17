@@ -72,6 +72,7 @@ import java.util.UUID;
                 @Persistent(name = "name"),
                 @Persistent(name = "author"),
                 @Persistent(name = "publisher"),
+                @Persistent(name = "supplier"),
                 @Persistent(name = "group"),
                 @Persistent(name = "name"),
                 @Persistent(name = "description"),
@@ -128,6 +129,18 @@ public class Project implements Serializable {
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
     private String publisher;
+
+    @Persistent /**Issue #2373, #2737 */
+    @Column(name = "SUPPLIER", allowsNull = "true")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The supplier may only contain printable characters")
+    private OrganizationalEntity supplier;
+
+    @Persistent /**Issue #2373, #2737 */
+    @Column(name = "MANUFACTURE", allowsNull = "true")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The manufacturer may only contain printable characters")
+    private OrganizationalEntity manufacture;
 
     @Persistent
     @Column(name = "GROUP", jdbcType = "VARCHAR")
@@ -284,6 +297,23 @@ public class Project implements Serializable {
     public void setPublisher(String publisher) {
         this.publisher = publisher;
     }
+
+    public OrganizationalEntity getSupplier() {
+        return supplier;
+    }
+
+    public void setSupplier(OrganizationalEntity supplier) {
+        this.supplier = supplier;
+    }
+
+    public OrganizationalEntity getManufacturer() { /**Issue #2373, #2737 */
+        return manufacture;
+    }
+
+    public void setManufacturer(OrganizationalEntity manufacture) {/**Issue #2373, #2737 */
+        this.manufacture = manufacture;
+    }
+
 
     public String getGroup() {
         return group;

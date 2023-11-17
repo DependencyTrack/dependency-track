@@ -280,7 +280,7 @@
 		  },
 		  "action_id": "actionId-3",
 		  "url": "{{ baseUrl }}/vulnerabilities/{{ subject.vulnerability.source | escape(strategy="json") }}/{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
-		},
+		}
 	  ]
 	}
   ]
@@ -410,7 +410,7 @@
 	  "text": {
 	    "text": "{{ notification.title | escape(strategy="json") }}",
 		"type": "plain_text"
-	  },
+	  }
 	},
 	{
 	  "type": "section",

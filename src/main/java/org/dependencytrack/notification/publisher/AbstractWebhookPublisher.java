@@ -34,17 +34,17 @@ import javax.json.JsonObject;
 import java.io.IOException;
 
 public abstract class AbstractWebhookPublisher implements Publisher {
-    public void publish(final String publisherName, final PebbleTemplate template, final Notification notification, final JsonObject config) {
+    public void publish(final PublishContext ctx, final String publisherName, final PebbleTemplate template, final Notification notification, final JsonObject config) {
         final Logger logger = LoggerFactory.getLogger(getClass());
         logger.debug("Preparing to publish " + publisherName + " notification");
         if (config == null) {
-            logger.warn("No configuration found. Skipping notification.");
+            logger.warn("No configuration found. Skipping notification. (%s)".formatted(ctx));
             return;
         }
         final String destination = getDestinationUrl(config);
-        final String content = prepareTemplate(notification, template);
+        final String content = prepareTemplate(ctx, notification, template);
         if (destination == null || content == null) {
-            logger.warn("A destination or template was not found. Skipping notification");
+            logger.warn("A destination or template was not found. Skipping notification (%s)".formatted(ctx));
             return;
         }
         final String mimeType = getTemplateMimeType(config);
@@ -55,7 +55,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
         try {
             credentials = getAuthCredentials();
         } catch (PublisherException e) {
-            logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification", e);
+            logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification (%s)".formatted(ctx), e);
             return;
         }
         if (credentials != null) {
@@ -77,7 +77,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
                 }
             }
         } catch (IOException ex) {
-            handleRequestException(logger, ex);
+            handleRequestException(ctx, logger, ex);
         }
     }
 
@@ -93,7 +93,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
     protected record AuthCredentials(String user, String password) {
     }
 
-    protected void handleRequestException(final Logger logger, final Exception e) {
-        logger.error("Request failure", e);
+    protected void handleRequestException(final PublishContext ctx, final Logger logger, final Exception e) {
+        logger.error("Request failure (%s)".formatted(ctx), e);
     }
 }

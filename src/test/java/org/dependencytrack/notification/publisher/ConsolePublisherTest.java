@@ -60,7 +60,7 @@ public class ConsolePublisherTest extends PersistenceCapableTest implements Noti
         notification.setTitle("Test Notification");
         notification.setContent("This is only a test");
         ConsolePublisher publisher = new ConsolePublisher();
-        publisher.inform(notification, getConfig(DefaultNotificationPublishers.CONSOLE, ""));
+        publisher.inform(PublishContext.from(notification), notification, getConfig(DefaultNotificationPublishers.CONSOLE, ""));
         Assert.assertTrue(outContent.toString().contains(expectedResult(notification)));
     }
 
@@ -73,7 +73,7 @@ public class ConsolePublisherTest extends PersistenceCapableTest implements Noti
         notification.setTitle("Test Notification");
         notification.setContent("This is only a test");
         ConsolePublisher publisher = new ConsolePublisher();
-        publisher.inform(notification, getConfig(DefaultNotificationPublishers.CONSOLE, ""));
+        publisher.inform(PublishContext.from(notification), notification, getConfig(DefaultNotificationPublishers.CONSOLE, ""));
         Assert.assertTrue(errContent.toString().contains(expectedResult(notification)));
     }
 

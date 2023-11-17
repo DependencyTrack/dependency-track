@@ -54,7 +54,7 @@ public interface Publisher {
 
     String CONFIG_DESTINATION = "destination";
 
-    void inform(Notification notification, JsonObject config);
+    void inform(final PublishContext ctx, final Notification notification, final JsonObject config);
 
     PebbleEngine getTemplateEngine();
 
@@ -78,7 +78,7 @@ public interface Publisher {
     default void enrichTemplateContext(final Map<String, Object> context) {
     }
 
-    default String prepareTemplate(final Notification notification, final PebbleTemplate template) {
+    default String prepareTemplate(final PublishContext ctx, final Notification notification, final PebbleTemplate template) {
 
         try (QueryManager qm = new QueryManager()) {
             final ConfigProperty baseUrlProperty = qm.getConfigProperty(
@@ -133,7 +133,7 @@ public interface Publisher {
                 template.evaluate(writer, context);
                 return writer.toString();
             } catch (IOException e) {
-                Logger.getLogger(this.getClass()).error("An error was encountered evaluating template", e);
+                Logger.getLogger(this.getClass()).error("An error was encountered evaluating template (%s)".formatted(ctx), e);
                 return null;
             }
         }

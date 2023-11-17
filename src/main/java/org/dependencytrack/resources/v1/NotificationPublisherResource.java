@@ -24,13 +24,11 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.Api;
-
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -39,6 +37,7 @@ import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.persistence.QueryManager;
@@ -47,8 +46,6 @@ import org.dependencytrack.util.NotificationUtil;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.validation.Validator;
-
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
@@ -58,7 +55,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -295,7 +291,7 @@ public class NotificationPublisherResource extends AlpineResource {
                     .content("SMTP configuration test")
                     .level(NotificationLevel.INFORMATIONAL);
             // Bypass Notification.dispatch() and go directly to the publisher itself
-            emailPublisher.inform(notification, config);
+            emailPublisher.inform(PublishContext.from(notification), notification, config);
             return Response.ok().build();
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
             LOGGER.error(e.getMessage(), e);

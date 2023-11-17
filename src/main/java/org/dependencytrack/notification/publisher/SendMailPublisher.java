@@ -56,30 +56,30 @@ public class SendMailPublisher implements Publisher {
     private static final Logger LOGGER = Logger.getLogger(SendMailPublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
 
-    public void inform(final Notification notification, final JsonObject config) {
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
         if (config == null) {
-            LOGGER.warn("No configuration found. Skipping notification.");
+            LOGGER.warn("No configuration found. Skipping notification. (%s)".formatted(ctx));
             return;
         }
         final String[] destinations = parseDestination(config);
-        sendNotification(notification, config, destinations);
+        sendNotification(ctx, notification, config, destinations);
     }
 
-    public void inform(final Notification notification, final JsonObject config, List<Team> teams) {
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config, List<Team> teams) {
         if (config == null) {
-            LOGGER.warn("No configuration found. Skipping notification.");
+            LOGGER.warn("No configuration found. Skipping notification. (%s)".formatted(ctx));
             return;
         }
         final String[] destinations = parseDestination(config, teams);
-        sendNotification(notification, config, destinations);
+        sendNotification(ctx, notification, config, destinations);
     }
 
-    private void sendNotification(Notification notification, JsonObject config, String[] destinations) {
+    private void sendNotification(final PublishContext ctx, Notification notification, JsonObject config, String[] destinations) {
         PebbleTemplate template = getTemplate(config);
         String mimeType = getTemplateMimeType(config);
-        final String content = prepareTemplate(notification, template);
+        final String content = prepareTemplate(ctx, notification, template);
         if (destinations == null || content == null) {
-            LOGGER.warn("A destination or template was not found. Skipping notification");
+            LOGGER.warn("A destination or template was not found. Skipping notification (%s)".formatted(ctx));
             return;
         }
         try (QueryManager qm = new QueryManager()) {
@@ -113,7 +113,7 @@ public class SendMailPublisher implements Publisher {
                     .trustCert(Boolean.valueOf(smtpTrustCert.getPropertyValue()));
             sendMail.send();
         } catch (Exception e) {
-            LOGGER.error("An error occurred sending output email notification", e);
+            LOGGER.error("An error occurred sending output email notification (%s)".formatted(ctx), e);
         }
   }
 

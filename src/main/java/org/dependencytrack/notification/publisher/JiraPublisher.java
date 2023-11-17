@@ -46,10 +46,10 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
     private String jiraTicketType;
 
     @Override
-    public void inform(final Notification notification, final JsonObject config) {
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
         jiraTicketType = config.getString("jiraTicketType");
         jiraProjectKey = config.getString(CONFIG_DESTINATION);
-        publish(DefaultNotificationPublishers.JIRA.getPublisherName(), getTemplate(config), notification, config);
+        publish(ctx, DefaultNotificationPublishers.JIRA.getPublisherName(), getTemplate(config), notification, config);
     }
 
     @Override

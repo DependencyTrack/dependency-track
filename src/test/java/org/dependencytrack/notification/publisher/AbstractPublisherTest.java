@@ -76,7 +76,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
     @Test
@@ -93,7 +93,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3197
@@ -110,7 +110,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
     @Test
@@ -124,7 +124,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC));
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
     @Test
@@ -146,7 +146,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
     @Test
@@ -168,7 +168,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
     private static Component createComponent(final Project project) {

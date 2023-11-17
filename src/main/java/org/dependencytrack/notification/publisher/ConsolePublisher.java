@@ -31,10 +31,10 @@ public class ConsolePublisher implements Publisher {
     private static final Logger LOGGER = Logger.getLogger(ConsolePublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
 
-    public void inform(final Notification notification, final JsonObject config) {
-        final String content = prepareTemplate(notification, getTemplate(config));
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
+        final String content = prepareTemplate(ctx, notification, getTemplate(config));
         if (content == null) {
-            LOGGER.warn("A template was not found. Skipping notification");
+            LOGGER.warn("A template was not found. Skipping notification (%s)".formatted(ctx));
             return;
         }
         final PrintStream ps;

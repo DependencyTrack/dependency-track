@@ -30,6 +30,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vex;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
+import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
@@ -697,7 +698,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void inform(Notification notification, JsonObject config) {
+        public void inform(final PublishContext ctx, Notification notification, JsonObject config) {
             MockPublisher.config = config;
             MockPublisher.notification = notification;
         }

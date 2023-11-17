@@ -72,6 +72,6 @@ public class CsWebexPublisherTest extends PersistenceCapableTest implements Noti
         notification.setTitle("Test Notification");
         notification.setContent("This is only a test");
         CsWebexPublisher publisher = new CsWebexPublisher();
-        publisher.inform(notification, config);
+        publisher.inform(PublishContext.from(notification), notification, config);
     }
 }

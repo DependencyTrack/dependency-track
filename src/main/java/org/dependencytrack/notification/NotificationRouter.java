@@ -26,6 +26,7 @@ import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
@@ -56,7 +57,10 @@ public class NotificationRouter implements Subscriber {
     private static final Logger LOGGER = Logger.getLogger(NotificationRouter.class);
 
     public void inform(final Notification notification) {
+        final PublishContext ctx = PublishContext.from(notification);
+
         for (final NotificationRule rule: resolveRules(notification)) {
+            final PublishContext ruleCtx = ctx.withRule(rule);
 
             // Not all publishers need configuration (i.e. ConsolePublisher)
             JsonObject config = Json.createObjectBuilder().build();
@@ -65,7 +69,7 @@ public class NotificationRouter implements Subscriber {
                      final JsonReader jsonReader = Json.createReader(stringReader)) {
                     config = jsonReader.readObject();
                 } catch (Exception e) {
-                    LOGGER.error("An error occurred while preparing the configuration for the notification publisher", e);
+                    LOGGER.error("An error occurred while preparing the configuration for the notification publisher (%s)".formatted(ruleCtx), e);
                 }
             }
             try {
@@ -79,19 +83,19 @@ public class NotificationRouter implements Subscriber {
                                                                  .addAll(Json.createObjectBuilder(config))
                                                                          .build();
                     if (publisherClass != SendMailPublisher.class || rule.getTeams().isEmpty() || rule.getTeams() == null){
-                        publisher.inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig);
+                        publisher.inform(ruleCtx, restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig);
                     } else {
-                        ((SendMailPublisher)publisher).inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig, rule.getTeams());
+                        ((SendMailPublisher)publisher).inform(ruleCtx, restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig, rule.getTeams());
                     }
 
 
                 } else {
-                    LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName());
+                    LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName() + " (%s)".formatted(ruleCtx));
                 }
             } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException e) {
-                LOGGER.error("An error occurred while instantiating a notification publisher", e);
+                LOGGER.error("An error occurred while instantiating a notification publisher (%s)".formatted(ruleCtx), e);
             } catch (PublisherException publisherException) {
-                LOGGER.error("An error occured during the publication of the notification", publisherException);
+                LOGGER.error("An error occured during the publication of the notification (%s)".formatted(ruleCtx), publisherException);
             }
         }
     }

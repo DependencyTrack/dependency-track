@@ -25,7 +25,6 @@ import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.h2.util.StringUtils;
-import us.springett.parsers.cpe.values.LogicalValue;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -211,8 +210,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
             // Evaluating wildcards in the source can only be done in-memory. If we wanted to do that,
             // we'd have to fetch *all* records, which is not practical.
 
-            if (!LogicalValue.ANY.getAbbreviation().equals(cpePart)
-                    && !LogicalValue.NA.getAbbreviation().equals(cpePart)) {
+            if (!"*".equals(cpePart) && !"-".equals(cpePart)) {
                 // | No. | Source A-V      | Target A-V | Relation             |
                 // | :-- | :-------------- | :--------- | :------------------- |
                 // | 3   | ANY             | i          | SUPERSET             |
@@ -235,7 +233,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                 // | 8   | NA              | m + wild cards  | undefined  |
                 // | 11  | i               | m + wild cards  | undefined  |
                 // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
-            } else if (LogicalValue.NA.getAbbreviation().equals(cpePart)) {
+            } else if ("-".equals(cpePart)) {
                 // | No. | Source A-V     | Target A-V | Relation |
                 // | :-- | :------------- | :--------- | :------- |
                 // | 2   | ANY            | NA         | SUPERSET |
@@ -248,32 +246,30 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                 // | :-- | :------------- | :--------- | :------- |
                 // | 1   | ANY            | ANY        | EQUAL    |
                 // | 5   | NA             | ANY        | SUBSET   |
-                // | 13  | i              | ANY        | SUPERSET |
-                // | 15  | m + wild cards | ANY        | SUPERSET |
+                // | 13  | i              | ANY        | SUBSET   |
+                // | 15  | m + wild cards | ANY        | SUBSET   |
                 cpeQueryFilterParts.add("part != null");
             }
 
-            if (!LogicalValue.ANY.getAbbreviation().equals(cpeVendor)
-                    && !LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
+            if (!"*".equals(cpeVendor) && !"-".equals(cpeVendor)) {
                 // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
                 //   Can't currently do this as it would require an index on UPPER("VENDOR"),
                 //   which we cannot add through JDO annotations.
                 cpeQueryFilterParts.add("(vendor == '*' || vendor == :vendor)");
                 queryParams.put("vendor", cpeVendor);
-            } else if (LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
+            } else if ("-".equals(cpeVendor)) {
                 cpeQueryFilterParts.add("(vendor == '*' || vendor == '-')");
             } else {
                 cpeQueryFilterParts.add("vendor != null");
             }
 
-            if (!LogicalValue.ANY.getAbbreviation().equals(cpeProduct)
-                    && !LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
+            if (!"*".equals(cpeProduct) && !"-".equals(cpeProduct)) {
                 // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
                 //   Can't currently do this as it would require an index on UPPER("PRODUCT"),
                 //   which we cannot add through JDO annotations.
                 cpeQueryFilterParts.add("(product == '*' || product == :product)");
                 queryParams.put("product", cpeProduct);
-            } else if (LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
+            } else if ("-".equals(cpeProduct)) {
                 cpeQueryFilterParts.add("(product == '*' || product == '-')");
             } else {
                 cpeQueryFilterParts.add("product != null");

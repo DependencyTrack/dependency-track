@@ -33,6 +33,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Context information about a {@link Notification} being published.
@@ -63,7 +65,11 @@ public record PublishContext(String notificationGroup, String notificationLevel,
             notificationSubjects.put(SUBJECT_PROJECT, Project.convert(subject.getProject()));
         } else if (notification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
             notificationSubjects.put(SUBJECT_COMPONENT, Component.convert(subject.getComponent()));
-            notificationSubjects.put(SUBJECT_PROJECTS, subject.getAffectedProjects().stream().map(Project::convert).toList());
+            if (subject.getAffectedProjects() != null) {
+                notificationSubjects.put(SUBJECT_PROJECTS, subject.getAffectedProjects().stream().map(Project::convert).toList());
+            } else {
+                notificationSubjects.put(SUBJECT_PROJECTS, null);
+            }
         } else if (notification.getSubject() instanceof final NewVulnerableDependency subject) {
             notificationSubjects.put(SUBJECT_COMPONENT, Component.convert(subject.getComponent()));
             notificationSubjects.put(SUBJECT_PROJECT, Project.convert(subject.getComponent().getProject()));
@@ -105,7 +111,7 @@ public record PublishContext(String notificationGroup, String notificationLevel,
                 return null;
             }
             return new Component(
-                    notificationComponent.getUuid().toString(),
+                    Optional.ofNullable(notificationComponent.getUuid()).map(UUID::toString).orElse(null),
                     notificationComponent.getGroup(),
                     notificationComponent.getName(),
                     notificationComponent.getVersion()
@@ -121,7 +127,7 @@ public record PublishContext(String notificationGroup, String notificationLevel,
                 return null;
             }
             return new Project(
-                    notificationProject.getUuid().toString(),
+                    Optional.ofNullable(notificationProject.getUuid()).map(UUID::toString).orElse(null),
                     notificationProject.getName(),
                     notificationProject.getVersion()
             );

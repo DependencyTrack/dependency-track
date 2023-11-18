@@ -241,14 +241,14 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:*:nginx:*:*:*:*:*:*:*:*"},
                 {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", withRange().havingEndExcluding("1.21.0"), MATCHES, "cpe:2.3:*:*:nginx:*:*:*:*:*:*:*:*"},
                 // Scenario:  Same as above, but "version" of target is i, which evaluates to SUPERSET for the "version" attribute
-                //            As per matching spec, SUBSET and SUPERSET can not appear in the same comparison across all attributes
+                //            The minimum requirements do not take this case into account; We treat is as a no-match for now
                 // Table No.: 3, 13
                 {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:*:*:nginx:1.20.1:*:*:*:*:*:*:*"},
                 {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", withRange().havingEndExcluding("1.21.0"), DOES_NOT_MATCH, "cpe:2.3:*:*:nginx:1.20.1:*:*:*:*:*:*:*"},
                 // ---
                 // Issue:     https://github.com/DependencyTrack/dependency-track/issues/3178#issuecomment-1812809295
                 // Scenario:  "vendor" of source is i, "product" of source is ANY, "vendor" of target is ANY, "product" of target is i
-                //            As SUBSET and SUPERSET are mixed, this is not a match according to the spec
+                //            As SUBSET and SUPERSET are mixed, this is not covered by the minimum requirements of the spec, and currently treated as a no-match
                 // Table No.: 3, 13
                 {"cpe:2.3:a:pascom_cloud_phone_system:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:*:util-linux-setarch:2.37.4:*:*:*:*:*:*:*"}
         });

@@ -23,6 +23,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.util.HttpUtil;
 import org.slf4j.Logger;
@@ -82,11 +83,15 @@ public abstract class AbstractWebhookPublisher implements Publisher {
             try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                 final int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode < 200 || statusCode >= 300) {
-                    logger.warn("Destination %s responded with with status code %d, likely indicating a processing failure (%s)"
-                            .formatted(maybeSanitizeDestinationUrl(destination), statusCode, ctx));
-                } else if (ctx.logSuccess()) {
-                    logger.info("Destination %s acknowledged reception of notification with status code %d (%s)"
-                            .formatted(maybeSanitizeDestinationUrl(destination), statusCode, ctx));
+                    logger.warn("Destination responded with with status code %d, likely indicating a processing failure (%s)"
+                            .formatted(statusCode, ctx));
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Response headers: %s".formatted((Object[]) response.getAllHeaders()));
+                        logger.debug("Response body: %s".formatted(EntityUtils.toString(response.getEntity())));
+                    }
+                } else if (ctx.shouldLogSuccess()) {
+                    logger.info("Destination acknowledged reception of notification with status code %d (%s)"
+                            .formatted(statusCode, ctx));
                 }
             }
         } catch (IOException ex) {
@@ -96,17 +101,6 @@ public abstract class AbstractWebhookPublisher implements Publisher {
 
     protected String getDestinationUrl(final JsonObject config) {
         return config.getString(CONFIG_DESTINATION, null);
-    }
-
-    /**
-     * Sanitize the destination URL from any secrets that are not supposed to be logged.
-     *
-     * @param destinationUrl The destination URL to sanitize
-     * @return The sanitized destination URL
-     * @since 4.10.0
-     */
-    protected String maybeSanitizeDestinationUrl(final String destinationUrl) {
-        return destinationUrl;
     }
 
     protected AuthCredentials getAuthCredentials() {

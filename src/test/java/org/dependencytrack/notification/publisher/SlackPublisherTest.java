@@ -18,17 +18,11 @@
  */
 package org.dependencytrack.notification.publisher;
 
-import alpine.server.cache.AbstractCacheManager;
-import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublisher> {
 
@@ -455,16 +449,6 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                           ]
                         }
                         """)));
-    }
-
-    @Test
-    public void testMaybeSanitizeDestinationUrl() {
-        final var cacheManager = new AbstractCacheManager(5, TimeUnit.SECONDS, 1) {
-        };
-        cacheManager.put("1", "2"); // Ensure String cache exists
-
-        assertThat(new SlackPublisher(cacheManager).maybeSanitizeDestinationUrl("https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"))
-                .isEqualTo("https://hooks.slack.com/services/T00000000/B00000000/********************XXXX");
     }
 
 }

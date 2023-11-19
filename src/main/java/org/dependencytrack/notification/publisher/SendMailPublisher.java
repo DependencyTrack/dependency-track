@@ -153,7 +153,7 @@ public class SendMailPublisher implements Publisher {
             return;
         }
 
-        if (ctx.logSuccess()) {
+        if (ctx.shouldLogSuccess()) {
             LOGGER.info("Notification email sent successfully via %s:%d (%s)"
                     .formatted(smtpHostname, smtpPort, ctx));
         }

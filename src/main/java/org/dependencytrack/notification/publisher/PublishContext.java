@@ -48,6 +48,7 @@ import java.util.UUID;
  * @param ruleName              Name of the matched {@link NotificationRule}
  * @param ruleScope             Scope of the matched {@link NotificationRule}
  * @param ruleLevel             Level of the matched {@link NotificationRule}
+ * @param logSuccess            Whether the publisher shall emit a log message upon successful publishing
  * @since 4.10.0
  */
 public record PublishContext(String notificationGroup, String notificationLevel, String notificationScope,
@@ -107,6 +108,10 @@ public record PublishContext(String notificationGroup, String notificationLevel,
     public PublishContext withRule(final NotificationRule rule) {
         return new PublishContext(this.notificationGroup, this.notificationLevel, this.notificationScope, this.notificationTimestamp,
                 this.notificationSubjects, rule.getName(), rule.getScope().name(), rule.getNotificationLevel().name(), rule.isLogSuccessfulPublish());
+    }
+
+    public boolean shouldLogSuccess() {
+        return logSuccess != null && logSuccess;
     }
 
     @Override

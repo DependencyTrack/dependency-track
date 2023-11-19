@@ -43,131 +43,269 @@ import static org.dependencytrack.tasks.scanners.InternalAnalysisTaskCpeMatching
 @RunWith(Parameterized.class)
 public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest {
 
-    @Parameters(name = "{index} source={0}, target={2}, expectMatch={1}")
+    @Parameters(name = "{index} source={0}, target={3}, range={1}, expectMatch={2}")
     public static Collection<Object[]> parameters() {
         return Arrays.asList(new Object[][]{
                 // | No. | Source A-V | Target A-V | Relation |
                 // | :-- | :--------- | :--------- | :------- |
                 // | 1   | ANY        | ANY        | EQUAL    |
-                {"cpe:2.3:*:*:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:*:*:*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:*:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:*:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:*:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:*:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:*:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:*:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:*:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:*:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:*"},
                 // | No. | Source A-V | Target A-V | Relation |
                 // | :-- | :--------- | :--------- | :------- |
                 // | 2   | ANY        | NA         | SUPERSET |
-                {"cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*"},
+                {"cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:-:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:*:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:-:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:*:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:-:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:*:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:-:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:*:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:-:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:-"},
                 // | No. | Source A-V | Target A-V | Relation |
                 // | :-- | :--------- | :--------- | :------- |
                 // | 3   | ANY        | i          | SUPERSET |
-                {"cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:*:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:*:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:*:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:*:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
                 // | No. | Source A-V | Target A-V     | Relation   |
                 // | :-- | :--------- | :------------- | :--------- |
                 // | 4   | ANY        | m + wild cards | undefined  |
                 // {"cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*", MATCHES, "cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*"},
                 //   cpe-parser library does not allow wildcards for the part attribute.
-                {"cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:ven*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.*:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:upd*:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edi*:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:*:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:la*:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:*:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdi*:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:*:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:tar*:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:*:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:tar*:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:oth*"},
                 // | No. | Source A-V | Target A-V | Relation |
                 // | :-- | :--------- | :--------- | :------- |
                 // | 5   | NA         | ANY        | SUBSET   |
-                {"cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:-:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:-:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:*:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:-:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:*:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:-:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:*:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:-:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:*:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:-", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:*"},
                 // | No. | Source A-V | Target A-V | Relation |
                 // | :-- | :--------- | :--------- | :------- |
                 // | 6   | NA         | NA         | EQUAL    |
-                {"cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*"},
+                {"cpe:2.3:-:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:-:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:-:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:-:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:-:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:-:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:-:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:-:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:-:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:-:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:-", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:-"},
                 // | No. | Source A-V | Target A-V | Relation |
                 // | :-- | :--------- | :--------- | :------- |
                 // | 7   | NA         | i          | DISJOINT |
-                {"cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:-:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:-:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:-:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:-:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:-:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:-", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
                 // | No. | Source A-V | Target A-V      | Relation   |
                 // | :-- | :--------- | :-------------- | :--------- |
                 // | 8   | NA         | m + wild cards  | undefined  |
                 // {"cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*"},
                 //   cpe-parser library does not allow wildcards for the part attribute.
-                {"cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:ven*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.*:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:upd*:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edi*:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:-:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:la*:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:-:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdi*:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:-:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:tar*:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:-:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:tar*:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:-", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:oth*"},
                 // | No. | Source A-V | Target A-V | Relation |
                 // | :-- | :--------- | :--------- | :------- |
                 // | 9   | i          | i          | EQUAL    |
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
                 // | No. | Source A-V | Target A-V | Relation |
                 // | :-- | :--------- | :--------- | :------- |
                 // | 10  | i          | k          | DISJOINT |
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:o:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:rodnev:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:tcudorp:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.1.1:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:o:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:rodnev:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:tcudorp:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:0.0.1:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:etadpu:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:noitide:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:gnal:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:noitidEws:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:wStegrat:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:wHtegrat:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:rehto"},
                 // | No. | Source A-V | Target A-V      | Relation   |
                 // | :-- | :--------- | :-------------- | :--------- |
                 // | 11  | i          | m + wild cards  | undefined  |
                 // {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*"},
                 //   cpe-parser library does not allow wildcards for the part attribute.
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:ven*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.*:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:upd*:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edi*:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:la*:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdi*:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:tar*:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:tar*:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:oth*"},
                 // | No. | Source A-V | Target A-V | Relation |
                 // | :-- | :--------- | :--------- | :------- |
                 // | 12  | i          | NA         | DISJOINT |
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:-:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:-:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:-:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:-:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:-:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:-"},
                 // | No. | Source A-V     | Target A-V | Relation |
                 // | :-- | :------------- | :--------- | :------- |
                 // | 13  | i              | ANY        | SUPERSET |
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:*:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:*:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:*:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:*:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:*"},
                 // | No. | Source A-V      | Target A-V | Relation             |
                 // | :-- | :-------------- | :--------- | :------------------- |
                 // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
                 // {"cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
                 //   cpe-parser library does not allow wildcards for the part attribute.
-                {"cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:ven:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:ven*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
                 //   wildcard expansion in source vendor is currently not supported; *should* be SUPERSET.
-                {"cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:pro:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
                 //   wildcard expansion in source product is currently not supported; *should* be SUPERSET.
-                {"cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:1.*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:upd*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edi*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:la*:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdi*:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:tar*:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:tar*:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:oth*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
                 // | No. | Source A-V     | Target A-V | Relation |
                 // | :-- | :------------- | :--------- | :------- |
                 // | 15  | m + wild cards | ANY        | SUPERSET |
                 // {"cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*"},
                 //   cpe-parser library does not allow wildcards for the part attribute.
-                {"cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:ven*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:upd*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edi*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:la*:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:*:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdi*:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:*:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:tar*:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:*:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:tar*:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:*:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:oth*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:*"},
                 // | No. | Source A-V     | Target A-V | Relation |
                 // | :-- | :------------- | :--------- | :------- |
                 // | 16  | m + wild cards | NA         | DISJOINT |
                 // {"cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:-:vendor:product:1.0.0:*:*:*:*:*:*:*"},
                 //   cpe-parser library does not allow wildcards for the part attribute.
-                {"cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:-:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:-:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:-:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:ven*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:upd*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edi*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:la*:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:-:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdi*:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:-:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:tar*:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:-:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:tar*:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:-:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:oth*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:-"},
                 // | No. | Source A-V      | Target A-V      | Relation   |
                 // | :-- | :-------------- | :-------------- | :--------- |
                 // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
                 // {"cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*"},
                 //   cpe-parser library does not allow wildcards for the part attribute.
-                {"cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:ven*:product:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:pro*:1.0.0:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.*:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:ven*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:ven*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.*:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:upd*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:upd*:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edi*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edi*:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:la*:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:la*:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdi*:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdi*:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:tar*:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:tar*:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:tar*:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:tar*:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:oth*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:oth*"},
+                {"cpe:2.3:a:ven*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:v*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:p*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1*:update:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:upd*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:u*:edition:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edi*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:e*:lang:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:la*:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:l*:swEdition:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdi*:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:s*:targetSw:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:tar*:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:t*:targetHw:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:tar*:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:t*:other"},
+                {"cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:oth*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:o*"},
+                // ---
+                // Version range evaluation
+                // ---
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", withRange().havingStartIncluding("1.0.0"), MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", withRange().havingStartExcluding("1.0.0"), DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", withRange().havingStartIncluding("0.9.9"), MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", withRange().havingStartExcluding("0.9.9"), MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other", withRange().havingStartIncluding("1.0.0"), DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", withRange().havingEndIncluding("1.0.0"), MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", withRange().havingEndExcluding("1.0.0"), DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", withRange().havingEndIncluding("1.0.1"), MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", withRange().havingEndExcluding("1.0.1"), MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other", withRange().havingEndIncluding("1.0.0"), DOES_NOT_MATCH, "cpe:2.3:a:vendor:product:1.0.0:*:*:*:*:*:*:*"},
                 // ---
                 // Required CPE name comparison relations (as per table 6-4 in the spec)
                 // ---
@@ -209,7 +347,7 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 // Scenario:  "vendor" of source is "linux", "vendor" of target ANY -> SUBSET.
                 // Table No.: 13
                 {"cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:o:*:linux_kernel:*:*:*:*:*:*:*:*"},
-                {"cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:o:*:linux_kernel:4.19.139:*:*:*:*:*:*:*"},
+                {"cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:o:*:linux_kernel:4.19.139:*:*:*:*:*:*:*"},
                 // ---
                 // Issue:     https://github.com/DependencyTrack/dependency-track/issues/2894
                 // Scenario:  "vendor" and "product" with different casing -> EQUAL.
@@ -241,14 +379,13 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:*:nginx:*:*:*:*:*:*:*:*"},
                 {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", withRange().havingEndExcluding("1.21.0"), MATCHES, "cpe:2.3:*:*:nginx:*:*:*:*:*:*:*:*"},
                 // Scenario:  Same as above, but "version" of target is i, which evaluates to SUPERSET for the "version" attribute
-                //            The minimum requirements do not take this case into account; We treat is as a no-match for now
                 // Table No.: 3, 13
-                {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:*:*:nginx:1.20.1:*:*:*:*:*:*:*"},
-                {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", withRange().havingEndExcluding("1.21.0"), DOES_NOT_MATCH, "cpe:2.3:*:*:nginx:1.20.1:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:*:nginx:1.20.1:*:*:*:*:*:*:*"},
+                {"cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*", withRange().havingEndExcluding("1.21.0"), MATCHES, "cpe:2.3:*:*:nginx:1.20.1:*:*:*:*:*:*:*"},
                 // ---
                 // Issue:     https://github.com/DependencyTrack/dependency-track/issues/3178#issuecomment-1812809295
                 // Scenario:  "vendor" of source is i, "product" of source is ANY, "vendor" of target is ANY, "product" of target is i
-                //            As SUBSET and SUPERSET are mixed, this is not covered by the minimum requirements of the spec, and currently treated as a no-match
+                //            We consider mixed SUBSET and SUPERSET relations in "vendor" and "product" attributes to be ambiguous and treat them as no-match
                 // Table No.: 3, 13
                 {"cpe:2.3:a:pascom_cloud_phone_system:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:*:util-linux-setarch:2.37.4:*:*:*:*:*:*:*"}
         });

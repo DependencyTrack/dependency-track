@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.tasks.scanners;
 
+import alpine.common.logging.Logger;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
@@ -44,39 +45,16 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * specific versions or version ranges. For every match, every vulnerability associated with
      * the VulnerableSoftware object will be applied to the specified component.
      *
-     * @param qm the QueryManager to use
-     * @param vsList a list of VulnerableSoftware objects
+     * @param qm            the QueryManager to use
+     * @param vsList        a list of VulnerableSoftware objects
      * @param targetVersion the version of the component
-     * @param component the component being analyzed
+     * @param component     the component being analyzed
      */
     protected void analyzeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
                                        final Cpe targetCpe, final String targetVersion, final Component component,
                                        final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
-        for (final VulnerableSoftware vs: vsList) {
-            Boolean isCpeMatch = null; // null means no CPE to compare
-            if (targetCpe != null && vs.getCpe23() != null) {
-                final List<Relation> relations = List.of(
-                        Cpe.compareAttribute(vs.getPart(), targetCpe.getPart().getAbbreviation()),
-                        Cpe.compareAttribute(vs.getVendor(), targetCpe.getVendor()),
-                        Cpe.compareAttribute(vs.getProduct(), targetCpe.getProduct()),
-                        Cpe.compareAttribute(vs.getVersion(), targetVersion),
-                        Cpe.compareAttribute(vs.getUpdate(), targetCpe.getUpdate()),
-                        Cpe.compareAttribute(vs.getEdition(), targetCpe.getEdition()),
-                        Cpe.compareAttribute(vs.getLanguage(), targetCpe.getLanguage()),
-                        Cpe.compareAttribute(vs.getSwEdition(), targetCpe.getSwEdition()),
-                        Cpe.compareAttribute(vs.getTargetSw(), targetCpe.getTargetSw()),
-                        Cpe.compareAttribute(vs.getTargetHw(), targetCpe.getTargetHw()),
-                        Cpe.compareAttribute(vs.getOther(), targetCpe.getOther())
-                );
-                if (relations.contains(Relation.DISJOINT)) {
-                    isCpeMatch = false;
-                } else {
-                    isCpeMatch = relations.stream().allMatch(Relation.EQUAL::equals)
-                            || relations.stream().allMatch(relation -> relation == Relation.EQUAL || relation == Relation.SUBSET)
-                            || relations.stream().allMatch(relation -> relation == Relation.EQUAL || relation == Relation.SUPERSET);
-                }
-            }
-
+        for (final VulnerableSoftware vs : vsList) {
+            final Boolean isCpeMatch = maybeMatchCpe(vs, targetCpe, targetVersion);
             if ((isCpeMatch == null || isCpeMatch) && compareVersions(vs, targetVersion)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
@@ -87,17 +65,56 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             }
         }
     }
+    
+    private Boolean maybeMatchCpe(final VulnerableSoftware vs, final Cpe targetCpe, final String targetVersion) {
+        if (targetCpe == null || vs.getCpe23() == null) {
+            return null;
+        }
+
+        final List<Relation> relations = List.of(
+                Cpe.compareAttribute(vs.getPart(), targetCpe.getPart().getAbbreviation()),
+                Cpe.compareAttribute(vs.getVendor(), targetCpe.getVendor()),
+                Cpe.compareAttribute(vs.getProduct(), targetCpe.getProduct()),
+                Cpe.compareAttribute(vs.getVersion(), targetVersion),
+                Cpe.compareAttribute(vs.getUpdate(), targetCpe.getUpdate()),
+                Cpe.compareAttribute(vs.getEdition(), targetCpe.getEdition()),
+                Cpe.compareAttribute(vs.getLanguage(), targetCpe.getLanguage()),
+                Cpe.compareAttribute(vs.getSwEdition(), targetCpe.getSwEdition()),
+                Cpe.compareAttribute(vs.getTargetSw(), targetCpe.getTargetSw()),
+                Cpe.compareAttribute(vs.getTargetHw(), targetCpe.getTargetHw()),
+                Cpe.compareAttribute(vs.getOther(), targetCpe.getOther())
+        );
+        if (relations.contains(Relation.DISJOINT)) {
+            return false;
+        }
+
+        boolean isMatch = true;
+
+        // Mixed SUBSET / SUPERSET relations in the vendor and product attribute are prone
+        // to false positives: https://github.com/DependencyTrack/dependency-track/issues/3178
+        final Relation vendorRelation = relations.get(1);
+        final Relation productRelation = relations.get(2);
+        isMatch &= !(vendorRelation == Relation.SUBSET && productRelation == Relation.SUPERSET);
+        isMatch &= !(vendorRelation == Relation.SUPERSET && productRelation == Relation.SUBSET);
+        if (!isMatch) {
+            // TODO: Change to DEBUG after testing is completed.
+            Logger.getLogger(getClass()).warn("%s: Dropped match with %s due to ambiguous vendor/product relation"
+                    .formatted(targetCpe.toCpe23FS(), vs.getCpe23()));
+        }
+
+        return isMatch;
+    }
 
     /**
      * Evaluates the target against the version and version range checks:
      * versionEndExcluding, versionStartExcluding versionEndIncluding, and
      * versionStartIncluding.
      *
-     * @param vs a reference to the vulnerable software to compare
+     * @param vs            a reference to the vulnerable software to compare
      * @param targetVersion the version to compare
      * @return <code>true</code> if the target version is matched; otherwise
      * <code>false</code>
-     *
+     * <p>
      * Ported from Dependency-Check v5.2.1
      */
     private static boolean compareVersions(VulnerableSoftware vs, String targetVersion) {

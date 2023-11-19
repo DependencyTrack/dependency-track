@@ -9,34 +9,52 @@ Dependency-Track includes a robust and configurable notification framework capab
 to the presence of newly discovered vulnerabilities, previously known vulnerable components that are added to
 projects, as well as providing notifications on various system and error conditions.
 
+## Scopes
 
-Dependency-Track notifications come in two flavors:
+Dependency-Track notifications come in two flavors (scopes):
 
-| Scope | Description |
-| ------|-------------|
-| SYSTEM    | Notifications on system-level informational and error conditions |
+| Scope     | Description                                                                           |
+|-----------|---------------------------------------------------------------------------------------|
+| SYSTEM    | Notifications on system-level informational and error conditions                      |
 | PORTFOLIO | Notifications on objects in the portfolio such as vulnerabilities and audit decisions |
 
+## Levels
 
-Each scope contains a set of notification groups that can be used to subscribe to.
+Notifications can have one of three possible levels:
 
-| Scope | Group | Description                                                                                                                       |
-| ------|-------|-----------------------------------------------------------------------------------------------------------------------------------|
-| SYSTEM | ANALYZER | Notifications generated as a result of interacting with an external source of vulnerability intelligence                          |
-| SYSTEM | DATASOURCE_MIRRORING | Notifications generated when performing mirroring of one of the supported datasources such as the NVD                             |
-| SYSTEM | INDEXING_SERVICE | Notifications generated as a result of performing maintenance on Dependency-Tracks internal index used for global searching       |
-| SYSTEM | FILE_SYSTEM | Notifications generated as a result of a file system operation. These are typically only generated on error conditions            |
-| SYSTEM | REPOSITORY | Notifications generated as a result of interacting with one of the supported repositories such as Maven Central, RubyGems, or NPM |
-| PORTFOLIO | NEW_VULNERABILITY | Notifications generated whenever a new vulnerability is identified                                                                |
-| PORTFOLIO | NEW_VULNERABLE_DEPENDENCY | Notifications generated as a result of a vulnerable component becoming a dependency of a project                                  |
-| PORTFOLIO | GLOBAL_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global)              |
-| PORTFOLIO | PROJECT_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                         |
-| PORTFOLIO | BOM_CONSUMED | Notifications generated whenever a supported BOM is ingested and identified                                                       |
-| PORTFOLIO | BOM_PROCESSED | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
-| PORTFOLIO | BOM_PROCESSING_FAILED | Notifications generated whenever a BOM upload process fails                                 |
-| PORTFOLIO | POLICY_VIOLATION | Notifications generated whenever a policy violation is identified                                                                 |
+* INFORMATIONAL
+* WARNING
+* ERROR
+
+Notification levels behave identical to logging levels:
+
+* Configuring a rule for level INFORMATIONAL will match notifications of level INFORMATIONAL, WARNING, and ERROR
+* Configuring a rule for level WARNING will match notifications of level WARNING and ERROR
+* Configuring a rule for level ERROR will match notifications of level ERROR
+
+## Groups
+
+Each scope contains a set of notification groups that can be subscribed to. Some groups contain notifications of
+multiple levels, while others can only ever have a single level.
+
+| Scope     | Group                     | Level(s)      | Description                                                                                                                       |
+|-----------|---------------------------|---------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| SYSTEM    | ANALYZER                  | (Any)         | Notifications generated as a result of interacting with an external source of vulnerability intelligence                          |
+| SYSTEM    | DATASOURCE_MIRRORING      | (Any)         | Notifications generated when performing mirroring of one of the supported datasources such as the NVD                             |
+| SYSTEM    | INDEXING_SERVICE          | (Any)         | Notifications generated as a result of performing maintenance on Dependency-Tracks internal index used for global searching       |
+| SYSTEM    | FILE_SYSTEM               | (Any)         | Notifications generated as a result of a file system operation. These are typically only generated on error conditions            |
+| SYSTEM    | REPOSITORY                | (Any)         | Notifications generated as a result of interacting with one of the supported repositories such as Maven Central, RubyGems, or NPM |
+| PORTFOLIO | NEW_VULNERABILITY         | INFORMATIONAL | Notifications generated whenever a new vulnerability is identified                                                                |
+| PORTFOLIO | NEW_VULNERABLE_DEPENDENCY | INFORMATIONAL | Notifications generated as a result of a vulnerable component becoming a dependency of a project                                  |
+| PORTFOLIO | GLOBAL_AUDIT_CHANGE       | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global)              |
+| PORTFOLIO | PROJECT_AUDIT_CHANGE      | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                         |
+| PORTFOLIO | BOM_CONSUMED              | INFORMATIONAL | Notifications generated whenever a supported BOM is ingested and identified                                                       |
+| PORTFOLIO | BOM_PROCESSED             | INFORMATIONAL | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
+| PORTFOLIO | BOM_PROCESSING_FAILED     | ERROR         | Notifications generated whenever a BOM upload process fails                                                                       |
+| PORTFOLIO | POLICY_VIOLATION          | INFORMATIONAL | Notifications generated whenever a policy violation is identified                                                                 |
 
 ## Configuring Publishers
+
 A notification publisher is a Dependency-Track concept allowing users to describe the structure of a notification (i.e. MIME type, template) and how to send a notification (i.e. publisher class).
 The following notification publishers are included by default :
 
@@ -59,7 +77,7 @@ The template context is enhanced with the following variables :
 | Variable               | Type                  | Description                                                                                                                |
 |------------------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------|
 | timestampEpochSecond   | long                  | The notification timestamp                                                                                                 |
-| timestamp              | string                | The notification local date time in ISO 8601 format (i.e. uuuu-MM-dd'T'HH:mm:ss.SSSSSSSSS)                                |
+| timestamp              | string                | The notification local date time in ISO 8601 format (i.e. uuuu-MM-dd'T'HH:mm:ss.SSSSSSSSS)                                 |
 | notification.level     | enum                  | One of INFORMATIONAL, WARNING, or ERROR                                                                                    |
 | notification.scope     | string                | The high-level type of notification. One of SYSTEM or PORTFOLIO                                                            |
 | notification.group     | string                | The specific type of notification                                                                                          |
@@ -69,7 +87,7 @@ The template context is enhanced with the following variables :
 | notification.subject   | Object                | An optional object containing specifics of the notification                                                                |
 | baseUrl                | string                | Dependency Track base url                                                                                                  |
 | subject                | Specific              | An optional object containing specifics of the notification. It is casted whereas notification.subject is a generic Object |
-| subjectJson            | javax.json.JsonObject | An optional JSON representation of the subject                                                                            |
+| subjectJson            | javax.json.JsonObject | An optional JSON representation of the subject                                                                             |
 
 > The format of the subject object will vary depending on the scope and group of notification. Not all fields in the
 > subject will be present at all times. Some fields are optional since the underlying fields in the datamodel are optional.

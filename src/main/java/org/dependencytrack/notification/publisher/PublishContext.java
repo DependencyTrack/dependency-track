@@ -19,6 +19,7 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
+import com.google.common.base.MoreObjects;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
@@ -51,13 +52,17 @@ import java.util.UUID;
  */
 public record PublishContext(String notificationGroup, String notificationLevel, String notificationScope,
                              String notificationTimestamp, Map<String, Object> notificationSubjects,
-                             String ruleName, String ruleScope, String ruleLevel) {
+                             String ruleName, String ruleScope, String ruleLevel, Boolean logSuccess) {
 
     private static final String SUBJECT_COMPONENT = "component";
     private static final String SUBJECT_PROJECT = "project";
     private static final String SUBJECT_PROJECTS = "projects";
 
     public static PublishContext from(final Notification notification) {
+        if (notification == null) {
+            return null;
+        }
+
         final var notificationSubjects = new HashMap<String, Object>();
         if (notification.getSubject() instanceof final BomConsumedOrProcessed subject) {
             notificationSubjects.put(SUBJECT_PROJECT, Project.convert(subject.getProject()));
@@ -88,9 +93,9 @@ public record PublishContext(String notificationGroup, String notificationLevel,
             notificationSubjects.put(SUBJECT_PROJECT, Project.convert(subject.getProject()));
         }
 
-        return new PublishContext(notification.getGroup(), notification.getLevel().name(), notification.getScope(),
-                notification.getTimestamp().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_DATE_TIME), notificationSubjects,
-                /* ruleName */ null, /* ruleScope */ null, /* ruleLevel */ null);
+        return new PublishContext(notification.getGroup(), Optional.ofNullable(notification.getLevel()).map(Enum::name).orElse(null),
+                notification.getScope(), notification.getTimestamp().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_DATE_TIME), notificationSubjects,
+                /* ruleName */ null, /* ruleScope */ null, /* ruleLevel */ null, /* logSuccess */ null);
     }
 
     /**
@@ -101,7 +106,23 @@ public record PublishContext(String notificationGroup, String notificationLevel,
      */
     public PublishContext withRule(final NotificationRule rule) {
         return new PublishContext(this.notificationGroup, this.notificationLevel, this.notificationScope, this.notificationTimestamp,
-                this.notificationSubjects, rule.getName(), rule.getScope().name(), rule.getNotificationLevel().name());
+                this.notificationSubjects, rule.getName(), rule.getScope().name(), rule.getNotificationLevel().name(), rule.isLogSuccessfulPublish());
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("notificationGroup", notificationGroup)
+                .add("notificationLevel", notificationLevel)
+                .add("notificationScope", notificationScope)
+                .add("notificationTimestamp", notificationTimestamp)
+                .add("notificationSubjects", notificationSubjects)
+                .add("ruleName", ruleName)
+                .add("ruleScope", ruleScope)
+                .add("ruleLevel", ruleLevel)
+                .add("logSuccess", logSuccess)
+                .omitNullValues()
+                .toString();
     }
 
     public record Component(String uuid, String group, String name, String version) {

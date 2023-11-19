@@ -28,7 +28,7 @@ public class WebhookPublisher extends AbstractWebhookPublisher implements Publis
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
 
     public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
-        publish(ctx, DefaultNotificationPublishers.WEBHOOK.getPublisherName(), getTemplate(config), notification, config);
+        publish(ctx, getTemplate(config), notification, config);
     }
 
     @Override

@@ -28,7 +28,7 @@ public class MattermostPublisher extends AbstractWebhookPublisher implements Pub
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
 
     public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
-        publish(ctx, DefaultNotificationPublishers.MATTERMOST.getPublisherName(), getTemplate(config), notification, config);
+        publish(ctx, getTemplate(config), notification, config);
     }
 
     @Override

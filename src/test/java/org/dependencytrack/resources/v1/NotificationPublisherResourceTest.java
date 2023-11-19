@@ -220,7 +220,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
 
     @Test
     public void updateExistingDefaultNotificationPublisherTest() {
-        NotificationPublisher notificationPublisher = qm.getDefaultNotificationPublisher((Class) SendMailPublisher.class);
+        NotificationPublisher notificationPublisher = qm.getDefaultNotificationPublisher(SendMailPublisher.class);
         notificationPublisher.setName(notificationPublisher.getName() + " Updated");
         Response response = target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
@@ -235,7 +235,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     public void updateNotificationPublisherWithNameOfAnotherNotificationPublisherTest() {
         NotificationPublisher notificationPublisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",
-                (Class) SendMailPublisher.class, "template", "text/html",
+                SendMailPublisher.class, "template", "text/html",
                 false
         );
         notificationPublisher = qm.detach(NotificationPublisher.class, notificationPublisher.getId());

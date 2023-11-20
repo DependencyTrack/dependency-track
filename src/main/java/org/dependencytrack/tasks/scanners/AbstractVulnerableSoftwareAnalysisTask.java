@@ -97,8 +97,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         isMatch &= !(vendorRelation == Relation.SUBSET && productRelation == Relation.SUPERSET);
         isMatch &= !(vendorRelation == Relation.SUPERSET && productRelation == Relation.SUBSET);
         if (!isMatch) {
-            // TODO: Change to DEBUG after testing is completed.
-            Logger.getLogger(getClass()).warn("%s: Dropped match with %s due to ambiguous vendor/product relation"
+            Logger.getLogger(getClass()).debug("%s: Dropped match with %s due to ambiguous vendor/product relation"
                     .formatted(targetCpe.toCpe23FS(), vs.getCpe23()));
         }
 

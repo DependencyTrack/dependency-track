@@ -438,3 +438,39 @@ With outbound webhooks, notifications and all of their relevant details can be d
 configured through Dependency-Track's notification settings.
 
 Notifications are sent via HTTP(S) POST and contain a JSON payload. The payload has the format described above in the templating section.
+
+## Debugging missing notifications
+
+Missing notifications may be caused by a variety of issues:
+
+* Network outage between Dependency-Track and notification destination
+* Faulty proxy configuration, causing Dependency-Track to be unable to reach the notification destination
+* Misconfiguration of notification rules in Dependency-Track, causing the notification to not be sent
+* Bug in Dependency-Track's notification routing mechanism, causing the notification to not be sent
+* Syntactically invalid notification content, causing the destination system to fail upon parsing it
+
+Generally, when Dependency-Track *fails* to deliver a notification to the destination, it will emit log messages
+with level `WARN` or `ERROR` about it.
+
+As of Dependency-Track v4.10, notification rules can additionally be configured to emit a log message with level `INFO`
+when publishing *succeeded*. Other than for debugging missing notifications, enabling this may also be useful in cases
+where notification volume needs to be audited or monitored. Note that this can cause a significant increase in log
+output, depending on how busy the system is.
+
+Logs include high-level details about the notification itself, its subjects, as well as the matched rule. For example:
+
+```
+INFO [WebhookPublisher] Destination acknowledged reception of notification with status code 200 (PublishContext{notificationGroup=NEW_VULNERABILITY, notificationLevel=INFORMATIONAL, notificationScope=PORTFOLIO, notificationTimestamp=2023-11-20T19:14:43.427901Z, notificationSubjects={component=Component[uuid=9f608f76-382c-4e05-b05f-7f69f2f6f507, group=org.apache.commons, name=commons-compress, version=1.23.0], projects=[Project[uuid=79de8ff7-6929-4fa4-8bff-ddec2424cbd2, name=Acme App, version=1.2.3]], vulnerability=Vulnerability[id=GHSA-cgwf-w82q-5jrr, source=GITHUB]}, ruleName=Foo, ruleScope=PORTFOLIO, ruleLevel=INFORMATIONAL})
+```
+
+For Webhook-based notifications (*Outbound Webhook*, *Slack*, *MS Teams*, *Mattermost*, *Cisco WebEx*, *JIRA*),
+services like [Request Bin](https://pipedream.com/requestbin) can be used to manually verify that notifications are sent:
+
+* Create a (private) Request Bin at https://pipedream.com/requestbin
+* Copy the generated endpoint URL to the *Destination* field of the notification rule
+* Ensure the desired *Groups* are selected for the notification rule
+* Perform an action that triggers any of the selected groups
+  * e.g. for group `BOM_PROCESSED`, upload a BOM
+* Observe the Request Bin output for any incoming requests
+
+If requests make it to the Bin, the problem is not in Dependency-Track.

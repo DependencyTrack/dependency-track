@@ -134,7 +134,6 @@ public record PublishContext(String notificationGroup, String notificationLevel,
                 .add("ruleName", ruleName)
                 .add("ruleScope", ruleScope)
                 .add("ruleLevel", ruleLevel)
-                .add("logSuccess", logSuccess)
                 .omitNullValues()
                 .toString();
     }

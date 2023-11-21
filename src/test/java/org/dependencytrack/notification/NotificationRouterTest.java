@@ -30,6 +30,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vex;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
+import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
@@ -57,7 +58,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
     public void testNullNotification() {
         Notification notification = null;
         NotificationRouter router = new NotificationRouter();
-        List<NotificationRule> rules = router.resolveRules(notification);
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertEquals(0, rules.size());
     }
 
@@ -65,7 +66,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
     public void testInvalidNotification() {
         Notification notification = new Notification();
         NotificationRouter router = new NotificationRouter();
-        List<NotificationRule> rules = router.resolveRules(notification);
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertEquals(0, rules.size());
     }
 
@@ -76,7 +77,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         NotificationRouter router = new NotificationRouter();
-        List<NotificationRule> rules = router.resolveRules(notification);
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertEquals(0, rules.size());
     }
 
@@ -98,7 +99,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        List<NotificationRule> rules = router.resolveRules(notification);
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertEquals(1, rules.size());
     }
 
@@ -127,7 +128,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        List<NotificationRule> rules = router.resolveRules(notification);
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertEquals(1, rules.size());
     }
 
@@ -157,7 +158,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        List<NotificationRule> rules = router.resolveRules(notification);
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertEquals(1, rules.size());
     }
 
@@ -244,7 +245,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        List<NotificationRule> rules = router.resolveRules(notification);
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertEquals(0, rules.size());
     }
 
@@ -260,7 +261,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setLevel(NotificationLevel.WARNING); // Rule level is equal
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).hasSize(1);
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).hasSize(1);
     }
 
     @Test
@@ -275,7 +276,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setLevel(NotificationLevel.ERROR); // Rule level is lower
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).hasSize(1);
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).hasSize(1);
     }
 
     @Test
@@ -291,7 +292,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setLevel(NotificationLevel.INFORMATIONAL); // Rule level is higher
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).isEmpty();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
     }
 
     @Test
@@ -308,7 +309,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setLevel(NotificationLevel.INFORMATIONAL);
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).isEmpty();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
     }
 
     @Test
@@ -338,10 +339,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(new NewVulnerabilityIdentified(null, componentB, Set.of(), null));
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).isEmpty();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
         notification.setSubject(new NewVulnerabilityIdentified(null, componentA, Set.of(), null));
-        assertThat(router.resolveRules(notification))
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
@@ -372,10 +373,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(new NewVulnerableDependency(componentB, null));
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).isEmpty();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
         notification.setSubject(new NewVulnerableDependency(componentA, null));
-        assertThat(router.resolveRules(notification))
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
@@ -397,10 +398,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(new BomConsumedOrProcessed(projectB, "", Bom.Format.CYCLONEDX, ""));
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).isEmpty();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
         notification.setSubject(new BomConsumedOrProcessed(projectA, "", Bom.Format.CYCLONEDX, ""));
-        assertThat(router.resolveRules(notification))
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
@@ -422,10 +423,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(new BomProcessingFailed(projectB, "", null, Bom.Format.CYCLONEDX, ""));
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).isEmpty();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
         notification.setSubject(new BomProcessingFailed(projectA, "", null, Bom.Format.CYCLONEDX, ""));
-        assertThat(router.resolveRules(notification))
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
@@ -447,10 +448,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(new VexConsumedOrProcessed(projectB, "", Vex.Format.CYCLONEDX, ""));
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).isEmpty();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
         notification.setSubject(new VexConsumedOrProcessed(projectA, "", Vex.Format.CYCLONEDX, ""));
-        assertThat(router.resolveRules(notification))
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
@@ -481,10 +482,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(new PolicyViolationIdentified(null, componentB, projectB));
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).isEmpty();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
         notification.setSubject(new PolicyViolationIdentified(null, componentA, projectA));
-        assertThat(router.resolveRules(notification))
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
@@ -506,10 +507,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(new AnalysisDecisionChange(null, null, projectB, null));
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).isEmpty();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
         notification.setSubject(new AnalysisDecisionChange(null, null, projectA, null));
-        assertThat(router.resolveRules(notification))
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
@@ -540,10 +541,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(new ViolationAnalysisDecisionChange(null, componentB, null));
 
         final var router = new NotificationRouter();
-        assertThat(router.resolveRules(notification)).isEmpty();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
         notification.setSubject(new ViolationAnalysisDecisionChange(null, componentA, null));
-        assertThat(router.resolveRules(notification))
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
@@ -578,7 +579,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        List<NotificationRule> rules = router.resolveRules(notification);
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertTrue(rule.isNotifyChildren());
         Assert.assertEquals(1, rules.size());
     }
@@ -615,7 +616,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        List<NotificationRule> rules = router.resolveRules(notification);
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertFalse(rule.isNotifyChildren());
         Assert.assertEquals(0, rules.size());
     }
@@ -651,7 +652,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        List<NotificationRule> rules = router.resolveRules(notification);
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertTrue(rule.isNotifyChildren());
         Assert.assertEquals(0, rules.size());
     }
@@ -672,7 +673,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         return qm.createNotificationPublisher(
                 MockPublisher.MOCK_PUBLISHER_NAME,
                 MockPublisher.MOCK_PUBLISHER_DESCRIPTION,
-                (Class) NotificationRouterTest.MockPublisher.class,
+                NotificationRouterTest.MockPublisher.class,
                 MockPublisher.MOCK_PUBLISHER_TEMPLATE_CONTENT, MockPublisher.MOCK_PUBLISHER_TEMPLATE_MIME_TYPE,
                 true
         );
@@ -697,7 +698,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void inform(Notification notification, JsonObject config) {
+        public void inform(final PublishContext ctx, Notification notification, JsonObject config) {
             MockPublisher.config = config;
             MockPublisher.notification = notification;
         }

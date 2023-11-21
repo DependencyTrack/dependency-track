@@ -1,6 +1,6 @@
 FROM eclipse-temurin:21.0.1_12-jre-jammy@sha256:8e6ea561ce4b5e02960b16f2578b3db4758f1d47a479de2194cd10f8e25df2d1 AS jre-build
 
-FROM debian:stable-slim@sha256:1529b15b786397b4695b1685d4e37b3dde62420862c0546fa364d0e889473c20
+FROM debian:stable-slim@sha256:375fb84f3c64691a1b9a9ff5ff3905173dcd0c5e11bc2aebd5c3472a139fa2b4
 
 # Arguments that can be passed at build time
 # Directory names must end with / to avoid errors when ADDing and COPYing

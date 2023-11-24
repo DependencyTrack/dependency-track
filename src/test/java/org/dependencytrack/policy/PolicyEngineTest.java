@@ -386,6 +386,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
 
         final var component = new Component();
         component.setProject(project);
+        component.setGroup("org.acme");
         component.setName("acme-lib");
         component.setVersion("2.0.0");
         qm.persist(component);
@@ -410,9 +411,8 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         qm.makeViolationAnalysisComment(violationAnalysisB, "comment", "commenter");
 
         final var policyEngine = new PolicyEngine();
-        assertThat(policyEngine.evaluate(List.of(component))).satisfiesExactly(violation -> {
-            assertThat(violation.getPolicyCondition().getPolicy()).isEqualTo(policyA);
-        });
+        assertThat(policyEngine.evaluate(List.of(component))).satisfiesExactly(violation ->
+                assertThat(violation.getPolicyCondition().getPolicy().getName()).isEqualTo("Policy A"));
     }
 
 }

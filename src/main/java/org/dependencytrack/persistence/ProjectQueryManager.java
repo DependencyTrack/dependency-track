@@ -510,40 +510,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
     /**
      * Updates an existing Project.
-     * @param uuid the uuid of the project to update
-     * @param name the name of the project
-     * @param description a description of the project
-     * @param version the project version
-     * @param tags a List of Tags - these will be resolved if necessary
-     * @param purl an optional Package URL
-     * @param active specified if the project is active
-     * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @return the updated Project
-     */
-    @Override
-    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, PackageURL purl, boolean active, boolean commitIndex) {
-        final Project project = getObjectByUuid(Project.class, uuid);
-        project.setName(name);
-        project.setDescription(description);
-        project.setVersion(version);
-        project.setPurl(purl);
-
-        if (!active && Boolean.TRUE.equals(project.isActive()) && hasActiveChild(project)){
-            throw new IllegalArgumentException("Project cannot be set to inactive, if active children are present.");
-        }
-        project.setActive(active);
-
-        final List<Tag> resolvedTags = resolveTags(tags);
-        bind(project, resolvedTags);
-
-        final Project result = persist(project);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
-        commitSearchIndex(commitIndex, Project.class);
-        return result;
-    }
-
-    /**
-     * Updates an existing Project.
      * @param transientProject the project to update
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the updated Project

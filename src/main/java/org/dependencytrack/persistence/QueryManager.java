@@ -431,10 +431,6 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().createProject(project, tags, commitIndex);
     }
 
-    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, PackageURL purl, boolean active, boolean commitIndex) {
-        return getProjectQueryManager().updateProject(uuid, name, description, version, tags, purl, active, commitIndex);
-    }
-
     public Project updateProject(Project transientProject, boolean commitIndex) {
         return getProjectQueryManager().updateProject(transientProject, commitIndex);
     }

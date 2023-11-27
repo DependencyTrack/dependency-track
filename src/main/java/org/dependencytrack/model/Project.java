@@ -141,6 +141,11 @@ public class Project implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Convert(OrganizationalEntityJsonConverter.class)
+    @Column(name = "MANUFACTURER", jdbcType = "CLOB", allowsNull = "true")
+    private OrganizationalEntity manufacturer;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Convert(OrganizationalEntityJsonConverter.class)
     @Column(name = "SUPPLIER", jdbcType = "CLOB", allowsNull = "true")
     private OrganizationalEntity supplier;
 
@@ -302,6 +307,14 @@ public class Project implements Serializable {
 
     public void setPublisher(String publisher) {
         this.publisher = publisher;
+    }
+
+    public OrganizationalEntity getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(final OrganizationalEntity manufacturer) {
+        this.manufacturer = manufacturer;
     }
 
     public OrganizationalEntity getSupplier() {

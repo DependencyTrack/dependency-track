@@ -137,13 +137,23 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(project.getLastBomImport()).isNotNull();
         assertThat(project.getExternalReferences()).isNotNull();
         assertThat(project.getExternalReferences()).hasSize(4);
-        assertThat(project.getSupplier()).isNotNull();
-        assertThat(project.getSupplier().getName()).isEqualTo("Foo Incorporated");
-        assertThat(project.getSupplier().getUrls()).containsOnly("https://foo.bar.com");
-        assertThat(project.getSupplier().getContacts()).satisfiesExactly(contact -> {
-            assertThat(contact.getName()).isEqualTo("Foo Jr.");
-            assertThat(contact.getEmail()).isEqualTo("foojr@bar.com");
-            assertThat(contact.getPhone()).isEqualTo("123-456-7890");
+        assertThat(project.getSupplier()).satisfies(supplier -> {
+            assertThat(supplier.getName()).isEqualTo("Foo Incorporated");
+            assertThat(supplier.getUrls()).containsOnly("https://foo.bar.com");
+            assertThat(supplier.getContacts()).satisfiesExactly(contact -> {
+                assertThat(contact.getName()).isEqualTo("Foo Jr.");
+                assertThat(contact.getEmail()).isEqualTo("foojr@bar.com");
+                assertThat(contact.getPhone()).isEqualTo("123-456-7890");
+            });
+        });
+        assertThat(project.getManufacturer()).satisfies(manufacturer -> {
+            assertThat(manufacturer.getName()).isEqualTo("Foo Incorporated");
+            assertThat(manufacturer.getUrls()).containsOnly("https://foo.bar.com");
+            assertThat(manufacturer.getContacts()).satisfiesExactly(contact -> {
+                assertThat(contact.getName()).isEqualTo("Foo Sr.");
+                assertThat(contact.getEmail()).isEqualTo("foo@bar.com");
+                assertThat(contact.getPhone()).isEqualTo("800-123-4567");
+            });
         });
 
         assertThat(project.getMetadata()).isNotNull();
@@ -151,15 +161,6 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
             assertThat(contact.getName()).isEqualTo("Author");
             assertThat(contact.getEmail()).isEqualTo("author@example.com");
             assertThat(contact.getPhone()).isEqualTo("123-456-7890");
-        });
-        assertThat(project.getMetadata().getManufacturer()).satisfies(supplier -> {
-            assertThat(supplier.getName()).isEqualTo("Foo Incorporated");
-            assertThat(supplier.getUrls()).containsOnly("https://foo.bar.com");
-            assertThat(supplier.getContacts()).satisfiesExactly(contact -> {
-                assertThat(contact.getName()).isEqualTo("Foo Sr.");
-                assertThat(contact.getEmail()).isEqualTo("foo@bar.com");
-                assertThat(contact.getPhone()).isEqualTo("800-123-4567");
-            });
         });
         assertThat(project.getMetadata().getSupplier()).satisfies(manufacturer -> {
             assertThat(manufacturer.getName()).isEqualTo("Foo Incorporated");

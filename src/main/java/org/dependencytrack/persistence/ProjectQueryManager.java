@@ -519,6 +519,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
         project.setAuthor(transientProject.getAuthor());
         project.setPublisher(transientProject.getPublisher());
+        project.setManufacturer(transientProject.getManufacturer());
         project.setSupplier(transientProject.getSupplier());
         project.setGroup(transientProject.getGroup());
         project.setName(transientProject.getName());
@@ -580,6 +581,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         Project project = new Project();
         project.setAuthor(source.getAuthor());
+        project.setManufacturer(source.getManufacturer());
         project.setSupplier(source.getSupplier());
         project.setPublisher(source.getPublisher());
         project.setGroup(source.getGroup());
@@ -601,7 +603,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             final var metadata = new ProjectMetadata();
             metadata.setProject(project);
             metadata.setAuthors(source.getMetadata().getAuthors());
-            metadata.setManufacturer(source.getMetadata().getManufacturer());
             metadata.setSupplier(source.getMetadata().getSupplier());
             persist(metadata);
         }

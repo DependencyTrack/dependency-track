@@ -432,6 +432,8 @@ public class ModelConverter {
         tool.setVersion(alpine.Config.getInstance().getApplicationVersion());
         metadata.setTools(Collections.singletonList(tool));
         if (project != null) {
+            metadata.setManufacture(convert(project.getManufacturer()));
+
             final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
             cycloneComponent.setBomRef(project.getUuid().toString());
             cycloneComponent.setAuthor(StringUtils.trimToNull(project.getAuthor()));
@@ -476,7 +478,6 @@ public class ModelConverter {
 
             if (project.getMetadata() != null) {
                 metadata.setAuthors(convertContacts(project.getMetadata().getAuthors()));
-                metadata.setManufacture(convert(project.getMetadata().getManufacturer()));
                 metadata.setSupplier(convert(project.getMetadata().getSupplier()));
             }
         }

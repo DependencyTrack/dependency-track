@@ -34,6 +34,11 @@ import javax.jdo.annotations.Unique;
 import java.util.List;
 
 /**
+ * Metadata that relates to, but does not directly describe, a {@link Project}.
+ * <p>
+ * In CycloneDX terms, {@link ProjectMetadata} represents data from the {@code metadata} node
+ * of a BOM (except {@code metadata.component}, which represents a {@link Project} in Dependency-Track).
+ *
  * @since 4.10.0
  */
 @PersistenceCapable(table = "PROJECT_METADATA")
@@ -50,11 +55,6 @@ public class ProjectMetadata {
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @JsonIgnore
     private Project project;
-
-    @Persistent(defaultFetchGroup = "true")
-    @Convert(OrganizationalEntityJsonConverter.class)
-    @Column(name = "MANUFACTURER", jdbcType = "CLOB", allowsNull = "true")
-    private OrganizationalEntity manufacturer;
 
     @Persistent(defaultFetchGroup = "true")
     @Convert(OrganizationalEntityJsonConverter.class)
@@ -80,14 +80,6 @@ public class ProjectMetadata {
 
     public void setProject(final Project project) {
         this.project = project;
-    }
-
-    public OrganizationalEntity getManufacturer() {
-        return manufacturer;
-    }
-
-    public void setManufacturer(final OrganizationalEntity manufacturer) {
-        this.manufacturer = manufacturer;
     }
 
     public OrganizationalEntity getSupplier() {

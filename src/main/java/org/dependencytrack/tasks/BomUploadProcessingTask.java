@@ -113,13 +113,13 @@ public class BomUploadProcessingTask implements Subscriber {
                         bomProcessingFailedBomVersion = bomSpecVersion;
                         bomVersion = cycloneDxBom.getVersion();
                         if (cycloneDxBom.getMetadata() != null) {
+                            project.setManufacturer(ModelConverter.convert(cycloneDxBom.getMetadata().getManufacture()));
+
                             final var projectMetadata = new ProjectMetadata();
-                            projectMetadata.setManufacturer(ModelConverter.convert(cycloneDxBom.getMetadata().getManufacture()));
                             projectMetadata.setSupplier(ModelConverter.convert(cycloneDxBom.getMetadata().getSupplier()));
                             projectMetadata.setAuthors(ModelConverter.convertCdxContacts(cycloneDxBom.getMetadata().getAuthors()));
                             if (project.getMetadata() != null) {
                                 qm.runInTransaction(() -> {
-                                    project.getMetadata().setManufacturer(projectMetadata.getManufacturer());
                                     project.getMetadata().setSupplier(projectMetadata.getSupplier());
                                     project.getMetadata().setAuthors(projectMetadata.getAuthors());
                                 });

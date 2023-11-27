@@ -107,24 +107,24 @@ public class BomResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability = qm.createVulnerability(vulnerability, false);
 
+        final var projectManufacturer = new OrganizationalEntity();
+        projectManufacturer.setName("projectManufacturer");
         final var projectSupplier = new OrganizationalEntity();
         projectSupplier.setName("projectSupplier");
         var project = new Project();
         project.setName("acme-app");
         project.setClassifier(Classifier.APPLICATION);
+        project.setManufacturer(projectManufacturer);
         project.setSupplier(projectSupplier);
         project = qm.createProject(project, null, false);
 
         final var bomSupplier = new OrganizationalEntity();
         bomSupplier.setName("bomSupplier");
-        final var bomManufacturer = new OrganizationalEntity();
-        bomManufacturer.setName("bomManufacturer");
         final var bomAuthor = new OrganizationalContact();
         bomAuthor.setName("bomAuthor");
         final var projectMetadata = new ProjectMetadata();
         projectMetadata.setProject(project);
         projectMetadata.setAuthors(List.of(bomAuthor));
-        projectMetadata.setManufacturer(bomManufacturer);
         projectMetadata.setSupplier(bomSupplier);
         qm.persist(projectMetadata);
 
@@ -212,7 +212,7 @@ public class BomResourceTest extends ResourceTest {
                             "version": "SNAPSHOT"
                         },
                         "manufacture": {
-                          "name": "bomManufacturer"
+                          "name": "projectManufacturer"
                         },
                         "supplier": {
                           "name": "bomSupplier"

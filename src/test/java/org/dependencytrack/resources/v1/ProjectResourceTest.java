@@ -587,6 +587,13 @@ public class ProjectResourceTest extends ResourceTest {
     public void patchProjectSuccessfullyPatchedTest() {
         final var tags = Stream.of("tag1", "tag2").map(qm::createTag).collect(Collectors.toUnmodifiableList());
         final var p1 = qm.createProject("ABC", "Test project", "1.0", tags, null, null, true, false);
+        final var projectManufacturerContact = new OrganizationalContact();
+        projectManufacturerContact.setName("manufacturerContactName");
+        final var projectManufacturer = new OrganizationalEntity();
+        projectManufacturer.setName("manufacturerName");
+        projectManufacturer.setUrls(new String[]{"https://manufacturer.example.com"});
+        projectManufacturer.setContacts(List.of(projectManufacturerContact));
+        p1.setManufacturer(projectManufacturer);
         final var projectSupplierContact = new OrganizationalContact();
         projectSupplierContact.setName("supplierContactName");
         final var projectSupplier = new OrganizationalEntity();
@@ -604,6 +611,13 @@ public class ProjectResourceTest extends ResourceTest {
             t.setName(name);
             return t;
         }).collect(Collectors.toUnmodifiableList()));
+        final var jsonProjectManufacturerContact = new OrganizationalContact();
+        jsonProjectManufacturerContact.setName("newManufacturerContactName");
+        final var jsonProjectManufacturer = new OrganizationalEntity();
+        jsonProjectManufacturer.setName("manufacturerName");
+        jsonProjectManufacturer.setUrls(new String[]{"https://manufacturer.example.com"});
+        jsonProjectManufacturer.setContacts(List.of(jsonProjectManufacturerContact));
+        jsonProject.setManufacturer(jsonProjectManufacturer);
         final var jsonProjectSupplierContact = new OrganizationalContact();
         jsonProjectSupplierContact.setName("newSupplierContactName");
         final var jsonProjectSupplier = new OrganizationalEntity();
@@ -622,6 +636,17 @@ public class ProjectResourceTest extends ResourceTest {
                 .isEqualTo("""
                         {
                           "publisher": "new publisher",
+                          "manufacturer": {
+                            "name": "manufacturerName",
+                            "urls": [
+                              "https://manufacturer.example.com"
+                            ],
+                            "contacts": [
+                              {
+                                "name": "newManufacturerContactName"
+                              }
+                            ]
+                          },
                           "supplier": {
                             "name": "supplierName",
                             "urls": [
@@ -837,12 +862,15 @@ public class ProjectResourceTest extends ResourceTest {
     public void cloneProjectTest() {
         EventService.getInstance().subscribe(CloneProjectEvent.class, CloneProjectTask.class);
 
+        final var projectManufacturer = new OrganizationalEntity();
+        projectManufacturer.setName("projectManufacturer");
         final var projectSupplier = new OrganizationalEntity();
         projectSupplier.setName("projectSupplier");
 
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
+        project.setManufacturer(projectManufacturer);
         project.setSupplier(projectSupplier);
         project.setAccessTeams(List.of(team));
         qm.persist(project);
@@ -856,14 +884,11 @@ public class ProjectResourceTest extends ResourceTest {
 
         final var metadataAuthor = new OrganizationalContact();
         metadataAuthor.setName("metadataAuthor");
-        final var metadataManufacturer = new OrganizationalEntity();
-        metadataManufacturer.setName("metadataManufacturer");
         final var metadataSupplier = new OrganizationalEntity();
         metadataSupplier.setName("metadataSupplier");
         final var metadata = new ProjectMetadata();
         metadata.setProject(project);
         metadata.setAuthors(List.of(metadataAuthor));
-        metadata.setManufacturer(metadataManufacturer);
         metadata.setSupplier(metadataSupplier);
         qm.persist(metadata);
 
@@ -920,6 +945,8 @@ public class ProjectResourceTest extends ResourceTest {
                     assertThat(clonedProject.getUuid()).isNotEqualTo(project.getUuid());
                     assertThat(clonedProject.getSupplier()).isNotNull();
                     assertThat(clonedProject.getSupplier().getName()).isEqualTo("projectSupplier");
+                    assertThat(clonedProject.getManufacturer()).isNotNull();
+                    assertThat(clonedProject.getManufacturer().getName()).isEqualTo("projectManufacturer");
                     assertThat(clonedProject.getAccessTeams()).containsOnly(team);
 
                     final List<ProjectProperty> clonedProperties = qm.getProjectProperties(clonedProject);
@@ -939,8 +966,6 @@ public class ProjectResourceTest extends ResourceTest {
                     assertThat(clonedMetadata).isNotNull();
                     assertThat(clonedMetadata.getAuthors())
                             .satisfiesExactly(contact -> assertThat(contact.getName()).isEqualTo("metadataAuthor"));
-                    assertThat(clonedMetadata.getManufacturer())
-                            .satisfies(entity -> assertThat(entity.getName()).isEqualTo("metadataManufacturer"));
                     assertThat(clonedMetadata.getSupplier())
                             .satisfies(entity -> assertThat(entity.getName()).isEqualTo("metadataSupplier"));
 

@@ -66,8 +66,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.equalTo;
 
 public class ProjectResourceTest extends ResourceTest {
 
@@ -585,6 +587,14 @@ public class ProjectResourceTest extends ResourceTest {
     public void patchProjectSuccessfullyPatchedTest() {
         final var tags = Stream.of("tag1", "tag2").map(qm::createTag).collect(Collectors.toUnmodifiableList());
         final var p1 = qm.createProject("ABC", "Test project", "1.0", tags, null, null, true, false);
+        final var projectSupplierContact = new OrganizationalContact();
+        projectSupplierContact.setName("supplierContactName");
+        final var projectSupplier = new OrganizationalEntity();
+        projectSupplier.setName("supplierName");
+        projectSupplier.setUrls(new String[]{"https://supplier.example.com"});
+        projectSupplier.setContacts(List.of(projectSupplierContact));
+        p1.setSupplier(projectSupplier);
+        qm.persist(p1);
         final var jsonProject = new Project();
         jsonProject.setActive(false);
         jsonProject.setName("new name");
@@ -594,22 +604,48 @@ public class ProjectResourceTest extends ResourceTest {
             t.setName(name);
             return t;
         }).collect(Collectors.toUnmodifiableList()));
+        final var jsonProjectSupplierContact = new OrganizationalContact();
+        jsonProjectSupplierContact.setName("newSupplierContactName");
+        final var jsonProjectSupplier = new OrganizationalEntity();
+        jsonProjectSupplier.setName("supplierName");
+        jsonProjectSupplier.setUrls(new String[]{"https://supplier.example.com"});
+        jsonProjectSupplier.setContacts(List.of(jsonProjectSupplierContact));
+        jsonProject.setSupplier(jsonProjectSupplier);
         final var response = target(V1_PROJECT + "/" + p1.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
                 .method("PATCH", Entity.json(jsonProject));
         Assert.assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        final var json = parseJsonObject(response);
-        Assert.assertEquals(p1.getUuid().toString(), json.getString("uuid"));
-        Assert.assertEquals(p1.getDescription(), json.getString("description"));
-        Assert.assertEquals(p1.getVersion(), json.getString("version"));
-        Assert.assertEquals(jsonProject.getName(), json.getString("name"));
-        Assert.assertEquals(jsonProject.getPublisher(), json.getString("publisher"));
-        Assert.assertEquals(false, json.getBoolean("active"));
-        final var jsonTags = json.getJsonArray("tags");
-        Assert.assertEquals(1, jsonTags.size());
-        Assert.assertEquals("tag4", jsonTags.get(0).asJsonObject().getString("name"));
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", equalTo(p1.getUuid().toString()))
+                .isEqualTo("""
+                        {
+                          "publisher": "new publisher",
+                          "supplier": {
+                            "name": "supplierName",
+                            "urls": [
+                              "https://supplier.example.com"
+                            ],
+                            "contacts": [
+                              {
+                                "name": "newSupplierContactName"
+                              }
+                            ]
+                          },
+                          "name": "new name",
+                          "description": "Test project",
+                          "version": "1.0",
+                          "uuid": "${json-unit.matches:projectUuid}",
+                          "properties": [],
+                          "tags": [
+                            {
+                              "name": "tag4"
+                            }
+                          ],
+                          "active": false
+                        }
+                        """);
     }
 
     @Test

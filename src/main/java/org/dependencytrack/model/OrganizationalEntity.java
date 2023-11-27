@@ -25,7 +25,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Model class for tracking organizational entities (provider, supplier, manufacturer, etc).
@@ -76,4 +78,20 @@ public class OrganizationalEntity implements Serializable {
     public void setContacts(List<OrganizationalContact> contacts) {
         this.contacts = contacts;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final OrganizationalEntity that = (OrganizationalEntity) o;
+        return Objects.equals(name, that.name) && Arrays.equals(urls, that.urls) && Objects.equals(contacts, that.contacts);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(name, contacts);
+        result = 31 * result + Arrays.hashCode(urls);
+        return result;
+    }
+
 }

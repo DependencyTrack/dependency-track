@@ -553,6 +553,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
         project.setAuthor(transientProject.getAuthor());
         project.setPublisher(transientProject.getPublisher());
+        project.setSupplier(transientProject.getSupplier());
         project.setGroup(transientProject.getGroup());
         project.setName(transientProject.getName());
         project.setDescription(transientProject.getDescription());

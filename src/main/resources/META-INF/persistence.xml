@@ -39,6 +39,7 @@
         <class>org.dependencytrack.model.PolicyViolation</class>
         <class>org.dependencytrack.model.PortfolioMetrics</class>
         <class>org.dependencytrack.model.Project</class>
+        <class>org.dependencytrack.model.ProjectMetadata</class>
         <class>org.dependencytrack.model.ProjectMetrics</class>
         <class>org.dependencytrack.model.ProjectProperty</class>
         <class>org.dependencytrack.model.Repository</class>

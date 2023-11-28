@@ -32,5 +32,9 @@ public enum Classifier {
     OPERATING_SYSTEM,
     DEVICE,
     FIRMWARE,
-    FILE
+    FILE,
+    PLATFORM,
+    DEVICE_DRIVER,
+    MACHINE_LEARNING_MODEL,
+    DATA
 }

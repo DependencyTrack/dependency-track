@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bom xmlns="http://cyclonedx.org/schema/bom/1.4" version="1">
     <metadata>
+        <authors>
+            <author>
+                <name>Author</name>
+                <email>author@example.com</email>
+                <phone>123-456-7890</phone>
+            </author>
+        </authors>
         <component type="application" bom-ref="acme">
             <supplier>
                 <name>Foo Incorporated</name>

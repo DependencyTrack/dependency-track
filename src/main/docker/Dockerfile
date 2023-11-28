@@ -73,7 +73,7 @@ CMD exec java ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=30s --timeout=3s CMD wget --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
+HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD wget -t 1 -T 3 --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
 
 # metadata labels
 LABEL \

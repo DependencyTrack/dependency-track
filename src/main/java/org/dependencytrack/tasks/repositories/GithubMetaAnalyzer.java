@@ -23,21 +23,23 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-
-import java.util.regex.Pattern;
-import java.io.IOException;
-
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHBranch;
-import org.kohsuke.github.GHRelease;
 import org.kohsuke.github.GHCommit;
+import org.kohsuke.github.GHRelease;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
+
+import java.io.IOException;
+import java.util.regex.Pattern;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * An IMetaAnalyzer implementation that supports GitHub via the api
  *
  * @author Jadyn Jaeger
- * @since 4.9.0
+ * @since 4.10.0
  */
 public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
 
@@ -45,21 +47,22 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private static final int VERSION_TYPE_RELEASE = 1;
     private static final int VERSION_TYPE_COMMIT = 2;
-    private static final String VERSION_TYPE_PATTERN = "[a-f,0-9]{6,40}";
+    private static final String VERSION_TYPE_PATTERN = "[a-f0-9]{6,40}";
     private static final String REPOSITORY_DEFAULT_URL = "https://github.com";
-    private String REPOSITORY_URL = "";
-    private String REPOSITORY_USER = "";
-    private String REPOSITORY_PASSWORD = "";
+    private String repositoryUrl;
+    private String repositoryUser;
+    private String repositoryPassword;
 
     GithubMetaAnalyzer() {
-        this.REPOSITORY_URL = REPOSITORY_DEFAULT_URL;
+        this.repositoryUrl = REPOSITORY_DEFAULT_URL;
     }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public void setRepositoryBaseUrl(String baseUrl) {
-        this.REPOSITORY_URL = baseUrl;
+        this.repositoryUrl = baseUrl;
     }
 
     /**
@@ -67,8 +70,8 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
      */
     @Override
     public void setRepositoryUsernameAndPassword(String username, String password) {
-        this.REPOSITORY_USER = username;
-        this.REPOSITORY_PASSWORD = password;
+        this.repositoryUser = username;
+        this.repositoryPassword = password;
     }
 
     /**
@@ -91,19 +94,19 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
     public MetaModel analyze(final Component component) {
         final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
-            try{
-                GitHub github;
-                if (!REPOSITORY_USER.isEmpty() && !REPOSITORY_PASSWORD.isEmpty()) {
-                    github = GitHub.connect(REPOSITORY_USER, REPOSITORY_PASSWORD);
-                } else if (REPOSITORY_USER.isEmpty() && !REPOSITORY_PASSWORD.isEmpty()){
-                    github = GitHub.connectUsingOAuth(REPOSITORY_URL, REPOSITORY_PASSWORD);
+            try {
+                final GitHub github;
+                if (isNotBlank(repositoryUser) && isNotBlank(repositoryPassword)) {
+                    github = GitHub.connect(repositoryUser, repositoryPassword);
+                } else if (isBlank(repositoryUser) && isNotBlank(repositoryPassword)) {
+                    github = GitHub.connectUsingOAuth(repositoryUrl, repositoryPassword);
                 } else {
                     github = GitHub.connectAnonymously();
                 }
 
                 Pattern version_pattern = Pattern.compile(VERSION_TYPE_PATTERN);
-                int version_type = 0;
-                if (version_pattern.matcher(component.getPurl().getVersion()).find()){
+                final int version_type;
+                if (version_pattern.matcher(component.getPurl().getVersion()).find()) {
                     LOGGER.debug("Version is commit");
                     version_type = VERSION_TYPE_COMMIT;
                 } else {
@@ -113,14 +116,18 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
 
                 GHRepository repository = github.getRepository(String.format("%s/%s", component.getPurl().getNamespace(), component.getPurl().getName()));
                 LOGGER.debug(String.format("Repos is at %s", repository.getUrl()));
-                if (version_type == VERSION_TYPE_RELEASE){
+                if (version_type == VERSION_TYPE_RELEASE) {
                     GHRelease latest_release = repository.getLatestRelease();
+                    if (latest_release != null) {
+                        meta.setLatestVersion(latest_release.getTagName());
+                        LOGGER.debug(String.format("Latest version: %s", meta.getLatestVersion()));
+                    }
                     GHRelease current_release = repository.getReleaseByTagName(component.getPurl().getVersion());
-                    meta.setLatestVersion(latest_release.getTagName());
-                    LOGGER.debug(String.format("Latest version: %s", meta.getLatestVersion()));
-                    meta.setPublishedTimestamp(current_release.getPublished_at());
-                    LOGGER.debug(String.format("Current version published at: %s", meta.getPublishedTimestamp()));
-                } else if (version_type == VERSION_TYPE_COMMIT){
+                    if (current_release != null) {
+                        meta.setPublishedTimestamp(current_release.getPublished_at());
+                        LOGGER.debug(String.format("Current version published at: %s", meta.getPublishedTimestamp()));
+                    }
+                } else {
                     GHBranch default_branch = repository.getBranch(repository.getDefaultBranch());
                     GHCommit latest_release = repository.getCommit(default_branch.getSHA1());
                     GHCommit current_release = repository.getCommit(component.getPurl().getVersion());
@@ -129,7 +136,6 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
                     meta.setPublishedTimestamp(current_release.getCommitDate());
                     LOGGER.debug(String.format("Current version published at: %s", meta.getPublishedTimestamp()));
                 }
-
             } catch (IOException ex) {
                 handleRequestException(LOGGER, ex);
             } catch (Exception ex) {

@@ -16,21 +16,22 @@ off-the-shelf software.
 Dependency-Track supports the following default repositories:
 
 | Ecosystem  | Repository       | Resolution Order |
-| ---------- | ---------------- | ---------------- |
-| cargo      | Crates.io        | 1 |
-| composer   | Packagist        | 1 |
-| gem        | RubyGems         | 1 |
-| go modules | proxy.golang.org | 1 |
-| hex        | Hex              | 1 |
-| maven      | Maven Central    | 1 |
-|            | Atlassian Public | 2 |
-|            | JBoss Releases   | 3 |
-|            | Clojars          | 4 |
-|            | Google Android   | 5 |
-| npm        | NPM              | 1 |
-| nuget      | NuGet            | 1 |
-| pypi       | PyPi             | 1 |
-| cpan       | CPAN             | 1 |
+|------------|------------------|------------------|
+| cargo      | Crates.io        | 1                |
+| composer   | Packagist        | 1                |
+| gem        | RubyGems         | 1                |
+| github     | github.com       | 1                |
+| go modules | proxy.golang.org | 1                |
+| hex        | Hex              | 1                |
+| maven      | Maven Central    | 1                |
+|            | Atlassian Public | 2                |
+|            | JBoss Releases   | 3                |
+|            | Clojars          | 4                |
+|            | Google Android   | 5                |
+| npm        | NPM              | 1                |
+| nuget      | NuGet            | 1                |
+| pypi       | PyPi             | 1                |
+| cpan       | CPAN             | 1                |
 
 
 Additional repositories can be added for each supported ecosystem. Additionally, repositories can be enabled or disabled

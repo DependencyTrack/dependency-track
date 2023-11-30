@@ -98,7 +98,7 @@ public enum ConfigPropertyConstants {
     TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE("task-scheduler", "component.analysis.cache.clear.cadence", "24", PropertyType.INTEGER, "Cleanup cadence (in hours) for component analysis cache"),
     SEARCH_INDEXES_CONSISTENCY_CHECK_ENABLED("search-indexes", "consistency.check.enabled", "true", PropertyType.BOOLEAN, "Flag to enable lucene indexes periodic consistency check"),
     SEARCH_INDEXES_CONSISTENCY_CHECK_CADENCE("search-indexes", "consistency.check.cadence", "4320", PropertyType.INTEGER, "Lucene indexes consistency check cadence (in minutes)"),
-    SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD("search-indexes", "consistency.check.delta.threshold", "20", PropertyType.INTEGER, "Threshold used to trigger an index rebuild when comparing database table and corresponding lucene index (in percentage). It must be an integer between 1 and 100")
+    SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD("search-indexes", "consistency.check.delta.threshold", "20", PropertyType.INTEGER, "Threshold used to trigger an index rebuild when comparing database table and corresponding lucene index (in percentage). It must be an integer between 1 and 100"),
     CUSTOM_RISK_SCORE_HISTORY_ENABLED("risk-score", "riskscore.history.enabled", "true", PropertyType.BOOLEAN, "Flag to re-calculate risk score history"),
     CUSTOM_RISK_SCORE_CRITICAL("risk-score", "riskscore.critical", "10", PropertyType.INTEGER, "Critical severity vulnerability weight (between 1-10)"),
     CUSTOM_RISK_SCORE_HIGH("risk-score", "riskscore.high", "5", PropertyType.INTEGER, "High severity vulnerability weight (between 1-10)"),

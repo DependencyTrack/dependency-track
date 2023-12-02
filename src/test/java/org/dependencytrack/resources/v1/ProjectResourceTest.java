@@ -1379,6 +1379,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "active": false,
                           "isLatest":false,
                           "children": []
+                          "collectionLogic":"NONE"
                         }
                         """);
     }

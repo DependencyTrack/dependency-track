@@ -190,6 +190,16 @@ public class Project implements Serializable {
     private Classifier classifier;
 
     @Persistent
+    @Column(name = "COLLECTION_LOGIC", jdbcType = "VARCHAR", allowsNull = "true", defaultValue = "NONE") // New column, must allow nulls on existing databases
+    @Index(name = "PROJECT_COLLECTION_LOGIC_IDX")
+    @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
+    private ProjectCollectionLogic collectionLogic;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "COLLECTION_TAG", allowsNull = "true")
+    private Tag collectionTag;
+
+    @Persistent
     @Index(name = "PROJECT_CPE_IDX")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
@@ -393,6 +403,23 @@ public class Project implements Serializable {
 
     public void setClassifier(Classifier classifier) {
         this.classifier = classifier;
+    }
+
+
+    public ProjectCollectionLogic getCollectionLogic() {
+        return collectionLogic;
+    }
+
+    public void setCollectionLogic(ProjectCollectionLogic collectionLogic) {
+        this.collectionLogic = collectionLogic;
+    }
+
+    public Tag getCollectionTag() {
+        return collectionTag;
+    }
+
+    public void setCollectionTag(Tag collectionTag) {
+        this.collectionTag = collectionTag;
     }
 
     public String getCpe() {

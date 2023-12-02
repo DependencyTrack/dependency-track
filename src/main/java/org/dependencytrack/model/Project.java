@@ -189,7 +189,7 @@ public class Project implements Serializable {
     @Column(name = "COLLECTION_LOGIC", jdbcType = "VARCHAR", allowsNull = "true", defaultValue = "NONE") // New column, must allow nulls on existing databases
     @Index(name = "PROJECT_COLLECTION_LOGIC_IDX")
     @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
-    private ProjectCollectionLogic collectionLogic;
+    private ProjectCollectionLogic collectionLogic = ProjectCollectionLogic.NONE;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "COLLECTION_TAG", allowsNull = "true")

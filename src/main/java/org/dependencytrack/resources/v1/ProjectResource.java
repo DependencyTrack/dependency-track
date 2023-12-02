@@ -236,6 +236,7 @@ public class ProjectResource extends AlpineResource {
                 validator.validateProperty(jsonProject, "description"),
                 validator.validateProperty(jsonProject, "version"),
                 validator.validateProperty(jsonProject, "classifier"),
+                validator.validateProperty(jsonProject, "collectionLogic"),
                 validator.validateProperty(jsonProject, "cpe"),
                 validator.validateProperty(jsonProject, "purl"),
                 validator.validateProperty(jsonProject, "swidTagId")
@@ -289,6 +290,7 @@ public class ProjectResource extends AlpineResource {
                 validator.validateProperty(jsonProject, "description"),
                 validator.validateProperty(jsonProject, "version"),
                 validator.validateProperty(jsonProject, "classifier"),
+                validator.validateProperty(jsonProject, "collectionLogic"),
                 validator.validateProperty(jsonProject, "cpe"),
                 validator.validateProperty(jsonProject, "purl"),
                 validator.validateProperty(jsonProject, "swidTagId")
@@ -354,6 +356,7 @@ public class ProjectResource extends AlpineResource {
                 validator.validateProperty(jsonProject, "description"),
                 validator.validateProperty(jsonProject, "version"),
                 validator.validateProperty(jsonProject, "classifier"),
+                validator.validateProperty(jsonProject, "collectionLogic"),
                 validator.validateProperty(jsonProject, "cpe"),
                 validator.validateProperty(jsonProject, "purl"),
                 validator.validateProperty(jsonProject, "swidTagId")
@@ -378,6 +381,8 @@ public class ProjectResource extends AlpineResource {
                 modified |= setIfDifferent(jsonProject, project, Project::getGroup, Project::setGroup);
                 modified |= setIfDifferent(jsonProject, project, Project::getDescription, Project::setDescription);
                 modified |= setIfDifferent(jsonProject, project, Project::getClassifier, Project::setClassifier);
+                modified |= setIfDifferent(jsonProject, project, Project::getCollectionLogic, Project::setCollectionLogic);
+                modified |= setIfDifferent(jsonProject, project, Project::getCollectionTag, Project::setCollectionTag);
                 modified |= setIfDifferent(jsonProject, project, Project::getCpe, Project::setCpe);
                 modified |= setIfDifferent(jsonProject, project, Project::getPurl, Project::setPurl);
                 modified |= setIfDifferent(jsonProject, project, Project::getSwidTagId, Project::setSwidTagId);

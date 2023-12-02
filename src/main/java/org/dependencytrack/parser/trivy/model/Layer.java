@@ -18,9 +18,13 @@
  */
 package org.dependencytrack.parser.trivy.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class Layer {
     private String digest;
+    @SerializedName("diff_id")
     private String diffID;
+    @SerializedName("created_by")
     private String createdBy;
 
     public String getDigest() { return digest; }

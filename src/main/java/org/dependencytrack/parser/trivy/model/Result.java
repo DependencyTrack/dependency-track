@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.parser.trivy.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class Result {
     private String target;
     private Vulnerability[] vulnerabilities;
@@ -25,6 +27,7 @@ public class Result {
     private String resultClass;
     private String type;
     private Object[] packages;
+    @SerializedName("custom_resources")
     private Object[] customResources;
     private Object[] secrets;
     private Object[] licenses;

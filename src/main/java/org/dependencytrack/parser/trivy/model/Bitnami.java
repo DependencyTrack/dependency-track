@@ -18,10 +18,16 @@
  */
 package org.dependencytrack.parser.trivy.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class Bitnami {
+    @SerializedName("v2_vector")
     private String v2Vector;
+    @SerializedName("v3_vector")
     private String v3Vector;
+    @SerializedName("v2_score")
     private double v2Score;
+    @SerializedName("v3_score")
     private double v3Score;
 
     public String getV2Vector() { return v2Vector; }

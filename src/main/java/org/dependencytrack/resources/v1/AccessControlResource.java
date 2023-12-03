@@ -29,6 +29,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
@@ -158,6 +159,37 @@ public class AccessControlResource extends AlpineResource {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team or project could not be found.").build();
             }
+        }
+    }
+
+    @GET
+    @Path("/notassignedprojects/{teamUuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all projects not yet assigned to the given team",
+            response = Project.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects not assigned to the given team")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired({Permissions.Constants.VIEW_PORTFOLIO, Permissions.Constants.ACCESS_MANAGEMENT})
+    public Response getProjects(
+                                @ApiParam(value = "The UUID of the team which projects shall be excluded", required = true)
+                                @PathParam("teamUuid") String teamUuid,
+                                @ApiParam(value = "The optional name of the project to query on", required = false)
+                                @QueryParam("name") String name,
+                                @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
+                                @QueryParam("excludeInactive") boolean excludeInactive
+    ) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Team team = qm.getObjectByUuid(Team.class, teamUuid);
+            if(team == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
+            }
+            final PaginatedResult result = qm.getProjectsNotAssignedToTeam(name, excludeInactive, team);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
 }

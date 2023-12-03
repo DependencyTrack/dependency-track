@@ -363,6 +363,10 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects(name, excludeInactive, onlyRoot);
     }
 
+    public PaginatedResult getProjectsNotAssignedToTeam(final String name, final boolean excludeInactive, final Team team) {
+        return getProjectQueryManager().getProjectsNotAssignedToTeam(name, excludeInactive, team);
+    }
+
     public Project getProject(final String uuid) {
         return getProjectQueryManager().getProject(uuid);
     }

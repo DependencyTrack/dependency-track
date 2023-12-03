@@ -202,6 +202,34 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * Returns a list of projects by their name that are not assigned to a team.
+     * @param name the name of the Projects
+     * @return a List of Project objects
+     */
+    @Override
+    public PaginatedResult getProjectsNotAssignedToTeam(final String name, final boolean excludeInactive, final Team team) {
+        final Query<Project> query = pm.newQuery(Project.class);
+        if (orderBy == null) {
+            query.setOrdering("version desc");
+        }
+
+        final var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive);
+        if(name != null && !name.isBlank()) {
+            filterBuilder.withName(name);
+        }
+        if(team != null) {
+            filterBuilder.notWithTeam(team);
+        }
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
+        preprocessACLs(query, queryFilter, params, false);
+        return execute(query, params);
+    }
+
+    /**
      * Returns a project by its uuid.
      * @param uuid the uuid of the Project (required)
      * @return a Project object, or null if not found

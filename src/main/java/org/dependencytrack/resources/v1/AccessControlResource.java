@@ -175,7 +175,7 @@ public class AccessControlResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired({Permissions.Constants.VIEW_PORTFOLIO, Permissions.Constants.ACCESS_MANAGEMENT})
-    public Response getProjects(
+    public Response getProjectsNotAssignedToTeam(
                                 @ApiParam(value = "The UUID of the team which projects shall be excluded", required = true)
                                 @PathParam("teamUuid") String teamUuid,
                                 @ApiParam(value = "The optional name of the project to query on", required = false)

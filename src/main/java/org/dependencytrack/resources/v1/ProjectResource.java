@@ -39,6 +39,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
+import org.dependencytrack.resources.v1.vo.IsTokenBeingProcessedResponse;
 
 import javax.jdo.FetchGroup;
 import javax.validation.Validator;
@@ -58,6 +59,7 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -514,8 +516,9 @@ public class ProjectResource extends AlpineResource {
                 }
 
                 LOGGER.info("Project " + sourceProject + " is being cloned by " + super.getPrincipal().getName());
-                Event.dispatch(new CloneProjectEvent(jsonRequest));
-                return Response.ok().build();
+                CloneProjectEvent event = new CloneProjectEvent(jsonRequest);
+                Event.dispatch(event);
+                return Response.ok(java.util.Collections.singletonMap("token", event.getChainIdentifier())).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }
@@ -668,5 +671,28 @@ public class ProjectResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }
         }
+    }
+
+    @GET
+    @Path("/token/{uuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
+            notes = "This endpoint is intended to be used in conjunction with cloning a project which returns a token. " +
+                    "The token can then be queried using this endpoint to determine if cloning is complete. " +
+                    "A value of true indicates processing is occurring. A value of false indicates that no processing is " +
+                    "occurring for the specified token. However, a value of false also does not confirm the token is valid, " +
+                    "only that no processing is associated with the specified token.", response = IsTokenBeingProcessedResponse.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response isTokenBeingProcessed (
+            @ApiParam(value = "The UUID of the token to query", required = true)
+            @PathParam("uuid") String uuid) {
+
+        final boolean value = Event.isEventBeingProcessed(UUID.fromString(uuid));
+        IsTokenBeingProcessedResponse response = new IsTokenBeingProcessedResponse();
+        response.setProcessing(value);
+        return Response.ok(response).build();
     }
 }

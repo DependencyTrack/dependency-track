@@ -431,10 +431,6 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().createProject(project, tags, commitIndex);
     }
 
-    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, PackageURL purl, boolean active, boolean commitIndex) {
-        return getProjectQueryManager().updateProject(uuid, name, description, version, tags, purl, active, commitIndex);
-    }
-
     public Project updateProject(Project transientProject, boolean commitIndex) {
         return getProjectQueryManager().updateProject(transientProject, commitIndex);
     }
@@ -1156,12 +1152,12 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().getNotificationPublisher(name);
     }
 
-    public NotificationPublisher getDefaultNotificationPublisher(final Class<Publisher> clazz) {
+    public NotificationPublisher getDefaultNotificationPublisher(final Class<? extends Publisher> clazz) {
         return getNotificationQueryManager().getDefaultNotificationPublisher(clazz);
     }
 
     public NotificationPublisher createNotificationPublisher(final String name, final String description,
-                                                             final Class<Publisher> publisherClass, final String templateContent,
+                                                             final Class<? extends Publisher> publisherClass, final String templateContent,
                                                              final String templateMimeType, final boolean defaultPublisher) {
         return getNotificationQueryManager().createNotificationPublisher(name, description, publisherClass, templateContent, templateMimeType, defaultPublisher);
     }

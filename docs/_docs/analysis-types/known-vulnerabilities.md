@@ -15,14 +15,30 @@ vulnerabilities. The platform employs several methods of vulnerability identific
 | VulnDB    | VulnDB is a commercial service which identifies vulnerabilities in third-party components              |
 | Snyk      | Snyk is a commercial service which identifies vulnerabilities in third-party components                |
 
-
-Each of the analyzers above can be enabled or disabled independently from one another.
+Each of the analyzers above can be enabled or disabled independently of one another.
 
 ### Internal Analyzer
 
 The internal analyzer relies on a dictionary of vulnerable software. This dictionary is automatically populated when 
-NVD, GitHub Advisories, or VulnDB mirroring is performed. The internal analyzer is applicable to all components with valid 
-CPEs, including application, operating system, and hardware components, and all components with Package URLs.
+NVD, GitHub Advisories, OSV, or VulnDB mirroring is performed. The internal analyzer is applicable to all components 
+with valid CPEs or PURLs, including application, operating system, and hardware components, and all components with
+Package URLs.
+
+#### CPE Matching
+
+Matching against data from the NVD requires components to have a valid CPE. Dependency-Track follows
+the [NIST CPE name matching specification](https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf), 
+with a few customizations.
+
+To reduce false positives, the following additional checks are performed:
+
+* If comparison of *vendor* yields `SUBSET`, and comparison of *product* yields `SUPERSET`, then it's a no-match
+* If comparison of *vendor* yields `SUPSERSET`, and comparison of *product* yields `SUBSET`, then it's a no-match
+
+This is to avoid component CPEs like `cpe:2.3:a:*:zstandard:1.5.2:*:*:*:*:*:*:*` from getting matched to
+CVE CPEs like `cpe:2.3:a:pascom_cloud_phone_system:*:*:*:*:*:*:*:*:*`.
+
+Dependency-Track will emit a log in `DEBUG` level whenever it discards matches due to the above.
 
 ### OSS Index Analyzer
 

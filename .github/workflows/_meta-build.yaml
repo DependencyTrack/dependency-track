@@ -109,7 +109,7 @@ jobs:
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # tag=v5.0.0
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # tag=v5.1.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
@@ -133,6 +133,6 @@ jobs:
 
       - name: Upload Trivy Scan Results to GitHub Security Tab
         if: ${{ inputs.publish-container }}
-        uses: github/codeql-action/upload-sarif@74483a38d39275f33fcff5f35b679b5ca4a26a99 # tag=v2.22.5
+        uses: github/codeql-action/upload-sarif@407ffafae6a767df3e0230c3df91b6443ae8df75 # tag=v2.22.8
         with:
           sarif_file: 'trivy-results.sarif'

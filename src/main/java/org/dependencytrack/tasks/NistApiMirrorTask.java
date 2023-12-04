@@ -57,6 +57,7 @@ import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder.aNvdCveApi;
 import static java.util.stream.Collectors.groupingBy;
@@ -143,6 +144,7 @@ public class NistApiMirrorTask implements Subscriber {
         final var executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), factory);
 
         final long startTimeNs = System.nanoTime();
+        final var numMirrored = new AtomicInteger(0);
         ZonedDateTime lastModified;
         try (final NvdCveClient client = createApiClient(apiUrl, apiKey, lastModifiedEpochSeconds)) {
             try {
@@ -166,6 +168,12 @@ public class NistApiMirrorTask implements Subscriber {
                                 synchronizeVulnerableSoftware(qm, persistentVuln, vsList);
                             } catch (Exception ex) {
                                 LOGGER.error("An unexpected error occurred while processing %s".formatted(vuln.getVulnId()), ex);
+                            } finally {
+                                final int currentNumMirrored = numMirrored.incrementAndGet();
+                                if (currentNumMirrored % 2000 == 0) { // Max page size of NVD API responses is 2000.
+                                    final int currentMirroredPercentage = (currentNumMirrored * 100) / client.getTotalAvailable();
+                                    LOGGER.info("Mirrored %d/%d CVEs (%d%%)".formatted(currentNumMirrored, client.getTotalAvailable(), currentMirroredPercentage));
+                                }
                             }
                         });
                     }
@@ -199,7 +207,7 @@ public class NistApiMirrorTask implements Subscriber {
             LOGGER.error("An unexpected error occurred while mirroring the contents of the National Vulnerability Database", ex);
             return;
         } finally {
-            LOGGER.info("Mirroring completed in %s".formatted(Duration.ofNanos(System.nanoTime() - startTimeNs)));
+            LOGGER.info("Mirroring of %d CVEs completed in %s".formatted(numMirrored.get(), Duration.ofNanos(System.nanoTime() - startTimeNs)));
         }
 
         if (updateLastModified(lastModified)) {

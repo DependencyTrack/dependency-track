@@ -162,13 +162,13 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     LOGGER.debug("Analyzing component: " + component.getUuid() + " using repository: "
                             + repository.getIdentifier() + " (" + repository.getType() + ")");
 
-                    if (Boolean.TRUE.equals(repository.isInternal()) || Boolean.TRUE.equals(repository.isAuthenticationRequired())) {
+                    if (Boolean.TRUE.equals(repository.isAuthenticationRequired())) {
                         try {
-                            String encryptedPassword = null;
+                            String decryptedPassword = null;
                             if (repository.getPassword() != null) {
-                                encryptedPassword = DataEncryption.decryptAsString(repository.getPassword());
+                                decryptedPassword = DataEncryption.decryptAsString(repository.getPassword());
                             }
-                            analyzer.setRepositoryUsernameAndPassword(repository.getUsername(), encryptedPassword);
+                            analyzer.setRepositoryUsernameAndPassword(repository.getUsername(), decryptedPassword);
                         } catch (Exception e) {
                             LOGGER.error("Failed decrypting password for repository: " + repository.getIdentifier(), e);
                         }

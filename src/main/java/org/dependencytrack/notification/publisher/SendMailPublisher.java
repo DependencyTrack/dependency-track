@@ -19,8 +19,6 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.common.logging.Logger;
-import alpine.common.util.BooleanUtil;
-import alpine.model.ConfigProperty;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
@@ -28,12 +26,14 @@ import alpine.model.Team;
 import alpine.notification.Notification;
 import alpine.security.crypto.DataEncryption;
 import alpine.server.mail.SendMail;
+import alpine.server.mail.SendMailException;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.json.JsonObject;
 import javax.json.JsonString;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -56,64 +56,106 @@ public class SendMailPublisher implements Publisher {
     private static final Logger LOGGER = Logger.getLogger(SendMailPublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
 
-    public void inform(final Notification notification, final JsonObject config) {
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
         if (config == null) {
-            LOGGER.warn("No configuration found. Skipping notification.");
+            LOGGER.warn("No configuration found; Skipping notification (%s)".formatted(ctx));
             return;
         }
         final String[] destinations = parseDestination(config);
-        sendNotification(notification, config, destinations);
+        sendNotification(ctx, notification, config, destinations);
     }
 
-    public void inform(final Notification notification, final JsonObject config, List<Team> teams) {
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config, List<Team> teams) {
         if (config == null) {
-            LOGGER.warn("No configuration found. Skipping notification.");
+            LOGGER.warn("No configuration found. Skipping notification. (%s)".formatted(ctx));
             return;
         }
         final String[] destinations = parseDestination(config, teams);
-        sendNotification(notification, config, destinations);
+        sendNotification(ctx, notification, config, destinations);
     }
 
-    private void sendNotification(Notification notification, JsonObject config, String[] destinations) {
-        PebbleTemplate template = getTemplate(config);
-        String mimeType = getTemplateMimeType(config);
-        final String content = prepareTemplate(notification, template);
-        if (destinations == null || content == null) {
-            LOGGER.warn("A destination or template was not found. Skipping notification");
+    private void sendNotification(final PublishContext ctx, Notification notification, JsonObject config, String[] destinations) {
+        if (config == null) {
+            LOGGER.warn("No publisher configuration found; Skipping notification (%s)".formatted(ctx));
             return;
         }
-        try (QueryManager qm = new QueryManager()) {
-            final ConfigProperty smtpEnabled = qm.getConfigProperty(EMAIL_SMTP_ENABLED.getGroupName(), EMAIL_SMTP_ENABLED.getPropertyName());
-            final ConfigProperty smtpFrom = qm.getConfigProperty(EMAIL_SMTP_FROM_ADDR.getGroupName(), EMAIL_SMTP_FROM_ADDR.getPropertyName());
-            final ConfigProperty smtpHostname = qm.getConfigProperty(EMAIL_SMTP_SERVER_HOSTNAME.getGroupName(), EMAIL_SMTP_SERVER_HOSTNAME.getPropertyName());
-            final ConfigProperty smtpPort = qm.getConfigProperty(EMAIL_SMTP_SERVER_PORT.getGroupName(), EMAIL_SMTP_SERVER_PORT.getPropertyName());
-            final ConfigProperty smtpUser = qm.getConfigProperty(EMAIL_SMTP_USERNAME.getGroupName(), EMAIL_SMTP_USERNAME.getPropertyName());
-            final ConfigProperty smtpPass = qm.getConfigProperty(EMAIL_SMTP_PASSWORD.getGroupName(), EMAIL_SMTP_PASSWORD.getPropertyName());
-            final ConfigProperty smtpSslTls = qm.getConfigProperty(EMAIL_SMTP_SSLTLS.getGroupName(), EMAIL_SMTP_SSLTLS.getPropertyName());
-            final ConfigProperty smtpTrustCert = qm.getConfigProperty(EMAIL_SMTP_TRUSTCERT.getGroupName(), EMAIL_SMTP_TRUSTCERT.getPropertyName());
+        if (destinations == null) {
+            LOGGER.warn("No destination(s) provided; Skipping notification (%s)".formatted(ctx));
+            return;
+        }
 
-            if (!BooleanUtil.valueOf(smtpEnabled.getPropertyValue())) {
-                LOGGER.warn("SMTP is not enabled");
-                return; // smtp is not enabled
+        final String content;
+        final String mimeType;
+        try {
+            final PebbleTemplate template = getTemplate(config);
+            mimeType = getTemplateMimeType(config);
+            content = prepareTemplate(notification, template);
+        } catch (IOException | RuntimeException e) {
+            LOGGER.error("Failed to prepare notification content (%s)".formatted(ctx), e);
+            return;
+        }
+
+        final boolean smtpEnabled;
+        final String smtpFrom;
+        final String smtpHostname;
+        final int smtpPort;
+        final String smtpUser;
+        final String encryptedSmtpPassword;
+        final boolean smtpSslTls;
+        final boolean smtpTrustCert;
+
+        try (QueryManager qm = new QueryManager()) {
+            smtpEnabled = qm.isEnabled(EMAIL_SMTP_ENABLED);
+            if (!smtpEnabled) {
+                LOGGER.warn("SMTP is not enabled; Skipping notification (%s)".formatted(ctx));
+                return;
             }
-            final boolean smtpAuth = (smtpUser.getPropertyValue() != null && smtpPass.getPropertyValue() != null);
-            final String password = (smtpPass.getPropertyValue() != null) ? DataEncryption.decryptAsString(smtpPass.getPropertyValue()) : null;
+
+            smtpFrom = qm.getConfigProperty(EMAIL_SMTP_FROM_ADDR.getGroupName(), EMAIL_SMTP_FROM_ADDR.getPropertyName()).getPropertyValue();
+            smtpHostname = qm.getConfigProperty(EMAIL_SMTP_SERVER_HOSTNAME.getGroupName(), EMAIL_SMTP_SERVER_HOSTNAME.getPropertyName()).getPropertyValue();
+            smtpPort = Integer.parseInt(qm.getConfigProperty(EMAIL_SMTP_SERVER_PORT.getGroupName(), EMAIL_SMTP_SERVER_PORT.getPropertyName()).getPropertyValue());
+            smtpUser = qm.getConfigProperty(EMAIL_SMTP_USERNAME.getGroupName(), EMAIL_SMTP_USERNAME.getPropertyName()).getPropertyValue();
+            encryptedSmtpPassword = qm.getConfigProperty(EMAIL_SMTP_PASSWORD.getGroupName(), EMAIL_SMTP_PASSWORD.getPropertyName()).getPropertyValue();
+            smtpSslTls = qm.isEnabled(EMAIL_SMTP_SSLTLS);
+            smtpTrustCert = qm.isEnabled(EMAIL_SMTP_TRUSTCERT);
+        } catch (RuntimeException e) {
+            LOGGER.error("Failed to load SMTP configuration from datastore (%s)".formatted(ctx), e);
+            return;
+        }
+
+        final boolean smtpAuth = (smtpUser != null && encryptedSmtpPassword != null);
+        final String decryptedSmtpPassword;
+        try {
+            decryptedSmtpPassword = (encryptedSmtpPassword != null) ? DataEncryption.decryptAsString(encryptedSmtpPassword) : null;
+        } catch (Exception e) {
+            LOGGER.error("Failed to decrypt SMTP password (%s)".formatted(ctx), e);
+            return;
+        }
+
+        try {
             final SendMail sendMail = new SendMail()
-                    .from(smtpFrom.getPropertyValue())
+                    .from(smtpFrom)
                     .to(destinations)
                     .subject("[Dependency-Track] " + notification.getTitle())
                     .body(content)
                     .bodyMimeType(mimeType)
-                    .host(smtpHostname.getPropertyValue())
-                    .port(Integer.valueOf(smtpPort.getPropertyValue()))
-                    .username(smtpUser.getPropertyValue())
-                    .password(password)
+                    .host(smtpHostname)
+                    .port(smtpPort)
+                    .username(smtpUser)
+                    .password(decryptedSmtpPassword)
                     .smtpauth(smtpAuth)
-                    .useStartTLS(BooleanUtil.valueOf(smtpSslTls.getPropertyValue()))
-                    .trustCert(Boolean.valueOf(smtpTrustCert.getPropertyValue()));
+                    .useStartTLS(smtpSslTls)
+                    .trustCert(smtpTrustCert);
             sendMail.send();
-        } catch (Exception e) {
-            LOGGER.error("An error occurred sending output email notification", e);
+        } catch (SendMailException | RuntimeException e) {
+            LOGGER.error("Failed to send notification email via %s:%d (%s)"
+                    .formatted(smtpHostname, smtpPort, ctx), e);
+            return;
+        }
+
+        if (ctx.shouldLogSuccess()) {
+            LOGGER.info("Notification email sent successfully via %s:%d (%s)"
+                    .formatted(smtpHostname, smtpPort, ctx));
         }
   }
 

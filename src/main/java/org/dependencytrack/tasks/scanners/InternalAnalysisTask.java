@@ -107,13 +107,10 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
         }
         List<VulnerableSoftware> vsList = Collections.emptyList();
         String componentVersion;
-        String componentUpdate;
         if (parsedCpe != null) {
             componentVersion = parsedCpe.getVersion();
-            componentUpdate = parsedCpe.getUpdate();
         } else if (component.getPurl() != null) {
             componentVersion = component.getPurl().getVersion();
-            componentUpdate = null;
         } else {
             // Catch cases where the CPE couldn't be parsed and no PURL exists.
             // Should be rare, but could lead to NPEs later.
@@ -148,7 +145,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             FuzzyVulnerableSoftwareSearchManager fm = new FuzzyVulnerableSoftwareSearchManager(excludeComponentsWithPurl);
             vsList = fm.fuzzyAnalysis(qm, component, parsedCpe);
         }
-        super.analyzeVersionRange(qm, vsList, componentVersion, componentUpdate, component, vulnerabilityAnalysisLevel);
+        super.analyzeVersionRange(qm, vsList, parsedCpe, componentVersion, component, vulnerabilityAnalysisLevel);
     }
 
 }

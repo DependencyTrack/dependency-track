@@ -16,34 +16,33 @@ off-the-shelf software.
 Dependency-Track supports the following default repositories:
 
 | Ecosystem  | Repository       | Resolution Order |
-| ---------- | ---------------- | ---------------- |
-| cargo      | Crates.io        | 1 |
-| composer   | Packagist        | 1 |
-| gem        | RubyGems         | 1 |
-| go modules | proxy.golang.org | 1 |
-| hex        | Hex              | 1 |
-| maven      | Maven Central    | 1 |
-|            | Atlassian Public | 2 |
-|            | JBoss Releases   | 3 |
-|            | Clojars          | 4 |
-|            | Google Android   | 5 |
-| npm        | NPM              | 1 |
-| nuget      | NuGet            | 1 |
-| pypi       | PyPi             | 1 |
-| cpan       | CPAN             | 1 |
+|------------|------------------|------------------|
+| cargo      | Crates.io        | 1                |
+| composer   | Packagist        | 1                |
+| gem        | RubyGems         | 1                |
+| github     | github.com       | 1                |
+| go modules | proxy.golang.org | 1                |
+| hex        | Hex              | 1                |
+| maven      | Maven Central    | 1                |
+|            | Atlassian Public | 2                |
+|            | JBoss Releases   | 3                |
+|            | Clojars          | 4                |
+|            | Google Android   | 5                |
+| npm        | NPM              | 1                |
+| nuget      | NuGet            | 1                |
+| pypi       | PyPi             | 1                |
+| cpan       | CPAN             | 1                |
 
 
 Additional repositories can be added for each supported ecosystem. Additionally, repositories can be enabled or disabled
-as well as identified as 'internal'. For internal repositories, a username and/or password may be specified. This allows
-Dependency-Track to scan packages from private repositories that require basic authentication, like Azure Artifacts or
-Artifactory.
+as well as identified as 'internal'. A username and/or password may be specified, which allows Dependency-Track to scan
+packages from private repositories that require basic authentication, like Azure Artifacts or Artifactory.
 
 ![repositories](/images/screenshots/repositories.png)
 
 > Components that are identified as 'internal' will only be analyzed using 'internal' repositories. Non-internal
 > components will only be analyzed using non-internal repositories. Disabled repositories will be omitted from
 > component metadata analysis.
-
 
 ### Outdated Version Tracking
 
@@ -59,3 +58,11 @@ leveraging repositories to identify outdated components.
 
 Refer to [Datasource Routing]({{ site.baseurl }}{% link _docs/datasources/routing.md %})
 for information on Package URL and the various ways it is used throughout Dependency-Track.
+
+### Authentication
+
+#### GitHub
+
+For GitHub repositories (`github.com` per default), the username should be the GitHub account's username,
+and the password should be a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+(PAT) with public access (no additional scopes).

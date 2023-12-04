@@ -382,6 +382,8 @@ public class ProjectResource extends AlpineResource {
                 modified |= setIfDifferent(jsonProject, project, Project::getPurl, Project::setPurl);
                 modified |= setIfDifferent(jsonProject, project, Project::getSwidTagId, Project::setSwidTagId);
                 modified |= setIfDifferent(jsonProject, project, Project::isActive, Project::setActive);
+                modified |= setIfDifferent(jsonProject, project, Project::getManufacturer, Project::setManufacturer);
+                modified |= setIfDifferent(jsonProject, project, Project::getSupplier, Project::setSupplier);
                 if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
                     final Project parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
                     if (parent == null) {

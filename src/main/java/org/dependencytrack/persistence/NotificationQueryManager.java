@@ -68,6 +68,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setPublisher(publisher);
         rule.setEnabled(true);
         rule.setNotifyChildren(true);
+        rule.setLogSuccessfulPublish(false);
         return persist(rule);
     }
 
@@ -81,6 +82,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setName(transientRule.getName());
         rule.setEnabled(transientRule.isEnabled());
         rule.setNotifyChildren(transientRule.isNotifyChildren());
+        rule.setLogSuccessfulPublish(transientRule.isLogSuccessfulPublish());
         rule.setNotificationLevel(transientRule.getNotificationLevel());
         rule.setPublisherConfig(transientRule.getPublisherConfig());
         rule.setNotifyOn(transientRule.getNotifyOn());
@@ -133,7 +135,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @param clazz The Class of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    public NotificationPublisher getDefaultNotificationPublisher(final Class<Publisher> clazz) {
+    public NotificationPublisher getDefaultNotificationPublisher(final Class<? extends Publisher> clazz) {
         return getDefaultNotificationPublisher(clazz.getCanonicalName());
     }
 
@@ -155,7 +157,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @return a NotificationPublisher
      */
     public NotificationPublisher createNotificationPublisher(final String name, final String description,
-                                                             final Class<Publisher> publisherClass, final String templateContent,
+                                                             final Class<? extends Publisher> publisherClass, final String templateContent,
                                                              final String templateMimeType, final boolean defaultPublisher) {
         pm.currentTransaction().begin();
         final NotificationPublisher publisher = new NotificationPublisher();

@@ -31,14 +31,14 @@ public enum DefaultNotificationPublishers {
     CS_WEBEX("Cisco Webex", "Publishes notifications to a Cisco Webex Teams channel", CsWebexPublisher.class, "/templates/notification/publisher/cswebex.peb", MediaType.APPLICATION_JSON, true),
     JIRA("Jira", "Creates a Jira issue in a configurable Jira instance and queue", JiraPublisher.class, "/templates/notification/publisher/jira.peb", MediaType.APPLICATION_JSON, true);
 
-    private String name;
-    private String description;
-    private Class publisherClass;
-    private String templateFile;
-    private String templateMimeType;
-    private boolean defaultPublisher;
+    private final String name;
+    private final String description;
+    private final Class<? extends Publisher> publisherClass;
+    private final String templateFile;
+    private final String templateMimeType;
+    private final boolean defaultPublisher;
 
-    DefaultNotificationPublishers(final String name, final String description, final Class publisherClass,
+    DefaultNotificationPublishers(final String name, final String description, final Class<? extends Publisher> publisherClass,
                                   final String templateFile, final String templateMimeType, final boolean defaultPublisher) {
         this.name = name;
         this.description = description;
@@ -56,7 +56,7 @@ public enum DefaultNotificationPublishers {
         return description;
     }
 
-    public Class getPublisherClass() {
+    public Class<? extends Publisher> getPublisherClass() {
         return publisherClass;
     }
 

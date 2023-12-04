@@ -33,7 +33,10 @@ import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.ExternalReference;
+import org.dependencytrack.model.OrganizationalContact;
+import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
@@ -63,8 +66,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.equalTo;
 
 public class ProjectResourceTest extends ResourceTest {
 
@@ -582,6 +587,21 @@ public class ProjectResourceTest extends ResourceTest {
     public void patchProjectSuccessfullyPatchedTest() {
         final var tags = Stream.of("tag1", "tag2").map(qm::createTag).collect(Collectors.toUnmodifiableList());
         final var p1 = qm.createProject("ABC", "Test project", "1.0", tags, null, null, true, false);
+        final var projectManufacturerContact = new OrganizationalContact();
+        projectManufacturerContact.setName("manufacturerContactName");
+        final var projectManufacturer = new OrganizationalEntity();
+        projectManufacturer.setName("manufacturerName");
+        projectManufacturer.setUrls(new String[]{"https://manufacturer.example.com"});
+        projectManufacturer.setContacts(List.of(projectManufacturerContact));
+        p1.setManufacturer(projectManufacturer);
+        final var projectSupplierContact = new OrganizationalContact();
+        projectSupplierContact.setName("supplierContactName");
+        final var projectSupplier = new OrganizationalEntity();
+        projectSupplier.setName("supplierName");
+        projectSupplier.setUrls(new String[]{"https://supplier.example.com"});
+        projectSupplier.setContacts(List.of(projectSupplierContact));
+        p1.setSupplier(projectSupplier);
+        qm.persist(p1);
         final var jsonProject = new Project();
         jsonProject.setActive(false);
         jsonProject.setName("new name");
@@ -591,22 +611,66 @@ public class ProjectResourceTest extends ResourceTest {
             t.setName(name);
             return t;
         }).collect(Collectors.toUnmodifiableList()));
+        final var jsonProjectManufacturerContact = new OrganizationalContact();
+        jsonProjectManufacturerContact.setName("newManufacturerContactName");
+        final var jsonProjectManufacturer = new OrganizationalEntity();
+        jsonProjectManufacturer.setName("manufacturerName");
+        jsonProjectManufacturer.setUrls(new String[]{"https://manufacturer.example.com"});
+        jsonProjectManufacturer.setContacts(List.of(jsonProjectManufacturerContact));
+        jsonProject.setManufacturer(jsonProjectManufacturer);
+        final var jsonProjectSupplierContact = new OrganizationalContact();
+        jsonProjectSupplierContact.setName("newSupplierContactName");
+        final var jsonProjectSupplier = new OrganizationalEntity();
+        jsonProjectSupplier.setName("supplierName");
+        jsonProjectSupplier.setUrls(new String[]{"https://supplier.example.com"});
+        jsonProjectSupplier.setContacts(List.of(jsonProjectSupplierContact));
+        jsonProject.setSupplier(jsonProjectSupplier);
         final var response = target(V1_PROJECT + "/" + p1.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
                 .method("PATCH", Entity.json(jsonProject));
         Assert.assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        final var json = parseJsonObject(response);
-        Assert.assertEquals(p1.getUuid().toString(), json.getString("uuid"));
-        Assert.assertEquals(p1.getDescription(), json.getString("description"));
-        Assert.assertEquals(p1.getVersion(), json.getString("version"));
-        Assert.assertEquals(jsonProject.getName(), json.getString("name"));
-        Assert.assertEquals(jsonProject.getPublisher(), json.getString("publisher"));
-        Assert.assertEquals(false, json.getBoolean("active"));
-        final var jsonTags = json.getJsonArray("tags");
-        Assert.assertEquals(1, jsonTags.size());
-        Assert.assertEquals("tag4", jsonTags.get(0).asJsonObject().getString("name"));
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", equalTo(p1.getUuid().toString()))
+                .isEqualTo("""
+                        {
+                          "publisher": "new publisher",
+                          "manufacturer": {
+                            "name": "manufacturerName",
+                            "urls": [
+                              "https://manufacturer.example.com"
+                            ],
+                            "contacts": [
+                              {
+                                "name": "newManufacturerContactName"
+                              }
+                            ]
+                          },
+                          "supplier": {
+                            "name": "supplierName",
+                            "urls": [
+                              "https://supplier.example.com"
+                            ],
+                            "contacts": [
+                              {
+                                "name": "newSupplierContactName"
+                              }
+                            ]
+                          },
+                          "name": "new name",
+                          "description": "Test project",
+                          "version": "1.0",
+                          "uuid": "${json-unit.matches:projectUuid}",
+                          "properties": [],
+                          "tags": [
+                            {
+                              "name": "tag4"
+                            }
+                          ],
+                          "active": false
+                        }
+                        """);
     }
 
     @Test
@@ -798,9 +862,16 @@ public class ProjectResourceTest extends ResourceTest {
     public void cloneProjectTest() {
         EventService.getInstance().subscribe(CloneProjectEvent.class, CloneProjectTask.class);
 
+        final var projectManufacturer = new OrganizationalEntity();
+        projectManufacturer.setName("projectManufacturer");
+        final var projectSupplier = new OrganizationalEntity();
+        projectSupplier.setName("projectSupplier");
+
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
+        project.setManufacturer(projectManufacturer);
+        project.setSupplier(projectSupplier);
         project.setAccessTeams(List.of(team));
         qm.persist(project);
 
@@ -811,10 +882,24 @@ public class ProjectResourceTest extends ResourceTest {
                 qm.createTag("tag-b")
         ));
 
+        final var metadataAuthor = new OrganizationalContact();
+        metadataAuthor.setName("metadataAuthor");
+        final var metadataSupplier = new OrganizationalEntity();
+        metadataSupplier.setName("metadataSupplier");
+        final var metadata = new ProjectMetadata();
+        metadata.setProject(project);
+        metadata.setAuthors(List.of(metadataAuthor));
+        metadata.setSupplier(metadataSupplier);
+        qm.persist(metadata);
+
+        final var componentSupplier = new OrganizationalEntity();
+        componentSupplier.setName("componentSupplier");
+
         final var component = new Component();
         component.setProject(project);
         component.setName("acme-lib");
         component.setVersion("2.0.0");
+        component.setSupplier(componentSupplier);
         qm.persist(component);
 
         final var service = new ServiceComponent();
@@ -858,6 +943,10 @@ public class ProjectResourceTest extends ResourceTest {
                     final Project clonedProject = qm.getProject("acme-app", "1.1.0");
                     assertThat(clonedProject).isNotNull();
                     assertThat(clonedProject.getUuid()).isNotEqualTo(project.getUuid());
+                    assertThat(clonedProject.getSupplier()).isNotNull();
+                    assertThat(clonedProject.getSupplier().getName()).isEqualTo("projectSupplier");
+                    assertThat(clonedProject.getManufacturer()).isNotNull();
+                    assertThat(clonedProject.getManufacturer().getName()).isEqualTo("projectManufacturer");
                     assertThat(clonedProject.getAccessTeams()).containsOnly(team);
 
                     final List<ProjectProperty> clonedProperties = qm.getProjectProperties(clonedProject);
@@ -873,10 +962,19 @@ public class ProjectResourceTest extends ResourceTest {
                     assertThat(clonedProject.getTags()).extracting(Tag::getName)
                             .containsOnly("tag-a", "tag-b");
 
+                    final ProjectMetadata clonedMetadata = clonedProject.getMetadata();
+                    assertThat(clonedMetadata).isNotNull();
+                    assertThat(clonedMetadata.getAuthors())
+                            .satisfiesExactly(contact -> assertThat(contact.getName()).isEqualTo("metadataAuthor"));
+                    assertThat(clonedMetadata.getSupplier())
+                            .satisfies(entity -> assertThat(entity.getName()).isEqualTo("metadataSupplier"));
+
                     assertThat(qm.getAllComponents(clonedProject)).satisfiesExactly(clonedComponent -> {
                         assertThat(clonedComponent.getUuid()).isNotEqualTo(component.getUuid());
                         assertThat(clonedComponent.getName()).isEqualTo("acme-lib");
                         assertThat(clonedComponent.getVersion()).isEqualTo("2.0.0");
+                        assertThat(clonedComponent.getSupplier()).isNotNull();
+                        assertThat(clonedComponent.getSupplier().getName()).isEqualTo("componentSupplier");
 
                         assertThat(qm.getAllVulnerabilities(clonedComponent)).containsOnly(vuln);
 

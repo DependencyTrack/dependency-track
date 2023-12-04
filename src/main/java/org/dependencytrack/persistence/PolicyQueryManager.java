@@ -165,6 +165,9 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             }
         }
         if (!markedForDeletion.isEmpty()) {
+            for (final PolicyViolation violation : markedForDeletion) {
+                deleteViolationAnalysisTrail(violation);
+            }
             delete(markedForDeletion);
         }
     }

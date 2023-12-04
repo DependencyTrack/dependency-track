@@ -28,50 +28,60 @@ import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
 import com.google.gson.Gson;
-
 import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.TrivyAnalysisEvent;
+import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
-import org.dependencytrack.parser.trivy.TrivyParser;
 import org.dependencytrack.parser.trivy.model.Application;
+import org.dependencytrack.parser.trivy.model.OS;
+import org.dependencytrack.parser.trivy.model.BlobInfo;
+import org.dependencytrack.parser.trivy.model.DeleteRequest;
+import org.dependencytrack.parser.trivy.model.Library;
+import org.dependencytrack.parser.trivy.model.Options;
+import org.dependencytrack.parser.trivy.model.PackageInfo;
+import org.dependencytrack.parser.trivy.model.PurlType;
 import org.dependencytrack.parser.trivy.model.PutRequest;
 import org.dependencytrack.parser.trivy.model.ScanRequest;
-import org.dependencytrack.parser.trivy.model.Options;
-import org.dependencytrack.parser.trivy.model.DeleteRequest;
-import org.dependencytrack.parser.trivy.model.BlobInfo;
 import org.dependencytrack.parser.trivy.model.TrivyResponse;
-import org.dependencytrack.parser.trivy.model.Library;
+import org.dependencytrack.parser.trivy.model.Package;
+import org.dependencytrack.parser.trivy.TrivyParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.RoundRobinAccessor;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 
 /**
@@ -183,22 +193,68 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
         var info = new BlobInfo();
 
-        var app = new Application("jar");
-
+        var pkgs = new HashMap<String, PackageInfo>();
+        var apps = new HashMap<String, Application>();
         var map = new HashMap<String, Component>();
 
         for (final Component component : components) {
-            var name = component.getGroup() + ":" + component.getName();
-            var key = name + ":" + component.getVersion();
+            if (component.getPurl() != null) {
+                var appType = resolveApp(component.getPurl().getType());
 
-            map.put(key, component);
-            app.addLibrary(new Library(name, component.getVersion()));
+                var name = component.getName();
+
+                if (component.getGroup() != null) {
+                    name = component.getGroup() + ":" + name;
+                }
+
+                var key = name + ":" + component.getVersion();
+
+                LOGGER.debug("Add key %s to map".formatted(key));
+                map.put(key, component);
+
+                if (appType != PurlType.UNKNOWN.getAppType()) {
+
+                    if (apps.get(appType) == null) {
+                        apps.put(appType, new Application(appType));
+                    }
+                    var app = apps.get(appType);
+
+                    app.addLibrary(new Library(name, component.getVersion()));
+                } else {
+                    var pkgType = component.getPurl().getType().toString();
+
+                    if (pkgs.get(pkgType) == null) {
+                        pkgs.put(pkgType, new PackageInfo());
+                    }
+
+                    var pkg = pkgs.get(pkgType);
+
+
+                    pkg.addPackage(new Package(component.getName(), component.getVersion(), "arm64"));
+                }
+            } else if (component.getClassifier() == Classifier.OPERATING_SYSTEM) {
+                info.setOS(new OS(component.getName(), component.getVersion()));
+            }
         }
 
-        info.setApplications(new Application[] {app});
+        info.setApplications(apps.values().toArray(new Application[]{}));
+        info.setPackageInfos(pkgs.values().toArray(new PackageInfo[]{}));
+
         var blob = new PutRequest();
         blob.setBlobInfo(info);
-        blob.setDiffID("sha256:82b8626f712f721809b12af37380479b68263b78600dea0b280ee8fc88e3d27a");
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            //todo - need to establish standard and requirements from trivy
+            byte[] hash = digest.digest(java.util.UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
+
+            blob.setDiffID("sha256:" + Hex.encodeHexString(hash));
+            LOGGER.debug(blob.getDiffID());
+        } catch(NoSuchAlgorithmException e) {
+            LOGGER.error(e.getMessage());
+            blob.setDiffID("sha256:0000000000000000000000000000000000000000000000000000000000000000");
+        }
+
 
         CompletableFuture
                     .runAsync(() -> analyzeBlob(map, blob), EXECUTOR)
@@ -253,7 +309,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                     for (int idx = 0; idx < result.getVulnerabilities().length; idx++) {
                         var vulnerability = result.getVulnerabilities()[idx];
                         var key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
-
+                        LOGGER.debug("Searching key %s in map".formatted(key));
                         handle(components.get(key), vulnerability);
                     }
                 }
@@ -395,6 +451,66 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
             updateAnalysisCacheStats(qm, Vulnerability.Source.NVD, apiBaseUrl, component.getPurl().getCoordinates(), component.getCacheResult());
         }
+    }
+
+    private String resolveApp(String purlType) {
+        if (purlType == null) {
+            return PurlType.UNKNOWN.getAppType();
+        }
+
+        PurlType type;
+        switch (purlType) {
+            case PurlType.Constants.BITNAMI:
+            type = PurlType.BITNAMI;
+            break;
+        case PurlType.Constants.CARGO:
+            type = PurlType.CARGO;
+            break;
+        case PurlType.Constants.COCOAPODS:
+            type = PurlType.COCOAPODS;
+            break;
+        case PurlType.Constants.COMPOSER:
+            type = PurlType.COMPOSER;
+            break;
+        case PurlType.Constants.CONAN:
+            type = PurlType.CONAN;
+            break;
+        case PurlType.Constants.CONDA:
+            type = PurlType.CONDA;
+            break;
+        case PurlType.Constants.GEM:
+            type = PurlType.GEM;
+            break;
+        case PurlType.Constants.GOLANG:
+            type = PurlType.GOLANG;
+            break;
+        case PurlType.Constants.HEX:
+            type = PurlType.HEX;
+            break;
+        case PurlType.Constants.MAVEN:
+            type = PurlType.MAVEN;
+            break;
+        case PurlType.Constants.NPM:
+            type = PurlType.NPM;
+            break;
+        case PurlType.Constants.NUGET:
+            type = PurlType.NUGET;
+            break;
+        case PurlType.Constants.PUB:
+            type = PurlType.PUB;
+            break;
+        case PurlType.Constants.PYPI:
+            type = PurlType.PYPI;
+            break;
+        case PurlType.Constants.SWIFT:
+            type = PurlType.SWIFT;
+            break;
+        default:
+            type = PurlType.UNKNOWN;
+            break;
+        }
+
+        return type.getAppType();
     }
 
     private Optional<String> getApiBaseUrl() {

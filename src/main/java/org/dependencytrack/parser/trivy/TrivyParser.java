@@ -65,7 +65,7 @@ public class TrivyParser {
             try {
                 vulnerability.setPublished(formatter.parse(data.getPublishedDate()));
             } catch (ParseException ex) {
-                LOGGER.error("Unable to parse published date %s".formatted(data.getPublishedDate()));
+                LOGGER.warn("Unable to parse published date %s".formatted(data.getPublishedDate()));
             }
             vulnerability.setCreated(vulnerability.getPublished());
         }
@@ -74,7 +74,7 @@ public class TrivyParser {
             try {
                 vulnerability.setUpdated(formatter.parse(data.getLastModifiedDate()));
             } catch (ParseException ex) {
-                LOGGER.error("Unable to parse last modified date %s".formatted(data.getLastModifiedDate()));
+                LOGGER.warn("Unable to parse last modified date %s".formatted(data.getLastModifiedDate()));
             }
         }
 

@@ -18,27 +18,19 @@
  */
 package org.dependencytrack.parser.trivy.model;
 
-public class OS {
-    private String family;
-    private String name;
-    private boolean eosl;
-    private boolean extended;
+import java.util.ArrayList;
 
-    public OS(){}
-    public OS(String family, String name) {
-        this.family = family;
-        this.name = name;
+public class PackageInfo {
+    private ArrayList<Package> packages;
+
+    public PackageInfo() {
+        this.packages = new ArrayList<Package>();
     }
 
-    public String getFamily() { return family; }
-    public void setFamily(String value) { this.family = value; }
-
-    public String getName() { return name; }
-    public void setName(String value) { this.name = value; }
-
-    public boolean getEosl() { return eosl; }
-    public void setEosl(boolean value) { this.eosl = value; }
-
-    public boolean getExtended() { return extended; }
-    public void setExtended(boolean value) { this.extended = value; }
+    public ArrayList<Package> getPackages() { return packages; }
+    public void setPackages(ArrayList<Package> value) { this.packages = value; }
+    public void addPackage(Package value) { this.packages.add(value); }
 }
+
+
+

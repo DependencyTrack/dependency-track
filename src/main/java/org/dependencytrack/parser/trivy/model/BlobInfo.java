@@ -25,6 +25,8 @@ public class BlobInfo {
     private long schemaVersion;
     private OS os;
     private Application[] applications;
+    @SerializedName("package_infos")
+    private PackageInfo[] packageInfos;
 
     public BlobInfo() {
         this.schemaVersion = 2;
@@ -39,4 +41,7 @@ public class BlobInfo {
 
     public Application[] getApplications() { return applications; }
     public void setApplications(Application[] value) { this.applications = value; }
+
+    public PackageInfo[] getPackageInfos() { return packageInfos; }
+    public void setPackageInfos(PackageInfo[] value) { this.packageInfos = value; }
 }

@@ -323,11 +323,12 @@ public class BomResource extends AlpineResource {
     @GET
     @Path("/token/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.", notes = "This endpoint is intended to be used in conjunction with uploading a supported BOM document. Upon upload, a token will be returned. The token can then be queried using this endpoint to determine if any tasks (such as vulnerability analysis) is being performed on the BOM. A value of true indicates processing is occurring. A value of false indicates that no processing is occurring for the specified token. However, a value of false also does not confirm the token is valid, only that no processing is associated with the specified token.", response = IsTokenBeingProcessedResponse.class)
+    @ApiOperation(value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.", notes = "Deprecated. Use /v1/event/token/{uuid} instead.", response = IsTokenBeingProcessedResponse.class)
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
+    @Deprecated(since = "4.11.0")
     public Response isTokenBeingProcessed (
             @ApiParam(value = "The UUID of the token to query", required = true)
             @PathParam("uuid") String uuid) {

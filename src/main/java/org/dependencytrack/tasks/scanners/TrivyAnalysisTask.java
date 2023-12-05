@@ -66,6 +66,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.model.Vulnerability.Source;
 import org.dependencytrack.parser.trivy.model.Application;
 import org.dependencytrack.parser.trivy.model.OS;
 import org.dependencytrack.parser.trivy.model.BlobInfo;
@@ -176,20 +177,27 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
     @Override
     public boolean isCapable(Component component) {
-        return true;
+        final boolean hasValidPurl = component.getPurl() != null
+        && component.getPurl().getScheme() != null
+        && component.getPurl().getType() != null
+        && component.getPurl().getName() != null
+        && component.getPurl().getVersion() != null;
+
+        return hasValidPurl
+        && resolveApp(component.getPurl().getType()) != PurlType.Constants.UNKNOWN.toString();
     }
+
+    @Override
+    protected boolean isCacheCurrent(Source source, String targetHost, String target) {
+        return false;
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public void analyze(final List<Component> components) {
         final var countDownLatch = new CountDownLatch(components.size());
-
-        // if (isCacheCurrent(Vulnerability.Source.TRIVY, apiBaseUrl, component.getPurl().getCoordinates())) {
-        //     applyAnalysisFromCache(component);
-        //     countDownLatch.countDown();
-        //     continue;
-        // }
 
         var info = new BlobInfo();
 

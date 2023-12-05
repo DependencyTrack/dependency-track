@@ -52,6 +52,7 @@ public interface Publisher {
     String CONFIG_TEMPLATE_MIME_TYPE_KEY = "mimeType";
 
     String CONFIG_DESTINATION = "destination";
+    String CONFIG_TOKEN = "token";
 
     void inform(final PublishContext ctx, final Notification notification, final JsonObject config);
 

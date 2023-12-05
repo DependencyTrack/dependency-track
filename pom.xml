@@ -100,7 +100,7 @@
         -->
         <lib.logstash-logback-encoder.version>7.3</lib.logstash-logback-encoder.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
-        <lib.open-vulnerability-clients.version>5.0.3</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>5.1.0</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.2.0</lib.pebble.version>
         <lib.resilience4j.version>2.0.2</lib.resilience4j.version>
@@ -108,6 +108,7 @@
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
+        <lib.httpclient5.version>5.2.1</lib.httpclient5.version>
         <lib.log4j-over-slf4j.version>2.0.9</lib.log4j-over-slf4j.version>
         <lib.org-kohsuke-github-api.version>1.316</lib.org-kohsuke-github-api.version>
         <!-- JDBC Drivers -->
@@ -253,6 +254,12 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>${lib.httpclient.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>${lib.httpclient5.version}</version>
         </dependency>
 
         <dependency>

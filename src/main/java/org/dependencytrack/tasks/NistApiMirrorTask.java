@@ -19,18 +19,31 @@
 package org.dependencytrack.tasks;
 
 import alpine.common.logging.Logger;
+import alpine.common.util.ProxyConfig;
+import alpine.common.util.ProxyUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
+import io.github.jeremylong.openvulnerability.client.HttpAsyncClientSupplier;
 import io.github.jeremylong.openvulnerability.client.nvd.CveItem;
 import io.github.jeremylong.openvulnerability.client.nvd.DefCveItem;
+import io.github.jeremylong.openvulnerability.client.nvd.NvdApiRetryStrategy;
 import io.github.jeremylong.openvulnerability.client.nvd.NvdCveClient;
 import io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.NTCredentials;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.routing.SystemDefaultRoutePlanner;
+import org.dependencytrack.common.AlpineHttpProxySelector;
 import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.IndexEvent.Action;
@@ -61,6 +74,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder.aNvdCveApi;
 import static java.util.stream.Collectors.groupingBy;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS;
@@ -355,7 +369,9 @@ public class NistApiMirrorTask implements Subscriber {
     }
 
     private static NvdCveClient createApiClient(final String apiUrl, final String apiKey, final long lastModifiedEpochSeconds) {
-        final NvdCveClientBuilder clientBuilder = aNvdCveApi().withEndpoint(apiUrl);
+        final NvdCveClientBuilder clientBuilder = aNvdCveApi()
+                .withHttpClientSupplier(new HttpClientSupplier(apiKey != null))
+                .withEndpoint(apiUrl);
         if (apiKey != null) {
             clientBuilder.withApiKey(apiKey);
         } else {
@@ -477,6 +493,40 @@ public class NistApiMirrorTask implements Subscriber {
         differ.applyIfNonNullAndChanged("epssPercentile", Vulnerability::getEpssPercentile, existingVuln::setEpssPercentile);
 
         return differ.getDiffs();
+    }
+
+    private static final class HttpClientSupplier implements HttpAsyncClientSupplier {
+
+        private final boolean isApiKeyProvided;
+
+        private HttpClientSupplier(final boolean isApiKeyProvided) {
+            this.isApiKeyProvided = isApiKeyProvided;
+        }
+
+        @Override
+        public CloseableHttpAsyncClient get() {
+            final ProxyConfig proxyConfig = ProxyUtil.getProxyConfig();
+            final HttpAsyncClientBuilder clientBuilder = HttpAsyncClients.custom()
+                    .setRetryStrategy(new NvdApiRetryStrategy(10, isApiKeyProvided ? 600L : 6500L))
+                    .setRoutePlanner(new SystemDefaultRoutePlanner(new AlpineHttpProxySelector(proxyConfig)))
+                    .useSystemProperties();
+
+            if (proxyConfig != null && isNotBlank(proxyConfig.getUsername()) && isNotBlank(proxyConfig.getPassword())) {
+                final var authScope = new AuthScope(null, proxyConfig.getHost(), proxyConfig.getPort(), null, null);
+                final var credentialProvider = new BasicCredentialsProvider();
+                if (proxyConfig.getDomain() != null) {
+                    credentialProvider.setCredentials(authScope, new NTCredentials(proxyConfig.getUsername(),
+                            proxyConfig.getPassword().toCharArray(), null, proxyConfig.getDomain()));
+                } else {
+                    credentialProvider.setCredentials(authScope, new UsernamePasswordCredentials(proxyConfig.getUsername(),
+                            proxyConfig.getPassword().toCharArray()));
+                }
+                clientBuilder.setDefaultCredentialsProvider(credentialProvider);
+            }
+
+            return clientBuilder.build();
+        }
+
     }
 
 }

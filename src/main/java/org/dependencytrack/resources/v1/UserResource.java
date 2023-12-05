@@ -388,6 +388,13 @@ public class UserResource extends AlpineResource {
             if (user == null) {
                 user = qm.createLdapUser(jsonUser.getUsername());
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user created: " + jsonUser.getUsername());
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.USER_CREATED)
+                        .title(NotificationConstants.Title.USER_CREATED)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content("LDAP user created")
+                        .subject(user));
                 return Response.status(Response.Status.CREATED).entity(user).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
@@ -414,6 +421,13 @@ public class UserResource extends AlpineResource {
             if (user != null) {
                 qm.delete(user);
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user deleted: " + jsonUser.getUsername());
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.USER_DELETED)
+                        .title(NotificationConstants.Title.USER_DELETED)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content("LDAP user deleted")
+                        .subject(user));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
@@ -461,6 +475,13 @@ public class UserResource extends AlpineResource {
                         String.valueOf(PasswordService.createHash(jsonUser.getNewPassword().toCharArray())),
                         jsonUser.isForcePasswordChange(), jsonUser.isNonExpiryPassword(), jsonUser.isSuspended());
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user created: " + jsonUser.getUsername());
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.USER_CREATED)
+                        .title(NotificationConstants.Title.USER_CREATED)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content("Managed user created")
+                        .subject(user));
                 return Response.status(Response.Status.CREATED).entity(user).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
@@ -529,6 +550,13 @@ public class UserResource extends AlpineResource {
             if (user != null) {
                 qm.delete(user);
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: " + jsonUser.getUsername());
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.USER_DELETED)
+                        .title(NotificationConstants.Title.USER_DELETED)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content("Managed user deleted")
+                        .subject(user));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
@@ -565,7 +593,7 @@ public class UserResource extends AlpineResource {
                         .group(NotificationGroup.USER_CREATED)
                         .title(NotificationConstants.Title.USER_CREATED)
                         .level(NotificationLevel.INFORMATIONAL)
-                        .content("A user was created")
+                        .content("OpenID Connect user created")
                         .subject(user));
                 return Response.status(Response.Status.CREATED).entity(user).build();
             } else {
@@ -598,7 +626,7 @@ public class UserResource extends AlpineResource {
                         .group(NotificationGroup.USER_DELETED)
                         .title(NotificationConstants.Title.USER_DELETED)
                         .level(NotificationLevel.INFORMATIONAL)
-                        .content("A user was deleted")
+                        .content("OpenID Connect user deleted")
                         .subject(user));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {

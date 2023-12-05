@@ -33,3 +33,12 @@ finding will have a positive impact not only on Dependency-Track itself, but the
 
 For example, vulnerability aggregation platforms such as Kenna Security or ThreadFix will become aware of the updated
 list of findings and metrics the next time they sync. These systems will assume suppressed findings have been 'fixed'.
+
+### Ignoring Advisories Systemwide
+
+Individual advisories can be ignored by setting the environment variable "IGNORED_ADVISORIES" before starting
+Dependency-Track API server. Identifiers of the advisories need to be separated by a space character, for example:
+
+```
+export IGNORED_ADVISORIES="CVE-2019-123 GHSA-567"
+```

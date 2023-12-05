@@ -22,6 +22,7 @@ import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
@@ -63,15 +64,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class NotificationUtil {
+    private static final Set<String> ignoredAdvisories = new HashSet<String>(Arrays.asList(SystemUtils.getEnvironmentVariable("IGNORED_ADVISORIES", "").split(" ")));
 
     /**
      * Private constructor.
@@ -79,30 +83,32 @@ public final class NotificationUtil {
     private NotificationUtil() { }
 
     public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component, VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
-        if (!qm.contains(vulnerability, component)) {
-            // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
-            // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
-            // it warrants a Notification be dispatched.
-            final Map<Long,Project> affectedProjects = new HashMap<>();
-            final List<Component> components = qm.matchIdentity(new ComponentIdentity(component));
-            for (final Component c : components) {
-                if(!affectedProjects.containsKey(c.getProject().getId())) {
-                    affectedProjects.put(c.getProject().getId(), qm.detach(Project.class, c.getProject().getId()));
+        if (!ignoredAdvisories.contains(vulnerability.getVulnId())) {
+            if (!qm.contains(vulnerability, component)) {
+                // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
+                // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
+                // it warrants a Notification be dispatched.
+                final Map<Long,Project> affectedProjects = new HashMap<>();
+                final List<Component> components = qm.matchIdentity(new ComponentIdentity(component));
+                for (final Component c : components) {
+                    if(!affectedProjects.containsKey(c.getProject().getId())) {
+                        affectedProjects.put(c.getProject().getId(), qm.detach(Project.class, c.getProject().getId()));
+                    }
                 }
+
+                final Vulnerability detachedVuln =  qm.detach(Vulnerability.class, vulnerability.getId());
+                detachedVuln.setAliases(qm.detach(qm.getVulnerabilityAliases(vulnerability))); // Aliases are lost during detach above
+                final Component detachedComponent = qm.detach(Component.class, component.getId());
+
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.PORTFOLIO)
+                        .group(NotificationGroup.NEW_VULNERABILITY)
+                        .title(generateNotificationTitle(NotificationConstants.Title.NEW_VULNERABILITY, component.getProject()))
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content(generateNotificationContent(detachedVuln))
+                        .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values()), vulnerabilityAnalysisLevel))
+                );
             }
-
-            final Vulnerability detachedVuln =  qm.detach(Vulnerability.class, vulnerability.getId());
-            detachedVuln.setAliases(qm.detach(qm.getVulnerabilityAliases(vulnerability))); // Aliases are lost during detach above
-            final Component detachedComponent = qm.detach(Component.class, component.getId());
-
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.PORTFOLIO)
-                    .group(NotificationGroup.NEW_VULNERABILITY)
-                    .title(generateNotificationTitle(NotificationConstants.Title.NEW_VULNERABILITY, component.getProject()))
-                    .level(NotificationLevel.INFORMATIONAL)
-                    .content(generateNotificationContent(detachedVuln))
-                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values()), vulnerabilityAnalysisLevel))
-            );
         }
     }
 

@@ -34,6 +34,21 @@ public enum PurlType {
     PUB("pub"),
     PYPI("python-pkg"),
     SWIFT("swift"),
+    ALPM("packages"),
+    APK("packages"),
+    BITBUCKET("packages"),
+    CRAN("packages"),
+    DEBIAN("packages"),
+    DOCKER("packages"),
+    GENERIC("packages"),
+    GITHUB("packages"),
+    HACKAGE("packages"),
+    HUGGINGFACE("packages"),
+    MLFLOW("packages"),
+    OCI("packages"),
+    QPKG("packages"),
+    RPM("packages"),
+    SWID("packages"),
     UNKNOWN("unknown");
 
     private final String appType;
@@ -78,5 +93,111 @@ public enum PurlType {
         public static final String SWID = "swid";
         public static final String SWIFT = "swift";
         public static final String UNKNOWN = "unknown";
+        public static final String PACKAGES = "packages";
+    }
+
+    public static String getApp(String purlType) {
+        if (purlType == null) {
+            return PurlType.UNKNOWN.getAppType();
+        }
+
+        PurlType type;
+        switch (purlType) {
+            case PurlType.Constants.BITNAMI:
+            type = PurlType.BITNAMI;
+            break;
+        case PurlType.Constants.CARGO:
+            type = PurlType.CARGO;
+            break;
+        case PurlType.Constants.COCOAPODS:
+            type = PurlType.COCOAPODS;
+            break;
+        case PurlType.Constants.COMPOSER:
+            type = PurlType.COMPOSER;
+            break;
+        case PurlType.Constants.CONAN:
+            type = PurlType.CONAN;
+            break;
+        case PurlType.Constants.CONDA:
+            type = PurlType.CONDA;
+            break;
+        case PurlType.Constants.GEM:
+            type = PurlType.GEM;
+            break;
+        case PurlType.Constants.GOLANG:
+            type = PurlType.GOLANG;
+            break;
+        case PurlType.Constants.HEX:
+            type = PurlType.HEX;
+            break;
+        case PurlType.Constants.MAVEN:
+            type = PurlType.MAVEN;
+            break;
+        case PurlType.Constants.NPM:
+            type = PurlType.NPM;
+            break;
+        case PurlType.Constants.NUGET:
+            type = PurlType.NUGET;
+            break;
+        case PurlType.Constants.PUB:
+            type = PurlType.PUB;
+            break;
+        case PurlType.Constants.PYPI:
+            type = PurlType.PYPI;
+            break;
+        case PurlType.Constants.SWIFT:
+            type = PurlType.SWIFT;
+            break;
+        case PurlType.Constants.ALPM:
+            type = PurlType.ALPM;
+            break;
+        case PurlType.Constants.APK:
+            type = PurlType.APK;
+            break;
+        case PurlType.Constants.BITBUCKET:
+            type = PurlType.BITBUCKET;
+            break;
+        case PurlType.Constants.CRAN:
+            type = PurlType.CRAN;
+            break;
+        case PurlType.Constants.DEBIAN:
+            type = PurlType.DEBIAN;
+            break;
+        case PurlType.Constants.DOCKER:
+            type = PurlType.DOCKER;
+            break;
+        case PurlType.Constants.GENERIC:
+            type = PurlType.GENERIC;
+            break;
+        case PurlType.Constants.GITHUB:
+            type = PurlType.GITHUB;
+            break;
+        case PurlType.Constants.HACKAGE:
+            type = PurlType.HACKAGE;
+            break;
+        case PurlType.Constants.HUGGINGFACE:
+            type = PurlType.HUGGINGFACE;
+            break;
+        case PurlType.Constants.MLFLOW:
+            type = PurlType.MLFLOW;
+            break;
+        case PurlType.Constants.OCI:
+            type = PurlType.OCI;
+            break;
+        case PurlType.Constants.QPKG:
+            type = PurlType.QPKG;
+            break;
+        case PurlType.Constants.RPM:
+            type = PurlType.RPM;
+            break;
+        case PurlType.Constants.SWID:
+            type = PurlType.SWID;
+            break;
+        default:
+            type = PurlType.UNKNOWN;
+            break;
+        }
+
+        return type.getAppType();
     }
 }

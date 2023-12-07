@@ -32,7 +32,6 @@ import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -177,7 +176,20 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
     @Override
     public boolean isCapable(Component component) {
-        return true;
+        final boolean hasValidPurl = component.getPurl() != null
+        && component.getPurl().getScheme() != null
+        && component.getPurl().getType() != null
+        && component.getPurl().getName() != null
+        && component.getPurl().getVersion() != null;
+
+        if (!hasValidPurl && component.getPurl() == null) {
+            LOGGER.warn("isCapable:purl is null for component %s".formatted(component.toString()));
+        } else if (!hasValidPurl) {
+            LOGGER.warn("isCapable: " + component.getPurl().toString());
+        }
+
+        return (hasValidPurl && PurlType.getApp(component.getPurl().getType()) != PurlType.Constants.UNKNOWN.toString())
+        || component.getClassifier() == Classifier.OPERATING_SYSTEM;
     }
 
     @Override
@@ -200,7 +212,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
         for (final Component component : components) {
             if (component.getPurl() != null) {
-                var appType = resolveApp(component.getPurl().getType());
+                var appType = PurlType.getApp(component.getPurl().getType());
 
                 var name = component.getName();
 
@@ -208,32 +220,54 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                     name = component.getGroup() + ":" + name;
                 }
 
-                var key = name + ":" + component.getVersion();
-
-                LOGGER.debug("Add key %s to map".formatted(key));
-                map.put(key, component);
-
                 if (appType != PurlType.UNKNOWN.getAppType()) {
+                    if (appType != "packages") {
 
-                    if (apps.get(appType) == null) {
-                        apps.put(appType, new Application(appType));
+                        if (apps.get(appType) == null) {
+                            apps.put(appType, new Application(appType));
+                        }
+                        var app = apps.get(appType);
+
+                        var key = name + ":" + component.getVersion();
+
+                        LOGGER.debug("Add key %s to map".formatted(key));
+                        map.put(key, component);
+
+                        LOGGER.info("add library %s".formatted(component.toString()));
+                        app.addLibrary(new Library(name, component.getVersion()));
+                    } else {
+                        var pkgType = component.getPurl().getType().toString();
+
+                        if (pkgs.get(pkgType) == null) {
+                            pkgs.put(pkgType, new PackageInfo());
+                        }
+
+                        var pkg = pkgs.get(pkgType);
+
+                        String arch = null;
+                        Integer epoch = null;
+                        String versionKey = "";
+
+                        if (component.getPurl().getQualifiers() != null) {
+                            arch = component.getPurl().getQualifiers().get("arch");
+
+                            String tmpEpoch = component.getPurl().getQualifiers().get("epoch");
+                            if (tmpEpoch != null) {
+                                epoch = Integer.parseInt(tmpEpoch);
+                                versionKey = tmpEpoch + ":";
+                            }
+                        }
+
+                        versionKey += component.getVersion();
+                        var key = name + ":" + versionKey;
+
+                        LOGGER.debug("Add key %s to map".formatted(key));
+                        map.put(key, component);
+                        LOGGER.info("add package %s".formatted(component.toString()));
+                        pkg.addPackage(new Package(component.getName(), component.getVersion(),  arch != null ? arch : "x86_64", epoch));
                     }
-                    var app = apps.get(appType);
-
-                    LOGGER.info("add library %s".formatted(component.toString()));
-                    app.addLibrary(new Library(name, component.getVersion()));
-                } else {
-                    var pkgType = component.getPurl().getType().toString();
-
-                    if (pkgs.get(pkgType) == null) {
-                        pkgs.put(pkgType, new PackageInfo());
-                    }
-
-                    var pkg = pkgs.get(pkgType);
-
-                    LOGGER.info("add package %s".formatted(component.toString()));
-                    pkg.addPackage(new Package(component.getName(), component.getVersion(), "x86_64"));
                 }
+
             } else if (component.getClassifier() == Classifier.OPERATING_SYSTEM) {
                 LOGGER.info("add operative system %s".formatted(component.toString()));
                 info.setOS(new OS(component.getName(), component.getVersion()));
@@ -307,7 +341,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         if (putBlob(blob)) {
             var response = scanBlob(blob);
             if (response != null) {
-                LOGGER.info("received response from trivy with %d results".formatted(response.getResults().length));
+                LOGGER.info("received response from trivy");
                 for (int count = 0; count < response.getResults().length; count++) {
                     var result = response.getResults()[count];
                     for (int idx = 0; idx < result.getVulnerabilities().length; idx++) {
@@ -457,65 +491,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         }
     }
 
-    private String resolveApp(String purlType) {
-        if (purlType == null) {
-            return PurlType.UNKNOWN.getAppType();
-        }
 
-        PurlType type;
-        switch (purlType) {
-            case PurlType.Constants.BITNAMI:
-            type = PurlType.BITNAMI;
-            break;
-        case PurlType.Constants.CARGO:
-            type = PurlType.CARGO;
-            break;
-        case PurlType.Constants.COCOAPODS:
-            type = PurlType.COCOAPODS;
-            break;
-        case PurlType.Constants.COMPOSER:
-            type = PurlType.COMPOSER;
-            break;
-        case PurlType.Constants.CONAN:
-            type = PurlType.CONAN;
-            break;
-        case PurlType.Constants.CONDA:
-            type = PurlType.CONDA;
-            break;
-        case PurlType.Constants.GEM:
-            type = PurlType.GEM;
-            break;
-        case PurlType.Constants.GOLANG:
-            type = PurlType.GOLANG;
-            break;
-        case PurlType.Constants.HEX:
-            type = PurlType.HEX;
-            break;
-        case PurlType.Constants.MAVEN:
-            type = PurlType.MAVEN;
-            break;
-        case PurlType.Constants.NPM:
-            type = PurlType.NPM;
-            break;
-        case PurlType.Constants.NUGET:
-            type = PurlType.NUGET;
-            break;
-        case PurlType.Constants.PUB:
-            type = PurlType.PUB;
-            break;
-        case PurlType.Constants.PYPI:
-            type = PurlType.PYPI;
-            break;
-        case PurlType.Constants.SWIFT:
-            type = PurlType.SWIFT;
-            break;
-        default:
-            type = PurlType.UNKNOWN;
-            break;
-        }
-
-        return type.getAppType();
-    }
 
     private Optional<String> getApiBaseUrl() {
         if (apiBaseUrl != null) {

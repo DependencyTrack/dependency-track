@@ -168,10 +168,12 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
 
     private List<Project> fetchNextActiveProjectsPage(final PersistenceManager pm, final Long lastId) throws Exception {
         try (final Query<Project> query = pm.newQuery(Project.class)) {
+            // exclude collection projects since their numbers are included in other projects and would wrongly influence portfolio metrics.
             if (lastId == null) {
-                query.setFilter("(active == null || active == true)");
+                query.setFilter("(active == null || active == true) && (collectionLogic == null || collectionLogic == 'NONE')");
             } else {
-                query.setFilter("(active == null || active == true) && id < :lastId");
+                query.setFilter("(active == null || active == true) && (collectionLogic == null || collectionLogic == 'NONE') " +
+                        "&& id < :lastId");
                 query.setParameters(lastId);
             }
             query.setOrdering("id DESC");

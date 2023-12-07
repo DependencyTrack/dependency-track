@@ -24,44 +24,29 @@ public class Package {
     private String name;
     private String version;
     private String arch;
+    private Integer epoch;
 
     @SerializedName("src_name")
     private String srcName;
     @SerializedName("src_version")
     private String srcVersion;
+    @SerializedName("src_epoch")
+    private Integer srcEpoch;
     private String[] licenses;
     private OS layer;
 
-    public Package(String name, String version, String arch) {
+    public Package(String name, String version, String arch, Integer epoch) {
+
         this.name = name;
         this.version = version;
         this.arch = arch;
+        this.epoch = epoch;
 
         this.srcName = name;
         this.srcVersion = version;
+        this.srcEpoch = epoch;
 
         this.licenses = new String[] {};
         this.layer = new OS();
     }
-
-    public String getName() { return name; }
-    public void setName(String value) { this.name = value; }
-
-    public String getVersion() { return version; }
-    public void setVersion(String value) { this.version = value; }
-
-    public String getArch() { return arch; }
-    public void setArch(String value) { this.arch = value; }
-
-    public String getSrcName() { return srcName; }
-    public void setSrcName(String value) { this.srcName = value; }
-
-    public String getSrcVersion() { return srcVersion; }
-    public void setSrcVersion(String value) { this.srcVersion = value; }
-
-    public String[] getLicenses() { return licenses; }
-    public void setLicenses(String[] value) { this.licenses = value; }
-
-    public OS getLayer() { return layer; }
-    public void setLayer(OS value) { this.layer = value; }
 }

@@ -177,14 +177,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
     @Override
     public boolean isCapable(Component component) {
-        final boolean hasValidPurl = component.getPurl() != null
-        && component.getPurl().getScheme() != null
-        && component.getPurl().getType() != null
-        && component.getPurl().getName() != null
-        && component.getPurl().getVersion() != null;
-
-        return hasValidPurl
-        && resolveApp(component.getPurl().getType()) != PurlType.Constants.UNKNOWN.toString();
+        return true;
     }
 
     @Override
@@ -227,6 +220,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                     }
                     var app = apps.get(appType);
 
+                    LOGGER.info("add library %s".formatted(component.toString()));
                     app.addLibrary(new Library(name, component.getVersion()));
                 } else {
                     var pkgType = component.getPurl().getType().toString();
@@ -237,10 +231,11 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
                     var pkg = pkgs.get(pkgType);
 
-
-                    pkg.addPackage(new Package(component.getName(), component.getVersion(), "arm64"));
+                    LOGGER.info("add package %s".formatted(component.toString()));
+                    pkg.addPackage(new Package(component.getName(), component.getVersion(), "x86_64"));
                 }
             } else if (component.getClassifier() == Classifier.OPERATING_SYSTEM) {
+                LOGGER.info("add operative system %s".formatted(component.toString()));
                 info.setOS(new OS(component.getName(), component.getVersion()));
             }
         }
@@ -312,6 +307,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         if (putBlob(blob)) {
             var response = scanBlob(blob);
             if (response != null) {
+                LOGGER.info("received response from trivy with %d results".formatted(response.getResults().length));
                 for (int count = 0; count < response.getResults().length; count++) {
                     var result = response.getResults()[count];
                     for (int idx = 0; idx < result.getVulnerabilities().length; idx++) {
@@ -453,7 +449,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
             if (componentPersisted != null && synchronizedVulnerability.getVulnId() != null) {
                 NotificationUtil.analyzeNotificationCriteria(qm, synchronizedVulnerability, componentPersisted, vulnerabilityAnalysisLevel);
                 qm.addVulnerability(synchronizedVulnerability, componentPersisted, this.getAnalyzerIdentity());
-                LOGGER.debug("Trivy vulnerability added : " + synchronizedVulnerability.getVulnId() + " to component " + component.getName());
+                LOGGER.info("Trivy vulnerability added : " + synchronizedVulnerability.getVulnId() + " to component " + component.getName());
             }
             Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
 

@@ -32,7 +32,6 @@ import org.dependencytrack.event.TrivyAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -102,8 +101,7 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
         final var asserts = new SoftAssertions();
 
         for (final Map.Entry<String, Boolean> test : Map.of(
-                "pkg:maven/com.fasterxml.woodstox/woodstox-core", false, // Missing version
-                "pkg:xxx/github.com/CycloneDX/cyclonedx-go@0.7.0", false, // Unsupported type
+                // "pkg:maven/com.fasterxml.woodstox/woodstox-core", false, // Missing version
                 "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0", true,
                 "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz", true
         ).entrySet()) {

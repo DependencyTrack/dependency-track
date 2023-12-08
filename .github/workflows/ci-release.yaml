@@ -38,6 +38,10 @@ jobs:
 
   create-release:
     runs-on: ubuntu-latest
+    permissions:
+      # Required for pushing changes via git command (rather than via GitHub API).
+      # TODO: Use bot credentials for git, or rewrite the "Commit Version" step to use API instead.
+      contents: write
     needs:
       - prepare-release
 

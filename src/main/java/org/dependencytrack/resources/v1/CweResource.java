@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.persistence.PaginatedResult;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,7 +36,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 /**
  * JAX-RS resources for processing CWEs.
@@ -59,8 +59,8 @@ public class CweResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     public Response getCwes() {
-        final List<Cwe> cwes = CweResolver.getInstance().all();
-        return Response.ok(cwes).header(TOTAL_COUNT_HEADER, cwes.size()).build();
+        final PaginatedResult cwes = CweResolver.getInstance().all(getAlpineRequest().getPagination());
+        return Response.ok(cwes.getObjects()).header(TOTAL_COUNT_HEADER, cwes.getTotal()).build();
     }
 
     @GET

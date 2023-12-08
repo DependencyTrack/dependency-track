@@ -18,10 +18,14 @@
  */
 package org.dependencytrack.parser.common.resolver;
 
+import alpine.persistence.PaginatedResult;
+import alpine.persistence.Pagination;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Attempts to resolve an internal CWE object from a string
@@ -117,6 +121,33 @@ public class CweResolver {
                     return cwe;
                 })
                 .toList();
+    }
+
+    public PaginatedResult all(final Pagination pagination) {
+        if (pagination == null || !pagination.isPaginated()) {
+            final List<Cwe> cwes = all();
+            return new PaginatedResult().objects(cwes).total(CweDictionary.DICTIONARY.size());
+        }
+
+        int pos = 0;
+        final var cwes = new ArrayList<Cwe>();
+        for (final Map.Entry<Integer, String> dictEntry : CweDictionary.DICTIONARY.entrySet()) {
+            if (pagination.getOffset() > pos) {
+                continue;
+            }
+            if (pagination.getLimit() <= pos) {
+                break;
+            }
+
+            final var cwe = new Cwe();
+            cwe.setCweId(dictEntry.getKey());
+            cwe.setName(dictEntry.getValue());
+            cwes.add(cwe);
+
+            pos++;
+        }
+
+        return new PaginatedResult().objects(cwes).total(CweDictionary.DICTIONARY.size());
     }
 
 }

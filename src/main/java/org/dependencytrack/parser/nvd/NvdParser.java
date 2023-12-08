@@ -164,7 +164,7 @@ public final class NvdParser {
                     if ("en".equals(prob4.get("lang").asText())) {
                         final String cweString = prob4.get("value").asText();
                         if (cweString != null && cweString.startsWith("CWE-")) {
-                            final Cwe cwe = CweResolver.getInstance().resolve(qm, cweString);
+                            final Cwe cwe = CweResolver.getInstance().lookup(cweString);
                             if (cwe != null) {
                                 vulnerability.addCwe(cwe);
                             } else {

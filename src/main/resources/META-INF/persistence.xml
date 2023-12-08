@@ -27,7 +27,6 @@
         <class>org.dependencytrack.model.Bom</class>
         <class>org.dependencytrack.model.Component</class>
         <class>org.dependencytrack.model.ComponentAnalysisCache</class>
-        <class>org.dependencytrack.model.Cwe</class>
         <class>org.dependencytrack.model.DependencyMetrics</class>
         <class>org.dependencytrack.model.FindingAttribution</class>
         <class>org.dependencytrack.model.License</class>

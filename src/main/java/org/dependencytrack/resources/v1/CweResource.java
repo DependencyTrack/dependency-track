@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.persistence.PaginatedResult;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -28,7 +27,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.model.Cwe;
-import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.parser.common.resolver.CweResolver;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -36,6 +35,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * JAX-RS resources for processing CWEs.
@@ -59,10 +59,8 @@ public class CweResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     public Response getCwes() {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = qm.getCwes();
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
-        }
+        final List<Cwe> cwes = CweResolver.getInstance().all();
+        return Response.ok(cwes).header(TOTAL_COUNT_HEADER, cwes.size()).build();
     }
 
     @GET
@@ -79,13 +77,11 @@ public class CweResource extends AlpineResource {
     public Response getCwe(
             @ApiParam(value = "The CWE ID of the CWE to retrieve", required = true)
             @PathParam("cweId") int cweId) {
-        try (QueryManager qm = new QueryManager()) {
-            final Cwe cwe = qm.getCweById(cweId);
-            if (cwe != null) {
-                return Response.ok(cwe).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The CWE could not be found.").build();
-            }
+        final Cwe cwe = CweResolver.getInstance().lookup(cweId);
+        if (cwe != null) {
+            return Response.ok(cwe).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("The CWE could not be found.").build();
         }
     }
 

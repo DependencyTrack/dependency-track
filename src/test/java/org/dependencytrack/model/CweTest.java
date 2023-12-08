@@ -24,13 +24,6 @@ import org.junit.Test;
 public class CweTest {
 
     @Test
-    public void testId() {
-        Cwe cwe = new Cwe();
-        cwe.setId(111L);
-        Assert.assertEquals(111L, cwe.getId());
-    }
-
-    @Test
     public void testCweId() {
         Cwe cwe = new Cwe();
         cwe.setCweId(79);

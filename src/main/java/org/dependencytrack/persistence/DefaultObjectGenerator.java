@@ -66,13 +66,6 @@ public class DefaultObjectGenerator implements ServletContextListener {
         loadDefaultRepositories();
         loadDefaultConfigProperties();
         loadDefaultNotificationPublishers();
-
-        try {
-            new CweImporter().processCweDefinitions();
-        } catch (Exception e) {
-            LOGGER.error("Error adding CWEs to database");
-            LOGGER.error(e.getMessage());
-        }
     }
 
     /**

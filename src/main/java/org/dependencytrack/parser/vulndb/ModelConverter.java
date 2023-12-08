@@ -163,7 +163,7 @@ public final class ModelConverter {
         if (vulnDbVuln.nvdAdditionalInfo() != null) {
             final String cweString = vulnDbVuln.nvdAdditionalInfo().cweId();
             if (cweString != null && cweString.startsWith("CWE-")) {
-                final Cwe cwe = CweResolver.getInstance().resolve(qm, cweString);
+                final Cwe cwe = CweResolver.getInstance().lookup(cweString);
                 if (cwe != null) {
                     vuln.addCwe(cwe);
                 }

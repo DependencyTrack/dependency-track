@@ -516,8 +516,9 @@ public class ProjectResource extends AlpineResource {
                 }
 
                 LOGGER.info("Project " + sourceProject + " is being cloned by " + super.getPrincipal().getName());
-                Event.dispatch(new CloneProjectEvent(jsonRequest));
-                return Response.ok().build();
+                CloneProjectEvent event = new CloneProjectEvent(jsonRequest);
+                Event.dispatch(event);
+                return Response.ok(java.util.Collections.singletonMap("token", event.getChainIdentifier())).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }

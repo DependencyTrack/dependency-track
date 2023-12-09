@@ -166,48 +166,65 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withRequestBody(equalToJson("""
                         {
-                          "notification" : {
-                            "level" : "INFORMATIONAL",
-                            "scope" : "PORTFOLIO",
-                            "group" : "NEW_VULNERABILITY",
-                            "timestamp" : "1970-01-01T18:31:06.000000666",
-                            "title" : "New Vulnerability Identified",
-                            "content" : "",
-                            "subject" : {
-                              "component" : {
-                                "uuid" : "94f87321-a5d1-4c2f-b2fe-95165debebc6",
-                                "name" : "componentName",
-                                "version" : "componentVersion"
+                          "notification": {
+                            "level": "INFORMATIONAL",
+                            "scope": "PORTFOLIO",
+                            "group": "NEW_VULNERABILITY",
+                            "timestamp": "1970-01-01T18:31:06.000000666",
+                            "title": "New Vulnerability Identified",
+                            "content": "",
+                            "subject": {
+                              "component": {
+                                "uuid": "94f87321-a5d1-4c2f-b2fe-95165debebc6",
+                                "name": "componentName",
+                                "version": "componentVersion"
                               },
-                              "vulnerabilityAnalysisLevel" : "BOM_UPLOAD_ANALYSIS",
-                              "vulnerability" : {
-                                "uuid" : "bccec5d5-ec21-4958-b3e8-22a7a866a05a",
-                                "vulnId" : "INT-001",
-                                "source" : "INTERNAL",
-                                "aliases" : [ {
-                                  "source" : "OSV",
-                                  "vulnId" : "OSV-001"
-                                } ],
-                                "title" : "vulnerabilityTitle",
-                                "subtitle" : "vulnerabilitySubTitle",
-                                "description" : "vulnerabilityDescription",
-                                "recommendation" : "vulnerabilityRecommendation",
-                                "cvssv2" : 5.5,
-                                "cvssv3" : 6.6,
-                                "owaspRRLikelihood" : 1.1,
-                                "owaspRRTechnicalImpact" : 2.2,
-                                "owaspRRBusinessImpact" : 3.3,
-                                "severity" : "MEDIUM",
-                                "cwes" : [ ]
+                              "vulnerabilityAnalysisLevel": "BOM_UPLOAD_ANALYSIS",
+                              "vulnerability": {
+                                "uuid": "bccec5d5-ec21-4958-b3e8-22a7a866a05a",
+                                "vulnId": "INT-001",
+                                "source": "INTERNAL",
+                                "aliases": [
+                                  {
+                                    "source": "OSV",
+                                    "vulnId": "OSV-001"
+                                  }
+                                ],
+                                "title": "vulnerabilityTitle",
+                                "subtitle": "vulnerabilitySubTitle",
+                                "description": "vulnerabilityDescription",
+                                "recommendation": "vulnerabilityRecommendation",
+                                "cvssv2": 5.5,
+                                "cvssv3": 6.6,
+                                "owaspRRLikelihood": 1.1,
+                                "owaspRRTechnicalImpact": 2.2,
+                                "owaspRRBusinessImpact": 3.3,
+                                "severity": "MEDIUM",
+                                "cwe": {
+                                  "cweId": 666,
+                                  "name": "Operation on Resource in Wrong Phase of Lifetime"
+                                },
+                                "cwes": [
+                                  {
+                                    "cweId": 666,
+                                    "name": "Operation on Resource in Wrong Phase of Lifetime"
+                                  },
+                                  {
+                                    "cweId": 777,
+                                    "name": "Regular Expression without Anchors"
+                                  }
+                                ]
                               },
-                              "affectedProjects" : [ {
-                                "uuid" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
-                                "name" : "projectName",
-                                "version" : "projectVersion",
-                                "description" : "projectDescription",
-                                "purl" : "pkg:maven/org.acme/projectName@projectVersion",
-                                "tags" : "tag1,tag2"
-                              } ]
+                              "affectedProjects": [
+                                {
+                                  "uuid": "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                  "name": "projectName",
+                                  "version": "projectVersion",
+                                  "description": "projectDescription",
+                                  "purl": "pkg:maven/org.acme/projectName@projectVersion",
+                                  "tags": "tag1,tag2"
+                                }
+                              ]
                             }
                           }
                         }
@@ -222,54 +239,71 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withRequestBody(equalToJson("""
                         {
-                          "notification" : {
-                            "level" : "INFORMATIONAL",
-                            "scope" : "PORTFOLIO",
-                            "group" : "PROJECT_AUDIT_CHANGE",
-                            "timestamp" : "1970-01-01T18:31:06.000000666",
-                            "title" : "Analysis Decision: Finding Suppressed",
-                            "content" : "",
-                            "subject" : {
-                              "component" : {
-                                "uuid" : "94f87321-a5d1-4c2f-b2fe-95165debebc6",
-                                "name" : "componentName",
-                                "version" : "componentVersion"
+                          "notification": {
+                            "level": "INFORMATIONAL",
+                            "scope": "PORTFOLIO",
+                            "group": "PROJECT_AUDIT_CHANGE",
+                            "timestamp": "1970-01-01T18:31:06.000000666",
+                            "title": "Analysis Decision: Finding Suppressed",
+                            "content": "",
+                            "subject": {
+                              "component": {
+                                "uuid": "94f87321-a5d1-4c2f-b2fe-95165debebc6",
+                                "name": "componentName",
+                                "version": "componentVersion"
                               },
-                              "vulnerability" : {
-                                "uuid" : "bccec5d5-ec21-4958-b3e8-22a7a866a05a",
-                                "vulnId" : "INT-001",
-                                "source" : "INTERNAL",
-                                "aliases" : [ {
-                                  "source" : "OSV",
-                                  "vulnId" : "OSV-001"
-                                } ],
-                                "title" : "vulnerabilityTitle",
-                                "subtitle" : "vulnerabilitySubTitle",
-                                "description" : "vulnerabilityDescription",
-                                "recommendation" : "vulnerabilityRecommendation",
-                                "cvssv2" : 5.5,
-                                "cvssv3" : 6.6,
-                                "owaspRRLikelihood" : 1.1,
-                                "owaspRRTechnicalImpact" : 2.2,
-                                "owaspRRBusinessImpact" : 3.3,
-                                "severity" : "MEDIUM",
-                                "cwes" : [ ]
+                              "vulnerability": {
+                                "uuid": "bccec5d5-ec21-4958-b3e8-22a7a866a05a",
+                                "vulnId": "INT-001",
+                                "source": "INTERNAL",
+                                "aliases": [
+                                  {
+                                    "source": "OSV",
+                                    "vulnId": "OSV-001"
+                                  }
+                                ],
+                                "title": "vulnerabilityTitle",
+                                "subtitle": "vulnerabilitySubTitle",
+                                "description": "vulnerabilityDescription",
+                                "recommendation": "vulnerabilityRecommendation",
+                                "cvssv2": 5.5,
+                                "cvssv3": 6.6,
+                                "owaspRRLikelihood": 1.1,
+                                "owaspRRTechnicalImpact": 2.2,
+                                "owaspRRBusinessImpact": 3.3,
+                                "severity": "MEDIUM",
+                                "cwe": {
+                                  "cweId": 666,
+                                  "name": "Operation on Resource in Wrong Phase of Lifetime"
+                                },
+                                "cwes": [
+                                  {
+                                    "cweId": 666,
+                                    "name": "Operation on Resource in Wrong Phase of Lifetime"
+                                  },
+                                  {
+                                    "cweId": 777,
+                                    "name": "Regular Expression without Anchors"
+                                  }
+                                ]
                               },
-                              "analysis" : {
-                                "suppressed" : true,
-                                "state" : "FALSE_POSITIVE",
-                                "project" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
-                                "component" : "94f87321-a5d1-4c2f-b2fe-95165debebc6",
-                                "vulnerability" : "bccec5d5-ec21-4958-b3e8-22a7a866a05a"
+                              "analysis": {
+                                "suppressed": true,
+                                "state": "FALSE_POSITIVE",
+                                "project": "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                "component": "94f87321-a5d1-4c2f-b2fe-95165debebc6",
+                                "vulnerability": "bccec5d5-ec21-4958-b3e8-22a7a866a05a"
                               },
-                              "affectedProjects" : [ {
-                                "uuid" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
-                                "name" : "projectName",
-                                "version" : "projectVersion",
-                                "description" : "projectDescription",
-                                "purl" : "pkg:maven/org.acme/projectName@projectVersion",
-                                "tags" : "tag1,tag2"
-                              } ]
+                              "affectedProjects": [
+                                {
+                                  "uuid": "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                  "name": "projectName",
+                                  "version": "projectVersion",
+                                  "description": "projectDescription",
+                                  "purl": "pkg:maven/org.acme/projectName@projectVersion",
+                                  "tags": "tag1,tag2"
+                                }
+                              ]
                             }
                           }
                         }

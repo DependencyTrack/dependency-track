@@ -21,10 +21,8 @@ package org.dependencytrack.persistence;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.h2.util.StringUtils;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -318,66 +316,4 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
         }
     }
 
-    /**
-     * Checks if the specified CWE id exists or not. If not, creates
-     * a new CWE with the specified ID and name. In both cases, the
-     * CWE will be returned.
-     * @param id the CWE ID
-     * @param name the name of the CWE
-     * @return a CWE object
-     */
-    public Cwe createCweIfNotExist(int id, String name) {
-        Cwe cwe = getCweById(id);
-        if (cwe != null) {
-            return cwe;
-        }
-        cwe = new Cwe();
-        cwe.setCweId(id);
-        cwe.setName(name);
-        return persist(cwe);
-    }
-
-    /**
-     * Returns a CWE by it's CWE-ID.
-     * @param cweId the CWE-ID
-     * @return a CWE object, or null if not found
-     */
-    public Cwe getCweById(int cweId) {
-        final Query<Cwe> query = pm.newQuery(Cwe.class, "cweId == :cweId");
-        query.setRange(0, 1);
-        return singleResult(query.execute(cweId));
-    }
-
-    /**
-     * Returns a complete list of all CWE's.
-     * @return a List of CWEs
-     */
-    public PaginatedResult getCwes() {
-        final Query<Cwe> query = pm.newQuery(Cwe.class);
-        if (orderBy == null) {
-            query.setOrdering("id asc");
-        }
-        if (filter != null) {
-            if (StringUtils.isNumber(filter)) {
-                query.setFilter("cweId == :cweId || name.matches(:filter)");
-                final String filterString = ".*" + filter.toLowerCase() + ".*";
-                return execute(query, Integer.valueOf(filter), filterString);
-            } else {
-                query.setFilter("name.toLowerCase().matches(:filter)");
-                final String filterString = ".*" + filter.toLowerCase() + ".*";
-                return execute(query, filterString);
-            }
-        }
-        return execute(query);
-    }
-
-    /**
-     * Returns a complete list of all CWE's.
-     * @return a List of CWEs
-     */
-    public List<Cwe> getAllCwes() {
-        final Query<Cwe> query = pm.newQuery(Cwe.class);
-        query.setOrdering("id asc");
-        return query.executeList();
-    }
 }

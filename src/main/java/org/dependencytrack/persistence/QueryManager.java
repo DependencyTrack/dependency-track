@@ -45,7 +45,6 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.FindingAttribution;
@@ -844,22 +843,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final PackageURL purl) {
         return getVulnerableSoftwareQueryManager().getAllVulnerableSoftware(cpePart, cpeVendor, cpeProduct, purl);
-    }
-
-    public Cwe createCweIfNotExist(int id, String name) {
-        return getVulnerableSoftwareQueryManager().createCweIfNotExist(id, name);
-    }
-
-    public Cwe getCweById(int cweId) {
-        return getVulnerableSoftwareQueryManager().getCweById(cweId);
-    }
-
-    public PaginatedResult getCwes() {
-        return getVulnerableSoftwareQueryManager().getCwes();
-    }
-
-    public List<Cwe> getAllCwes() {
-        return getVulnerableSoftwareQueryManager().getAllCwes();
     }
 
     public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {

@@ -146,7 +146,7 @@ public class SnykParser {
             String id = problem.optString("id");
             // CWE
             if (source.equalsIgnoreCase("CWE")) {
-                final Cwe cwe = CweResolver.getInstance().resolve(qm, id);
+                final Cwe cwe = CweResolver.getInstance().lookup(id);
                 if (cwe != null) {
                     vulnerability.addCwe(cwe);
                 }

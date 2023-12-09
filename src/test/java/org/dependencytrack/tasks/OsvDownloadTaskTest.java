@@ -28,7 +28,6 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
-import org.dependencytrack.persistence.CweImporter;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -78,8 +77,6 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testParseOSVJsonToAdvisoryAndSave() throws Exception {
-        new CweImporter().processCweDefinitions(); // Necessary for resolving CWEs
-
         // Enable alias synchronization
         qm.createConfigProperty(
                 ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getGroupName(),

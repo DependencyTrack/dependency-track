@@ -285,8 +285,6 @@ public class Project implements Serializable {
     private transient List<ProjectVersion> versions;
     private transient List<Component> dependencyGraph;
 
-    private transient UUID affectedComponent;
-
     public long getId() {
         return id;
     }
@@ -539,14 +537,6 @@ public class Project implements Serializable {
     @JsonIgnore
     public void setDependencyGraph(List<Component> dependencyGraph) {
         this.dependencyGraph = dependencyGraph;
-    }
-
-    public UUID getAffectedComponent() {
-        return affectedComponent;
-    }
-
-    public void setAffectedComponent(UUID affectedComponent) {
-        this.affectedComponent = affectedComponent;
     }
 
     @Override

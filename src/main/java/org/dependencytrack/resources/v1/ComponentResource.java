@@ -57,6 +57,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -488,7 +489,7 @@ public class ComponentResource extends AlpineResource {
     }
 
     @GET
-    @Path("/project/{projectUuid}/dependencyGraph/{componentUuid}")
+    @Path("/project/{projectUuid}/dependencyGraph/{componentUuids}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns the expanded dependency graph to every occurrence of a component",
@@ -503,24 +504,31 @@ public class ComponentResource extends AlpineResource {
     public Response getDependencyGraphForComponent(
             @ApiParam(value = "The UUID of the project to get the expanded dependency graph for", required = true)
             @PathParam("projectUuid") String projectUuid,
-            @ApiParam(value = "The UUID of the component to get the expanded dependency graph for", required = true)
-            @PathParam("componentUuid") String componentUuid) {
+            @ApiParam(value = "List of UUIDs of the components (separated by |) to get the expanded dependency graph for", required = true)
+            @PathParam("componentUuids") String componentUuids) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);
-            if (project != null) {
-                if (!qm.hasAccess(super.getPrincipal(), project)) {
-                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden.").build();
-                }
-                final Component component = qm.getObjectByUuid(Component.class, componentUuid);
-                if (component != null) {
-                    Map<String, Component> dependencyGraph = qm.getDependencyGraphForComponent(project, component);
-                    return Response.ok(dependencyGraph).build();
-                } else {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
-                }
-            } else {
+
+            if(project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }
+
+            if (!qm.hasAccess(super.getPrincipal(), project)) {
+                return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden.").build();
+            }
+
+            final String[] componentUuidsSplit = componentUuids.split("\\|");
+            final List<Component> components = new ArrayList<>();
+            for(String uuid : componentUuidsSplit) {
+                final Component component = qm.getObjectByUuid(Component.class, uuid);
+                if(component == null) {
+                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
+                }
+                components.add(component);
+            }
+
+            Map<String, Component> dependencyGraph = qm.getDependencyGraphForComponents(project, components);
+            return Response.ok(dependencyGraph).build();
         }
     }
 }

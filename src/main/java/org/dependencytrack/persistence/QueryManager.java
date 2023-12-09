@@ -75,6 +75,7 @@ import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
@@ -540,8 +541,8 @@ public class QueryManager extends AlpineQueryManager {
         getComponentQueryManager().recursivelyDelete(component, commitIndex);
     }
 
-    public Map<String, Component> getDependencyGraphForComponent(Project project, Component component) {
-        return getComponentQueryManager().getDependencyGraphForComponent(project, component);
+    public Map<String, Component> getDependencyGraphForComponents(Project project, List<Component> components) {
+        return getComponentQueryManager().getDependencyGraphForComponents(project, components);
     }
 
     public PaginatedResult getLicenses() {
@@ -998,8 +999,8 @@ public class QueryManager extends AlpineQueryManager {
         return getFindingsQueryManager().getSuppressedCount(project, component);
     }
 
-    public List<Project> getProjects(Vulnerability vulnerability) {
-        return getVulnerabilityQueryManager().getProjects(vulnerability);
+    public List<AffectedProject> getAffectedProjects(Vulnerability vulnerability) {
+        return getVulnerabilityQueryManager().getAffectedProjects(vulnerability);
     }
 
     public VulnerabilityAlias synchronizeVulnerabilityAlias(VulnerabilityAlias alias) {

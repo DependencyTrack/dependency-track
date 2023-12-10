@@ -37,7 +37,7 @@ import java.sql.Statement;
 
 public class v4110Updater extends AbstractUpgradeItem {
 
-    private static final Logger LOGGER = Logger.getLogger(v4100Updater.class);
+    private static final Logger LOGGER = Logger.getLogger(v4110Updater.class);
 
     @Override
     public String getSchemaVersion() {

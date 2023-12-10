@@ -24,16 +24,11 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import org.dependencytrack.model.Severity;
-import org.dependencytrack.upgrade.v410.v410Updater;
 import org.dependencytrack.util.VulnerabilityUtil;
 
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 
 public class v4110Updater extends AbstractUpgradeItem {
 

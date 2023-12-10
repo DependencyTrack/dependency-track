@@ -187,6 +187,33 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * clones a policy violation
+     * @param sourcePolicyViolation the policy violation to clone
+     * @param destinationComponent the corresponding component
+     */
+    public PolicyViolation clonePolicyViolation(PolicyViolation sourcePolicyViolation, Component destinationComponent){
+            //cloning PolicyViolation
+            final PolicyViolation policyViolation = new PolicyViolation();
+            policyViolation.setType(sourcePolicyViolation.getType());
+            policyViolation.setComponent(destinationComponent);
+            policyViolation.setPolicyCondition(sourcePolicyViolation.getPolicyCondition());
+            policyViolation.setTimestamp(sourcePolicyViolation.getTimestamp());
+            policyViolation.setText(sourcePolicyViolation.getText());
+            policyViolation.setType(sourcePolicyViolation.getType());
+            //cloning ViolatioAnalysis
+            ViolationAnalysis violationAnalysis = cloneViolationAnalysis(destinationComponent, sourcePolicyViolation);
+            //cloning ViolationAnalysisComments
+            List<ViolationAnalysisComment> comments = cloneViolationAnalysisComments(sourcePolicyViolation, violationAnalysis);
+            if(comments != null){
+                violationAnalysis.setAnalysisComments(comments);
+            }
+            policyViolation.setAnalysis(violationAnalysis); 
+            policyViolation.getAnalysis().setPolicyViolation(policyViolation);
+            policyViolation.setUuid(sourcePolicyViolation.getUuid());
+            return policyViolation;
+    }
+
+    /**
      * Returns a List of all Policy objects.
      * This method if designed NOT to provide paginated results.
      * @return a List of all Policy objects
@@ -341,6 +368,24 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * clones a ViolationAnalysis
+     * @param destinationComponent the destinationComponent
+     * @param sourcePolicyViolation the PolicyViolation to clone from
+     * @return the cloned violationAnalysis
+     */
+    public ViolationAnalysis cloneViolationAnalysis(Component destinationComponent, PolicyViolation sourcePolicyViolation){
+        ViolationAnalysis violationAnalysis = new ViolationAnalysis();
+        violationAnalysis.setComponent(destinationComponent);
+        if(sourcePolicyViolation.getAnalysis() != null){
+            violationAnalysis.setSuppressed(sourcePolicyViolation.getAnalysis().isSuppressed());
+            violationAnalysis.setViolationAnalysisState(sourcePolicyViolation.getAnalysis().getAnalysisState());
+        } else {
+            violationAnalysis.setViolationAnalysisState(ViolationAnalysisState.NOT_SET);
+        }
+        return violationAnalysis;
+    }
+
+    /**
      * Returns a ViolationAnalysis for the specified Component and PolicyViolation.
      * @param component the Component
      * @param policyViolation the PolicyViolation
@@ -376,6 +421,28 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         violationAnalysis.setViolationAnalysisState(violationAnalysisState);
         violationAnalysis = persist(violationAnalysis);
         return getViolationAnalysis(violationAnalysis.getComponent(), violationAnalysis.getPolicyViolation());
+    }
+
+    /**
+     * clones ViolationAnalysisComments
+     * @param sourcePolicyViolation the source PolicyViolation
+     * @param violationAnalysis the ViolationAnalysis to clone from
+     * @return the cloned ViolationAnalysisComments
+     */
+    public List<ViolationAnalysisComment> cloneViolationAnalysisComments(PolicyViolation sourcePolicyViolation, ViolationAnalysis violationAnalysis){
+        List<ViolationAnalysisComment> comments = new ArrayList<ViolationAnalysisComment>();
+        if(sourcePolicyViolation.getAnalysis() != null && sourcePolicyViolation.getAnalysis().getAnalysisComments() != null){
+            for(ViolationAnalysisComment c : sourcePolicyViolation.getAnalysis().getAnalysisComments()){
+                ViolationAnalysisComment comment = new ViolationAnalysisComment();
+                comment.setViolationAnalysis(violationAnalysis);
+                comment.setComment(c.getComment());
+                comment.setCommenter(c.getCommenter());
+                comment.setTimestamp(c.getTimestamp());
+                comments.add(comment);
+            }
+        }
+        
+        return comments;
     }
 
     /**

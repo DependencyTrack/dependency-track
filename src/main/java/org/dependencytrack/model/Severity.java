@@ -47,4 +47,5 @@ public enum Severity {
     public static Severity getSeverityByLevel(final int level){
         return Arrays.stream(values()).filter(value -> value.level == level).findFirst().orElse(UNASSIGNED);
     }
+
 }

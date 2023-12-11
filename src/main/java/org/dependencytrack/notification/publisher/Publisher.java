@@ -20,6 +20,7 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.common.util.UrlUtil;
 import alpine.model.ConfigProperty;
+import alpine.model.UserPrincipal;
 import alpine.notification.Notification;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
@@ -122,6 +123,11 @@ public interface Publisher {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final PolicyViolationIdentified subject) {
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                }
+            } else if  (NotificationScope.SYSTEM.name().equals(notification.getScope())) {
+                if (notification.getSubject() instanceof final UserPrincipal subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 }

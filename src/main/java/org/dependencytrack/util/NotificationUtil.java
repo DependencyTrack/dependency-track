@@ -275,10 +275,19 @@ public final class NotificationUtil {
 
     public static JsonObject toJson(final UserPrincipal user) {
         final JsonObjectBuilder userBuilder = Json.createObjectBuilder();
-        userBuilder.add("id", user.getId());
+
         userBuilder.add("username", user.getUsername());
-        userBuilder.add("name", user.getName());
-        userBuilder.add("email", user.getEmail());
+
+        if (user.getId() != 0) {
+            userBuilder.add("id", user.getId());
+        }
+        if (user.getName() != null) {
+            userBuilder.add("name", user.getName());
+        }
+
+        if (user.getEmail() != null) {
+            userBuilder.add("email", user.getEmail());
+        }
 
         return userBuilder.build();
     }

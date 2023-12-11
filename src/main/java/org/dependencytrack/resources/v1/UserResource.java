@@ -427,7 +427,7 @@ public class UserResource extends AlpineResource {
                         .title(NotificationConstants.Title.USER_DELETED)
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("LDAP user deleted")
-                        .subject(user));
+                        .subject(jsonUser));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
@@ -556,7 +556,7 @@ public class UserResource extends AlpineResource {
                         .title(NotificationConstants.Title.USER_DELETED)
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("Managed user deleted")
-                        .subject(user));
+                        .subject(jsonUser));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
@@ -627,7 +627,7 @@ public class UserResource extends AlpineResource {
                         .title(NotificationConstants.Title.USER_DELETED)
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("OpenID Connect user deleted")
-                        .subject(user));
+                        .subject(jsonUser));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();

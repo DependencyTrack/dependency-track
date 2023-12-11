@@ -123,7 +123,7 @@ jobs:
 
       - name: Run Trivy Vulnerability Scanner
         if: ${{ inputs.publish-container }}
-        uses: aquasecurity/trivy-action@2b6a709cf9c4025c5438138008beaddbb02086f0 # tag=0.14.0
+        uses: aquasecurity/trivy-action@91713af97dc80187565512baba96e4364e983601 # tag=0.16.0
         with:
           image-ref: docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
           format: 'sarif'

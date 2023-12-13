@@ -41,6 +41,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -204,10 +205,11 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
     public void analyze(final List<Component> components) {
         final var countDownLatch = new CountDownLatch(components.size());
 
-        var info = new BlobInfo();
+
 
         var pkgs = new HashMap<String, PackageInfo>();
         var apps = new HashMap<String, Application>();
+        var os = new HashMap<String, OS>();
         var map = new HashMap<String, Component>();
 
         for (final Component component : components) {
@@ -233,16 +235,10 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                         LOGGER.debug("Add key %s to map".formatted(key));
                         map.put(key, component);
 
-                        LOGGER.info("add library %s".formatted(component.toString()));
+                        LOGGER.debug("add library %s".formatted(component.toString()));
                         app.addLibrary(new Library(name, component.getVersion()));
                     } else {
                         var pkgType = component.getPurl().getType().toString();
-
-                        if (pkgs.get(pkgType) == null) {
-                            pkgs.put(pkgType, new PackageInfo());
-                        }
-
-                        var pkg = pkgs.get(pkgType);
 
                         String arch = null;
                         Integer epoch = null;
@@ -256,45 +252,56 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                                 epoch = Integer.parseInt(tmpEpoch);
                                 versionKey = tmpEpoch + ":";
                             }
+
+                            String distro = component.getPurl().getQualifiers().get("distro");
+
+                            if (distro != null) {
+                                pkgType = distro;
+                            }
                         }
+
+                         if (pkgs.get(pkgType) == null) {
+                            pkgs.put(pkgType, new PackageInfo());
+                        }
+
+                        var pkg = pkgs.get(pkgType);
 
                         versionKey += component.getVersion();
                         var key = name + ":" + versionKey;
 
                         LOGGER.debug("Add key %s to map".formatted(key));
                         map.put(key, component);
-                        LOGGER.info("add package %s".formatted(component.toString()));
+                        LOGGER.debug("add package %s".formatted(component.toString()));
                         pkg.addPackage(new Package(component.getName(), component.getVersion(),  arch != null ? arch : "x86_64", epoch));
                     }
                 }
 
             } else if (component.getClassifier() == Classifier.OPERATING_SYSTEM) {
-                LOGGER.info("add operative system %s".formatted(component.toString()));
-                info.setOS(new OS(component.getName(), component.getVersion()));
+                LOGGER.debug("add operative system %s".formatted(component.toString()));
+                var key = "%s-%s".formatted(component.getName(), component.getVersion());
+                os.put(key, new OS(component.getName(), component.getVersion()));
             }
         }
 
-        info.setApplications(apps.values().toArray(new Application[]{}));
-        info.setPackageInfos(pkgs.values().toArray(new PackageInfo[]{}));
+        ArrayList<BlobInfo> infos = new ArrayList<BlobInfo>();
 
-        var blob = new PutRequest();
-        blob.setBlobInfo(info);
-
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            //todo - need to establish standard and requirements from trivy
-            byte[] hash = digest.digest(java.util.UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
-
-            blob.setDiffID("sha256:" + Hex.encodeHexString(hash));
-            LOGGER.debug(blob.getDiffID());
-        } catch(NoSuchAlgorithmException e) {
-            LOGGER.error(e.getMessage());
-            blob.setDiffID("sha256:0000000000000000000000000000000000000000000000000000000000000000");
+        if (apps.size() > 0) {
+            var info = new BlobInfo();
+            info.setApplications(apps.values().toArray(new Application[]{}));
+            infos.add(info);
         }
 
+        pkgs.forEach((key, value) -> {
+            var info = new BlobInfo();
+            info.setPackageInfos(new PackageInfo[]{value});
+            if (os.get(key) != null) {
+                info.setOS(os.get(key));
+            }
+            infos.add(info);
+        });
 
         CompletableFuture
-                    .runAsync(() -> analyzeBlob(map, blob), EXECUTOR)
+                    .runAsync(() -> analyzeBlob(map, infos.toArray(new BlobInfo[]{})), EXECUTOR)
                     .whenComplete((result, exception) -> {
                         countDownLatch.countDown();
 
@@ -337,22 +344,40 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                         component.getPurl().getCoordinates(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel));
     }
 
-    private void analyzeBlob(final Map<String, Component> components, final PutRequest blob) {
-        if (putBlob(blob)) {
-            var response = scanBlob(blob);
-            if (response != null) {
-                LOGGER.info("received response from trivy");
-                for (int count = 0; count < response.getResults().length; count++) {
-                    var result = response.getResults()[count];
-                    for (int idx = 0; idx < result.getVulnerabilities().length; idx++) {
-                        var vulnerability = result.getVulnerabilities()[idx];
-                        var key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
-                        LOGGER.debug("Searching key %s in map".formatted(key));
-                        handle(components.get(key), vulnerability);
+    private void analyzeBlob(final Map<String, Component> components, final BlobInfo[] blobs) {
+        for (final BlobInfo info : blobs) {
+
+            var blob = new PutRequest();
+            blob.setBlobInfo(info);
+
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                //todo - need to establish standard and requirements from trivy
+                byte[] hash = digest.digest(java.util.UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
+
+                blob.setDiffID("sha256:" + Hex.encodeHexString(hash));
+                LOGGER.debug(blob.getDiffID());
+            } catch(NoSuchAlgorithmException e) {
+                LOGGER.error(e.getMessage());
+                blob.setDiffID("sha256:0000000000000000000000000000000000000000000000000000000000000000");
+            }
+
+            if (putBlob(blob)) {
+                var response = scanBlob(blob);
+                if (response != null) {
+                    LOGGER.info("received response from trivy");
+                    for (int count = 0; count < response.getResults().length; count++) {
+                        var result = response.getResults()[count];
+                        for (int idx = 0; idx < result.getVulnerabilities().length; idx++) {
+                            var vulnerability = result.getVulnerabilities()[idx];
+                            var key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
+                            LOGGER.debug("Searching key %s in map".formatted(key));
+                            handle(components.get(key), vulnerability);
+                        }
                     }
                 }
+                deleteBlob(blob);
             }
-            deleteBlob(blob);
         }
     }
 

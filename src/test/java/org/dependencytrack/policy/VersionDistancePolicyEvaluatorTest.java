@@ -157,6 +157,11 @@ public class VersionDistancePolicyEvaluatorTest extends PersistenceCapableTest {
             final PolicyConditionViolation violation = violations.get(0);
             assertThat(violation.getComponent()).isEqualTo(component);
             assertThat(violation.getPolicyCondition()).isEqualTo(condition);
+
+            // https://github.com/DependencyTrack/dependency-track/issues/3295
+            project.setDirectDependencies(null);
+            qm.persist(project);
+            assertThat(evaluator.evaluate(policy, component)).isEmpty();
         } else {
             assertThat(violations).isEmpty();
         }

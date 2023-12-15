@@ -257,7 +257,8 @@ public class NotificationRouter implements Subscriber {
             return false;
         }
         for (Project child : parent.getChildren()) {
-            if ((child.getUuid().equals(uuid) && Boolean.TRUE.equals(child.isActive())) || isChild) {
+            final boolean isChildActive = child.isActive() == null || child.isActive();
+            if ((child.getUuid().equals(uuid) && isChildActive) || isChild) {
                 return true;
             }
             isChild = checkIfChildrenAreAffected(child, uuid);

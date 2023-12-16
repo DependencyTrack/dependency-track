@@ -117,7 +117,9 @@ public class BomUploadProcessingTask implements Subscriber {
 
                             final var projectMetadata = new ProjectMetadata();
                             projectMetadata.setSupplier(ModelConverter.convert(cycloneDxBom.getMetadata().getSupplier()));
-                            projectMetadata.setAuthors(new ArrayList<>(ModelConverter.convertCdxContacts(cycloneDxBom.getMetadata().getAuthors())));
+                            projectMetadata.setAuthors(cycloneDxBom.getMetadata().getAuthors() != null
+                                    ? new ArrayList<>(ModelConverter.convertCdxContacts(cycloneDxBom.getMetadata().getAuthors()))
+                                    : null);
                             if (project.getMetadata() != null) {
                                 qm.runInTransaction(() -> {
                                     project.getMetadata().setSupplier(projectMetadata.getSupplier());

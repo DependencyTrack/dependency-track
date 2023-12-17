@@ -26,6 +26,7 @@ import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import net.jcip.annotations.NotThreadSafe;
 import org.apache.commons.io.IOUtils;
+import org.awaitility.core.ConditionTimeoutException;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
@@ -53,10 +54,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
 @NotThreadSafe
@@ -285,7 +289,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 """.getBytes(StandardCharsets.UTF_8);
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+        awaitBomProcessedNotification();
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
             assertThat(component.getLicense()).isNull();
@@ -329,7 +333,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 """.getBytes(StandardCharsets.UTF_8);
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+        awaitBomProcessedNotification();
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
             assertThat(component.getResolvedLicense()).isNotNull();
@@ -369,13 +373,73 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 """.getBytes(StandardCharsets.UTF_8);
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+        awaitBomProcessedNotification();
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
             assertThat(component.getLicense()).isNull();
             assertThat(component.getLicenseExpression()).isNull();
             assertThat(component.getResolvedLicense()).isNull();
         });
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3309
+    public void informIssue3309Test() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final Runnable assertProjectAuthors = () -> {
+            qm.getPersistenceManager().evictAll();
+            assertThat(project.getMetadata()).isNotNull();
+            assertThat(project.getMetadata().getAuthors()).satisfiesExactly(author -> {
+                assertThat(author.getName()).isEqualTo("Author Name");
+                assertThat(author.getEmail()).isEqualTo("author@example.com");
+            });
+        };
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "metadata": {
+                    "authors": [
+                      {
+                        "name": "Author Name",
+                        "email": "author@example.com"
+                      }
+                    ]
+                  }
+                }
+                """.getBytes();
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        awaitBomProcessedNotification();
+        assertProjectAuthors.run();
+
+        NOTIFICATIONS.clear();
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        awaitBomProcessedNotification();
+        assertProjectAuthors.run();
+    }
+
+    private void awaitBomProcessedNotification() {
+        try {
+            await("BOM Processed Notification")
+                    .atMost(Duration.ofSeconds(3))
+                    .untilAsserted(() -> assertThat(NOTIFICATIONS)
+                            .anyMatch(n -> NotificationGroup.BOM_PROCESSED.name().equals(n.getGroup())));
+        } catch (ConditionTimeoutException e) {
+            final Optional<Notification> optionalNotification = NOTIFICATIONS.stream()
+                    .filter(n -> NotificationGroup.BOM_PROCESSING_FAILED.name().equals(n.getGroup()))
+                    .findAny();
+            if (optionalNotification.isEmpty()) {
+                throw e;
+            }
+
+            final var subject = (BomProcessingFailed) optionalNotification.get().getSubject();
+            fail("Expected BOM processing to succeed, but it failed due to: %s", subject.getCause());
+        }
     }
 
 }

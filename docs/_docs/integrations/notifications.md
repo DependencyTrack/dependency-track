@@ -44,6 +44,8 @@ multiple levels, while others can only ever have a single level.
 | SYSTEM    | INDEXING_SERVICE          | (Any)         | Notifications generated as a result of performing maintenance on Dependency-Tracks internal index used for global searching       |
 | SYSTEM    | FILE_SYSTEM               | (Any)         | Notifications generated as a result of a file system operation. These are typically only generated on error conditions            |
 | SYSTEM    | REPOSITORY                | (Any)         | Notifications generated as a result of interacting with one of the supported repositories such as Maven Central, RubyGems, or NPM |
+| SYSTEM    | USER_CREATED                | INFORMATIONAL         | Notifications generated as a result of a user creation |
+| SYSTEM    | USER_DELETED                | INFORMATIONAL         | Notifications generated as a result of a user deletion |
 | PORTFOLIO | NEW_VULNERABILITY         | INFORMATIONAL | Notifications generated whenever a new vulnerability is identified                                                                |
 | PORTFOLIO | NEW_VULNERABLE_DEPENDENCY | INFORMATIONAL | Notifications generated as a result of a vulnerable component becoming a dependency of a project                                  |
 | PORTFOLIO | GLOBAL_AUDIT_CHANGE       | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global)              |
@@ -365,6 +367,46 @@ This type of notification will always contain:
 }
 ```
 
+#### USER_CREATED
+
+```json
+{
+  "notification": {
+    "level": "INFORMATIONAL",
+    "scope": "SYSTEM",
+    "group": "USER_CREATED",
+    "timestamp": "2022-05-12T23:07:59.611303",
+    "title": "User Created",
+    "content": "LDAP user created",
+    "subject": {
+      "id": "user",
+      "username": "user",
+      "name": "User 1",
+      "email": "user@example.com",
+      }
+  }
+}
+```
+
+#### USER_DELETED
+
+```json
+{
+  "notification": {
+    "level": "INFORMATIONAL",
+    "scope": "SYSTEM",
+    "group": "USER_CREATED",
+    "timestamp": "2022-05-12T23:07:59.611303",
+    "title": "User Deleted",
+    "content": "LDAP user deleted",
+    "subject": {
+      "username": "user",
+    }
+  }
+}
+```
+
+
 ### Override of default templates
 Default publishers are installed in the database at startup using templates retrieved in Dependency-Track classpath. Those publishers are **read-only** by default.
 Dependency-Track can be configured from the administrative page to allow an override of the default templates. This requires SYSTEM_CONFIGURATION permission.
@@ -376,7 +418,7 @@ Switch on enable default template override flag and provide a filesystem base di
 
 ![notification publisher general configuration](/images/screenshots/notifications-publisher-override-template.png)
 
-> The default template override flag is switched off by default and can set at initial startup with environment variable `DEFAULT_TEMPLATES_OVERRIDE_ENABLED`. 
+> The default template override flag is switched off by default and can set at initial startup with environment variable `DEFAULT_TEMPLATES_OVERRIDE_ENABLED`.
 > The default templates base directory is set to ${user.home} by default and can be set at initial startup with environment variable `DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY`.
 
 To override all default templates, you must have the following [Pebble Templates](https://pebbletemplates.io/) template files inside the configured base directory.

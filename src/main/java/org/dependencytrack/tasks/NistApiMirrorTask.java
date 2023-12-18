@@ -395,7 +395,7 @@ public class NistApiMirrorTask implements Subscriber {
         }
 
         LOGGER.debug("Latest captured modification date: %s".formatted(lastModifiedDateTime));
-        try (final var qm = new QueryManager().withL2CacheDisabled()) {
+        try (final var qm = new QueryManager()) {
             qm.runInTransaction(() -> {
                 final ConfigProperty property = qm.getConfigProperty(
                         VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS.getGroupName(),

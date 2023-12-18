@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.model.ConfigProperty;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.NistApiMirrorEvent;
@@ -233,6 +234,16 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(qm.hasAffectedVersionAttribution(vuln, vs, Source.NVD)).isTrue();
                 }
         );
+
+        // Property is in L1 cache because it was created in the test's setUp method.
+        // Evict L1 cache to reach L2 cache / datastore instead.
+        qm.getPersistenceManager().evictAll();
+        final ConfigProperty lastModifiedProperty = qm.getConfigProperty(
+                VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS.getGroupName(),
+                VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS.getPropertyName()
+        );
+        assertThat(lastModifiedProperty).isNotNull();
+        assertThat(lastModifiedProperty.getPropertyValue()).isEqualTo("1691504544");
     }
 
     @Test

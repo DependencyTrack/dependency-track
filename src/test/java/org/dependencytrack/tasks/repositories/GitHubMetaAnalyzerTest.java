@@ -74,4 +74,46 @@ public class GitHubMetaAnalyzerTest {
         Assert.assertTrue(version_pattern.matcher(metaModel.getLatestVersion()).find());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }
+
+    @Test
+    public void testAnalyzerNoVersion() throws Exception{
+        final var component = new Component();
+        component.setPurl(new PackageURL("pkg:github/CycloneDX/cdxgen"));
+
+        final var analyzer = new GithubMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
+
+        MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertTrue(metaModel.getLatestVersion().startsWith("v"));
+        Assert.assertNull(metaModel.getPublishedTimestamp());
+    }
+    @Test
+    public void testAnalyzerInvalidCommit() throws Exception{
+        final var component = new Component();
+        component.setPurl(new PackageURL("pkg:github/CycloneDX/cdxgen@0000000"));
+
+        final var analyzer = new GithubMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
+
+        MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertNull(metaModel.getPublishedTimestamp());
+    }
+
+        @Test
+    public void testAnalyzerInvalidRelease() throws Exception{
+        final var component = new Component();
+        component.setPurl(new PackageURL("pkg:github/CycloneDX/cdxgen@invalid-release"));
+
+        final var analyzer = new GithubMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
+
+        MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertNull(metaModel.getPublishedTimestamp());
+    }
 }

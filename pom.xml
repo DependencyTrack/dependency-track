@@ -121,7 +121,7 @@
         <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
         <!-- Keep Jetty at 10.0.15 until migration plan is planned/resolved per Steve in https://github.com/DependencyTrack/dependency-track/pull/2725#issuecomment-1532417022! -->
-        <plugin.jetty.version>10.0.18</plugin.jetty.version>
+        <plugin.jetty.version>10.0.19</plugin.jetty.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
         <!-- CycloneDX CLI -->

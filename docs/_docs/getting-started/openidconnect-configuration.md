@@ -130,7 +130,7 @@ The following steps demonstrate how to setup OpenID Connect with Keycloak. Most 
 2.  To be able to synchronize team memberships, create a _protocol mapper_ that includes group memberships as `groups` in
     the `/userinfo` endpoint:
 
-        ![Keycloak: Create protocol mapper for groups](/images/screenshots/oidc-keycloak-create-protocol-mapper.png)
+      ![Keycloak: Create protocol mapper for groups](/images/screenshots/oidc-keycloak-create-protocol-mapper.png)
 
         * Mapper Type: `Group Membership`
         * Token Claim Name: `groups`

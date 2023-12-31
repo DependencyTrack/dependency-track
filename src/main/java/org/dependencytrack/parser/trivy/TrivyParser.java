@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -59,23 +60,17 @@ public class TrivyParser {
         vulnerability.setDescription(data.getDescription());
         vulnerability.setSeverity(parseSeverity(data.getSeverity()));
 
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH);
-
-        if (data.getPublishedDate() != null) {
-            try {
-                vulnerability.setPublished(formatter.parse(data.getPublishedDate()));
-            } catch (ParseException ex) {
-                LOGGER.warn("Unable to parse published date %s".formatted(data.getPublishedDate()));
-            }
+        try {
+            vulnerability.setPublished(parseDate(data.getPublishedDate()));
             vulnerability.setCreated(vulnerability.getPublished());
+        } catch (ParseException ex) {
+            LOGGER.warn("Unable to parse published date %s".formatted(data.getPublishedDate()));
         }
 
-        if (data.getLastModifiedDate() != null) {
-            try {
-                vulnerability.setUpdated(formatter.parse(data.getLastModifiedDate()));
-            } catch (ParseException ex) {
-                LOGGER.warn("Unable to parse last modified date %s".formatted(data.getLastModifiedDate()));
-            }
+        try {
+            vulnerability.setUpdated(parseDate(data.getLastModifiedDate()));
+        } catch (ParseException ex) {
+            LOGGER.warn("Unable to parse last modified date %s".formatted(data.getLastModifiedDate()));
         }
 
         vulnerability.setReferences(addReferences(data.getReferences()));
@@ -99,6 +94,15 @@ public class TrivyParser {
         qm.persist(synchronizedVulnerability);
 
         return synchronizedVulnerability;
+    }
+
+    public Date parseDate(String input) throws ParseException {
+        if (input != null) {
+            String format = input.length() == 20 ? "yyyy-MM-dd'T'HH:mm:ss'Z'" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+            SimpleDateFormat formatter = new SimpleDateFormat(format, Locale.ENGLISH);
+            return formatter.parse(input);
+        }
+        return null;
     }
 
     public Severity parseSeverity(String severity) {

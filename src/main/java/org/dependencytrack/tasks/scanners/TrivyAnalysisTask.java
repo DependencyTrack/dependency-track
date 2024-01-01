@@ -372,7 +372,9 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                             var vulnerability = result.getVulnerabilities()[idx];
                             var key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
                             LOGGER.debug("Searching key %s in map".formatted(key));
-                            handle(components.get(key), vulnerability);
+                             if (!super.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED) || vulnerability.getStatus() == 3) {
+                                handle(components.get(key), vulnerability);
+                             }
                         }
                     }
                 }

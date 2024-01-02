@@ -79,6 +79,12 @@ A service for storing open-source and third-party components and other artifacts
 software engineering to provide resolved dependencies during build time and are often accompanied with an API for
 programmatic integration. 
 
+### Risk Score
+A weighted severity score, calculated by:
+```
+((critical * 10) + (high * 5) + (medium * 3) + (low * 1) + (unassigned * 5))
+```
+
 ### Scan
 A scan is method by which evidence about a component is gathered and cross-referenced with one or more vulnerability 
 intelligence services in an effort to determine if that component has known vulnerabilities.

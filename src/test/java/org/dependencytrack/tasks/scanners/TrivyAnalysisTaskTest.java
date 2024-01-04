@@ -51,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_API_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED;
 import static org.mockserver.model.HttpError.error;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -84,7 +85,7 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
                 "url");
         qm.createConfigProperty(SCANNER_TRIVY_IGNORE_UNFIXED.getGroupName(),
                 SCANNER_TRIVY_IGNORE_UNFIXED.getPropertyName(),
-                false,
+                "false",
                 IConfigProperty.PropertyType.BOOLEAN,
                 "ignore unfixed");
     }

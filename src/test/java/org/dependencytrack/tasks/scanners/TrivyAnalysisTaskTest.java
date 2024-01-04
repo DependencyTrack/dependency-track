@@ -82,6 +82,11 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
                 "http://localhost:8081",
                 IConfigProperty.PropertyType.STRING,
                 "url");
+        qm.createConfigProperty(SCANNER_TRIVY_IGNORE_UNFIXED.getGroupName(),
+                SCANNER_TRIVY_IGNORE_UNFIXED.getPropertyName(),
+                false,
+                IConfigProperty.PropertyType.BOOLEAN,
+                "ignore unfixed");
     }
 
     @After

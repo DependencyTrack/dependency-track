@@ -417,7 +417,7 @@ public class ModelConverter {
             }
         }
 
-        component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
+        component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component));
 
         if (cycloneDxComponent.getType() != null) {
             component.setClassifier(Classifier.valueOf(cycloneDxComponent.getType().name()));

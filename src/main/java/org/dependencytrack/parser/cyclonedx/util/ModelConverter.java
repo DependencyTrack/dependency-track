@@ -22,8 +22,11 @@ import alpine.common.logging.Logger;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Bom;
+import org.cyclonedx.model.BomReference;
 import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Hash;
 import org.cyclonedx.model.LicenseChoice;
@@ -112,6 +115,7 @@ public class ModelConverter {
         project.setAuthor(trimToNull(cdxComponent.getAuthor()));
         project.setPublisher(trimToNull(cdxComponent.getPublisher()));
         project.setSupplier(convert(cdxComponent.getSupplier()));
+        project.setBomRef(cdxComponent.getBomRef());
         project.setClassifier(convertClassifier(cdxComponent.getType()).orElse(Classifier.APPLICATION));
         project.setGroup(trimToNull(cdxComponent.getGroup()));
         project.setName(trimToNull(cdxComponent.getName()));
@@ -280,6 +284,25 @@ public class ModelConverter {
         }
 
         return service;
+    }
+
+    public static MultiValuedMap<String, String> convertDependencyGraph(final List<Dependency> cdxDependencies) {
+        final var dependencyGraph = new HashSetValuedHashMap<String, String>();
+        if (cdxDependencies == null || cdxDependencies.isEmpty()) {
+            return dependencyGraph;
+        }
+
+        for (final Dependency cdxDependency : cdxDependencies) {
+            if (cdxDependency.getDependencies() == null || cdxDependency.getDependencies().isEmpty()) {
+                continue;
+            }
+
+            final List<String> directDependencies = cdxDependency.getDependencies().stream()
+                    .map(BomReference::getRef).toList();
+            dependencyGraph.putAll(cdxDependency.getRef(), directDependencies);
+        }
+
+        return dependencyGraph;
     }
 
     private static Optional<Classifier> convertClassifier(final org.cyclonedx.model.Component.Type cdxComponentType) {

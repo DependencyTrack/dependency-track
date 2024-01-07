@@ -32,6 +32,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.dependencytrack.util.PersistenceUtil.assertNonPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
 public class PersistenceUtilTest extends PersistenceCapableTest {
@@ -86,6 +87,51 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> assertPersistent(pm.detachCopy(project), null));
     }
+
+    @Test
+    public void testAssertNonPersistentTx() {
+        final Transaction trx = pm.currentTransaction();
+        try {
+            trx.begin();
+
+            final var project = new Project();
+            project.setName("foo");
+            pm.makePersistent(project);
+
+            assertThatExceptionOfType(IllegalStateException.class)
+                    .isThrownBy(() -> assertNonPersistent(project, null));
+        } finally {
+            trx.rollback();
+        }
+    }
+
+    @Test
+    public void testAssertNonPersistentNonTx() {
+        final var project = new Project();
+        project.setName("foo");
+        pm.makePersistent(project);
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> assertNonPersistent(project, null));
+    }
+
+    @Test
+    public void testAssertNonPersistentWhenTransient() {
+        final var project = new Project();
+        assertThatNoException()
+                .isThrownBy(() -> assertNonPersistent(project, null));
+    }
+
+    @Test
+    public void testAssertNonPersistentWhenDetached() {
+        final var project = new Project();
+        project.setName("foo");
+        pm.makePersistent(project);
+
+        assertThatNoException()
+                .isThrownBy(() -> assertNonPersistent(pm.detachCopy(project), null));
+    }
+
 
     @Test
     public void testDifferWithChanges() {

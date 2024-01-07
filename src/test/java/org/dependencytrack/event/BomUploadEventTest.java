@@ -18,11 +18,9 @@
  */
 package org.dependencytrack.event;
 
-import alpine.common.util.SystemUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.UUID;
 
 public class BomUploadEventTest {
@@ -31,20 +29,10 @@ public class BomUploadEventTest {
     public void testByteArrayConstructor() {
         UUID uuid = UUID.randomUUID();
         byte[] bom = "testing".getBytes();
-        BomUploadEvent event = new BomUploadEvent(uuid, bom);
-        Assert.assertEquals(uuid, event.getProjectUuid());
+        BomUploadEvent event = new BomUploadEvent(null, bom);
+        Assert.assertEquals(uuid, event.getProject().getUuid());
         Assert.assertNotEquals(bom, event.getBom()); // should be a cloned byte array - not the same reference
         Assert.assertTrue(event.getBom().length > 0);
-        Assert.assertNull(event.getFile());
     }
 
-    @Test
-    public void testFileConstructor() {
-        UUID uuid = UUID.randomUUID();
-        File bitBucket = new File(SystemUtil.getBitBucket());
-        BomUploadEvent event = new BomUploadEvent(uuid, bitBucket);
-        Assert.assertEquals(uuid, event.getProjectUuid());
-        Assert.assertEquals(bitBucket, event.getFile());
-        Assert.assertNull(event.getBom());
-    }
 }

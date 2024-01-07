@@ -456,8 +456,21 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
 
     /**
      * Returns a component by matching its identity information.
+     * @param project the Project the component is a dependency of
+     * @param cid the identity values of the component
+     * @return a Component object, or null if not found
+     */
+    public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
+        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(project, cid);
+        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getLeft());
+        query.setRange(0, 1);
+        return singleResult(query.executeWithMap(queryFilterParamsPair.getRight()));
+    }
+
+    /**
+     * Returns a component by matching its identity information.
      * <p>
-     * Note that this method employs a stricter matching logic than {@link #matchIdentity(Project, ComponentIdentity)}
+     * Note that this method employs a stricter matching logic than {@link #matchSingleIdentity(Project, ComponentIdentity)}
      * and {@link #matchIdentity(ComponentIdentity)}. For example, if {@code purl} of the given {@link ComponentIdentity}
      * is {@code null}, this method will use a query that explicitly checks for the {@code purl} column to be {@code null}.
      * Whereas other methods will simply not include {@code purl} in the query in such cases.
@@ -465,8 +478,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param project the Project the component is a dependency of
      * @param cid     the identity values of the component
      * @return a Component object, or null if not found
+     * @since 4.11.0
      */
-    public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
+    public Component matchSingleIdentityExact(final Project project, final ComponentIdentity cid) {
         var filterParts = new ArrayList<String>();
         final var params = new HashMap<String, Object>();
 

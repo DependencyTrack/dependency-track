@@ -294,7 +294,7 @@ public class ComponentResource extends AlpineResource {
             component.setFilename(StringUtils.trimToNull(jsonComponent.getFilename()));
             component.setClassifier(jsonComponent.getClassifier());
             component.setPurl(jsonComponent.getPurl());
-            component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
+            component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component));
             component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
             component.setSwidTagId(StringUtils.trimToNull(jsonComponent.getSwidTagId()));
             component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
@@ -391,7 +391,7 @@ public class ComponentResource extends AlpineResource {
                 component.setFilename(StringUtils.trimToNull(jsonComponent.getFilename()));
                 component.setClassifier(jsonComponent.getClassifier());
                 component.setPurl(jsonComponent.getPurl());
-                component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
+                component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component));
                 component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
                 component.setSwidTagId(StringUtils.trimToNull(jsonComponent.getSwidTagId()));
                 component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));

@@ -1,10 +1,7 @@
 package org.dependencytrack.util;
 
-import alpine.model.ConfigProperty;
+import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.persistence.QueryManager;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -12,25 +9,18 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX;
+import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 @RunWith(Parameterized.class)
-public class InternalComponentIdentificationUtilTest {
+public class InternalComponentIdentificationUtilTest extends PersistenceCapableTest {
 
     private final String groupsRegexProperty;
     private final String componentGroup;
     private final String namesRegexProperty;
     private final String componentName;
     private final boolean shouldBeInternal;
-    private QueryManager queryManagerMock;
-
-    @Before
-    public void setUp() {
-        queryManagerMock = mock(QueryManager.class);
-    }
 
     @Parameterized.Parameters(name = "[{index}] groupsRegexProperty={0} componentGroup={1} " +
             "namesRegexProperty={2} componentName={3} shouldBeInternal={4}")
@@ -73,27 +63,26 @@ public class InternalComponentIdentificationUtilTest {
 
     @Test
     public void testIsInternal() {
-        final ConfigProperty groupConfigProperty = new ConfigProperty();
-        groupConfigProperty.setPropertyValue(groupsRegexProperty);
-
-        final ConfigProperty nameConfigProperty = new ConfigProperty();
-        nameConfigProperty.setPropertyValue(namesRegexProperty);
-
-        doReturn(groupConfigProperty).when(queryManagerMock)
-                .getConfigProperty(
-                        eq(ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX.getGroupName()),
-                        eq(ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName()));
-
-        doReturn(nameConfigProperty).when(queryManagerMock)
-                .getConfigProperty(
-                        eq(ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName()),
-                        eq(ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyName()));
+        qm.createConfigProperty(
+                INTERNAL_COMPONENTS_GROUPS_REGEX.getGroupName(),
+                INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName(),
+                groupsRegexProperty,
+                INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyType(),
+                INTERNAL_COMPONENTS_GROUPS_REGEX.getDescription()
+        );
+        qm.createConfigProperty(
+                INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName(),
+                INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyName(),
+                namesRegexProperty,
+                INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyType(),
+                INTERNAL_COMPONENTS_NAMES_REGEX.getDescription()
+        );
 
         final Component component = new Component();
         component.setGroup(componentGroup);
         component.setName(componentName);
 
-        assertEquals(shouldBeInternal, InternalComponentIdentificationUtil.isInternalComponent(component, queryManagerMock));
+        assertEquals(shouldBeInternal, InternalComponentIdentificationUtil.isInternalComponent(component));
     }
 
 }

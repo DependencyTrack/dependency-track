@@ -27,7 +27,7 @@ import org.datanucleus.PropertyNames;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.InternalComponentIdentificationUtil;
+import org.dependencytrack.util.InternalComponentIdentifier;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -70,6 +70,7 @@ public class InternalComponentIdentificationTask implements Subscriber {
             // from being garbage collected. This is not required the case of this task.
             pm.setProperty(PropertyNames.PROPERTY_CACHE_L2_TYPE, "none");
 
+            final var internalComponentIdentifier = new InternalComponentIdentifier();
             List<Component> components = fetchNextComponentsPage(pm, null);
             while (!components.isEmpty()) {
                 for (final Component component : components) {
@@ -78,7 +79,7 @@ public class InternalComponentIdentificationTask implements Subscriber {
                         coordinates = component.getGroup() + ":" + coordinates;
                     }
 
-                    final boolean internal = InternalComponentIdentificationUtil.isInternalComponent(component, qm);
+                    final boolean internal = internalComponentIdentifier.isInternal(component);
                     if (internal) {
                         LOGGER.debug("Component " + coordinates + " (" + component.getUuid() + ") was identified to be internal");
                     }

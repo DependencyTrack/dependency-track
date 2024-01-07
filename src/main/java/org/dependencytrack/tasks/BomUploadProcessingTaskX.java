@@ -56,6 +56,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.InternalComponentIdentifier;
 import org.json.JSONArray;
 import org.slf4j.MDC;
 
@@ -84,7 +85,6 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertCo
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertServices;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProject;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
-import static org.dependencytrack.util.InternalComponentIdentificationUtil.isInternalComponent;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
@@ -354,9 +354,10 @@ public class BomUploadProcessingTaskX implements Subscriber {
         // To avoid any conflicts with license IDs, cache those separately.
         final var customLicenseCache = new HashMap<String, License>();
 
+        final var internalComponentIdentifier = new InternalComponentIdentifier();
         final var persistentComponents = new HashMap<ComponentIdentity, Component>();
         for (final Component component : components) {
-            component.setInternal(isInternalComponent(component, qm));
+            component.setInternal(internalComponentIdentifier.isInternal(component));
             resolveAndApplyLicense(qm, component, licenseCache, customLicenseCache);
 
             final var componentIdentity = new ComponentIdentity(component);

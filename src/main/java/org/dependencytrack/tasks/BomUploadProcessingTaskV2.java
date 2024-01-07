@@ -88,7 +88,10 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
-public class BomUploadProcessingTaskX implements Subscriber {
+/**
+ * @since 4.11.0
+ */
+public class BomUploadProcessingTaskV2 implements Subscriber {
 
     private static final class Context {
 
@@ -109,7 +112,7 @@ public class BomUploadProcessingTaskX implements Subscriber {
 
     }
 
-    private static final Logger LOGGER = Logger.getLogger(BomUploadProcessingTaskX.class);
+    private static final Logger LOGGER = Logger.getLogger(BomUploadProcessingTaskV2.class);
 
     /**
      * {@link Event}s to dispatch <em>after</em> BOM processing completed successfully.
@@ -208,15 +211,17 @@ public class BomUploadProcessingTaskX implements Subscriber {
 
         components = components.stream().filter(distinctComponentsByIdentity(identitiesByBomRef, bomRefsByIdentity)).toList();
         services = services.stream().filter(distinctServicesByIdentity(identitiesByBomRef, bomRefsByIdentity)).toList();
-        LOGGER.info("Consumed %d components (%d before de-duplication) and %d services (%d before de-duplication)"
-                .formatted(components.size(), numComponentsTotal, services.size(), numServicesTotal));
+        LOGGER.info("""
+                Consumed %d components (%d before de-duplication), %d services (%d before de-duplication), \
+                and %d dependency graph entries""".formatted(components.size(), numComponentsTotal,
+                services.size(), numServicesTotal, dependencyGraph.size()));
 
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.BOM_CONSUMED)
                 .level(NotificationLevel.INFORMATIONAL)
                 .title(NotificationConstants.Title.BOM_CONSUMED)
-                .content("")
+                .content("A " + ctx.bomFormat.getFormatShortName() + " BOM was consumed and will be processed")
                 .subject(new BomConsumedOrProcessed(ctx.project, ctx.bomEncoded, ctx.bomFormat, ctx.bomSpecVersion)));
 
         final var processedComponents = new ArrayList<Component>();
@@ -251,6 +256,12 @@ public class BomUploadProcessingTaskX implements Subscriber {
             // BomUploadProcessingTaskTest#informWithBloatedBomTest can be used to profile the impact on large BOMs.
             qm.getPersistenceManager().setProperty(PROPERTY_FLUSH_MODE, FlushMode.MANUAL.name());
 
+            // Prevent object fields from being unloaded upon commit.
+            //
+            // DataNucleus transitions objects into the "hollow" state after the transaction is committed.
+            // In hollow state, all fields except the ID are unloaded. Accessing fields afterward triggers
+            // one or more database queries to load them again.
+            // See https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#lifecycle
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
 
             LOGGER.info("Processing %d components and %s services".formatted(components.size(), services.size()));
@@ -262,7 +273,6 @@ public class BomUploadProcessingTaskX implements Subscriber {
                         processComponents(qm, persistentProject, finalComponents, identitiesByBomRef, bomRefsByIdentity);
                 processDependencyGraph(qm, persistentProject, dependencyGraph, persistentComponentsByIdentity, identitiesByBomRef);
                 recordBomImport(ctx, qm, persistentProject);
-
                 processedComponents.addAll(persistentComponentsByIdentity.values());
             });
         }
@@ -278,16 +288,16 @@ public class BomUploadProcessingTaskX implements Subscriber {
         vulnAnalysisEvent.onSuccess(new PolicyEvaluationEvent(processedComponents).project(ctx.project));
         eventsToDispatch.add(vulnAnalysisEvent);
 
-        final var rme = new RepositoryMetaEvent(processedComponents);
-        rme.onSuccess(new PolicyEvaluationEvent(processedComponents).project(ctx.project));
-        eventsToDispatch.add(rme);
+        final var repoMetaAnalysisEvent = new RepositoryMetaEvent(processedComponents);
+        repoMetaAnalysisEvent.onSuccess(new PolicyEvaluationEvent(processedComponents).project(ctx.project));
+        eventsToDispatch.add(repoMetaAnalysisEvent);
 
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.BOM_PROCESSED)
                 .level(NotificationLevel.INFORMATIONAL)
                 .title(NotificationConstants.Title.BOM_CONSUMED)
-                .content("")
+                .content("A " + ctx.bomFormat.getFormatShortName() + " BOM was processed")
                 .subject(new BomConsumedOrProcessed(ctx.project, ctx.bomEncoded, ctx.bomFormat, ctx.bomSpecVersion)));
     }
 
@@ -307,6 +317,7 @@ public class BomUploadProcessingTaskX implements Subscriber {
 
         if (project != null) {
             boolean hasChanged = false;
+            persistentProject.setBomRef(project.getBomRef()); // Transient
             hasChanged |= applyIfChanged(persistentProject, project, Project::getAuthor, persistentProject::setAuthor);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getPublisher, persistentProject::setPublisher);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getManufacturer, persistentProject::setManufacturer);
@@ -321,9 +332,6 @@ public class BomUploadProcessingTaskX implements Subscriber {
             hasChanged |= applyIfChanged(persistentProject, project, Project::getExternalReferences, persistentProject::setExternalReferences);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getPurl, persistentProject::setPurl);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getSwidTagId, persistentProject::setSwidTagId);
-
-            // BOM ref is transient and thus doesn't count towards the changed status.
-            persistentProject.setBomRef(project.getBomRef());
 
             if (project.getMetadata() != null) {
                 final ProjectMetadata projectMetadata = project.getMetadata();
@@ -377,9 +385,10 @@ public class BomUploadProcessingTaskX implements Subscriber {
             if (persistentComponent == null) {
                 component.setProject(project);
                 persistentComponent = qm.getPersistenceManager().makePersistent(component);
-                component.setNew(true); // transient
+                component.setNew(true); // Transient
                 eventsToDispatch.add(new IndexEvent(IndexEvent.Action.CREATE, persistentComponent));
             } else {
+                persistentComponent.setBomRef(component.getBomRef()); // Transient
                 applyIfChanged(persistentComponent, component, Component::getAuthor, persistentComponent::setAuthor);
                 applyIfChanged(persistentComponent, component, Component::getPublisher, persistentComponent::setPublisher);
                 applyIfChanged(persistentComponent, component, Component::getSupplier, persistentComponent::setSupplier);
@@ -409,7 +418,6 @@ public class BomUploadProcessingTaskX implements Subscriber {
                 applyIfChanged(persistentComponent, component, Component::getLicenseUrl, persistentComponent::setLicenseUrl);
                 applyIfChanged(persistentComponent, component, Component::isInternal, persistentComponent::setInternal);
                 applyIfChanged(persistentComponent, component, Component::getExternalReferences, persistentComponent::setExternalReferences);
-                persistentComponent.setBomRef(component.getBomRef());
 
                 idsOfComponentsToDelete.remove(persistentComponent.getId());
                 eventsToDispatch.add(new IndexEvent(IndexEvent.Action.UPDATE, persistentComponent));
@@ -417,7 +425,6 @@ public class BomUploadProcessingTaskX implements Subscriber {
 
             // Update component identities in our Identity->BOMRef map,
             // as after persisting the components, their identities now include UUIDs.
-            // Applications like the frontend rely on UUIDs being there.
             final var newIdentity = new ComponentIdentity(persistentComponent);
             final ComponentIdentity oldIdentity = identitiesByBomRef.put(persistentComponent.getBomRef(), newIdentity);
             for (final String bomRef : bomRefsByIdentity.get(oldIdentity)) {
@@ -436,6 +443,67 @@ public class BomUploadProcessingTaskX implements Subscriber {
 
         return persistentComponents;
     }
+
+    private Map<ComponentIdentity, ServiceComponent> processServices(final QueryManager qm,
+                                                                     final Project project,
+                                                                     final List<ServiceComponent> services,
+                                                                     final Map<String, ComponentIdentity> identitiesByBomRef,
+                                                                     final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity) {
+        assertPersistent(project, "Project must be persistent");
+
+        final PersistenceManager pm = qm.getPersistenceManager();
+
+        // Fetch IDs of all services that exist in the project already.
+        // We'll need them later to determine which services to delete.
+        final Set<Long> idsOfServicesToDelete = getAllComponentIds(qm, project, ServiceComponent.class);
+
+        final var persistentServices = new HashMap<ComponentIdentity, ServiceComponent>();
+
+        for (final ServiceComponent service : services) {
+            final var componentIdentity = new ComponentIdentity(service);
+            ServiceComponent persistentService = qm.matchServiceIdentity(project, componentIdentity);
+            if (persistentService == null) {
+                service.setProject(project);
+                persistentService = pm.makePersistent(service);
+                eventsToDispatch.add(new IndexEvent(IndexEvent.Action.CREATE, persistentService));
+            } else {
+                persistentService.setBomRef(service.getBomRef()); // Transient
+                applyIfChanged(persistentService, service, ServiceComponent::getGroup, persistentService::setGroup);
+                applyIfChanged(persistentService, service, ServiceComponent::getName, persistentService::setName);
+                applyIfChanged(persistentService, service, ServiceComponent::getVersion, persistentService::setVersion);
+                applyIfChanged(persistentService, service, ServiceComponent::getDescription, persistentService::setDescription);
+                applyIfChanged(persistentService, service, ServiceComponent::getAuthenticated, persistentService::setAuthenticated);
+                applyIfChanged(persistentService, service, ServiceComponent::getCrossesTrustBoundary, persistentService::setCrossesTrustBoundary);
+                applyIfChanged(persistentService, service, ServiceComponent::getExternalReferences, persistentService::setExternalReferences);
+                applyIfChanged(persistentService, service, ServiceComponent::getProvider, persistentService::setProvider);
+                applyIfChanged(persistentService, service, ServiceComponent::getData, persistentService::setData);
+                applyIfChanged(persistentService, service, ServiceComponent::getEndpoints, persistentService::setEndpoints);
+                idsOfServicesToDelete.remove(persistentService.getId());
+                eventsToDispatch.add(new IndexEvent(IndexEvent.Action.UPDATE, persistentService));
+            }
+
+            // Update component identities in our Identity->BOMRef map,
+            // as after persisting the services, their identities now include UUIDs.
+            final var newIdentity = new ComponentIdentity(persistentService);
+            final ComponentIdentity oldIdentity = identitiesByBomRef.put(service.getBomRef(), newIdentity);
+            for (final String bomRef : bomRefsByIdentity.get(oldIdentity)) {
+                identitiesByBomRef.put(bomRef, newIdentity);
+            }
+
+            persistentServices.put(newIdentity, persistentService);
+        }
+
+        qm.getPersistenceManager().flush();
+
+        final long servicesDeleted = deleteServicesById(qm, idsOfServicesToDelete);
+        if (servicesDeleted > 0) {
+            qm.getPersistenceManager().flush();
+        }
+
+
+        return persistentServices;
+    }
+
 
     private static Predicate<Component> distinctComponentsByIdentity(final Map<String, ComponentIdentity> identitiesByBomRef,
                                                                      final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity) {
@@ -575,6 +643,15 @@ public class BomUploadProcessingTaskX implements Subscriber {
         pm.newQuery(FindingAttribution.class, ":ids.contains(component.id)").deletePersistentAll(componentIds);
         pm.newQuery(PolicyViolation.class, ":ids.contains(component.id)").deletePersistentAll(componentIds);
         return pm.newQuery(Component.class, ":ids.contains(id)").deletePersistentAll(componentIds);
+    }
+
+    private static long deleteServicesById(final QueryManager qm, final Collection<Long> serviceIds) {
+        if (serviceIds.isEmpty()) {
+            return 0;
+        }
+
+        final PersistenceManager pm = qm.getPersistenceManager();
+        return pm.newQuery(ServiceComponent.class, ":ids.contains(id)").deletePersistentAll(serviceIds);
     }
 
     private static void resolveAndApplyLicense(final QueryManager qm,

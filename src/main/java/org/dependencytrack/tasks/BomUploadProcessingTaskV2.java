@@ -84,6 +84,7 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertCo
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertDependencyGraph;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertServices;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProject;
+import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProjectMetadata;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
@@ -168,6 +169,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
     private void processBom(final Context ctx, final org.cyclonedx.model.Bom cdxBom) {
         LOGGER.info("Consuming uploaded BOM");
 
+        final ProjectMetadata projectMetadata = convertToProjectMetadata(cdxBom.getMetadata());
         final Project project = convertToProject(cdxBom.getMetadata());
         List<Component> components = new ArrayList<>();
         if (cdxBom.getMetadata() != null && cdxBom.getMetadata().getComponent() != null) {
@@ -250,7 +252,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             final List<ServiceComponent> finalServices = services;
 
             qm.runInTransaction(() -> {
-                final Project persistentProject = processProject(ctx, qm, project);
+                final Project persistentProject = processProject(ctx, qm, project, projectMetadata);
 
                 LOGGER.info("Processing %d components".formatted(finalComponents.size()));
                 final Map<ComponentIdentity, Component> persistentComponentsByIdentity =
@@ -286,7 +288,8 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
         dispatchBomProcessedNotification(ctx);
     }
 
-    private Project processProject(final Context ctx, final QueryManager qm, final Project project) {
+    private Project processProject(final Context ctx, final QueryManager qm,
+                                   final Project project, final ProjectMetadata projectMetadata) {
         final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
         query.setFilter("uuid == :uuid");
         query.setParameters(ctx.project.getUuid());
@@ -300,8 +303,8 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             throw new IllegalStateException("Project does not exist");
         }
 
+        boolean hasChanged = false;
         if (project != null) {
-            boolean hasChanged = false;
             persistentProject.setBomRef(project.getBomRef()); // Transient
             hasChanged |= applyIfChanged(persistentProject, project, Project::getAuthor, persistentProject::setAuthor);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getPublisher, persistentProject::setPublisher);
@@ -317,23 +320,22 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             hasChanged |= applyIfChanged(persistentProject, project, Project::getExternalReferences, persistentProject::setExternalReferences);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getPurl, persistentProject::setPurl);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getSwidTagId, persistentProject::setSwidTagId);
+        }
 
-            if (project.getMetadata() != null) {
-                final ProjectMetadata projectMetadata = project.getMetadata();
-                if (persistentProject.getMetadata() == null) {
-                    projectMetadata.setProject(persistentProject);
-                    qm.getPersistenceManager().makePersistent(projectMetadata);
-                    hasChanged = true;
-                } else {
-                    hasChanged |= applyIfChanged(persistentProject.getMetadata(), project.getMetadata(), ProjectMetadata::getAuthors, persistentProject.getMetadata()::setAuthors);
-                    hasChanged |= applyIfChanged(persistentProject.getMetadata(), project.getMetadata(), ProjectMetadata::getSupplier, persistentProject.getMetadata()::setSupplier);
-                }
+        if (projectMetadata != null) {
+            if (persistentProject.getMetadata() == null) {
+                projectMetadata.setProject(persistentProject);
+                qm.getPersistenceManager().makePersistent(projectMetadata);
+                hasChanged = true;
+            } else {
+                hasChanged |= applyIfChanged(persistentProject.getMetadata(), projectMetadata, ProjectMetadata::getAuthors, persistentProject.getMetadata()::setAuthors);
+                hasChanged |= applyIfChanged(persistentProject.getMetadata(), projectMetadata, ProjectMetadata::getSupplier, persistentProject.getMetadata()::setSupplier);
             }
+        }
 
-            if (hasChanged) {
-                eventsToDispatch.add(new IndexEvent(IndexEvent.Action.UPDATE, persistentProject));
-                qm.getPersistenceManager().flush();
-            }
+        if (hasChanged) {
+            eventsToDispatch.add(new IndexEvent(IndexEvent.Action.UPDATE, persistentProject));
+            qm.getPersistenceManager().flush();
         }
 
         return persistentProject;

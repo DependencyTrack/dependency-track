@@ -94,6 +94,18 @@ public class ModelConverter {
     private ModelConverter() {
     }
 
+    public static ProjectMetadata convertToProjectMetadata(final org.cyclonedx.model.Metadata cdxMetadata) {
+        if (cdxMetadata == null) {
+            return null;
+        }
+
+        final var projectMetadata = new ProjectMetadata();
+        projectMetadata.setAuthors(convertCdxContacts(cdxMetadata.getAuthors()));
+        projectMetadata.setSupplier(convert(cdxMetadata.getSupplier()));
+
+        return projectMetadata;
+    }
+
     public static Project convertToProject(final org.cyclonedx.model.Metadata cdxMetadata) {
         if (cdxMetadata == null || cdxMetadata.getComponent() == null) {
             return null;
@@ -101,11 +113,6 @@ public class ModelConverter {
 
         final Project project = convertToProject(cdxMetadata.getComponent());
         project.setManufacturer(convert(cdxMetadata.getManufacture()));
-
-        final var projectMetadata = new ProjectMetadata();
-        projectMetadata.setAuthors(convertCdxContacts(cdxMetadata.getAuthors()));
-        projectMetadata.setSupplier(convert(cdxMetadata.getSupplier()));
-        project.setMetadata(projectMetadata);
 
         return project;
     }

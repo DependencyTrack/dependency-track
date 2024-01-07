@@ -112,10 +112,10 @@ public class ModelConverter {
 
     public static Project convertToProject(final org.cyclonedx.model.Component cdxComponent) {
         final var project = new Project();
+        project.setBomRef(useOrGenerateRandomBomRef(cdxComponent.getBomRef()));
         project.setAuthor(trimToNull(cdxComponent.getAuthor()));
         project.setPublisher(trimToNull(cdxComponent.getPublisher()));
         project.setSupplier(convert(cdxComponent.getSupplier()));
-        project.setBomRef(cdxComponent.getBomRef());
         project.setClassifier(convertClassifier(cdxComponent.getType()).orElse(Classifier.APPLICATION));
         project.setGroup(trimToNull(cdxComponent.getGroup()));
         project.setName(trimToNull(cdxComponent.getName()));
@@ -149,10 +149,10 @@ public class ModelConverter {
 
     public static Component convertComponent(final org.cyclonedx.model.Component cdxComponent) {
         final var component = new Component();
+        component.setBomRef(useOrGenerateRandomBomRef(cdxComponent.getBomRef()));
         component.setAuthor(trimToNull(cdxComponent.getAuthor()));
         component.setPublisher(trimToNull(cdxComponent.getPublisher()));
         component.setSupplier(convert(cdxComponent.getSupplier()));
-        component.setBomRef(trimToNull(cdxComponent.getBomRef()));
         component.setClassifier(convertClassifier(cdxComponent.getType()).orElse(Classifier.LIBRARY));
         component.setGroup(trimToNull(cdxComponent.getGroup()));
         component.setName(trimToNull(cdxComponent.getName()));
@@ -258,7 +258,7 @@ public class ModelConverter {
 
     public static ServiceComponent convertService(final org.cyclonedx.model.Service cdxService) {
         final var service = new ServiceComponent();
-        service.setBomRef(trimToNull(cdxService.getBomRef()));
+        service.setBomRef(useOrGenerateRandomBomRef(cdxService.getBomRef()));
         service.setGroup(trimToNull(cdxService.getGroup()));
         service.setName(trimToNull(cdxService.getName()));
         service.setVersion(trimToNull(cdxService.getVersion()));
@@ -367,6 +367,12 @@ public class ModelConverter {
                     return classification;
                 })
                 .toList();
+    }
+
+    private static String useOrGenerateRandomBomRef(final String bomRef) {
+        return Optional.ofNullable(bomRef)
+                .map(StringUtils::trimToNull)
+                .orElseGet(() -> UUID.randomUUID().toString());
     }
 
     public static <T> List<T> flatten(final Collection<T> items,
@@ -627,7 +633,7 @@ public class ModelConverter {
         cdxContact.setPhone(StringUtils.trimToNull(cdxContact.getPhone()));
         return cdxContact;
     }
-    
+
     /**Convert from DT to CycloneDX */
     public static org.cyclonedx.model.Component convert(final QueryManager qm, final Component component) {
         final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();

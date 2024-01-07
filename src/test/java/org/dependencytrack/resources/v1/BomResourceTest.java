@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -49,13 +48,13 @@ import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
+import static org.apache.commons.io.IOUtils.resourceToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
@@ -694,8 +693,7 @@ public class BomResourceTest extends ResourceTest {
     public void uploadBomTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
-        File file = new File(Thread.currentThread().getContextClassLoader().getResource("bom-1.xml").toURI());
-        String bomString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(project.getUuid().toString(), null, null, false, bomString);
         Response response = target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
@@ -710,8 +708,7 @@ public class BomResourceTest extends ResourceTest {
     @Test
     public void uploadBomInvalidProjectTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
-        File file = new File(Thread.currentThread().getContextClassLoader().getResource("bom-1.xml").toURI());
-        String bomString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(UUID.randomUUID().toString(), null, null, false, bomString);
         Response response = target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
@@ -725,8 +722,7 @@ public class BomResourceTest extends ResourceTest {
     @Test
     public void uploadBomAutoCreateTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
-        File file = new File(Thread.currentThread().getContextClassLoader().getResource("bom-1.xml").toURI());
-        String bomString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", true, bomString);
         Response response = target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
@@ -742,8 +738,7 @@ public class BomResourceTest extends ResourceTest {
 
     @Test
     public void uploadBomUnauthorizedTest() throws Exception {
-        File file = new File(Thread.currentThread().getContextClassLoader().getResource("bom-1.xml").toURI());
-        String bomString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", true, bomString);
         Response response = target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
@@ -756,8 +751,7 @@ public class BomResourceTest extends ResourceTest {
     @Test
     public void uploadBomAutoCreateTestWithParentTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
-        File file = new File(Thread.currentThread().getContextClassLoader().getResource("bom-1.xml").toURI());
-        String bomString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         // Upload parent project
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Parent", "1.0", true, bomString);
         Response response = target(V1_BOM).request()
@@ -820,8 +814,7 @@ public class BomResourceTest extends ResourceTest {
     @Test
     public void uploadBomInvalidParentTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
-        File file = new File(Thread.currentThread().getContextClassLoader().getResource("bom-1.xml").toURI());
-        String bomString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", true, UUID.randomUUID().toString(), null, null, bomString);
         Response response = target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)

@@ -27,7 +27,6 @@ import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.cyclonedx.BomParserFactory;
 import org.cyclonedx.exception.ParseException;
-import org.cyclonedx.model.Dependency;
 import org.cyclonedx.parsers.Parser;
 import org.datanucleus.flush.FlushMode;
 import org.dependencytrack.event.BomUploadEvent;
@@ -82,6 +81,7 @@ import static org.datanucleus.PropertyNames.PROPERTY_FLUSH_MODE;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
 import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertComponents;
+import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertDependencyGraph;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertServices;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProject;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
@@ -111,6 +111,11 @@ public class BomUploadProcessingTaskX implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(BomUploadProcessingTaskX.class);
 
+    /**
+     * {@link Event}s to dispatch <em>after</em> BOM processing completed successfully.
+     * <p>
+     * May include search index updates, or triggers for tasks relying on successful completion.
+     */
     private final List<Event> eventsToDispatch = new ArrayList<>();
 
     @Override
@@ -146,8 +151,10 @@ public class BomUploadProcessingTaskX implements Subscriber {
         }
 
         ctx.bomSpecVersion = cdxBom.getSpecVersion();
-        ctx.bomSerialNumber = cdxBom.getSerialNumber();
         ctx.bomVersion = cdxBom.getVersion();
+        if (cdxBom.getSerialNumber() != null) {
+            ctx.bomSerialNumber = cdxBom.getSerialNumber().replaceFirst("^urn:uuid:", "");
+        }
 
         try (var ignoredMdcBomFormat = MDC.putCloseable("bomFormat", ctx.bomFormat.getFormatShortName());
              var ignoredMdcBomSpecVersion = MDC.putCloseable("bomSpecVersion", ctx.bomSpecVersion);
@@ -183,6 +190,8 @@ public class BomUploadProcessingTaskX implements Subscriber {
         List<ServiceComponent> services = convertServices(cdxBom.getServices());
         services = flatten(services, ServiceComponent::getChildren, ServiceComponent::setChildren);
         final int numServicesTotal = services.size();
+
+        final MultiValuedMap<String, String> dependencyGraph = convertDependencyGraph(cdxBom.getDependencies());
 
         // Keep track of which BOM ref points to which component identity.
         // During component and service de-duplication, we'll potentially drop
@@ -251,7 +260,7 @@ public class BomUploadProcessingTaskX implements Subscriber {
                 final Project persistentProject = processProject(ctx, qm, project);
                 final Map<ComponentIdentity, Component> persistentComponentsByIdentity =
                         processComponents(qm, persistentProject, finalComponents, identitiesByBomRef, bomRefsByIdentity);
-                processDependencyGraph(qm, cdxBom, persistentProject, persistentComponentsByIdentity, identitiesByBomRef);
+                processDependencyGraph(qm, persistentProject, dependencyGraph, persistentComponentsByIdentity, identitiesByBomRef);
                 recordBomImport(ctx, qm, persistentProject);
 
                 processedComponents.addAll(persistentComponentsByIdentity.values());
@@ -313,6 +322,9 @@ public class BomUploadProcessingTaskX implements Subscriber {
             hasChanged |= applyIfChanged(persistentProject, project, Project::getPurl, persistentProject::setPurl);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getSwidTagId, persistentProject::setSwidTagId);
 
+            // BOM ref is transient and thus doesn't count towards the changed status.
+            persistentProject.setBomRef(project.getBomRef());
+
             if (project.getMetadata() != null) {
                 final ProjectMetadata projectMetadata = project.getMetadata();
                 if (persistentProject.getMetadata() == null) {
@@ -343,7 +355,7 @@ public class BomUploadProcessingTaskX implements Subscriber {
 
         // Fetch IDs of all components that exist in the project already.
         // We'll need them later to determine which components to delete.
-        final Set<Long> idsOfComponentsToDelete = getAllComponentIds(qm.getPersistenceManager(), project, Component.class);
+        final Set<Long> idsOfComponentsToDelete = getAllComponentIds(qm, project, Component.class);
 
         // Avoid redundant queries by caching resolved licenses.
         // It is likely that if license IDs were present in a BOM,
@@ -397,8 +409,6 @@ public class BomUploadProcessingTaskX implements Subscriber {
                 applyIfChanged(persistentComponent, component, Component::getLicenseUrl, persistentComponent::setLicenseUrl);
                 applyIfChanged(persistentComponent, component, Component::isInternal, persistentComponent::setInternal);
                 applyIfChanged(persistentComponent, component, Component::getExternalReferences, persistentComponent::setExternalReferences);
-
-                // BOM ref is transient and thus doesn't count towards the changed status.
                 persistentComponent.setBomRef(component.getBomRef());
 
                 idsOfComponentsToDelete.remove(persistentComponent.getId());
@@ -449,8 +459,8 @@ public class BomUploadProcessingTaskX implements Subscriber {
         };
     }
 
-    private static <T> Set<Long> getAllComponentIds(final PersistenceManager pm, final Project project, final Class<T> clazz) {
-        final Query<T> query = pm.newQuery(clazz);
+    private static <T> Set<Long> getAllComponentIds(final QueryManager qm, final Project project, final Class<T> clazz) {
+        final Query<T> query = qm.getPersistenceManager().newQuery(clazz);
         query.setFilter("project == :project");
         query.setParameters(project);
         query.setResult("id");
@@ -482,17 +492,15 @@ public class BomUploadProcessingTaskX implements Subscriber {
     }
 
     private void processDependencyGraph(final QueryManager qm,
-                                        final org.cyclonedx.model.Bom cdxBom, final Project project,
+                                        final Project project,
+                                        final MultiValuedMap<String, String> dependencyGraph,
                                         final Map<ComponentIdentity, Component> componentsByIdentity,
                                         final Map<String, ComponentIdentity> identitiesByBomRef) {
         assertPersistent(project, "Project must be persistent");
 
-        if (cdxBom.getMetadata() != null
-                && cdxBom.getMetadata().getComponent() != null
-                && cdxBom.getMetadata().getComponent().getBomRef() != null) {
-            final org.cyclonedx.model.Dependency dependency =
-                    findDependencyByBomRef(cdxBom.getDependencies(), cdxBom.getMetadata().getComponent().getBomRef());
-            final String directDependenciesJson = resolveDirectDependenciesJson(dependency, identitiesByBomRef);
+        if (project.getBomRef() != null) {
+            final Collection<String> directDependencyBomRefs = dependencyGraph.get(project.getBomRef());
+            final String directDependenciesJson = resolveDirectDependenciesJson(project.getBomRef(), directDependencyBomRefs, identitiesByBomRef);
             if (!Objects.equals(directDependenciesJson, project.getDirectDependencies())) {
                 project.setDirectDependencies(directDependenciesJson);
                 qm.getPersistenceManager().flush();
@@ -506,8 +514,9 @@ public class BomUploadProcessingTaskX implements Subscriber {
         }
 
         for (final Map.Entry<String, ComponentIdentity> entry : identitiesByBomRef.entrySet()) {
-            final org.cyclonedx.model.Dependency dependency = findDependencyByBomRef(cdxBom.getDependencies(), entry.getKey());
-            final String directDependenciesJson = resolveDirectDependenciesJson(dependency, identitiesByBomRef);
+            final String componentBomRef = entry.getKey();
+            final Collection<String> directDependencyBomRefs = dependencyGraph.get(componentBomRef);
+            final String directDependenciesJson = resolveDirectDependenciesJson(componentBomRef, directDependencyBomRefs, identitiesByBomRef);
 
             final ComponentIdentity dependencyIdentity = identitiesByBomRef.get(entry.getKey());
             final Component component = componentsByIdentity.get(dependencyIdentity);
@@ -529,34 +538,23 @@ public class BomUploadProcessingTaskX implements Subscriber {
         qm.getPersistenceManager().flush();
     }
 
-    private static org.cyclonedx.model.Dependency findDependencyByBomRef(final List<Dependency> dependencies, final String bomRef) {
-        if (dependencies == null || dependencies.isEmpty() || bomRef == null) {
+    private String resolveDirectDependenciesJson(final String dependencyBomRef,
+                                                 final Collection<String> directDependencyBomRefs,
+                                                 final Map<String, ComponentIdentity> identitiesByBomRef) {
+        if (directDependencyBomRefs == null || directDependencyBomRefs.isEmpty()) {
             return null;
         }
 
-        for (final org.cyclonedx.model.Dependency dependency : dependencies) {
-            if (bomRef.equals(dependency.getRef())) {
-                return dependency;
-            }
-        }
-
-        return null;
-    }
-
-    private String resolveDirectDependenciesJson(final org.cyclonedx.model.Dependency cdxDependency,
-                                                 final Map<String, ComponentIdentity> identitiesByBomRef) {
         final var jsonDependencies = new JSONArray();
-        if (cdxDependency != null && cdxDependency.getDependencies() != null) {
-            for (final org.cyclonedx.model.Dependency subDependency : cdxDependency.getDependencies()) {
-                final ComponentIdentity subDependencyIdentity = identitiesByBomRef.get(subDependency.getRef());
-                if (subDependencyIdentity != null) {
-                    jsonDependencies.put(subDependencyIdentity.toJSON());
-                } else {
-                    LOGGER.warn("""
-                            Unable to resolve BOM ref %s to a component identity; \
-                            As a result, the dependency graph will likely be incomplete\
-                            """.formatted(cdxDependency.getRef()));
-                }
+        for (final String directDependencyBomRef : directDependencyBomRefs) {
+            final ComponentIdentity directDependencyIdentity = identitiesByBomRef.get(directDependencyBomRef);
+            if (directDependencyIdentity != null) {
+                jsonDependencies.put(directDependencyIdentity.toJSON());
+            } else {
+                LOGGER.warn("""
+                        Unable to resolve BOM ref %s to a component identity while processing direct \
+                        dependencies of BOM ref %s; As a result, the dependency graph will likely be incomplete\
+                        """.formatted(dependencyBomRef, directDependencyBomRef));
             }
         }
 

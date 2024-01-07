@@ -143,13 +143,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             cdxBom = bomParser.parse(event.getBom());
         } catch (ParseException e) {
             LOGGER.error("Failed to parse BOM", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.PORTFOLIO)
-                    .group(NotificationGroup.BOM_PROCESSING_FAILED)
-                    .level(NotificationLevel.ERROR)
-                    .title(NotificationConstants.Title.BOM_PROCESSING_FAILED)
-                    .content("An error occurred while processing a BOM")
-                    .subject(new BomProcessingFailed(ctx.project, ctx.bomEncoded, e.getMessage(), ctx.bomFormat, ctx.bomSpecVersion)));
+            dispatchBomProcessingFailedNotification(ctx, e);
             return;
         }
 
@@ -166,14 +160,8 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             processBom(ctx, cdxBom);
             eventsToDispatch.forEach(Event::dispatch);
         } catch (RuntimeException e) {
-            LOGGER.error("Processing BOM failed", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.PORTFOLIO)
-                    .group(NotificationGroup.BOM_PROCESSING_FAILED)
-                    .level(NotificationLevel.ERROR)
-                    .title(NotificationConstants.Title.BOM_PROCESSING_FAILED)
-                    .content("An error occurred while processing a BOM")
-                    .subject(new BomProcessingFailed(ctx.project, ctx.bomEncoded, e.getMessage(), ctx.bomFormat, ctx.bomSpecVersion)));
+            LOGGER.error("Failed to process BOM", e);
+            dispatchBomProcessingFailedNotification(ctx, e);
         }
     }
 
@@ -216,13 +204,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
                 and %d dependency graph entries""".formatted(components.size(), numComponentsTotal,
                 services.size(), numServicesTotal, dependencyGraph.size()));
 
-        Notification.dispatch(new Notification()
-                .scope(NotificationScope.SYSTEM)
-                .group(NotificationGroup.BOM_CONSUMED)
-                .level(NotificationLevel.INFORMATIONAL)
-                .title(NotificationConstants.Title.BOM_CONSUMED)
-                .content("A " + ctx.bomFormat.getFormatShortName() + " BOM was consumed and will be processed")
-                .subject(new BomConsumedOrProcessed(ctx.project, ctx.bomEncoded, ctx.bomFormat, ctx.bomSpecVersion)));
+        dispatchBomConsumedNotification(ctx);
 
         final var processedComponents = new ArrayList<Component>();
         try (final var qm = new QueryManager().withL2CacheDisabled()) {
@@ -264,17 +246,22 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             // See https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#lifecycle
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
 
-            LOGGER.info("Processing %d components and %s services".formatted(components.size(), services.size()));
-
             final List<Component> finalComponents = components;
             final List<ServiceComponent> finalServices = services;
 
             qm.runInTransaction(() -> {
                 final Project persistentProject = processProject(ctx, qm, project);
+
+                LOGGER.info("Processing %d components".formatted(finalComponents.size()));
                 final Map<ComponentIdentity, Component> persistentComponentsByIdentity =
                         processComponents(qm, persistentProject, finalComponents, identitiesByBomRef, bomRefsByIdentity);
+
+                LOGGER.info("Processing %d services".formatted(finalServices.size()));
                 processServices(qm, persistentProject, finalServices, identitiesByBomRef, bomRefsByIdentity);
+
+                LOGGER.info("Processing %d dependency graph entries".formatted(dependencyGraph.size()));
                 processDependencyGraph(qm, persistentProject, dependencyGraph, persistentComponentsByIdentity, identitiesByBomRef);
+
                 recordBomImport(ctx, qm, persistentProject);
                 processedComponents.addAll(persistentComponentsByIdentity.values());
             });
@@ -295,13 +282,8 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
         repoMetaAnalysisEvent.onSuccess(new PolicyEvaluationEvent(processedComponents).project(ctx.project));
         eventsToDispatch.add(repoMetaAnalysisEvent);
 
-        Notification.dispatch(new Notification()
-                .scope(NotificationScope.SYSTEM)
-                .group(NotificationGroup.BOM_PROCESSED)
-                .level(NotificationLevel.INFORMATIONAL)
-                .title(NotificationConstants.Title.BOM_CONSUMED)
-                .content("A " + ctx.bomFormat.getFormatShortName() + " BOM was processed")
-                .subject(new BomConsumedOrProcessed(ctx.project, ctx.bomEncoded, ctx.bomFormat, ctx.bomSpecVersion)));
+        LOGGER.info("BOM processed successfully");
+        dispatchBomProcessedNotification(ctx);
     }
 
     private Project processProject(final Context ctx, final QueryManager qm, final Project project) {
@@ -719,6 +701,36 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
         } finally {
             query.closeAll();
         }
+    }
+
+    private static void dispatchBomConsumedNotification(final Context ctx) {
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.BOM_CONSUMED)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.BOM_CONSUMED)
+                .content("A " + ctx.bomFormat.getFormatShortName() + " BOM was consumed and will be processed")
+                .subject(new BomConsumedOrProcessed(ctx.project, ctx.bomEncoded, ctx.bomFormat, ctx.bomSpecVersion)));
+    }
+
+    private static void dispatchBomProcessedNotification(final Context ctx) {
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.BOM_PROCESSED)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.BOM_CONSUMED)
+                .content("A " + ctx.bomFormat.getFormatShortName() + " BOM was processed")
+                .subject(new BomConsumedOrProcessed(ctx.project, ctx.bomEncoded, ctx.bomFormat, ctx.bomSpecVersion)));
+    }
+
+    private static void dispatchBomProcessingFailedNotification(final Context ctx, final Exception exception) {
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.BOM_PROCESSING_FAILED)
+                .level(NotificationLevel.ERROR)
+                .title(NotificationConstants.Title.BOM_PROCESSING_FAILED)
+                .content("An error occurred while processing a BOM")
+                .subject(new BomProcessingFailed(ctx.project, ctx.bomEncoded, exception.getMessage(), ctx.bomFormat, ctx.bomSpecVersion)));
     }
 
 }

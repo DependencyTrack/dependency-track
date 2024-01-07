@@ -267,10 +267,13 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             LOGGER.info("Processing %d components and %s services".formatted(components.size(), services.size()));
 
             final List<Component> finalComponents = components;
+            final List<ServiceComponent> finalServices = services;
+
             qm.runInTransaction(() -> {
                 final Project persistentProject = processProject(ctx, qm, project);
                 final Map<ComponentIdentity, Component> persistentComponentsByIdentity =
                         processComponents(qm, persistentProject, finalComponents, identitiesByBomRef, bomRefsByIdentity);
+                processServices(qm, persistentProject, finalServices, identitiesByBomRef, bomRefsByIdentity);
                 processDependencyGraph(qm, persistentProject, dependencyGraph, persistentComponentsByIdentity, identitiesByBomRef);
                 recordBomImport(ctx, qm, persistentProject);
                 processedComponents.addAll(persistentComponentsByIdentity.values());
@@ -381,7 +384,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             resolveAndApplyLicense(qm, component, licenseCache, customLicenseCache);
 
             final var componentIdentity = new ComponentIdentity(component);
-            Component persistentComponent = qm.matchSingleIdentity(project, componentIdentity);
+            Component persistentComponent = qm.matchSingleIdentityExact(project, componentIdentity);
             if (persistentComponent == null) {
                 component.setProject(project);
                 persistentComponent = qm.getPersistenceManager().makePersistent(component);

@@ -23,6 +23,7 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.util.PurlUtil;
 import org.json.JSONObject;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -135,6 +136,27 @@ public class ComponentIdentity {
 
     public UUID getUuid() {
         return uuid;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ComponentIdentity that = (ComponentIdentity) o;
+        return objectType == that.objectType
+                && Objects.equals(purl, that.purl)
+                && Objects.equals(purlCoordinates, that.purlCoordinates)
+                && Objects.equals(cpe, that.cpe)
+                && Objects.equals(swidTagId, that.swidTagId)
+                && Objects.equals(group, that.group)
+                && Objects.equals(name, that.name)
+                && Objects.equals(version, that.version)
+                && Objects.equals(uuid, that.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(objectType, purl, purlCoordinates, cpe, swidTagId, group, name, version, uuid);
     }
 
     public JSONObject toJSON() {

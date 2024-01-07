@@ -456,15 +456,69 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
 
     /**
      * Returns a component by matching its identity information.
+     * <p>
+     * Note that this method employs a stricter matching logic than {@link #matchIdentity(Project, ComponentIdentity)}
+     * and {@link #matchIdentity(ComponentIdentity)}. For example, if {@code purl} of the given {@link ComponentIdentity}
+     * is {@code null}, this method will use a query that explicitly checks for the {@code purl} column to be {@code null}.
+     * Whereas other methods will simply not include {@code purl} in the query in such cases.
+     *
      * @param project the Project the component is a dependency of
-     * @param cid the identity values of the component
+     * @param cid     the identity values of the component
      * @return a Component object, or null if not found
      */
     public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
-        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(project, cid);
-        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getLeft());
-        query.setRange(0, 1);
-        return singleResult(query.executeWithMap(queryFilterParamsPair.getRight()));
+        var filterParts = new ArrayList<String>();
+        final var params = new HashMap<String, Object>();
+
+        if (cid.getPurl() != null) {
+            filterParts.add("(purl != null && purl == :purl)");
+            params.put("purl", cid.getPurl().canonicalize());
+        } else {
+            filterParts.add("purl == null");
+        }
+
+        if (cid.getCpe() != null) {
+            filterParts.add("(cpe != null && cpe == :cpe)");
+            params.put("cpe", cid.getCpe());
+        } else {
+            filterParts.add("cpe == null");
+        }
+
+        if (cid.getSwidTagId() != null) {
+            filterParts.add("(swidTagId != null && swidTagId == :swidTagId)");
+            params.put("swidTagId", cid.getSwidTagId());
+        } else {
+            filterParts.add("swidTagId == null");
+        }
+
+        var coordinatesFilter = "(";
+        if (cid.getGroup() != null) {
+            coordinatesFilter += "group == :group";
+            params.put("group", cid.getGroup());
+        } else {
+            coordinatesFilter += "group == null";
+        }
+        coordinatesFilter += " && name == :name";
+        params.put("name", cid.getName());
+        if (cid.getVersion() != null) {
+            coordinatesFilter += " && version == :version";
+            params.put("version", cid.getVersion());
+        } else {
+            coordinatesFilter += " && version == null";
+        }
+        coordinatesFilter += ")";
+        filterParts.add(coordinatesFilter);
+
+        final var filter = "project == :project && (" + String.join(" && ", filterParts) + ")";
+        params.put("project", project);
+
+        final Query<Component> query = pm.newQuery(Component.class, filter);
+        query.setNamedParameters(params);
+        try {
+            return query.executeUnique();
+        } finally {
+            query.closeAll();
+        }
     }
 
     /**

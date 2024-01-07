@@ -133,7 +133,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
         final byte[] bomBytes = Files.readAllBytes(Paths.get(getClass().getClassLoader().getResource("bom-1.xml").toURI()));
 
-        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        new BomUploadProcessingTaskX().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes));
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 6, Duration.ofSeconds(5));
 
         qm.getPersistenceManager().refresh(project);
@@ -223,7 +223,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                   "bomFormat": "CycloneDX",
                 """.getBytes(StandardCharsets.UTF_8);
 
-        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        new BomUploadProcessingTaskX().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes));
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
 
         assertThat(NOTIFICATIONS).satisfiesExactly(
@@ -256,7 +256,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         final byte[] bomBytes = IOUtils.resourceToByteArray("/unit/bom-issue2859.xml");
 
         assertThatNoException()
-                .isThrownBy(() -> new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes)));
+                .isThrownBy(() -> new BomUploadProcessingTask().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes)));
     }
 
     @Test
@@ -288,7 +288,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 }
                 """.getBytes(StandardCharsets.UTF_8);
 
-        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        new BomUploadProcessingTaskX().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes));
         awaitBomProcessedNotification();
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
@@ -332,7 +332,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 }
                 """.getBytes(StandardCharsets.UTF_8);
 
-        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        new BomUploadProcessingTaskX().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes));
         awaitBomProcessedNotification();
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
@@ -372,7 +372,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 }
                 """.getBytes(StandardCharsets.UTF_8);
 
-        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        new BomUploadProcessingTaskX().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes));
         awaitBomProcessedNotification();
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
@@ -412,13 +412,13 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 }
                 """.getBytes();
 
-        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        new BomUploadProcessingTask().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes));
         awaitBomProcessedNotification();
         assertProjectAuthors.run();
 
         NOTIFICATIONS.clear();
 
-        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        new BomUploadProcessingTask().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes));
         awaitBomProcessedNotification();
         assertProjectAuthors.run();
     }

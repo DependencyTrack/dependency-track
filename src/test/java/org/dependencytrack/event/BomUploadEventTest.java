@@ -18,19 +18,18 @@
  */
 package org.dependencytrack.event;
 
+import org.dependencytrack.model.Project;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.UUID;
 
 public class BomUploadEventTest {
 
     @Test
     public void testByteArrayConstructor() {
-        UUID uuid = UUID.randomUUID();
+        var project = new Project();
         byte[] bom = "testing".getBytes();
-        BomUploadEvent event = new BomUploadEvent(null, bom);
-        Assert.assertEquals(uuid, event.getProject().getUuid());
+        BomUploadEvent event = new BomUploadEvent(project, bom);
+        Assert.assertEquals(project, event.getProject());
         Assert.assertNotEquals(bom, event.getBom()); // should be a cloned byte array - not the same reference
         Assert.assertTrue(event.getBom().length > 0);
     }

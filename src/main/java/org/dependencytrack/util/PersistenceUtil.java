@@ -170,6 +170,7 @@ public final class PersistenceUtil {
      * @param message Message to use for the exception, if object is not persistent
      * @throws IllegalStateException When the object is not in a persistent state
      * @see <a href="https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#lifecycle">Object Lifecycle</a>
+     * @since 4.10.0
      */
     public static void assertPersistent(final Object object, final String message) {
         if (!isPersistent(object)) {
@@ -183,6 +184,7 @@ public final class PersistenceUtil {
      * @param object  The object to check the state of
      * @param message Message to use for the exception, if object is persistent
      * @see #assertPersistent(Object, String)
+     * @since 4.11.0
      */
     public static void assertNonPersistent(final Object object, final String message) {
         if (isPersistent(object)) {

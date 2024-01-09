@@ -109,7 +109,7 @@
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.httpclient5.version>5.3</lib.httpclient5.version>
-        <lib.log4j-over-slf4j.version>2.0.10</lib.log4j-over-slf4j.version>
+        <lib.log4j-over-slf4j.version>2.0.11</lib.log4j-over-slf4j.version>
         <lib.org-kohsuke-github-api.version>1.318</lib.org-kohsuke-github-api.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.4.2.jre11</lib.jdbc-driver.mssql.version>

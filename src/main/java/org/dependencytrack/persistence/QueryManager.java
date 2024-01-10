@@ -858,6 +858,10 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().matchSingleIdentityExact(project, cid);
     }
 
+    public Component matchFirstIdentityExact(final Project project, final ComponentIdentity cid) {
+        return getComponentQueryManager().matchFirstIdentityExact(project, cid);
+    }
+
     public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {
         return getComponentQueryManager().matchIdentity(project, cid);
     }

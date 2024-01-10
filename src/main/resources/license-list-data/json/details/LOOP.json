@@ -7,10 +7,46 @@
   "crossRef": [
     {
       "match": "false",
+      "url": "https://github.com/cl-adams/adams/blob/master/LICENSE.md",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:15:13Z",
+      "isWayBackLink": false,
+      "order": 3
+    },
+    {
+      "match": "false",
+      "url": "https://gitlab.common-lisp.net/cmucl/cmucl/-/blob/master/src/code/loop.lisp",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:15:14Z",
+      "isWayBackLink": false,
+      "order": 5
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/blakemcbride/eclipse-lisp/blob/master/lisp/loop.lisp",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:15:16Z",
+      "isWayBackLink": false,
+      "order": 4
+    },
+    {
+      "match": "false",
+      "url": "https://gitlab.com/embeddable-common-lisp/ecl/-/blob/develop/src/lsp/loop.lsp",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:15:17Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "false",
       "url": "https://sourceforge.net/p/sbcl/sbcl/ci/master/tree/src/code/loop.lisp",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:43:11Z",
+      "timestamp": "2023-10-05T15:15:18Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -19,45 +55,9 @@
       "url": "http://git.savannah.gnu.org/cgit/gcl.git/tree/gcl/lsp/gcl_loop.lsp?h\u003dVersion_2_6_13pre",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:43:12Z",
+      "timestamp": "2023-10-05T15:15:20Z",
       "isWayBackLink": false,
       "order": 1
-    },
-    {
-      "match": "false",
-      "url": "https://github.com/blakemcbride/eclipse-lisp/blob/master/lisp/loop.lisp",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:43:14Z",
-      "isWayBackLink": false,
-      "order": 4
-    },
-    {
-      "match": "false",
-      "url": "https://github.com/cl-adams/adams/blob/master/LICENSE.md",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:43:15Z",
-      "isWayBackLink": false,
-      "order": 3
-    },
-    {
-      "match": "false",
-      "url": "https://gitlab.com/embeddable-common-lisp/ecl/-/blob/develop/src/lsp/loop.lsp",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:43:16Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
-      "url": "https://gitlab.common-lisp.net/cmucl/cmucl/-/blob/master/src/code/loop.lisp",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:43:17Z",
-      "isWayBackLink": false,
-      "order": 5
     }
   ],
   "seeAlso": [

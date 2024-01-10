@@ -6,11 +6,11 @@
   "licenseId": "CC-BY-3.0-NL",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "https://creativecommons.org/licenses/by/3.0/nl/legalcode",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:37:51Z",
+      "timestamp": "2023-10-05T15:09:12Z",
       "isWayBackLink": false,
       "order": 0
     }

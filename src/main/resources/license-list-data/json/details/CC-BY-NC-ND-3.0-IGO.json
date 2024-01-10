@@ -6,11 +6,11 @@
   "licenseId": "CC-BY-NC-ND-3.0-IGO",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "https://creativecommons.org/licenses/by-nc-nd/3.0/igo/legalcode",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:38:13Z",
+      "timestamp": "2023-10-05T15:15:58Z",
       "isWayBackLink": false,
       "order": 0
     }

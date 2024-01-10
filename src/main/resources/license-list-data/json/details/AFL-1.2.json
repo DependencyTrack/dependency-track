@@ -10,22 +10,22 @@
   "standardLicenseHeader": "Licensed under the Academic Free License version 1.2\n\n",
   "crossRef": [
     {
-      "match": "false",
-      "url": "http://opensource.linux-mirror.org/licenses/afl-1.2.txt",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:41:09Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "http://wayback.archive.org/web/20021204204652/http://www.opensource.org/licenses/academic.php",
       "isValid": false,
       "isLive": false,
-      "timestamp": "2023-06-18T16:41:10Z",
+      "timestamp": "2023-10-05T15:09:47Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://opensource.linux-mirror.org/licenses/afl-1.2.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:09:49Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

@@ -8,21 +8,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://www.7-zip.org/sdk.html",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:46:57Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://sourceforge.net/projects/sevenzip/files/LZMA%20SDK/",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:46:58Z",
+      "timestamp": "2023-10-05T15:09:29Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://www.7-zip.org/sdk.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:09:30Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

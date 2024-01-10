@@ -7,56 +7,11 @@
   "licenseId": "D-FSL-1.0",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://www.hbz-nrw.de/produkte/open-access/lizenzen/dfsl/D-FSL-1_0_en.txt/at_download/file",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2023-06-18T16:42:09Z",
-      "isWayBackLink": false,
-      "order": 7
-    },
-    {
-      "match": "N/A",
-      "url": "https://www.hbz-nrw.de/produkte/open-access/lizenzen/dfsl/D-FSL-1_0_de.txt/at_download/file",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2023-06-18T16:42:09Z",
-      "isWayBackLink": false,
-      "order": 6
-    },
-    {
-      "match": "false",
-      "url": "https://www.hbz-nrw.de/produkte/open-access/lizenzen/dfsl",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:42:09Z",
-      "isWayBackLink": false,
-      "order": 3
-    },
-    {
-      "match": "false",
-      "url": "https://www.hbz-nrw.de/produkte/open-access/lizenzen/dfsl/german-free-software-license",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:42:10Z",
-      "isWayBackLink": false,
-      "order": 5
-    },
-    {
-      "match": "false",
-      "url": "https://www.hbz-nrw.de/produkte/open-access/lizenzen/dfsl/deutsche-freie-software-lizenz",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:42:11Z",
-      "isWayBackLink": false,
-      "order": 4
-    },
-    {
       "match": "false",
       "url": "http://www.dipp.nrw.de/d-fsl/lizenzen/",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:42:12Z",
+      "timestamp": "2023-10-05T15:10:41Z",
       "isWayBackLink": false,
       "order": 0
     },
@@ -65,7 +20,7 @@
       "url": "http://www.dipp.nrw.de/d-fsl/index_html/lizenzen/en/D-FSL-1_0_en.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:42:13Z",
+      "timestamp": "2023-10-05T15:10:58Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -74,9 +29,54 @@
       "url": "http://www.dipp.nrw.de/d-fsl/index_html/lizenzen/de/D-FSL-1_0_de.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:42:14Z",
+      "timestamp": "2023-10-05T15:11:00Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "N/A",
+      "url": "https://www.hbz-nrw.de/produkte/open-access/lizenzen/dfsl/D-FSL-1_0_en.txt/at_download/file",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2023-10-05T15:11:01Z",
+      "isWayBackLink": false,
+      "order": 7
+    },
+    {
+      "match": "N/A",
+      "url": "https://www.hbz-nrw.de/produkte/open-access/lizenzen/dfsl/D-FSL-1_0_de.txt/at_download/file",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2023-10-05T15:11:01Z",
+      "isWayBackLink": false,
+      "order": 6
+    },
+    {
+      "match": "false",
+      "url": "https://www.hbz-nrw.de/produkte/open-access/lizenzen/dfsl/german-free-software-license",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:11:01Z",
+      "isWayBackLink": false,
+      "order": 5
+    },
+    {
+      "match": "false",
+      "url": "https://www.hbz-nrw.de/produkte/open-access/lizenzen/dfsl/deutsche-freie-software-lizenz",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:11:02Z",
+      "isWayBackLink": false,
+      "order": 4
+    },
+    {
+      "match": "false",
+      "url": "https://www.hbz-nrw.de/produkte/open-access/lizenzen/dfsl",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:11:02Z",
+      "isWayBackLink": false,
+      "order": 3
     }
   ],
   "seeAlso": [

@@ -6,22 +6,22 @@
   "licenseId": "PostgreSQL",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/PostgreSQL",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:51:43Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "http://www.postgresql.org/about/licence",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:51:44Z",
+      "timestamp": "2023-10-05T15:12:02Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/PostgreSQL",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:12:03Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

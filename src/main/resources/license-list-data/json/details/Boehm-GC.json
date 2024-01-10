@@ -7,10 +7,19 @@
   "crossRef": [
     {
       "match": "false",
+      "url": "https://github.com/ivmai/libatomic_ops/blob/master/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:19:25Z",
+      "isWayBackLink": false,
+      "order": 2
+    },
+    {
+      "match": "false",
       "url": "https://github.com/uim/libgcroots/blob/master/COPYING",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:41:27Z",
+      "timestamp": "2023-10-05T15:19:26Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -19,18 +28,9 @@
       "url": "https://fedoraproject.org/wiki/Licensing:MIT#Another_Minimal_variant_(found_in_libatomic_ops)",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:41:27Z",
+      "timestamp": "2023-10-05T15:19:26Z",
       "isWayBackLink": false,
       "order": 0
-    },
-    {
-      "match": "false",
-      "url": "https://github.com/ivmai/libatomic_ops/blob/master/LICENSE",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:41:28Z",
-      "isWayBackLink": false,
-      "order": 2
     }
   ],
   "seeAlso": [

@@ -8,21 +8,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "http://web.mit.edu/freebsd/head/lib/libutil/login_ok.3",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:51:52Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://cgit.freedesktop.org/libbsd/tree/man/setproctitle.3bsd",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:51:53Z",
+      "timestamp": "2023-10-05T15:12:28Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://web.mit.edu/freebsd/head/lib/libutil/login_ok.3",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:12:28Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

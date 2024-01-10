@@ -8,20 +8,11 @@
   "licenseId": "EUPL-1.1",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/EUPL-1.1",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:36:18Z",
-      "isWayBackLink": false,
-      "order": 2
-    },
-    {
       "match": "false",
       "url": "https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/eupl1.1.-licence-en_0.pdf",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:36:18Z",
+      "timestamp": "2023-10-05T15:13:59Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -30,9 +21,18 @@
       "url": "https://joinup.ec.europa.eu/software/page/eupl/licence-eupl",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:36:19Z",
+      "timestamp": "2023-10-05T15:13:59Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/EUPL-1.1",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:14:00Z",
+      "isWayBackLink": false,
+      "order": 2
     }
   ],
   "seeAlso": [

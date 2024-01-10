@@ -7,39 +7,39 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://gitlab.freedesktop.org/xorg/app/xvinfo/-/blob/master/COPYING",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:35:37Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://gitlab.freedesktop.org/xorg/app/iceauth/-/blob/master/COPYING",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:35:38Z",
+      "timestamp": "2023-10-05T15:19:35Z",
       "isWayBackLink": false,
       "order": 0
-    },
-    {
-      "match": "false",
-      "url": "https://gitlab.freedesktop.org/xorg/app/xauth/-/blob/master/COPYING",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:35:39Z",
-      "isWayBackLink": false,
-      "order": 3
     },
     {
       "match": "false",
       "url": "https://gitlab.freedesktop.org/xorg/app/xsetroot/-/blob/master/COPYING",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:35:40Z",
+      "timestamp": "2023-10-05T15:19:36Z",
       "isWayBackLink": false,
       "order": 2
+    },
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/app/xvinfo/-/blob/master/COPYING",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:19:39Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/app/xauth/-/blob/master/COPYING",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:19:40Z",
+      "isWayBackLink": false,
+      "order": 3
     }
   ],
   "seeAlso": [

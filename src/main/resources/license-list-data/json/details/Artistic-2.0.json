@@ -8,20 +8,11 @@
   "licenseId": "Artistic-2.0",
   "crossRef": [
     {
-      "match": "false",
-      "url": "http://www.perlfoundation.org/artistic_license_2_0",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:36:57Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/artistic-license-2.0",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2023-06-18T16:36:57Z",
+      "timestamp": "2023-10-05T15:11:41Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -30,9 +21,18 @@
       "url": "https://www.perlfoundation.org/artistic-license-20.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:36:57Z",
+      "timestamp": "2023-10-05T15:11:41Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://www.perlfoundation.org/artistic_license_2_0",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:11:41Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

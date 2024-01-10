@@ -1,0 +1,11 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "As a special exception, when this file is read by TeX when\nprocessing a Texinfo source document, you may use the result without\nrestriction. This Exception is an additional permission under\nsection 7 of the GNU General Public License, version 3 (\"GPLv3\").\n",
+  "name": "Texinfo exception",
+  "seeAlso": [
+    "https://git.savannah.gnu.org/cgit/automake.git/tree/lib/texinfo.tex?h\u003dv1.16.5#n23"
+  ],
+  "licenseExceptionId": "Texinfo-exception",
+  "licenseExceptionTemplate": "As a special exception, when this file is read by TeX when processing a Texinfo source document, you may use the result without restriction. This Exception is an additional permission under section 7 of the GNU General Public License, version 3 (\"GPLv3\").\n\n",
+  "exceptionTextHtml": "\n         \u003cp\u003e\n            As a special exception, when this file is read by TeX when\n            processing a Texinfo source document, you may use the result without\n            restriction. This Exception is an additional permission under\n            section 7 of the GNU General Public License, version 3 (\u0026quot;GPLv3\u0026quot;).\n         \u003c/p\u003e\n\n      "
+}

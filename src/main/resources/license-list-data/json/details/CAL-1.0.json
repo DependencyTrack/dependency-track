@@ -7,22 +7,22 @@
   "licenseId": "CAL-1.0",
   "crossRef": [
     {
-      "match": "false",
-      "url": "http://cryptographicautonomylicense.com/license-text.html",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-06-18T16:38:38Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/CAL-1.0",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2023-06-18T16:38:38Z",
+      "timestamp": "2023-10-05T15:09:13Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://cryptographicautonomylicense.com/license-text.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2023-10-05T15:09:14Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

@@ -6,11 +6,11 @@
   "licenseId": "Glide",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "http://www.users.on.net/~triforce/glidexp/COPYING.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-06-18T16:43:04Z",
+      "timestamp": "2023-10-05T15:23:40Z",
       "isWayBackLink": false,
       "order": 0
     }

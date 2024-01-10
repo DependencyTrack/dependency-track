@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.persistence;
 
-import java.lang.reflect.Method;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -26,6 +25,8 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,7 +48,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultLicenses");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(613, qm.getAllLicensesConcise().size());
+        Assert.assertEquals(661, qm.getAllLicensesConcise().size());
     }
 
     @Test

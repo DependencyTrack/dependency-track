@@ -46,6 +46,7 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.search.document.ComponentDocument;
 import org.junit.After;
 import org.junit.Before;
@@ -130,6 +131,12 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     public void informTest() throws Exception {
         EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EventService.getInstance().subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
+
+        for (final License license : new SpdxLicenseDetailParser().getLicenseDefinitions()) {
+            if ("Apache-2.0".equals(license.getLicenseId())) {
+                qm.synchronizeLicense(license, false);
+            }
+        }
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 

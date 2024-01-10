@@ -36,7 +36,8 @@ public enum ConfigKey implements Config.Key {
     REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_ENABLED("repo.meta.analyzer.cacheStampedeBlocker.enabled", true),
     REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_LOCK_BUCKETS("repo.meta.analyzer.cacheStampedeBlocker.lock.buckets", 1000),
     REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_MAX_ATTEMPTS("repo.meta.analyzer.cacheStampedeBlocker.max.attempts", 10),
-    SYSTEM_REQUIREMENT_CHECK_ENABLED("system.requirement.check.enabled", true);
+    SYSTEM_REQUIREMENT_CHECK_ENABLED("system.requirement.check.enabled", true),
+    BOM_PROCESSING_TASK_V2_ENABLED("bom.processing.task.v2.enabled", true);
 
     private final String propertyName;
     private final Object defaultValue;

@@ -18,17 +18,19 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.event.framework.Event;
 import alpine.event.framework.EventService;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.notification.NotificationService;
-import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import net.jcip.annotations.NotThreadSafe;
 import org.awaitility.core.ConditionTimeoutException;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
+import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
+import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
@@ -44,6 +46,7 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.search.document.ComponentDocument;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,6 +61,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.fail;
@@ -67,7 +71,16 @@ import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeou
 @NotThreadSafe
 public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
-    public static class NotificationSubscriber implements Subscriber {
+    public static class EventSubscriber implements alpine.event.framework.Subscriber {
+
+        @Override
+        public void inform(final Event event) {
+            EVENTS.add(event);
+        }
+
+    }
+
+    public static class NotificationSubscriber implements alpine.notification.Subscriber {
 
         @Override
         public void inform(final Notification notification) {
@@ -76,6 +89,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     }
 
+    private static final ConcurrentLinkedQueue<Event> EVENTS = new ConcurrentLinkedQueue<>();
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
 
     // Temporary for easier switching between implementations.
@@ -83,6 +97,9 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @Before
     public void setUp() {
+        EventService.getInstance().subscribe(IndexEvent.class, EventSubscriber.class);
+        EventService.getInstance().subscribe(RepositoryMetaEvent.class, EventSubscriber.class);
+        EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, EventSubscriber.class);
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
 
         // Enable processing of CycloneDX BOMs
@@ -100,8 +117,10 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @After
     public void tearDown() {
+        EVENTS.clear();
         NOTIFICATIONS.clear();
 
+        EventService.getInstance().unsubscribe(EventSubscriber.class);
         EventService.getInstance().unsubscribe(VulnerabilityAnalysisTask.class);
         EventService.getInstance().unsubscribe(NewVulnerableDependencyAnalysisTask.class);
         NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
@@ -318,6 +337,86 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         // Make sure we ingested all components of the BOM.
         final List<Component> components = qm.getAllComponents(project);
         assertThat(components).hasSize(185);
+    }
+
+    @Test
+    public void informWithExistingDuplicateComponentsTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setGroup("com.acme");
+        componentA.setName("acme-lib");
+        componentA.setVersion("2.0.0");
+        qm.persist(componentA);
+
+        final var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setGroup("com.acme");
+        componentB.setName("acme-lib");
+        componentB.setVersion("2.0.0");
+        qm.persist(componentB);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "acme-lib",
+                      "version": "2.0.0"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        TASK_SUPPLIER.get().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes));
+        awaitBomProcessedNotification();
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(c -> {
+            assertThat(c.getId()).isEqualTo(componentA.getId());
+            assertThat(c.getClassifier()).isEqualTo(Classifier.LIBRARY);
+            assertThat(c.getPublisher()).isEqualTo("Acme Inc");
+            assertThat(c.getGroup()).isEqualTo("com.acme");
+            assertThat(c.getName()).isEqualTo("acme-lib");
+            assertThat(c.getVersion()).isEqualTo("2.0.0");
+        });
+
+        assertThat(EVENTS).satisfiesExactlyInAnyOrder(
+                event -> {
+                    assertThat(event).isInstanceOf(IndexEvent.class);
+                    final var indexEvent = (IndexEvent) event;
+                    assertThat(indexEvent.getIndexableClass()).isEqualTo(Component.class);
+                    assertThat(indexEvent.getAction()).isEqualTo(IndexEvent.Action.UPDATE);
+                    final var searchDoc = (ComponentDocument) indexEvent.getDocument();
+                    assertThat(searchDoc.uuid()).isEqualTo(componentA.getUuid());
+                },
+                event -> {
+                    assertThat(event).isInstanceOf(IndexEvent.class);
+                    final var indexEvent = (IndexEvent) event;
+                    assertThat(indexEvent.getIndexableClass()).isEqualTo(Component.class);
+                    assertThat(indexEvent.getAction()).isEqualTo(IndexEvent.Action.DELETE);
+                    final var searchDoc = (ComponentDocument) indexEvent.getDocument();
+                    assertThat(searchDoc.uuid()).isEqualTo(componentB.getUuid());
+                },
+                event -> {
+                    assertThat(event).isInstanceOf(IndexEvent.class);
+                    final var indexEvent = (IndexEvent) event;
+                    assertThat(indexEvent.getIndexableClass()).isEqualTo(Project.class);
+                    assertThat(indexEvent.getAction()).isEqualTo(IndexEvent.Action.UPDATE);
+                },
+                event -> assertThat(event).isInstanceOf(VulnerabilityAnalysisEvent.class),
+                event -> assertThat(event).isInstanceOf(RepositoryMetaEvent.class)
+        );
     }
 
     @Test

@@ -77,7 +77,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
                 request.addHeader("Authorization", "Bearer " + credentials.password);
             }
         } else if (getToken(config) != null) {
-            request.addHeader("X-Api-Key", getToken(config));
+            request.addHeader(getTokenHeader(config), getToken(config));
         }
 
         try {
@@ -111,6 +111,10 @@ public abstract class AbstractWebhookPublisher implements Publisher {
 
     protected String getToken(final JsonObject config) {
         return config.getString(CONFIG_TOKEN, null);
+    }
+
+    protected String getTokenHeader(final JsonObject config) {
+        return config.getString(CONFIG_TOKEN_HEADER, "X-Api-Key");
     }
 
     protected record AuthCredentials(String user, String password) {

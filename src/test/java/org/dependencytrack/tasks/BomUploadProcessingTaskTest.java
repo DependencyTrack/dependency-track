@@ -751,6 +751,37 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertProjectAuthors.run();
     }
 
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3371
+    public void informIssue3371Test() throws Exception {
+        final var project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        // Upload the same BOM again a few times.
+        // Ensure processing does not fail, and the number of components ingested doesn't change.
+        for (int i = 0; i < 2; i++) {
+            var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
+                    resourceToByteArray("/unit/bom-issue3371.json"));
+            TASK_SUPPLIER.get().inform(bomUploadEvent);
+
+            // Make sure processing did not fail.
+            awaitBomProcessedNotification();
+            NOTIFICATIONS.clear();
+
+            // Ensure the expected amount of components is present.
+            assertThat(qm.getAllComponents(project)).satisfiesExactlyInAnyOrder(
+                    component -> {
+                        assertThat(component.getName()).isEqualTo("alsa-utils");
+                        assertThat(component.getVersion()).isEqualTo("1.2.1.2");
+                        assertThat(component.getCpe()).isEqualTo("cpe:2.3:*:alsa-project:alsa:1.2.1.2:*:*:*:*:*:*:*");
+                    },
+                    component -> {
+                        assertThat(component.getName()).isEqualTo("alsa-lib");
+                        assertThat(component.getVersion()).isEqualTo("1.2.1.2");
+                        assertThat(component.getCpe()).isEqualTo("cpe:2.3:*:alsa-project:alsa:1.2.1.2:*:*:*:*:*:*:*");
+                    }
+            );
+        }
+    }
+
     private void awaitBomProcessedNotification() {
         try {
             await("BOM Processed Notification")

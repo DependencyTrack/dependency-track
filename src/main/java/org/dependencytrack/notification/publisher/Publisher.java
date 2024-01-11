@@ -54,7 +54,7 @@ public interface Publisher {
 
     String CONFIG_DESTINATION = "destination";
     String CONFIG_TOKEN = "token";
-    String CONFIG_TOKEN_HEADER = "token_header";
+    String CONFIG_TOKEN_HEADER = "tokenHeader";
 
     void inform(final PublishContext ctx, final Notification notification, final JsonObject config);
 

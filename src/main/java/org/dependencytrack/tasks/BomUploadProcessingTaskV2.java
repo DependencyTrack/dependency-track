@@ -101,6 +101,7 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertTo
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
+import static org.dependencytrack.util.PersistenceUtil.evictFromL2Cache;
 
 /**
  * @since 4.11.0
@@ -226,7 +227,9 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
 
         dispatchBomConsumedNotification(ctx);
 
-        final var processedComponents = new ArrayList<Component>();
+        final var processedProject = new Project[1];
+        final var processedComponents = new ArrayList<Component>(components.size());
+        final var processedServices = new ArrayList<ServiceComponent>(services.size());
         try (final var qm = new QueryManager().withL2CacheDisabled()) {
             // Disable reachability checks on commit.
             // See https://www.datanucleus.org/products/accessplatform_4_1/jdo/performance_tuning.html
@@ -288,14 +291,24 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
                         processComponents(qm, persistentProject, finalComponents, identitiesByBomRef, bomRefsByIdentity);
 
                 LOGGER.info("Processing %d services".formatted(finalServices.size()));
-                processServices(qm, persistentProject, finalServices, identitiesByBomRef, bomRefsByIdentity);
+                final Map<ComponentIdentity, ServiceComponent> persistentServicesByIdentity =
+                        processServices(qm, persistentProject, finalServices, identitiesByBomRef, bomRefsByIdentity);
 
                 LOGGER.info("Processing %d dependency graph entries".formatted(numDependencyGraphEntries));
                 processDependencyGraph(qm, persistentProject, dependencyGraph, persistentComponentsByIdentity, identitiesByBomRef);
 
                 recordBomImport(ctx, qm, persistentProject);
+
+                processedProject[0] = persistentProject;
                 processedComponents.addAll(persistentComponentsByIdentity.values());
+                processedServices.addAll(persistentServicesByIdentity.values());
             });
+
+            // Ensure other areas of the application that still use L2 caching do
+            // not operate on stale data.
+            evictFromL2Cache(qm, processedProject[0]);
+            evictFromL2Cache(qm, processedComponents);
+            evictFromL2Cache(qm, processedServices);
         }
 
         eventsToDispatch.add(createVulnAnalysisEvent(ctx, processedComponents));

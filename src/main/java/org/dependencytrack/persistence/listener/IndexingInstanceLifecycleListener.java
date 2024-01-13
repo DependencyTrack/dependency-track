@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.persistence;
+package org.dependencytrack.persistence.listener;
 
 import alpine.event.framework.Event;
 import org.dependencytrack.event.IndexEvent;
@@ -39,11 +39,11 @@ import java.util.function.Consumer;
  *
  * @since 4.11.0
  */
-public class IndexingObjectLifecycleListener implements DeleteLifecycleListener, StoreLifecycleListener {
+public class IndexingInstanceLifecycleListener implements DeleteLifecycleListener, StoreLifecycleListener {
 
     private final Consumer<Event> eventConsumer;
 
-    public IndexingObjectLifecycleListener(final Consumer<Event> eventConsumer) {
+    public IndexingInstanceLifecycleListener(final Consumer<Event> eventConsumer) {
         this.eventConsumer = eventConsumer;
     }
 

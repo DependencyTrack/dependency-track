@@ -55,8 +55,9 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
-import org.dependencytrack.persistence.IndexingObjectLifecycleListener;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.listener.IndexingInstanceLifecycleListener;
+import org.dependencytrack.persistence.listener.L2CacheEvictingInstanceLifecycleListener;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.json.JSONArray;
 import org.slf4j.MDC;
@@ -101,7 +102,6 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertTo
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
-import static org.dependencytrack.util.PersistenceUtil.evictFromL2Cache;
 
 /**
  * @since 4.11.0
@@ -227,9 +227,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
 
         dispatchBomConsumedNotification(ctx);
 
-        final var processedProject = new Project[1];
         final var processedComponents = new ArrayList<Component>(components.size());
-        final var processedServices = new ArrayList<ServiceComponent>(services.size());
         try (final var qm = new QueryManager().withL2CacheDisabled()) {
             // Disable reachability checks on commit.
             // See https://www.datanucleus.org/products/accessplatform_4_1/jdo/performance_tuning.html
@@ -269,8 +267,10 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             // See https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#lifecycle
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
 
-            qm.getPersistenceManager().addInstanceLifecycleListener(new IndexingObjectLifecycleListener(eventsToDispatch::add),
+            qm.getPersistenceManager().addInstanceLifecycleListener(new IndexingInstanceLifecycleListener(eventsToDispatch::add),
                     Component.class, Project.class, ProjectMetadata.class, ServiceComponent.class);
+            qm.getPersistenceManager().addInstanceLifecycleListener(new L2CacheEvictingInstanceLifecycleListener(qm),
+                    Bom.class, Component.class, Project.class, ProjectMetadata.class, ServiceComponent.class);
 
             final List<Component> finalComponents = components;
             final List<ServiceComponent> finalServices = services;
@@ -291,24 +291,15 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
                         processComponents(qm, persistentProject, finalComponents, identitiesByBomRef, bomRefsByIdentity);
 
                 LOGGER.info("Processing %d services".formatted(finalServices.size()));
-                final Map<ComponentIdentity, ServiceComponent> persistentServicesByIdentity =
-                        processServices(qm, persistentProject, finalServices, identitiesByBomRef, bomRefsByIdentity);
+                processServices(qm, persistentProject, finalServices, identitiesByBomRef, bomRefsByIdentity);
 
                 LOGGER.info("Processing %d dependency graph entries".formatted(numDependencyGraphEntries));
                 processDependencyGraph(qm, persistentProject, dependencyGraph, persistentComponentsByIdentity, identitiesByBomRef);
 
                 recordBomImport(ctx, qm, persistentProject);
 
-                processedProject[0] = persistentProject;
                 processedComponents.addAll(persistentComponentsByIdentity.values());
-                processedServices.addAll(persistentServicesByIdentity.values());
             });
-
-            // Ensure other areas of the application that still use L2 caching do
-            // not operate on stale data.
-            evictFromL2Cache(qm, processedProject[0]);
-            evictFromL2Cache(qm, processedComponents);
-            evictFromL2Cache(qm, processedServices);
         }
 
         eventsToDispatch.add(createVulnAnalysisEvent(ctx, processedComponents));

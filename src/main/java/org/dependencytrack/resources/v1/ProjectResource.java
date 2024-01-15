@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.model.Team;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
@@ -90,9 +91,19 @@ public class ProjectResource extends AlpineResource {
                                 @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
                                 @QueryParam("excludeInactive") boolean excludeInactive,
                                 @ApiParam(value = "Optionally excludes children projects from being returned", required = false)
-                                @QueryParam("onlyRoot") boolean onlyRoot) {
+                                @QueryParam("onlyRoot") boolean onlyRoot,
+                                @ApiParam(value = "The UUID of the team which projects shall be excluded", required = false)
+                                @QueryParam("notAssignedToTeamWithUuid") String notAssignedToTeamWithUuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = (name != null) ? qm.getProjects(name, excludeInactive, onlyRoot) : qm.getProjects(true, excludeInactive, onlyRoot);
+            Team notAssignedToTeam = null;
+            if (StringUtils.isNotEmpty(notAssignedToTeamWithUuid)) {
+                notAssignedToTeam = qm.getObjectByUuid(Team.class, notAssignedToTeamWithUuid);
+                if (notAssignedToTeam == null) {
+                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
+                }
+            }
+
+            final PaginatedResult result = (name != null) ? qm.getProjects(name, excludeInactive, onlyRoot, notAssignedToTeam) : qm.getProjects(true, excludeInactive, onlyRoot, notAssignedToTeam);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }

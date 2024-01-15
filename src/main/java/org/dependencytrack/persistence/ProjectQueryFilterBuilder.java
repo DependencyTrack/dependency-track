@@ -57,6 +57,13 @@ class ProjectQueryFilterBuilder {
         return this;
     }
 
+
+    ProjectQueryFilterBuilder notWithTeam(Team team) {
+        params.put("team", team);
+        filterCriteria.add("(!accessTeams.contains(:team))");
+        return this;
+    }
+
     ProjectQueryFilterBuilder withName(String name) {
         params.put("name", name);
         filterCriteria.add("(name == :name)");

@@ -62,69 +62,75 @@ public class GitHubSecurityAdvisoryParser {
 
     private GitHubSecurityAdvisory parseSecurityAdvisory(final JSONObject object) {
         final GitHubSecurityAdvisory advisory = new GitHubSecurityAdvisory();
-        advisory.setDatabaseId(object.getInt("databaseId"));
-        advisory.setDescription(object.optString("description", null));
-        advisory.setGhsaId(object.optString("ghsaId", null));
-        advisory.setId(object.optString("id", null));
-        advisory.setNotificationsPermalink(object.optString("notificationsPermalink", null));
-        advisory.setOrigin(object.optString("origin", null));
-        advisory.setPermalink(object.optString("permalink", null));
-        advisory.setSeverity(object.optString("severity", null));
-        advisory.setSummary(object.optString("summary", null));
-        advisory.setPublishedAt(jsonStringToTimestamp(object.optString("publishedAt", null)));
-        advisory.setUpdatedAt(jsonStringToTimestamp(object.optString("updatedAt", null)));
-        advisory.setWithdrawnAt(jsonStringToTimestamp(object.optString("withdrawnAt", null)));
 
-        final JSONArray identifiers = object.optJSONArray("identifiers");
-        if (identifiers != null) {
-            for (int i=0; i<identifiers.length(); i++) {
-                final JSONObject identifier = identifiers.getJSONObject(i);
-                final String type = identifier.optString("type", null);
-                final String value = identifier.optString("value", null);
-                if (type != null && value != null) {
-                    final Pair<String, String> pair = Pair.of(type, value);
-                    advisory.addIdentifier(pair);
+        // initial check if advisory is valid or withdrawn
+        String withdrawnAt = object.optString("withdrawnAt", null);
+
+        if(object != null && withdrawnAt == null) {
+            advisory.setDatabaseId(object.getInt("databaseId"));
+            advisory.setDescription(object.optString("description", null));
+            advisory.setGhsaId(object.optString("ghsaId", null));
+            advisory.setId(object.optString("id", null));
+            advisory.setNotificationsPermalink(object.optString("notificationsPermalink", null));
+            advisory.setOrigin(object.optString("origin", null));
+            advisory.setPermalink(object.optString("permalink", null));
+            advisory.setSeverity(object.optString("severity", null));
+            advisory.setSummary(object.optString("summary", null));
+            advisory.setPublishedAt(jsonStringToTimestamp(object.optString("publishedAt", null)));
+            advisory.setUpdatedAt(jsonStringToTimestamp(object.optString("updatedAt", null)));
+            advisory.setWithdrawnAt(jsonStringToTimestamp(withdrawnAt));
+    
+            final JSONArray identifiers = object.optJSONArray("identifiers");
+            if (identifiers != null) {
+                for (int i=0; i<identifiers.length(); i++) {
+                    final JSONObject identifier = identifiers.getJSONObject(i);
+                    final String type = identifier.optString("type", null);
+                    final String value = identifier.optString("value", null);
+                    if (type != null && value != null) {
+                        final Pair<String, String> pair = Pair.of(type, value);
+                        advisory.addIdentifier(pair);
+                    }
                 }
             }
-        }
-
-        final JSONArray references = object.optJSONArray("references");
-        if (references != null) {
-            for (int i=0; i<references.length(); i++) {
-                final String url = references.optJSONObject(i).optString("url", null);
-                if (url != null) {
-                    advisory.addReference(url);
+    
+            final JSONArray references = object.optJSONArray("references");
+            if (references != null) {
+                for (int i=0; i<references.length(); i++) {
+                    final String url = references.optJSONObject(i).optString("url", null);
+                    if (url != null) {
+                        advisory.addReference(url);
+                    }
                 }
             }
-        }
-
-        final JSONObject cvss = object.optJSONObject("cvss");
-        if (cvss != null) {
-            advisory.setCvssScore(cvss.optInt("score", 0));
-            advisory.setCvssVector(cvss.optString("score", null));
-        }
-
-        final JSONObject cwes = object.optJSONObject("cwes");
-        if (cwes != null) {
-            final JSONArray edges = cwes.optJSONArray("edges");
-            if (edges != null) {
-                for (int i = 0; i < edges.length(); i++) {
-                    final JSONObject edge = edges.optJSONObject(i);
-                    if (edge != null) {
-                        final JSONObject node = edge.optJSONObject("node");
-                        if (node != null) {
-                            final String cweId = node.optString("cweId", null);
-                            if (cweId != null) {
-                                advisory.addCwe(cweId);
+    
+            final JSONObject cvss = object.optJSONObject("cvss");
+            if (cvss != null) {
+                advisory.setCvssScore(cvss.optInt("score", 0));
+                advisory.setCvssVector(cvss.optString("score", null));
+            }
+    
+            final JSONObject cwes = object.optJSONObject("cwes");
+            if (cwes != null) {
+                final JSONArray edges = cwes.optJSONArray("edges");
+                if (edges != null) {
+                    for (int i = 0; i < edges.length(); i++) {
+                        final JSONObject edge = edges.optJSONObject(i);
+                        if (edge != null) {
+                            final JSONObject node = edge.optJSONObject("node");
+                            if (node != null) {
+                                final String cweId = node.optString("cweId", null);
+                                if (cweId != null) {
+                                    advisory.addCwe(cweId);
+                                }
                             }
                         }
                     }
                 }
             }
+            final List<GitHubVulnerability> vulnerabilities = parseVulnerabilities(object);
+            advisory.setVulnerabilities(vulnerabilities);
+            return advisory;
         }
-        final List<GitHubVulnerability> vulnerabilities = parseVulnerabilities(object);
-        advisory.setVulnerabilities(vulnerabilities);
-        return advisory;
     }
 
     private List<GitHubVulnerability> parseVulnerabilities(final JSONObject object) {

@@ -30,9 +30,11 @@ import io.github.jeremylong.openvulnerability.client.nvd.Node;
 import io.github.jeremylong.openvulnerability.client.nvd.Reference;
 import io.github.jeremylong.openvulnerability.client.nvd.Weakness;
 import org.apache.commons.lang3.tuple.Pair;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.util.VulnerabilityUtil;
 import us.springett.cvss.Cvss;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
@@ -123,6 +125,7 @@ public final class ModelConverter {
 
     private static void convertCvssMetrics(final Metrics metrics, final Vulnerability vuln) {
         if (metrics == null) {
+            vuln.setSeverity(Severity.UNASSIGNED);
             return;
         }
 
@@ -148,11 +151,9 @@ public final class ModelConverter {
                 vuln.setCvssV3BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
                 vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
                 vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
-                return;
+                break;
             }
-        }
-
-        if (metrics.getCvssMetricV30() != null && !metrics.getCvssMetricV30().isEmpty()) {
+        } else if (metrics.getCvssMetricV30() != null && !metrics.getCvssMetricV30().isEmpty()) {
             metrics.getCvssMetricV30().sort(comparingInt(metric -> metric.getType().ordinal()));
 
             for (final CvssV3 metric : metrics.getCvssMetricV30()) {
@@ -164,6 +165,14 @@ public final class ModelConverter {
                 break;
             }
         }
+
+        vuln.setSeverity(VulnerabilityUtil.getSeverity(
+                vuln.getCvssV2BaseScore(),
+                vuln.getCvssV3BaseScore(),
+                vuln.getOwaspRRLikelihoodScore(),
+                vuln.getOwaspRRTechnicalImpactScore(),
+                vuln.getOwaspRRBusinessImpactScore()
+        ));
     }
 
     public static List<VulnerableSoftware> convertConfigurations(final String cveId, final List<Config> configurations) {

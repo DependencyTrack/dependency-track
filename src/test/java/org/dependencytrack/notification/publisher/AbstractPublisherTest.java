@@ -27,6 +27,7 @@ import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
@@ -215,6 +216,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         vuln.setOwaspRRLikelihoodScore(BigDecimal.valueOf(1.1));
         vuln.setOwaspRRTechnicalImpactScore(BigDecimal.valueOf(2.2));
         vuln.setOwaspRRBusinessImpactScore(BigDecimal.valueOf(3.3));
+        vuln.setSeverity(Severity.MEDIUM);
         vuln.setCwes(List.of(666, 777));
         return vuln;
     }

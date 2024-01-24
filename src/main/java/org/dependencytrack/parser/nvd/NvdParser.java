@@ -34,6 +34,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.VulnerabilityUtil;
 import us.springett.cvss.Cvss;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
@@ -291,6 +292,14 @@ public final class NvdParser {
             vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(imp3.get("exploitabilityScore").asDouble()));
             vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(imp3.get("impactScore").asDouble()));
         }
+
+        vuln.setSeverity(VulnerabilityUtil.getSeverity(
+                vuln.getCvssV2BaseScore(),
+                vuln.getCvssV3BaseScore(),
+                vuln.getOwaspRRLikelihoodScore(),
+                vuln.getOwaspRRTechnicalImpactScore(),
+                vuln.getOwaspRRBusinessImpactScore()
+        ));
     }
 
     private List<VulnerableSoftware> parseCpes(final QueryManager qm, final ObjectNode node) {

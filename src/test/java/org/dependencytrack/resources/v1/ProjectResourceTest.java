@@ -531,6 +531,63 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertEquals(204, response.getStatus(), 0);
     }
 
+    List<UUID> createProjects(int size, boolean accessible) {
+        List<UUID> projectUUIDs = new ArrayList<>();
+        for (int i=0; i<size; i++) {
+            Project project = qm.createProject("ABC", null, String.valueOf(i)+".0", null, null, null, true, false);
+            if (accessible) {
+                project.setAccessTeams(List.of(team));
+            }
+            projectUUIDs.add(project.getUuid());
+            qm.persist(project);
+        }
+        return projectUUIDs;
+    }
+
+    @Test
+    public void batchDeleteProjectsWithFullAccessTest() {
+        // Enable portfolio access control.
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                null
+        );
+
+        List<UUID> uuidsOfAccessibleProjects = createProjects(9, true);
+        List<UUID> uuidsOfInaccessibleProjects = createProjects(1, false);
+
+        // Delete only accessible projects
+        Response response = target(V1_PROJECT + "/batchDelete")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .method("POST", Entity.json(uuidsOfAccessibleProjects));
+        Assert.assertEquals(204, response.getStatus(), 0);
+
+        // Delete only inaccessible projects
+        response = target(V1_PROJECT + "/batchDelete")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .method("POST", Entity.json(uuidsOfInaccessibleProjects));
+        Assert.assertEquals(403, response.getStatus(), 0);
+        String output = response.readEntity(String.class);
+        Assert.assertEquals("", "Access to the following project(s) is forbidden: " + uuidsOfInaccessibleProjects, output);
+
+        // Delete mixed accessible + inaccessible projects
+        List<UUID> uuidsOfMixedProjects = new ArrayList<>();
+        uuidsOfAccessibleProjects = createProjects(9, true);
+        uuidsOfMixedProjects.addAll(uuidsOfAccessibleProjects);
+        uuidsOfMixedProjects.addAll(uuidsOfInaccessibleProjects);
+        response = target(V1_PROJECT + "/batchDelete")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .method("POST", Entity.json(uuidsOfMixedProjects));
+        Assert.assertEquals(403, response.getStatus(), 0);
+        output = response.readEntity(String.class);
+        Assert.assertEquals("", "Access to the following project(s) is forbidden: " + uuidsOfInaccessibleProjects, output);
+    }
+
     @Test
     public void deleteProjectInvalidUuidTest() {
         qm.createProject("ABC", null, "1.0", null, null, null, true, false);

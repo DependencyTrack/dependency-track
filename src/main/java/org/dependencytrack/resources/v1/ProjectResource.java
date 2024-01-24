@@ -56,11 +56,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -496,44 +494,6 @@ public class ProjectResource extends AlpineResource {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }
-        }
-    }
-
-    @POST
-    @Path("/batchDelete")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a list of projects specified by their UUIDs",
-            code = 204
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to one or more of the specified projects is forbidden")
-    })
-    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
-    public Response deleteProjects(
-            @ApiParam(value = "A list of one or more project UUIDs", required = true)
-            List<UUID> uuids) {
-        List<UUID> inaccessibleProjects = new ArrayList<>();
-        try (QueryManager qm = new QueryManager()) {
-            for (UUID uuid : uuids) {
-                final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
-                if (project != null) {
-                    if (qm.hasAccess(super.getPrincipal(), project)) {
-                        LOGGER.info("Project " + project + " deletion request by " + super.getPrincipal().getName());
-                        qm.recursivelyDelete(project, true);
-                    } else {
-                        inaccessibleProjects.add(uuid);
-                    }
-                } else {
-                    LOGGER.warn("No project found by UUID " + uuid);
-                }
-            }
-            if (!inaccessibleProjects.isEmpty()) {
-                return Response.status(Response.Status.FORBIDDEN).entity("Access to the following project(s) is forbidden: " + inaccessibleProjects).build();
-            }
-            return Response.status(Response.Status.NO_CONTENT).build();
         }
     }
 

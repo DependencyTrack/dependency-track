@@ -43,7 +43,9 @@ public class GitHubSecurityAdvisoryParser {
                     for (int i = 0; i < securityAdvisoriesNodes.length(); i++) {
                         final JSONObject securityAdvisory = securityAdvisoriesNodes.getJSONObject(i);
                         final GitHubSecurityAdvisory advisory = parseSecurityAdvisory(securityAdvisory);
-                        advisories.add(advisory);
+                        if (advisory != null) {
+                            advisories.add(advisory);
+                        }
                     }
                 }
                 pageableList.setTotalCount(securityAdvisories.optInt("totalCount"));
@@ -62,6 +64,13 @@ public class GitHubSecurityAdvisoryParser {
 
     private GitHubSecurityAdvisory parseSecurityAdvisory(final JSONObject object) {
         final GitHubSecurityAdvisory advisory = new GitHubSecurityAdvisory();
+
+        // initial check if advisory is valid or withdrawn
+        String withdrawnAt = object.optString("withdrawnAt", null);
+        if (object == null || withdrawnAt != null) {
+            return null;
+        }
+
         advisory.setDatabaseId(object.getInt("databaseId"));
         advisory.setDescription(object.optString("description", null));
         advisory.setGhsaId(object.optString("ghsaId", null));
@@ -73,11 +82,11 @@ public class GitHubSecurityAdvisoryParser {
         advisory.setSummary(object.optString("summary", null));
         advisory.setPublishedAt(jsonStringToTimestamp(object.optString("publishedAt", null)));
         advisory.setUpdatedAt(jsonStringToTimestamp(object.optString("updatedAt", null)));
-        advisory.setWithdrawnAt(jsonStringToTimestamp(object.optString("withdrawnAt", null)));
+        advisory.setWithdrawnAt(jsonStringToTimestamp(withdrawnAt));
 
         final JSONArray identifiers = object.optJSONArray("identifiers");
         if (identifiers != null) {
-            for (int i=0; i<identifiers.length(); i++) {
+            for (int i = 0; i < identifiers.length(); i++) {
                 final JSONObject identifier = identifiers.getJSONObject(i);
                 final String type = identifier.optString("type", null);
                 final String value = identifier.optString("value", null);
@@ -90,7 +99,7 @@ public class GitHubSecurityAdvisoryParser {
 
         final JSONArray references = object.optJSONArray("references");
         if (references != null) {
-            for (int i=0; i<references.length(); i++) {
+            for (int i = 0; i < references.length(); i++) {
                 final String url = references.optJSONObject(i).optString("url", null);
                 if (url != null) {
                     advisory.addReference(url);
@@ -133,7 +142,7 @@ public class GitHubSecurityAdvisoryParser {
         if (vs != null) {
             final JSONArray edges = vs.optJSONArray("edges");
             if (edges != null) {
-                for (int i=0; i<edges.length(); i++) {
+                for (int i = 0; i < edges.length(); i++) {
                     final JSONObject node = edges.getJSONObject(i).optJSONObject("node");
                     if (node != null) {
                         GitHubVulnerability vulnerability = parseVulnerability(node);

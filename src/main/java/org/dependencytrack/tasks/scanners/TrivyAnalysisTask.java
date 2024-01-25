@@ -18,37 +18,27 @@
  */
 package org.dependencytrack.tasks.scanners;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
-import alpine.common.metrics.Metrics;
 import alpine.common.util.UrlUtil;
 import alpine.event.framework.Event;
-import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
 import com.google.gson.Gson;
-import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
+
+import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -57,6 +47,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
+import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.event.IndexEvent;
@@ -82,46 +73,38 @@ import org.dependencytrack.parser.trivy.model.Package;
 import org.dependencytrack.parser.trivy.TrivyParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
-import org.dependencytrack.util.RoundRobinAccessor;
+import org.dependencytrack.parser.trivy.model.Result;
 
 
 /**
  * Subscriber task that performs an analysis of component using Trivy vulnerability API.
  *
- * @since 4.7.0
+ * @since 4.11.0
  */
 public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements CacheableScanTask, Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(TrivyAnalysisTask.class);
     private static final String TOKEN_HEADER = "Trivy-Token";
     private static final Retry RETRY;
-    private static final ExecutorService EXECUTOR;
 
     static {
-        final RetryRegistry retryRegistry = RetryRegistry.of(RetryConfig.<CloseableHttpResponse>custom()
-                .retryOnException(exception -> false)
-                .retryOnResult(response -> 429 == response.getStatusLine().getStatusCode())
-                .build());
-        RETRY = retryRegistry.retry("trivy-api");
-        RETRY.getEventPublisher()
-                .onRetry(event -> LOGGER.debug("Will execute retry #%d in %s" .formatted(event.getNumberOfRetryAttempts(), event.getWaitInterval())))
-                .onError(event -> LOGGER.error("Retry failed after %d attempts: %s" .formatted(event.getNumberOfRetryAttempts(), event.getLastThrowable())));
-        TaggedRetryMetrics.ofRetryRegistry(retryRegistry)
-                .bindTo(Metrics.getRegistry());
-
-        // The number of threads to be used for Trivy analyzer are configurable.
-        // Default is 10. Can be set based on user requirements.
-        final int threadPoolSize = 10;
-        final var threadFactory = new BasicThreadFactory.Builder()
-                .namingPattern(TrivyAnalysisTask.class.getSimpleName() + "-%d")
-                .uncaughtExceptionHandler(new LoggableUncaughtExceptionHandler())
+           IntervalFunction intervalWithCustomExponentialBackoff = IntervalFunction
+                .ofExponentialBackoff(
+                        IntervalFunction.DEFAULT_INITIAL_INTERVAL,
+                        Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER),
+                        Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION)
+                );
+        RetryConfig config = RetryConfig.custom()
+                .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS))
+                .intervalFunction(intervalWithCustomExponentialBackoff)
                 .build();
-        EXECUTOR = Executors.newFixedThreadPool(threadPoolSize, threadFactory);
-        Metrics.registerExecutorService(EXECUTOR, TrivyAnalysisTask.class.getSimpleName());
+
+        RetryRegistry registry = RetryRegistry.of(config);
+        RETRY = registry.retry("trivy-api");
     }
 
     private String apiBaseUrl;
-    private Supplier<String> apiTokenSupplier;
+    private String apiToken;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     /**
@@ -149,14 +132,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 }
 
                 apiBaseUrl = getApiBaseUrl().get();
-
-                try {
-                    final String decryptedToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
-                    apiTokenSupplier = createTokenSupplier(decryptedToken);
-                } catch (Exception ex) {
-                    LOGGER.error("An error occurred decrypting the API Token; Skipping", ex);
-                    return;
-                }
+                apiToken = apiTokenProperty.getPropertyValue();
             }
             vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
             LOGGER.info("Starting Trivy vulnerability analysis task");
@@ -184,9 +160,9 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         && component.getPurl().getVersion() != null;
 
         if (!hasValidPurl && component.getPurl() == null) {
-            LOGGER.warn("isCapable:purl is null for component %s".formatted(component.toString()));
+            LOGGER.debug("isCapable:purl is null for component %s".formatted(component.toString()));
         } else if (!hasValidPurl) {
-            LOGGER.warn("isCapable: " + component.getPurl().toString());
+            LOGGER.debug("isCapable: " + component.getPurl().toString());
         }
 
         return (hasValidPurl && PurlType.getApp(component.getPurl().getType()) != PurlType.Constants.UNKNOWN.toString())
@@ -203,10 +179,6 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
      */
     @Override
     public void analyze(final List<Component> components) {
-        final var countDownLatch = new CountDownLatch(components.size());
-
-
-
         var pkgs = new HashMap<String, PackageInfo>();
         var apps = new HashMap<String, Application>();
         var os = new HashMap<String, OS>();
@@ -300,27 +272,12 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
             infos.add(info);
         });
 
-        CompletableFuture
-                    .runAsync(() -> analyzeBlob(map, infos.toArray(new BlobInfo[]{})), EXECUTOR)
-                    .whenComplete((result, exception) -> {
-                        countDownLatch.countDown();
-
-                        if (exception != null) {
-                            LOGGER.error("An unexpected error occurred while analyzing", exception);
-                        }
-                    });
-
         try {
-            if (!countDownLatch.await(60, TimeUnit.MINUTES)) {
-                // Depending on the system load, it may take a while for the queued events
-                // to be processed. And depending on how large the projects are, it may take a
-                // while for the processing of the respective event to complete.
-                // It is unlikely though that either of these situations causes a block for
-                // over 60 minutes. If that happens, the system is under-resourced.
-                LOGGER.warn("The Analysis for project :" + components.get(0).getProject().getName() + "took longer than expected");
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            final var results = RETRY.executeCheckedSupplier(() -> analyzeBlob(infos.toArray(new BlobInfo[]{})));
+            handleResults(map,results);
+        } catch (Throwable ex) {
+            handleRequestException(LOGGER, ex);
+            return;
         }
     }
 
@@ -344,66 +301,72 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                         component.getPurl().getCoordinates(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel));
     }
 
-    private void analyzeBlob(final Map<String, Component> components, final BlobInfo[] blobs) {
+    private void handleResults(final Map<String, Component> components, final ArrayList<Result> input) {
+        for (int count = 0; count < input.size(); count++) {
+            var result = input.get(count);
+            for (int idx = 0; idx < result.getVulnerabilities().length; idx++) {
+                var vulnerability = result.getVulnerabilities()[idx];
+                var key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
+                LOGGER.debug("Searching key %s in map".formatted(key));
+                 if (!super.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED) || vulnerability.getStatus() == 3) {
+                    handle(components.get(key), vulnerability);
+                 }
+            }
+        }
+    }
+
+    private ArrayList<Result> analyzeBlob(final BlobInfo[] blobs) {
+        ArrayList<Result> output = new ArrayList<Result>();
+
         for (final BlobInfo info : blobs) {
 
             var blob = new PutRequest();
             blob.setBlobInfo(info);
 
-            try {
-                MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                //todo - need to establish standard and requirements from trivy
-                byte[] hash = digest.digest(java.util.UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8));
-
-                blob.setDiffID("sha256:" + Hex.encodeHexString(hash));
-                LOGGER.debug(blob.getDiffID());
-            } catch(NoSuchAlgorithmException e) {
-                LOGGER.error(e.getMessage());
-                blob.setDiffID("sha256:0000000000000000000000000000000000000000000000000000000000000000");
-            }
+            String hash = DigestUtils.sha256Hex(java.util.UUID.randomUUID().toString());
+            blob.setDiffID("sha256:" + hash);
 
             if (putBlob(blob)) {
                 var response = scanBlob(blob);
                 if (response != null) {
-                    LOGGER.info("received response from trivy");
-                    for (int count = 0; count < response.getResults().length; count++) {
-                        var result = response.getResults()[count];
-                        for (int idx = 0; idx < result.getVulnerabilities().length; idx++) {
-                            var vulnerability = result.getVulnerabilities()[idx];
-                            var key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
-                            LOGGER.debug("Searching key %s in map".formatted(key));
-                             if (!super.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED) || vulnerability.getStatus() == 3) {
-                                handle(components.get(key), vulnerability);
-                             }
-                        }
-                    }
+                    LOGGER.debug("received response from trivy");
+                    output.addAll(Arrays.asList(response.getResults()));
                 }
                 deleteBlob(blob);
             }
         }
+
+        return output;
+    }
+
+
+    private HttpUriRequest buildRequest(final String url, Object input) throws Exception {
+        URIBuilder uriBuilder = new URIBuilder(url);
+        HttpPost post = new HttpPost(uriBuilder.build().toString());
+
+
+        Gson gson = new Gson();
+        StringEntity body = new StringEntity(gson.toJson(input));
+        post.setEntity(body);
+
+        LOGGER.debug("Request: " + gson.toJson(input));
+
+        HttpUriRequest request = post;
+        request.setHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
+        request.setHeader(TOKEN_HEADER, DataEncryption.decryptAsString(apiToken));
+        request.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+
+        return request;
     }
 
     private boolean putBlob(PutRequest input) {
         final String requestUrl = "%s/twirp/trivy.cache.v1.Cache/PutBlob".formatted(apiBaseUrl);
 
          try {
-            URIBuilder uriBuilder = new URIBuilder(requestUrl);
-            HttpPost post = new HttpPost(uriBuilder.build().toString());
+            HttpUriRequest request = buildRequest(requestUrl, input);
 
-
-            Gson gson = new Gson();
-            StringEntity body = new StringEntity(gson.toJson(input));
-            post.setEntity(body);
-
-            LOGGER.debug("PutBlob request: " + gson.toJson(input));
-
-            HttpUriRequest request = post;
-
-            request.setHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
-            request.setHeader(TOKEN_HEADER, apiTokenSupplier.get());
-            request.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
             try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
-                LOGGER.info("PutBlob response: " + response.getStatusLine().getStatusCode());
+                LOGGER.debug("PutBlob response: " + response.getStatusLine().getStatusCode());
                 return (response.getStatusLine().getStatusCode() >= HttpStatus.SC_OK);
             }
         } catch (Throwable  ex) {
@@ -412,44 +375,34 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         return false;
     }
 
+
     private TrivyResponse scanBlob(PutRequest input) {
         final String requestUrl = "%s/twirp/trivy.scanner.v1.Scanner/Scan".formatted(apiBaseUrl);
 
+        ScanRequest scan = new ScanRequest();
+
+        scan.setTarget(input.getDiffID());
+        scan.setArtifactID(input.getDiffID());
+        scan.setBlobIDS(new String[] {input.getDiffID()});
+
+        Options opts = new Options();
+        opts.setVulnType(new String[] {"os", "library"});
+        opts.setScanners(new String[] {"vuln"});
+
+        scan.setOptions(opts);
+
          try {
-            URIBuilder uriBuilder = new URIBuilder(requestUrl);
-            HttpPost post = new HttpPost(uriBuilder.build().toString());
+            HttpUriRequest request = buildRequest(requestUrl, scan);
 
-            ScanRequest scan = new ScanRequest();
-
-            scan.setTarget(input.getDiffID());
-            scan.setArtifactID(input.getDiffID());
-            scan.setBlobIDS(new String[] {input.getDiffID()});
-
-            Options opts = new Options();
-            opts.setVulnType(new String[] {"os", "library"});
-            opts.setScanners(new String[] {"vuln"});
-
-            scan.setOptions(opts);
-
-            Gson gson = new Gson();
-            StringEntity body = new StringEntity(gson.toJson(scan));
-            post.setEntity(body);
-
-            LOGGER.debug("Scan request: " + gson.toJson(scan));
-
-            HttpUriRequest request = post;
-
-            request.setHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
-            request.setHeader(TOKEN_HEADER, apiTokenSupplier.get());
-            request.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
             try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
 
 
                 if (response.getStatusLine().getStatusCode() >= HttpStatus.SC_OK && response.getStatusLine().getStatusCode() < HttpStatus.SC_MULTIPLE_CHOICES) {
                     String responseString = EntityUtils.toString(response.getEntity());
+                    Gson gson = new Gson();
                     var trivyResponse = gson.fromJson(responseString,TrivyResponse.class);
 
-                    LOGGER.info("Scan response: " + response.getStatusLine().getStatusCode());
+                    LOGGER.debug("Scan response: " + response.getStatusLine().getStatusCode());
                     LOGGER.debug("Response from server: " + responseString);
                     return trivyResponse;
                 } else {
@@ -464,28 +417,13 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
     private void deleteBlob(PutRequest input) {
         final String requestUrl = "%s/twirp/trivy.cache.v1.Cache/DeleteBlobs".formatted(apiBaseUrl);
+        DeleteRequest delete = new DeleteRequest();
+        delete.setBlobIDS(new String[] {input.getDiffID()});
 
          try {
-            URIBuilder uriBuilder = new URIBuilder(requestUrl);
-            HttpPost post = new HttpPost(uriBuilder.build().toString());
-
-            DeleteRequest delete = new DeleteRequest();
-            delete.setBlobIDS(new String[] {input.getDiffID()});
-
-            Gson gson = new Gson();
-
-            StringEntity body = new StringEntity(gson.toJson(delete));
-            post.setEntity(body);
-
-            LOGGER.debug("Delete Request: " + gson.toJson(delete));
-
-            HttpUriRequest request = post;
-
-            request.setHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
-            request.setHeader(TOKEN_HEADER, apiTokenSupplier.get());
-            request.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+            HttpUriRequest request = buildRequest(requestUrl, delete);
             final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request));
-            LOGGER.info("DeleteBlob response: " + response.getStatusLine().getStatusCode());
+            LOGGER.debug("DeleteBlob response: " + response.getStatusLine().getStatusCode());
         } catch (Throwable  ex) {
             handleRequestException(LOGGER, ex);
         }
@@ -504,21 +442,28 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         try (QueryManager qm = new QueryManager()) {
             final var trivyParser = new TrivyParser();
 
-            Vulnerability synchronizedVulnerability = trivyParser.parse(data, qm);
-            addVulnerabilityToCache(component, synchronizedVulnerability);
+            Vulnerability parsedVulnerability = trivyParser.parse(data, qm);
             final Component componentPersisted = qm.getObjectByUuid(Component.class, component.getUuid());
-            if (componentPersisted != null && synchronizedVulnerability.getVulnId() != null) {
-                NotificationUtil.analyzeNotificationCriteria(qm, synchronizedVulnerability, componentPersisted, vulnerabilityAnalysisLevel);
-                qm.addVulnerability(synchronizedVulnerability, componentPersisted, this.getAnalyzerIdentity());
-                LOGGER.info("Trivy vulnerability added : " + synchronizedVulnerability.getVulnId() + " to component " + component.getName());
-            }
-            Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
 
-            updateAnalysisCacheStats(qm, Vulnerability.Source.NVD, apiBaseUrl, component.getPurl().getCoordinates(), component.getCacheResult());
+            if (componentPersisted != null && parsedVulnerability.getVulnId() != null) {
+                Vulnerability vulnerability = qm.getVulnerabilityByVulnId(parsedVulnerability.getSource(), parsedVulnerability.getVulnId());
+
+                if (vulnerability == null) {
+                    LOGGER.warn("Vulnerability not available:" + parsedVulnerability.getSource()  + " - " + parsedVulnerability.getVulnId());
+                    vulnerability = qm.createVulnerability(parsedVulnerability, false);
+                    addVulnerabilityToCache(componentPersisted, vulnerability);
+                }
+
+                LOGGER.debug("Trivy vulnerability added: " + vulnerability.getVulnId() + " to component " + componentPersisted.getName());
+
+                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, componentPersisted, vulnerabilityAnalysisLevel);
+                qm.addVulnerability(vulnerability, componentPersisted, this.getAnalyzerIdentity());
+
+                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+                updateAnalysisCacheStats(qm, Vulnerability.Source.valueOf(vulnerability.getSource()), apiBaseUrl, componentPersisted.getPurl().getCoordinates(), componentPersisted.getCacheResult());
+            }
         }
     }
-
-
 
     private Optional<String> getApiBaseUrl() {
         if (apiBaseUrl != null) {
@@ -538,16 +483,4 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
             return Optional.of(apiBaseUrl);
         }
     }
-
-    private Supplier<String> createTokenSupplier(final String tokenValue) {
-        final String[] tokens = tokenValue.split(";");
-        if (tokens.length > 1) {
-            LOGGER.debug("Will use %d tokens in round robin" .formatted(tokens.length));
-            final var roundRobinAccessor = new RoundRobinAccessor<>(List.of(tokens));
-            return roundRobinAccessor::get;
-        }
-
-        return apiTokenSupplier = () -> tokenValue;
-    }
-
 }

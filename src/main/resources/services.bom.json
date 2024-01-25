@@ -493,10 +493,7 @@
     {
       "bom-ref": "service:com.aquasec",
       "provider": {
-        "name": "Trivy",
-        "url": [
-          "https://www.aquasec.com/products/trivy"
-        ]
+        "name": "Trivy"
       },
       "group": "com.aquasec",
       "name": "Trivy",

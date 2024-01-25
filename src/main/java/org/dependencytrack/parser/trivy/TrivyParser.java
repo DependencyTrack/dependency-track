@@ -24,7 +24,7 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.parser.trivy.model.Bitnami;
+import org.dependencytrack.parser.trivy.model.CVSS;
 import org.dependencytrack.persistence.QueryManager;
 
 import java.math.BigDecimal;
@@ -44,13 +44,7 @@ public class TrivyParser {
         Vulnerability vulnerability = new Vulnerability();
         List<VulnerableSoftware> vsList = new ArrayList<>();
 
-        Vulnerability.Source source = Vulnerability.Source.NVD;
-
-        if (data.getVulnerabilityID().startsWith("GHSA-")) {
-            source = Vulnerability.Source.GITHUB;
-        }
-
-        vulnerability.setSource(source);
+        vulnerability.setSource(Vulnerability.Source.resolve(data.getVulnerabilityID()));
 
         vulnerability.setPatchedVersions(data.getFixedVersion());
 
@@ -85,15 +79,7 @@ public class TrivyParser {
 
         vulnerability = setCvssScore(data.getCvss().get(data.getSeveritySource()), vulnerability);
 
-        final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));
-        synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-        qm.persist(vsList);
-        qm.updateAffectedVersionAttributions(synchronizedVulnerability, vsList, source);
-        vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, source);
-        synchronizedVulnerability.setVulnerableSoftware(vsList);
-        qm.persist(synchronizedVulnerability);
-
-        return synchronizedVulnerability;
+        return vulnerability;
     }
 
     public Date parseDate(String input) throws ParseException {
@@ -123,7 +109,7 @@ public class TrivyParser {
         return Severity.UNASSIGNED;
     }
 
-    public Vulnerability setCvssScore(Bitnami cvss, Vulnerability vulnerability) {
+    public Vulnerability setCvssScore(CVSS cvss, Vulnerability vulnerability) {
         if (cvss != null) {
             vulnerability.setCvssV2Vector(cvss.getV2Vector());
             vulnerability.setCvssV3Vector(cvss.getV3Vector());

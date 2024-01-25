@@ -21,8 +21,12 @@ package org.dependencytrack.upgrade.v4110;
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.util.VulnerabilityUtil;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Statement;
 
 public class v4110Updater extends AbstractUpgradeItem {
@@ -37,6 +41,7 @@ public class v4110Updater extends AbstractUpgradeItem {
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
         dropCweTable(connection);
+        computeVulnerabilitySeverities(connection);
     }
 
     private static void dropCweTable(final Connection connection) throws Exception {
@@ -64,7 +69,7 @@ public class v4110Updater extends AbstractUpgradeItem {
                         ALTER TABLE "VULNERABILITY" DROP COLUMN IF EXISTS "CWE"
                         """);
 
-                LOGGER.info("Dropping table CWE");
+                LOGGER.info("Dropping table \"CWE\"");
                 stmt.executeUpdate("""
                         DROP TABLE IF EXISTS "CWE"
                         """);
@@ -78,6 +83,59 @@ public class v4110Updater extends AbstractUpgradeItem {
             if (shouldReEnableAutoCommit) {
                 connection.setAutoCommit(true);
             }
+        }
+    }
+
+    private static void computeVulnerabilitySeverities(final Connection connection) throws Exception {
+        // Part of a fix for https://github.com/DependencyTrack/dependency-track/issues/2474.
+        // Recomputes all database severity values with value NULL of a vulnerability and updates them in the database.
+        LOGGER.info("Computing severities for vulnerabilities where severity is currently NULL");
+        try (final PreparedStatement selectStatement = connection.prepareStatement("""
+                 SELECT
+                  "CVSSV2BASESCORE",
+                  "CVSSV3BASESCORE",
+                  "OWASPRRLIKELIHOODSCORE",
+                  "OWASPRRTECHNICALIMPACTSCORE",
+                  "OWASPRRBUSINESSIMPACTSCORE",
+                  "VULNID"
+                FROM
+                  "VULNERABILITY"
+                WHERE
+                  "SEVERITY" is NULL
+                """);
+             final PreparedStatement updateStatement = connection.prepareStatement("""
+                     UPDATE "VULNERABILITY" SET "SEVERITY" = ? WHERE "VULNID" = ?
+                     """)) {
+            int batchSize = 0, numBatches = 0, numUpdates = 0;
+            final ResultSet rs = selectStatement.executeQuery();
+            while (rs.next()) {
+                final String vulnID = rs.getString(6);
+                final Severity severity = VulnerabilityUtil.getSeverity(
+                        rs.getBigDecimal(1),
+                        rs.getBigDecimal(2),
+                        rs.getBigDecimal(3),
+                        rs.getBigDecimal(4),
+                        rs.getBigDecimal(5)
+                );
+
+                updateStatement.setString(1, severity.name());
+                updateStatement.setString(2, vulnID);
+                updateStatement.addBatch();
+                if (++batchSize == 500) {
+                    updateStatement.executeBatch();
+                    numUpdates += batchSize;
+                    numBatches++;
+                    batchSize = 0;
+                }
+            }
+
+            if (batchSize > 0) {
+                updateStatement.executeBatch();
+                numUpdates += batchSize;
+                numBatches++;
+            }
+
+            LOGGER.info("Updated %d vulnerabilities in %d batches".formatted(numUpdates, numBatches));
         }
     }
 

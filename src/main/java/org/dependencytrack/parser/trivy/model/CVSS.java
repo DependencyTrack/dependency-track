@@ -20,7 +20,7 @@ package org.dependencytrack.parser.trivy.model;
 
 import com.google.gson.annotations.SerializedName;
 
-public class Bitnami {
+public class CVSS {
     @SerializedName("v2_vector")
     private String v2Vector;
     @SerializedName("v3_vector")

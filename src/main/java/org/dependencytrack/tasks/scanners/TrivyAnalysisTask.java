@@ -91,11 +91,11 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
            IntervalFunction intervalWithCustomExponentialBackoff = IntervalFunction
                 .ofExponentialBackoff(
                         IntervalFunction.DEFAULT_INITIAL_INTERVAL,
-                        Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER),
-                        Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION)
+                        Config.getInstance().getPropertyAsInt(ConfigKey.TRIVY_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER),
+                        Config.getInstance().getPropertyAsInt(ConfigKey.TRIVY_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION)
                 );
         RetryConfig config = RetryConfig.custom()
-                .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS))
+                .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.TRIVY_RETRY_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS))
                 .intervalFunction(intervalWithCustomExponentialBackoff)
                 .build();
 

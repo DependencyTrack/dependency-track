@@ -224,12 +224,18 @@ The following steps demonstrate how to setup OpenID Connect with Azure Active Di
    - Supported account types: `Accounts in this organizational directory only`
    - Redirect URI (optional): Leave empty for now
 
-2. Under Authentication, add the following Redirect URI for a Single Page Application and leave all settings at default:
+2. Under Authentication:
+   
+   - Add `https://dependencytrack.example.com/static/oidc-callback.html` as a Single Page Application Redirect URI
+   - leave all settings at default:
 
-   - https://dependencytrack.example.com/static/oidc-callback.html
-
-3. Under Token configuration, click Add groups claim and select the group types you'd like to include (check all options if you're not sure).
-
+3. Under Token configuration:
+   
+   - Click Add groups claim
+   - Select the group types you'd like to include
+     - If you are unsure, start by trying all options
+     - If you are in a large organization and have users with lots of groups, you may want to choice only `Groups assigned to the application` to avoid SSO issues. See #2150
+ 
 4. Under API permissions, add the following Microsoft Graph API permissions:
    - OpenId permissions -> email
    - OpenId permissions -> openid

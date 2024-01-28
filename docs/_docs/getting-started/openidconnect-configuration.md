@@ -104,6 +104,17 @@ Set the redirect URI to `<dependency track host>/static/oidc-callback.html`
 
 <span style="color:red">\*</span> Requires additional configuration, see [Example setup with Keycloak](#example-setup-with-keycloak)
 
+### Default Groups
+
+In cases where team synchronization is not possible, auto-provisioned users can be assigned one or more default teams.
+
+```ini
+alpine.oidc.teams.default=TeamA,TeamB
+```
+
+Note that this feature is intended to be used specifically when team synchronization is *disabled*. 
+If team synchronization is enabled, memberships will be reset upon next login of the respective user.
+
 ### Example setup with Keycloak
 
 The following steps demonstrate how to setup OpenID Connect with Keycloak. Most settings should be applicable to other IdPs as well.

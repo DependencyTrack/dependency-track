@@ -38,13 +38,16 @@ public class AffectedProject {
 
     private final String version;
 
+    private final boolean active;
+
     private final List<UUID> affectedComponentUuids;
 
-    public AffectedProject(UUID uuid, boolean dependencyGraphAvailable, String name, String version, List<UUID> affectedComponentUuids) {
+    public AffectedProject(UUID uuid, boolean dependencyGraphAvailable, String name, String version, boolean active, List<UUID> affectedComponentUuids) {
         this.uuid = uuid;
         this.dependencyGraphAvailable = dependencyGraphAvailable;
         this.name = name;
         this.version = version;
+        this.active = active;
         this.affectedComponentUuids = affectedComponentUuids == null ? new ArrayList<>() : affectedComponentUuids;
     }
 
@@ -61,6 +64,10 @@ public class AffectedProject {
 
     public String getVersion() {
         return version;
+    }
+
+    public boolean getActive() {
+        return active;
     }
 
     public List<UUID> getAffectedComponentUuids() {

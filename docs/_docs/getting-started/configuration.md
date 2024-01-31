@@ -390,6 +390,17 @@ alpine.oidc.team.synchronization=false
 alpine.oidc.teams.claim=groups
 
 # Optional
+# Defines one or more team names that auto-provisioned OIDC users shall be added to.
+# Multiple team names may be provided as comma-separated list.
+# Has no effect when alpine.oidc.user.provisioning=false, or alpine.oidc.team.synchronization=true.
+alpine.oidc.teams.default=
+
+# Optional
+# Define whether system requirement check is enable.
+# The default value is true.
+system.requirement.check.enabled=true
+
+# Optional
 # Defines the size of the thread pool used to perform requests to the Snyk API in parallel.
 # The thread pool will only be used when Snyk integration is enabled.
 # A high number may result in quicker exceeding of API rate limits,

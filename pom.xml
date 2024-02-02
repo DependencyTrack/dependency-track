@@ -112,7 +112,7 @@
         <lib.log4j-over-slf4j.version>2.0.11</lib.log4j-over-slf4j.version>
         <lib.org-kohsuke-github-api.version>1.318</lib.org-kohsuke-github-api.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>12.4.2.jre11</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>12.6.0.jre11</lib.jdbc-driver.mssql.version>
         <!-- Upgrading to 8.0.33 as https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
         <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.6.0</lib.jdbc-driver.postgresql.version>

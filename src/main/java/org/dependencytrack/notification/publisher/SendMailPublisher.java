@@ -104,7 +104,7 @@ public class SendMailPublisher implements Publisher {
         final String encryptedSmtpPassword;
         final boolean smtpSslTls;
         final boolean smtpTrustCert;
-        String smtpPrefix;
+        String emailSubjectPrefix;
 
         try (QueryManager qm = new QueryManager()) {
             smtpEnabled = qm.isEnabled(EMAIL_SMTP_ENABLED);
@@ -114,8 +114,8 @@ public class SendMailPublisher implements Publisher {
             }
 
             smtpFrom = qm.getConfigProperty(EMAIL_SMTP_FROM_ADDR.getGroupName(), EMAIL_SMTP_FROM_ADDR.getPropertyName()).getPropertyValue();
-            smtpPrefix = qm.getConfigProperty(EMAIL_PREFIX.getGroupName(), EMAIL_PREFIX.getPropertyName()).getPropertyValue();
-            smtpPrefix = smtpPrefix == null ? " " : smtpPrefix;
+            emailSubjectPrefix = qm.getConfigProperty(EMAIL_PREFIX.getGroupName(), EMAIL_PREFIX.getPropertyName()).getPropertyValue();
+            emailSubjectPrefix = emailSubjectPrefix == null ? " " : emailSubjectPrefix;
             smtpHostname = qm.getConfigProperty(EMAIL_SMTP_SERVER_HOSTNAME.getGroupName(), EMAIL_SMTP_SERVER_HOSTNAME.getPropertyName()).getPropertyValue();
             smtpPort = Integer.parseInt(qm.getConfigProperty(EMAIL_SMTP_SERVER_PORT.getGroupName(), EMAIL_SMTP_SERVER_PORT.getPropertyName()).getPropertyValue());
             smtpUser = qm.getConfigProperty(EMAIL_SMTP_USERNAME.getGroupName(), EMAIL_SMTP_USERNAME.getPropertyName()).getPropertyValue();
@@ -140,7 +140,7 @@ public class SendMailPublisher implements Publisher {
             final SendMail sendMail = new SendMail()
                     .from(smtpFrom)
                     .to(destinations)
-                    .subject(smtpPrefix + " " + notification.getTitle() )
+                    .subject(emailSubjectPrefix + " " + notification.getTitle() )
                     .body(content)
                     .bodyMimeType(mimeType)
                     .host(smtpHostname)

@@ -98,13 +98,13 @@ public class SendMailPublisher implements Publisher {
 
         final boolean smtpEnabled;
         final String smtpFrom;
-        final String smtpPrefix;
         final String smtpHostname;
         final int smtpPort;
         final String smtpUser;
         final String encryptedSmtpPassword;
         final boolean smtpSslTls;
         final boolean smtpTrustCert;
+        String smtpPrefix;
 
         try (QueryManager qm = new QueryManager()) {
             smtpEnabled = qm.isEnabled(EMAIL_SMTP_ENABLED);
@@ -115,6 +115,7 @@ public class SendMailPublisher implements Publisher {
 
             smtpFrom = qm.getConfigProperty(EMAIL_SMTP_FROM_ADDR.getGroupName(), EMAIL_SMTP_FROM_ADDR.getPropertyName()).getPropertyValue();
             smtpPrefix = qm.getConfigProperty(EMAIL_PREFIX.getGroupName(), EMAIL_PREFIX.getPropertyName()).getPropertyValue();
+            smtpPrefix = smtpPrefix == null ? " " : smtpPrefix;
             smtpHostname = qm.getConfigProperty(EMAIL_SMTP_SERVER_HOSTNAME.getGroupName(), EMAIL_SMTP_SERVER_HOSTNAME.getPropertyName()).getPropertyValue();
             smtpPort = Integer.parseInt(qm.getConfigProperty(EMAIL_SMTP_SERVER_PORT.getGroupName(), EMAIL_SMTP_SERVER_PORT.getPropertyName()).getPropertyValue());
             smtpUser = qm.getConfigProperty(EMAIL_SMTP_USERNAME.getGroupName(), EMAIL_SMTP_USERNAME.getPropertyName()).getPropertyValue();

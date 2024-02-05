@@ -24,6 +24,7 @@ import static com.icegreen.greenmail.configuration.GreenMailConfiguration.aConfi
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_FROM_ADDR;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_PREFIX;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_PASSWORD;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_HOSTNAME;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_PORT;
@@ -85,6 +86,13 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
                 "dtrack@example.com",
                 EMAIL_SMTP_FROM_ADDR.getPropertyType(),
                 EMAIL_SMTP_FROM_ADDR.getDescription()
+        );
+        qm.createConfigProperty(
+                EMAIL_PREFIX.getGroupName(),
+                EMAIL_PREFIX.getPropertyName(),
+                "[Dependency-Track]",
+                EMAIL_PREFIX.getPropertyType(),
+                EMAIL_PREFIX.getDescription()
         );
         qm.createConfigProperty(
                 EMAIL_SMTP_SSLTLS.getGroupName(),

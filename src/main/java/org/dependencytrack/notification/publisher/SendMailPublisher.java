@@ -140,7 +140,7 @@ public class SendMailPublisher implements Publisher {
             final SendMail sendMail = new SendMail()
                     .from(smtpFrom)
                     .to(destinations)
-                    .subject(emailSubjectPrefix + " " + notification.getTitle() )
+                    .subject(emailSubjectPrefix + " " + notification.getTitle())
                     .body(content)
                     .bodyMimeType(mimeType)
                     .host(smtpHostname)

@@ -305,7 +305,7 @@ public class VulnDbParser {
                 JSONArray nvdInfo = object.optJSONArray("nvd_additional_information");
                // List<NvdAdditionalInfo> nvdAdditionalInfos = new ArrayList<>();
                 NvdAdditionalInfo nvdAdditionalInfo = null;
-                if (nvdInfo != null) {
+                if (nvdInfo != null && nvdInfo.length() > 0) {
 //                    for (int j = 0; j < nvdInfo.length(); ++j) {
 //                        JSONObject jso = nvdInfo.getJSONObject(j);
 //                        NvdAdditionalInfo nvdAdditionalInfo = new NvdAdditionalInfo(StringUtils.trimToNull(jso.optString("summary", (String) null)),

@@ -422,8 +422,9 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
          try {
             HttpUriRequest request = buildRequest(requestUrl, delete);
-            final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request));
-            LOGGER.debug("DeleteBlob response: " + response.getStatusLine().getStatusCode());
+            try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
+                LOGGER.debug("DeleteBlob response: " + response.getStatusLine().getStatusCode());
+            };
         } catch (Throwable  ex) {
             handleRequestException(LOGGER, ex);
         }
@@ -449,7 +450,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(parsedVulnerability.getSource(), parsedVulnerability.getVulnId());
 
                 if (vulnerability == null) {
-                    LOGGER.warn("Vulnerability not available:" + parsedVulnerability.getSource()  + " - " + parsedVulnerability.getVulnId());
+                    LOGGER.debug("Creating unavailable vulnerability:" + parsedVulnerability.getSource()  + " - " + parsedVulnerability.getVulnId());
                     vulnerability = qm.createVulnerability(parsedVulnerability, false);
                     addVulnerabilityToCache(componentPersisted, vulnerability);
                 }

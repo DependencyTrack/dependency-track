@@ -31,7 +31,6 @@ import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.persistence.CweImporter;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;

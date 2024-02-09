@@ -99,7 +99,7 @@
           https://github.com/stevespringett/Alpine/pull/517 is merged and released.
         -->
         <lib.logstash-logback-encoder.version>7.3</lib.logstash-logback-encoder.version>
-        <lib.lucene.version>8.11.2</lib.lucene.version>
+        <lib.lucene.version>8.11.3</lib.lucene.version>
         <lib.open-vulnerability-clients.version>5.1.1</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.2.0</lib.pebble.version>

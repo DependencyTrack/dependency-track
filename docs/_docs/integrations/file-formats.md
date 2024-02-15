@@ -39,7 +39,7 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
 
 ```json
 {
-  "version": "1.1",
+  "version": "1.2",
   "meta" : {
     "application": "Dependency-Track",
     "version": "4.5.0",
@@ -81,7 +81,20 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
       "recommendation": "No direct patch is available..."
     },
     "analysis": {
-      "state": "NOT_SET",
+      "state": "NOT_AFFECTED",
+      "details": "Not exploitable in this project",
+      "comments": [
+        {
+          "timestamp": 1697500959345,
+          "comment": "Analysis: NOT_SET → NOT_AFFECTED",
+          "commenter": "admin"
+        },
+        {
+          "timestamp": 1697500977371,
+          "comment": "Details: Not exploitable in this project",
+          "commenter": "admin"
+        }
+      ],
       "isSuppressed": false
     },
     "matrix": "ca4f2da9-0fad-4a13-92d7-f627f3168a56:b815b581-fec1-4374-a871-68862a8f8d52:115b80bb-46c4-41d1-9f10-8a175d4abb46"

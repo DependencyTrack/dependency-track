@@ -40,16 +40,33 @@ import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_USERNAME;
  * @since 4.7
  */
 public class JiraPublisher extends AbstractWebhookPublisher implements Publisher {
+
     private static final Logger LOGGER = Logger.getLogger(JiraPublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
+
     private String jiraProjectKey;
     private String jiraTicketType;
 
     @Override
-    public void inform(final Notification notification, final JsonObject config) {
-        jiraTicketType = config.getString("jiraTicketType");
-        jiraProjectKey = config.getString(CONFIG_DESTINATION);
-        publish(DefaultNotificationPublishers.JIRA.getPublisherName(), getTemplate(config), notification, config);
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
+        if (config == null) {
+            LOGGER.warn("No publisher configuration provided; Skipping notification (%s)".formatted(ctx));
+            return;
+        }
+
+        jiraTicketType = config.getString("jiraTicketType", null);
+        if (jiraTicketType == null) {
+            LOGGER.warn("No JIRA ticket type configured; Skipping notification (%s)".formatted(ctx));
+            return;
+        }
+
+        jiraProjectKey = config.getString(CONFIG_DESTINATION, null);
+        if (jiraProjectKey == null) {
+            LOGGER.warn("No JIRA project key configured; Skipping notification (%s)".formatted(ctx));
+            return;
+        }
+
+        publish(ctx, getTemplate(config), notification, config);
     }
 
     @Override
@@ -68,7 +85,7 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
     }
 
     @Override
-    public AuthCredentials getAuthCredentials() {
+    protected AuthCredentials getAuthCredentials() {
         try (final QueryManager qm = new QueryManager()) {
             final ConfigProperty jiraUsernameProp = qm.getConfigProperty(JIRA_USERNAME.getGroupName(), JIRA_USERNAME.getPropertyName());
             final String jiraUsername = (jiraUsernameProp == null) ? null : jiraUsernameProp.getPropertyValue();

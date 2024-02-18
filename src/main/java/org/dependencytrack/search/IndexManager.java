@@ -50,7 +50,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
@@ -105,7 +104,6 @@ public abstract class IndexManager implements AutoCloseable {
         SERVICECOMPONENT(ServiceComponent.class),
         VULNERABILITY(Vulnerability.class),
         LICENSE(License.class),
-        CPE(Cpe.class),
         VULNERABLESOFTWARE(VulnerableSoftware.class);
 
         final private Class<?> clazz;

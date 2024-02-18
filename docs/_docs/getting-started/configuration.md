@@ -68,6 +68,12 @@ alpine.data.directory=~/.dependency-track
 # Default is "<alpine.data.directory>/keys/secret.key".
 # alpine.secret.key.path=/var/run/secrets/secret.key
 
+# Optional
+# Defines the prefix to be used for API keys. A maximum prefix length of 251
+# characters is supported.
+# The prefix may also be left empty.
+alpine.api.key.prefix=odt_
+
 # Required
 # Defines the interval (in seconds) to log general heath information. If value
 # equals 0, watchdog logging will be disabled.
@@ -161,18 +167,6 @@ alpine.database.pool.max.lifetime=600000
 #
 # DO NOT CHANGE UNLESS THERE IS A GOOD REASON TO.
 # alpine.datanucleus.cache.level2.type=
-
-# Optional
-# When authentication is enforced, API keys are required for automation, and
-# the user interface will prevent anonymous access by prompting for login
-# credentials.
-alpine.enforce.authentication=true
-
-# Optional
-# When authorization is enforced, team membership for both API keys and user
-# accounts are restricted to what the team itself has access to. To enforce 
-# authorization, the enforce.authentication property (above) must be true.
-alpine.enforce.authorization=true
 
 # Required
 # Specifies the number of bcrypt rounds to use when hashing a users password.
@@ -394,6 +388,17 @@ alpine.oidc.team.synchronization=false
 # When using a customizable / on-demand hosted identity provider, name, content, and inclusion in the userinfo endpoint
 # will most likely need to be configured.
 alpine.oidc.teams.claim=groups
+
+# Optional
+# Defines one or more team names that auto-provisioned OIDC users shall be added to.
+# Multiple team names may be provided as comma-separated list.
+# Has no effect when alpine.oidc.user.provisioning=false, or alpine.oidc.team.synchronization=true.
+alpine.oidc.teams.default=
+
+# Optional
+# Define whether system requirement check is enable.
+# The default value is true.
+system.requirement.check.enabled=true
 
 # Optional
 # Defines the size of the thread pool used to perform requests to the Snyk API in parallel.

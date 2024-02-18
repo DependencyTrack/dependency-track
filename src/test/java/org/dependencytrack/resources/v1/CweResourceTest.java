@@ -21,13 +21,11 @@ package org.dependencytrack.resources.v1;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
-import org.dependencytrack.persistence.CweImporter;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import javax.json.JsonArray;
@@ -43,13 +41,6 @@ public class CweResourceTest extends ResourceTest {
                         .register(ApiFilter.class)
                         .register(AuthenticationFilter.class)))
                 .build();
-    }
-
-    @Before
-    public void before() throws Exception {
-       super.before();
-        CweImporter cweImporter = new CweImporter();
-        cweImporter.processCweDefinitions();
     }
 
     @Test

@@ -58,6 +58,7 @@ import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.HttpUtil;
 import org.dependencytrack.util.NotificationUtil;
+import org.dependencytrack.util.VulnerabilityUtil;
 import org.json.JSONObject;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.CvssV2;
@@ -361,7 +362,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         vulnerability.setDescription(reportedVuln.getDescription());
 
         if (reportedVuln.getCwe() != null) {
-            final Cwe cwe = CweResolver.getInstance().resolve(qm, reportedVuln.getCwe());
+            final Cwe cwe = CweResolver.getInstance().lookup(reportedVuln.getCwe());
             if (cwe != null) {
                 vulnerability.addCwe(cwe);
             }
@@ -397,6 +398,15 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                 }
             }
         }
+
+        vulnerability.setSeverity(VulnerabilityUtil.getSeverity(
+                vulnerability.getCvssV2BaseScore(),
+                vulnerability.getCvssV3BaseScore(),
+                vulnerability.getOwaspRRLikelihoodScore(),
+                vulnerability.getOwaspRRTechnicalImpactScore(),
+                vulnerability.getOwaspRRBusinessImpactScore()
+        ));
+
         return vulnerability;
     }
 

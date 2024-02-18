@@ -47,4 +47,19 @@ public class ProjectTest extends PersistenceCapableTest {
         Assert.assertNotNull(bom.getUuid());
         Assert.assertNotNull(bom.getImported());
     }
+
+    @Test
+    public void testProjectPersistActiveFieldDefaultsToTrue() {
+
+        Project project = new Project();
+        project.setName("Example Project 1");
+        project.setDescription("Description 1");
+        project.setVersion("1.0");
+        project.setActive(null);
+
+        Project persistedProject = qm.createProject(project, null, false);
+
+        Assert.assertNotNull(persistedProject.isActive());
+        Assert.assertTrue(persistedProject.isActive());
+    }
 }

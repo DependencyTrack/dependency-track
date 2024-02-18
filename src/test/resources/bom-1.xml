@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bom xmlns="http://cyclonedx.org/schema/bom/1.4" version="1">
     <metadata>
+        <authors>
+            <author>
+                <name>Author</name>
+                <email>author@example.com</email>
+                <phone>123-456-7890</phone>
+            </author>
+        </authors>
         <component type="application" bom-ref="acme">
+            <supplier>
+                <name>Foo Incorporated</name>
+                <url>https://foo.bar.com</url>
+                <contact>
+                    <name>Foo Jr.</name>
+                    <email>foojr@bar.com</email>
+                    <phone>123-456-7890</phone>
+                </contact>
+            </supplier>
             <publisher>DependencyTrack</publisher>
             <name>Acme example</name>
             <externalReferences>
@@ -19,10 +35,37 @@
                 </reference>
             </externalReferences>
         </component>
+        <manufacture>
+            <name>Foo Incorporated</name>
+            <url>https://foo.bar.com</url>
+            <contact>
+                <name>Foo Sr.</name>
+                <email>foo@bar.com</email>
+                <phone>800-123-4567</phone>
+            </contact>
+        </manufacture>
+        <supplier>
+           <name>Foo Incorporated</name>
+            <url>https://foo.bar.com</url>
+            <contact>
+                <name>Foo Jr.</name>
+                <email>foojr@bar.com</email>
+                <phone>123-456-7890</phone>
+            </contact>
+        </supplier>
     </metadata>
     <components>
         <component type="application">
 			<author>Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................</author>
+            <supplier>
+                <name>Foo Incorporated</name>
+                <url>https://foo.bar.com</url>
+                <contact>
+                    <name>Foo Jr.</name>
+                    <email>foojr@bar.com</email>
+                    <phone>123-456-7890</phone>
+                </contact>
+            </supplier>
             <publisher>Example Incorporated</publisher>
             <group>com.example</group>
             <name>xmlutil</name>

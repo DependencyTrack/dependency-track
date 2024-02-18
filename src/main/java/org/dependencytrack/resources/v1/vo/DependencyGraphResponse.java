@@ -16,8 +16,9 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-
 package org.dependencytrack.resources.v1.vo;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import java.util.UUID;
  * @author Nathan Mittelette <mittelette.nathan@gmail.com>
  * @since 4.9.0
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record DependencyGraphResponse(UUID uuid, String name, String version, String purl, String directDependencies, String latestVersion) implements Serializable {
 
     public DependencyGraphResponse(DependencyGraphResponse source, String latestVersion) {

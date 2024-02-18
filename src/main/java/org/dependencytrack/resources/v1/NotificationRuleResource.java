@@ -36,7 +36,7 @@ import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
+import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.validation.Validator;
@@ -282,7 +282,7 @@ public class NotificationRuleResource extends AlpineResource {
             if (rule == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
             }
-            if (!rule.getPublisher().getName().equals(DefaultNotificationPublishers.EMAIL.getPublisherName())) {
+            if (!rule.getPublisher().getPublisherClass().equals(SendMailPublisher.class.getName())) {
                 return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Team subscriptions are only possible on notification rules with EMAIL publisher.").build();
             }
             final Team team = qm.getObjectByUuid(Team.class, teamUuid);
@@ -323,7 +323,7 @@ public class NotificationRuleResource extends AlpineResource {
             if (rule == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
             }
-            if (!rule.getPublisher().getName().equals(DefaultNotificationPublishers.EMAIL.getPublisherName())) {
+            if (!rule.getPublisher().getPublisherClass().equals(SendMailPublisher.class.getName())) {
                 return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Team subscriptions are only possible on notification rules with EMAIL publisher.").build();
             }
             final Team team = qm.getObjectByUuid(Team.class, teamUuid);

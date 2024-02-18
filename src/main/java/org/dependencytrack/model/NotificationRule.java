@@ -89,6 +89,18 @@ public class NotificationRule implements Serializable {
     @Column(name = "NOTIFY_CHILDREN", allowsNull = "true") // New column, must allow nulls on existing data bases)
     private boolean notifyChildren;
 
+    /**
+     * In addition to warnings and errors, also emit a log message upon successful publishing.
+     * <p>
+     * Intended to aid in debugging of missing notifications, or environments where notification
+     * delivery is critical and subject to auditing.
+     *
+     * @since 4.10.0
+     */
+    @Persistent
+    @Column(name = "LOG_SUCCESSFUL_PUBLISH", allowsNull = "true")
+    private boolean logSuccessfulPublish;
+
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "SCOPE", jdbcType = "VARCHAR", allowsNull = "false")
     @NotNull
@@ -167,6 +179,14 @@ public class NotificationRule implements Serializable {
 
     public void setNotifyChildren(boolean notifyChildren) {
         this.notifyChildren = notifyChildren;
+    }
+
+    public boolean isLogSuccessfulPublish() {
+        return logSuccessfulPublish;
+    }
+
+    public void setLogSuccessfulPublish(final boolean logSuccessfulPublish) {
+        this.logSuccessfulPublish = logSuccessfulPublish;
     }
 
     @NotNull

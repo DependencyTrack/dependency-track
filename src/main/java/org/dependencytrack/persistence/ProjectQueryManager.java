@@ -39,7 +39,9 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.FindingAttribution;
+import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.ServiceComponent;
@@ -49,6 +51,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.NotificationUtil;
+
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -86,7 +89,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return a List of Projects
      */
     @Override
-    public PaginatedResult getProjects(final boolean includeMetrics, final boolean excludeInactive, final boolean onlyRoot) {
+    public PaginatedResult getProjects(final boolean includeMetrics, final boolean excludeInactive, final boolean onlyRoot, final Team notAssignedToTeam) {
         final PaginatedResult result;
         final Query<Project> query = pm.newQuery(Project.class);
         if (orderBy == null) {
@@ -99,6 +102,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (onlyRoot){
             filterBuilder.excludeChildProjects();
             query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+        }
+
+        if(notAssignedToTeam != null) {
+            filterBuilder.notWithTeam(notAssignedToTeam);
         }
 
         if (filter != null) {
@@ -134,7 +141,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     @Override
     public PaginatedResult getProjects(final boolean includeMetrics) {
-        return getProjects(includeMetrics, false, false);
+        return getProjects(includeMetrics, false, false, null);
     }
 
     /**
@@ -192,7 +199,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return a List of Project objects
      */
     @Override
-    public PaginatedResult getProjects(final String name, final boolean excludeInactive, final boolean onlyRoot) {
+    public PaginatedResult getProjects(final String name, final boolean excludeInactive, final boolean onlyRoot, final Team notAssignedToTeam) {
         final Query<Project> query = pm.newQuery(Project.class);
         if (orderBy == null) {
             query.setOrdering("version desc");
@@ -205,6 +212,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (onlyRoot) {
             filterBuilder.excludeChildProjects();
             query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+        }
+
+        if(notAssignedToTeam != null) {
+            filterBuilder.notWithTeam(notAssignedToTeam);
         }
 
         final String queryFilter = filterBuilder.buildFilter();
@@ -486,7 +497,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final List<Tag> resolvedTags = resolveTags(tags);
         bind(project, resolvedTags);
 
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.PORTFOLIO)
                 .group(NotificationGroup.PROJECT_CREATED)
@@ -511,45 +522,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (project.getParent() != null && !Boolean.TRUE.equals(project.getParent().isActive())){
             throw new IllegalArgumentException("An inactive Parent cannot be selected as parent");
         }
-        final Project result = persist(project);
-        final List<Tag> resolvedTags = resolveTags(tags);
-        bind(project, resolvedTags);
-
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
-        commitSearchIndex(commitIndex, Project.class);
-        return result;
-    }
-
-    /**
-     * Updates an existing Project.
-     * @param uuid the uuid of the project to update
-     * @param name the name of the project
-     * @param description a description of the project
-     * @param version the project version
-     * @param tags a List of Tags - these will be resolved if necessary
-     * @param purl an optional Package URL
-     * @param active specified if the project is active
-     * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @return the updated Project
-     */
-    @Override
-    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, PackageURL purl, boolean active, boolean commitIndex) {
-        final Project project = getObjectByUuid(Project.class, uuid);
-        project.setName(name);
-        project.setDescription(description);
-        project.setVersion(version);
-        project.setPurl(purl);
-
-        if (!active && Boolean.TRUE.equals(project.isActive()) && hasActiveChild(project)){
-            throw new IllegalArgumentException("Project cannot be set to inactive, if active children are present.");
+        if (project.isActive() == null) {
+            project.setActive(Boolean.TRUE);
         }
-        project.setActive(active);
-
+        final Project result = persist(project);
         final List<Tag> resolvedTags = resolveTags(tags);
         bind(project, resolvedTags);
 
-        final Project result = persist(project);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -565,6 +545,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
         project.setAuthor(transientProject.getAuthor());
         project.setPublisher(transientProject.getPublisher());
+        project.setManufacturer(transientProject.getManufacturer());
+        project.setSupplier(transientProject.getSupplier());
         project.setGroup(transientProject.getGroup());
         project.setName(transientProject.getName());
         project.setDescription(transientProject.getDescription());
@@ -601,7 +583,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         bind(project, resolvedTags);
 
         final Project result = persist(project);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -609,13 +591,24 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     @Override
     public Project clone(UUID from, String newVersion, boolean includeTags, boolean includeProperties,
                          boolean includeComponents, boolean includeServices, boolean includeAuditHistory,
-                         boolean includeACL) {
+                         boolean includeACL, boolean includePolicyViolations) {
         final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
         if (source == null) {
+            LOGGER.warn("Project with UUID %s was supposed to be cloned, but it does not exist anymore".formatted(from));
+            return null;
+        }
+        if (doesProjectExist(source.getName(), newVersion)) {
+            // Project cloning is an asynchronous process. When receiving the clone request, we already perform
+            // this check. It is possible though that a project with the new version is created synchronously
+            // between the clone event being dispatched, and it being processed.
+            LOGGER.warn("Project %s was supposed to be cloned to version %s, but that version already exists"
+                    .formatted(source, newVersion));
             return null;
         }
         Project project = new Project();
         project.setAuthor(source.getAuthor());
+        project.setManufacturer(source.getManufacturer());
+        project.setSupplier(source.getSupplier());
         project.setPublisher(source.getPublisher());
         project.setGroup(source.getGroup());
         project.setName(source.getName());
@@ -631,6 +624,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         project.setParent(source.getParent());
         project = persist(project);
+
+        if (source.getMetadata() != null) {
+            final var metadata = new ProjectMetadata();
+            metadata.setProject(project);
+            metadata.setAuthors(source.getMetadata().getAuthors());
+            metadata.setSupplier(source.getMetadata().getSupplier());
+            persist(metadata);
+        }
 
         if (includeTags) {
             for (final Tag tag: source.getTags()) {
@@ -664,6 +665,15 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                         this.addVulnerability(vuln, clonedComponent, sourceAttribution.getAnalyzerIdentity(), sourceAttribution.getAlternateIdentifier(), sourceAttribution.getReferenceUrl());
                     }
                     clonedComponents.put(sourceComponent.getId(), clonedComponent);
+                }
+            }
+        }
+
+        if (includeServices) {
+            final List<ServiceComponent> sourceServices = getAllServiceComponents(source);
+            if (sourceServices != null) {
+                for (final ServiceComponent sourceService : sourceServices) {
+                    cloneServiceComponent(sourceService, project, false);
                 }
             }
         }
@@ -707,8 +717,21 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             }
         }
 
+     
+       if(includeComponents && includePolicyViolations){
+            final List<PolicyViolation> sourcePolicyViolations = getAllPolicyViolations(source);
+            if(sourcePolicyViolations != null){
+                for(final PolicyViolation policyViolation: sourcePolicyViolations){
+                final Component destinationComponent = clonedComponents.get(policyViolation.getComponent().getId());
+                final PolicyViolation clonedPolicyViolation = clonePolicyViolation(policyViolation, destinationComponent);
+                persist(clonedPolicyViolation);
+                }   
+            }
+       }
+        
+
         project = getObjectById(Project.class, project.getId());
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(project)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, project));
         commitSearchIndex(true, Project.class);
         return project;
     }
@@ -727,7 +750,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Project result = pm.getObjectById(Project.class, project.getId());
-        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, result));
         commitSearchIndex(commitIndex, Project.class);
 
         deleteAnalysisTrail(project);
@@ -744,6 +767,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         deleteVexs(project);
         removeProjectFromNotificationRules(project);
         removeProjectFromPolicies(project);
+        delete(project.getMetadata());
         delete(project.getProperties());
         delete(getAllBoms(project));
         delete(project.getChildren());
@@ -1111,6 +1135,39 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         return result;
     }
 
+    /**
+     * Check whether a {@link Project} with a given {@code name} and {@code version} exists.
+     *
+     * @param name    Name of the {@link Project} to check for
+     * @param version Version of the {@link Project} to check for
+     * @return {@code true} when a matching {@link Project} exists, otherwise {@code false}
+     * @since 4.9.0
+     */
+    @Override
+    public boolean doesProjectExist(final String name, final String version) {
+        final Query<Project> query = pm.newQuery(Project.class);
+        if (version != null) {
+            query.setFilter("name == :name && version == :version");
+            query.setNamedParameters(Map.of(
+                    "name", name,
+                    "version", version
+            ));
+        } else {
+            // Version is optional for projects, but using null
+            // for parameter values bypasses the query compilation cache.
+            // https://github.com/DependencyTrack/dependency-track/issues/2540
+            query.setFilter("name == :name && version == null");
+            query.setNamedParameters(Map.of(
+                    "name", name
+            ));
+        }
+        query.setResult("count(this)");
+        try {
+            return query.executeResultUnique(Long.class) > 0;
+        } finally {
+            query.closeAll();
+        }
+    }
 
     private static boolean isChildOf(Project project, UUID uuid) {
         boolean isChild = false;

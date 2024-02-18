@@ -35,6 +35,8 @@ import org.dependencytrack.util.HttpUtil;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Base abstract class that all IMetaAnalyzer implementations should likely extend.
@@ -49,6 +51,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
     protected String username;
 
     protected String password;
+
     /**
      * {@inheritDoc}
      */
@@ -66,6 +69,10 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
     public void setRepositoryUsernameAndPassword(String username, String password) {
         this.username = StringUtils.trimToNull(username);
         this.password = StringUtils.trimToNull(password);
+    }
+
+    protected String urlEncode(final String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode, final String statusText, final Component component) {

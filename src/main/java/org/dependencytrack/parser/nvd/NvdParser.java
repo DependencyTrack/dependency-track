@@ -29,12 +29,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
 import org.datanucleus.PropertyNames;
 import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.VulnerabilityUtil;
 import us.springett.cvss.Cvss;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
@@ -108,7 +108,6 @@ public final class NvdParser {
             LOGGER.error("An error occurred while parsing NVD JSON data", e);
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
-        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Cpe.class));
     }
 
     private void parseCveItem(final ObjectNode cveItem) {
@@ -166,7 +165,7 @@ public final class NvdParser {
                     if ("en".equals(prob4.get("lang").asText())) {
                         final String cweString = prob4.get("value").asText();
                         if (cweString != null && cweString.startsWith("CWE-")) {
-                            final Cwe cwe = CweResolver.getInstance().resolve(qm, cweString);
+                            final Cwe cwe = CweResolver.getInstance().lookup(cweString);
                             if (cwe != null) {
                                 vulnerability.addCwe(cwe);
                             } else {
@@ -293,6 +292,14 @@ public final class NvdParser {
             vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(imp3.get("exploitabilityScore").asDouble()));
             vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(imp3.get("impactScore").asDouble()));
         }
+
+        vuln.setSeverity(VulnerabilityUtil.getSeverity(
+                vuln.getCvssV2BaseScore(),
+                vuln.getCvssV3BaseScore(),
+                vuln.getOwaspRRLikelihoodScore(),
+                vuln.getOwaspRRTechnicalImpactScore(),
+                vuln.getOwaspRRBusinessImpactScore()
+        ));
     }
 
     private List<VulnerableSoftware> parseCpes(final QueryManager qm, final ObjectNode node) {

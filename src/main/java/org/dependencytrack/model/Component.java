@@ -29,9 +29,11 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.validation.ValidSpdxExpression;
+import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Convert;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
@@ -54,8 +56,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Model class for tracking individual components.
@@ -115,6 +117,11 @@ public class Component implements Serializable {
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
     private String publisher;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Convert(OrganizationalEntityJsonConverter.class)
+    @Column(name = "SUPPLIER", jdbcType = "CLOB", allowsNull = "true")
+    private OrganizationalEntity supplier;
 
     @Persistent
     @Column(name = "GROUP", jdbcType = "VARCHAR")
@@ -357,12 +364,8 @@ public class Component implements Serializable {
     private transient DependencyMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
     private transient int usedBy;
-
-    @JsonIgnore
     private transient JsonObject cacheResult;
-
     private transient Set<String> dependencyGraph;
-
     private transient boolean expandDependencyGraph;
 
     public long getId() {
@@ -387,6 +390,14 @@ public class Component implements Serializable {
 
     public void setPublisher(String publisher) {
         this.publisher = publisher;
+    }
+
+    public OrganizationalEntity getSupplier() {
+        return supplier;
+    }
+
+    public void setSupplier(OrganizationalEntity supplier) {
+        this.supplier = supplier;
     }
 
     public String getGroup() {
@@ -778,10 +789,12 @@ public class Component implements Serializable {
         this.usedBy = usedBy;
     }
 
+    @JsonIgnore
     public JsonObject getCacheResult() {
         return cacheResult;
     }
 
+    @JsonIgnore
     public void setCacheResult(JsonObject cacheResult) {
         this.cacheResult = cacheResult;
     }

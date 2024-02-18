@@ -27,8 +27,8 @@ public class SlackPublisher extends AbstractWebhookPublisher implements Publishe
 
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
 
-    public void inform(final Notification notification, final JsonObject config) {
-        publish(DefaultNotificationPublishers.SLACK.getPublisherName(), getTemplate(config), notification, config);
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
+        publish(ctx, getTemplate(config), notification, config);
     }
 
     @Override

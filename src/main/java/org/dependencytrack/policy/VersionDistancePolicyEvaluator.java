@@ -18,9 +18,7 @@
  */
 package org.dependencytrack.policy;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
@@ -32,7 +30,8 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.VersionDistance;
 import org.json.JSONObject;
 
-import alpine.common.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Evaluates the {@link VersionDistance} between a {@link Component}'s current and it's latest
@@ -64,7 +63,13 @@ public class VersionDistancePolicyEvaluator extends AbstractPolicyEvaluator {
     @Override
     public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
         final var violations = new ArrayList<PolicyConditionViolation>();
-        if (component.getPurl() == null) {
+
+        if (component.getPurl() == null || component.getVersion() == null) {
+            return violations;
+        }
+
+        final List<PolicyCondition> conditions = super.extractSupportedConditions(policy);
+        if (conditions.isEmpty()) {
             return violations;
         }
 
@@ -83,9 +88,18 @@ public class VersionDistancePolicyEvaluator extends AbstractPolicyEvaluator {
             return violations;
         }
 
-        final var versionDistance = VersionDistance.getVersionDistance(component.getVersion(),metaComponent.getLatestVersion());
+        final VersionDistance versionDistance;
+        try {
+            versionDistance = VersionDistance.getVersionDistance(component.getVersion(), metaComponent.getLatestVersion());
+        } catch (RuntimeException e) {
+            LOGGER.warn("""
+                    Failed to compute version distance for component %s (UUID: %s), \
+                    between component version %s and latest version %s; Skipping\
+                    """.formatted(component, component.getUuid(), component.getVersion(), metaComponent.getLatestVersion()), e);
+            return violations;
+        }
 
-        for (final PolicyCondition condition : super.extractSupportedConditions(policy)) {
+        for (final PolicyCondition condition : conditions) {
             if (isDirectDependency(component) && evaluate(condition, versionDistance)) {
                 violations.add(new PolicyConditionViolation(condition, component));
             }
@@ -150,13 +164,17 @@ public class VersionDistancePolicyEvaluator extends AbstractPolicyEvaluator {
     }
 
     /**
-     * Test if the components project direct dependencies contain a givven component
+     * Test if the components project direct dependencies contain a given component
      * If so, the component is a direct dependency of the project
      *
      * @param component component to test
      * @return If the components project direct dependencies contain the component
      */
     private boolean isDirectDependency(Component component) {
+        if (component.getProject().getDirectDependencies() == null) {
+            return false;
+        }
+
         return component.getProject().getDirectDependencies().contains("\"uuid\":\"" + component.getUuid().toString() + "\"");
     }
 

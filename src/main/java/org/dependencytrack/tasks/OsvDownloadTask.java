@@ -250,7 +250,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
         if (advisory.getCweIds() != null) {
             for (int i=0; i<advisory.getCweIds().size(); i++) {
-                final Cwe cwe = CweResolver.getInstance().resolve(qm, advisory.getCweIds().get(i));
+                final Cwe cwe = CweResolver.getInstance().lookup(advisory.getCweIds().get(i));
                 if (cwe != null) {
                     vuln.addCwe(cwe);
                 }

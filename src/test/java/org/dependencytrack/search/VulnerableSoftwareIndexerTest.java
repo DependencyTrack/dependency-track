@@ -19,8 +19,8 @@
 package org.dependencytrack.search;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -54,7 +54,7 @@ public class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         vulnerableSoftware.setVendor("vendor");
         vulnerableSoftware.setProduct("product");
         vulnerableSoftware.setVersion("version");
-        VulnerableSoftwareIndexer.getInstance().add(vulnerableSoftware);
+        VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vulnerableSoftware));
         VulnerableSoftwareIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
         SearchResult result = searchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getCpe23(), 10);
@@ -71,10 +71,10 @@ public class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         vulnerableSoftware.setVendor("vendor");
         vulnerableSoftware.setProduct("product");
         vulnerableSoftware.setVersion("version");
-        VulnerableSoftwareIndexer.getInstance().add(vulnerableSoftware);
+        VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vulnerableSoftware));
         VulnerableSoftwareIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
-        VulnerableSoftwareIndexer.getInstance().remove(vulnerableSoftware);
+        VulnerableSoftwareIndexer.getInstance().remove(new VulnerableSoftwareDocument(vulnerableSoftware));
         VulnerableSoftwareIndexer.getInstance().commit();
         SearchResult result = searchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getUuid().toString(), 10);
         Assert.assertEquals(1, result.getResults().size());

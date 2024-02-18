@@ -26,6 +26,7 @@ import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import net.jcip.annotations.NotThreadSafe;
 import org.apache.commons.io.IOUtils;
+import org.awaitility.core.ConditionTimeoutException;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
@@ -53,10 +54,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
 @NotThreadSafe
@@ -131,16 +135,56 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 6, Duration.ofSeconds(5));
+
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
         assertThat(project.getLastBomImport()).isNotNull();
         assertThat(project.getExternalReferences()).isNotNull();
         assertThat(project.getExternalReferences()).hasSize(4);
+        assertThat(project.getSupplier()).satisfies(supplier -> {
+            assertThat(supplier.getName()).isEqualTo("Foo Incorporated");
+            assertThat(supplier.getUrls()).containsOnly("https://foo.bar.com");
+            assertThat(supplier.getContacts()).satisfiesExactly(contact -> {
+                assertThat(contact.getName()).isEqualTo("Foo Jr.");
+                assertThat(contact.getEmail()).isEqualTo("foojr@bar.com");
+                assertThat(contact.getPhone()).isEqualTo("123-456-7890");
+            });
+        });
+        assertThat(project.getManufacturer()).satisfies(manufacturer -> {
+            assertThat(manufacturer.getName()).isEqualTo("Foo Incorporated");
+            assertThat(manufacturer.getUrls()).containsOnly("https://foo.bar.com");
+            assertThat(manufacturer.getContacts()).satisfiesExactly(contact -> {
+                assertThat(contact.getName()).isEqualTo("Foo Sr.");
+                assertThat(contact.getEmail()).isEqualTo("foo@bar.com");
+                assertThat(contact.getPhone()).isEqualTo("800-123-4567");
+            });
+        });
+
+        assertThat(project.getMetadata()).isNotNull();
+        assertThat(project.getMetadata().getAuthors()).satisfiesExactly(contact -> {
+            assertThat(contact.getName()).isEqualTo("Author");
+            assertThat(contact.getEmail()).isEqualTo("author@example.com");
+            assertThat(contact.getPhone()).isEqualTo("123-456-7890");
+        });
+        assertThat(project.getMetadata().getSupplier()).satisfies(manufacturer -> {
+            assertThat(manufacturer.getName()).isEqualTo("Foo Incorporated");
+            assertThat(manufacturer.getUrls()).containsOnly("https://foo.bar.com");
+            assertThat(manufacturer.getContacts()).satisfiesExactly(contact -> {
+                assertThat(contact.getName()).isEqualTo("Foo Jr.");
+                assertThat(contact.getEmail()).isEqualTo("foojr@bar.com");
+                assertThat(contact.getPhone()).isEqualTo("123-456-7890");
+            });
+        });
 
         final List<Component> components = qm.getAllComponents(project);
         assertThat(components).hasSize(1);
 
         final Component component = components.get(0);
+        assertThat(component.getSupplier().getName()).isEqualTo("Foo Incorporated");
+        assertThat(component.getSupplier().getUrls()[0]).isEqualTo("https://foo.bar.com");
+        assertThat(component.getSupplier().getContacts().get(0).getEmail()).isEqualTo("foojr@bar.com");
+        assertThat(component.getSupplier().getContacts().get(0).getPhone()).isEqualTo("123-456-7890");
+        
         assertThat(component.getAuthor()).isEqualTo("Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
         assertThat(component.getPublisher()).isEqualTo("Example Incorporated");
         assertThat(component.getGroup()).isEqualTo("com.example");
@@ -245,7 +289,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 """.getBytes(StandardCharsets.UTF_8);
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+        awaitBomProcessedNotification();
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
             assertThat(component.getLicense()).isNull();
@@ -289,7 +333,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 """.getBytes(StandardCharsets.UTF_8);
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+        awaitBomProcessedNotification();
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
             assertThat(component.getResolvedLicense()).isNotNull();
@@ -329,13 +373,73 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 """.getBytes(StandardCharsets.UTF_8);
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 2, Duration.ofSeconds(5));
+        awaitBomProcessedNotification();
 
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
             assertThat(component.getLicense()).isNull();
             assertThat(component.getLicenseExpression()).isNull();
             assertThat(component.getResolvedLicense()).isNull();
         });
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3309
+    public void informIssue3309Test() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final Runnable assertProjectAuthors = () -> {
+            qm.getPersistenceManager().evictAll();
+            assertThat(project.getMetadata()).isNotNull();
+            assertThat(project.getMetadata().getAuthors()).satisfiesExactly(author -> {
+                assertThat(author.getName()).isEqualTo("Author Name");
+                assertThat(author.getEmail()).isEqualTo("author@example.com");
+            });
+        };
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "metadata": {
+                    "authors": [
+                      {
+                        "name": "Author Name",
+                        "email": "author@example.com"
+                      }
+                    ]
+                  }
+                }
+                """.getBytes();
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        awaitBomProcessedNotification();
+        assertProjectAuthors.run();
+
+        NOTIFICATIONS.clear();
+
+        new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
+        awaitBomProcessedNotification();
+        assertProjectAuthors.run();
+    }
+
+    private void awaitBomProcessedNotification() {
+        try {
+            await("BOM Processed Notification")
+                    .atMost(Duration.ofSeconds(3))
+                    .untilAsserted(() -> assertThat(NOTIFICATIONS)
+                            .anyMatch(n -> NotificationGroup.BOM_PROCESSED.name().equals(n.getGroup())));
+        } catch (ConditionTimeoutException e) {
+            final Optional<Notification> optionalNotification = NOTIFICATIONS.stream()
+                    .filter(n -> NotificationGroup.BOM_PROCESSING_FAILED.name().equals(n.getGroup()))
+                    .findAny();
+            if (optionalNotification.isEmpty()) {
+                throw e;
+            }
+
+            final var subject = (BomProcessingFailed) optionalNotification.get().getSubject();
+            fail("Expected BOM processing to succeed, but it failed due to: %s", subject.getCause());
+        }
     }
 
 }

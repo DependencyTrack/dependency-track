@@ -29,39 +29,38 @@ public class CweResolverTest extends PersistenceCapableTest {
     @Before
     public void before() throws Exception {
         super.before();
-        qm.createCweIfNotExist(79, "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
     }
 
     @Test
     public void testPositiveResolutionByCweId() {
-        Cwe cwe = CweResolver.getInstance().resolve(qm,"CWE-79");
+        Cwe cwe = CweResolver.getInstance().lookup("CWE-79");
         Assert.assertNotNull(cwe);
         Assert.assertEquals(79, cwe.getCweId());
     }
 
     @Test
     public void testPositiveResolutionByCweIdIntegerOnly() {
-        Cwe cwe = CweResolver.getInstance().resolve(qm,"79");
+        Cwe cwe = CweResolver.getInstance().lookup("79");
         Assert.assertNotNull(cwe);
         Assert.assertEquals(79, cwe.getCweId());
     }
 
     @Test
     public void testPositiveResolutionByCweIdAndName() {
-        Cwe cwe = CweResolver.getInstance().resolve(qm,"CWE-79 Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
+        Cwe cwe = CweResolver.getInstance().lookup("CWE-79 Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
         Assert.assertNotNull(cwe);
         Assert.assertEquals(79, cwe.getCweId());
     }
 
     @Test
     public void testNegativeResolutionByCweId() {
-        Cwe cwe = CweResolver.getInstance().resolve(qm,"CWE-9999");
+        Cwe cwe = CweResolver.getInstance().lookup("CWE-9999");
         Assert.assertNull(cwe);
     }
 
     @Test
     public void testNegativeResolutionByInvalidCweId() {
-        Cwe cwe = CweResolver.getInstance().resolve(qm,"CWE-A");
+        Cwe cwe = CweResolver.getInstance().lookup("CWE-A");
         Assert.assertNull(cwe);
     }
 }

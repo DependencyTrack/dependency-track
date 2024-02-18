@@ -38,6 +38,7 @@ public enum RepositoryType {
     COMPOSER,
     CARGO,
     GO_MODULES,
+    GITHUB,
     UNSUPPORTED;
 
     /**
@@ -67,6 +68,8 @@ public enum RepositoryType {
             return CARGO;
         } else if (PackageURL.StandardTypes.GOLANG.equals(type)) {
             return GO_MODULES;
+        } else if (PackageURL.StandardTypes.GITHUB.equals(type)) {
+            return GITHUB;
         }
         return UNSUPPORTED;
     }

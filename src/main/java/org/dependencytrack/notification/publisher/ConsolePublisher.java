@@ -24,6 +24,7 @@ import alpine.notification.NotificationLevel;
 import io.pebbletemplates.pebble.PebbleEngine;
 
 import javax.json.JsonObject;
+import java.io.IOException;
 import java.io.PrintStream;
 
 public class ConsolePublisher implements Publisher {
@@ -31,10 +32,12 @@ public class ConsolePublisher implements Publisher {
     private static final Logger LOGGER = Logger.getLogger(ConsolePublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
 
-    public void inform(final Notification notification, final JsonObject config) {
-        final String content = prepareTemplate(notification, getTemplate(config));
-        if (content == null) {
-            LOGGER.warn("A template was not found. Skipping notification");
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
+        final String content;
+        try {
+            content = prepareTemplate(notification, getTemplate(config));
+        } catch (IOException | RuntimeException e) {
+            LOGGER.error("Failed to prepare notification content (%s)".formatted(ctx), e);
             return;
         }
         final PrintStream ps;

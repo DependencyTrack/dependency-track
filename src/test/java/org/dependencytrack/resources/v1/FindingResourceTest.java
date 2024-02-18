@@ -24,18 +24,16 @@ import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Severity;
-import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.persistence.CweImporter;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import javax.json.JsonArray;
@@ -54,12 +52,6 @@ public class FindingResourceTest extends ResourceTest {
                         .register(ApiFilter.class)
                         .register(AuthenticationFilter.class)))
                 .build();
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-        new CweImporter().processCweDefinitions();
     }
 
     @Test

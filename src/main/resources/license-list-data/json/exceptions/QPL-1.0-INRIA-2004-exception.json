@@ -1,0 +1,13 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "As a special exception to the Q Public Licence, you may develop\napplication programs, reusable components and other software items\nthat link with the original or modified versions of the Software\nand are not made available to the general public, without any of the\nadditional requirements listed in clause 6c of the Q Public licence.\n",
+  "name": "INRIA QPL 1.0 2004 variant exception",
+  "licenseComments": "This exception is primarily used with QPL-1.0-INRIA-2004",
+  "seeAlso": [
+    "https://git.frama-c.com/pub/frama-c/-/blob/master/licenses/Q_MODIFIED_LICENSE",
+    "https://github.com/maranget/hevea/blob/master/LICENSE"
+  ],
+  "licenseExceptionId": "QPL-1.0-INRIA-2004-exception",
+  "licenseExceptionTemplate": "As a special exception to the Q Public License, you may develop application programs, reusable components and other software items that link with the original or modified versions of the \u003c\u003cvar;name\u003d\"softwareGenerator\";original\u003d\"Software\";match\u003d\"Software|Generator\"\u003e\u003e and are not made available to the general public, without any of the additional requirements listed in clause 6c of the Q Public license.\n\n",
+  "exceptionTextHtml": "\n         \u003cp\u003e\n            As a special exception to the Q Public License, you may develop\n            application programs, reusable components and other software items\n            that link with the original or modified versions of the\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e Software\u003c/var\u003e\n            and are not made available to the general public, without any of the\n            additional requirements listed in clause 6c of the Q Public license.\n         \u003c/p\u003e\n\n      "
+}

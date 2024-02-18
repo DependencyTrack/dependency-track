@@ -35,6 +35,7 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -45,11 +46,14 @@ import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
+
+import javax.jdo.FetchPlan;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Subscriber task that performs processing of bill-of-material (bom)
@@ -75,7 +79,8 @@ public class BomUploadProcessingTask implements Subscriber {
             final byte[] bomBytes = CompressUtil.optionallyDecompress(event.getBom());
             final QueryManager qm = new QueryManager();
             try {
-                final Project project =  qm.getObjectByUuid(Project.class, event.getProjectUuid());
+                final Project project =  qm.getObjectByUuid(Project.class, event.getProjectUuid(),
+                        List.of(FetchPlan.DEFAULT, Project.FetchGroup.METADATA.name()));
                 bomProcessingFailedProject = project;
 
                 if (project == null) {
@@ -107,14 +112,45 @@ public class BomUploadProcessingTask implements Subscriber {
                         bomSpecVersion = cycloneDxBom.getSpecVersion();
                         bomProcessingFailedBomVersion = bomSpecVersion;
                         bomVersion = cycloneDxBom.getVersion();
+                        if (cycloneDxBom.getMetadata() != null) {
+                            project.setManufacturer(ModelConverter.convert(cycloneDxBom.getMetadata().getManufacture()));
+
+                            final var projectMetadata = new ProjectMetadata();
+                            projectMetadata.setSupplier(ModelConverter.convert(cycloneDxBom.getMetadata().getSupplier()));
+                            projectMetadata.setAuthors(cycloneDxBom.getMetadata().getAuthors() != null
+                                    ? new ArrayList<>(ModelConverter.convertCdxContacts(cycloneDxBom.getMetadata().getAuthors()))
+                                    : null);
+                            if (project.getMetadata() != null) {
+                                qm.runInTransaction(() -> {
+                                    project.getMetadata().setSupplier(projectMetadata.getSupplier());
+                                    project.getMetadata().setAuthors(projectMetadata.getAuthors());
+                                });
+                            } else {
+                                qm.runInTransaction(() -> {
+                                    projectMetadata.setProject(project);
+                                    qm.getPersistenceManager().makePersistent(projectMetadata);
+                                });
+                            }
+
+                            if (cycloneDxBom.getMetadata().getComponent() != null) {
+                                final org.cyclonedx.model.Component cdxMetadataComponent = cycloneDxBom.getMetadata().getComponent();
+                                if (cdxMetadataComponent.getType() != null && project.getClassifier() == null) {
+                                    try {
+                                        project.setClassifier(Classifier.valueOf(cdxMetadataComponent.getType().name()));
+                                    } catch (IllegalArgumentException ex) {
+                                        LOGGER.warn("""
+                                                The metadata.component element of the BOM is of unknown type %s. \
+                                                Known types are %s.""".formatted(cdxMetadataComponent.getType(),
+                                                Arrays.stream(Classifier.values()).map(Enum::name).collect(Collectors.joining(", "))));
+                                    }
+                                }
+                                if (cdxMetadataComponent.getSupplier() != null) {
+                                    project.setSupplier(ModelConverter.convert(cdxMetadataComponent.getSupplier()));
+                                }
+                            }
+                        }
                         if (project.getClassifier() == null) {
-                            final var classifier = Optional.ofNullable(cycloneDxBom.getMetadata())
-                                .map(org.cyclonedx.model.Metadata::getComponent)
-                                .map(org.cyclonedx.model.Component::getType)
-                                .map(org.cyclonedx.model.Component.Type::name)
-                                .map(Classifier::valueOf)
-                                .orElse(Classifier.APPLICATION);
-                            project.setClassifier(classifier);
+                            project.setClassifier(Classifier.APPLICATION);
                         }
                         project.setExternalReferences(ModelConverter.convertBomMetadataExternalReferences(cycloneDxBom));
                         serialNumnber = (cycloneDxBom.getSerialNumber() != null) ? cycloneDxBom.getSerialNumber().replaceFirst("urn:uuid:", "") : null;

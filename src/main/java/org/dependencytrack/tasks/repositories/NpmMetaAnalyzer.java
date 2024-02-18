@@ -69,12 +69,12 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
 
             final String packageName;
             if (component.getPurl().getNamespace() != null) {
-                packageName = component.getPurl().getNamespace().replace("@", "%40") + "%2F" + component.getPurl().getName();
+                packageName = "%s/%s".formatted(component.getPurl().getNamespace(), component.getPurl().getName());
             } else {
                 packageName = component.getPurl().getName();
             }
 
-            final String url = String.format(baseUrl + API_URL, packageName);
+            final String url = String.format(baseUrl + API_URL, urlEncode(packageName));
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                     if (response.getEntity()!=null) {

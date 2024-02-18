@@ -19,10 +19,8 @@
 package org.dependencytrack.model;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.persistence.CweImporter;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -40,12 +38,6 @@ public class FindingTest extends PersistenceCapableTest {
             "component-version", "component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
             "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
             "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
-
-
-    @Before
-    public void setUp() throws Exception {
-        new CweImporter().processCweDefinitions();
-    }
 
     @Test
     public void testComponent() {

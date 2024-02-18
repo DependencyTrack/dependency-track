@@ -8,6 +8,8 @@ on:
       - released
   workflow_dispatch:
 
+permissions: { }
+
 jobs:
   read-version:
     runs-on: ubuntu-latest
@@ -21,7 +23,7 @@ jobs:
             exit 1
           fi
       - name: Checkout Repository
-        uses: actions/checkout@v3.6.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # tag=v4.1.1
 
       - name: Parse Version from POM
         id: parse
@@ -36,6 +38,8 @@ jobs:
     with:
       app-version: ${{ needs.read-version.outputs.version }}
       publish-container: true
+    permissions:
+      security-events: write # Required to upload trivy's SARIF output
     secrets:
       registry-0-usr: ${{ secrets.HUB_USERNAME }}
       registry-0-psw: ${{ secrets.HUB_ACCESSS_TOKEN }}
@@ -47,10 +51,10 @@ jobs:
       - call-build
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.6.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # tag=v4.1.1
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v3.0.2
+        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # tag=v4.1.2
         with:
           name: assembled-wars
           path: target

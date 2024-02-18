@@ -20,6 +20,7 @@ package org.dependencytrack.search;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.search.document.ComponentDocument;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -51,7 +52,7 @@ public class ComponentIndexerTest extends PersistenceCapableTest {
         c.setGroup("acme");
         c.setName("crypto-library");
         c.setVersion("1.0.0");
-        ComponentIndexer.getInstance().add(c);
+        ComponentIndexer.getInstance().add(new ComponentDocument(c));
         ComponentIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
         SearchResult result = searchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
@@ -66,10 +67,10 @@ public class ComponentIndexerTest extends PersistenceCapableTest {
         c.setGroup("acme");
         c.setName("crypto-library");
         c.setVersion("1.0.0");
-        ComponentIndexer.getInstance().add(c);
+        ComponentIndexer.getInstance().add(new ComponentDocument(c));
         ComponentIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
-        ComponentIndexer.getInstance().remove(c);
+        ComponentIndexer.getInstance().remove(new ComponentDocument(c));
         ComponentIndexer.getInstance().commit();
         SearchResult result = searchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
         Assert.assertEquals(1, result.getResults().size());

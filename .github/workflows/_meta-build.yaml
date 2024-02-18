@@ -17,15 +17,17 @@ on:
       registry-0-psw:
         required: true
 
+permissions: { }
+
 jobs:
   build-java:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.6.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # tag=v4.1.1
 
       - name: Set up JDK
-        uses: actions/setup-java@v3.12.0
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # tag=v4.0.0
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -49,7 +51,7 @@ jobs:
           mvn cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # tag=v4.3.1
         with:
           name: assembled-wars
           path: |-
@@ -58,6 +60,8 @@ jobs:
 
   build-container:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write # Required to upload trivy's SARIF output
     needs:
       - build-java
 
@@ -70,25 +74,25 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.6.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # tag=v4.1.1
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v3.0.2
+        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # tag=v4.1.2
         with:
           name: assembled-wars
           path: target
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2.2.0
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # tag=v3.0.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2.10.0
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # tag=v3.0.0
         id: buildx
         with:
           install: true
 
       - name: Login to Docker.io
-        uses: docker/login-action@v2.2.0
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # tag=v3.0.0
         if: ${{ inputs.publish-container }}
         with:
           registry: docker.io
@@ -105,7 +109,7 @@ jobs:
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@v4.1.1
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # tag=v5.1.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
@@ -119,7 +123,7 @@ jobs:
 
       - name: Run Trivy Vulnerability Scanner
         if: ${{ inputs.publish-container }}
-        uses: aquasecurity/trivy-action@0.12.0
+        uses: aquasecurity/trivy-action@84384bd6e777ef152729993b8145ea352e9dd3ef # tag=0.17.0
         with:
           image-ref: docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
           format: 'sarif'
@@ -129,6 +133,6 @@ jobs:
 
       - name: Upload Trivy Scan Results to GitHub Security Tab
         if: ${{ inputs.publish-container }}
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@e8893c57a1f3a2b659b6b55564fdfdbbd2982911 # tag=v3.24.0
         with:
           sarif_file: 'trivy-results.sarif'

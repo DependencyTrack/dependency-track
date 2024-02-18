@@ -24,6 +24,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -44,7 +45,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
@@ -335,7 +335,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      */
     public Component createComponent(Component component, boolean commitIndex) {
         final Component result = persist(component);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, Component.class);
         return result;
     }
@@ -371,6 +371,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setLicenseUrl(sourceComponent.getLicenseUrl());
         component.setResolvedLicense(sourceComponent.getResolvedLicense());
         component.setAuthor(sourceComponent.getAuthor());
+        component.setSupplier(sourceComponent.getSupplier());
         // TODO Add support for parent component and children components
         component.setProject(destinationProject);
         return createComponent(component, commitIndex);
@@ -405,8 +406,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setPurl(transientComponent.getPurl());
         component.setInternal(transientComponent.isInternal());
         component.setAuthor(transientComponent.getAuthor());
+        component.setSupplier(transientComponent.getSupplier());
         final Component result = persist(component);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, Component.class);
         return result;
     }
@@ -434,7 +436,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         try {
             final Component result = pm.getObjectById(Component.class, component.getId());
-            Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+            Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, result));
             deleteAnalysisTrail(component);
             deleteViolationAnalysisTrail(component);
             deleteMetrics(component);
@@ -455,19 +457,10 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @return a Component object, or null if not found
      */
     public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
-        String purlString = null;
-        String purlCoordinates = null;
-        if (cid.getPurl() != null) {
-            try {
-                final PackageURL purl = cid.getPurl();
-                purlString = cid.getPurl().canonicalize();
-                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
-            } catch (MalformedPackageURLException e) { // throw it away
-            }
-        }
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version))");
+        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(project, cid);
+        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getLeft());
         query.setRange(0, 1);
-        return singleResult(query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()));
+        return singleResult(query.executeWithMap(queryFilterParamsPair.getRight()));
     }
 
     /**
@@ -478,6 +471,24 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      */
     @SuppressWarnings("unchecked")
     public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {
+        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(project, cid);
+        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getLeft());
+        return (List<Component>) query.executeWithMap(queryFilterParamsPair.getRight());
+    }
+
+    /**
+     * Returns a List of components by matching identity information.
+     * @param cid the identity values of the component
+     * @return a List of Component objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Component> matchIdentity(final ComponentIdentity cid) {
+        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(null, cid);
+        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getLeft());
+        return (List<Component>) query.executeWithMap(queryFilterParamsPair.getRight());
+    }
+
+    private static Pair<String, Map<String, Object>> buildComponentIdentityQuery(final Project project, final ComponentIdentity cid) {
         String purlString = null;
         String purlCoordinates = null;
         if (cid.getPurl() != null) {
@@ -488,29 +499,56 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             } catch (MalformedPackageURLException e) { // throw it away
             }
         }
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version))");
-        return (List<Component>) query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion());
-    }
 
-    /**
-     * Returns a List of components by matching identity information.
-     * @param cid the identity values of the component
-     * @return a List of Component objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<Component> matchIdentity(final ComponentIdentity cid) {
-        String purlString = null;
-        String purlCoordinates = null;
-        if (cid.getPurl() != null) {
-            purlString = cid.getPurl().canonicalize();
-            try {
-                final PackageURL purl = cid.getPurl();
-                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
-            } catch (MalformedPackageURLException e) { // throw it away
-            }
+        final var filterParts = new ArrayList<String>();
+        final var params = new HashMap<String, Object>();
+
+        if (purlString != null) {
+            filterParts.add("purl == :purl");
+            params.put("purl", purlString);
         }
-        final Query<Component> query = pm.newQuery(Component.class, "(purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version)");
-        return (List<Component>) query.executeWithArray(purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion());
+        if (purlCoordinates != null) {
+            filterParts.add("purlCoordinates == :purlCoordinates");
+            params.put("purlCoordinates", purlCoordinates);
+        }
+        if (cid.getCpe() != null) {
+            filterParts.add("cpe == :cpe");
+            params.put("cpe", cid.getCpe());
+        }
+        if (cid.getSwidTagId() != null) {
+            filterParts.add("swidTagId == :swidTagId");
+            params.put("swidTagId", cid.getSwidTagId());
+        }
+
+        final var coordinatesFilterParts = new ArrayList<String>();
+        if (cid.getGroup() != null) {
+            coordinatesFilterParts.add("group == :group");
+            params.put("group", cid.getGroup());
+        } else {
+            coordinatesFilterParts.add("group == null");
+        }
+        if (cid.getName() != null) {
+            coordinatesFilterParts.add("name == :name");
+            params.put("name", cid.getName());
+        } else {
+            coordinatesFilterParts.add("name == null");
+        }
+        if (cid.getVersion() != null) {
+            coordinatesFilterParts.add("version == :version");
+            params.put("version", cid.getVersion());
+        } else {
+            coordinatesFilterParts.add("version == null");
+        }
+        filterParts.add("(%s)".formatted(String.join(" && ", coordinatesFilterParts)));
+
+        if (project == null) {
+            final String filter = String.join(" || ", filterParts);
+            return Pair.of(filter, params);
+        }
+
+        final String filter = "project == :project && (%s)".formatted(String.join(" || ", filterParts));
+        params.put("project", project);
+        return Pair.of(filter, params);
     }
 
     /**
@@ -552,28 +590,17 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         preprocessACLs(query, inputFilter, params, bypass, "project.accessTeams");
     }
 
-    public Map<String, Component> getDependencyGraphForComponent(Project project, Component component) {
+    public Map<String, Component> getDependencyGraphForComponents(Project project, List<Component> components) {
         Map<String, Component> dependencyGraph = new HashMap<>();
         if (project.getDirectDependencies() == null || project.getDirectDependencies().isBlank()) {
             return dependencyGraph;
         }
-        String queryUuid = ".*" + component.getUuid().toString() + ".*";
-        final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
-        List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
-        for (Component parentNodeComponent : components) {
-            parentNodeComponent.setExpandDependencyGraph(true);
-            if (dependencyGraph.containsKey(parentNodeComponent.getUuid().toString())) {
-                parentNodeComponent.getDependencyGraph().add(component.getUuid().toString());
-            } else {
-                dependencyGraph.put(parentNodeComponent.getUuid().toString(), parentNodeComponent);
-                Set<String> set = new HashSet<>();
-                set.add(component.getUuid().toString());
-                parentNodeComponent.setDependencyGraph(set);
-            }
-            getParentDependenciesOfComponent(project, parentNodeComponent, dependencyGraph, component);
-        }
-        if (!dependencyGraph.isEmpty() || project.getDirectDependencies().contains(component.getUuid().toString())){
+
+        for(Component component : components) {
             dependencyGraph.put(component.getUuid().toString(), component);
+            getParentDependenciesOfComponent(project, component, dependencyGraph);
+        }
+        if (!dependencyGraph.isEmpty()){
             getRootDependencies(dependencyGraph, project);
             getDirectDependenciesForPathDependencies(dependencyGraph);
         }
@@ -615,24 +642,19 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         return List.copyOf(query.executeResultList(DependencyGraphResponse.class));
     }
 
-    private void getParentDependenciesOfComponent(Project project, Component parentNode, Map<String, Component> dependencyGraph, Component searchedComponent) {
-        String queryUuid = ".*" + parentNode.getUuid().toString() + ".*";
+    private void getParentDependenciesOfComponent(Project project, Component childComponent, Map<String, Component> dependencyGraph) {
+        String queryUuid = ".*" + childComponent.getUuid().toString() + ".*";
         final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
-        List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
-        for (Component component : components) {
-            if (component.getUuid() != searchedComponent.getUuid()) {
-                component.setExpandDependencyGraph(true);
-                if (dependencyGraph.containsKey(component.getUuid().toString())) {
-                    if (component.getDependencyGraph().add(component.getUuid().toString())) {
-                        getParentDependenciesOfComponent(project, component, dependencyGraph, searchedComponent);
-                    }
-                } else {
-                    dependencyGraph.put(component.getUuid().toString(), component);
-                    Set<String> set = new HashSet<>();
-                    set.add(component.getUuid().toString());
-                    component.setDependencyGraph(set);
-                    getParentDependenciesOfComponent(project, component, dependencyGraph, searchedComponent);
-                }
+        List<Component> parentComponents = (List<Component>) query.executeWithArray(queryUuid, project);
+        for (Component parentComponent : parentComponents) {
+            parentComponent.setExpandDependencyGraph(true);
+            if(parentComponent.getDependencyGraph() == null) {
+                parentComponent.setDependencyGraph(new HashSet<>());
+            }
+            parentComponent.getDependencyGraph().add(childComponent.getUuid().toString());
+            if (!dependencyGraph.containsKey(parentComponent.getUuid().toString())) {
+                dependencyGraph.put(parentComponent.getUuid().toString(), parentComponent);
+                getParentDependenciesOfComponent(project, parentComponent, dependencyGraph);
             }
         }
     }
@@ -640,9 +662,10 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     private void getRootDependencies(Map<String, Component> dependencyGraph, Project project) {
         JsonArray directDependencies = Json.createReader(new StringReader(project.getDirectDependencies())).readArray();
         for (JsonValue directDependency : directDependencies) {
-            if (!dependencyGraph.containsKey(directDependency.asJsonObject().getString("uuid"))) {
-                Component component = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
-                dependencyGraph.put(component.getUuid().toString(), component);
+            String uuid = directDependency.asJsonObject().getString("uuid");
+            if (!dependencyGraph.containsKey(uuid)) {
+                Component component = this.getObjectByUuid(Component.class, uuid);
+                dependencyGraph.put(uuid, component);
             }
         }
         getDirectDependenciesForPathDependencies(dependencyGraph);
@@ -657,12 +680,13 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                     if (component.getDependencyGraph() == null) {
                         component.setDependencyGraph(new HashSet<>());
                     }
-                    if (!dependencyGraph.containsKey(directDependency.asJsonObject().getString("uuid")) && !addToDependencyGraph.containsKey(directDependency.asJsonObject().getString("uuid"))) {
-                        Component childNode = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
+                    String uuid = directDependency.asJsonObject().getString("uuid");
+                    if (!dependencyGraph.containsKey(uuid) && !addToDependencyGraph.containsKey(uuid)) {
+                        Component childNode = this.getObjectByUuid(Component.class, uuid);
                         addToDependencyGraph.put(childNode.getUuid().toString(), childNode);
                         component.getDependencyGraph().add(childNode.getUuid().toString());
                     } else {
-                        component.getDependencyGraph().add(directDependency.asJsonObject().getString("uuid"));
+                        component.getDependencyGraph().add(uuid);
                     }
                 }
             }

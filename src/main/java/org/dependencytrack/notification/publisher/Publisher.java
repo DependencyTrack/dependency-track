@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.notification.publisher;
 
-import alpine.common.logging.Logger;
 import alpine.common.util.UrlUtil;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
@@ -54,7 +53,7 @@ public interface Publisher {
 
     String CONFIG_DESTINATION = "destination";
 
-    void inform(Notification notification, JsonObject config);
+    void inform(final PublishContext ctx, final Notification notification, final JsonObject config);
 
     PebbleEngine getTemplateEngine();
 
@@ -78,8 +77,7 @@ public interface Publisher {
     default void enrichTemplateContext(final Map<String, Object> context) {
     }
 
-    default String prepareTemplate(final Notification notification, final PebbleTemplate template) {
-
+    default String prepareTemplate(final Notification notification, final PebbleTemplate template) throws IOException {
         try (QueryManager qm = new QueryManager()) {
             final ConfigProperty baseUrlProperty = qm.getConfigProperty(
                     ConfigPropertyConstants.GENERAL_BASE_URL.getGroupName(),
@@ -132,9 +130,6 @@ public interface Publisher {
             try (final Writer writer = new StringWriter()) {
                 template.evaluate(writer, context);
                 return writer.toString();
-            } catch (IOException e) {
-                Logger.getLogger(this.getClass()).error("An error was encountered evaluating template", e);
-                return null;
             }
         }
     }

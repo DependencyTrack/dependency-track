@@ -278,9 +278,6 @@ public final class NotificationUtil {
 
         userBuilder.add("username", user.getUsername());
 
-        if (user.getId() != 0) {
-            userBuilder.add("id", user.getId());
-        }
         if (user.getName() != null) {
             userBuilder.add("name", user.getName());
         }

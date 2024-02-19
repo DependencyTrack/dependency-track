@@ -419,15 +419,16 @@ public class UserResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final LdapUser user = qm.getLdapUser(jsonUser.getUsername());
             if (user != null) {
+                final LdapUser detachedUser = qm.getPersistenceManager().detachCopy(user);
                 qm.delete(user);
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user deleted: " + jsonUser.getUsername());
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user deleted: " + detachedUser);
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.SYSTEM)
                         .group(NotificationGroup.USER_DELETED)
                         .title(NotificationConstants.Title.USER_DELETED)
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("LDAP user deleted")
-                        .subject(jsonUser));
+                        .subject(detachedUser));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
@@ -548,15 +549,16 @@ public class UserResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
             if (user != null) {
+                final ManagedUser detachedUser = qm.getPersistenceManager().detachCopy(user);
                 qm.delete(user);
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: " + jsonUser.getUsername());
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: " +detachedUser);
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.SYSTEM)
                         .group(NotificationGroup.USER_DELETED)
                         .title(NotificationConstants.Title.USER_DELETED)
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("Managed user deleted")
-                        .subject(jsonUser));
+                        .subject(detachedUser));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
@@ -619,15 +621,16 @@ public class UserResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final OidcUser user = qm.getOidcUser(jsonUser.getUsername());
             if (user != null) {
+                final OidcUser detachedUser = qm.getPersistenceManager().detachCopy(user);
                 qm.delete(user);
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user deleted: " + jsonUser.getUsername());
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user deleted: " + detachedUser);
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.SYSTEM)
                         .group(NotificationGroup.USER_DELETED)
                         .title(NotificationConstants.Title.USER_DELETED)
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("OpenID Connect user deleted")
-                        .subject(jsonUser));
+                        .subject(detachedUser));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();

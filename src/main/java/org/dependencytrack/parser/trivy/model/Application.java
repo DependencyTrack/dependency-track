@@ -16,19 +16,23 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.tasks.scanners;
+package org.dependencytrack.parser.trivy.model;
 
-/**
- * Specifies identities of all supported analyzers.
- *
- * @since 4.0.0
- */
-public enum AnalyzerIdentity {
-    INTERNAL_ANALYZER,
-    OSSINDEX_ANALYZER,
-    NPM_AUDIT_ANALYZER,
-    VULNDB_ANALYZER,
-    SNYK_ANALYZER,
-    TRIVY_ANALYZER,
-    NONE
+import java.util.ArrayList;
+
+public class Application {
+    private String type;
+    private ArrayList<Library> libraries;
+
+    public Application(String type) {
+        this.type = type;
+        this.libraries = new ArrayList<Library>();
+    }
+
+    public String getType() { return type; }
+    public void setType(String value) { this.type = value; }
+
+    public ArrayList<Library> getLibraries() { return libraries; }
+    public void setLibraries(ArrayList<Library> value) { this.libraries = value; }
+    public void addLibrary(Library value) { this.libraries.add(value); }
 }

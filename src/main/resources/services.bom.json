@@ -489,6 +489,23 @@
           "flow": "inbound"
         }
       ]
+    },
+    {
+      "bom-ref": "service:com.aquasec",
+      "provider": {
+        "name": "Trivy"
+      },
+      "group": "com.aquasec",
+      "name": "Trivy",
+      "description": "Trivy is a comprehensive and versatile security scanner. Trivy has scanners that look for security issues, and targets where it can find those issues.",
+      "authenticated": true,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
     }
   ]
 }

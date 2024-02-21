@@ -16,19 +16,19 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.tasks.scanners;
+package org.dependencytrack.parser.trivy.model;
 
-/**
- * Specifies identities of all supported analyzers.
- *
- * @since 4.0.0
- */
-public enum AnalyzerIdentity {
-    INTERNAL_ANALYZER,
-    OSSINDEX_ANALYZER,
-    NPM_AUDIT_ANALYZER,
-    VULNDB_ANALYZER,
-    SNYK_ANALYZER,
-    TRIVY_ANALYZER,
-    NONE
+import com.google.gson.annotations.SerializedName;
+
+public class PutRequest {
+    @SerializedName("diff_id")
+    private String diffID;
+    @SerializedName("blob_info")
+    private BlobInfo blobInfo;
+
+    public String getDiffID() { return diffID; }
+    public void setDiffID(String value) { this.diffID = value; }
+
+    public BlobInfo getBlobInfo() { return blobInfo; }
+    public void setBlobInfo(BlobInfo value) { this.blobInfo = value; }
 }

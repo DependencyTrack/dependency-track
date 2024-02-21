@@ -20,6 +20,7 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.common.util.UrlUtil;
 import alpine.model.ConfigProperty;
+import alpine.model.UserPrincipal;
 import alpine.notification.Notification;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
@@ -52,6 +53,8 @@ public interface Publisher {
     String CONFIG_TEMPLATE_MIME_TYPE_KEY = "mimeType";
 
     String CONFIG_DESTINATION = "destination";
+    String CONFIG_TOKEN = "token";
+    String CONFIG_TOKEN_HEADER = "tokenHeader";
 
     void inform(final PublishContext ctx, final Notification notification, final JsonObject config);
 
@@ -121,6 +124,11 @@ public interface Publisher {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final PolicyViolationIdentified subject) {
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                }
+            } else if  (NotificationScope.SYSTEM.name().equals(notification.getScope())) {
+                if (notification.getSubject() instanceof final UserPrincipal subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 }

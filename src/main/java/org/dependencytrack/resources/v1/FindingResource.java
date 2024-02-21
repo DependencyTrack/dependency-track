@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -36,6 +37,7 @@ import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.GroupedFinding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
@@ -48,7 +50,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -177,5 +181,121 @@ public class FindingResource extends AlpineResource {
         }
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all findings",
+            response = Finding.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
+    public Response getAllFindings(@ApiParam(value = "Show inactive projects")
+                                   @QueryParam("showInactive") boolean showInactive,
+                                   @ApiParam(value = "Show suppressed findings")
+                                   @QueryParam("showSuppressed") boolean showSuppressed,
+                                   @ApiParam(value = "Filter by severity")
+                                   @QueryParam("severity") String severity,
+                                   @ApiParam(value = "Filter by analysis status")
+                                   @QueryParam("analysisStatus") String analysisStatus,
+                                   @ApiParam(value = "Filter by vendor response")
+                                   @QueryParam("vendorResponse") String vendorResponse,
+                                   @ApiParam(value = "Filter published from this date")
+                                   @QueryParam("publishDateFrom") String publishDateFrom,
+                                   @ApiParam(value = "Filter published to this date")
+                                   @QueryParam("publishDateTo") String publishDateTo,
+                                   @ApiParam(value = "Filter attributed on from this date")
+                                   @QueryParam("attributedOnDateFrom") String attributedOnDateFrom,
+                                   @ApiParam(value = "Filter attributed on to this date")
+                                   @QueryParam("attributedOnDateTo") String attributedOnDateTo,
+                                   @ApiParam(value = "Filter the text input in these fields")
+                                   @QueryParam("textSearchField") String textSearchField,
+                                   @ApiParam(value = "Filter by this text input")
+                                   @QueryParam("textSearchInput") String textSearchInput,
+                                   @ApiParam(value = "Filter CVSSv2 from this value")
+                                   @QueryParam("cvssv2From") String cvssv2From,
+                                   @ApiParam(value = "Filter CVSSv2 from this Value")
+                                   @QueryParam("cvssv2To") String cvssv2To,
+                                   @ApiParam(value = "Filter CVSSv3 from this value")
+                                   @QueryParam("cvssv3From") String cvssv3From,
+                                   @ApiParam(value = "Filter CVSSv3 from this Value")
+                                   @QueryParam("cvssv3To") String cvssv3To) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Map<String, String> filters = new HashMap<>();
+            filters.put("severity", severity);
+            filters.put("analysisStatus", analysisStatus);
+            filters.put("vendorResponse", vendorResponse);
+            filters.put("publishDateFrom", publishDateFrom);
+            filters.put("publishDateTo", publishDateTo);
+            filters.put("attributedOnDateFrom", attributedOnDateFrom);
+            filters.put("attributedOnDateTo", attributedOnDateTo);
+            filters.put("textSearchField", textSearchField);
+            filters.put("textSearchInput", textSearchInput);
+            filters.put("cvssv2From", cvssv2From);
+            filters.put("cvssv2To", cvssv2To);
+            filters.put("cvssv3From", cvssv3From);
+            filters.put("cvssv3To", cvssv3To);
+            final PaginatedResult result = qm.getAllFindings(filters, showSuppressed, showInactive);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        }
+    }
+
+    @GET
+    @Path("/grouped")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all findings grouped by vulnerability",
+            response = GroupedFinding.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
+    public Response getAllFindings(@ApiParam(value = "Show inactive projects")
+                                   @QueryParam("showInactive") boolean showInactive,
+                                   @ApiParam(value = "Filter by severity")
+                                   @QueryParam("severity") String severity,
+                                   @ApiParam(value = "Filter published from this date")
+                                   @QueryParam("publishDateFrom") String publishDateFrom,
+                                   @ApiParam(value = "Filter published to this date")
+                                   @QueryParam("publishDateTo") String publishDateTo,
+                                   @ApiParam(value = "Filter the text input in these fields")
+                                   @QueryParam("textSearchField") String textSearchField,
+                                   @ApiParam(value = "Filter by this text input")
+                                   @QueryParam("textSearchInput") String textSearchInput,
+                                   @ApiParam(value = "Filter CVSSv2 from this value")
+                                   @QueryParam("cvssv2From") String cvssv2From,
+                                   @ApiParam(value = "Filter CVSSv2 to this value")
+                                   @QueryParam("cvssv2To") String cvssv2To,
+                                   @ApiParam(value = "Filter CVSSv3 from this value")
+                                   @QueryParam("cvssv3From") String cvssv3From,
+                                   @ApiParam(value = "Filter CVSSv3 to this value")
+                                   @QueryParam("cvssv3To") String cvssv3To,
+                                   @ApiParam(value = "Filter occurrences in projects from this value")
+                                   @QueryParam("occurrencesFrom") String occurrencesFrom,
+                                   @ApiParam(value = "Filter occurrences in projects to this value")
+                                   @QueryParam("occurrencesTo") String occurrencesTo) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Map<String, String> filters = new HashMap<>();
+            filters.put("severity", severity);
+            filters.put("publishDateFrom", publishDateFrom);
+            filters.put("publishDateTo", publishDateTo);
+            filters.put("textSearchField", textSearchField);
+            filters.put("textSearchInput", textSearchInput);
+            filters.put("cvssv2From", cvssv2From);
+            filters.put("cvssv2To", cvssv2To);
+            filters.put("cvssv3From", cvssv3From);
+            filters.put("cvssv3To", cvssv3To);
+            filters.put("occurrencesFrom", occurrencesFrom);
+            filters.put("occurrencesTo", occurrencesTo);
+            final PaginatedResult result = qm.getAllFindingsGroupedByVulnerability(filters, showInactive);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        }
+    }
 
 }

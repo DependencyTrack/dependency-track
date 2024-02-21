@@ -19,10 +19,13 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.Config;
+import alpine.model.ConfigProperty;
+import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
@@ -319,6 +322,271 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertFalse(json.getJsonObject(0).getJsonObject("analysis").getBoolean("isSuppressed"));
         Assert.assertEquals(p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":" + v1.getUuid().toString(), json.getJsonObject(0).getString("matrix"));
         Assert.assertThrows(NullPointerException.class, () -> json.getJsonObject(0).getJsonObject("component").getString("latestVersion"));
+    }
+
+    @Test
+    public void getAllFindings() {
+        Project p1 = qm.createProject("Acme Example 1", null, "1.0", null, null, null, true, false);
+        Project p1_child = qm.createProject("Acme Example 2", null, "1.0", null, p1, null, true, false);
+        Project p2 = qm.createProject("Acme Example 3", null, "1.0", null, null, null, true, false);
+        Component c1 = createComponent(p1, "Component A", "1.0");
+        Component c2 = createComponent(p1, "Component B", "1.0");
+        Component c3 = createComponent(p1_child, "Component C", "1.0");
+        Component c4 = createComponent(p2, "Component D", "1.0");
+        Component c5 = createComponent(p2, "Component E", "1.0");
+        Component c6 = createComponent(p2, "Component F", "1.0");
+        Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
+        Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH);
+        Vulnerability v3 = createVulnerability("Vuln-3", Severity.MEDIUM);
+        Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
+        Date date = new Date();
+        v1.setPublished(date);
+        v2.setPublished(date);
+        v3.setPublished(date);
+        v4.setPublished(date);
+        qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c3, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
+        Response response = target(V1_FINDING)
+                .queryParam("sortName", "component.projectName")
+                .queryParam("sortOrder", "asc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(5), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(5, json.size());
+        Assert.assertEquals(date.getTime() ,json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(p1.getName() ,json.getJsonObject(0).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p1.getVersion() ,json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(0).getJsonObject("component").getString("project"));
+        Assert.assertEquals(date.getTime() ,json.getJsonObject(1).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(p1.getName() ,json.getJsonObject(1).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p1.getVersion() ,json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(1).getJsonObject("component").getString("project"));
+        Assert.assertEquals(date.getTime() ,json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(p1.getName() ,json.getJsonObject(2).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p1.getVersion() ,json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(2).getJsonObject("component").getString("project"));
+        Assert.assertEquals(date.getTime() ,json.getJsonObject(3).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(p1_child.getName() ,json.getJsonObject(3).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p1_child.getVersion() ,json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p1_child.getUuid().toString(), json.getJsonObject(3).getJsonObject("component").getString("project"));
+        Assert.assertEquals(date.getTime() ,json.getJsonObject(4).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(p2.getName() ,json.getJsonObject(4).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p2.getVersion() ,json.getJsonObject(4).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p2.getUuid().toString(), json.getJsonObject(4).getJsonObject("component").getString("project"));
+    }
+
+    @Test
+    public void getAllFindingsWithAclEnabled() {
+        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Project p1_child = qm.createProject("Acme Example", null, "1.0", null, p1, null, true, false);
+        Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Team team = qm.createTeam("Team Acme", true);
+        p1.addAccessTeam(team);
+        Component c1 = createComponent(p1, "Component A", "1.0");
+        Component c2 = createComponent(p1, "Component B", "1.0");
+        Component c3 = createComponent(p1_child, "Component C", "1.0");
+        Component c4 = createComponent(p2, "Component D", "1.0");
+        Component c5 = createComponent(p2, "Component E", "1.0");
+        Component c6 = createComponent(p2, "Component F", "1.0");
+        Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
+        Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH);
+        Vulnerability v3 = createVulnerability("Vuln-3", Severity.MEDIUM);
+        Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
+        Date date = new Date();
+        v1.setPublished(date);
+        v2.setPublished(date);
+        v3.setPublished(date);
+        v4.setPublished(date);
+        qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c3, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
+        ConfigProperty aclToggle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToggle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToggle.setPropertyValue("true");
+            qm.persist(aclToggle);
+        }
+        Response response = target(V1_FINDING).request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(3, json.size());
+        Assert.assertEquals(date.getTime() ,json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(p1.getName() ,json.getJsonObject(0).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p1.getVersion() ,json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(0).getJsonObject("component").getString("project"));
+        Assert.assertEquals(date.getTime() ,json.getJsonObject(1).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(p1.getName() ,json.getJsonObject(1).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p1.getVersion() ,json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(1).getJsonObject("component").getString("project"));
+        Assert.assertEquals(date.getTime() ,json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(p1.getName() ,json.getJsonObject(2).getJsonObject("component").getString("projectName"));
+        Assert.assertEquals(p1.getVersion() ,json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
+        Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject(2).getJsonObject("component").getString("project"));
+    }
+
+    @Test
+    public void getAllFindingsGroupedByVulnerability() {
+        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Project p1_child = qm.createProject("Acme Example", null, "1.0", null, p1, null, true, false);
+        Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Component c1 = createComponent(p1, "Component A", "1.0");
+        Component c2 = createComponent(p1, "Component B", "1.0");
+        Component c3 = createComponent(p1_child, "Component C", "1.0");
+        Component c4 = createComponent(p2, "Component D", "1.0");
+        Component c5 = createComponent(p2, "Component E", "1.0");
+        Component c6 = createComponent(p2, "Component F", "1.0");
+        Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
+        Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH);
+        Vulnerability v3 = createVulnerability("Vuln-3", Severity.MEDIUM);
+        Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
+        Date date = new Date();
+        v1.setPublished(date);
+        v2.setPublished(date);
+        v3.setPublished(date);
+        v4.setPublished(date);
+        qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c3, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c4, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c6, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
+        Response response = target(V1_FINDING + "/grouped").request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(4), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(4, json.size());
+        Assert.assertEquals("INTERNAL", json.getJsonObject(0).getJsonObject("vulnerability").getString("source"));
+        Assert.assertEquals("Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
+        Assert.assertEquals(Severity.CRITICAL.name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+        Assert.assertEquals("NONE", json.getJsonObject(0).getJsonObject("attribution").getString("analyzerIdentity"));
+        Assert.assertEquals(date.getTime(), json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(2, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").size());
+        Assert.assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
+        Assert.assertEquals(666, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
+        Assert.assertEquals(1, json.getJsonObject(0).getJsonObject("vulnerability").getInt("affectedProjectCount"));
+
+        Assert.assertEquals("INTERNAL", json.getJsonObject(1).getJsonObject("vulnerability").getString("source"));
+        Assert.assertEquals("Vuln-2", json.getJsonObject(1).getJsonObject("vulnerability").getString("vulnId"));
+        Assert.assertEquals(Severity.HIGH.name(), json.getJsonObject(1).getJsonObject("vulnerability").getString("severity"));
+        Assert.assertEquals("NONE", json.getJsonObject(1).getJsonObject("attribution").getString("analyzerIdentity"));
+        Assert.assertEquals(date.getTime(), json.getJsonObject(1).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(2, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
+        Assert.assertEquals(80, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
+        Assert.assertEquals(666, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
+        Assert.assertEquals(3, json.getJsonObject(1).getJsonObject("vulnerability").getInt("affectedProjectCount"));
+
+        Assert.assertEquals("INTERNAL", json.getJsonObject(2).getJsonObject("vulnerability").getString("source"));
+        Assert.assertEquals("Vuln-3", json.getJsonObject(2).getJsonObject("vulnerability").getString("vulnId"));
+        Assert.assertEquals(Severity.MEDIUM.name(), json.getJsonObject(2).getJsonObject("vulnerability").getString("severity"));
+        Assert.assertEquals("NONE", json.getJsonObject(2).getJsonObject("attribution").getString("analyzerIdentity"));
+        Assert.assertEquals(date.getTime(), json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(2, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").size());
+        Assert.assertEquals(80, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
+        Assert.assertEquals(666, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
+        Assert.assertEquals(2, json.getJsonObject(2).getJsonObject("vulnerability").getInt("affectedProjectCount"));
+
+        Assert.assertEquals("INTERNAL", json.getJsonObject(3).getJsonObject("vulnerability").getString("source"));
+        Assert.assertEquals("Vuln-4", json.getJsonObject(3).getJsonObject("vulnerability").getString("vulnId"));
+        Assert.assertEquals(Severity.LOW.name(), json.getJsonObject(3).getJsonObject("vulnerability").getString("severity"));
+        Assert.assertEquals("NONE", json.getJsonObject(3).getJsonObject("attribution").getString("analyzerIdentity"));
+        Assert.assertEquals(date.getTime(), json.getJsonObject(3).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(2, json.getJsonObject(3).getJsonObject("vulnerability").getJsonArray("cwes").size());
+        Assert.assertEquals(80, json.getJsonObject(3).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
+        Assert.assertEquals(666, json.getJsonObject(3).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
+        Assert.assertEquals(1, json.getJsonObject(3).getJsonObject("vulnerability").getInt("affectedProjectCount"));
+    }
+
+    @Test
+    public void getAllFindingsGroupedByVulnerabilityWithAclEnabled() {
+        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Project p1_child = qm.createProject("Acme Example", null, "1.0", null, p1, null, true, false);
+        Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Team team = qm.createTeam("Team Acme", true);
+        p1.addAccessTeam(team);
+        Component c1 = createComponent(p1, "Component A", "1.0");
+        Component c2 = createComponent(p1, "Component B", "1.0");
+        Component c3 = createComponent(p1_child, "Component C", "1.0");
+        Component c4 = createComponent(p2, "Component D", "1.0");
+        Component c5 = createComponent(p2, "Component E", "1.0");
+        Component c6 = createComponent(p2, "Component F", "1.0");
+        Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
+        Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH);
+        Vulnerability v3 = createVulnerability("Vuln-3", Severity.MEDIUM);
+        Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
+        Date date = new Date();
+        v1.setPublished(date);
+        v2.setPublished(date);
+        v3.setPublished(date);
+        v4.setPublished(date);
+        qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c3, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c4, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c6, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
+        ConfigProperty aclToggle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToggle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToggle.setPropertyValue("true");
+            qm.persist(aclToggle);
+        }
+        Response response = target(V1_FINDING + "/grouped").request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(3, json.size());
+        Assert.assertEquals("INTERNAL", json.getJsonObject(0).getJsonObject("vulnerability").getString("source"));
+        Assert.assertEquals("Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
+        Assert.assertEquals(Severity.CRITICAL.name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+        Assert.assertEquals("NONE", json.getJsonObject(0).getJsonObject("attribution").getString("analyzerIdentity"));
+        Assert.assertEquals(date.getTime(), json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(2, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").size());
+        Assert.assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
+        Assert.assertEquals(666, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
+        Assert.assertEquals(1, json.getJsonObject(0).getJsonObject("vulnerability").getInt("affectedProjectCount"));
+
+        Assert.assertEquals("INTERNAL", json.getJsonObject(1).getJsonObject("vulnerability").getString("source"));
+        Assert.assertEquals("Vuln-2", json.getJsonObject(1).getJsonObject("vulnerability").getString("vulnId"));
+        Assert.assertEquals(Severity.HIGH.name(), json.getJsonObject(1).getJsonObject("vulnerability").getString("severity"));
+        Assert.assertEquals("NONE", json.getJsonObject(1).getJsonObject("attribution").getString("analyzerIdentity"));
+        Assert.assertEquals(date.getTime(), json.getJsonObject(1).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(2, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
+        Assert.assertEquals(80, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
+        Assert.assertEquals(666, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
+        Assert.assertEquals(1, json.getJsonObject(1).getJsonObject("vulnerability").getInt("affectedProjectCount"));
+
+        Assert.assertEquals("INTERNAL", json.getJsonObject(2).getJsonObject("vulnerability").getString("source"));
+        Assert.assertEquals("Vuln-3", json.getJsonObject(2).getJsonObject("vulnerability").getString("vulnId"));
+        Assert.assertEquals(Severity.MEDIUM.name(), json.getJsonObject(2).getJsonObject("vulnerability").getString("severity"));
+        Assert.assertEquals("NONE", json.getJsonObject(2).getJsonObject("attribution").getString("analyzerIdentity"));
+        Assert.assertEquals(date.getTime(), json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
+        Assert.assertEquals(2, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").size());
+        Assert.assertEquals(80, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
+        Assert.assertEquals(666, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
+        Assert.assertEquals(1, json.getJsonObject(2).getJsonObject("vulnerability").getInt("affectedProjectCount"));
     }
 
     private Component createComponent(Project project, String name, String version) {

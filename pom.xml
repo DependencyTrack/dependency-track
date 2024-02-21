@@ -93,7 +93,7 @@
         <lib.cyclonedx-java.version>8.0.3</lib.cyclonedx-java.version>
         <lib.greenmail.version>1.6.14</lib.greenmail.version>
         <lib.jaxb.runtime.version>2.3.8</lib.jaxb.runtime.version>
-        <lib.json-unit.version>3.2.4</lib.json-unit.version>
+        <lib.json-unit.version>3.2.5</lib.json-unit.version>
         <!--
           Overriding logstash-logback-encoder version as a temporary workaround until
           https://github.com/stevespringett/Alpine/pull/517 is merged and released.

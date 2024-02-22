@@ -115,7 +115,7 @@
         <lib.jdbc-driver.mssql.version>12.6.1.jre11</lib.jdbc-driver.mssql.version>
         <!-- Upgrading to 8.0.33 as https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
         <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.6.0</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.postgresql.version>42.7.2</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
@@ -544,8 +544,7 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.build.directory}/bom.json"
-                                      tofile="${project.build.directory}/${project.artifactId}/.well-known/sbom"/>
+                                <copy file="${project.build.directory}/bom.json" tofile="${project.build.directory}/${project.artifactId}/.well-known/sbom"/>
                             </target>
                         </configuration>
                         <goals>

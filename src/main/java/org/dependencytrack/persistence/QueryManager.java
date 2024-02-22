@@ -757,6 +757,11 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().addVulnerability(vulnerability, component, analyzerIdentity, alternateIdentifier, referenceUrl);
     }
 
+    public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity,
+                                 String alternateIdentifier, String referenceUrl, Date attributedOn) {
+        getVulnerabilityQueryManager().addVulnerability(vulnerability, component, analyzerIdentity, alternateIdentifier, referenceUrl, attributedOn);
+    }
+
     public void removeVulnerability(Vulnerability vulnerability, Component component) {
         getVulnerabilityQueryManager().removeVulnerability(vulnerability, component);
     }

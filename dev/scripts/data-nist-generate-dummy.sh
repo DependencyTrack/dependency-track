@@ -32,7 +32,7 @@ done
 rm -rf "$NIST_DIR"
 mkdir -p "$NIST_DIR"
 
-for feed in $(seq "2023" "2002"); do
+for feed in $(seq "2024" "2002"); do
   touch "$NIST_DIR/nvdcve-1.1-$feed.json.gz"
   echo "9999999999999" > "$NIST_DIR/nvdcve-1.1-$feed.json.gz.ts"
 done

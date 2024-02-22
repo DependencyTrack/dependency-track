@@ -84,27 +84,25 @@
         <frontend.version>4.10.0</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.2.0</lib.awaitility.version>
+        <lib.checkstyle.version>10.12.5</lib.checkstyle.version>
         <lib.cloud-sql-connector-jdbc-sqlserver.version>1.16.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
-        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.15.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
-        <lib.cloud-sql-postgres-socket-factory.version>1.15.0</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.16.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.16.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
+        <lib.commons-compress.version>1.26.0</lib.commons-compress.version>
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>8.0.3</lib.cyclonedx-java.version>
-        <lib.greenmail.version>1.6.14</lib.greenmail.version>
-        <lib.jaxb.runtime.version>2.3.8</lib.jaxb.runtime.version>
+        <lib.greenmail.version>1.6.15</lib.greenmail.version>
+        <lib.jaxb.runtime.version>2.3.9</lib.jaxb.runtime.version>
         <lib.json-unit.version>3.2.7</lib.json-unit.version>
-        <!--
-          Overriding logstash-logback-encoder version as a temporary workaround until
-          https://github.com/stevespringett/Alpine/pull/517 is merged and released.
-        -->
-        <lib.logstash-logback-encoder.version>7.3</lib.logstash-logback-encoder.version>
         <lib.lucene.version>8.11.3</lib.lucene.version>
+        <lib.mockserver-netty.version>5.15.0</lib.mockserver-netty.version>
         <lib.open-vulnerability-clients.version>5.1.2</lib.open-vulnerability-clients.version>
-        <lib.packageurl.version>1.4.1</lib.packageurl.version>
-        <lib.pebble.version>3.2.0</lib.pebble.version>
-        <lib.resilience4j.version>2.1.0</lib.resilience4j.version>
-        <lib.woodstox.version>6.5.1</lib.woodstox.version>
+        <lib.packageurl.version>1.5.0</lib.packageurl.version>
+        <lib.pebble.version>3.2.2</lib.pebble.version>
+        <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
+        <lib.woodstox.version>6.6.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
@@ -113,14 +111,13 @@
         <lib.org-kohsuke-github-api.version>1.318</lib.org-kohsuke-github-api.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.6.1.jre11</lib.jdbc-driver.mssql.version>
-        <!-- Upgrading to 8.0.33 as https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
         <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.6.0</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.postgresql.version>42.7.2</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <!-- Keep Jetty at 10.0.15 until migration plan is planned/resolved per Steve in https://github.com/DependencyTrack/dependency-track/pull/2725#issuecomment-1532417022! -->
+        <!-- Keep Jetty at 10.0.x until migration plan is planned/resolved per Steve in https://github.com/DependencyTrack/dependency-track/pull/2725#issuecomment-1532417022! -->
         <plugin.jetty.version>10.0.20</plugin.jetty.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
@@ -205,12 +202,13 @@
             <artifactId>json</artifactId>
             <version>20240205</version>
         </dependency>
-        <!-- Package URL -->
+
         <dependency>
             <groupId>com.github.package-url</groupId>
             <artifactId>packageurl-java</artifactId>
             <version>${lib.packageurl.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
@@ -243,7 +241,6 @@
             <version>${lib.open-vulnerability-clients.version}</version>
         </dependency>
 
-        <!-- Pebble templating engine -->
         <dependency>
             <groupId>io.pebbletemplates</groupId>
             <artifactId>pebble</artifactId>
@@ -275,7 +272,6 @@
             <version>${lib.httpclient.version}</version>
         </dependency>
 
-
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
@@ -287,7 +283,7 @@
             <artifactId>maven-artifact</artifactId>
             <version>3.9.6</version>
         </dependency>
-        <!-- Bundle JDBC drivers -->
+
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
@@ -328,6 +324,7 @@
             <artifactId>cloud-sql-connector-jdbc-sqlserver</artifactId>
             <version>${lib.cloud-sql-connector-jdbc-sqlserver.version}</version>
         </dependency>
+
         <!-- Xerces -->
         <dependency>
             <groupId>xerces</groupId>
@@ -340,13 +337,13 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- Commons Compress -->
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.26.0</version>
+            <version>${lib.commons-compress.version}</version>
         </dependency>
-        <!-- Resilience4J -->
+
         <dependency>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-retry</artifactId>
@@ -404,15 +401,14 @@
             <artifactId>mockito-core</artifactId>
             <version>${lib.mockito.version}</version>
             <scope>test</scope>
-
         </dependency>
+
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-jre8</artifactId>
             <version>2.35.2</version>
             <scope>test</scope>
         </dependency>
-
 
         <dependency>
             <groupId>com.github.stefanbirkner</groupId>
@@ -435,7 +431,7 @@
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-netty</artifactId>
-            <version>5.15.0</version>
+            <version>${lib.mockserver-netty.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -495,7 +491,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>10.12.5</version>
+                        <version>${lib.checkstyle.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>

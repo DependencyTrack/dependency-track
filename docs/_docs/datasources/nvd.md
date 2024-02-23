@@ -4,6 +4,7 @@ category: Datasources
 chapter: 4
 order: 1
 ---
+> This product uses the NVD API but is not endorsed or certified by the NVD.
 
 The National Vulnerability Database (NVD) is the largest publicly available source of vulnerability intelligence.
 It is maintained by a group within the National Institute of Standards and Technology (NIST) and builds upon the

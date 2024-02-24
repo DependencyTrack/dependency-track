@@ -31,39 +31,49 @@ import java.util.Map;
  * only be queried on, not updated or deleted. Modifications to data in the GroupedFinding object need to be made
  * to the original source object needing modified.
  *
- * @since 4.8.0
+ * @since 4.11.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GroupedFinding implements Serializable {
 
     private static final long serialVersionUID = 2246518534279822243L;
 
+    @SuppressWarnings("SqlShouldBeInGroupBy")
+    // language=SQL
     public static final String QUERY = """
-            SELECT
-                "VULNERABILITY"."SOURCE",
-                "VULNERABILITY"."VULNID",
-                "VULNERABILITY"."TITLE",
-                "VULNERABILITY"."SEVERITY",
-                "VULNERABILITY"."CVSSV2BASESCORE",
-                "VULNERABILITY"."CVSSV3BASESCORE",
-                "VULNERABILITY"."OWASPRRLIKELIHOODSCORE",
-                "VULNERABILITY"."OWASPRRTECHNICALIMPACTSCORE",
-                "VULNERABILITY"."OWASPRRBUSINESSIMPACTSCORE",
-                "FINDINGATTRIBUTION"."ANALYZERIDENTITY",
-                "VULNERABILITY"."PUBLISHED",
-                "VULNERABILITY"."CWES",
-                COUNT(DISTINCT "PROJECT"."ID") AS "AFFECTED_PROJECT_COUNT",
-            FROM "COMPONENT"
-                INNER JOIN "COMPONENTS_VULNERABILITIES" ON ("COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID")
-                INNER JOIN "VULNERABILITY" ON ("COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID" = "VULNERABILITY"."ID")
-                INNER JOIN "FINDINGATTRIBUTION" ON ("COMPONENT"."ID" = "FINDINGATTRIBUTION"."COMPONENT_ID") AND ("VULNERABILITY"."ID" = "FINDINGATTRIBUTION"."VULNERABILITY_ID")
-                LEFT JOIN "ANALYSIS" ON ("COMPONENT"."ID" = "ANALYSIS"."COMPONENT_ID") AND ("VULNERABILITY"."ID" = "ANALYSIS"."VULNERABILITY_ID") AND ("COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID")
-                INNER JOIN "PROJECT" ON ("COMPONENT"."PROJECT_ID" = "PROJECT"."ID")
-                LEFT JOIN "PROJECT_ACCESS_TEAMS" ON ("PROJECT"."ID" = "PROJECT_ACCESS_TEAMS"."PROJECT_ID")
+            SELECT "VULNERABILITY"."SOURCE"
+                 , "VULNERABILITY"."VULNID"
+                 , "VULNERABILITY"."TITLE"
+                 , "VULNERABILITY"."SEVERITY"
+                 , "VULNERABILITY"."CVSSV2BASESCORE"
+                 , "VULNERABILITY"."CVSSV3BASESCORE"
+                 , "VULNERABILITY"."OWASPRRLIKELIHOODSCORE"
+                 , "VULNERABILITY"."OWASPRRTECHNICALIMPACTSCORE"
+                 , "VULNERABILITY"."OWASPRRBUSINESSIMPACTSCORE"
+                 , "FINDINGATTRIBUTION"."ANALYZERIDENTITY"
+                 , "VULNERABILITY"."PUBLISHED"
+                 , "VULNERABILITY"."CWES"
+                 , COUNT(DISTINCT "PROJECT"."ID") AS "AFFECTED_PROJECT_COUNT"
+             FROM "COMPONENT"
+            INNER JOIN "COMPONENTS_VULNERABILITIES"
+               ON "COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
+            INNER JOIN "VULNERABILITY"
+               ON "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID" = "VULNERABILITY"."ID"
+            INNER JOIN "FINDINGATTRIBUTION"
+               ON "COMPONENT"."ID" = "FINDINGATTRIBUTION"."COMPONENT_ID"
+              AND "VULNERABILITY"."ID" = "FINDINGATTRIBUTION"."VULNERABILITY_ID"
+             LEFT JOIN "ANALYSIS"
+               ON "COMPONENT"."ID" = "ANALYSIS"."COMPONENT_ID"
+              AND "VULNERABILITY"."ID" = "ANALYSIS"."VULNERABILITY_ID"
+              AND "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
+            INNER JOIN "PROJECT"
+               ON "COMPONENT"."PROJECT_ID" = "PROJECT"."ID"
+             LEFT JOIN "PROJECT_ACCESS_TEAMS"
+               ON "PROJECT"."ID" = "PROJECT_ACCESS_TEAMS"."PROJECT_ID"
             """;
 
-    private Map<String, Object> vulnerability = new LinkedHashMap<>();
-    private Map<String, Object> attribution = new LinkedHashMap<>();
+    private final Map<String, Object> vulnerability = new LinkedHashMap<>();
+    private final Map<String, Object> attribution = new LinkedHashMap<>();
 
     public GroupedFinding(Object ...o) {
         optValue(vulnerability, "source", o[0]);
@@ -78,11 +88,11 @@ public class GroupedFinding implements Serializable {
         optValue(vulnerability, "affectedProjectCount", o[12]);
     }
 
-    public Map getVulnerability() {
+    public Map<String, Object> getVulnerability() {
         return vulnerability;
     }
 
-    public Map getAttribution() {
+    public Map<String, Object> getAttribution() {
         return attribution;
     }
 

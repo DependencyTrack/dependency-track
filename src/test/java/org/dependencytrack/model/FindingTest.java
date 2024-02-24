@@ -32,16 +32,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class FindingTest extends PersistenceCapableTest {
 
-    private UUID projectUuid = UUID.randomUUID();
-    private Date attributedOn = new Date();
-    private Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
+    private final UUID projectUuid = UUID.randomUUID();
+    private final Date attributedOn = new Date();
+    private final Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
             "component-version", "component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
             "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
             "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
 
     @Test
     public void testComponent() {
-        Map map = finding.getComponent();
+        Map<String, Object> map = finding.getComponent();
         Assert.assertEquals("component-uuid", map.get("uuid"));
         Assert.assertEquals("component-name", map.get("name"));
         Assert.assertEquals("component-group", map.get("group"));
@@ -51,7 +51,7 @@ public class FindingTest extends PersistenceCapableTest {
 
     @Test
     public void testVulnerability() {
-        Map map = finding.getVulnerability();
+        Map<String, Object> map = finding.getVulnerability();
         Assert.assertEquals("vuln-uuid", map.get("uuid"));
         Assert.assertEquals("vuln-source", map.get("source"));
         Assert.assertEquals("vuln-vulnId", map.get("vulnId"));
@@ -70,7 +70,7 @@ public class FindingTest extends PersistenceCapableTest {
 
     @Test
     public void testAnalysis() {
-        Map map = finding.getAnalysis();
+        Map<String, Object> map = finding.getAnalysis();
         Assert.assertEquals(AnalysisState.NOT_AFFECTED, map.get("state"));
         Assert.assertEquals(true, map.get("isSuppressed"));
     }

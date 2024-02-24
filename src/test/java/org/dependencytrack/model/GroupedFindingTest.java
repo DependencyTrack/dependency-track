@@ -28,15 +28,15 @@ import java.util.Date;
 import java.util.Map;
 
 public class GroupedFindingTest extends PersistenceCapableTest {
-    private Date published = new Date();
 
-    private GroupedFinding groupedFinding = new GroupedFinding("vuln-source", "vuln-vulnId", "vuln-title",
+    private final Date published = new Date();
+    private final GroupedFinding groupedFinding = new GroupedFinding("vuln-source", "vuln-vulnId", "vuln-title",
             Severity.HIGH, BigDecimal.valueOf(8.5), BigDecimal.valueOf(8.4), null, null, null, AnalyzerIdentity.INTERNAL_ANALYZER, published, null, 3);
 
 
     @Test
     public void testVulnerability() {
-        Map map = groupedFinding.getVulnerability();
+        Map<String, Object> map = groupedFinding.getVulnerability();
         Assert.assertEquals("vuln-source", map.get("source"));
         Assert.assertEquals("vuln-vulnId", map.get("vulnId"));
         Assert.assertEquals("vuln-title", map.get("title"));
@@ -49,7 +49,7 @@ public class GroupedFindingTest extends PersistenceCapableTest {
 
     @Test
     public void testAttribution() {
-        Map map = groupedFinding.getAttribution();
+        Map<String, Object> map = groupedFinding.getAttribution();
         Assert.assertEquals(AnalyzerIdentity.INTERNAL_ANALYZER, map.get("analyzerIdentity"));
     }
 }

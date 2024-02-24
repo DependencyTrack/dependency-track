@@ -53,88 +53,109 @@ public class Finding implements Serializable {
      * in double quotes to satisfy PostgreSQL case-sensitive requirements. This also places a requirement
      * on ANSI_QUOTES mode being enabled in MySQL. SQL Server works regardless and is just happy to be invited :-)
      */
-    public static final String QUERY = "SELECT " +
-            "\"COMPONENT\".\"UUID\"," +
-            "\"COMPONENT\".\"NAME\"," +
-            "\"COMPONENT\".\"GROUP\"," +
-            "\"COMPONENT\".\"VERSION\"," +
-            "\"COMPONENT\".\"PURL\"," +
-            "\"COMPONENT\".\"CPE\"," +
-            "\"VULNERABILITY\".\"UUID\"," +
-            "\"VULNERABILITY\".\"SOURCE\"," +
-            "\"VULNERABILITY\".\"VULNID\"," +
-            "\"VULNERABILITY\".\"TITLE\"," +
-            "\"VULNERABILITY\".\"SUBTITLE\"," +
-            "\"VULNERABILITY\".\"DESCRIPTION\"," +
-            "\"VULNERABILITY\".\"RECOMMENDATION\"," +
-            "\"VULNERABILITY\".\"SEVERITY\"," +
-            "\"VULNERABILITY\".\"CVSSV2BASESCORE\"," +
-            "\"VULNERABILITY\".\"CVSSV3BASESCORE\"," +
-            "\"VULNERABILITY\".\"OWASPRRLIKELIHOODSCORE\"," +
-            "\"VULNERABILITY\".\"OWASPRRTECHNICALIMPACTSCORE\"," +
-            "\"VULNERABILITY\".\"OWASPRRBUSINESSIMPACTSCORE\"," +
-            "\"VULNERABILITY\".\"EPSSSCORE\"," +
-            "\"VULNERABILITY\".\"EPSSPERCENTILE\"," +
-            "\"VULNERABILITY\".\"CWES\"," +
-            "\"FINDINGATTRIBUTION\".\"ANALYZERIDENTITY\"," +
-            "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\"," +
-            "\"FINDINGATTRIBUTION\".\"ALT_ID\"," +
-            "\"FINDINGATTRIBUTION\".\"REFERENCE_URL\"," +
-            "\"ANALYSIS\".\"STATE\"," +
-            "\"ANALYSIS\".\"SUPPRESSED\" " +
-            "FROM \"COMPONENT\" " +
-            "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
-            "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
-            "INNER JOIN \"FINDINGATTRIBUTION\" ON (\"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\")" +
-            "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
-            "WHERE \"COMPONENT\".\"PROJECT_ID\" = ?";
+    // language=SQL
+    public static final String QUERY = """
+            SELECT "COMPONENT"."UUID"
+                 , "COMPONENT"."NAME"
+                 , "COMPONENT"."GROUP"
+                 , "COMPONENT"."VERSION"
+                 , "COMPONENT"."PURL"
+                 , "COMPONENT"."CPE"
+                 , "VULNERABILITY"."UUID"
+                 , "VULNERABILITY"."SOURCE"
+                 , "VULNERABILITY"."VULNID"
+                 , "VULNERABILITY"."TITLE"
+                 , "VULNERABILITY"."SUBTITLE"
+                 , "VULNERABILITY"."DESCRIPTION"
+                 , "VULNERABILITY"."RECOMMENDATION"
+                 , "VULNERABILITY"."SEVERITY"
+                 , "VULNERABILITY"."CVSSV2BASESCORE"
+                 , "VULNERABILITY"."CVSSV3BASESCORE"
+                 , "VULNERABILITY"."OWASPRRLIKELIHOODSCORE"
+                 , "VULNERABILITY"."OWASPRRTECHNICALIMPACTSCORE"
+                 , "VULNERABILITY"."OWASPRRBUSINESSIMPACTSCORE"
+                 , "VULNERABILITY"."EPSSSCORE"
+                 , "VULNERABILITY"."EPSSPERCENTILE"
+                 , "VULNERABILITY"."CWES"
+                 , "FINDINGATTRIBUTION"."ANALYZERIDENTITY"
+                 , "FINDINGATTRIBUTION"."ATTRIBUTED_ON"
+                 , "FINDINGATTRIBUTION"."ALT_ID"
+                 , "FINDINGATTRIBUTION"."REFERENCE_URL"
+                 , "ANALYSIS"."STATE"
+                 , "ANALYSIS"."SUPPRESSED"
+              FROM "COMPONENT"
+             INNER JOIN "COMPONENTS_VULNERABILITIES"
+                ON "COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
+             INNER JOIN "VULNERABILITY"
+                ON "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID" = "VULNERABILITY"."ID"
+             INNER JOIN "FINDINGATTRIBUTION"
+                ON "COMPONENT"."ID" = "FINDINGATTRIBUTION"."COMPONENT_ID"
+               AND "VULNERABILITY"."ID" = "FINDINGATTRIBUTION"."VULNERABILITY_ID"
+              LEFT JOIN "ANALYSIS"
+                ON "COMPONENT"."ID" = "ANALYSIS"."COMPONENT_ID"
+               AND "VULNERABILITY"."ID" = "ANALYSIS"."VULNERABILITY_ID"
+               AND "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
+             WHERE "COMPONENT"."PROJECT_ID" = ?
+            """;
 
-    public static final String QUERY_ALL_FINDINGS = "SELECT DISTINCT " +
-            "\"COMPONENT\".\"UUID\"," +
-            "\"COMPONENT\".\"NAME\"," +
-            "\"COMPONENT\".\"GROUP\"," +
-            "\"COMPONENT\".\"VERSION\"," +
-            "\"COMPONENT\".\"PURL\"," +
-            "\"COMPONENT\".\"CPE\"," +
-            "\"VULNERABILITY\".\"UUID\"," +
-            "\"VULNERABILITY\".\"SOURCE\"," +
-            "\"VULNERABILITY\".\"VULNID\"," +
-            "\"VULNERABILITY\".\"TITLE\"," +
-            "\"VULNERABILITY\".\"SUBTITLE\"," +
-            "\"VULNERABILITY\".\"DESCRIPTION\"," +
-            "\"VULNERABILITY\".\"RECOMMENDATION\"," +
-            "\"VULNERABILITY\".\"SEVERITY\"," +
-            "\"VULNERABILITY\".\"CVSSV2BASESCORE\"," +
-            "\"VULNERABILITY\".\"CVSSV3BASESCORE\"," +
-            "\"VULNERABILITY\".\"OWASPRRLIKELIHOODSCORE\"," +
-            "\"VULNERABILITY\".\"OWASPRRTECHNICALIMPACTSCORE\"," +
-            "\"VULNERABILITY\".\"OWASPRRBUSINESSIMPACTSCORE\"," +
-            "\"VULNERABILITY\".\"EPSSSCORE\"," +
-            "\"VULNERABILITY\".\"EPSSPERCENTILE\"," +
-            "\"VULNERABILITY\".\"CWES\"," +
-            "\"FINDINGATTRIBUTION\".\"ANALYZERIDENTITY\"," +
-            "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\"," +
-            "\"FINDINGATTRIBUTION\".\"ALT_ID\"," +
-            "\"FINDINGATTRIBUTION\".\"REFERENCE_URL\"," +
-            "\"ANALYSIS\".\"STATE\"," +
-            "\"ANALYSIS\".\"SUPPRESSED\"," +
-            "\"VULNERABILITY\".\"PUBLISHED\"," +
-            "\"PROJECT\".\"UUID\"," +
-            "\"PROJECT\".\"NAME\"," +
-            "\"PROJECT\".\"VERSION\"" +
-            "FROM \"COMPONENT\" " +
-            "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
-            "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
-            "INNER JOIN \"FINDINGATTRIBUTION\" ON (\"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\")" +
-            "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
-            "INNER JOIN \"PROJECT\" ON (\"COMPONENT\".\"PROJECT_ID\" = \"PROJECT\".\"ID\") " +
-            "LEFT JOIN \"PROJECT_ACCESS_TEAMS\" ON (\"PROJECT\".\"ID\" = \"PROJECT_ACCESS_TEAMS\".\"PROJECT_ID\")";
+    // language=SQL
+    public static final String QUERY_ALL_FINDINGS = """
+            SELECT DISTINCT
+                   "COMPONENT"."UUID"
+                 , "COMPONENT"."NAME"
+                 , "COMPONENT"."GROUP"
+                 , "COMPONENT"."VERSION"
+                 , "COMPONENT"."PURL"
+                 , "COMPONENT"."CPE"
+                 , "VULNERABILITY"."UUID"
+                 , "VULNERABILITY"."SOURCE"
+                 , "VULNERABILITY"."VULNID"
+                 , "VULNERABILITY"."TITLE"
+                 , "VULNERABILITY"."SUBTITLE"
+                 , "VULNERABILITY"."DESCRIPTION"
+                 , "VULNERABILITY"."RECOMMENDATION"
+                 , "VULNERABILITY"."SEVERITY"
+                 , "VULNERABILITY"."CVSSV2BASESCORE"
+                 , "VULNERABILITY"."CVSSV3BASESCORE"
+                 , "VULNERABILITY"."OWASPRRLIKELIHOODSCORE"
+                 , "VULNERABILITY"."OWASPRRTECHNICALIMPACTSCORE"
+                 , "VULNERABILITY"."OWASPRRBUSINESSIMPACTSCORE"
+                 , "VULNERABILITY"."EPSSSCORE"
+                 , "VULNERABILITY"."EPSSPERCENTILE"
+                 , "VULNERABILITY"."CWES"
+                 , "FINDINGATTRIBUTION"."ANALYZERIDENTITY"
+                 , "FINDINGATTRIBUTION"."ATTRIBUTED_ON"
+                 , "FINDINGATTRIBUTION"."ALT_ID"
+                 , "FINDINGATTRIBUTION"."REFERENCE_URL"
+                 , "ANALYSIS"."STATE"
+                 , "ANALYSIS"."SUPPRESSED"
+                 , "VULNERABILITY"."PUBLISHED"
+                 , "PROJECT"."UUID"
+                 , "PROJECT"."NAME"
+                 , "PROJECT"."VERSION"
+              FROM "COMPONENT"
+             INNER JOIN "COMPONENTS_VULNERABILITIES"
+                ON "COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
+             INNER JOIN "VULNERABILITY"
+                ON "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID" = "VULNERABILITY"."ID"
+             INNER JOIN "FINDINGATTRIBUTION"
+                ON "COMPONENT"."ID" = "FINDINGATTRIBUTION"."COMPONENT_ID"
+               AND "VULNERABILITY"."ID" = "FINDINGATTRIBUTION"."VULNERABILITY_ID"
+              LEFT JOIN "ANALYSIS"
+                ON "COMPONENT"."ID" = "ANALYSIS"."COMPONENT_ID"
+               AND "VULNERABILITY"."ID" = "ANALYSIS"."VULNERABILITY_ID"
+               AND "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
+             INNER JOIN "PROJECT"
+                ON "COMPONENT"."PROJECT_ID" = "PROJECT"."ID"
+              LEFT JOIN "PROJECT_ACCESS_TEAMS"
+                ON "PROJECT"."ID" = "PROJECT_ACCESS_TEAMS"."PROJECT_ID"
+            """;
 
-    private UUID project;
-    private Map<String, Object> component = new LinkedHashMap<>();
-    private Map<String, Object> vulnerability = new LinkedHashMap<>();
-    private Map<String, Object> analysis = new LinkedHashMap<>();
-    private Map<String, Object> attribution = new LinkedHashMap<>();
+    private final UUID project;
+    private final Map<String, Object> component = new LinkedHashMap<>();
+    private final Map<String, Object> vulnerability = new LinkedHashMap<>();
+    private final Map<String, Object> analysis = new LinkedHashMap<>();
+    private final Map<String, Object> attribution = new LinkedHashMap<>();
 
     /**
      * Constructs a new Finding object. The generic Object array passed as an argument is the
@@ -190,19 +211,19 @@ public class Finding implements Serializable {
         }
     }
 
-    public Map getComponent() {
+    public Map<String, Object> getComponent() {
         return component;
     }
 
-    public Map getVulnerability() {
+    public Map<String, Object> getVulnerability() {
         return vulnerability;
     }
 
-    public Map getAnalysis() {
+    public Map<String, Object> getAnalysis() {
         return analysis;
     }
 
-    public Map getAttribution() {
+    public Map<String, Object> getAttribution() {
         return attribution;
     }
 

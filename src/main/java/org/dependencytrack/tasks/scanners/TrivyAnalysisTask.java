@@ -38,7 +38,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.HttpClientPool;
@@ -49,7 +48,6 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.Vulnerability.Source;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.parser.trivy.TrivyParser;
 import org.dependencytrack.parser.trivy.model.Application;
@@ -68,6 +66,7 @@ import org.dependencytrack.parser.trivy.model.TrivyResponse;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -84,7 +83,6 @@ import static org.dependencytrack.util.RetryUtil.maybeClosePreviousResult;
 import static org.dependencytrack.util.RetryUtil.withExponentialBackoff;
 import static org.dependencytrack.util.RetryUtil.withTransientCause;
 import static org.dependencytrack.util.RetryUtil.withTransientErrorCode;
-
 
 /**
  * Subscriber task that performs an analysis of component using Trivy vulnerability API.
@@ -120,6 +118,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 .bindTo(Metrics.getRegistry());
     }
 
+    private final Gson gson = new Gson();
     private String apiBaseUrl;
     private String apiToken;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
@@ -149,7 +148,13 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 }
 
                 apiBaseUrl = getApiBaseUrl().get();
-                apiToken = apiTokenProperty.getPropertyValue();
+
+                try {
+                    apiToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+                } catch (Exception ex) {
+                    LOGGER.error("An error occurred decrypting the Trivy API token; Skipping", ex);
+                    return;
+                }
             }
             vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
             LOGGER.info("Starting Trivy vulnerability analysis task");
@@ -168,27 +173,25 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         return AnalyzerIdentity.TRIVY_ANALYZER;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isCapable(Component component) {
         final boolean hasValidPurl = component.getPurl() != null
-        && component.getPurl().getScheme() != null
-        && component.getPurl().getType() != null
-        && component.getPurl().getName() != null
-        && component.getPurl().getVersion() != null;
+                                     && component.getPurl().getScheme() != null
+                                     && component.getPurl().getType() != null
+                                     && component.getPurl().getName() != null
+                                     && component.getPurl().getVersion() != null;
 
         if (!hasValidPurl && component.getPurl() == null) {
-            LOGGER.debug("isCapable:purl is null for component %s".formatted(component.toString()));
+            LOGGER.debug("isCapable: purl is null for component %s".formatted(component));
         } else if (!hasValidPurl) {
             LOGGER.debug("isCapable: " + component.getPurl().toString());
         }
 
-        return (hasValidPurl && PurlType.getApp(component.getPurl().getType()) != PurlType.Constants.UNKNOWN.toString())
-        || component.getClassifier() == Classifier.OPERATING_SYSTEM;
-    }
-
-    @Override
-    protected boolean isCacheCurrent(Source source, String targetHost, String target) {
-        return false;
+        return (hasValidPurl && !PurlType.Constants.UNKNOWN.equals(PurlType.getApp(component.getPurl().getType())))
+               || component.getClassifier() == Classifier.OPERATING_SYSTEM;
     }
 
     /**
@@ -196,10 +199,10 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
      */
     @Override
     public void analyze(final List<Component> components) {
-        var pkgs = new HashMap<String, PackageInfo>();
-        var apps = new HashMap<String, Application>();
-        var os = new HashMap<String, OS>();
-        var map = new HashMap<String, Component>();
+        final var pkgs = new HashMap<String, PackageInfo>();
+        final var apps = new HashMap<String, Application>();
+        final var os = new HashMap<String, OS>();
+        final var map = new HashMap<String, Component>();
 
         for (final Component component : components) {
             if (component.getPurl() != null) {
@@ -211,15 +214,10 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                     name = component.getGroup() + ":" + name;
                 }
 
-                if (appType != PurlType.UNKNOWN.getAppType()) {
-                    if (appType != "packages") {
-
-                        if (apps.get(appType) == null) {
-                            apps.put(appType, new Application(appType));
-                        }
-                        var app = apps.get(appType);
-
-                        var key = name + ":" + component.getVersion();
+                if (!PurlType.UNKNOWN.getAppType().equals(appType)) {
+                    if (!PurlType.Constants.PACKAGES.equals(appType)) {
+                        final Application app = apps.computeIfAbsent(appType, Application::new);
+                        final String key = name + ":" + component.getVersion();
 
                         LOGGER.debug("Add key %s to map".formatted(key));
                         map.put(key, component);
@@ -227,8 +225,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                         LOGGER.debug("add library %s".formatted(component.toString()));
                         app.addLibrary(new Library(name, component.getVersion()));
                     } else {
-                        var pkgType = component.getPurl().getType().toString();
-
+                        String pkgType = component.getPurl().getType();
                         String arch = null;
                         Integer epoch = null;
                         String versionKey = "";
@@ -249,19 +246,15 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                             }
                         }
 
-                         if (pkgs.get(pkgType) == null) {
-                            pkgs.put(pkgType, new PackageInfo());
-                        }
-
-                        var pkg = pkgs.get(pkgType);
+                        final PackageInfo pkg = pkgs.computeIfAbsent(pkgType, ignored -> new PackageInfo());
 
                         versionKey += component.getVersion();
-                        var key = name + ":" + versionKey;
+                        final String key = name + ":" + versionKey;
 
                         LOGGER.debug("Add key %s to map".formatted(key));
                         map.put(key, component);
                         LOGGER.debug("add package %s".formatted(component.toString()));
-                        pkg.addPackage(new Package(component.getName(), component.getVersion(),  arch != null ? arch : "x86_64", epoch));
+                        pkg.addPackage(new Package(component.getName(), component.getVersion(), arch != null ? arch : "x86_64", epoch));
                     }
                 }
 
@@ -272,9 +265,9 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
             }
         }
 
-        ArrayList<BlobInfo> infos = new ArrayList<BlobInfo>();
+        final var infos = new ArrayList<BlobInfo>();
 
-        if (apps.size() > 0) {
+        if (!apps.isEmpty()) {
             var info = new BlobInfo();
             info.setApplications(apps.values().toArray(new Application[]{}));
             infos.add(info);
@@ -290,11 +283,10 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         });
 
         try {
-            final var results = RETRY.executeCheckedSupplier(() -> analyzeBlob(infos.toArray(new BlobInfo[]{})));
-            handleResults(map,results);
+            final var results = analyzeBlob(infos.toArray(new BlobInfo[]{}));
+            handleResults(map, results);
         } catch (Throwable ex) {
             handleRequestException(LOGGER, ex);
-            return;
         }
     }
 
@@ -304,7 +296,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
     @Override
     public boolean shouldAnalyze(final PackageURL packageUrl) {
         return getApiBaseUrl()
-                .map(baseUrl -> !isCacheCurrent(Vulnerability.Source.NVD, apiBaseUrl, packageUrl.getCoordinates()))
+                .map(baseUrl -> !isCacheCurrent(Vulnerability.Source.TRIVY, apiBaseUrl, packageUrl.getCoordinates()))
                 .orElse(false);
     }
 
@@ -314,26 +306,25 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
     @Override
     public void applyAnalysisFromCache(final Component component) {
         getApiBaseUrl().ifPresent(baseUrl ->
-                applyAnalysisFromCache(Vulnerability.Source.NVD, apiBaseUrl,
+                applyAnalysisFromCache(Vulnerability.Source.TRIVY, apiBaseUrl,
                         component.getPurl().getCoordinates(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel));
     }
 
     private void handleResults(final Map<String, Component> components, final ArrayList<Result> input) {
-        for (int count = 0; count < input.size(); count++) {
-            var result = input.get(count);
+        for (final Result result : input) {
             for (int idx = 0; idx < result.getVulnerabilities().length; idx++) {
                 var vulnerability = result.getVulnerabilities()[idx];
                 var key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
                 LOGGER.debug("Searching key %s in map".formatted(key));
-                 if (!super.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED) || vulnerability.getStatus() == 3) {
+                if (!super.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED) || vulnerability.getStatus() == 3) {
                     handle(components.get(key), vulnerability);
-                 }
+                }
             }
         }
     }
 
     private ArrayList<Result> analyzeBlob(final BlobInfo[] blobs) {
-        ArrayList<Result> output = new ArrayList<Result>();
+        final var output = new ArrayList<Result>();
 
         for (final BlobInfo info : blobs) {
 
@@ -357,20 +348,18 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
     }
 
 
-    private HttpUriRequest buildRequest(final String url, Object input) throws Exception {
-        URIBuilder uriBuilder = new URIBuilder(url);
-        HttpPost post = new HttpPost(uriBuilder.build().toString());
+    private HttpUriRequest buildRequest(final String url, Object input) {
+        final var request = new HttpPost(url);
 
+        final var body = new StringEntity(gson.toJson(input), StandardCharsets.UTF_8);
+        request.setEntity(body);
 
-        Gson gson = new Gson();
-        StringEntity body = new StringEntity(gson.toJson(input));
-        post.setEntity(body);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Request: " + gson.toJson(input));
+        }
 
-        LOGGER.debug("Request: " + gson.toJson(input));
-
-        HttpUriRequest request = post;
         request.setHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
-        request.setHeader(TOKEN_HEADER, DataEncryption.decryptAsString(apiToken));
+        request.setHeader(TOKEN_HEADER, apiToken);
         request.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
 
         return request;
@@ -378,17 +367,16 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
     private boolean putBlob(PutRequest input) {
         final String requestUrl = "%s/twirp/trivy.cache.v1.Cache/PutBlob".formatted(apiBaseUrl);
+        final HttpUriRequest request = buildRequest(requestUrl, input);
 
-         try {
-            HttpUriRequest request = buildRequest(requestUrl, input);
-
-            try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
-                LOGGER.debug("PutBlob response: " + response.getStatusLine().getStatusCode());
-                return (response.getStatusLine().getStatusCode() >= HttpStatus.SC_OK);
-            }
-        } catch (Throwable  ex) {
+        try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
+            final int statusCode = response.getStatusLine().getStatusCode();
+            LOGGER.debug("PutBlob response: " + statusCode);
+            return statusCode >= HttpStatus.SC_OK && statusCode < HttpStatus.SC_MULTIPLE_CHOICES;
+        } catch (Throwable ex) {
             handleRequestException(LOGGER, ex);
         }
+
         return false;
     }
 
@@ -396,56 +384,51 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
     private TrivyResponse scanBlob(PutRequest input) {
         final String requestUrl = "%s/twirp/trivy.scanner.v1.Scanner/Scan".formatted(apiBaseUrl);
 
-        ScanRequest scan = new ScanRequest();
-
+        final var scan = new ScanRequest();
         scan.setTarget(input.getDiffID());
         scan.setArtifactID(input.getDiffID());
-        scan.setBlobIDS(new String[] {input.getDiffID()});
+        scan.setBlobIDS(new String[]{input.getDiffID()});
 
-        Options opts = new Options();
-        opts.setVulnType(new String[] {"os", "library"});
-        opts.setScanners(new String[] {"vuln"});
+        final var opts = new Options();
+        opts.setVulnType(new String[]{"os", "library"});
+        opts.setScanners(new String[]{"vuln"});
 
         scan.setOptions(opts);
 
-         try {
-            HttpUriRequest request = buildRequest(requestUrl, scan);
+        final HttpUriRequest request = buildRequest(requestUrl, scan);
 
-            try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
+        try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
+            if (response.getStatusLine().getStatusCode() >= HttpStatus.SC_OK && response.getStatusLine().getStatusCode() < HttpStatus.SC_MULTIPLE_CHOICES) {
+                final String responseString = EntityUtils.toString(response.getEntity());
+                final TrivyResponse trivyResponse = gson.fromJson(responseString, TrivyResponse.class);
 
-
-                if (response.getStatusLine().getStatusCode() >= HttpStatus.SC_OK && response.getStatusLine().getStatusCode() < HttpStatus.SC_MULTIPLE_CHOICES) {
-                    String responseString = EntityUtils.toString(response.getEntity());
-                    Gson gson = new Gson();
-                    var trivyResponse = gson.fromJson(responseString,TrivyResponse.class);
-
+                if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Scan response: " + response.getStatusLine().getStatusCode());
                     LOGGER.debug("Response from server: " + responseString);
-                    return trivyResponse;
-                } else {
-                    handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
                 }
+
+                return trivyResponse;
+            } else {
+                handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
             }
-        } catch (Throwable  ex) {
+        } catch (Throwable ex) {
             handleRequestException(LOGGER, ex);
         }
+
         return null;
     }
 
     private void deleteBlob(PutRequest input) {
         final String requestUrl = "%s/twirp/trivy.cache.v1.Cache/DeleteBlobs".formatted(apiBaseUrl);
-        DeleteRequest delete = new DeleteRequest();
-        delete.setBlobIDS(new String[] {input.getDiffID()});
+        final var delete = new DeleteRequest();
+        delete.setBlobIDS(new String[]{input.getDiffID()});
 
-         try {
-            HttpUriRequest request = buildRequest(requestUrl, delete);
-            try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
-                LOGGER.debug("DeleteBlob response: " + response.getStatusLine().getStatusCode());
-            };
-        } catch (Throwable  ex) {
+        final HttpUriRequest request = buildRequest(requestUrl, delete);
+        try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
+            LOGGER.debug("DeleteBlob response: " + response.getStatusLine().getStatusCode());
+        } catch (Throwable ex) {
             handleRequestException(LOGGER, ex);
         }
-
     }
 
     private void handle(final Component component, final org.dependencytrack.parser.trivy.model.Vulnerability data) {
@@ -457,17 +440,17 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
             return;
         }
 
-        try (QueryManager qm = new QueryManager()) {
+        try (final var qm = new QueryManager()) {
             final var trivyParser = new TrivyParser();
 
-            Vulnerability parsedVulnerability = trivyParser.parse(data, qm);
+            final Vulnerability parsedVulnerability = trivyParser.parse(data);
             final Component componentPersisted = qm.getObjectByUuid(Component.class, component.getUuid());
 
             if (componentPersisted != null && parsedVulnerability.getVulnId() != null) {
                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(parsedVulnerability.getSource(), parsedVulnerability.getVulnId());
 
                 if (vulnerability == null) {
-                    LOGGER.debug("Creating unavailable vulnerability:" + parsedVulnerability.getSource()  + " - " + parsedVulnerability.getVulnId());
+                    LOGGER.debug("Creating unavailable vulnerability:" + parsedVulnerability.getSource() + " - " + parsedVulnerability.getVulnId());
                     vulnerability = qm.createVulnerability(parsedVulnerability, false);
                     addVulnerabilityToCache(componentPersisted, vulnerability);
                 }
@@ -478,7 +461,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 qm.addVulnerability(vulnerability, componentPersisted, this.getAnalyzerIdentity());
 
                 Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
-                updateAnalysisCacheStats(qm, Vulnerability.Source.valueOf(vulnerability.getSource()), apiBaseUrl, componentPersisted.getPurl().getCoordinates(), componentPersisted.getCacheResult());
+                updateAnalysisCacheStats(qm, Vulnerability.Source.TRIVY, apiBaseUrl, componentPersisted.getPurl().getCoordinates(), componentPersisted.getCacheResult());
             }
         }
     }

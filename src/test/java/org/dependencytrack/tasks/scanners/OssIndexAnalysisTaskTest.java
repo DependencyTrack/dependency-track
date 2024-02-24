@@ -1,10 +1,10 @@
 package org.dependencytrack.tasks.scanners;
 
 import com.github.packageurl.PackageURL;
-import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
@@ -22,6 +22,7 @@ import java.util.Map;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
@@ -172,9 +173,9 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
                 }
         );
 
-        wireMock.verify(WireMock.exactly(3), postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
+        wireMock.verify(exactly(3), postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
                 .withHeader("Content-Type", equalTo("application/json"))
-                .withHeader("User-Agent", WireMock.matching("^Dependency-Track v\\d+.\\d+.\\d+.+$"))
+                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
                 .withRequestBody(equalToJson("""
                         {
                           "coordinates": [

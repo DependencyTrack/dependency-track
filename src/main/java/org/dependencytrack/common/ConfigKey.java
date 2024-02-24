@@ -20,22 +20,22 @@ package org.dependencytrack.common;
 
 import alpine.Config;
 
-import java.time.Duration;
-
 public enum ConfigKey implements Config.Key {
 
+    OSSINDEX_REQUEST_MAX_PURL("ossindex.request.max.purl", 128),
+    OSSINDEX_RETRY_MAX_ATTEMPTS("ossindex.retry.max.attempts", 10),
+    OSSINDEX_RETRY_BACKOFF_MULTIPLIER("ossindex.retry.backoff.multiplier", 2),
+    OSSINDEX_RETRY_BACKOFF_INITIAL_DURATION_MS("ossindex.retry.backoff.initial.duration.ms", 1000),
+    OSSINDEX_RETRY_BACKOFF_MAX_DURATION_MS("ossindex.retry.backoff.max.duration.ms", 60_000),
     SNYK_THREAD_POOL_SIZE("snyk.thread.pool.size", 10),
     SNYK_RETRY_MAX_ATTEMPTS("snyk.retry.max.attempts", 10),
-    SNYK_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER("snyk.retry.exponential.backoff.multiplier", 2),
-    SNYK_RETRY_EXPONENTIAL_BACKOFF_INITIAL_DURATION_SECONDS("snyk.retry.exponential.backoff.initial.duration.seconds", 1),
-    SNYK_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION_SECONDS("snyk.retry.exponential.backoff.max.duration.seconds", 60),
-    OSSINDEX_REQUEST_MAX_PURL("ossindex.request.max.purl", 128),
-    OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS("ossindex.retry.backoff.max.attempts", 10),
-    OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER("ossindex.retry.backoff.multiplier", 2),
-    OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION("ossindex.retry.backoff.max.duration", Duration.ofMinutes(10).toMillis()),
-    TRIVY_RETRY_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS("trivy.retry.backoff.max.attempts", 10),
-    TRIVY_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER("trivy.retry.backoff.multiplier", 2),
-    TRIVY_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION("trivy.retry.backoff.max.duration", Duration.ofMinutes(10).toMillis()),
+    SNYK_RETRY_BACKOFF_MULTIPLIER("snyk.retry.backoff.multiplier", 2),
+    SNYK_RETRY_BACKOFF_INITIAL_DURATION_MS("snyk.retry.backoff.initial.duration.ms", 1000),
+    SNYK_RETRY_BACKOFF_MAX_DURATION_MS("snyk.retry.backoff.max.duration.ms", 60_000),
+    TRIVY_RETRY_MAX_ATTEMPTS("trivy.retry.max.attempts", 10),
+    TRIVY_RETRY_BACKOFF_MULTIPLIER("trivy.retry.backoff.multiplier", 2),
+    TRIVY_RETRY_BACKOFF_INITIAL_DURATION_MS("trivy.retry.backoff.initial.duration.ms", 1000),
+    TRIVY_RETRY_BACKOFF_MAX_DURATION_MS("trivy.retry.backoff.max.duration.ms", 60_000),
     REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_ENABLED("repo.meta.analyzer.cacheStampedeBlocker.enabled", true),
     REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_LOCK_BUCKETS("repo.meta.analyzer.cacheStampedeBlocker.lock.buckets", 1000),
     REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_MAX_ATTEMPTS("repo.meta.analyzer.cacheStampedeBlocker.max.attempts", 10),

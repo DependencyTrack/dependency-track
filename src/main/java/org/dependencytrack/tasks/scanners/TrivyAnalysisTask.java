@@ -20,6 +20,7 @@ package org.dependencytrack.tasks.scanners;
 
 import alpine.Config;
 import alpine.common.logging.Logger;
+import alpine.common.metrics.Metrics;
 import alpine.common.util.UrlUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
@@ -27,27 +28,19 @@ import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
 import com.google.gson.Gson;
-
-import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
-import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.event.IndexEvent;
@@ -56,24 +49,41 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.Vulnerability.Source;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.parser.trivy.TrivyParser;
 import org.dependencytrack.parser.trivy.model.Application;
-import org.dependencytrack.parser.trivy.model.OS;
 import org.dependencytrack.parser.trivy.model.BlobInfo;
 import org.dependencytrack.parser.trivy.model.DeleteRequest;
 import org.dependencytrack.parser.trivy.model.Library;
+import org.dependencytrack.parser.trivy.model.OS;
 import org.dependencytrack.parser.trivy.model.Options;
+import org.dependencytrack.parser.trivy.model.Package;
 import org.dependencytrack.parser.trivy.model.PackageInfo;
 import org.dependencytrack.parser.trivy.model.PurlType;
 import org.dependencytrack.parser.trivy.model.PutRequest;
+import org.dependencytrack.parser.trivy.model.Result;
 import org.dependencytrack.parser.trivy.model.ScanRequest;
 import org.dependencytrack.parser.trivy.model.TrivyResponse;
-import org.dependencytrack.parser.trivy.model.Package;
-import org.dependencytrack.parser.trivy.TrivyParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
-import org.dependencytrack.parser.trivy.model.Result;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_INITIAL_DURATION_MS;
+import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_MAX_DURATION_MS;
+import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_MULTIPLIER;
+import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_MAX_ATTEMPTS;
+import static org.dependencytrack.util.RetryUtil.logRetryEventWith;
+import static org.dependencytrack.util.RetryUtil.maybeClosePreviousResult;
+import static org.dependencytrack.util.RetryUtil.withExponentialBackoff;
+import static org.dependencytrack.util.RetryUtil.withTransientCause;
+import static org.dependencytrack.util.RetryUtil.withTransientErrorCode;
 
 
 /**
@@ -88,19 +98,26 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
     private static final Retry RETRY;
 
     static {
-           IntervalFunction intervalWithCustomExponentialBackoff = IntervalFunction
-                .ofExponentialBackoff(
-                        IntervalFunction.DEFAULT_INITIAL_INTERVAL,
-                        Config.getInstance().getPropertyAsInt(ConfigKey.TRIVY_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER),
-                        Config.getInstance().getPropertyAsInt(ConfigKey.TRIVY_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION)
-                );
-        RetryConfig config = RetryConfig.custom()
-                .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.TRIVY_RETRY_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS))
-                .intervalFunction(intervalWithCustomExponentialBackoff)
-                .build();
-
-        RetryRegistry registry = RetryRegistry.of(config);
-        RETRY = registry.retry("trivy-api");
+        final RetryRegistry retryRegistry = RetryRegistry.of(RetryConfig.<CloseableHttpResponse>custom()
+                .intervalFunction(withExponentialBackoff(
+                        TRIVY_RETRY_BACKOFF_INITIAL_DURATION_MS,
+                        TRIVY_RETRY_BACKOFF_MULTIPLIER,
+                        TRIVY_RETRY_BACKOFF_MAX_DURATION_MS
+                ))
+                .maxAttempts(Config.getInstance().getPropertyAsInt(TRIVY_RETRY_MAX_ATTEMPTS))
+                .consumeResultBeforeRetryAttempt(maybeClosePreviousResult())
+                .retryOnException(withTransientCause())
+                .retryOnResult(withTransientErrorCode())
+                .failAfterMaxAttempts(true)
+                .build());
+        RETRY = retryRegistry.retry("trivy-api");
+        RETRY.getEventPublisher()
+                .onIgnoredError(logRetryEventWith(LOGGER))
+                .onError(logRetryEventWith(LOGGER))
+                .onRetry(logRetryEventWith(LOGGER));
+        TaggedRetryMetrics
+                .ofRetryRegistry(retryRegistry)
+                .bindTo(Metrics.getRegistry());
     }
 
     private String apiBaseUrl;

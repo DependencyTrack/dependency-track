@@ -65,7 +65,6 @@ import org.json.JSONObject;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -77,7 +76,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
+import static org.dependencytrack.common.ConfigKey.SNYK_RETRY_BACKOFF_INITIAL_DURATION_MS;
+import static org.dependencytrack.common.ConfigKey.SNYK_RETRY_BACKOFF_MAX_DURATION_MS;
+import static org.dependencytrack.common.ConfigKey.SNYK_RETRY_BACKOFF_MULTIPLIER;
+import static org.dependencytrack.common.ConfigKey.SNYK_RETRY_MAX_ATTEMPTS;
+import static org.dependencytrack.util.RetryUtil.logRetryEventWith;
+import static org.dependencytrack.util.RetryUtil.maybeClosePreviousResult;
+import static org.dependencytrack.util.RetryUtil.withExponentialBackoff;
+import static org.dependencytrack.util.RetryUtil.withTransientCause;
+import static org.dependencytrack.util.RetryUtil.withTransientErrorCode;
 
 /**
  * Subscriber task that performs an analysis of component using Snyk vulnerability REST API.
@@ -97,30 +104,35 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             PackageURL.StandardTypes.MAVEN,
             PackageURL.StandardTypes.NPM,
             PackageURL.StandardTypes.NUGET,
-            PackageURL.StandardTypes.PYPI
+            PackageURL.StandardTypes.PYPI,
+            "swift" // Not defined in StandardTypes
     );
     private static final Retry RETRY;
     private static final ExecutorService EXECUTOR;
 
     static {
         final RetryRegistry retryRegistry = RetryRegistry.of(RetryConfig.<CloseableHttpResponse>custom()
-                .intervalFunction(ofExponentialBackoff(
-                        Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_INITIAL_DURATION_SECONDS)),
-                        Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER),
-                        Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION_SECONDS))
+                .intervalFunction(withExponentialBackoff(
+                        SNYK_RETRY_BACKOFF_INITIAL_DURATION_MS,
+                        SNYK_RETRY_BACKOFF_MULTIPLIER,
+                        SNYK_RETRY_BACKOFF_MAX_DURATION_MS
                 ))
-                .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_MAX_ATTEMPTS))
-                .retryOnException(exception -> false)
-                .retryOnResult(response -> 429 == response.getStatusLine().getStatusCode())
+                .maxAttempts(Config.getInstance().getPropertyAsInt(SNYK_RETRY_MAX_ATTEMPTS))
+                .consumeResultBeforeRetryAttempt(maybeClosePreviousResult())
+                .retryOnException(withTransientCause())
+                .retryOnResult(withTransientErrorCode())
+                .failAfterMaxAttempts(true)
                 .build());
         RETRY = retryRegistry.retry("snyk-api");
         RETRY.getEventPublisher()
-                .onRetry(event -> LOGGER.debug("Will execute retry #%d in %s" .formatted(event.getNumberOfRetryAttempts(), event.getWaitInterval())))
-                .onError(event -> LOGGER.error("Retry failed after %d attempts: %s" .formatted(event.getNumberOfRetryAttempts(), event.getLastThrowable())));
-        TaggedRetryMetrics.ofRetryRegistry(retryRegistry)
+                .onIgnoredError(logRetryEventWith(LOGGER))
+                .onError(logRetryEventWith(LOGGER))
+                .onRetry(logRetryEventWith(LOGGER));
+        TaggedRetryMetrics
+                .ofRetryRegistry(retryRegistry)
                 .bindTo(Metrics.getRegistry());
 
-        // The number of threads to be used for Snyk analyzer are configurable.
+        // The number of threads to be used is configurable.
         // Default is 10. Can be set based on user requirements.
         final int threadPoolSize = Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_POOL_SIZE);
         final var threadFactory = new BasicThreadFactory.Builder()

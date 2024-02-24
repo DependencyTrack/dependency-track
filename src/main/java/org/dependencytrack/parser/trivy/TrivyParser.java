@@ -22,30 +22,24 @@ import alpine.common.logging.Logger;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.trivy.model.CVSS;
-import org.dependencytrack.persistence.QueryManager;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
+
+import static org.apache.commons.lang3.StringUtils.trimToNull;
 
 public class TrivyParser {
 
     private static final Logger LOGGER = Logger.getLogger(TrivyParser.class);
 
-    public Vulnerability parse(org.dependencytrack.parser.trivy.model.Vulnerability data, QueryManager qm) {
-        Vulnerability synchronizedVulnerability = new Vulnerability();
-        Vulnerability vulnerability = new Vulnerability();
-        List<VulnerableSoftware> vsList = new ArrayList<>();
-
+    public Vulnerability parse(org.dependencytrack.parser.trivy.model.Vulnerability data) {
+        var vulnerability = new Vulnerability();
         vulnerability.setSource(Vulnerability.Source.resolve(data.getVulnerabilityID()));
-
         vulnerability.setPatchedVersions(data.getFixedVersion());
 
         // get the id of the data record (vulnerability)
@@ -58,13 +52,13 @@ public class TrivyParser {
             vulnerability.setPublished(parseDate(data.getPublishedDate()));
             vulnerability.setCreated(vulnerability.getPublished());
         } catch (ParseException ex) {
-            LOGGER.warn("Unable to parse published date %s".formatted(data.getPublishedDate()));
+            LOGGER.warn("Unable to parse published date %s".formatted(data.getPublishedDate()), ex);
         }
 
         try {
             vulnerability.setUpdated(parseDate(data.getLastModifiedDate()));
         } catch (ParseException ex) {
-            LOGGER.warn("Unable to parse last modified date %s".formatted(data.getLastModifiedDate()));
+            LOGGER.warn("Unable to parse last modified date %s".formatted(data.getLastModifiedDate()), ex);
         }
 
         vulnerability.setReferences(addReferences(data.getReferences()));
@@ -111,10 +105,14 @@ public class TrivyParser {
 
     public Vulnerability setCvssScore(CVSS cvss, Vulnerability vulnerability) {
         if (cvss != null) {
-            vulnerability.setCvssV2Vector(cvss.getV2Vector());
-            vulnerability.setCvssV3Vector(cvss.getV3Vector());
-            vulnerability.setCvssV2BaseScore(BigDecimal.valueOf(cvss.getV2Score()));
-            vulnerability.setCvssV3BaseScore(BigDecimal.valueOf(cvss.getV3Score()));
+            vulnerability.setCvssV2Vector(trimToNull(cvss.getV2Vector()));
+            vulnerability.setCvssV3Vector(trimToNull(cvss.getV3Vector()));
+            if (cvss.getV2Score() > 0.0) {
+                vulnerability.setCvssV2BaseScore(BigDecimal.valueOf(cvss.getV2Score()));
+            }
+            if (cvss.getV3Score() > 0.0) {
+                vulnerability.setCvssV3BaseScore(BigDecimal.valueOf(cvss.getV3Score()));
+            }
         }
 
         return vulnerability;

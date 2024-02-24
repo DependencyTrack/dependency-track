@@ -353,7 +353,7 @@ public class BomResource extends AlpineResource {
             final byte[] decoded = Base64.getDecoder().decode(encodedBomData);
             try (final ByteArrayInputStream bain = new ByteArrayInputStream(decoded)) {
                 final byte[] content = IOUtils.toByteArray(new BOMInputStream((bain)));
-                final BomUploadEvent bomUploadEvent = new BomUploadEvent(project.getUuid(), content);
+                final BomUploadEvent bomUploadEvent = new BomUploadEvent(qm.getPersistenceManager().detachCopy(project), content);
                 Event.dispatch(bomUploadEvent);
                 return Response.ok(Collections.singletonMap("token", bomUploadEvent.getChainIdentifier())).build();
             } catch (IOException e) {
@@ -378,7 +378,7 @@ public class BomResource extends AlpineResource {
                     final byte[] content = IOUtils.toByteArray(new BOMInputStream((in)));
                     // todo: make option to combine all the bom data so components are reconciled in a single pass.
                     // todo: https://github.com/DependencyTrack/dependency-track/issues/130
-                    final BomUploadEvent bomUploadEvent = new BomUploadEvent(project.getUuid(), content);
+                    final BomUploadEvent bomUploadEvent = new BomUploadEvent(qm.getPersistenceManager().detachCopy(project), content);
                     Event.dispatch(bomUploadEvent);
 
                     BomUploadResponse bomUploadResponse = new BomUploadResponse();

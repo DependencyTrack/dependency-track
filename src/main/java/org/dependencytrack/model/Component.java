@@ -361,8 +361,10 @@ public class Component implements Serializable {
     private UUID uuid;
 
     private transient String bomRef;
+    private transient List<org.cyclonedx.model.License> licenseCandidates;
     private transient DependencyMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
+    private transient boolean isNew;
     private transient int usedBy;
     private transient JsonObject cacheResult;
     private transient Set<String> dependencyGraph;
@@ -765,6 +767,14 @@ public class Component implements Serializable {
         this.repositoryMeta = repositoryMeta;
     }
 
+    public boolean isNew() {
+        return isNew;
+    }
+
+    public void setNew(final boolean aNew) {
+        isNew = aNew;
+    }
+
     public Double getLastInheritedRiskScore() {
         return lastInheritedRiskScore;
     }
@@ -779,6 +789,14 @@ public class Component implements Serializable {
 
     public void setBomRef(String bomRef) {
         this.bomRef = bomRef;
+    }
+
+    public List<org.cyclonedx.model.License> getLicenseCandidates() {
+        return licenseCandidates;
+    }
+
+    public void setLicenseCandidates(final List<org.cyclonedx.model.License> licenseCandidates) {
+        this.licenseCandidates = licenseCandidates;
     }
 
     public int getUsedBy() {

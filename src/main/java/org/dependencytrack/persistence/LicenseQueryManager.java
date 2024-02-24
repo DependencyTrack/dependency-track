@@ -158,7 +158,7 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a synchronize License object
      */
-    License synchronizeLicense(License license, boolean commitIndex) {
+    public License synchronizeLicense(License license, boolean commitIndex) {
         License result = updateLicense(license, commitIndex);
         if (result == null) {
             result = createLicense(license, commitIndex);

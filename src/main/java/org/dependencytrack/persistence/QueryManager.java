@@ -573,7 +573,7 @@ public class QueryManager extends AlpineQueryManager {
         return getLicenseQueryManager().getCustomLicense(licenseName);
     }
 
-    License synchronizeLicense(License license, boolean commitIndex) {
+    public License synchronizeLicense(License license, boolean commitIndex) {
         return getLicenseQueryManager().synchronizeLicense(license, commitIndex);
     }
 
@@ -870,6 +870,14 @@ public class QueryManager extends AlpineQueryManager {
 
     public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
         return getComponentQueryManager().matchSingleIdentity(project, cid);
+    }
+
+    public Component matchSingleIdentityExact(final Project project, final ComponentIdentity cid) {
+        return getComponentQueryManager().matchSingleIdentityExact(project, cid);
+    }
+
+    public Component matchFirstIdentityExact(final Project project, final ComponentIdentity cid) {
+        return getComponentQueryManager().matchFirstIdentityExact(project, cid);
     }
 
     public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {

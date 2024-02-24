@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # pip3 install --user defusedxml jinja2 requests
-# python3 ./dev/scripts/cwe-dictionary-generate.py -o src/main/java/org/dependencytrack/parser/common/resolver/CweDictionary.java
+# python3 ./dev/scripts/cwe-dictionary-generate.py -v 4.13 \
+#   -o src/main/java/org/dependencytrack/parser/common/resolver/CweDictionary.java
 
 import os.path
 import zipfile
@@ -61,14 +62,15 @@ if __name__ == "__main__":
     arg_parser = ArgumentParser()
     arg_parser.add_argument("-p", "--package", default="org.dependencytrack.parser.common.resolver", help="Package name")
     arg_parser.add_argument("-o", "--output", type=Path, required=True, help="Output file path")
+    arg_parser.add_argument("-v", "--version", type=str, required=True, help="CWE dictionary version")
     args = arg_parser.parse_args()
 
     with TemporaryFile(suffix=".zip") as tmp:
-        with requests.get("https://cwe.mitre.org/data/xml/cwec_v4.12.xml.zip") as res:
+        with requests.get(f"https://cwe.mitre.org/data/xml/cwec_v{args.version}.xml.zip") as res:
             tmp.write(res.content)
         tmp.seek(0)
         with zipfile.ZipFile(tmp) as zip:
-            with zip.open("cwec_v4.12.xml") as dict_file:
+            with zip.open(f"cwec_v{args.version}.xml") as dict_file:
                 tree: ElementTree = parse_etree(dict_file)
 
     tree_root = tree.getroot()

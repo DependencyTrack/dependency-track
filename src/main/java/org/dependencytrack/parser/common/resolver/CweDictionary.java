@@ -22,7 +22,7 @@ import javax.annotation.Generated;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Generated(value = "cwe-dictionary-generate.py", date = "2023-12-08T22:31:25.627365+00:00")
+@Generated(value = "cwe-dictionary-generate.py", date = "2024-02-24T10:51:02.559228+00:00")
 public final class CweDictionary {
 
     public static final Map<Integer, String> DICTIONARY = new LinkedHashMap<>();
@@ -1215,7 +1215,7 @@ public final class CweDictionary {
         DICTIONARY.put(1185, "SEI CERT Perl Coding Standard - Guidelines 07. File Input and Output (FIO)");
         DICTIONARY.put(1186, "SEI CERT Perl Coding Standard - Guidelines 50. Miscellaneous (MSC)");
         DICTIONARY.put(1187, "DEPRECATED: Use of Uninitialized Resource");
-        DICTIONARY.put(1188, "Insecure Default Initialization of Resource");
+        DICTIONARY.put(1188, "Initialization of a Resource with an Insecure Default");
         DICTIONARY.put(1189, "Improper Isolation of Shared Resources on System-on-a-Chip (SoC)");
         DICTIONARY.put(1190, "DMA Device Enabled Too Early in Boot Phase");
         DICTIONARY.put(1191, "On-Chip Debug and Test Interface With Improper Access Control");
@@ -1446,6 +1446,7 @@ public final class CweDictionary {
         DICTIONARY.put(1416, "Comprehensive Categorization: Resource Lifecycle Management");
         DICTIONARY.put(1417, "Comprehensive Categorization: Sensitive Information Exposure");
         DICTIONARY.put(1418, "Comprehensive Categorization: Violation of Secure Design Principles");
+        DICTIONARY.put(1419, "Incorrect Initialization of Resource");
         DICTIONARY.put(1425, "Weaknesses in the 2023 CWE Top 25 Most Dangerous Software Weaknesses");
         DICTIONARY.put(2000, "Comprehensive CWE Dictionary");
         

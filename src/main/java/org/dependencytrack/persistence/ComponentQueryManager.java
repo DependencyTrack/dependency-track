@@ -21,6 +21,7 @@ package org.dependencytrack.persistence;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.model.ApiKey;
+import alpine.model.IConfigProperty;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.persistence.PaginatedResult;
@@ -31,6 +32,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
@@ -830,4 +832,59 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         }
         dependencyGraph.putAll(addToDependencyGraph);
     }
+
+    /**
+     * Returns a ComponentProperty with the specified groupName and propertyName.
+     *
+     * @param component    the component the property belongs to
+     * @param groupName    the group name of the config property
+     * @param propertyName the name of the property
+     * @return a ComponentProperty object
+     */
+    @Override
+    public ComponentProperty getComponentProperty(final Component component, final String groupName, final String propertyName) {
+        final Query<ComponentProperty> query = this.pm.newQuery(ComponentProperty.class, "component == :component && groupName == :groupName && propertyName == :propertyName");
+        query.setRange(0, 1);
+        return singleResult(query.execute(component, groupName, propertyName));
+    }
+
+    /**
+     * Returns a List of ProjectProperty's for the specified project.
+     *
+     * @param component the project the property belongs to
+     * @return a List ProjectProperty objects
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<ComponentProperty> getComponentProperties(final Component component) {
+        final Query<ComponentProperty> query = this.pm.newQuery(ComponentProperty.class, "component == :component");
+        query.setOrdering("groupName asc, propertyName asc");
+        return (List<ComponentProperty>) query.execute(component);
+    }
+
+    /**
+     * Creates a key/value pair (ComponentProperty) for the specified Project.
+     *
+     * @param component     the Component to create the property for
+     * @param groupName     the group name of the property
+     * @param propertyName  the name of the property
+     * @param propertyValue the value of the property
+     * @param propertyType  the type of property
+     * @param description   a description of the property
+     * @return the created ComponentProperty object
+     */
+    @Override
+    public ComponentProperty createComponentProperty(final Component component, final String groupName, final String propertyName,
+                                                     final String propertyValue, final IConfigProperty.PropertyType propertyType,
+                                                     final String description) {
+        final ComponentProperty property = new ComponentProperty();
+        property.setComponent(component);
+        property.setGroupName(groupName);
+        property.setPropertyName(propertyName);
+        property.setPropertyValue(propertyValue);
+        property.setPropertyType(propertyType);
+        property.setDescription(description);
+        return persist(property);
+    }
+
 }

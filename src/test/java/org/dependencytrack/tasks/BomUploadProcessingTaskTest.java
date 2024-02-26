@@ -20,6 +20,7 @@ package org.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
 import alpine.event.framework.EventService;
+import alpine.model.IConfigProperty.PropertyType;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.notification.NotificationService;
@@ -177,7 +178,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
                 resourceToByteArray("/unit/bom-1.xml"));
         bomUploadProcessingTaskSupplier.get().inform(bomUploadEvent);
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 6, Duration.ofSeconds(5));
+        awaitBomProcessedNotification();
 
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
@@ -237,6 +238,22 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(component.getCpe()).isEqualTo("cpe:/a:example:xmlutil:1.0.0");
         assertThat(component.getPurl().canonicalize()).isEqualTo("pkg:maven/com.example/xmlutil@1.0.0?packaging=jar");
         assertThat(component.getLicenseUrl()).isEqualTo("https://www.apache.org/licenses/LICENSE-2.0.txt");
+        assertThat(component.getProperties()).satisfiesExactly(
+                property -> {
+                    assertThat(property.getGroupName()).isEqualTo("foo");
+                    assertThat(property.getPropertyName()).isEqualTo("bar");
+                    assertThat(property.getPropertyValue()).isEqualTo("baz");
+                    assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
+                    assertThat(property.getDescription()).isNull();
+                },
+                property -> {
+                    assertThat(property.getGroupName()).isEqualTo("internal");
+                    assertThat(property.getPropertyName()).isEqualTo("foo");
+                    assertThat(property.getPropertyValue()).isEqualTo("bar");
+                    assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
+                    assertThat(property.getDescription()).isNull();
+                }
+        );
 
         assertThat(qm.getAllVulnerabilities(component)).hasSize(2);
         assertThat(NOTIFICATIONS).satisfiesExactly(

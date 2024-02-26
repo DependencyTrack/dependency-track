@@ -41,6 +41,7 @@ import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.License;
@@ -74,6 +75,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -436,11 +438,14 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
                 applyIfChanged(persistentComponent, component, Component::getResolvedLicense, persistentComponent::setResolvedLicense);
                 applyIfChanged(persistentComponent, component, Component::getLicense, persistentComponent::setLicense);
                 applyIfChanged(persistentComponent, component, Component::getLicenseUrl, persistentComponent::setLicenseUrl);
+                applyIfChanged(persistentComponent, component, Component::getLicenseExpression, persistentComponent::setLicenseExpression);
                 applyIfChanged(persistentComponent, component, Component::isInternal, persistentComponent::setInternal);
                 applyIfChanged(persistentComponent, component, Component::getExternalReferences, persistentComponent::setExternalReferences);
 
                 idsOfComponentsToDelete.remove(persistentComponent.getId());
             }
+
+            processComponentProperties(qm, persistentComponent, component.getProperties());
 
             // Update component identities in our Identity->BOMRef map,
             // as after persisting the components, their identities now include UUIDs.
@@ -461,6 +466,39 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
         }
 
         return persistentComponents;
+    }
+
+    private void processComponentProperties(final QueryManager qm, final Component component, final List<ComponentProperty> properties) {
+        if (properties == null || properties.isEmpty()) {
+            // TODO: Should we delete pre-existing properties that no longer exist in the BOM?
+            return;
+        }
+
+        if (component.getProperties() == null || component.getProperties().isEmpty()) {
+            for (final ComponentProperty property : properties) {
+                property.setComponent(component);
+                qm.getPersistenceManager().makePersistent(property);
+            }
+
+            return;
+        }
+
+        for (final ComponentProperty property : component.getProperties()) {
+            final Optional<ComponentProperty> optionalPersistentProperty = component.getProperties().stream()
+                    .filter(persistentProperty -> Objects.equals(persistentProperty.getGroupName(), property.getGroupName()))
+                    .filter(persistentProperty -> Objects.equals(persistentProperty.getPropertyName(), property.getPropertyName()))
+                    .findFirst();
+            if (optionalPersistentProperty.isEmpty()) {
+                property.setComponent(component);
+                qm.getPersistenceManager().makePersistent(property);
+                continue;
+            }
+
+            final ComponentProperty persistentProperty = optionalPersistentProperty.get();
+            applyIfChanged(persistentProperty, property, ComponentProperty::getPropertyValue, persistentProperty::setPropertyValue);
+            applyIfChanged(persistentProperty, property, ComponentProperty::getPropertyType, persistentProperty::setPropertyType);
+            applyIfChanged(persistentProperty, property, ComponentProperty::getDescription, persistentProperty::setDescription);
+        }
     }
 
     private Map<ComponentIdentity, ServiceComponent> processServices(final QueryManager qm,

@@ -79,6 +79,9 @@ jobs:
           $(cat target/checksums.txt)
           \`\`\`
           EOF
+          
+          gh release view ${{ needs.read-version.outputs.version }} \
+            --json body --jq .body >> .github/default-release-notes.md
 
           gh release edit ${{ needs.read-version.outputs.version }} \
             --notes-file ".github/default-release-notes.md"

@@ -78,7 +78,8 @@ public class VexResource extends AlpineResource {
     @Produces({CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @ApiOperation(
             value = "Returns a VEX for a project in CycloneDX format",
-            response = String.class
+            response = String.class,
+            notes = "<p>Requires permission <b>VULNERABILITY_ANALYSIS</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -122,7 +123,7 @@ public class VexResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload a supported VEX document",
-            notes = "Expects CycloneDX along and a valid project UUID. If a UUID is not specified then the projectName and projectVersion must be specified."
+            notes = "Expects CycloneDX along and a valid project UUID. If a UUID is not specified then the projectName and projectVersion must be specified. <p>Requires permission <b>VULNERABILITY_ANALYSIS</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -159,7 +160,7 @@ public class VexResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload a supported VEX document",
-            notes = "Expects CycloneDX along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified."
+            notes = "Expects CycloneDX along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified. <p>Requires permission <b>VULNERABILITY_ANALYSIS</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

@@ -69,7 +69,8 @@ public class RepositoryResource extends AlpineResource {
             value = "Returns a list of all repositories",
             response = Repository.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of repositories")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of repositories"),
+            notes = "<p>Requires permission <b>SYSTEM_CONFIGURATION</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -89,7 +90,8 @@ public class RepositoryResource extends AlpineResource {
             value = "Returns repositories that support the specific type",
             response = Repository.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of repositories")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of repositories"),
+            notes = "<p>Requires permission <b>SYSTEM_CONFIGURATION</b></p>"
 
     )
     @ApiResponses(value = {
@@ -148,7 +150,8 @@ public class RepositoryResource extends AlpineResource {
     @ApiOperation(
             value = "Creates a new repository",
             response = Repository.class,
-            code = 201
+            code = 201,
+            notes = "<p>Requires permission <b>SYSTEM_CONFIGURATION</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -186,7 +189,8 @@ public class RepositoryResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a repository",
-            response = Repository.class
+            response = Repository.class,
+            notes = "<p>Requires permission <b>SYSTEM_CONFIGURATION</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -227,7 +231,8 @@ public class RepositoryResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a repository",
-            code = 204
+            code = 204,
+            notes = "<p>Requires permission <b>SYSTEM_CONFIGURATION</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

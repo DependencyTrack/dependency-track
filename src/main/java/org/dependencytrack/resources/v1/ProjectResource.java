@@ -80,7 +80,8 @@ public class ProjectResource extends AlpineResource {
             value = "Returns a list of all projects",
             response = Project.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects"),
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -113,7 +114,8 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a specific project",
-            response = Project.class
+            response = Project.class,
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -141,7 +143,12 @@ public class ProjectResource extends AlpineResource {
     @GET
     @Path("/lookup")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Returns a specific project by its name and version", response = Project.class, nickname = "getProjectByNameAndVersion")
+    @ApiOperation(
+        value = "Returns a specific project by its name and version", 
+        response = Project.class, 
+        nickname = "getProjectByNameAndVersion", 
+        notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
@@ -174,7 +181,8 @@ public class ProjectResource extends AlpineResource {
             value = "Returns a list of all projects by tag",
             response = Project.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects with the tag")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects with the tag"),
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -201,7 +209,8 @@ public class ProjectResource extends AlpineResource {
             value = "Returns a list of all projects by classifier",
             response = Project.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects of the specified classifier")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects of the specified classifier"),
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -230,7 +239,8 @@ public class ProjectResource extends AlpineResource {
             value = "Creates a new project",
             notes = "If a parent project exists, the UUID of the parent project is required ",
             response = Project.class,
-            code = 201
+            code = 201,
+            notes = "<p>Requires permission <b>PORTFOLIO_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -282,7 +292,8 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a project",
-            response = Project.class
+            response = Project.class,
+            notes = "<p>Requires permission <b>PORTFOLIO_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -344,7 +355,8 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Partially updates a project",
-            response = Project.class
+            response = Project.class,
+            notes = "<p>Requires permission <b>PORTFOLIO_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -470,7 +482,8 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a project",
-            code = 204
+            code = 204,
+            notes = "<p>Requires permission <b>PORTFOLIO_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -503,7 +516,8 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Clones a project",
-            response = Project.class
+            response = Project.class,
+            notes = "<p>Requires permission <b>PORTFOLIO_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -544,7 +558,8 @@ public class ProjectResource extends AlpineResource {
             value = "Returns a list of all children for a project",
             response = Project.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects"),
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -578,7 +593,8 @@ public class ProjectResource extends AlpineResource {
             value = "Returns a list of all children for a project by classifier",
             response = Project.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects"),
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -616,7 +632,8 @@ public class ProjectResource extends AlpineResource {
             value = "Returns a list of all children for a project by tag",
             response = Project.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects"),
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -654,7 +671,8 @@ public class ProjectResource extends AlpineResource {
             value = "Returns a list of all projects without the descendants of the selected project",
             response = Project.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects"),
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

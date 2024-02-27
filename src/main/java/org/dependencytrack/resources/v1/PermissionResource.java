@@ -62,7 +62,8 @@ public class PermissionResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of all permissions",
             response = alpine.model.Permission.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <b>ACCESS_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -81,7 +82,8 @@ public class PermissionResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Adds the permission to the specified username.",
-            response = UserPrincipal.class
+            response = UserPrincipal.class,
+            notes = "<p>Requires permission <b>ACCESS_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The user already has the specified permission assigned"),
@@ -121,7 +123,8 @@ public class PermissionResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Removes the permission from the user.",
-            response = UserPrincipal.class
+            response = UserPrincipal.class,
+            notes = "<p>Requires permission <b>ACCESS_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The user already has the specified permission assigned"),
@@ -162,7 +165,8 @@ public class PermissionResource extends AlpineResource {
     @ApiOperation(
             value = "Adds the permission to the specified team.",
             notes = "Requires 'manage users' permission.",
-            response = Team.class
+            response = Team.class,
+            notes = "<p>Requires permission <b>ACCESS_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The team already has the specified permission assigned"),
@@ -202,7 +206,8 @@ public class PermissionResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Removes the permission from the team.",
-            response = Team.class
+            response = Team.class,
+            notes = "<p>Requires permission <b>ACCESS_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The team already has the specified permission assigned"),

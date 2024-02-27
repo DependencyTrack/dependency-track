@@ -72,7 +72,7 @@ public class LdapResource extends AlpineResource {
             response = String.class,
             responseContainer = "List",
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of ldap groups that match the specified search criteria"),
-            notes = "This API performs a pass-thru query to the configured LDAP server. Search criteria results are cached using default Alpine CacheManager policy"
+            notes = "This API performs a pass-thru query to the configured LDAP server. Search criteria results are cached using default Alpine CacheManager policy <p>Requires permission <b>ACCESS_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -116,7 +116,8 @@ public class LdapResource extends AlpineResource {
     @ApiOperation(
             value = "Returns the DNs of all groups mapped to the specified team",
             response = String.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <b>ACCESS_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -141,7 +142,8 @@ public class LdapResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Adds a mapping",
-            response = MappedLdapGroup.class
+            response = MappedLdapGroup.class,
+            notes = "<p>Requires permission <b>ACCESS_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -175,7 +177,8 @@ public class LdapResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Removes a mapping",
-            response = MappedLdapGroup.class
+            response = MappedLdapGroup.class,
+            notes = "<p>Requires permission <b>ACCESS_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

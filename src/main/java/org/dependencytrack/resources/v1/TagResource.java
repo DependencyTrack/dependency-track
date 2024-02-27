@@ -50,7 +50,8 @@ public class TagResource extends AlpineResource {
             value = "Returns a list of all tags",
             response = Tag.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of tags")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of tags"),
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")

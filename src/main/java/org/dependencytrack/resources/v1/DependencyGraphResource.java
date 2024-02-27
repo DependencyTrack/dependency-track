@@ -70,7 +70,8 @@ public class DependencyGraphResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of specific components and services from project UUID",
             response = DependencyGraphResponse.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -108,7 +109,8 @@ public class DependencyGraphResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of specific components and services from component UUID",
             response = DependencyGraphResponse.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

@@ -120,7 +120,8 @@ public class LicenseResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Creates a new custom license",
-            response = License.class
+            response = License.class,
+            notes = "<p>Requires permission <b>SYSTEM_CONFIGURATION</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -150,7 +151,8 @@ public class LicenseResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a custom license",
-            code = 204
+            code = 204,
+            notes = "<p>Requires permission <b>SYSTEM_CONFIGURATION</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

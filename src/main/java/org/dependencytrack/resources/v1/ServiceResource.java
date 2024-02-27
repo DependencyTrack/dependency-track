@@ -63,7 +63,8 @@ public class ServiceResource extends AlpineResource {
             value = "Returns a list of all services for a given project",
             response = ServiceComponent.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of services")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of services"),
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -92,7 +93,8 @@ public class ServiceResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a specific service",
-            response = ServiceComponent.class
+            response = ServiceComponent.class,
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -126,7 +128,8 @@ public class ServiceResource extends AlpineResource {
     @ApiOperation(
             value = "Creates a new service",
             response = ServiceComponent.class,
-            code = 201
+            code = 201,
+            notes = "<p>Requires permission <b>PORTFOLIO_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -177,7 +180,8 @@ public class ServiceResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a service",
-            response = ServiceComponent.class
+            response = ServiceComponent.class,
+            notes = "<p>Requires permission <b>PORTFOLIO_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -227,7 +231,8 @@ public class ServiceResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a service",
-            code = 204
+            code = 204,
+            notes = "<p>Requires permission <b>PORTFOLIO_MANAGEMENT</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

@@ -45,7 +45,8 @@ public class OsvEcosytemResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of all ecosystems in OSV",
             response = String.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <b>SYSTEM_CONFIGURATION</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -63,7 +64,8 @@ public class OsvEcosytemResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of available inactive ecosystems in OSV to be selected by user",
             response = String.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <b>SYSTEM_CONFIGURATION</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")

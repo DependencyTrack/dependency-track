@@ -68,7 +68,8 @@ public class AnalysisResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Retrieves an analysis trail",
-            response = Analysis.class
+            response = Analysis.class,
+            notes = "<p>Requires permission <b>VIEW_VULNERABILITY</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -115,7 +116,8 @@ public class AnalysisResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Records an analysis decision",
-            response = Analysis.class
+            response = Analysis.class,
+            notes = "<p>Requires permission <b>VULNERABILITY_ANALYSIS</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

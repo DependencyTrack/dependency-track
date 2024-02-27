@@ -55,7 +55,8 @@ public class SearchResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Processes and returns search results",
-            response = SearchResult.class
+            response = SearchResult.class,
+            notes = "<p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -73,7 +74,7 @@ public class SearchResource extends AlpineResource {
     @ApiOperation(
             value = "Processes and returns search results",
             response = SearchResult.class,
-            notes = "Preferred search endpoint"
+            notes = "Preferred search endpoint <p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -91,7 +92,7 @@ public class SearchResource extends AlpineResource {
     @ApiOperation(
             value = "Processes and returns search results",
             response = SearchResult.class,
-            notes = "Preferred search endpoint"
+            notes = "Preferred search endpoint <p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -109,7 +110,7 @@ public class SearchResource extends AlpineResource {
     @ApiOperation(
             value = "Processes and returns search results",
             response = SearchResult.class,
-            notes = "Preferred search endpoint"
+            notes = "Preferred search endpoint <p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -127,7 +128,7 @@ public class SearchResource extends AlpineResource {
     @ApiOperation(
             value = "Processes and returns search results",
             response = SearchResult.class,
-            notes = "Preferred search endpoint"
+            notes = "Preferred search endpoint <p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -145,7 +146,7 @@ public class SearchResource extends AlpineResource {
     @ApiOperation(
             value = "Processes and returns search results",
             response = SearchResult.class,
-            notes = "Preferred search endpoint"
+            notes = "Preferred search endpoint <p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -163,7 +164,7 @@ public class SearchResource extends AlpineResource {
     @ApiOperation(
             value = "Processes and returns search results",
             response = SearchResult.class,
-            notes = "Preferred search endpoint"
+            notes = "Preferred search endpoint <p>Requires permission <b>VIEW_PORTFOLIO</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -185,7 +186,8 @@ public class SearchResource extends AlpineResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Rebuild lucene indexes for search operations"
+            value = "Rebuild lucene indexes for search operations",
+            notes = "<p>Requires permission <b>SYSTEM_CONFIGURATION</b></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

@@ -104,7 +104,7 @@ jobs:
           gh release create "${{ needs.prepare-release.outputs.version }}" \
             --target "${{ needs.prepare-release.outputs.release-branch }}" \
             --title "${{ needs.prepare-release.outputs.version }}" \
-            --notes-file ".github/default-release-notes.md"
+            --generate-notes
 
   post-release:
     runs-on: ubuntu-latest

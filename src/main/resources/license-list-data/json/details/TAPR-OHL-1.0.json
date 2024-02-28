@@ -6,11 +6,11 @@
   "licenseId": "TAPR-OHL-1.0",
   "crossRef": [
     {
-      "match": "N/A",
+      "match": "false",
       "url": "https://www.tapr.org/OHL",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2023-10-05T15:14:11Z",
+      "isLive": true,
+      "timestamp": "2024-02-08T16:35:59Z",
       "isWayBackLink": false,
       "order": 0
     }

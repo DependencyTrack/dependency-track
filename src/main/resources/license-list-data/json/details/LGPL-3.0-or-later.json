@@ -9,10 +9,19 @@
   "crossRef": [
     {
       "match": "false",
+      "url": "https://www.gnu.org/licenses/lgpl+gpl-3.0.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-02-08T16:35:43Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
       "url": "https://www.gnu.org/licenses/lgpl-3.0-standalone.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-10-05T15:16:50Z",
+      "timestamp": "2024-02-08T16:35:43Z",
       "isWayBackLink": false,
       "order": 0
     },
@@ -21,18 +30,9 @@
       "url": "https://opensource.org/licenses/LGPL-3.0",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2023-10-05T15:16:50Z",
+      "timestamp": "2024-02-08T16:35:43Z",
       "isWayBackLink": false,
       "order": 2
-    },
-    {
-      "match": "false",
-      "url": "https://www.gnu.org/licenses/lgpl+gpl-3.0.txt",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-10-05T15:16:50Z",
-      "isWayBackLink": false,
-      "order": 1
     }
   ],
   "seeAlso": [

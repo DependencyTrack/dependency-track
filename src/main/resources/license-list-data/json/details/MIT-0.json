@@ -8,10 +8,19 @@
   "crossRef": [
     {
       "match": "false",
+      "url": "https://github.com/aws/mit-0",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-02-08T16:30:42Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "false",
       "url": "https://github.com/awsdocs/aws-cloud9-user-guide/blob/master/LICENSE-SAMPLECODE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-10-05T15:09:35Z",
+      "timestamp": "2024-02-08T16:30:42Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -20,18 +29,9 @@
       "url": "https://romanrm.net/mit-zero",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-10-05T15:09:37Z",
+      "timestamp": "2024-02-08T16:30:44Z",
       "isWayBackLink": false,
       "order": 1
-    },
-    {
-      "match": "false",
-      "url": "https://github.com/aws/mit-0",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-10-05T15:09:37Z",
-      "isWayBackLink": false,
-      "order": 0
     }
   ],
   "seeAlso": [

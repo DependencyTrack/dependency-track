@@ -8,11 +8,11 @@
   "licenseId": "Unlicense",
   "crossRef": [
     {
-      "match": "N/A",
+      "match": "false",
       "url": "https://unlicense.org/",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2023-10-05T15:15:24Z",
+      "isLive": true,
+      "timestamp": "2024-02-08T16:30:23Z",
       "isWayBackLink": false,
       "order": 0
     }

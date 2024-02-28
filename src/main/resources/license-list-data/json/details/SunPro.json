@@ -10,7 +10,7 @@
       "url": "https://github.com/freebsd/freebsd-src/blob/main/lib/msun/src/e_lgammal.c",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-10-05T15:20:38Z",
+      "timestamp": "2024-02-08T16:30:35Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -19,7 +19,7 @@
       "url": "https://github.com/freebsd/freebsd-src/blob/main/lib/msun/src/e_acosh.c",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-10-05T15:20:38Z",
+      "timestamp": "2024-02-08T16:30:36Z",
       "isWayBackLink": false,
       "order": 0
     }
@@ -29,6 +29,5 @@
     "https://github.com/freebsd/freebsd-src/blob/main/lib/msun/src/e_lgammal.c"
   ],
   "isOsiApproved": false,
-  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e \n            Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.\n         \u003c/var\u003e\n         \u003cp\u003e\n            Developed at\u003cvar class\u003d\"replaceable-license-text\"\u003e SunPro\u003c/var\u003e\n            , a Sun Microsystems, Inc. business.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Permission to use, copy, modify, and distribute this software\n            is freely granted, provided that this notice is preserved.\n         \u003c/p\u003e\n\n      ",
-  "standardLicenseHeaderHtml": "\n      "
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e \n            Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.\n         \u003c/var\u003e\n         \u003cp\u003e\n            Developed at\u003cvar class\u003d\"replaceable-license-text\"\u003e SunPro\u003c/var\u003e\n            , a Sun Microsystems, Inc. business.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Permission to use, copy, modify, and distribute this software\n            is freely granted, provided that this notice is preserved.\n         \u003c/p\u003e\n\n      "
 }

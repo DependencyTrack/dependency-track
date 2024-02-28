@@ -1,0 +1,13 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "--- Optional exception to the license ---\n\nAs an exception, if, as a result of your compiling your source code, portions\nof this Software are embedded into a machine-executable object form of such\nsource code, you may redistribute such embedded portions in such object form\nwithout including the above copyright and permission notices.\n",
+  "name": "fmt exception",
+  "licenseComments": "Typically used with MIT.",
+  "seeAlso": [
+    "https://github.com/fmtlib/fmt/blob/master/LICENSE",
+    "https://github.com/fmtlib/fmt/blob/2eb363297b24cd71a68ccfb20ff755430f17e60f/LICENSE#L22C1-L27C62"
+  ],
+  "licenseExceptionId": "fmt-exception",
+  "licenseExceptionTemplate": "\u003c\u003cbeginOptional\u003e\u003e--- Optional exception to the license ---\n\n\u003c\u003cendOptional\u003e\u003e\n\nAs an exception, if, as a result of your compiling your source code, portions of this Software are embedded into a machine-executable object form of such source code, you may redistribute such embedded portions in such object form without including the above copyright and permission notices.\n\n",
+  "exceptionTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \u003cp\u003e--- Optional exception to the license ---\u003c/p\u003e\n\u003c/div\u003e\n      \u003cp\u003e\n\tAs an exception, if, as a result of your compiling your source code, portions\n\tof this Software are embedded into a machine-executable object form of such\n\tsource code, you may redistribute such embedded portions in such object form\n\twithout including the above copyright and permission notices.\n      \u003c/p\u003e\n\n   "
+}

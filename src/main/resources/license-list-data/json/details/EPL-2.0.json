@@ -12,16 +12,16 @@
       "url": "https://www.eclipse.org/legal/epl-2.0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-10-05T15:10:53Z",
+      "timestamp": "2024-02-08T16:30:59Z",
       "isWayBackLink": false,
       "order": 0
     },
     {
-      "match": "N/A",
+      "match": "true",
       "url": "https://www.opensource.org/licenses/EPL-2.0",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2023-10-05T15:10:54Z",
+      "isLive": true,
+      "timestamp": "2024-02-08T16:31:01Z",
       "isWayBackLink": false,
       "order": 1
     }

@@ -41,10 +41,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Path("/v1/tag")
 @Api(value = "tag", authorizations = @Authorization(value = "X-Api-Key"))
 public class TagResource extends AlpineResource {
+
 
     @GET
     @Path("/policy/{policyUuid}")
@@ -91,8 +93,8 @@ public class TagResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             NotificationRule rule = qm.getNotificationRule(uuid);
             if (rule != null) {
-                final PaginatedResult result = qm.getTags(rule.getProjects());
-                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                List<Tag> tags = rule.getTags();
+                return Response.ok(tags).header(TOTAL_COUNT_HEADER, tags.size()).build();
             }
             // SDE: refine this part
             return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();

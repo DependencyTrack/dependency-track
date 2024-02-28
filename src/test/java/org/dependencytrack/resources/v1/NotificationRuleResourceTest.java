@@ -426,8 +426,10 @@ public class NotificationRuleResourceTest extends ResourceTest {
                           "notifyChildren": true,
                           "logSuccessfulPublish": false,
                           "scope": "PORTFOLIO",
+                          "tags":[],
                           "notificationLevel": "INFORMATIONAL",
                           "projects": [],
+                          "tags": [],
                           "teams": [
                             {
                               "uuid": "${json-unit.matches:teamUuid}",

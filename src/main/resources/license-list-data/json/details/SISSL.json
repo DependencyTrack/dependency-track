@@ -9,22 +9,22 @@
   "standardLicenseHeader": "\"The contents of this file are subject to the Sun Standards License Version 1.1 (the \"License\"); You may not use this file except in compliance with the License. You may obtain a copy of the License at _______________________________ .\n\nSoftware distributed under the License is distributed on an \"AS IS\" basis, WITHOUT WARRANTY OF ANY KIND, either\n\nexpress or implied. See the License for the specific language governing rights and limitations under the License.\n\nThe Original Code is ______________________________________ .\n\nThe Initial Developer of the Original Code is: Sun Microsystems, Inc. .\n\nPortions created by: _______________________________________\n\nare Copyright (C): _______________________________________\n\nAll Rights Reserved.\n\nContributor(s): _______________________________________\n\n",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/SISSL",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-10-05T15:15:14Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "true",
       "url": "http://www.openoffice.org/licenses/sissl_license.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-10-05T15:15:14Z",
+      "timestamp": "2024-02-08T16:39:06Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/SISSL",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-02-08T16:39:06Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

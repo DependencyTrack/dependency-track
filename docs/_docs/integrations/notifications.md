@@ -473,7 +473,7 @@ to notify on. Then specify the destination:
 ![configure notification](/images/screenshots/notifications-configure.png)
 
 By default, portfolio notifications are published regardless of which project is affected. This behavior can be altered
-by optionally limiting the projects. Expand the 'Limit To' button to reveal and configure the list of projects.
+by optionally limiting the projects or limiting to tags. Expand the 'Limit To' button to reveal and configure the list of projects or tags.
 
 ## Outbound Webhooks
 With outbound webhooks, notifications and all of their relevant details can be delivered via HTTP to an endpoint

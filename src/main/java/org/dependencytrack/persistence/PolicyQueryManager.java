@@ -98,6 +98,15 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * Returns a policy by it's uuid.
+     * @param uuid the uuid of the policy (required)
+     * @return a Policy object, or null if not found
+     */
+    public Policy getPolicyByUuid(final String uuid) {
+        return getObjectByUuid(Policy.class, uuid);
+    }
+
+    /**
      * Creates a new Policy.
      * @param name the name of the policy to create
      * @param operator the operator

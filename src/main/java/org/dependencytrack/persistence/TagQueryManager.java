@@ -21,7 +21,6 @@ package org.dependencytrack.persistence;
 import alpine.common.logging.Logger;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
-import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 
@@ -54,12 +53,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
         super(pm, request);
     }
 
-    public PaginatedResult getTags(String policyUuid) {
-
-        LOGGER.debug("Retrieving tags under policy " + policyUuid);
-
-        Policy policy = getObjectByUuid(Policy.class, policyUuid);
-        List<Project> projects = policy.getProjects();
+    public PaginatedResult getTags(List<Project> projects) {
 
         final Stream<Tag> tags;
         if (projects != null && !projects.isEmpty()) {

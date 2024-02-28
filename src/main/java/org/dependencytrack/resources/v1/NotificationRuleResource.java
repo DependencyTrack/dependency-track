@@ -35,6 +35,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
@@ -325,7 +326,7 @@ public class NotificationRuleResource extends AlpineResource {
     public Response removeTeamFromRule(
             @ApiParam(value = "The UUID of the rule to remove the project from", format = "uuid", required = true)
             @PathParam("ruleUuid") @ValidUuid String ruleUuid,
-            @ApiParam(value = "The UUID of the project to remove from the rule", format = "uuid", required = true)
+            @ApiParam(value = "The UUID of the team to remove from the rule", format = "uuid", required = true)
             @PathParam("teamUuid") @ValidUuid String teamUuid) {
         try (QueryManager qm = new QueryManager()) {
             final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);

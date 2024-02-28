@@ -29,6 +29,8 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
@@ -45,7 +47,7 @@ import javax.ws.rs.core.Response;
 public class TagResource extends AlpineResource {
 
     @GET
-    @Path("/{policyUuid}")
+    @Path("/policy/{policyUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all tags",
@@ -58,11 +60,42 @@ public class TagResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getTags(@ApiParam(value = "The UUID of the policy", format = "uuid", required = true)
+    public Response getTagsForPolicy(@ApiParam(value = "The UUID of the policy", required = true)
                             @PathParam("policyUuid") @ValidUuid String policyUuid){
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = qm.getTags(policyUuid);
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            Policy policy = qm.getPolicyByUuid(policyUuid);
+            if (policy != null) {
+                final PaginatedResult result = qm.getTags(policy.getProjects());
+                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            }
+            // SDE: refine this part
+            return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();
+        }
+    }
+
+    @GET
+    @Path("/rule/{uuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all tags",
+            response = Tag.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of tags")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getTagsForAlert(@ApiParam(value = "The UUID of the rule", required = true)
+                            @PathParam("uuid") @ValidUuid String uuid){
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            NotificationRule rule = qm.getNotificationRule(uuid);
+            if (rule != null) {
+                final PaginatedResult result = qm.getTags(rule.getProjects());
+                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            }
+            // SDE: refine this part
+            return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();
         }
     }
 }

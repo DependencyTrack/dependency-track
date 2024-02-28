@@ -90,6 +90,11 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
+            } else if (PackageURL.StandardTypes.CARGO.equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new CargoMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
             } else if ("cpan".equals(component.getPurl().getType())) {
                 IMetaAnalyzer analyzer = new CpanMetaAnalyzer();
                 if (analyzer.isApplicable(component)) {

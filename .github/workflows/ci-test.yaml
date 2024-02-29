@@ -46,7 +46,7 @@ jobs:
           mvn test -P enhance
 
       - name: Publish test coverage
-        if: ${{ github.ref == 'refs/heads/master' && contains(github.repository, 'DependencyTrack/') }}
+        if: ${{ contains(github.repository, 'DependencyTrack/') }}
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}

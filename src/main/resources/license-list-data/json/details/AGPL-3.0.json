@@ -9,22 +9,22 @@
   "standardLicenseHeader": "Copyright (C) [year] [name of author] This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, version 3. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program. If not, see \u003chttps://www.gnu.org/licenses/\u003e.",
   "crossRef": [
     {
-      "match": "false",
-      "url": "https://www.gnu.org/licenses/agpl.txt",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-10-05T15:13:15Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/AGPL-3.0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-10-05T15:13:15Z",
+      "timestamp": "2024-02-08T16:36:20Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://www.gnu.org/licenses/agpl.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-02-08T16:36:21Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

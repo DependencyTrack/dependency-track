@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "http://www.cs.wustl.edu/~schmidt/ACE-copying.html",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-10-05T15:09:22Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://www.dre.vanderbilt.edu/~schmidt/ACE-copying.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-10-05T15:09:22Z",
+      "timestamp": "2024-02-08T16:30:30Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://www.cs.wustl.edu/~schmidt/ACE-copying.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-02-08T16:30:30Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://sourceware.org/git/?p\u003dbinutils-gdb.git;a\u003dblob;f\u003dlibiberty/strcasecmp.c;h\u003d131d81c2ce7881fa48c363dc5bf5fb302c61ce0b;hb\u003dHEAD",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2023-10-05T15:22:00Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://git.openldap.org/openldap/openldap/-/blob/master/COPYRIGHT#L55-63",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2023-10-05T15:22:01Z",
+      "timestamp": "2024-02-08T16:40:43Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://sourceware.org/git/?p\u003dbinutils-gdb.git;a\u003dblob;f\u003dlibiberty/strcasecmp.c;h\u003d131d81c2ce7881fa48c363dc5bf5fb302c61ce0b;hb\u003dHEAD",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-02-08T16:40:43Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

@@ -112,7 +112,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                     var jsonObject = new JSONObject(responseString);
                     final JSONArray versions = jsonObject.getJSONArray("versions");
 
-                    final boolean excludePreRelease = component.getPurl().getVersion() != null && component.getPurl().getVersion().contains("-") ==false;  // if the version is a pre-release version, we should not exclude pre-release versions
+                     // if the version is a pre-release version, we should not exclude pre-release versions
+                    final boolean excludePreRelease = component.getPurl().getVersion() != null && !component.getPurl().getVersion().contains("-"); 
 
                     final String latest = findLatestVersion(versions,excludePreRelease); // get the last version in the array
                     meta.setLatestVersion(latest);

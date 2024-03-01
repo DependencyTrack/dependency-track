@@ -26,10 +26,10 @@ jobs:
     - name: Report Coverage to Codacy
       run: |-
         bash <(curl -Ls https://coverage.codacy.com/get.sh) report \
-          --organization-provider gh \
-          --username "${GITHUB_REPOSITORY_OWNER}" \
-          --project-name "${GITHUB_REPOSITORY##*/}" \
           --project-token ${{ secrets.CODACY_PROJECT_TOKEN }} \
           --commit-uuid "$(cat ./pr-commit.txt)" \
           --coverage-reports ./target/jacoco-ut/jacoco.xml \
           --language Java
+        bash <(curl -Ls https://coverage.codacy.com/get.sh) final \
+          --project-token ${{ secrets.CODACY_PROJECT_TOKEN }} \
+          --commit-uuid "$(cat ./pr-commit.txt)"

@@ -27,9 +27,6 @@ jobs:
       run: |-
         bash <(curl -Ls https://coverage.codacy.com/get.sh) report \
           --project-token ${{ secrets.CODACY_PROJECT_TOKEN }} \
-          --commit-uuid "$(cat ./pr-commit.txt)" \
+          --commit-uuid ${{ github.event.workflow_run.head_sha }} \
           --coverage-reports ./target/jacoco-ut/jacoco.xml \
           --language Java
-        bash <(curl -Ls https://coverage.codacy.com/get.sh) final \
-          --project-token ${{ secrets.CODACY_PROJECT_TOKEN }} \
-          --commit-uuid "$(cat ./pr-commit.txt)"

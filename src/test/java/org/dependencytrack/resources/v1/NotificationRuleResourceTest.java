@@ -431,7 +431,8 @@ public class NotificationRuleResourceTest extends ResourceTest {
                           "teams": [
                             {
                               "uuid": "${json-unit.matches:teamUuid}",
-                              "name": "Team Example"
+                              "name": "Team Example",
+                              "permissions": []
                             }
                           ],
                           "notifyOn": [],

@@ -48,6 +48,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -725,9 +726,24 @@ public class ProjectResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
 
-        final JsonObject responseJson = parseJsonObject(response);
-        assertThat(responseJson.getString("uuid")).isEqualTo(project.getUuid().toString());
-        assertThat(responseJson.getJsonObject("parent")).isNull(); // Parents are currently not returned
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", CoreMatchers.equalTo(project.getUuid().toString()))
+                .withMatcher("parentProjectUuid", CoreMatchers.equalTo(newParent.getUuid().toString()))
+                .isEqualTo("""
+                        {
+                          "name": "DEF",
+                          "version": "2.0",
+                          "uuid": "${json-unit.matches:projectUuid}",
+                          "parent": {
+                            "name": "GHI",
+                            "version": "3.0",
+                            "uuid": "${json-unit.matches:parentProjectUuid}"
+                          },
+                          "properties": [],
+                          "tags": [],
+                          "active": true
+                        }
+                        """);
 
         // Ensure the parent was updated.
         qm.getPersistenceManager().refresh(project);

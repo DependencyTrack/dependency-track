@@ -21,6 +21,7 @@ jobs:
       uses: actions/download-artifact@87c55149d96e628cc2ef7e6fc2aab372015aec85 # tag=v4.1.3
       with:
         name: pr-test-coverage-report
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
     - name: Report Coverage to Codacy
       run: |-
@@ -30,5 +31,5 @@ jobs:
           --project-name "${GITHUB_REPOSITORY##*/}" \
           --project-token ${{ secrets.CODACY_PROJECT_TOKEN }} \
           --commit-uuid "$(cat ./pr-commit.txt)" \
-          --coverage-reports ./jacoco.xml \
+          --coverage-reports ./target/jacoco-ut/jacoco.xml \
           --language Java

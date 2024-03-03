@@ -198,6 +198,7 @@ public class Project implements Serializable {
     @Size(max = 255)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @ApiModelProperty(dataType = "string")
     private String purl;
 
     @Persistent

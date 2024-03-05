@@ -1,0 +1,11 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "As a special exception, when this file is copied by Bison into a\nBison output file, you may use that output file without restriction.\nThis special exception was added by the Free Software Foundation\nin version 1.24 of Bison.\n",
+  "name": "Bison exception 1.24",
+  "seeAlso": [
+    "https://github.com/arineng/rwhoisd/blob/master/rwhoisd/mkdb/y.tab.c#L180"
+  ],
+  "licenseExceptionId": "Bison-exception-1.24",
+  "licenseExceptionTemplate": "As a special exception, when this file is copied by Bison into a Bison output file, you may use that output file without restriction. This special exception was added by the Free Software Foundation in version 1.24 of Bison.\n\n",
+  "exceptionTextHtml": "\n      \u003cp\u003e\n         As a special exception, when this file is copied by Bison\n         into a Bison output file, you may use that output file\n         without restriction. This special exception was added by\n         the Free Software Foundation in version 1.24 of Bison.\n      \u003c/p\u003e\n\n   "
+}

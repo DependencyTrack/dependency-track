@@ -648,7 +648,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     // Add vulnerabilties and finding attribution from the source component to the cloned component
                     for (Vulnerability vuln: sourceComponent.getVulnerabilities()) {
                         final FindingAttribution sourceAttribution = this.getFindingAttribution(vuln, sourceComponent);
-                        this.addVulnerability(vuln, clonedComponent, sourceAttribution.getAnalyzerIdentity(), sourceAttribution.getAlternateIdentifier(), sourceAttribution.getReferenceUrl());
+                        this.addVulnerability(vuln, clonedComponent, sourceAttribution.getAnalyzerIdentity(), sourceAttribution.getAlternateIdentifier(), sourceAttribution.getReferenceUrl(), sourceAttribution.getAttributedOn());
                     }
                     clonedComponents.put(sourceComponent.getId(), clonedComponent);
                 }

@@ -39,6 +39,7 @@ CI/CD environments.
   * [GitHub Advisories]
   * [Sonatype OSS Index]
   * [Snyk]
+  * [Trivy]
   * [OSV]
   * [VulnDB] from [Risk Based Security]
   * More coming soon.
@@ -80,6 +81,7 @@ CI/CD environments.
 [GitHub Advisories]: https://www.github.com/advisories
 [Sonatype OSS Index]: https://ossindex.sonatype.org
 [Snyk]: https://snyk.io
+[Trivy]: https://www.aquasec.com/products/trivy/
 [OSV]: https://osv.dev
 [VulnDB]: https://vulndb.cyberriskanalytics.com
 [Risk Based Security]: https://www.riskbasedsecurity.com

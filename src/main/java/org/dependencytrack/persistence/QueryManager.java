@@ -109,6 +109,8 @@ public class QueryManager extends AlpineQueryManager {
     private CacheQueryManager cacheQueryManager;
     private ComponentQueryManager componentQueryManager;
     private FindingsQueryManager findingsQueryManager;
+
+    private FindingsSearchQueryManager findingsSearchQueryManager;
     private LicenseQueryManager licenseQueryManager;
     private MetricsQueryManager metricsQueryManager;
     private NotificationQueryManager notificationQueryManager;
@@ -274,6 +276,17 @@ public class QueryManager extends AlpineQueryManager {
             findingsQueryManager = (request == null) ? new FindingsQueryManager(getPersistenceManager()) : new FindingsQueryManager(getPersistenceManager(), request);
         }
         return findingsQueryManager;
+    }
+
+    /**
+     * Lazy instantiation of FindingsSearchQueryManager.
+     * @return a FindingsSearchQueryManager object
+     */
+    private FindingsSearchQueryManager getFindingsSearchQueryManager() {
+        if (findingsSearchQueryManager == null) {
+            findingsSearchQueryManager = (request == null) ? new FindingsSearchQueryManager(getPersistenceManager()) : new FindingsSearchQueryManager(getPersistenceManager(), request);
+        }
+        return findingsSearchQueryManager;
     }
 
     /**
@@ -560,7 +573,7 @@ public class QueryManager extends AlpineQueryManager {
         return getLicenseQueryManager().getCustomLicense(licenseName);
     }
 
-    License synchronizeLicense(License license, boolean commitIndex) {
+    public License synchronizeLicense(License license, boolean commitIndex) {
         return getLicenseQueryManager().synchronizeLicense(license, commitIndex);
     }
 
@@ -744,6 +757,11 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().addVulnerability(vulnerability, component, analyzerIdentity, alternateIdentifier, referenceUrl);
     }
 
+    public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity,
+                                 String alternateIdentifier, String referenceUrl, Date attributedOn) {
+        getVulnerabilityQueryManager().addVulnerability(vulnerability, component, analyzerIdentity, alternateIdentifier, referenceUrl, attributedOn);
+    }
+
     public void removeVulnerability(Vulnerability vulnerability, Component component) {
         getVulnerabilityQueryManager().removeVulnerability(vulnerability, component);
     }
@@ -852,6 +870,14 @@ public class QueryManager extends AlpineQueryManager {
 
     public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
         return getComponentQueryManager().matchSingleIdentity(project, cid);
+    }
+
+    public Component matchSingleIdentityExact(final Project project, final ComponentIdentity cid) {
+        return getComponentQueryManager().matchSingleIdentityExact(project, cid);
+    }
+
+    public Component matchFirstIdentityExact(final Project project, final ComponentIdentity cid) {
+        return getComponentQueryManager().matchFirstIdentityExact(project, cid);
     }
 
     public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {
@@ -1030,6 +1056,14 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<Finding> getFindings(Project project, boolean includeSuppressed) {
         return getFindingsQueryManager().getFindings(project, includeSuppressed);
+    }
+
+    public PaginatedResult getAllFindings(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
+        return getFindingsSearchQueryManager().getAllFindings(filters, showSuppressed, showInactive);
+    }
+
+    public PaginatedResult getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showInactive) {
+        return getFindingsSearchQueryManager().getAllFindingsGroupedByVulnerability(filters, showInactive);
     }
 
     public List<VulnerabilityMetrics> getVulnerabilityMetrics() {

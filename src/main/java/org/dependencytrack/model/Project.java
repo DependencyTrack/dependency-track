@@ -198,6 +198,7 @@ public class Project implements Serializable {
     @Size(max = 255)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @ApiModelProperty(dataType = "string")
     private String purl;
 
     @Persistent
@@ -281,6 +282,7 @@ public class Project implements Serializable {
     @ApiModelProperty(accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     private ProjectMetadata metadata;
 
+    private transient String bomRef;
     private transient ProjectMetrics metrics;
     private transient List<ProjectVersion> versions;
     private transient List<Component> dependencyGraph;
@@ -488,6 +490,14 @@ public class Project implements Serializable {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public String getBomRef() {
+        return bomRef;
+    }
+
+    public void setBomRef(String bomRef) {
+        this.bomRef = bomRef;
     }
 
     public ProjectMetrics getMetrics() {

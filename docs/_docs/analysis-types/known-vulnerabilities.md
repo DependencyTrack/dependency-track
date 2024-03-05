@@ -71,6 +71,11 @@ This analyzer is applicable to all components with valid Package URLs.
 Snyk REST API version is updated every 6 months and can be referred at
 [Snyk REST API for PURL](https://apidocs.snyk.io/?version=2022-10-06#get-/orgs/-org_id-/packages/-purl-/issues) for additional information.
 
+### Trivy Analyzer
+
+Trivy analyzer relies on a server trivy instance to perform the analysis using REST API.
+Trivy REST API is not publically documented so upgrading to a new version might lead to some issues.
+
 ### Analysis Result Cache
 
 Dependency-Track contains an internal limiter which prevents repeated requests to remote services when performing

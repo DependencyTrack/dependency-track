@@ -20,7 +20,6 @@ package org.dependencytrack.persistence;
 
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
-import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
@@ -29,10 +28,10 @@ import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
-import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.model.RepositoryMetaComponent;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -265,7 +264,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      */
     @SuppressWarnings("unchecked")
     public List<Finding> getFindings(Project project, boolean includeSuppressed) {
-        final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, Finding.QUERY);
+        final Query<Object[]> query = pm.newQuery(Query.SQL, Finding.QUERY);
         query.setParameters(project.getId());
         final List<Object[]> list = query.executeList();
         final List<Finding> findings = new ArrayList<>();

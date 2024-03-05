@@ -1,0 +1,40 @@
+{
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.4",
+    "serialNumber": "urn:uuid:23d6e70a-4502-4da8-b196-efb41664c7fe",
+    "version": 1,
+    "metadata": {
+        "timestamp": "2023-12-13T13:21:58+01:00",
+        "component": {
+            "type": "firmware"
+        }
+    },
+    "components": [
+        {
+            "name": "alsa-utils",
+            "version": "1.2.1.2",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0"
+                    }
+                }
+            ],
+            "cpe": "cpe:2.3:*:alsa-project:alsa:1.2.1.2:*:*:*:*:*:*:*",
+            "type": "application"
+        },
+        {
+            "name": "alsa-lib",
+            "version": "1.2.1.2",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-2.1"
+                    }
+                }
+            ],
+            "cpe": "cpe:2.3:*:alsa-project:alsa:1.2.1.2:*:*:*:*:*:*:*",
+            "type": "library"
+        }
+    ]
+}

@@ -73,7 +73,7 @@ public class KennaDataTransformer {
         final JSONArray vulns = new JSONArray();
         final List<Finding> findings = qm.getFindings(project);
         for (final Finding finding: findings) {
-            final Map analysis = finding.getAnalysis();
+            final Map<String, Object> analysis = finding.getAnalysis();
             final Object suppressed = finding.getAnalysis().get("isSuppressed");
             if (suppressed instanceof Boolean) {
                 final boolean isSuppressed = (Boolean)analysis.get("isSuppressed");

@@ -18,13 +18,16 @@
  */
 package org.dependencytrack.event;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.event.LdapSyncEvent;
 import alpine.event.framework.EventService;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.server.tasks.LdapSyncTask;
 import org.dependencytrack.RequirementsVerifier;
+import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.tasks.BomUploadProcessingTask;
+import org.dependencytrack.tasks.BomUploadProcessingTaskV2;
 import org.dependencytrack.tasks.CallbackTask;
 import org.dependencytrack.tasks.ClearComponentAnalysisCacheTask;
 import org.dependencytrack.tasks.CloneProjectTask;
@@ -52,6 +55,7 @@ import org.dependencytrack.tasks.repositories.RepositoryMetaAnalyzerTask;
 import org.dependencytrack.tasks.scanners.InternalAnalysisTask;
 import org.dependencytrack.tasks.scanners.OssIndexAnalysisTask;
 import org.dependencytrack.tasks.scanners.SnykAnalysisTask;
+import org.dependencytrack.tasks.scanners.TrivyAnalysisTask;
 import org.dependencytrack.tasks.scanners.VulnDbAnalysisTask;
 
 import javax.servlet.ServletContextEvent;
@@ -83,7 +87,11 @@ public class EventSubsystemInitializer implements ServletContextListener {
         if (RequirementsVerifier.failedValidation()) {
             return;
         }
-        EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
+        if (Config.getInstance().getPropertyAsBoolean(ConfigKey.BOM_PROCESSING_TASK_V2_ENABLED)) {
+            EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTaskV2.class);
+        } else {
+            EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
+        }
         EVENT_SERVICE.subscribe(VexUploadEvent.class, VexUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
         EVENT_SERVICE.subscribe(InternalAnalysisEvent.class, InternalAnalysisTask.class);
@@ -95,6 +103,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.subscribe(PortfolioVulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.subscribe(SnykAnalysisEvent.class, SnykAnalysisTask.class);
+        EVENT_SERVICE.subscribe(TrivyAnalysisEvent.class, TrivyAnalysisTask.class);
         EVENT_SERVICE.subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
         EVENT_SERVICE.subscribe(PolicyEvaluationEvent.class, PolicyEvaluationTask.class);
         EVENT_SERVICE.subscribe(ComponentMetricsUpdateEvent.class, ComponentMetricsUpdateTask.class);
@@ -126,7 +135,11 @@ public class EventSubsystemInitializer implements ServletContextListener {
         LOGGER.info("Shutting down asynchronous event subsystem");
         TaskScheduler.getInstance().shutdown();
 
-        EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);
+        if (Config.getInstance().getPropertyAsBoolean(ConfigKey.BOM_PROCESSING_TASK_V2_ENABLED)) {
+            EVENT_SERVICE.unsubscribe(BomUploadProcessingTaskV2.class);
+        } else {
+            EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);
+        }
         EVENT_SERVICE.unsubscribe(VexUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
         EVENT_SERVICE.unsubscribe(InternalAnalysisTask.class);
@@ -143,6 +156,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(PortfolioMetricsUpdateTask.class);
         EVENT_SERVICE.unsubscribe(VulnerabilityMetricsUpdateTask.class);
         EVENT_SERVICE.unsubscribe(SnykAnalysisTask.class);
+        EVENT_SERVICE.unsubscribe(TrivyAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(CloneProjectTask.class);
         EVENT_SERVICE.unsubscribe(FortifySscUploadTask.class);
         EVENT_SERVICE.unsubscribe(DefectDojoUploadTask.class);

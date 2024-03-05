@@ -1,0 +1,32 @@
+name: Report PR Test Coverage
+
+on:
+  workflow_run:
+    workflows:
+    - Tests CI
+    types:
+    - completed
+
+permissions: { }
+
+jobs:
+  publish:
+    name: Report Coverage
+    runs-on: ubuntu-latest
+    if: |-
+      github.event.workflow_run.event == 'pull_request'
+        && github.event.workflow_run.conclusion == 'success'
+    steps:
+    - name: Download PR test coverage report
+      uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # tag=v4.1.4
+      with:
+        name: pr-test-coverage-report
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+    - name: Report Coverage to Codacy
+      run: |-
+        bash <(curl -Ls https://coverage.codacy.com/get.sh) report \
+          --project-token ${{ secrets.CODACY_PROJECT_TOKEN }} \
+          --commit-uuid ${{ github.event.workflow_run.head_sha }} \
+          --coverage-reports ./target/jacoco-ut/jacoco.xml \
+          --language Java

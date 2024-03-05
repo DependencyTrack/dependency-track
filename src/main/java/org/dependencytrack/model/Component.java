@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import io.swagger.annotations.ApiModelProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.validation.ValidSpdxExpression;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
@@ -250,6 +251,7 @@ public class Component implements Serializable {
     @Size(max = 255)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @ApiModelProperty(dataType = "string")
     private String purl;
 
     @Persistent(defaultFetchGroup = "true")
@@ -361,8 +363,10 @@ public class Component implements Serializable {
     private UUID uuid;
 
     private transient String bomRef;
+    private transient List<org.cyclonedx.model.License> licenseCandidates;
     private transient DependencyMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
+    private transient boolean isNew;
     private transient int usedBy;
     private transient JsonObject cacheResult;
     private transient Set<String> dependencyGraph;
@@ -765,6 +769,14 @@ public class Component implements Serializable {
         this.repositoryMeta = repositoryMeta;
     }
 
+    public boolean isNew() {
+        return isNew;
+    }
+
+    public void setNew(final boolean aNew) {
+        isNew = aNew;
+    }
+
     public Double getLastInheritedRiskScore() {
         return lastInheritedRiskScore;
     }
@@ -779,6 +791,14 @@ public class Component implements Serializable {
 
     public void setBomRef(String bomRef) {
         this.bomRef = bomRef;
+    }
+
+    public List<org.cyclonedx.model.License> getLicenseCandidates() {
+        return licenseCandidates;
+    }
+
+    public void setLicenseCandidates(final List<org.cyclonedx.model.License> licenseCandidates) {
+        this.licenseCandidates = licenseCandidates;
     }
 
     public int getUsedBy() {

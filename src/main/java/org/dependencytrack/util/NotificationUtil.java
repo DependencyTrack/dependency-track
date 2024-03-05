@@ -19,6 +19,7 @@
 package org.dependencytrack.util;
 
 import alpine.model.ConfigProperty;
+import alpine.model.UserPrincipal;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
@@ -270,6 +271,22 @@ public final class NotificationUtil {
             JsonUtil.add(projectBuilder, "tags", tags);
         }
         return projectBuilder.build();
+    }
+
+    public static JsonObject toJson(final UserPrincipal user) {
+        final JsonObjectBuilder userBuilder = Json.createObjectBuilder();
+
+        userBuilder.add("username", user.getUsername());
+
+        if (user.getName() != null) {
+            userBuilder.add("name", user.getName());
+        }
+
+        if (user.getEmail() != null) {
+            userBuilder.add("email", user.getEmail());
+        }
+
+        return userBuilder.build();
     }
 
     public static JsonObject toJson(final Component component) {

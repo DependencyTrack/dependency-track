@@ -29,5 +29,6 @@ public enum AnalyzerIdentity {
     NPM_AUDIT_ANALYZER,
     VULNDB_ANALYZER,
     SNYK_ANALYZER,
+    TRIVY_ANALYZER,
     NONE
 }

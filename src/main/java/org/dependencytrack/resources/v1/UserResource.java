@@ -26,6 +26,8 @@ import alpine.model.OidcUser;
 import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import alpine.security.crypto.KeyManager;
 import alpine.server.auth.AlpineAuthenticationException;
 import alpine.server.auth.AuthenticationNotRequired;
@@ -45,6 +47,9 @@ import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.IdentifiableObject;
+import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.owasp.security.logging.SecurityMarkers;
 
@@ -383,6 +388,13 @@ public class UserResource extends AlpineResource {
             if (user == null) {
                 user = qm.createLdapUser(jsonUser.getUsername());
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user created: " + jsonUser.getUsername());
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.USER_CREATED)
+                        .title(NotificationConstants.Title.USER_CREATED)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content("LDAP user created")
+                        .subject(user));
                 return Response.status(Response.Status.CREATED).entity(user).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
@@ -407,8 +419,16 @@ public class UserResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final LdapUser user = qm.getLdapUser(jsonUser.getUsername());
             if (user != null) {
+                final LdapUser detachedUser = qm.getPersistenceManager().detachCopy(user);
                 qm.delete(user);
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user deleted: " + jsonUser.getUsername());
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user deleted: " + detachedUser);
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.USER_DELETED)
+                        .title(NotificationConstants.Title.USER_DELETED)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content("LDAP user deleted")
+                        .subject(detachedUser));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
@@ -456,6 +476,13 @@ public class UserResource extends AlpineResource {
                         String.valueOf(PasswordService.createHash(jsonUser.getNewPassword().toCharArray())),
                         jsonUser.isForcePasswordChange(), jsonUser.isNonExpiryPassword(), jsonUser.isSuspended());
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user created: " + jsonUser.getUsername());
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.USER_CREATED)
+                        .title(NotificationConstants.Title.USER_CREATED)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content("Managed user created")
+                        .subject(user));
                 return Response.status(Response.Status.CREATED).entity(user).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
@@ -522,8 +549,16 @@ public class UserResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
             if (user != null) {
+                final ManagedUser detachedUser = qm.getPersistenceManager().detachCopy(user);
                 qm.delete(user);
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: " + jsonUser.getUsername());
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: " +detachedUser);
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.USER_DELETED)
+                        .title(NotificationConstants.Title.USER_DELETED)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content("Managed user deleted")
+                        .subject(detachedUser));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
@@ -555,6 +590,13 @@ public class UserResource extends AlpineResource {
             if (user == null) {
                 user = qm.createOidcUser(jsonUser.getUsername());
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user created: " + jsonUser.getUsername());
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.USER_CREATED)
+                        .title(NotificationConstants.Title.USER_CREATED)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content("OpenID Connect user created")
+                        .subject(user));
                 return Response.status(Response.Status.CREATED).entity(user).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
@@ -579,8 +621,16 @@ public class UserResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final OidcUser user = qm.getOidcUser(jsonUser.getUsername());
             if (user != null) {
+                final OidcUser detachedUser = qm.getPersistenceManager().detachCopy(user);
                 qm.delete(user);
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user deleted: " + jsonUser.getUsername());
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user deleted: " + detachedUser);
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.USER_DELETED)
+                        .title(NotificationConstants.Title.USER_DELETED)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content("OpenID Connect user deleted")
+                        .subject(detachedUser));
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();

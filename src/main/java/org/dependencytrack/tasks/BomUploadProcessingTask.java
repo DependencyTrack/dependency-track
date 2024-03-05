@@ -79,12 +79,12 @@ public class BomUploadProcessingTask implements Subscriber {
             final byte[] bomBytes = CompressUtil.optionallyDecompress(event.getBom());
             final QueryManager qm = new QueryManager();
             try {
-                final Project project =  qm.getObjectByUuid(Project.class, event.getProjectUuid(),
+                final Project project =  qm.getObjectByUuid(Project.class, event.getProject().getUuid(),
                         List.of(FetchPlan.DEFAULT, Project.FetchGroup.METADATA.name()));
                 bomProcessingFailedProject = project;
 
                 if (project == null) {
-                    LOGGER.warn("Ignoring BOM Upload event for no longer existing project " + event.getProjectUuid());
+                    LOGGER.warn("Ignoring BOM Upload event for no longer existing project " + event.getProject().getUuid());
                     return;
                 }
 
@@ -104,7 +104,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 org.cyclonedx.model.Bom cycloneDxBom = null;
                 if (BomParserFactory.looksLikeCycloneDX(bomBytes)) {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
-                        LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProjectUuid());
+                        LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProject().getUuid());
                         bomFormat = Bom.Format.CYCLONEDX;
                         bomProcessingFailedBomFormat = bomFormat;
                         final Parser parser = BomParserFactory.createParser(bomBytes);
@@ -182,14 +182,14 @@ public class BomUploadProcessingTask implements Subscriber {
                     processService(qm, bom, service, flattenedServices);
                 }
                 if (Bom.Format.CYCLONEDX == bomFormat) {
-                    LOGGER.info("Processing CycloneDX dependency graph for project: " + event.getProjectUuid());
+                    LOGGER.info("Processing CycloneDX dependency graph for project: " + event.getProject().getUuid());
                     ModelConverter.generateDependencies(cycloneDxBom, project, components);
                 }
-                LOGGER.debug("Reconciling components for project " + event.getProjectUuid());
+                LOGGER.debug("Reconciling components for project " + event.getProject().getUuid());
                 qm.reconcileComponents(project, existingProjectComponents, flattenedComponents);
-                LOGGER.debug("Reconciling services for project " + event.getProjectUuid());
+                LOGGER.debug("Reconciling services for project " + event.getProject().getUuid());
                 qm.reconcileServiceComponents(project, existingProjectServices, flattenedServices);
-                LOGGER.debug("Updating last import date for project " + event.getProjectUuid());
+                LOGGER.debug("Updating last import date for project " + event.getProject().getUuid());
                 qm.updateLastBomImport(project, date, bomFormat.getFormatShortName() + " " + bomSpecVersion);
                 // Instead of firing off a new VulnerabilityAnalysisEvent, chain the VulnerabilityAnalysisEvent to
                 // the BomUploadEvent so that synchronous publishing mode (Jenkins) waits until vulnerability
@@ -216,7 +216,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 rme.onSuccess(new PolicyEvaluationEvent(detachedFlattenedComponent).project(detachedProject));
                 Event.dispatch(rme);
 
-                LOGGER.info("Processed " + flattenedComponents.size() + " components and " + flattenedServices.size() + " services uploaded to project " + event.getProjectUuid());
+                LOGGER.info("Processed " + flattenedComponents.size() + " components and " + flattenedServices.size() + " services uploaded to project " + event.getProject().getUuid());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)
                         .group(NotificationGroup.BOM_PROCESSED)
@@ -248,7 +248,7 @@ public class BomUploadProcessingTask implements Subscriber {
                                   final List<Component> flattenedComponents,
                                   final List<Component> newComponents) {
         final boolean isNew = component.getUuid() == null;
-        component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
+        component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component));
         component = qm.createComponent(component, false);
         final long oid = component.getId();
         // Refreshing the object by querying for it again is preventative

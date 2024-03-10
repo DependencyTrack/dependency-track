@@ -38,6 +38,7 @@ import org.dependencytrack.event.VexUploadEvent;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
 import org.dependencytrack.resources.v1.vo.VexSubmitRequest;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -122,9 +123,15 @@ public class VexResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload a supported VEX document",
-            notes = "Expects CycloneDX along and a valid project UUID. If a UUID is not specified then the projectName and projectVersion must be specified."
+            notes = """
+                    Expects CycloneDX and a valid project UUID. If a UUID is not specified, \
+                    then the projectName and projectVersion must be specified.
+                    The VEX will be validated against the CycloneDX schema. If schema validation fails, \
+                    a response with problem details in RFC 9457 format will be returned. In this case, \
+                    the response's content type will be application/problem+json."""
     )
     @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Invalid VEX", response = InvalidBomProblemDetails.class),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
@@ -159,9 +166,15 @@ public class VexResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload a supported VEX document",
-            notes = "Expects CycloneDX along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified."
+            notes = """
+                    Expects CycloneDX along and a valid project UUID. If a UUID is not specified, \
+                    then the projectName and projectVersion must be specified.
+                    The VEX will be validated against the CycloneDX schema. If schema validation fails, \
+                    a response with problem details in RFC 9457 format will be returned. In this case, \
+                    the response's content type will be application/problem+json."""
     )
     @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Invalid VEX", response = InvalidBomProblemDetails.class),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
@@ -197,6 +210,7 @@ public class VexResource extends AlpineResource {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
             final byte[] decoded = Base64.getDecoder().decode(encodedVexData);
+            BomResource.validate(decoded);
             final VexUploadEvent vexUploadEvent = new VexUploadEvent(project.getUuid(), decoded);
             Event.dispatch(vexUploadEvent);
             return Response.ok(Collections.singletonMap("token", vexUploadEvent.getChainIdentifier())).build();
@@ -217,6 +231,7 @@ public class VexResource extends AlpineResource {
                 }
                 try (InputStream in = bodyPartEntity.getInputStream()) {
                     final byte[] content = IOUtils.toByteArray(new BOMInputStream((in)));
+                    BomResource.validate(content);
                     final VexUploadEvent vexUploadEvent = new VexUploadEvent(project.getUuid(), content);
                     Event.dispatch(vexUploadEvent);
                     return Response.ok(Collections.singletonMap("token", vexUploadEvent.getChainIdentifier())).build();

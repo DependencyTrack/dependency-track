@@ -19,15 +19,15 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
+import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
+import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import alpine.model.Team;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -42,6 +42,10 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.UUID;
+
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
 
 public class TeamResourceTest extends ResourceTest {
 
@@ -271,4 +275,43 @@ public class TeamResourceTest extends ResourceTest {
         String body = getPlainTextBody(response);
         Assert.assertEquals("The API key could not be found.", body);
     }
+
+    @Test
+    public void updateApiKeyCommentTest() {
+        final Team team = qm.createTeam("foo", true);
+        final ApiKey apiKey = team.getApiKeys().get(0);
+
+        assertThat(apiKey.getCreated()).isNotNull();
+        assertThat(apiKey.getLastUsed()).isNull();
+        assertThat(apiKey.getComment()).isNull();
+
+        final Response response = target("%s/key/%s/comment".formatted(V1_TEAM, apiKey.getKey())).request()
+                .header(X_API_KEY, this.apiKey)
+                .post(Entity.entity("Some comment 123", MediaType.TEXT_PLAIN));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("key", equalTo(apiKey.getKey()))
+                .withMatcher("maskedKey", equalTo(apiKey.getMaskedKey()))
+                .isEqualTo("""
+                        {
+                          "key": "${json-unit.matches:key}",
+                          "maskedKey": "${json-unit.matches:maskedKey}",
+                          "created": "${json-unit.any-number}",
+                          "lastUsed": null,
+                          "comment": "Some comment 123"
+                        }
+                        """);
+    }
+
+    @Test
+    public void updateApiKeyCommentNotFoundTest() {
+        final Response response = target("%s/key/does-not-exist/comment".formatted(V1_TEAM)).request()
+                .header(X_API_KEY, this.apiKey)
+                .post(Entity.entity("Some comment 123", MediaType.TEXT_PLAIN));
+
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(getPlainTextBody(response)).isEqualTo("The API key could not be found.");
+    }
+
 }

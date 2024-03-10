@@ -49,6 +49,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
+import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
+
 /**
  * JAX-RS resources for processing teams.
  *
@@ -240,6 +242,36 @@ public class TeamResource extends AlpineResource {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The API key could not be found.").build();
             }
+        }
+    }
+
+    @POST
+    @Path("/key/{key}/comment")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Updates an API key's comment", response = ApiKey.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The API key could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response updateApiKeyComment(@PathParam("key") final String key,
+                                        final String comment) {
+        try (final var qm = new QueryManager()) {
+            qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
+
+            return qm.runInTransaction(() -> {
+                final ApiKey apiKey = qm.getApiKey(key);
+                if (apiKey == null) {
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The API key could not be found.")
+                            .build();
+                }
+
+                apiKey.setComment(comment);
+                return Response.ok(apiKey).build();
+            });
         }
     }
 

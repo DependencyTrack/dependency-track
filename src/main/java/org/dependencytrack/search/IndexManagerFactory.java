@@ -51,6 +51,8 @@ public class IndexManagerFactory {
                 @Override
                 public void add(final DummyDocument object) { }
                 @Override
+                public void update(final DummyDocument object) { }
+                @Override
                 public void remove(final DummyDocument object) { }
                 @Override
                 public void commit() { }

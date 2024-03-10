@@ -22,6 +22,14 @@ If configured properly, users will be able to sign in by clicking the _OpenID_ b
 > which means that Dependency-Track will no longer request the `/userinfo` endpoint if all required claims  
 > are present in the ID token's payload already.
 
+## How OpenID Connect claims are mapped
+
+When someone authenticates using OIDC, the claims provided in the ID token or `/userinfo` API response will be mapped to existing OIDC Groups and the user will be added to any teams which have those groups mapped. To have OIDC users added to a team, you must perform the following steps:
+
+1. Login to Dependency-Track as an administrator and navigate to _Administration_ -> _Access Management_ -> _OpenID Connect Groups_.
+2. Create a group with the name used in the OIDC team claim configured below. The value _must_ match exactly, including case.
+3. If the team you want members of the OIDC group to join already exists, use the _Mapped Teams_ menu to select it. If the team does not exist, open _Administration_ -> _Access Management_ -> _Teams_ to create it and, after having done so, add the OIDC group to the _Mapped OpenID Connect Groups_ list.
+
 ### Example Configurations
 
 Generally, Dependency-Track can be used with any identity provider that implements the [OpenID Connect](https://openid.net/connect/) standard.
@@ -208,7 +216,7 @@ $ curl https://auth.example.com/auth/realms/example/protocol/openid-connect/user
 
 6. Login to Dependency-Track as `admin` and navigate to _Administration -> Access Management -> OpenID Connect Groups_
 
-- Create groups with names equivalent to those in Keycloak
+- Create groups with names equivalent to those in Keycloak (these must match exactly, including case)
 - Add teams that the groups should be mapped to
 
   ![Group mappings](/images/screenshots/oidc-groups.png)

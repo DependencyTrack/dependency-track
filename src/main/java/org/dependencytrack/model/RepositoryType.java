@@ -39,10 +39,13 @@ public enum RepositoryType {
     CARGO,
     GO_MODULES,
     GITHUB,
+    HACKAGE,
+    NIXPKGS,
     UNSUPPORTED;
 
     /**
      * Returns a RepositoryType for the specified PackageURL.
+     *
      * @param packageURL a package URL
      * @return a RepositoryType
      */
@@ -70,6 +73,8 @@ public enum RepositoryType {
             return GO_MODULES;
         } else if (PackageURL.StandardTypes.GITHUB.equals(type)) {
             return GITHUB;
+        } else if ("hackage".equals(type)) {
+            return HACKAGE;
         }
         return UNSUPPORTED;
     }

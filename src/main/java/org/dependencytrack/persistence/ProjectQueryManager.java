@@ -893,6 +893,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     /**
      * A similar method exists in ComponentQueryManager
      */
+    // TODO: Move redundant method `preprocessACLs` into own utility class (AclUtil) once #2407 and #2472 are merged.
     private void preprocessACLs(final Query<Project> query, final String inputFilter, final Map<String, Object> params, final boolean bypass) {
         if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
             final List<Team> teams;

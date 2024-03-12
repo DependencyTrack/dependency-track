@@ -18,14 +18,11 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.common.logging.Logger;
 import alpine.model.ApiKey;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
-import alpine.server.util.DbUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.License;
@@ -41,9 +38,6 @@ import org.dependencytrack.util.DateUtil;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -52,24 +46,6 @@ import java.util.Map;
 import java.util.UUID;
 
 final class PolicyQueryManager extends QueryManager implements IQueryManager {
-
-    public static final String QUERY_ACL_1 = """
-            "DESCENDANTS" ("ID", "NAME") AS
-                            (SELECT "PROJECT"."ID",
-                            "PROJECT"."NAME"
-                             FROM "PROJECT"
-            """;
-
-    public static final String QUERY_ACL_2 = """
-            UNION ALL
-            SELECT "CHILD"."ID",
-                            "CHILD"."NAME"
-                            FROM "PROJECT" "CHILD"
-                                 JOIN "DESCENDANTS"
-                                     ON "DESCENDANTS"."ID" = "CHILD"."PARENT_PROJECT_ID")
-                        SELECT "DESCENDANTS"."ID", "DESCENDANTS"."NAME" FROM "DESCENDANTS"
-            """;
-    private static final Logger LOGGER = Logger.getLogger(PolicyQueryManager.class);
 
     /**
      * Constructs a new QueryManager.
@@ -721,7 +697,6 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         }
     }
 
-    // TODO: Move redundant method `preprocessACLs` into own utility class (AclUtil) once #2407 and #2472 are merged.
     private void preprocessACLs(final Query<PolicyViolation> query, final String inputFilter, final Map<String, Object> params, final boolean bypass) {
         if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
             final List<Team> teams;
@@ -740,115 +715,23 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
                     return;
                 }
             }
-
-            // Query every project that the teams have access to
-            final Map<String, Object> tempParams = new HashMap<>();
-            final Query<Project> queryAclProjects = pm.newQuery(Project.class);
             if (teams != null && teams.size() > 0) {
-                final StringBuilder stringBuilderAclProjects = new StringBuilder();
+                final StringBuilder sb = new StringBuilder();
                 for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
                     final Team team = super.getObjectById(Team.class, teams.get(i).getId());
-                    stringBuilderAclProjects.append(" accessTeams.contains(:team").append(i).append(") ");
-                    tempParams.put("team" + i, team);
+                    sb.append(" project.accessTeams.contains(:team").append(i).append(") ");
+                    params.put("team" + i, team);
                     if (i < teamsSize-1) {
-                        stringBuilderAclProjects.append(" || ");
+                        sb.append(" || ");
                     }
                 }
-                queryAclProjects.setFilter(stringBuilderAclProjects.toString());
-            } else {
-                if (inputFilter != null && !inputFilter.isEmpty()) {
-                    query.setFilter(inputFilter + " && :false");
+                if (inputFilter != null) {
+                    query.setFilter(inputFilter + " && (" + sb.toString() + ")");
                 } else {
-                    query.setFilter(":false");
+                    query.setFilter(sb.toString());
                 }
-                params.put("false", false);
-                return;
             }
-            List<Project> result = (List<Project>) queryAclProjects.executeWithMap(tempParams);
-            // Query the descendants of the projects that the teams have access to
-            if (result != null && !result.isEmpty()) {
-                final StringBuilder stringBuilderDescendants = new StringBuilder();
-                final List<Long> parameters = new ArrayList<>();
-                stringBuilderDescendants.append("WHERE");
-                int i = 0, teamSize = result.size();
-                for (Project project : result) {
-                    stringBuilderDescendants.append(" \"ID\" = ?").append(" ");
-                    parameters.add(project.getId());
-                    if (i < teamSize-1) {
-                        stringBuilderDescendants.append(" OR");
-                    }
-                    i++;
-                }
-                stringBuilderDescendants.append("\n");
-                final List<Long> results = new ArrayList<>();
-
-                // Querying the descendants of projects requires a CTE (Common Table Expression), which needs to be at the top-level of the query for Microsoft SQL Server.
-                // Because of JDO, queries are only allowed to start with "SELECT", so the "WITH" clause for the CTE in MSSQL cannot be at top level.
-                // Activating the JDO property that queries don't have to start with "SELECT" does not help in this case, because JDO queries that do not start with "SELECT" only return "true", so no data can be fetched this way.
-                // To circumvent this problem, the query is executed via the direct connection to the database and not via JDO.
-                Connection connection = null;
-                PreparedStatement preparedStatement = null;
-                ResultSet rs = null;
-                try {
-                    connection = (Connection) pm.getDataStoreConnection();
-                    if (DbUtil.isMssql() || DbUtil.isOracle()) { // Microsoft SQL Server and Oracle DB already imply the "RECURSIVE" keyword in the "WITH" clause, therefore it is not needed in the query
-                        preparedStatement = connection.prepareStatement("WITH " + QUERY_ACL_1 + stringBuilderDescendants + QUERY_ACL_2);
-                    } else { // Other Databases need the "RECURSIVE" keyword in the "WITH" clause to correctly execute the query
-                        preparedStatement = connection.prepareStatement("WITH RECURSIVE " + QUERY_ACL_1 + stringBuilderDescendants + QUERY_ACL_2);
-                    }
-                    int j = 1;
-                    for (Long id : parameters) {
-                        preparedStatement.setLong(j, id);
-                        j++;
-                    }
-                    preparedStatement.execute();
-                    rs = preparedStatement.getResultSet();
-                    while (rs.next()) {
-                        results.add(rs.getLong(1));
-                    }
-                } catch (Exception e) {
-                    LOGGER.error(e.getMessage());
-                    if (inputFilter != null && !inputFilter.isEmpty()) {
-                        query.setFilter(inputFilter + " && :false");
-                    } else {
-                        query.setFilter(":false");
-                    }
-                    params.put("false", false);
-                    return;
-                } finally {
-                    DbUtil.close(rs);
-                    DbUtil.close(preparedStatement);
-                    DbUtil.close(connection);
-                }
-
-                // Add queried projects and descendants to the input filter of the query
-                if (results != null && !results.isEmpty()) {
-                    final StringBuilder stringBuilderInputFilter = new StringBuilder();
-                    int j = 0;
-                    int resultSize = results.size();
-                    for (Long id : results) {
-                        stringBuilderInputFilter.append(" project.id == :id").append(j);
-                        params.put("id" + j, id);
-                        if (j < resultSize-1) {
-                            stringBuilderInputFilter.append(" || ");
-                        }
-                        j++;
-                    }
-                    if (inputFilter != null && !inputFilter.isEmpty()) {
-                        query.setFilter(inputFilter + " && (" + stringBuilderInputFilter.toString() + ")");
-                    } else {
-                        query.setFilter(stringBuilderInputFilter.toString());
-                    }
-                }
-            } else {
-                if (inputFilter != null && !inputFilter.isEmpty()) {
-                    query.setFilter(inputFilter + " && :false");
-                } else {
-                    query.setFilter(":false");
-                }
-                params.put("false", false);
-            }
-        } else if (StringUtils.trimToNull(inputFilter) != null) {
+        } else {
             query.setFilter(inputFilter);
         }
     }

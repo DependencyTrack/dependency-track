@@ -121,11 +121,11 @@ public class PolicyViolationResourceTest extends ResourceTest {
         component0.setVersion("1.0");
         component0 = qm.createComponent(component0, false);
 
-        var component1 = new Component();
-        component1.setProject(project);
-        component1.setName("Acme Component 1");
-        component1.setVersion("1.0");
-        component1 = qm.createComponent(component1, false);
+        var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("Acme Component 1");
+        componentA.setVersion("1.0");
+        componentA = qm.createComponent(componentA, false);
 
         final Policy policy0 = qm.createPolicy("Blacklisted Version 0", Policy.Operator.ALL, Policy.ViolationState.FAIL);
         final PolicyCondition condition0 = qm.createPolicyCondition(policy0, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
@@ -140,7 +140,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
 
             var violation = new PolicyViolation();
             violation.setType(PolicyViolation.Type.OPERATIONAL);
-            violation.setComponent(componentFilter ? component0 : component1);
+            violation.setComponent(componentFilter ? component0 : componentA);
             violation.setPolicyCondition(conditionFilter ? condition0 : condition1);
             violation.setTimestamp(new Date());
             violation = qm.persist(violation);
@@ -317,65 +317,74 @@ public class PolicyViolationResourceTest extends ResourceTest {
     public void getViolationsWithAclEnabledTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
-        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
-        final Project child = qm.createProject("Acme Example - Child", null, "1.0", null, null, null, true, false);
-        final Project grandchild = qm.createProject("Acme Example - Grandchild", null, "1.0", null, null, null, true, false);
-        final Project noAccess = qm.createProject("Acme Example - No Access", null, "1.0", null, null, null, true, false);
+        final Project projectA = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        final Project projectA_child = qm.createProject("Acme Example - Child", null, "1.0", null, projectA, null, true, false);
+        final Project projectB = qm.createProject("Acme Example - Grandchild", null, "1.0", null, null, null, true, false);
 
-        var component = new Component();
-        component.setProject(project);
-        component.setName("Acme Component");
-        component.setVersion("1.0");
-        component = qm.createComponent(component, false);
+        projectA.addAccessTeam(team);
 
-        var component1 = new Component();
-        component1.setProject(child);
-        component1.setName("Acme Component");
-        component1.setVersion("1.0");
-        component1 = qm.createComponent(component1, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Acme Component");
+        componentA.setVersion("1.0");
+        componentA = qm.createComponent(componentA, false);
 
-        var component2 = new Component();
-        component2.setProject(grandchild);
-        component2.setName("Acme Component");
-        component2.setVersion("1.0");
-        component2 = qm.createComponent(component2, false);
+        var componentB = new Component();
+        componentB.setProject(projectA_child);
+        componentB.setName("Acme Component");
+        componentB.setVersion("1.0");
+        componentB = qm.createComponent(componentB, false);
 
-        var component3 = new Component();
-        component3.setProject(noAccess);
-        component3.setName("Acme Component");
-        component3.setVersion("1.0");
-        component3 = qm.createComponent(component3, false);
+        var componentC = new Component();
+        componentC.setProject(projectB);
+        componentC.setName("Acme Component");
+        componentC.setVersion("1.0");
+        componentC = qm.createComponent(componentC, false);
+
+        var componentD = new Component();
+        componentD.setProject(projectA);
+        componentD.setName("Acme Component");
+        componentD.setVersion("1.0");
+        componentD = qm.createComponent(componentA, false);
 
         final Policy policy = qm.createPolicy("Blacklisted Version", Policy.Operator.ALL, Policy.ViolationState.FAIL);
         final PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
 
-        var violation = new PolicyViolation();
-        violation.setType(PolicyViolation.Type.OPERATIONAL);
-        violation.setComponent(component);
-        violation.setPolicyCondition(condition);
-        violation.setTimestamp(new Date());
-        violation = qm.persist(violation);
+        var violationA = new PolicyViolation();
+        violationA.setType(PolicyViolation.Type.OPERATIONAL);
+        violationA.setComponent(componentA);
+        violationA.setPolicyCondition(condition);
+        violationA.setTimestamp(new Date());
+        violationA = qm.persist(violationA);
 
-        var violation1 = new PolicyViolation();
-        violation1.setType(PolicyViolation.Type.OPERATIONAL);
-        violation1.setComponent(component1);
-        violation1.setPolicyCondition(condition);
-        violation1.setTimestamp(new Date());
-        violation1 = qm.persist(violation1);
+        var violationB = new PolicyViolation();
+        violationB.setType(PolicyViolation.Type.OPERATIONAL);
+        violationB.setComponent(componentB);
+        violationB.setPolicyCondition(condition);
+        violationB.setTimestamp(new Date());
+        violationB = qm.persist(violationB);
 
-        var violation2 = new PolicyViolation();
-        violation2.setType(PolicyViolation.Type.OPERATIONAL);
-        violation2.setComponent(component2);
-        violation2.setPolicyCondition(condition);
-        violation2.setTimestamp(new Date());
-        violation2 = qm.persist(violation2);
+        var violationC = new PolicyViolation();
+        violationC.setType(PolicyViolation.Type.OPERATIONAL);
+        violationC.setComponent(componentC);
+        violationC.setPolicyCondition(condition);
+        violationC.setTimestamp(new Date());
+        violationC = qm.persist(violationC);
 
-        var violation3 = new PolicyViolation();
-        violation3.setType(PolicyViolation.Type.OPERATIONAL);
-        violation3.setComponent(component3);
-        violation3.setPolicyCondition(condition);
-        violation3.setTimestamp(new Date());
-        violation3 = qm.persist(violation3);
+        var violationD = new PolicyViolation();
+        violationD.setType(PolicyViolation.Type.OPERATIONAL);
+        violationD.setComponent(componentD);
+        violationD.setPolicyCondition(condition);
+        violationD.setTimestamp(new Date());
+        violationD = qm.persist(violationD);
+
+        final Response responseA = target(V1_POLICY_VIOLATION)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseA.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+        assertThat(parseJsonArray(responseA)).hasSize(4);
 
         ConfigProperty aclToggle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
         if (aclToggle == null) {
@@ -385,66 +394,33 @@ public class PolicyViolationResourceTest extends ResourceTest {
             qm.persist(aclToggle);
         }
 
-        project.addAccessTeam(team);
-
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response responseB = target(V1_POLICY_VIOLATION)
                 .request()
-                .header(X_API_KEY, apiKey)
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
                 .get();
-        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThat(responseB.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseB.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("2");
 
-        final JsonArray jsonArray = parseJsonArray(response);
-        assertThat(jsonArray).hasSize(1);
+        final JsonArray jsonArray = parseJsonArray(responseB);
+        assertThat(jsonArray).hasSize(2);
 
-        final JsonObject jsonObject = jsonArray.getJsonObject(0);
-        assertThat(jsonObject.getString("uuid")).isEqualTo(violation.getUuid().toString());
-        assertThat(jsonObject.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
-        assertThat(jsonObject.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
-        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
-        assertThat(jsonObject.getJsonObject("project").getString("uuid")).isEqualTo(project.getUuid().toString());
+        final JsonObject jsonObjectA = jsonArray.getJsonObject(0);
+        assertThat(jsonObjectA.getString("uuid")).isEqualTo(violationD.getUuid().toString());
+        assertThat(jsonObjectA.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObjectA.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObjectA.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObjectA.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObjectA.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
+        assertThat(jsonObjectA.getJsonObject("project").getString("uuid")).isEqualTo(projectA.getUuid().toString());
 
-        child.setParent(project);
-        grandchild.setParent(child);
-
-        final Response response1 = target(V1_POLICY_VIOLATION)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
-        assertThat(response1.getStatus()).isEqualTo(200);
-        assertThat(response1.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
-
-        final JsonArray jsonArray1 = parseJsonArray(response1);
-        assertThat(jsonArray1).hasSize(3);
-
-        final JsonObject jsonObject1 = jsonArray1.getJsonObject(0);
-        assertThat(jsonObject1.getString("uuid")).isEqualTo(violation2.getUuid().toString());
-        assertThat(jsonObject1.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
-        assertThat(jsonObject1.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObject1.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObject1.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
-        assertThat(jsonObject1.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
-        assertThat(jsonObject1.getJsonObject("project").getString("uuid")).isEqualTo(grandchild.getUuid().toString());
-
-        final JsonObject jsonObject2 = jsonArray1.getJsonObject(1);
-        assertThat(jsonObject2.getString("uuid")).isEqualTo(violation1.getUuid().toString());
-        assertThat(jsonObject2.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
-        assertThat(jsonObject2.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObject2.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObject2.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
-        assertThat(jsonObject2.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
-        assertThat(jsonObject2.getJsonObject("project").getString("uuid")).isEqualTo(child.getUuid().toString());
-
-        final JsonObject jsonObject3 = jsonArray1.getJsonObject(2);
-        assertThat(jsonObject3.getString("uuid")).isEqualTo(violation.getUuid().toString());
-        assertThat(jsonObject3.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
-        assertThat(jsonObject3.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObject3.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObject3.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
-        assertThat(jsonObject3.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
-        assertThat(jsonObject3.getJsonObject("project").getString("uuid")).isEqualTo(project.getUuid().toString());
+        final JsonObject jsonObjectB = jsonArray.getJsonObject(1);
+        assertThat(jsonObjectB.getString("uuid")).isEqualTo(violationA.getUuid().toString());
+        assertThat(jsonObjectB.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObjectB.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObjectB.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObjectB.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObjectB.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
+        assertThat(jsonObjectB.getJsonObject("project").getString("uuid")).isEqualTo(projectA.getUuid().toString());
     }
 
 }

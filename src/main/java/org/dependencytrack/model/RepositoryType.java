@@ -40,7 +40,6 @@ public enum RepositoryType {
     GO_MODULES,
     GITHUB,
     HACKAGE,
-    NIXPKGS,
     UNSUPPORTED;
 
     /**

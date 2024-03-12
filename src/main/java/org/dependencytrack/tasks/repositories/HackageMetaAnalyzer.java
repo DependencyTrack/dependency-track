@@ -30,8 +30,8 @@ public class HackageMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public boolean isApplicable(Component component) {
-        // FUTUREWORK(mangoiv): add nixpkgs and hackage to https://github.com/package-url/packageurl-java/blob/master/src/main/java/com/github/packageurl/PackageURL.java
-        var purl = component.getPurl();
+        // FUTUREWORK(mangoiv): add hackage to https://github.com/package-url/packageurl-java/blob/master/src/main/java/com/github/packageurl/PackageURL.java
+        final var purl = component.getPurl();
         return purl != null && "hackage".equals(purl.getType());
     }
 
@@ -40,7 +40,7 @@ public class HackageMetaAnalyzer extends AbstractMetaAnalyzer {
      */
     public MetaModel analyze(final Component component) {
         final var meta = new MetaModel(component);
-        var purl = component.getPurl();
+        final var purl = component.getPurl();
         if (purl != null) {
             final var url = baseUrl + "/package/" + purl.getName() + "/preferred";
             try (final CloseableHttpResponse response = processHttpRequest(url)) {

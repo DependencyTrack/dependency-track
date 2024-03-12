@@ -135,6 +135,11 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
+            } else if ("hackage".equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new HackageMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
             }
         }
 

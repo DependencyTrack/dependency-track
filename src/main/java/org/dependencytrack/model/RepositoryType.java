@@ -40,6 +40,7 @@ public enum RepositoryType {
     GO_MODULES,
     GITHUB,
     HACKAGE,
+    NIXPKGS,
     UNSUPPORTED;
 
     /**
@@ -74,6 +75,8 @@ public enum RepositoryType {
             return GITHUB;
         } else if ("hackage".equals(type)) {
             return HACKAGE;
+        } else if ("nixpkgs".equals(type)) {
+            return NIXPKGS;
         }
         return UNSUPPORTED;
     }

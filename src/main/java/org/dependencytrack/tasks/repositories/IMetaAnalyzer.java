@@ -140,6 +140,11 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
+            } else if ("nixpkgs".equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = NixpkgsMetaAnalyzer.getNixpkgsMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
             }
         }
 

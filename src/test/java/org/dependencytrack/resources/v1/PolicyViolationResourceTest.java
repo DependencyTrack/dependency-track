@@ -22,6 +22,7 @@ import alpine.model.ConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
+
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
@@ -30,6 +31,8 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ViolationAnalysis;
+import org.dependencytrack.model.ViolationAnalysisState;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -39,6 +42,7 @@ import org.junit.Test;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.core.Response;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
@@ -423,4 +427,238 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonObjectB.getJsonObject("project").getString("uuid")).isEqualTo(projectA.getUuid().toString());
     }
 
+    @Test
+    public void getViolationsWithArrayFilter() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+        
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        final Policy policyA = qm.createPolicy("Policy A", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition conditionA = qm.createPolicyCondition(policyA, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationA = new PolicyViolation();
+        violationA.setType(PolicyViolation.Type.OPERATIONAL);
+        violationA.setComponent(component);
+        violationA.setPolicyCondition(conditionA);
+        violationA.setTimestamp(new Date());
+        violationA = qm.persist(violationA);
+
+        final Policy policyB = qm.createPolicy("Policy B", Policy.Operator.ALL, Policy.ViolationState.INFO);
+        final PolicyCondition conditionB = qm.createPolicyCondition(policyB, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, "unresolved");
+        var violationB = new PolicyViolation();
+        violationB.setType(PolicyViolation.Type.LICENSE);
+        violationB.setComponent(component);
+        violationB.setPolicyCondition(conditionB);
+        violationB.setTimestamp(new Date());
+        violationB = qm.persist(violationB);
+
+        final Policy policyC = qm.createPolicy("Policy C", Policy.Operator.ALL, Policy.ViolationState.INFO);
+        final PolicyCondition conditionC = qm.createPolicyCondition(policyC, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        ViolationAnalysis violationAnalysis = new ViolationAnalysis();
+        violationAnalysis.setViolationAnalysisState(ViolationAnalysisState.REJECTED);
+        var violationC = new PolicyViolation();
+        violationC.setType(PolicyViolation.Type.OPERATIONAL);
+        violationC.setComponent(component);
+        violationC.setPolicyCondition(conditionC);
+        violationC.setTimestamp(new Date());
+        violationC.setAnalysis(violationAnalysis);
+        violationAnalysis.setPolicyViolation(violationC);
+        violationC = qm.persist(violationC);
+
+        final Policy policyD = qm.createPolicy("Policy D", Policy.Operator.ALL, Policy.ViolationState.INFO);
+        final PolicyCondition conditionD = qm.createPolicyCondition(policyD, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationD = new PolicyViolation();
+        violationD.setType(PolicyViolation.Type.OPERATIONAL);
+        violationD.setComponent(component);
+        violationD.setPolicyCondition(conditionD);
+        violationD.setTimestamp(new Date());
+        violationD = qm.persist(violationD);
+
+        final Response response = target(V1_POLICY_VIOLATION)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+        assertThat(parseJsonArray(response)).hasSize(4);
+
+        final Response responseA = target(V1_POLICY_VIOLATION).queryParam("violationState", "FAIL")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseA.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayA = parseJsonArray(responseA);
+        assertThat(jsonArrayA).hasSize(1);
+        assertThat(jsonArrayA.getJsonObject(0).getString("uuid")).isEqualTo(violationA.getUuid().toString());
+
+
+        final Response responseB = target(V1_POLICY_VIOLATION).queryParam("riskType", "LICENSE")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseB.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseB.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayB = parseJsonArray(responseB);
+        assertThat(jsonArrayB).hasSize(1);
+        assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
+        assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
+
+        final Response responseC = target(V1_POLICY_VIOLATION).queryParam("analysisState", "REJECTED")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseC.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseC.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayC = parseJsonArray(responseC);
+        assertThat(jsonArrayC).hasSize(1);
+        assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
+        assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
+
+        final Response responseD = target(V1_POLICY_VIOLATION).queryParam("policy", policyD.getUuid().toString())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseD.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseD.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayD = parseJsonArray(responseD);
+        assertThat(jsonArrayD).hasSize(1);
+        assertThat(jsonArrayD.getJsonObject(0).getString("uuid")).isEqualTo(violationD.getUuid().toString());
+        assertThat(jsonArrayD.getJsonObject(0).getString("uuid")).isEqualTo(violationD.getUuid().toString());
+    }
+
+    @Test
+    public void getViolationsWithInputFilter() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        final Project projectC = qm.createProject("Project C", null, "1.0", null, null, null, true, false);
+        final Project projectD = qm.createProject("Project D", null, "1.0", null, null, null, true, false);
+
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA.setVersion("1.0");
+        componentA.setLicense("License A");
+        componentA = qm.createComponent(componentA, false);
+        
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB.setVersion("1.0");
+        componentB.setLicense("License B");
+        componentB = qm.createComponent(componentB, false);
+
+        var componentC = new Component();
+        componentC.setProject(projectC);
+        componentC.setName("Component C");
+        componentC.setVersion("1.0");
+        componentC.setLicense("License C");
+        componentC = qm.createComponent(componentC, false);
+
+        var componentD = new Component();
+        componentD.setProject(projectD);
+        componentD.setName("Component D");
+        componentD.setVersion("1.0");
+        componentD.setLicense("License D");
+        componentD = qm.createComponent(componentD, false);
+
+        final Policy policyA = qm.createPolicy("Policy A", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition conditionA = qm.createPolicyCondition(policyA, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationA = new PolicyViolation();
+        violationA.setType(PolicyViolation.Type.OPERATIONAL);
+        violationA.setComponent(componentA);
+        violationA.setPolicyCondition(conditionA);
+        violationA.setTimestamp(new Date());
+        violationA = qm.persist(violationA);
+
+        final Policy policyB = qm.createPolicy("Policy B", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition conditionB = qm.createPolicyCondition(policyB, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationB = new PolicyViolation();
+        violationB.setType(PolicyViolation.Type.OPERATIONAL);
+        violationB.setComponent(componentB);
+        violationB.setPolicyCondition(conditionB);
+        violationB.setTimestamp(new Date());
+        violationB = qm.persist(violationB);
+
+        final Policy policyC = qm.createPolicy("Policy C", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition conditionC = qm.createPolicyCondition(policyC, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationC = new PolicyViolation();
+        violationC.setType(PolicyViolation.Type.OPERATIONAL);
+        violationC.setComponent(componentC);
+        violationC.setPolicyCondition(conditionC);
+        violationC.setTimestamp(new Date());
+        violationC = qm.persist(violationC);
+
+        final Policy policyD = qm.createPolicy("Policy D", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition conditionD = qm.createPolicyCondition(policyD, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationD = new PolicyViolation();
+        violationD.setType(PolicyViolation.Type.OPERATIONAL);
+        violationD.setComponent(componentD);
+        violationD.setPolicyCondition(conditionD);
+        violationD.setTimestamp(new Date());
+        violationD = qm.persist(violationD);
+
+        final Response response = target(V1_POLICY_VIOLATION)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+        assertThat(parseJsonArray(response)).hasSize(4);
+
+        final Response responseA = target(V1_POLICY_VIOLATION)
+                .queryParam("textSearchField", "policy_name")
+                .queryParam("textSearchInput", "Policy A")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseA.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayA = parseJsonArray(responseA);
+        assertThat(jsonArrayA).hasSize(1);
+        assertThat(jsonArrayA.getJsonObject(0).getString("uuid")).isEqualTo(violationA.getUuid().toString());
+
+        final Response responseB = target(V1_POLICY_VIOLATION)
+                .queryParam("textSearchField", "component")
+                .queryParam("textSearchInput", "Component B")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseB.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseB.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayB = parseJsonArray(responseB);
+        assertThat(jsonArrayB).hasSize(1);
+        assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
+
+        final Response responseC = target(V1_POLICY_VIOLATION)
+                .queryParam("textSearchField", "license")
+                .queryParam("textSearchInput", "License C")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseC.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseC.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayC = parseJsonArray(responseC);
+        assertThat(jsonArrayC).hasSize(1);
+        assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
+
+        final Response responseD = target(V1_POLICY_VIOLATION)
+                .queryParam("textSearchField", "project_name")
+                .queryParam("textSearchInput", "Project D")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseD.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseD.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayD = parseJsonArray(responseD);
+        assertThat(jsonArrayD).hasSize(1);
+        assertThat(jsonArrayD.getJsonObject(0).getString("uuid")).isEqualTo(violationD.getUuid().toString());
+    }
 }

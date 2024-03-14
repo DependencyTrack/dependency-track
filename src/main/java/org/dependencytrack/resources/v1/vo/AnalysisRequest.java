@@ -54,7 +54,7 @@ public class AnalysisRequest {
     private final String comment;
 
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The comment may only contain printable characters")
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The analysis details may only contain printable characters")
     private final String analysisDetails;
 
     private final AnalysisState analysisState;

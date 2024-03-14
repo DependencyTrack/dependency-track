@@ -28,32 +28,70 @@ public final class AnalysisCommentUtil {
 
     private AnalysisCommentUtil() { }
 
+
+    public static void makeFirstStateComment(final QueryManager qm, final Analysis analysis, final String commenter) {
+        if (analysis.getAnalysisState() != null) {
+            addAnalysisStateComment(qm, analysis, null, analysis.getAnalysisState(), commenter);
+        }
+    }
+
     public static boolean makeStateComment(final QueryManager qm, final Analysis analysis, final AnalysisState analysisState, final String commenter) {
         boolean analysisStateChange = false;
         if (analysisState != null && analysisState != analysis.getAnalysisState()) {
             analysisStateChange = true;
-            qm.makeAnalysisComment(analysis, String.format("Analysis: %s → %s", analysis.getAnalysisState(), analysisState), commenter);
+            addAnalysisStateComment(qm, analysis, analysis.getAnalysisState(), analysisState, commenter);
         }
         return analysisStateChange;
+    }
+
+    private static void addAnalysisStateComment(QueryManager qm, Analysis analysis, AnalysisState before, AnalysisState after, String commenter) {
+        qm.makeAnalysisComment(analysis, String.format("Analysis: %s → %s", before, after), commenter);
+    }
+
+    public static void makeFirstJustificationComment(QueryManager qm, Analysis analysis, String commenter) {
+        if (analysis.getAnalysisJustification() != null) {
+            addAnalysisJustificationComment(qm, analysis, null, analysis.getAnalysisJustification(), commenter);
+        }
     }
 
     public static void makeJustificationComment(final QueryManager qm, final Analysis analysis, final AnalysisJustification analysisJustification, final String commenter) {
         if (analysisJustification != null) {
             if (analysis.getAnalysisJustification() == null && AnalysisJustification.NOT_SET != analysisJustification) {
-                qm.makeAnalysisComment(analysis, String.format("Justification: %s → %s", AnalysisJustification.NOT_SET, analysisJustification), commenter);
+                addAnalysisJustificationComment(qm, analysis, AnalysisJustification.NOT_SET, analysisJustification, commenter);
             } else if (analysis.getAnalysisJustification() != null && analysisJustification != analysis.getAnalysisJustification()) {
-                qm.makeAnalysisComment(analysis, String.format("Justification: %s → %s", analysis.getAnalysisJustification(), analysisJustification), commenter);
+                addAnalysisJustificationComment(qm, analysis, analysis.getAnalysisJustification(), analysisJustification, commenter);
             }
+        }
+    }
+
+    private static void addAnalysisJustificationComment(QueryManager qm, Analysis analysis, AnalysisJustification before, AnalysisJustification after, String commenter) {
+        qm.makeAnalysisComment(analysis, String.format("Justification: %s → %s", before, after), commenter);
+    }
+
+
+    public static void makeFirstAnalysisResponseComment(QueryManager qm, Analysis analysis, String commenter) {
+        if (analysis.getAnalysisResponse() != null) {
+            addAnalysisResponseComment(qm, analysis, null, analysis.getAnalysisResponse(), commenter);
         }
     }
 
     public static void makeAnalysisResponseComment(final QueryManager qm, final Analysis analysis, final AnalysisResponse analysisResponse, final String commenter) {
         if (analysisResponse != null) {
             if (analysis.getAnalysisResponse() == null && analysis.getAnalysisResponse() != analysisResponse) {
-                qm.makeAnalysisComment(analysis, String.format("Vendor Response: %s → %s", AnalysisResponse.NOT_SET, analysisResponse), commenter);
+                addAnalysisResponseComment(qm, analysis, AnalysisResponse.NOT_SET, analysisResponse, commenter);
             } else if (analysis.getAnalysisResponse() != null && analysis.getAnalysisResponse() != analysisResponse) {
-                qm.makeAnalysisComment(analysis, String.format("Vendor Response: %s → %s", analysis.getAnalysisResponse(), analysisResponse), commenter);
+                addAnalysisResponseComment(qm, analysis, analysis.getAnalysisResponse(), analysisResponse, commenter);
             }
+        }
+    }
+
+    private static void addAnalysisResponseComment(QueryManager qm, Analysis analysis, AnalysisResponse before, AnalysisResponse after, String commenter) {
+        qm.makeAnalysisComment(analysis, String.format("Vendor Response: %s → %s", before, after), commenter);
+    }
+
+    public static void makeFirstDetailsComment(QueryManager qm, Analysis analysis, String commenter) {
+        if (analysis.getAnalysisDetails() != null && !analysis.getAnalysisDetails().isEmpty()) {
+            addAnalysisDetailsComment(qm, analysis, commenter);
         }
     }
 
@@ -62,6 +100,11 @@ public final class AnalysisCommentUtil {
             final String message = "Details: " + analysisDetails.trim();
             qm.makeAnalysisComment(analysis, message, commenter);
         }
+    }
+
+    private static void addAnalysisDetailsComment(QueryManager qm, Analysis analysis, String commenter) {
+        final String message = "Details: " + analysis.getAnalysisDetails().trim();
+        qm.makeAnalysisComment(analysis, message, commenter);
     }
 
     public static boolean makeAnalysisSuppressionComment(final QueryManager qm, final Analysis analysis, final Boolean suppressed, final String commenter) {
@@ -73,4 +116,6 @@ public final class AnalysisCommentUtil {
         }
         return suppressionChange;
     }
+
+
 }

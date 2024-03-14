@@ -35,7 +35,6 @@ import io.swagger.annotations.Authorization;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
@@ -168,9 +167,10 @@ public class AnalysisResource extends AlpineResource {
             } else {
                 analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed());
                 analysisStateChange = true; // this is a new analysis - so set to true because it was previously null
-                if (AnalysisState.NOT_SET != request.getAnalysisState()) {
-                    qm.makeAnalysisComment(analysis, String.format("Analysis: %s → %s", AnalysisState.NOT_SET, request.getAnalysisState()), commenter);
-                }
+                AnalysisCommentUtil.makeFirstStateComment(qm, analysis, commenter);
+                AnalysisCommentUtil.makeFirstJustificationComment(qm, analysis, commenter);
+                AnalysisCommentUtil.makeFirstAnalysisResponseComment(qm, analysis, commenter);
+                AnalysisCommentUtil.makeFirstDetailsComment(qm, analysis, commenter);
             }
 
             final String comment = StringUtils.trimToNull(request.getComment());

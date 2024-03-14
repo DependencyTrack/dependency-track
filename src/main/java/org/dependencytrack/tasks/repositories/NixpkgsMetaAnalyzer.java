@@ -2,8 +2,6 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.entity.BrotliInputStreamFactory;
-import org.apache.hc.client5.http.entity.DecompressingEntity;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -32,27 +30,31 @@ public class NixpkgsMetaAnalyzer extends AbstractMetaAnalyzer {
         this.baseUrl = DEFAULT_CHANNEL_URL;
         HashMap<String, String> newLatestVersion = new HashMap<>();
 
-        try (final CloseableHttpResponse packagesResponse = processHttpRequest5()) {
-            if (packagesResponse != null && packagesResponse.getCode() == HttpStatus.SC_OK) {
-                final var entity = packagesResponse.getEntity();
-                if (entity != null) {
-                    // TODO(mangoiv): is this the fastest way we can do this?
-                    final var entityString = EntityUtils.toString(new DecompressingEntity(entity, new BrotliInputStreamFactory()));
-                    final var packages = new JSONObject(entityString).getJSONObject("packages").toMap().values();
-                    packages.forEach(pkg -> {
-                        // FUTUREWORK(mangoiv): there are potentially packages with the same pname
-                        if (pkg instanceof JSONObject jsonPkg) {
-                            final var pname = jsonPkg.getString("pname");
-                            final var version = jsonPkg.getString("version");
-                            newLatestVersion.putIfAbsent(pname, version);
-                        }
-                    });
-                }
+        try (final CloseableHttpClient client = HttpClients.createDefault()) {
+            try (final CloseableHttpResponse packagesResponse = processHttpRequest5(client)) {
+                if (packagesResponse != null && packagesResponse.getCode() == HttpStatus.SC_OK) {
+                    final var entity = packagesResponse.getEntity();
+                    if (entity != null) {
+                        // TODO(mangoiv): is this the fastest way we can do this?
+                        final var entityString = EntityUtils.toString(entity);
+                        final var packages = new JSONObject(entityString).getJSONObject("packages").toMap().values();
+                        packages.forEach(pkg -> {
+                            // FUTUREWORK(mangoiv): there are potentially packages with the same pname
+                            if (pkg instanceof HashMap jsonPkg) {
+                                final var pname = jsonPkg.get("pname");
+                                final var version = jsonPkg.get("version");
+                                newLatestVersion.putIfAbsent((String)pname, (String)version);
+                            }
+                        });
+                    }
 
+                }
             }
         } catch (IOException ex) {
+            LOGGER.debug(ex.toString());
             handleRequestException(LOGGER, ex);
         } catch (Exception ex) {
+            LOGGER.debug(ex.toString());
             throw new MetaAnalyzerException(ex);
         }
         this.latestVersion = newLatestVersion;
@@ -63,14 +65,14 @@ public class NixpkgsMetaAnalyzer extends AbstractMetaAnalyzer {
         return nixpkgsMetaAnalyzer;
     }
 
-    private CloseableHttpResponse processHttpRequest5() throws IOException {
+    private CloseableHttpResponse processHttpRequest5(CloseableHttpClient client) throws IOException {
         try {
             URIBuilder uriBuilder = new URIBuilder(baseUrl);
             final HttpGet request = new HttpGet(uriBuilder.build().toString());
             request.addHeader("accept", "application/json");
-            try (final CloseableHttpClient client = HttpClients.createDefault()) {
-                return client.execute(request);
-            }
+
+            return client.execute(request);
+
         } catch (URISyntaxException ex) {
             handleRequestException(LOGGER, ex);
             return null;

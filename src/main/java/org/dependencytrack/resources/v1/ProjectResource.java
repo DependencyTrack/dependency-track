@@ -58,6 +58,7 @@ import javax.ws.rs.core.Response;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -509,7 +510,7 @@ public class ProjectResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to one or more of the specified projects is forbidden")
+            @ApiResponse(code = 207, message = "Access is forbidden to the projects listed in the response")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response deleteProjects(
@@ -531,7 +532,16 @@ public class ProjectResource extends AlpineResource {
                 }
             }
             if (!inaccessibleProjects.isEmpty()) {
-                return Response.status(Response.Status.FORBIDDEN).entity("Access to the following project(s) is forbidden: " + inaccessibleProjects).build();
+                // not all are inaccessible
+                if (!new HashSet<>(inaccessibleProjects).containsAll(uuids)) {
+                    return Response.status(207)
+                            .entity(inaccessibleProjects)
+                            .build();
+                }
+                // all are inaccessible
+                return Response.status(Response.Status.FORBIDDEN)
+                        .entity(inaccessibleProjects)
+                        .build();
             }
             return Response.status(Response.Status.NO_CONTENT).build();
         }

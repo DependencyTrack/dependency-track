@@ -54,6 +54,7 @@ import org.junit.Test;
 
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.client.Entity;
@@ -545,7 +546,7 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    public void batchDeleteProjectsWithFullAccessTest() {
+    public void batchDeleteProjectsTest() {
         // Enable portfolio access control.
         qm.createConfigProperty(
                 ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
@@ -571,8 +572,13 @@ public class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .method("POST", Entity.json(uuidsOfInaccessibleProjects));
         Assert.assertEquals(403, response.getStatus(), 0);
-        String output = response.readEntity(String.class);
-        Assert.assertEquals("", "Access to the following project(s) is forbidden: " + uuidsOfInaccessibleProjects, output);
+        JsonArray jsonResponse = parseJsonArray(response);
+        JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+        for (UUID uuid: uuidsOfInaccessibleProjects)  {
+            jsonArrayBuilder.add(uuid.toString());
+        }
+        JsonArray uuidsOfInaccessibleProjectsAsJson = jsonArrayBuilder.build();
+        Assert.assertEquals("", uuidsOfInaccessibleProjectsAsJson, jsonResponse);
 
         // Delete mixed accessible + inaccessible projects
         List<UUID> uuidsOfMixedProjects = new ArrayList<>();
@@ -583,9 +589,9 @@ public class ProjectResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .method("POST", Entity.json(uuidsOfMixedProjects));
-        Assert.assertEquals(403, response.getStatus(), 0);
-        output = response.readEntity(String.class);
-        Assert.assertEquals("", "Access to the following project(s) is forbidden: " + uuidsOfInaccessibleProjects, output);
+        Assert.assertEquals(207, response.getStatus(), 0);
+        jsonResponse = parseJsonArray(response);
+        Assert.assertEquals("", uuidsOfInaccessibleProjectsAsJson, jsonResponse);
     }
 
     @Test

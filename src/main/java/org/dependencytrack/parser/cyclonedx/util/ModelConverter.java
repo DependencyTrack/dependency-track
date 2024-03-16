@@ -19,6 +19,7 @@
 package org.dependencytrack.parser.cyclonedx.util;
 
 import alpine.common.logging.Logger;
+import alpine.model.IConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
@@ -705,6 +706,7 @@ public class ModelConverter {
         cycloneComponent.setCpe(StringUtils.trimToNull(component.getCpe()));
         cycloneComponent.setAuthor(StringUtils.trimToNull(component.getAuthor()));
         cycloneComponent.setSupplier(convert(component.getSupplier()));
+        cycloneComponent.setProperties(convert(component.getProperties()));
 
         if (component.getSwidTagId() != null) {
             final Swid swid = new Swid();
@@ -766,7 +768,7 @@ public class ModelConverter {
         }
 
 
-        if (component.getExternalReferences() != null && component.getExternalReferences().size() > 0) {
+        if (component.getExternalReferences() != null && !component.getExternalReferences().isEmpty()) {
             List<org.cyclonedx.model.ExternalReference> references = new ArrayList<>();
             for (ExternalReference ref: component.getExternalReferences()) {
                 org.cyclonedx.model.ExternalReference cdxRef = new org.cyclonedx.model.ExternalReference();
@@ -797,6 +799,22 @@ public class ModelConverter {
         */
 
         return cycloneComponent;
+    }
+
+    private static <T extends IConfigProperty> List<org.cyclonedx.model.Property> convert(final Collection<T> dtProperties) {
+        if (dtProperties == null || dtProperties.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        final List<org.cyclonedx.model.Property> cdxProperties = new ArrayList<>();
+        for (final T dtProperty : dtProperties) {
+            final var cdxProperty = new org.cyclonedx.model.Property();
+            cdxProperty.setName("%s:%s".formatted(dtProperty.getGroupName(), dtProperty.getPropertyName()));
+            cdxProperty.setValue(dtProperty.getPropertyValue());
+            cdxProperties.add(cdxProperty);
+        }
+
+        return cdxProperties;
     }
 
     public static org.cyclonedx.model.Metadata createMetadata(final Project project) {
@@ -849,6 +867,7 @@ public class ModelConverter {
                 cycloneComponent.setExternalReferences(references);
             }
             cycloneComponent.setSupplier(convert(project.getSupplier()));
+            cycloneComponent.setProperties(convert(project.getProperties()));
             metadata.setComponent(cycloneComponent);
 
             if (project.getMetadata() != null) {

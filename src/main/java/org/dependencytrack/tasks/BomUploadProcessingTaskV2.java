@@ -672,6 +672,14 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             }
 
             if (isNotBlank(licenseCandidate.getName())) {
+                final License resolvedLicense = licenseCache.computeIfAbsent(licenseCandidate.getName(),
+                    licenseName -> resolveLicense(qm, licenseName));
+                if (resolvedLicense != License.UNRESOLVED) {
+                    component.setResolvedLicense(resolvedLicense);
+                    component.setLicenseUrl(trimToNull(licenseCandidate.getUrl()));
+                    break;
+                }
+
                 final License resolvedCustomLicense = customLicenseCache.computeIfAbsent(licenseCandidate.getName(),
                         licenseName -> resolveCustomLicense(qm, licenseName));
                 if (resolvedCustomLicense != License.UNRESOLVED) {

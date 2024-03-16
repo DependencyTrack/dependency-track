@@ -676,6 +676,48 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         });
     }
 
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3433
+    public void informIssue3433Test() {
+        final var license = new License();
+        license.setLicenseId("GPL-3.0-or-later");
+        license.setName("GPL-3.0-or-later");
+        qm.persist(license);
+
+        final var project = new Project();
+        project.setName("acme-license-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b80",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib-x",
+                      "licenses": [
+                        {
+                          "license": {
+                            "name": "GPL-3.0-or-later"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        bomUploadProcessingTaskSupplier.get().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes));
+        awaitBomProcessedNotification();
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getResolvedLicense()).isNotNull();
+            assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("GPL-3.0-or-later");
+        });
+    }
+
     @Test
     public void informWithBomContainingServiceTest() throws Exception {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);

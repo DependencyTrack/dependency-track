@@ -248,7 +248,8 @@ public class Component implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_IDX")
-    @Size(max = 255)
+    @Column(name = "PURL", length = 786)
+    @Size(max = 786)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @ApiModelProperty(dataType = "string")
@@ -256,7 +257,8 @@ public class Component implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_COORDINATES_IDX")
-    @Size(max = 255)
+    @Column(name = "PURLCOORDINATES", length = 786)
+    @Size(max = 786)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String purlCoordinates; // Field should contain only type, namespace, name, and version. Everything up to the qualifiers

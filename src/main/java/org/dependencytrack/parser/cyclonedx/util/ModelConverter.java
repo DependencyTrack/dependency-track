@@ -513,34 +513,36 @@ public class ModelConverter {
                 licenseOptions.addAll(licenseChoice.getLicenses());
             }
 
-            // try to find a license in the database among the license options, but only if none has been
-            // selected previously.
-            if (component.getResolvedLicense() == null) {
-                for (final org.cyclonedx.model.License cycloneLicense : licenseOptions) {
-                    if (cycloneLicense != null) {
-                        if (StringUtils.isNotBlank(cycloneLicense.getId())) {
-                            final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
-                            if (license != null) {
-                                component.setResolvedLicense(license);
-                            }
+            // try to find a license in the database among the license options
+            for (final org.cyclonedx.model.License cycloneLicense : licenseOptions) {
+                if (cycloneLicense != null) {
+                    if (StringUtils.isNotBlank(cycloneLicense.getId())) {
+                        final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
+                        if (license != null) {
+                            component.setResolvedLicense(license);
                         }
-                        else if (StringUtils.isNotBlank(cycloneLicense.getName()))
-                        {
-                            final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getName()));
-                            if (license != null) {
-                                component.setResolvedLicense(license);
-                            } else {
-                                final License customLicense = qm.getCustomLicense(StringUtils.trimToNull(cycloneLicense.getName()));
-                                if (customLicense != null) {
-                                    component.setResolvedLicense(customLicense);
-                                }
-                            }
-                        }
-                        component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
-                        component.setLicenseUrl(StringUtils.trimToNull(cycloneLicense.getUrl()));
                     }
+                    else if (StringUtils.isNotBlank(cycloneLicense.getName()))
+                    {
+                        final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                        if (license != null) {
+                            component.setResolvedLicense(license);
+                        } else {
+                            final License customLicense = qm.getCustomLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                            if (customLicense != null) {
+                                component.setResolvedLicense(customLicense);
+                            }
+                        }
+                    }
+                    component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                    component.setLicenseUrl(StringUtils.trimToNull(cycloneLicense.getUrl()));
                 }
             }
+        } else {
+            component.setLicense(null);
+            component.setLicenseUrl(null);
+            component.setLicenseExpression(null);
+            component.setResolvedLicense(null);
         }
 
         if (cycloneDxComponent.getExternalReferences() != null && !cycloneDxComponent.getExternalReferences().isEmpty()) {

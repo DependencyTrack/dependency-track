@@ -718,6 +718,168 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         });
     }
 
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3498
+    public void informUpdateExistingLicenseTest() {
+        final var existingLicense = new License();
+        existingLicense.setLicenseId("GPL-3.0-or-later");
+        existingLicense.setName("GPL-3.0-or-later");
+        qm.persist(existingLicense);
+
+        final var updatedLicense = new License();
+        updatedLicense.setLicenseId("Apache-2.0");
+        updatedLicense.setName("Apache-2.0");
+        qm.persist(updatedLicense);
+
+        final var project = new Project();
+        project.setName("acme-update-license-app");
+        qm.persist(project);
+
+        final byte[] existingBomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "acme-lib-y",
+                      "version": "2.0.0",
+                      "licenses": [
+                        {
+                          "license": {
+                            "name": "GPL-3.0-or-later"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        bomUploadProcessingTaskSupplier.get().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), existingBomBytes));
+        awaitBomProcessedNotification();
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getResolvedLicense()).isNotNull();
+            assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo(existingLicense.getLicenseId());
+        });
+
+        // Upload bom again but with new license
+        final byte[] updatedBomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "acme-lib-y",
+                      "version": "2.0.0",
+                      "licenses": [
+                        {
+                          "license": {
+                            "name": "Apache-2.0"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        bomUploadProcessingTaskSupplier.get().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), updatedBomBytes));
+        awaitBomProcessedNotification();
+        qm.getPersistenceManager().evictAll();
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getResolvedLicense()).isNotNull();
+            assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo(updatedLicense.getLicenseId());
+        });
+
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3498
+    public void informDeleteExistingLicenseTest() {
+        final var existingLicense = new License();
+        existingLicense.setLicenseId("GPL-3.0-or-later");
+        existingLicense.setName("GPL-3.0-or-later");
+        qm.persist(existingLicense);
+
+        final var project = new Project();
+        project.setName("acme-update-license-app");
+        qm.persist(project);
+
+        final byte[] existingBomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "acme-lib-y",
+                      "version": "2.0.0",
+                      "licenses": [
+                        {
+                          "license": {
+                            "name": "GPL-3.0-or-later"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        bomUploadProcessingTaskSupplier.get().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), existingBomBytes));
+        awaitBomProcessedNotification();
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getResolvedLicense()).isNotNull();
+            assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo(existingLicense.getLicenseId());
+        });
+
+        // Upload bom again but with license deleted
+        final byte[] updatedBomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "publisher": "Acme Inc",
+                      "group": "com.acme",
+                      "name": "acme-lib-y",
+                      "version": "2.0.0",
+                      "licenses": []
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        bomUploadProcessingTaskSupplier.get().inform(new BomUploadEvent(qm.detach(Project.class, project.getId()), updatedBomBytes));
+        awaitBomProcessedNotification();
+        qm.getPersistenceManager().evictAll();
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getResolvedLicense()).isNull();
+            assertThat(component.getLicense()).isNull();
+            assertThat(component.getLicenseUrl()).isNull();
+            assertThat(component.getLicenseExpression()).isNull();
+        });
+    }
+
     @Test
     public void informWithBomContainingServiceTest() throws Exception {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);

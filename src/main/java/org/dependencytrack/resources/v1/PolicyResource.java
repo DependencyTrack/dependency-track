@@ -64,7 +64,8 @@ public class PolicyResource extends AlpineResource {
             value = "Returns a list of all policies",
             response = Policy.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policies")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policies"),
+            notes = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -82,7 +83,8 @@ public class PolicyResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a specific policy",
-            response = Policy.class
+            response = Policy.class,
+            notes = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -108,7 +110,8 @@ public class PolicyResource extends AlpineResource {
     @ApiOperation(
             value = "Creates a new policy",
             response = Policy.class,
-            code = 201
+            code = 201,
+            notes = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -147,7 +150,8 @@ public class PolicyResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a policy",
-            response = Policy.class
+            response = Policy.class,
+            notes = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -180,7 +184,8 @@ public class PolicyResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a policy",
-            code = 204
+            code = 204,
+            notes = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -207,7 +212,8 @@ public class PolicyResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Adds a project to a policy",
-            response = Policy.class
+            response = Policy.class,
+            notes = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The policy already has the specified project assigned"),
@@ -245,7 +251,8 @@ public class PolicyResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Removes a project from a policy",
-            response = Policy.class
+            response = Policy.class,
+            notes = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The policy does not have the specified project assigned"),
@@ -283,7 +290,8 @@ public class PolicyResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Adds a tag to a policy",
-            response = Policy.class
+            response = Policy.class,
+            notes = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The policy already has the specified tag assigned"),
@@ -322,7 +330,8 @@ public class PolicyResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Removes a tag from a policy",
-            response = Policy.class
+            response = Policy.class,
+            notes = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The policy does not have the specified tag assigned"),

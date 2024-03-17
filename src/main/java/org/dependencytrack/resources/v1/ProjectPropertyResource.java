@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.common.logging.Logger;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -55,14 +54,13 @@ import java.util.List;
 @Api(value = "projectProperty", authorizations = @Authorization(value = "X-Api-Key"))
 public class ProjectPropertyResource extends AbstractConfigPropertyResource {
 
-    private static final Logger LOGGER = Logger.getLogger(ProjectPropertyResource.class);
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all ProjectProperties for the specified project",
             response = ProjectProperty.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -104,7 +102,8 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
     @ApiOperation(
             value = "Creates a new project property",
             response = ProjectProperty.class,
-            code = 201
+            code = 201,
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -160,7 +159,8 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a project property",
-            response = ProjectProperty.class
+            response = ProjectProperty.class,
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -202,7 +202,8 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a config property",
-            response = ProjectProperty.class
+            response = ProjectProperty.class,
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

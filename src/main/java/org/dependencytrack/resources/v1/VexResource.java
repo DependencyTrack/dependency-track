@@ -42,7 +42,6 @@ import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
 import org.dependencytrack.resources.v1.vo.VexSubmitRequest;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.validation.Validator;
@@ -79,7 +78,8 @@ public class VexResource extends AlpineResource {
     @Produces({CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @ApiOperation(
             value = "Returns a VEX for a project in CycloneDX format",
-            response = String.class
+            response = String.class,
+            notes = "<p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -124,11 +124,16 @@ public class VexResource extends AlpineResource {
     @ApiOperation(
             value = "Upload a supported VEX document",
             notes = """
-                    Expects CycloneDX and a valid project UUID. If a UUID is not specified, \
-                    then the projectName and projectVersion must be specified.
-                    The VEX will be validated against the CycloneDX schema. If schema validation fails, \
-                    a response with problem details in RFC 9457 format will be returned. In this case, \
-                    the response's content type will be application/problem+json."""
+                    <p>
+                      Expects CycloneDX and a valid project UUID. If a UUID is not specified,
+                      then the <code>projectName</code> and <code>projectVersion</code> must be specified.
+                    </p>
+                    <p>
+                      The VEX will be validated against the CycloneDX schema. If schema validation fails,
+                      a response with problem details in RFC 9457 format will be returned. In this case,
+                      the response's content type will be <code>application/problem+json</code>.
+                    </p>
+                    <p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"""
     )
     @ApiResponses(value = {
             @ApiResponse(code = 400, message = "Invalid VEX", response = InvalidBomProblemDetails.class),
@@ -167,11 +172,16 @@ public class VexResource extends AlpineResource {
     @ApiOperation(
             value = "Upload a supported VEX document",
             notes = """
-                    Expects CycloneDX along and a valid project UUID. If a UUID is not specified, \
-                    then the projectName and projectVersion must be specified.
-                    The VEX will be validated against the CycloneDX schema. If schema validation fails, \
-                    a response with problem details in RFC 9457 format will be returned. In this case, \
-                    the response's content type will be application/problem+json."""
+                    <p>
+                      Expects CycloneDX and a valid project UUID. If a UUID is not specified,
+                      then the <code>projectName</code> and <code>projectVersion</code> must be specified.
+                    </p>
+                    <p>
+                      The VEX will be validated against the CycloneDX schema. If schema validation fails,
+                      a response with problem details in RFC 9457 format will be returned. In this case,
+                      the response's content type will be <code>application/problem+json</code>.
+                    </p>
+                    <p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"""
     )
     @ApiResponses(value = {
             @ApiResponse(code = 400, message = "Invalid VEX", response = InvalidBomProblemDetails.class),
@@ -183,9 +193,7 @@ public class VexResource extends AlpineResource {
     public Response uploadVex(@FormDataParam("project") String projectUuid,
                               @FormDataParam("projectName") String projectName,
                               @FormDataParam("projectVersion") String projectVersion,
-                              final FormDataMultiPart multiPart) {
-
-        final List<FormDataBodyPart> artifactParts = multiPart.getFields("vex");
+                              @ApiParam(type = "string") @FormDataParam("vex") final List<FormDataBodyPart> artifactParts) {
         if (projectUuid != null) {
             try (QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, projectUuid);

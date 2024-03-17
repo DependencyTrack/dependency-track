@@ -66,7 +66,8 @@ public class ViolationAnalysisResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Retrieves a violation analysis trail",
-            response = ViolationAnalysis.class
+            response = ViolationAnalysis.class,
+            notes = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -100,7 +101,8 @@ public class ViolationAnalysisResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Records a violation analysis decision",
-            response = ViolationAnalysis.class
+            response = ViolationAnalysis.class,
+            notes = "<p>Requires permission <strong>POLICY_VIOLATION_ANALYSIS</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

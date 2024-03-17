@@ -41,6 +41,7 @@ import org.dependencytrack.model.GroupedFinding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -75,7 +76,8 @@ public class FindingResource extends AlpineResource {
             value = "Returns a list of all findings for a specific project",
             response = Finding.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings"),
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -113,7 +115,8 @@ public class FindingResource extends AlpineResource {
     @Path("/project/{uuid}/export")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Returns the findings for the specified project as FPF"
+            value = "Returns the findings for the specified project as FPF",
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -145,7 +148,8 @@ public class FindingResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Triggers Vulnerability Analysis on a specific project",
-            response = Project.class
+            response = Project.class,
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -187,7 +191,8 @@ public class FindingResource extends AlpineResource {
             value = "Returns a list of all findings",
             response = Finding.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings"),
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -250,7 +255,8 @@ public class FindingResource extends AlpineResource {
             value = "Returns a list of all findings grouped by vulnerability",
             response = GroupedFinding.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings"),
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

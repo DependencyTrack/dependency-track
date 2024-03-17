@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.AnalysisResponse;
@@ -30,6 +31,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
+import org.dependencytrack.resources.v1.exception.JsonMappingExceptionMapper;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -41,7 +43,6 @@ import org.junit.Test;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
 import java.util.Base64;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -57,7 +58,8 @@ public class VexResourceTest extends ResourceTest {
                         new ResourceConfig(VexResource.class)
                                 .register(ApiFilter.class)
                                 .register(AuthenticationFilter.class)
-                                .register(MultiPartFeature.class)))
+                                .register(MultiPartFeature.class)
+                                .register(JsonMappingExceptionMapper.class)))
                 .build();
     }
 
@@ -302,6 +304,35 @@ public class VexResourceTest extends ResourceTest {
                     "cvc-enumeration-valid: Value 'foo' is not facet-valid with respect to enumeration '[application, framework, library, container, operating-system, device, firmware, file]'. It must be a value from the enumeration.",
                     "cvc-attribute.3: The value 'foo' of attribute 'type' on element 'component' is not valid with respect to its type, 'classification'."
                   ]
+                }
+                """);
+    }
+
+    @Test
+    public void uploadVexTooLargeViaPutTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final String vex = "a".repeat(StreamReadConstraints.DEFAULT_MAX_STRING_LEN + 1);
+
+        final Response response = target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(vex), MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                {
+                  "status": 400,
+                  "title": "The provided JSON payload could not be mapped",
+                  "detail": "The VEX is too large to be transmitted safely via Base64 encoded JSON value. Please use the \\"POST /api/v1/vex\\" endpoint with Content-Type \\"multipart/form-data\\" instead. Original cause: String length (20000001) exceeds the maximum length (20000000) (through reference chain: org.dependencytrack.resources.v1.vo.VexSubmitRequest[\\"vex\\"])"
                 }
                 """);
     }

@@ -36,11 +36,12 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Path("/v1/integration/osv/ecosystem")
-@Api(value = "ecosystem", authorizations = @Authorization(value = "X-Api-Key"))
-public class OsvEcosytemResource extends AlpineResource {
+@Path("/v1/integration")
+@Api(value = "integration", authorizations = @Authorization(value = "X-Api-Key"))
+public class IntegrationResource extends AlpineResource {
 
     @GET
+    @Path("/osv/ecosystem")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all ecosystems in OSV",
@@ -58,7 +59,7 @@ public class OsvEcosytemResource extends AlpineResource {
     }
 
     @GET
-    @Path("/inactive")
+    @Path("/osv/ecosystem/inactive")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of available inactive ecosystems in OSV to be selected by user",

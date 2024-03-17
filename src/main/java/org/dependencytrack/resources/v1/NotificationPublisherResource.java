@@ -68,7 +68,7 @@ import java.util.List;
  * @since 3.2.0
  */
 @Path("/v1/notification/publisher")
-@Api(authorizations = @Authorization(value = "X-Api-Key"))
+@Api(value = "notification", authorizations = @Authorization(value = "X-Api-Key"))
 public class NotificationPublisherResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(NotificationPublisherResource.class);
@@ -78,7 +78,8 @@ public class NotificationPublisherResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of all notification publishers",
             response = NotificationPublisher.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -97,7 +98,8 @@ public class NotificationPublisherResource extends AlpineResource {
     @ApiOperation(
             value = "Creates a new notification publisher",
             response = NotificationPublisher.class,
-            code = 201
+            code = 201,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 400, message = "Invalid notification class or trying to modify a default publisher"),
@@ -149,7 +151,8 @@ public class NotificationPublisherResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a notification publisher",
-            response = NotificationRule.class
+            response = NotificationRule.class,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 400, message = "Invalid notification class or trying to modify a default publisher"),
@@ -211,7 +214,8 @@ public class NotificationPublisherResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a notification publisher and all related notification rules",
-            code = 204
+            code = 204,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 400, message = "Deleting a default notification publisher is forbidden"),
@@ -241,7 +245,8 @@ public class NotificationPublisherResource extends AlpineResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Restore the default notification publisher templates using the ones in the solution classpath"
+            value = "Restore the default notification publisher templates using the ones in the solution classpath",
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -268,7 +273,8 @@ public class NotificationPublisherResource extends AlpineResource {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Dispatches a SMTP notification test"
+            value = "Dispatches a SMTP notification test",
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")

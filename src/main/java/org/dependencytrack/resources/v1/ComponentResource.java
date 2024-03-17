@@ -45,6 +45,7 @@ import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
+
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -78,7 +79,8 @@ public class ComponentResource extends AlpineResource {
             value = "Returns a list of all components for a given project",
             response = Component.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of components")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of components"),
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -113,7 +115,8 @@ public class ComponentResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a specific component",
-            response = Component.class
+            response = Component.class,
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -155,7 +158,8 @@ public class ComponentResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of components that have the specified component identity. This resource accepts coordinates (group, name, version) or purl, cpe, or swidTagId",
             responseContainer = "List",
-            response = Component.class
+            response = Component.class,
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -213,7 +217,8 @@ public class ComponentResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of components that have the specified hash value",
             responseContainer = "List",
-            response = Component.class
+            response = Component.class,
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -235,7 +240,8 @@ public class ComponentResource extends AlpineResource {
     @ApiOperation(
             value = "Creates a new component",
             response = Component.class,
-            code = 201
+            code = 201,
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -342,7 +348,8 @@ public class ComponentResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a component",
-            response = Component.class
+            response = Component.class,
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -449,7 +456,8 @@ public class ComponentResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a component",
-            code = 204
+            code = 204,
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -478,7 +486,11 @@ public class ComponentResource extends AlpineResource {
     @GET
     @Path("/internal/identify")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Requests the identification of internal components in the portfolio", code = 204)
+    @ApiOperation(
+            value = "Requests the identification of internal components in the portfolio",
+            code = 204,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
     })
@@ -494,7 +506,9 @@ public class ComponentResource extends AlpineResource {
     @ApiOperation(
             value = "Returns the expanded dependency graph to every occurrence of a component",
             response = Component.class,
-            responseContainer = "Map")
+            responseContainer = "Map",
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),

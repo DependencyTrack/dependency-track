@@ -133,6 +133,11 @@ public class VexResource extends AlpineResource {
                       a response with problem details in RFC 9457 format will be returned. In this case,
                       the response's content type will be <code>application/problem+json</code>.
                     </p>
+                    <p>
+                      The maximum allowed length of the <code>vex</code> value is 20'000'000 characters.
+                      When uploading large VEX files, the <code>POST</code> endpoint is preferred,
+                      as it does not have this limit.
+                    </p>
                     <p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"""
     )
     @ApiResponses(value = {

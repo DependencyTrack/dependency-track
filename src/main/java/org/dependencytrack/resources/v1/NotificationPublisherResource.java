@@ -68,7 +68,7 @@ import java.util.List;
  * @since 3.2.0
  */
 @Path("/v1/notification/publisher")
-@Api(authorizations = @Authorization(value = "X-Api-Key"))
+@Api(value = "notification", authorizations = @Authorization(value = "X-Api-Key"))
 public class NotificationPublisherResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(NotificationPublisherResource.class);

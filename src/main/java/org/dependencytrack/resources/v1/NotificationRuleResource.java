@@ -59,7 +59,7 @@ import java.util.List;
  * @since 3.2.0
  */
 @Path("/v1/notification/rule")
-@Api(authorizations = @Authorization(value = "X-Api-Key"))
+@Api(value = "notification", authorizations = @Authorization(value = "X-Api-Key"))
 public class NotificationRuleResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(NotificationRuleResource.class);

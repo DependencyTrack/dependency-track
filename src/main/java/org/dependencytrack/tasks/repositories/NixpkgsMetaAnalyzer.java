@@ -24,16 +24,20 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.HttpStatus;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.brotli.dec.BrotliInputStream;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 public class NixpkgsMetaAnalyzer extends AbstractMetaAnalyzer {
     private static final Logger LOGGER = Logger.getLogger(NixpkgsMetaAnalyzer.class);
@@ -51,20 +55,17 @@ public class NixpkgsMetaAnalyzer extends AbstractMetaAnalyzer {
         try (final CloseableHttpClient client = HttpClients.createDefault()) {
             try (final CloseableHttpResponse packagesResponse = processHttpRequest5(client)) {
                 if (packagesResponse != null && packagesResponse.getCode() == HttpStatus.SC_OK) {
-                    final var entity = packagesResponse.getEntity();
-                    if (entity != null) {
-                        // TODO(mangoiv): is this the fastest way we can do this?
-                        final var entityString = EntityUtils.toString(entity);
-                        final var packages = new JSONObject(entityString).getJSONObject("packages").toMap().values();
-                        packages.forEach(pkg -> {
-                            // FUTUREWORK(mangoiv): there are potentially packages with the same pname
-                            if (pkg instanceof HashMap jsonPkg) {
-                                final var pname = jsonPkg.get("pname");
-                                final var version = jsonPkg.get("version");
-                                newLatestVersion.putIfAbsent((String) pname, (String) version);
-                            }
-                        });
-                    }
+                    var reader = new BufferedReader(new InputStreamReader(packagesResponse.getEntity().getContent()));
+                    var packages = new JSONObject(new JSONTokener(reader)).getJSONObject("packages").toMap().values();
+                    packages.forEach(pkg -> {
+                        // FUTUREWORK(mangoiv): there are potentially packages with the same pname
+                        if (pkg instanceof HashMap jsonPkg) {
+                            final var pname = jsonPkg.get("pname");
+                            final var version = jsonPkg.get("version");
+                            newLatestVersion.putIfAbsent((String) pname, (String) version);
+                        }
+                    });
+
 
                 }
             }

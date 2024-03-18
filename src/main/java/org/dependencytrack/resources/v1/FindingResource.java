@@ -20,9 +20,12 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.model.About;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -30,6 +33,11 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.core.Response.Status;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
@@ -67,12 +75,13 @@ import java.util.stream.Collectors;
 public class FindingResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(FindingResource.class);
+    public static final String MEDIA_TYPE_SARIF_JSON = "application/sarif+json";
 
     @GET
     @Path("/project/{uuid}")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, MEDIA_TYPE_SARIF_JSON})
     @ApiOperation(
-            value = "Returns a list of all findings for a specific project",
+            value = "Returns a list of all findings for a specific project or generates SARIF file if Accept: application/sarif+json header is provided",
             response = Finding.class,
             responseContainer = "List",
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
@@ -87,13 +96,24 @@ public class FindingResource extends AlpineResource {
                                          @ApiParam(value = "Optionally includes suppressed findings")
                                          @QueryParam("suppressed") boolean suppressed,
                                          @ApiParam(value = "Optionally limit findings to specific sources of vulnerability intelligence")
-                                         @QueryParam("source") Vulnerability.Source source) {
+                                         @QueryParam("source") Vulnerability.Source source,
+                                         @HeaderParam("accept") String acceptHeader) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     //final long totalCount = qm.getVulnerabilityCount(project, suppressed);
                     final List<Finding> findings = qm.getFindings(project, suppressed);
+                    if (acceptHeader != null && acceptHeader.contains(MEDIA_TYPE_SARIF_JSON)) {
+                        try {
+                            return Response.ok(generateSARIF(findings), MEDIA_TYPE_SARIF_JSON)
+                                .header("content-disposition","attachment; filename=\"findings-" + uuid + ".sarif\"")
+                                .build();
+                        } catch (IOException ioException) {
+                            LOGGER.error(ioException.getMessage(), ioException);
+                            return Response.status(Status.INTERNAL_SERVER_ERROR).entity("An error occurred while generating SARIF file").build();
+                        }
+                    }
                     if (source != null) {
                         final List<Finding> filteredList = findings.stream().filter(finding -> source.name().equals(finding.getVulnerability().get("source"))).collect(Collectors.toList());
                         return Response.ok(filteredList).header(TOTAL_COUNT_HEADER, filteredList.size()).build();
@@ -295,6 +315,21 @@ public class FindingResource extends AlpineResource {
             filters.put("occurrencesTo", occurrencesTo);
             final PaginatedResult result = qm.getAllFindingsGroupedByVulnerability(filters, showInactive);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        }
+    }
+
+    private String generateSARIF(List<Finding> findings) throws IOException {
+        final PebbleEngine engine = new PebbleEngine.Builder().newLineTrimming(false).build();
+        final PebbleTemplate sarifTemplate = engine.getTemplate("templates/findings/sarif.peb");
+
+        final Map<String, Object> context = new HashMap<>();
+        final About about = new About();
+        context.put("findings", findings);
+        context.put("dependencyTrackVersion", about.getVersion());
+
+        try (final Writer writer = new StringWriter()) {
+            sarifTemplate.evaluate(writer, context);
+            return writer.toString();
         }
     }
 

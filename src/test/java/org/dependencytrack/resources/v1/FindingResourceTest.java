@@ -18,11 +18,15 @@
  */
 package org.dependencytrack.resources.v1;
 
+import static org.dependencytrack.resources.v1.FindingResource.MEDIA_TYPE_SARIF_JSON;
+
 import alpine.Config;
+import alpine.model.About;
 import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import javax.ws.rs.core.HttpHeaders;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -587,6 +591,45 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals(80, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
         Assert.assertEquals(666, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
         Assert.assertEquals(1, json.getJsonObject(2).getJsonObject("vulnerability").getInt("affectedProjectCount"));
+    }
+
+    @Test
+    public void getSARIFFindingsByProjectTest() {
+        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Component c1 = createComponent(p1, "Component A", "1.0");
+        Component c2 = createComponent(p1, "Component B", "1.0");
+        Component c3 = createComponent(p1, "Component C", "1.0");
+        Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
+        Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH);
+        Vulnerability v3 = createVulnerability("Vuln-3", Severity.MEDIUM);
+        Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
+        qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v4, c3, AnalyzerIdentity.NONE);
+
+        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+            .header(HttpHeaders.ACCEPT, MEDIA_TYPE_SARIF_JSON)
+            .header(X_API_KEY, apiKey)
+            .get(Response.class);
+
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(MEDIA_TYPE_SARIF_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+
+        JsonArray runs = json.getJsonArray("runs");
+        Assert.assertNotNull(runs);
+        JsonObject runsJson = runs.getJsonObject(0);
+        Assert.assertNotNull(runsJson);
+        Assert.assertEquals("OWASP Dependency-Track", runsJson.getJsonObject("tool").getJsonObject("driver").getString("name"));
+        Assert.assertEquals(new About().getVersion(), runsJson.getJsonObject("tool").getJsonObject("driver").getString("version"));
+        Assert.assertNotNull(runsJson.getJsonObject("tool").getJsonObject("driver").getJsonArray("rules"));
+        Assert.assertEquals("Vuln-1", runsJson.getJsonObject("tool").getJsonObject("driver").getJsonArray("rules").getJsonObject(0).getString("id"));
+        Assert.assertNotNull(runsJson.getJsonArray("results"));
+        Assert.assertEquals("error", runsJson.getJsonArray("results").getJsonObject(0).getString("level"));
+        Assert.assertEquals("Vuln-1", runsJson.getJsonArray("results").getJsonObject(0).getString("ruleId"));
     }
 
     private Component createComponent(Project project, String name, String version) {

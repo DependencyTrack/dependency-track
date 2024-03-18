@@ -25,7 +25,6 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
-import org.brotli.dec.BrotliInputStream;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
@@ -37,7 +36,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.stream.Collectors;
 
 public class NixpkgsMetaAnalyzer extends AbstractMetaAnalyzer {
     private static final Logger LOGGER = Logger.getLogger(NixpkgsMetaAnalyzer.class);

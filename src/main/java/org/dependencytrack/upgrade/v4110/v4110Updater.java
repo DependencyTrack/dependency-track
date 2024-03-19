@@ -21,6 +21,7 @@ package org.dependencytrack.upgrade.v4110;
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
+import alpine.server.util.DbUtil;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.util.VulnerabilityUtil;
 
@@ -42,6 +43,7 @@ public class v4110Updater extends AbstractUpgradeItem {
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
         dropCweTable(connection);
         computeVulnerabilitySeverities(connection);
+        extendPurlColumnLengths(connection);
     }
 
     private static void dropCweTable(final Connection connection) throws Exception {
@@ -59,10 +61,17 @@ public class v4110Updater extends AbstractUpgradeItem {
                         ALTER TABLE "VULNERABILITY" DROP CONSTRAINT IF EXISTS "VULNERABILITY_FK1"
                         """);
 
-                LOGGER.info("Dropping index \"VULNERABILITY\".\"VULNERABILITY_CWE_IDX\"");
-                stmt.executeUpdate("""
+                if (DbUtil.isH2()) {
+                    LOGGER.info("Dropping index \"VULNERABILITY_CWE_IDX\"");
+                    stmt.executeUpdate("""
+                        DROP INDEX IF EXISTS "VULNERABILITY_CWE_IDX"
+                        """);
+                } else {
+                    LOGGER.info("Dropping index \"VULNERABILITY\".\"VULNERABILITY_CWE_IDX\"");
+                    stmt.executeUpdate("""
                         DROP INDEX IF EXISTS "VULNERABILITY"."VULNERABILITY_CWE_IDX"
                         """);
+                }
 
                 LOGGER.info("Dropping column \"VULNERABILITY\".\"CWE\"");
                 stmt.executeUpdate("""
@@ -136,6 +145,49 @@ public class v4110Updater extends AbstractUpgradeItem {
             }
 
             LOGGER.info("Updated %d vulnerabilities in %d batches".formatted(numUpdates, numBatches));
+        }
+    }
+
+    private static void extendPurlColumnLengths(final Connection connection) throws Exception {
+        LOGGER.info("Extending length of PURL and PURLCOORDINATES columns from 255 to 786");
+        if (DbUtil.isH2() || DbUtil.isPostgreSQL()) {
+            try (final Statement statement = connection.createStatement()) {
+                statement.addBatch("""
+                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURL" SET DATA TYPE VARCHAR(786)""");
+                statement.addBatch("""
+                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURLCOORDINATES" SET DATA TYPE VARCHAR(786)""");
+                statement.addBatch("""
+                        ALTER TABLE "COMPONENTANALYSISCACHE" ALTER COLUMN "TARGET" SET DATA TYPE VARCHAR(786)""");
+                statement.addBatch("""
+                        ALTER TABLE "PROJECT" ALTER COLUMN "PURL" SET DATA TYPE VARCHAR(786)""");
+                statement.executeBatch();
+            }
+        } else if (DbUtil.isMssql()) {
+            try (final Statement statement = connection.createStatement()) {
+                statement.addBatch("""
+                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURL" VARCHAR(786) NULL""");
+                statement.addBatch("""
+                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURLCOORDINATES" VARCHAR(786) NULL""");
+                statement.addBatch("""
+                        ALTER TABLE "COMPONENTANALYSISCACHE" ALTER COLUMN "TARGET" VARCHAR(786) NOT NULL""");
+                statement.addBatch("""
+                        ALTER TABLE "PROJECT" ALTER COLUMN "PURL" VARCHAR(786) NULL""");
+                statement.executeBatch();
+            }
+        } else if (DbUtil.isMysql()) {
+            try (final Statement statement = connection.createStatement()) {
+                statement.addBatch("""
+                        ALTER TABLE "COMPONENT" MODIFY COLUMN "PURL" VARCHAR(786)""");
+                statement.addBatch("""
+                        ALTER TABLE "COMPONENT" MODIFY COLUMN "PURLCOORDINATES" VARCHAR(786)""");
+                statement.addBatch("""
+                        ALTER TABLE "COMPONENTANALYSISCACHE" MODIFY COLUMN "TARGET" VARCHAR(786)""");
+                statement.addBatch("""
+                        ALTER TABLE "PROJECT" MODIFY COLUMN "PURL" VARCHAR(786)""");
+                statement.executeBatch();
+            }
+        } else {
+            throw new IllegalStateException("Unrecognized database type");
         }
     }
 

@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.parser.common.resolver.CveResolver;
 import org.dependencytrack.parser.vulndb.model.Author;
 import org.dependencytrack.parser.vulndb.model.CvssV2Metric;
 import org.dependencytrack.parser.vulndb.model.CvssV3Metric;
@@ -162,10 +163,17 @@ public final class ModelConverter {
 
         if (vulnDbVuln.nvdAdditionalInfo() != null) {
             final String cweString = vulnDbVuln.nvdAdditionalInfo().cweId();
+            final String cve_idString = vulnDbVuln.nvdAdditionalInfo().cveId();
             if (cweString != null && cweString.startsWith("CWE-")) {
                 final Cwe cwe = CweResolver.getInstance().lookup(cweString);
                 if (cwe != null) {
                     vuln.addCwe(cwe);
+                }
+            }
+            if (cve_idString != null && cve_idString.startsWith("CVE-")) {
+                final String cve_id = CveResolver.getInstance().parseCveString(cve_idString);
+                if (cve_id != null) {
+                    vuln.setAdditionalVulnId(cve_id);
                 }
             }
         }

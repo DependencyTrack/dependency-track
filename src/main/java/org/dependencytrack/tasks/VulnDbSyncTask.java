@@ -42,6 +42,7 @@ import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
+import org.dependencytrack.model.VulnerabilityAlias;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,7 +113,21 @@ public class VulnDbSyncTask implements LoggableSubscriber {
             }
         }
     }
-
+    /*
+     * Compute Alias between VulnDB and CVEs
+     */
+    public List<VulnerabilityAlias> computeAliases(Vulnerability vulnerability, QueryManager qm) {
+        List<VulnerabilityAlias> vulnerabilityAliasList = new ArrayList<>();
+        final String cve_id = vulnerability.getAdditionalVulnId();
+        if (cve_id != null) {
+            final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+            vulnerabilityAlias.setVulnDbId(vulnerability.getVulnId());
+            vulnerabilityAlias.setCveId(cve_id);
+            qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+            vulnerabilityAliasList.add(vulnerabilityAlias);
+        }
+        return vulnerabilityAliasList;
+    }
     /**
      * Synchronizes the VulnDB vulnerabilities with the internal Dependency-Track database.
      *
@@ -131,6 +146,9 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                     qm.updateAffectedVersionAttributions(synchronizeVulnerability, vsList, Vulnerability.Source.VULNDB);
                     vsList = qm.reconcileVulnerableSoftware(synchronizeVulnerability, vsListOld, vsList, Vulnerability.Source.VULNDB);
                     synchronizeVulnerability.setVulnerableSoftware(vsList);
+                    if (synchronizeVulnerability.getAdditionalVulnId() != null){
+                        synchronizeVulnerability.setAliases(computeAliases(synchronizeVulnerability, qm));
+                    }
                     qm.persist(synchronizeVulnerability);
                 }
             }

@@ -131,6 +131,6 @@ public class AnalysisRequest {
     }
 
     public Boolean isSuppressed() {
-        return suppressed;
+        return suppressed != null;
     }
 }

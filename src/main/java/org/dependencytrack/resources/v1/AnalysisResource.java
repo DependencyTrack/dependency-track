@@ -32,16 +32,11 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.exception.EntityNotFoundException;
 import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
-import org.dependencytrack.util.AnalysisCommentUtil;
-import org.dependencytrack.util.NotificationUtil;
+import org.dependencytrack.services.AnalysisService;
 
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -52,6 +47,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Optional;
 
 /**
  * JAX-RS resources for processing analysis decisions.
@@ -86,27 +82,14 @@ public class AnalysisResource extends AlpineResource {
                 new ValidationTask(RegexSequence.Pattern.UUID, componentUuid, "Component is not a valid UUID"),
                 new ValidationTask(RegexSequence.Pattern.UUID, vulnerabilityUuid, "Vulnerability is not a valid UUID")
         );
-        try (QueryManager qm = new QueryManager()) {
-            final Project project;
-            if (StringUtils.trimToNull(projectUuid) != null) {
-                project = qm.getObjectByUuid(Project.class, projectUuid);
-                if (project == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
-                }
+        try (AnalysisService service = new AnalysisService()) {
+            Optional<Analysis> analysis = service.getAnalysis(projectUuid, componentUuid, vulnerabilityUuid);
+            if (analysis.isPresent()) {
+                return Response.ok(analysis.get()).build();
             }
-            final Component component = qm.getObjectByUuid(Component.class, componentUuid);
-            if (component == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
-            }
-            final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, vulnerabilityUuid);
-            if (vulnerability == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The vulnerability could not be found.").build();
-            }
-            final Analysis analysis = qm.getAnalysis(component, vulnerability);
-            if (analysis == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("No analysis exists.").build();
-            }
-            return Response.ok(analysis).build();
+            return Response.status(Response.Status.NOT_FOUND).entity("No analysis exists.").build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
     }
 
@@ -135,49 +118,18 @@ public class AnalysisResource extends AlpineResource {
                 validator.validateProperty(request, "analysisDetails"),
                 validator.validateProperty(request, "comment")
         );
-        try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getObjectByUuid(Project.class, request.getProject());
-            if (project == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
-            }
-            final Component component = qm.getObjectByUuid(Component.class, request.getComponent());
-            if (component == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
-            }
-            final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, request.getVulnerability());
-            if (vulnerability == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The vulnerability could not be found.").build();
-            }
-
+        try (AnalysisService service = new AnalysisService()) {
             String commenter = null;
             if (getPrincipal() instanceof LdapUser || getPrincipal() instanceof ManagedUser || getPrincipal() instanceof OidcUser) {
                 commenter = ((UserPrincipal) getPrincipal()).getUsername();
             }
 
-            boolean analysisStateChange = false;
-            boolean suppressionChange = false;
-            Analysis analysis = qm.getAnalysis(component, vulnerability);
-            if (analysis != null) {
-                analysisStateChange = AnalysisCommentUtil.makeStateComment(qm, analysis, request.getAnalysisState(), commenter);
-                AnalysisCommentUtil.makeJustificationComment(qm, analysis, request.getAnalysisJustification(), commenter);
-                AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, request.getAnalysisResponse(), commenter);
-                AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, request.getAnalysisDetails(), commenter);
-                suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
-                analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed());
-            } else {
-                analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed());
-                analysisStateChange = true; // this is a new analysis - so set to true because it was previously null
-                AnalysisCommentUtil.makeFirstStateComment(qm, analysis, commenter);
-                AnalysisCommentUtil.makeFirstJustificationComment(qm, analysis, commenter);
-                AnalysisCommentUtil.makeFirstAnalysisResponseComment(qm, analysis, commenter);
-                AnalysisCommentUtil.makeFirstDetailsComment(qm, analysis, commenter);
+            try {
+                Analysis analysis = service.updateAnalysis(request, commenter);
+                return Response.ok(analysis).build();
+            } catch (EntityNotFoundException e) {
+                return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
             }
-
-            final String comment = StringUtils.trimToNull(request.getComment());
-            qm.makeAnalysisComment(analysis, comment, commenter);
-            analysis = qm.getAnalysis(component, vulnerability);
-            NotificationUtil.analyzeNotificationCriteria(qm, analysis, analysisStateChange, suppressionChange);
-            return Response.ok(analysis).build();
         }
     }
 

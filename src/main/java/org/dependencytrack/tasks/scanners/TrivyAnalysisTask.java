@@ -346,7 +346,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                     .whenComplete((complete, exception) -> {
                         countDownLatch.countDown();
                         if (exception != null) {
-                            LOGGER.error("An unexpected error occurred while analyzing %s" .formatted(components.get(key)), exception);
+                            LOGGER.error("An unexpected error occurred while analyzing %s".formatted(components.get(key)), exception);
                         }
                     });
         }));
@@ -357,7 +357,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 // while for the processing of the respective event to complete.
                 // It is unlikely though that either of these situations causes a block for
                 // over 60 minutes. If that happens, the system is under-resourced.
-                LOGGER.warn("The Analysis for project :" + components.entrySet().iterator().next().getValue().getProject().getName() + "took longer than expected");
+                LOGGER.warn("The Analysis for project %s took longer than expected".formatted(components.entrySet().iterator().next().getValue().getProject().getName()));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

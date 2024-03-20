@@ -205,7 +205,7 @@ Interested in contributing to Dependency-Track? Please check [`CONTRIBUTING.md`]
 * Discussion (Groups.io): <https://dependencytrack.org/discussion>
 
 ## Copyright & License
-Dependency-Track is Copyright (c) Steve Springett. All Rights Reserved.
+Dependency-Track is Copyright (c) OWASP Foundation. All Rights Reserved.
 
 Permission to modify and redistribute is granted under the terms of the
 [Apache License 2.0].

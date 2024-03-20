@@ -598,6 +598,10 @@ public class QueryManager extends AlpineQueryManager {
         return getPolicyQueryManager().getPolicy(name);
     }
 
+    public Policy getPolicyByUuid(final String uuid) {
+        return getPolicyQueryManager().getPolicyByUuid(uuid);
+    }
+
     public Policy createPolicy(String name, Policy.Operator operator, Policy.ViolationState violationState) {
         return getPolicyQueryManager().createPolicy(name, operator, violationState);
     }
@@ -1166,6 +1170,10 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().getNotificationRules();
     }
 
+    public NotificationRule getNotificationRule(String uuid) {
+        return getNotificationQueryManager().getNotificationRule(uuid);
+    }
+
     public List<NotificationPublisher> getAllNotificationPublishers() {
         return getNotificationQueryManager().getAllNotificationPublishers();
     }
@@ -1266,8 +1274,8 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().hasAccessManagementPermission(apiKey);
     }
 
-    public PaginatedResult getTags(String policyUuid) {
-        return getTagQueryManager().getTags(policyUuid);
+    public PaginatedResult getTags(List<Project> projects) {
+        return getTagQueryManager().getTags(projects);
     }
 
     /**

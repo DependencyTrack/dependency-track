@@ -35,6 +35,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.persistence.QueryManager;
@@ -322,9 +323,9 @@ public class NotificationRuleResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response removeTeamFromRule(
-            @ApiParam(value = "The UUID of the rule to remove the project from", required = true)
+            @ApiParam(value = "The UUID of the rule to remove the team from", required = true)
             @PathParam("ruleUuid") String ruleUuid,
-            @ApiParam(value = "The UUID of the project to remove from the rule", required = true)
+            @ApiParam(value = "The UUID of the team to remove from the rule", required = true)
             @PathParam("teamUuid") String teamUuid) {
         try (QueryManager qm = new QueryManager()) {
             final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
@@ -347,4 +348,88 @@ public class NotificationRuleResource extends AlpineResource {
             return Response.status(Response.Status.NOT_MODIFIED).build();
         }
     }
+
+    @POST
+    @Path("/{ruleUuid}/tag/{tagName}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Adds a tag to a notification rule",
+            response = NotificationRule.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The rule already has the specified tag assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The notification rule or tag could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response addTagToRule(
+            @ApiParam(value = "The UUID of the rule to add a tag to", required = true)
+            @PathParam("ruleUuid") String ruleUuid,
+            @ApiParam(value = "The name of the tag to add to the rule", required = true)
+            @PathParam("tagName") String tagName) {
+        try (QueryManager qm = new QueryManager()) {
+            final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            if (rule == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+            }
+            if (rule.getScope() != NotificationScope.PORTFOLIO) {
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Tag limitations are only possible on notification rules with PORTFOLIO scope.").build();
+            }
+            final Tag tag = qm.getTagByName(tagName);
+            if (tag == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The tag could not be found.").build();
+            }
+            final List<Tag> tags = rule.getTags();
+            if (tags != null && !tags.contains(tag)) {
+                rule.getTags().add(tag);
+                qm.persist(rule);
+                return Response.ok(rule).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
+        }
+    }
+
+    @DELETE
+    @Path("/{ruleUuid}/tag/{tagName}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Removes a tag from a notification rule",
+            response = NotificationRule.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The rule does not have the specified tag assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The notification rule or tag could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response removeTagFromRule(
+            @ApiParam(value = "The UUID of the rule to remove the tag from", required = true)
+            @PathParam("ruleUuid") String ruleUuid,
+            @ApiParam(value = "The name of the tag to remove from the rule", required = true)
+            @PathParam("tagName") String tagName) {
+        try (QueryManager qm = new QueryManager()) {
+            final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            if (rule == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+            }
+            if (!rule.getPublisher().getPublisherClass().equals(SendMailPublisher.class.getName())) {
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Team subscriptions are only possible on notification rules with EMAIL publisher.").build();
+            }
+            final Tag tag = qm.getTagByName(tagName);
+            if (tag == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The tag could not be found.").build();
+            }
+            final List<Tag> tags = rule.getTags();
+            if (tags != null && tags.contains(tag)) {
+                rule.getTags().remove(tag);
+                qm.persist(rule);
+                return Response.ok(rule).build();
+            }
+
+            return Response.status(Response.Status.NOT_MODIFIED).build();
+        }
+    }
 }
+

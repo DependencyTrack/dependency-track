@@ -107,6 +107,15 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
     }
 
     /**
+     * Returns a notification rule by it's uuid.
+     * @param uuid the uuid of the notification rule (required)
+     * @return a NotificationRule object, or null if not found
+     */
+    public NotificationRule getNotificationRule(String uuid) {
+        return getObjectByUuid(NotificationRule.class, uuid);
+    }
+
+    /**
      * Retrieves all NotificationPublishers.
      * This method if designed NOT to provide paginated results.
      * @return list of all NotificationPublisher objects

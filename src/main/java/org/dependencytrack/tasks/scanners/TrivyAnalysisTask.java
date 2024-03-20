@@ -23,6 +23,7 @@ import alpine.common.logging.Logger;
 import alpine.common.metrics.Metrics;
 import alpine.common.util.UrlUtil;
 import alpine.event.framework.Event;
+import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
@@ -33,6 +34,7 @@ import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -40,6 +42,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.event.IndexEvent;
@@ -73,6 +76,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 
 import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_INITIAL_DURATION_MS;
 import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_MAX_DURATION_MS;
@@ -93,6 +101,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
     private static final Logger LOGGER = Logger.getLogger(TrivyAnalysisTask.class);
     private static final String TOKEN_HEADER = "Trivy-Token";
+    private static final ExecutorService EXECUTOR;
     private static final Retry RETRY;
 
     static {
@@ -116,6 +125,13 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         TaggedRetryMetrics
                 .ofRetryRegistry(retryRegistry)
                 .bindTo(Metrics.getRegistry());
+        final int threadPoolSize = Config.getInstance().getPropertyAsInt(ConfigKey.TRIVY_THREAD_POOL_SIZE);
+        final var threadFactory = new BasicThreadFactory.Builder()
+                .namingPattern(TrivyAnalysisTask.class.getSimpleName() + "-%d")
+                .uncaughtExceptionHandler(new LoggableUncaughtExceptionHandler())
+                .build();
+        EXECUTOR = Executors.newFixedThreadPool(threadPoolSize, threadFactory);
+        Metrics.registerExecutorService(EXECUTOR, TrivyAnalysisTask.class.getSimpleName());
     }
 
     private final Gson gson = new Gson();
@@ -311,15 +327,40 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
     }
 
     private void handleResults(final Map<String, Component> components, final ArrayList<Result> input) {
-        for (final Result result : input) {
-            for (int idx = 0; idx < result.getVulnerabilities().length; idx++) {
-                var vulnerability = result.getVulnerabilities()[idx];
-                var key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
-                LOGGER.debug("Searching key %s in map".formatted(key));
-                if (!super.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED) || vulnerability.getStatus() == 3) {
-                    handle(components.get(key), vulnerability);
-                }
+        // this is expensive, so we can run it once here and use the cached result
+        final boolean ignoreUnfixed = super.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED);
+        final CountDownLatch countDownLatch = new CountDownLatch(input.stream()
+                .mapToInt(result -> result.getVulnerabilities().length)
+                .sum());
+
+        input.parallelStream().forEach(result -> Arrays.stream(result.getVulnerabilities()).parallel().forEach(vulnerability -> {
+            String key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
+            Component component = components.get(key);
+            LOGGER.debug("Searching key %s in map".formatted(key));
+            CompletableFuture
+                    .runAsync(() -> {
+                        if (!ignoreUnfixed || vulnerability.getStatus() == 3) {
+                            handle(component, vulnerability);
+                        }
+                    }, EXECUTOR)
+                    .whenComplete((complete, exception) -> {
+                        countDownLatch.countDown();
+                        if (exception != null) {
+                            LOGGER.error("An unexpected error occurred while analyzing %s" .formatted(components.get(key)), exception);
+                        }
+                    });
+        }));
+        try {
+            if (!countDownLatch.await(60, TimeUnit.MINUTES)) {
+                // Depending on the system load, it may take a while for the queued events
+                // to be processed. And depending on how large the projects are, it may take a
+                // while for the processing of the respective event to complete.
+                // It is unlikely though that either of these situations causes a block for
+                // over 60 minutes. If that happens, the system is under-resourced.
+                LOGGER.warn("The Analysis for project :" + components.entrySet().iterator().next().getValue().getProject().getName() + "took longer than expected");
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

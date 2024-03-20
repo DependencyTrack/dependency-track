@@ -93,7 +93,7 @@ public class MetricsResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getPortfolioCurrentMetrics() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
             return Response.ok(metrics).build();
         }
@@ -122,7 +122,7 @@ public class MetricsResource extends AlpineResource {
         if (since == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("The specified date format is incorrect.").build();
         }
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final List<PortfolioMetrics> metrics = qm.getPortfolioMetricsSince(since);
             return Response.ok(metrics).build();
         }
@@ -146,7 +146,7 @@ public class MetricsResource extends AlpineResource {
             @PathParam("days") int days) {
 
         final Date since = DateUtils.addDays(new Date(), -days);
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final List<PortfolioMetrics> metrics = qm.getPortfolioMetricsSince(since);
             return Response.ok(metrics).build();
         }

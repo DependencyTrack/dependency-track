@@ -333,7 +333,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 .mapToInt(result -> result.getVulnerabilities().length)
                 .sum());
 
-        input.parallelStream().forEach(result -> Arrays.stream(result.getVulnerabilities()).parallel().forEach(vulnerability -> {
+        input.forEach(result -> Arrays.stream(result.getVulnerabilities()).forEach(vulnerability -> {
             String key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
             Component component = components.get(key);
             LOGGER.debug("Searching key %s in map".formatted(key));

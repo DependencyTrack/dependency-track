@@ -6,6 +6,7 @@
       "tool": {
         "driver": {
           "name": "OWASP Dependency-Track",
+          "fullName": "OWASP Dependency-Track - {{ dependencyTrackVersion }}",
           "version": "{{ dependencyTrackVersion }}",
           "informationUri": "https://dependencytrack.org/",
           "rules": [{% for vuln in uniqueVulnerabilities %}
@@ -13,6 +14,9 @@
               "id": "{{ vuln.vulnId }}",
               "name": "{{ vuln.cweName }}",
               "shortDescription": {
+                "text": "{{ vuln.vulnId }}"
+              },
+              "fullDescription": {
                 "text": "{{ vuln.description | trim }}"
               }
             }{% if not loop.last %},{% endif %}{% endfor %}

@@ -627,6 +627,7 @@ public class FindingResourceTest extends ResourceTest {
 
         assertThatJson(jsonResponse)
             .withMatcher("version", equalTo(new About().getVersion()))
+            .withMatcher("fullName", equalTo("OWASP Dependency-Track - " + new About().getVersion()))
             .withMatcher("vuln1Id", equalTo(v1.getVulnId()))
             .withMatcher("vuln2Id", equalTo(v2.getVulnId()))
             .withMatcher("vuln3Id", equalTo(v3.getVulnId()))
@@ -657,6 +658,7 @@ public class FindingResourceTest extends ResourceTest {
                             "tool": {
                               "driver": {
                                 "name": "OWASP Dependency-Track",
+                                "fullName": "${json-unit.matches:fullName}",
                                 "version": "${json-unit.matches:version}",
                                 "informationUri": "https://dependencytrack.org/",
                                 "rules": [
@@ -664,6 +666,9 @@ public class FindingResourceTest extends ResourceTest {
                                     "id": "${json-unit.matches:vuln1Id}",
                                     "name": "ImproperNeutralizationOfScript-relatedHtmlTagsInAWebPage(basicXss)",
                                     "shortDescription": {
+                                      "text": "${json-unit.matches:vuln1Id}"
+                                    },
+                                    "fullDescription": {
                                       "text": "${json-unit.matches:vuln1Desc}"
                                     }
                                   },
@@ -671,6 +676,9 @@ public class FindingResourceTest extends ResourceTest {
                                     "id": "${json-unit.matches:vuln2Id}",
                                     "name": "PathEquivalence:'filename'(trailingSpace)",
                                     "shortDescription": {
+                                      "text": "${json-unit.matches:vuln2Id}"
+                                    },
+                                    "fullDescription": {
                                       "text": "${json-unit.matches:vuln2Desc}"
                                     }
                                   },
@@ -678,6 +686,9 @@ public class FindingResourceTest extends ResourceTest {
                                     "id": "${json-unit.matches:vuln3Id}",
                                     "name": "RelativePathTraversal",
                                     "shortDescription": {
+                                      "text": "${json-unit.matches:vuln3Id}"
+                                    },
+                                    "fullDescription": {
                                       "text": "${json-unit.matches:vuln3Desc}"
                                     }
                                   }

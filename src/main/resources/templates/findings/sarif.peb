@@ -8,12 +8,12 @@
           "name": "OWASP Dependency-Track",
           "version": "{{ dependencyTrackVersion }}",
           "informationUri": "https://dependencytrack.org/",
-          "rules": [{% for finding in findings %}
+          "rules": [{% for vuln in uniqueVulnerabilities %}
             {
-              "id": "{{ finding.vulnerability.vulnId }}",
-              "name": "{{ finding.component.name }} - {{ finding.vulnerability.cweName }}",
+              "id": "{{ vuln.vulnId }}",
+              "name": "{{ vuln.cweName }}",
               "shortDescription": {
-                "text": "{{ finding.vulnerability.description | split('\n') | join(' ') | trim }}"
+                "text": "{{ vuln.description | trim }}"
               }
             }{% if not loop.last %},{% endif %}{% endfor %}
           ]
@@ -23,15 +23,15 @@
         {
           "ruleId": "{{ finding.vulnerability.vulnId }}",
           "message": {
-            "text": "{{ finding.vulnerability.description | split('\n') | join(' ') | trim }}"
+            "text": "{{ finding.vulnerability.description | trim }}"
           },
           "locations": [
             {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "{{ finding.component.purl }}"
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "{{ finding.component.purl }}"
                 }
-              }
+              ]
             }
           ],
           "level": {% if ['LOW', 'INFO'] contains finding.vulnerability.severity %}"note",{% elseif finding.vulnerability.severity == 'MEDIUM' %}"warning",{% elseif ['HIGH', 'CRITICAL'] contains finding.vulnerability.severity %}"error",{% else %}"none",{% endif %}
@@ -45,7 +45,7 @@
             "epssScore": "{{ finding.vulnerability.epssScore }}",
             "epssPercentile": "{{ finding.vulnerability.epssPercentile }}",
             "severityRank": "{{ finding.vulnerability.severityRank }}",
-            "recommendation": "{{ finding.vulnerability.recommendation | split('\n') | join(' ') | trim }}"
+            "recommendation": "{{ finding.vulnerability.recommendation | trim }}"
           }
         }{% if not loop.last %},{% endif %}{% endfor %}
       ]

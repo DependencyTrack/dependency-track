@@ -38,6 +38,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.core.Response.Status;
+import org.apache.commons.lang3.text.WordUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
@@ -319,18 +320,44 @@ public class FindingResource extends AlpineResource {
     }
 
     private String generateSARIF(List<Finding> findings) throws IOException {
-        final PebbleEngine engine = new PebbleEngine.Builder().newLineTrimming(false).build();
+        final PebbleEngine engine = new PebbleEngine.Builder()
+            .newLineTrimming(false)
+            .defaultEscapingStrategy("json")
+            .build();
         final PebbleTemplate sarifTemplate = engine.getTemplate("templates/findings/sarif.peb");
 
         final Map<String, Object> context = new HashMap<>();
         final About about = new About();
+
+        // Using "vulnId" as key, forming a list of unique vulnerabilities across all findings
+        // Also converts cweName to PascalCase, since it will be used as rule.name in the SARIF file
+        List<Map<String, Object>> uniqueVulnerabilities = findings.stream()
+            .collect(Collectors.toMap(
+                finding -> finding.getVulnerability().get("vulnId"),
+                FindingResource::convertCweNameToPascalCase,
+                (existingVuln, replacementVuln) -> existingVuln))
+            .values()
+            .stream()
+            .toList();
+
         context.put("findings", findings);
         context.put("dependencyTrackVersion", about.getVersion());
+        context.put("uniqueVulnerabilities", uniqueVulnerabilities);
 
         try (final Writer writer = new StringWriter()) {
             sarifTemplate.evaluate(writer, context);
             return writer.toString();
         }
+    }
+
+    private static Map<String, Object> convertCweNameToPascalCase(Finding finding) {
+        final Object cweName = finding.getVulnerability()
+            .get("cweName");
+        if (cweName != null) {
+            final String pascalCasedCweName = WordUtils.capitalizeFully(cweName.toString()).replaceAll("\\s", "");
+            finding.getVulnerability().put("cweName", pascalCasedCweName);
+        }
+        return finding.getVulnerability();
     }
 
 }

@@ -18,7 +18,10 @@
  */
 package org.dependencytrack.resources.v1;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static org.dependencytrack.resources.v1.FindingResource.MEDIA_TYPE_SARIF_JSON;
+import static org.hamcrest.CoreMatchers.equalTo;
 
 import alpine.Config;
 import alpine.model.About;
@@ -595,41 +598,210 @@ public class FindingResourceTest extends ResourceTest {
 
     @Test
     public void getSARIFFindingsByProjectTest() {
-        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
-        Component c1 = createComponent(p1, "Component A", "1.0");
-        Component c2 = createComponent(p1, "Component B", "1.0");
-        Component c3 = createComponent(p1, "Component C", "1.0");
-        Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
-        Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH);
-        Vulnerability v3 = createVulnerability("Vuln-3", Severity.MEDIUM);
-        Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Component c1 = createComponent(project, "Component 1", "1.1.4");
+        Component c2 = createComponent(project, "Component 2", "2.78.123");
+        c1.setGroup("org.acme");
+        c2.setGroup("com.xyz");
+        c1.setPurl("pkg:maven/org.acme/component1@1.1.4?type=jar");
+        c2.setPurl("pkg:maven/com.xyz/component2@2.78.123?type=jar");
+
+        Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL, "Vuln Title 1", "This is a description", null, 80);
+        Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH, "Vuln Title 2", "   Yet another description but with surrounding whitespaces   ", "", 46);
+        Vulnerability v3 = createVulnerability("Vuln-3", Severity.LOW, "Vuln Title 3", "A description-with-hyphens-(and parentheses)", "  Recommendation with whitespaces  ", 23);
+
+        // Note: Same vulnerability added to multiple components to test whether "rules" field doesn't contain duplicates
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
-        qm.addVulnerability(v4, c3, AnalyzerIdentity.NONE);
 
-        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = target(V1_FINDING + "/project/" + project.getUuid().toString()).request()
             .header(HttpHeaders.ACCEPT, MEDIA_TYPE_SARIF_JSON)
             .header(X_API_KEY, apiKey)
             .get(Response.class);
 
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(MEDIA_TYPE_SARIF_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+        final String jsonResponse = getPlainTextBody(response);
 
-        JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-
-        JsonArray runs = json.getJsonArray("runs");
-        Assert.assertNotNull(runs);
-        JsonObject runsJson = runs.getJsonObject(0);
-        Assert.assertNotNull(runsJson);
-        Assert.assertEquals("OWASP Dependency-Track", runsJson.getJsonObject("tool").getJsonObject("driver").getString("name"));
-        Assert.assertEquals(new About().getVersion(), runsJson.getJsonObject("tool").getJsonObject("driver").getString("version"));
-        Assert.assertNotNull(runsJson.getJsonObject("tool").getJsonObject("driver").getJsonArray("rules"));
-        Assert.assertEquals("Vuln-1", runsJson.getJsonObject("tool").getJsonObject("driver").getJsonArray("rules").getJsonObject(0).getString("id"));
-        Assert.assertNotNull(runsJson.getJsonArray("results"));
-        Assert.assertEquals("error", runsJson.getJsonArray("results").getJsonObject(0).getString("level"));
-        Assert.assertEquals("Vuln-1", runsJson.getJsonArray("results").getJsonObject(0).getString("ruleId"));
+        assertThatJson(jsonResponse)
+            .withMatcher("version", equalTo(new About().getVersion()))
+            .withMatcher("vuln1Id", equalTo(v1.getVulnId()))
+            .withMatcher("vuln2Id", equalTo(v2.getVulnId()))
+            .withMatcher("vuln3Id", equalTo(v3.getVulnId()))
+            .withMatcher("vuln1CweId", equalTo(v1.getCwes().get(0).toString()))
+            .withMatcher("vuln2CweId", equalTo(v2.getCwes().get(0).toString()))
+            .withMatcher("vuln3CweId", equalTo(v3.getCwes().get(0).toString()))
+            .withMatcher("vuln1Desc", equalTo(v1.getDescription().trim()))
+            .withMatcher("vuln2Desc", equalTo(v2.getDescription().trim()))
+            .withMatcher("vuln3Desc", equalTo(v3.getDescription().trim()))
+            .withMatcher("vuln1Level", equalTo(getSARIFLevelFromSeverity(v1.getSeverity())))
+            .withMatcher("vuln2Level", equalTo(getSARIFLevelFromSeverity(v2.getSeverity())))
+            .withMatcher("vuln3Level", equalTo(getSARIFLevelFromSeverity(v3.getSeverity())))
+            .withMatcher("vuln3Recommendation", equalTo(v3.getRecommendation().trim()))
+            .withMatcher("comp1Purl", equalTo(c1.getPurl().toString()))
+            .withMatcher("comp2Purl", equalTo(c2.getPurl().toString()))
+            .withMatcher("comp1Name", equalTo(c1.getName()))
+            .withMatcher("comp2Name", equalTo(c2.getName()))
+            .withMatcher("comp1Group", equalTo(c1.getGroup()))
+            .withMatcher("comp2Group", equalTo(c2.getGroup()))
+            .withMatcher("comp1Version", equalTo(c1.getVersion()))
+            .withMatcher("comp2Version", equalTo(c2.getVersion()))
+            .isEqualTo(json("""
+                {
+                        "version": "2.1.0",
+                        "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
+                        "runs": [
+                          {
+                            "tool": {
+                              "driver": {
+                                "name": "OWASP Dependency-Track",
+                                "version": "${json-unit.matches:version}",
+                                "informationUri": "https://dependencytrack.org/",
+                                "rules": [
+                                  {
+                                    "id": "${json-unit.matches:vuln1Id}",
+                                    "name": "ImproperNeutralizationOfScript-relatedHtmlTagsInAWebPage(basicXss)",
+                                    "shortDescription": {
+                                      "text": "${json-unit.matches:vuln1Desc}"
+                                    }
+                                  },
+                                  {
+                                    "id": "${json-unit.matches:vuln2Id}",
+                                    "name": "PathEquivalence:'filename'(trailingSpace)",
+                                    "shortDescription": {
+                                      "text": "${json-unit.matches:vuln2Desc}"
+                                    }
+                                  },
+                                  {
+                                    "id": "${json-unit.matches:vuln3Id}",
+                                    "name": "RelativePathTraversal",
+                                    "shortDescription": {
+                                      "text": "${json-unit.matches:vuln3Desc}"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "results": [
+                              {
+                                "ruleId": "${json-unit.matches:vuln1Id}",
+                                "message": {
+                                  "text": "${json-unit.matches:vuln1Desc}"
+                                },
+                                "locations": [
+                                  {
+                                    "logicalLocations": [
+                                      {
+                                        "fullyQualifiedName": "${json-unit.matches:comp1Purl}"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "level": "${json-unit.matches:vuln1Level}",
+                                "properties": {
+                                  "name": "${json-unit.matches:comp1Name}",
+                                  "group": "org.acme",
+                                  "version": "${json-unit.matches:comp1Version}",
+                                  "source": "INTERNAL",
+                                  "cweId": "${json-unit.matches:vuln1CweId}",
+                                  "cvssV3BaseScore": "",
+                                  "epssScore": "",
+                                  "epssPercentile": "",
+                                  "severityRank": "0",
+                                  "recommendation": ""
+                                }
+                              },
+                              {
+                                "ruleId": "${json-unit.matches:vuln2Id}",
+                                "message": {
+                                  "text": "${json-unit.matches:vuln2Desc}"
+                                },
+                                "locations": [
+                                  {
+                                    "logicalLocations": [
+                                      {
+                                        "fullyQualifiedName": "${json-unit.matches:comp1Purl}"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "level": "${json-unit.matches:vuln2Level}",
+                                "properties": {
+                                  "name": "${json-unit.matches:comp1Name}",
+                                  "group": "${json-unit.matches:comp1Group}",
+                                  "version": "${json-unit.matches:comp1Version}",
+                                  "source": "INTERNAL",
+                                  "cweId": "${json-unit.matches:vuln2CweId}",
+                                  "cvssV3BaseScore": "",
+                                  "epssScore": "",
+                                  "epssPercentile": "",
+                                  "severityRank": "1",
+                                  "recommendation": ""
+                                }
+                              },
+                              {
+                                "ruleId": "${json-unit.matches:vuln3Id}",
+                                "message": {
+                                  "text": "${json-unit.matches:vuln3Desc}"
+                                },
+                                "locations": [
+                                  {
+                                    "logicalLocations": [
+                                      {
+                                        "fullyQualifiedName": "${json-unit.matches:comp1Purl}"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "level": "${json-unit.matches:vuln3Level}",
+                                "properties": {
+                                  "name": "${json-unit.matches:comp1Name}",
+                                  "group": "${json-unit.matches:comp1Group}",
+                                  "version": "${json-unit.matches:comp1Version}",
+                                  "source": "INTERNAL",
+                                  "cweId": "${json-unit.matches:vuln3CweId}",
+                                  "cvssV3BaseScore": "",
+                                  "epssScore": "",
+                                  "epssPercentile": "",
+                                  "severityRank": "3",
+                                  "recommendation": "${json-unit.matches:vuln3Recommendation}"
+                                }
+                              },
+                              {
+                                "ruleId": "${json-unit.matches:vuln3Id}",
+                                "message": {
+                                  "text": "${json-unit.matches:vuln3Desc}"
+                                },
+                                "locations": [
+                                  {
+                                    "logicalLocations": [
+                                      {
+                                        "fullyQualifiedName": "${json-unit.matches:comp2Purl}"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "level": "${json-unit.matches:vuln3Level}",
+                                "properties": {
+                                  "name": "${json-unit.matches:comp2Name}",
+                                  "group": "${json-unit.matches:comp2Group}",
+                                  "version": "${json-unit.matches:comp2Version}",
+                                  "source": "INTERNAL",
+                                  "cweId": "${json-unit.matches:vuln3CweId}",
+                                  "cvssV3BaseScore": "",
+                                  "epssScore": "",
+                                  "epssPercentile": "",
+                                  "severityRank": "3",
+                                  "recommendation": "${json-unit.matches:vuln3Recommendation}"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+            """));
     }
 
     private Component createComponent(Project project, String name, String version) {
@@ -647,5 +819,30 @@ public class FindingResourceTest extends ResourceTest {
         vulnerability.setSeverity(severity);
         vulnerability.setCwes(List.of(80, 666));
         return qm.createVulnerability(vulnerability, false);
+    }
+
+    private Vulnerability createVulnerability(String vulnId, Severity severity, String title, String description, String recommendation, Integer cweId) {
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId(vulnId);
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(severity);
+        vulnerability.setTitle(title);
+        vulnerability.setDescription(description);
+        vulnerability.setRecommendation(recommendation);
+        vulnerability.setCwes(List.of(cweId));
+        return qm.createVulnerability(vulnerability, false);
+    }
+
+    private static String getSARIFLevelFromSeverity(Severity severity) {
+        if (Severity.LOW == severity || Severity.INFO == severity) {
+            return "note";
+        }
+        if (Severity.MEDIUM == severity) {
+            return "warning";
+        }
+        if (Severity.HIGH == severity || Severity.CRITICAL == severity) {
+            return "error";
+        }
+        return "none";
     }
 }

@@ -33,7 +33,7 @@ template = """/*
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package {{ package }};
 

@@ -50,7 +50,7 @@ public class AnalysisDescriptionBuilder {
         return this;
     }
 
-    public AnalysisDescriptionBuilder withSuppression(boolean isSuppressed) {
+    public AnalysisDescriptionBuilder withSuppression(Boolean isSuppressed) {
         get().suppressed(isSuppressed);
         return this;
     }

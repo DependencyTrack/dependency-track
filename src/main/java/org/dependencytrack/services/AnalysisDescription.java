@@ -34,7 +34,7 @@ public class AnalysisDescription {
     protected List<AnalysisResponse> analysisResponses;
     protected String analysisDetails;
     protected String comment;
-    protected boolean isSuppressed;
+    protected Boolean isSuppressed;
 
     public AnalysisState getAnalysisState() {
         return analysisState;
@@ -71,7 +71,7 @@ public class AnalysisDescription {
         this.analysisDetails = analysisDetails;
     }
 
-    protected void suppressed(boolean isSuppressed) {
+    protected void suppressed(Boolean isSuppressed) {
         this.isSuppressed = isSuppressed;
     }
 

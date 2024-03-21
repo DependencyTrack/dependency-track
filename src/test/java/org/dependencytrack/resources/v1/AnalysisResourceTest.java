@@ -28,6 +28,7 @@ import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
 import net.jcip.annotations.NotThreadSafe;
 import org.apache.http.HttpStatus;
+import org.assertj.core.api.Condition;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Analysis;
@@ -54,6 +55,7 @@ import org.junit.Test;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.JsonValue;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -61,6 +63,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
@@ -352,11 +355,17 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
-        assertThat(responseJson.getJsonArray("analysisComments")).hasSize(2);
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(0))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: NOT_SET → NOT_AFFECTED"))
-                .doesNotContainKey("commenter"); // Not set when authenticating via API key
+        assertThat(responseJson.getJsonArray("analysisComments")).hasSize(5);
         assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(1))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Justification: NOT_SET → CODE_NOT_REACHABLE"))
+                .doesNotContainKey("commenter"); // Not set when authenticating via API key
+        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(2))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Vendor Response: NOT_SET → WILL_NOT_FIX"))
+                .doesNotContainKey("commenter"); // Not set when authenticating via API key
+        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(3))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Details: Analysis details here"))
+                .doesNotContainKey("commenter"); // Not set when authenticating via API key
+        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(4))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
@@ -408,7 +417,7 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.NOT_SET.name());
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.NOT_SET.name());
         assertThat(responseJson.getJsonString("analysisDetails")).isNull();
-        assertThat(responseJson.getJsonArray("analysisComments")).isEmpty();
+        assertThat(responseJson.getJsonArray("analysisComments")).isNotEmpty();
         assertThat(responseJson.getBoolean("isSuppressed")).isFalse();
 
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));

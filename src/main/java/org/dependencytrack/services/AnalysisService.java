@@ -55,9 +55,11 @@ public class AnalysisService implements AutoCloseable {
      * @throws EntityNotFoundException if project, component or vulnerability are not found
      */
     public Optional<Analysis> getAnalysis(String projectUuid, String componentUuid, String vulnerabilityUuid) throws EntityNotFoundException {
-        final Project project = qm.getObjectByUuid(Project.class, projectUuid);
-        if (project == null) {
-            throw new EntityNotFoundException("The project could not be found.");
+        if (StringUtils.trimToNull(projectUuid) != null) {
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            if (project == null) {
+                throw new EntityNotFoundException("The project could not be found.");
+            }
         }
         final Component component = qm.getObjectByUuid(Component.class, componentUuid);
         if (component == null) {

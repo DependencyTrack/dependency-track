@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.services;
 
@@ -40,10 +40,19 @@ import java.util.Optional;
 public class AnalysisService implements AutoCloseable {
 
     private final QueryManager qm;
+    private final boolean hasBorrowedQueryManager;
 
     public AnalysisService() {
+        hasBorrowedQueryManager = false;
         this.qm = new QueryManager();
     }
+
+    public AnalysisService(QueryManager queryManager) {
+        hasBorrowedQueryManager = true;
+        this.qm = queryManager;
+    }
+
+
 
     /**
      * Retrieves an analysis from the database
@@ -159,11 +168,13 @@ public class AnalysisService implements AutoCloseable {
             analysisStateChange = true; // this is a new analysis - so set to true because it was previously null
             makeFirstStateComment(qm, analysis, commenter);
             makeFirstJustificationComment(qm, analysis, commenter);
-            for (int i=0; i<analysisDescription.getAnalysisResponses().size(); i++) {
-                if (i == 0) {
-                    makeFirstAnalysisResponseComment(qm, analysis, analysisDescription.getAnalysisResponses().get(i), commenter);
-                } else {
-                    makeAnalysisResponseComment(qm, analysis, analysisDescription.getAnalysisResponses().get(i), commenter);
+            if (analysisDescription.getAnalysisResponses() != null) {
+                for (int i = 0; i < analysisDescription.getAnalysisResponses().size(); i++) {
+                    if (i == 0) {
+                        makeFirstAnalysisResponseComment(qm, analysis, analysisDescription.getAnalysisResponses().get(i), commenter);
+                    } else {
+                        makeAnalysisResponseComment(qm, analysis, analysisDescription.getAnalysisResponses().get(i), commenter);
+                    }
                 }
             }
             makeFirstDetailsComment(qm, analysis, commenter);
@@ -267,6 +278,8 @@ public class AnalysisService implements AutoCloseable {
 
     @Override
     public void close() {
-        this.qm.close();
+        if (!hasBorrowedQueryManager) {
+            this.qm.close();
+        }
     }
 }

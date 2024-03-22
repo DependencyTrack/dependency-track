@@ -73,7 +73,7 @@ public class CycloneDXVexImporter {
                 continue;
             }
 
-            try (AnalysisService analysisService = new AnalysisService()) {
+            try (AnalysisService analysisService = new AnalysisService(qm)) {
                 for (org.cyclonedx.model.vulnerability.Vulnerability.Affect affect : vexVuln.getAffects()) {
                     final ObjectLocator ol = new ObjectLocator(bom, affect.getRef()).locate();
                     if ((ol.found() && ol.isMetadataComponent()) || (!ol.found() && BomLink.isBomLink(affect.getRef()))) {

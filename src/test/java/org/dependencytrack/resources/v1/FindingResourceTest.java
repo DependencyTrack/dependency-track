@@ -628,27 +628,6 @@ public class FindingResourceTest extends ResourceTest {
         assertThatJson(jsonResponse)
             .withMatcher("version", equalTo(new About().getVersion()))
             .withMatcher("fullName", equalTo("OWASP Dependency-Track - " + new About().getVersion()))
-            .withMatcher("vuln1Id", equalTo(v1.getVulnId()))
-            .withMatcher("vuln2Id", equalTo(v2.getVulnId()))
-            .withMatcher("vuln3Id", equalTo(v3.getVulnId()))
-            .withMatcher("vuln1CweId", equalTo(v1.getCwes().get(0).toString()))
-            .withMatcher("vuln2CweId", equalTo(v2.getCwes().get(0).toString()))
-            .withMatcher("vuln3CweId", equalTo(v3.getCwes().get(0).toString()))
-            .withMatcher("vuln1Desc", equalTo(v1.getDescription().trim()))
-            .withMatcher("vuln2Desc", equalTo(v2.getDescription().trim()))
-            .withMatcher("vuln3Desc", equalTo(v3.getDescription().trim()))
-            .withMatcher("vuln1Level", equalTo(getSARIFLevelFromSeverity(v1.getSeverity())))
-            .withMatcher("vuln2Level", equalTo(getSARIFLevelFromSeverity(v2.getSeverity())))
-            .withMatcher("vuln3Level", equalTo(getSARIFLevelFromSeverity(v3.getSeverity())))
-            .withMatcher("vuln3Recommendation", equalTo(v3.getRecommendation().trim()))
-            .withMatcher("comp1Purl", equalTo(c1.getPurl().toString()))
-            .withMatcher("comp2Purl", equalTo(c2.getPurl().toString()))
-            .withMatcher("comp1Name", equalTo(c1.getName()))
-            .withMatcher("comp2Name", equalTo(c2.getName()))
-            .withMatcher("comp1Group", equalTo(c1.getGroup()))
-            .withMatcher("comp2Group", equalTo(c2.getGroup()))
-            .withMatcher("comp1Version", equalTo(c1.getVersion()))
-            .withMatcher("comp2Version", equalTo(c2.getVersion()))
             .isEqualTo(json("""
                 {
                         "version": "2.1.0",
@@ -663,33 +642,33 @@ public class FindingResourceTest extends ResourceTest {
                                 "informationUri": "https://dependencytrack.org/",
                                 "rules": [
                                   {
-                                    "id": "${json-unit.matches:vuln1Id}",
+                                    "id": "Vuln-1",
                                     "name": "ImproperNeutralizationOfScript-relatedHtmlTagsInAWebPage(basicXss)",
                                     "shortDescription": {
-                                      "text": "${json-unit.matches:vuln1Id}"
+                                      "text": "Vuln-1"
                                     },
                                     "fullDescription": {
-                                      "text": "${json-unit.matches:vuln1Desc}"
+                                      "text": "This is a description"
                                     }
                                   },
                                   {
-                                    "id": "${json-unit.matches:vuln2Id}",
+                                    "id": "Vuln-2",
                                     "name": "PathEquivalence:'filename'(trailingSpace)",
                                     "shortDescription": {
-                                      "text": "${json-unit.matches:vuln2Id}"
+                                      "text": "Vuln-2"
                                     },
                                     "fullDescription": {
-                                      "text": "${json-unit.matches:vuln2Desc}"
+                                      "text": "Yet another description but with surrounding whitespaces"
                                     }
                                   },
                                   {
-                                    "id": "${json-unit.matches:vuln3Id}",
+                                    "id": "Vuln-3",
                                     "name": "RelativePathTraversal",
                                     "shortDescription": {
-                                      "text": "${json-unit.matches:vuln3Id}"
+                                      "text": "Vuln-3"
                                     },
                                     "fullDescription": {
-                                      "text": "${json-unit.matches:vuln3Desc}"
+                                      "text": "A description-with-hyphens-(and parentheses)"
                                     }
                                   }
                                 ]
@@ -697,26 +676,26 @@ public class FindingResourceTest extends ResourceTest {
                             },
                             "results": [
                               {
-                                "ruleId": "${json-unit.matches:vuln1Id}",
+                                "ruleId": "Vuln-1",
                                 "message": {
-                                  "text": "${json-unit.matches:vuln1Desc}"
+                                  "text": "This is a description"
                                 },
                                 "locations": [
                                   {
                                     "logicalLocations": [
                                       {
-                                        "fullyQualifiedName": "${json-unit.matches:comp1Purl}"
+                                        "fullyQualifiedName": "pkg:maven/org.acme/component1@1.1.4?type=jar"
                                       }
                                     ]
                                   }
                                 ],
-                                "level": "${json-unit.matches:vuln1Level}",
+                                "level": "error",
                                 "properties": {
-                                  "name": "${json-unit.matches:comp1Name}",
+                                  "name": "Component 1",
                                   "group": "org.acme",
-                                  "version": "${json-unit.matches:comp1Version}",
+                                  "version": "1.1.4",
                                   "source": "INTERNAL",
-                                  "cweId": "${json-unit.matches:vuln1CweId}",
+                                  "cweId": "80",
                                   "cvssV3BaseScore": "",
                                   "epssScore": "",
                                   "epssPercentile": "",
@@ -725,26 +704,26 @@ public class FindingResourceTest extends ResourceTest {
                                 }
                               },
                               {
-                                "ruleId": "${json-unit.matches:vuln2Id}",
+                                "ruleId": "Vuln-2",
                                 "message": {
-                                  "text": "${json-unit.matches:vuln2Desc}"
+                                  "text": "Yet another description but with surrounding whitespaces"
                                 },
                                 "locations": [
                                   {
                                     "logicalLocations": [
                                       {
-                                        "fullyQualifiedName": "${json-unit.matches:comp1Purl}"
+                                        "fullyQualifiedName": "pkg:maven/org.acme/component1@1.1.4?type=jar"
                                       }
                                     ]
                                   }
                                 ],
-                                "level": "${json-unit.matches:vuln2Level}",
+                                "level": "error",
                                 "properties": {
-                                  "name": "${json-unit.matches:comp1Name}",
-                                  "group": "${json-unit.matches:comp1Group}",
-                                  "version": "${json-unit.matches:comp1Version}",
+                                  "name": "Component 1",
+                                  "group": "org.acme",
+                                  "version": "1.1.4",
                                   "source": "INTERNAL",
-                                  "cweId": "${json-unit.matches:vuln2CweId}",
+                                  "cweId": "46",
                                   "cvssV3BaseScore": "",
                                   "epssScore": "",
                                   "epssPercentile": "",
@@ -753,59 +732,59 @@ public class FindingResourceTest extends ResourceTest {
                                 }
                               },
                               {
-                                "ruleId": "${json-unit.matches:vuln3Id}",
+                                "ruleId": "Vuln-3",
                                 "message": {
-                                  "text": "${json-unit.matches:vuln3Desc}"
+                                  "text": "A description-with-hyphens-(and parentheses)"
                                 },
                                 "locations": [
                                   {
                                     "logicalLocations": [
                                       {
-                                        "fullyQualifiedName": "${json-unit.matches:comp1Purl}"
+                                        "fullyQualifiedName": "pkg:maven/org.acme/component1@1.1.4?type=jar"
                                       }
                                     ]
                                   }
                                 ],
-                                "level": "${json-unit.matches:vuln3Level}",
+                                "level": "note",
                                 "properties": {
-                                  "name": "${json-unit.matches:comp1Name}",
-                                  "group": "${json-unit.matches:comp1Group}",
-                                  "version": "${json-unit.matches:comp1Version}",
+                                  "name": "Component 1",
+                                  "group": "org.acme",
+                                  "version": "1.1.4",
                                   "source": "INTERNAL",
-                                  "cweId": "${json-unit.matches:vuln3CweId}",
+                                  "cweId": "23",
                                   "cvssV3BaseScore": "",
                                   "epssScore": "",
                                   "epssPercentile": "",
                                   "severityRank": "3",
-                                  "recommendation": "${json-unit.matches:vuln3Recommendation}"
+                                  "recommendation": "Recommendation with whitespaces"
                                 }
                               },
                               {
-                                "ruleId": "${json-unit.matches:vuln3Id}",
+                                "ruleId": "Vuln-3",
                                 "message": {
-                                  "text": "${json-unit.matches:vuln3Desc}"
+                                  "text": "A description-with-hyphens-(and parentheses)"
                                 },
                                 "locations": [
                                   {
                                     "logicalLocations": [
                                       {
-                                        "fullyQualifiedName": "${json-unit.matches:comp2Purl}"
+                                        "fullyQualifiedName": "pkg:maven/com.xyz/component2@2.78.123?type=jar"
                                       }
                                     ]
                                   }
                                 ],
-                                "level": "${json-unit.matches:vuln3Level}",
+                                "level": "note",
                                 "properties": {
-                                  "name": "${json-unit.matches:comp2Name}",
-                                  "group": "${json-unit.matches:comp2Group}",
-                                  "version": "${json-unit.matches:comp2Version}",
+                                  "name": "Component 2",
+                                  "group": "com.xyz",
+                                  "version": "2.78.123",
                                   "source": "INTERNAL",
-                                  "cweId": "${json-unit.matches:vuln3CweId}",
+                                  "cweId": "23",
                                   "cvssV3BaseScore": "",
                                   "epssScore": "",
                                   "epssPercentile": "",
                                   "severityRank": "3",
-                                  "recommendation": "${json-unit.matches:vuln3Recommendation}"
+                                  "recommendation": "Recommendation with whitespaces"
                                 }
                               }
                             ]

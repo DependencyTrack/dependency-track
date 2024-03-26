@@ -22,8 +22,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import org.apache.commons.lang3.StringUtils;
 /**
- * Attempts to resolve an internal CVE object from a string
- * representation of a CVE.
+ * Attempts to obtain a valid CVE ID from a string
  */
 public class CveResolver {
 
@@ -37,21 +36,27 @@ public class CveResolver {
     }
 
     /**
-     * Parses a CVE string returning the CVE ID, or null.
+     * Returns a valid CVE ID if found in the input string, or null otherwise
+     * If the input string is not a valid CVE ID, attempts to add "CVE-" prefix before checking again
+     * Returns null if the input string is empty, null or do not match.
      *
-     * @param cveString the string to parse
-     * @return a CVE object
+     * @param cveString the input string, potentially containing a CVE ID
+     * @return the valid CVE ID
      */
-    public String parseCveString(final String cveString) {
+    public String getValidCveId(String cveString) {
         if (StringUtils.isNotBlank(cveString)) {
-        // Define the regex pattern
-        String pattern = "^CVE-\\d{4}-\\d+$";
-        // Compile the pattern
-        Pattern regex = Pattern.compile(pattern);
-        // Match the input against the pattern
-        Matcher matcher = regex.matcher(cveString);
-        if (matcher.matches()) {
-            return cveString;
+            // Define the regex pattern
+            String pattern = "^CVE-\\d{4}-\\d+$";
+            // Compile the pattern
+            Pattern regex = Pattern.compile(pattern);
+            if (!cveString.startsWith("CVE-")){
+                // Try adding "CVE-" to the beginning of cveString
+                cveString = "CVE-" + cveString;
+            }
+            // Match the input against the pattern
+            Matcher matcher = regex.matcher(cveString);
+            if (matcher.matches()) {
+                return cveString;
             }
         }
         return null;

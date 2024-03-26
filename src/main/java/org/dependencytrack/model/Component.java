@@ -74,6 +74,7 @@ import java.util.UUID;
                 @Persistent(name = "externalReferences"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
+                @Persistent(name = "properties"),
                 @Persistent(name = "vulnerabilities"),
         }),
         @FetchGroup(name = "INTERNAL_IDENTIFICATION", members = {
@@ -329,6 +330,10 @@ public class Component implements Serializable {
     @Persistent(mappedBy = "parent")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private Collection<Component> children;
+
+    @Persistent(mappedBy = "component", defaultFetchGroup = "false")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "groupName ASC, propertyName ASC"))
+    private List<ComponentProperty> properties;
 
     @Persistent(table = "COMPONENTS_VULNERABILITIES")
     @Join(column = "COMPONENT_ID")
@@ -710,6 +715,14 @@ public class Component implements Serializable {
 
     public void setChildren(Collection<Component> children) {
         this.children = children;
+    }
+
+    public List<ComponentProperty> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(final List<ComponentProperty> properties) {
+        this.properties = properties;
     }
 
     public List<Vulnerability> getVulnerabilities() {

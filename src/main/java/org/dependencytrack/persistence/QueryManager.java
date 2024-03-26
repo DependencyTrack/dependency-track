@@ -22,6 +22,7 @@ import alpine.common.util.BooleanUtil;
 import alpine.event.framework.Event;
 import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
+import alpine.model.IConfigProperty;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.notification.NotificationLevel;
@@ -44,6 +45,7 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Finding;
@@ -555,6 +557,21 @@ public class QueryManager extends AlpineQueryManager {
 
     public Map<String, Component> getDependencyGraphForComponents(Project project, List<Component> components) {
         return getComponentQueryManager().getDependencyGraphForComponents(project, components);
+    }
+
+    public List<ComponentProperty> getComponentProperties(final Component component) {
+        return getComponentQueryManager().getComponentProperties(component);
+    }
+
+    public ComponentProperty getComponentProperty(final Component component, final String groupName, final String propertyName) {
+        return getComponentQueryManager().getComponentProperty(component, groupName, propertyName);
+    }
+
+    public ComponentProperty createComponentProperty(final Component component, final String groupName, final String propertyName,
+                                                     final String propertyValue, final IConfigProperty.PropertyType propertyType,
+                                                     final String description) {
+        return getComponentQueryManager()
+                .createComponentProperty(component, groupName, propertyName, propertyValue, propertyType, description);
     }
 
     public PaginatedResult getLicenses() {

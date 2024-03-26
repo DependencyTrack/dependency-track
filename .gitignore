@@ -19,3 +19,7 @@ target/
 .idea/*
 !.idea/icon.svg
 !.idea/runConfigurations/
+
+# nix 
+.direnv
+.pre-commit-config.yaml

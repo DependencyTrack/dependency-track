@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -29,7 +29,6 @@ import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
-import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -40,7 +39,6 @@ import java.io.Serializable;
  * @since 4.11.0
  */
 @PersistenceCapable(table = "COMPONENT_PROPERTY")
-@Unique(name = "COMPONENT_PROPERTY_KEYS_IDX", members = {"component", "groupName", "propertyName"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ComponentProperty implements IConfigProperty, Serializable {
 

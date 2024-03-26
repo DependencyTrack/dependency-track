@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -36,16 +36,18 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Path("/v1/integration/osv/ecosystem")
-@Api(value = "ecosystem", authorizations = @Authorization(value = "X-Api-Key"))
-public class OsvEcosytemResource extends AlpineResource {
+@Path("/v1/integration")
+@Api(value = "integration", authorizations = @Authorization(value = "X-Api-Key"))
+public class IntegrationResource extends AlpineResource {
 
     @GET
+    @Path("/osv/ecosystem")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all ecosystems in OSV",
             response = String.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -58,12 +60,13 @@ public class OsvEcosytemResource extends AlpineResource {
     }
 
     @GET
-    @Path("/inactive")
+    @Path("/osv/ecosystem/inactive")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of available inactive ecosystems in OSV to be selected by user",
             response = String.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 
 package org.dependencytrack.resources.v1;
@@ -70,7 +70,8 @@ public class DependencyGraphResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of specific components and services from project UUID",
             response = DependencyGraphResponse.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -108,7 +109,8 @@ public class DependencyGraphResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of specific components and services from component UUID",
             response = DependencyGraphResponse.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

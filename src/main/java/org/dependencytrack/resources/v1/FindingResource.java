@@ -14,15 +14,18 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.model.About;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -30,6 +33,12 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.core.Response.Status;
+import org.apache.commons.lang3.text.WordUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
@@ -41,6 +50,7 @@ import org.dependencytrack.model.GroupedFinding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -67,15 +77,17 @@ import java.util.stream.Collectors;
 public class FindingResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(FindingResource.class);
+    public static final String MEDIA_TYPE_SARIF_JSON = "application/sarif+json";
 
     @GET
     @Path("/project/{uuid}")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, MEDIA_TYPE_SARIF_JSON})
     @ApiOperation(
-            value = "Returns a list of all findings for a specific project",
+            value = "Returns a list of all findings for a specific project or generates SARIF file if Accept: application/sarif+json header is provided",
             response = Finding.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings"),
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -87,13 +99,24 @@ public class FindingResource extends AlpineResource {
                                          @ApiParam(value = "Optionally includes suppressed findings")
                                          @QueryParam("suppressed") boolean suppressed,
                                          @ApiParam(value = "Optionally limit findings to specific sources of vulnerability intelligence")
-                                         @QueryParam("source") Vulnerability.Source source) {
+                                         @QueryParam("source") Vulnerability.Source source,
+                                         @HeaderParam("accept") String acceptHeader) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     //final long totalCount = qm.getVulnerabilityCount(project, suppressed);
                     final List<Finding> findings = qm.getFindings(project, suppressed);
+                    if (acceptHeader != null && acceptHeader.contains(MEDIA_TYPE_SARIF_JSON)) {
+                        try {
+                            return Response.ok(generateSARIF(findings), MEDIA_TYPE_SARIF_JSON)
+                                .header("content-disposition","attachment; filename=\"findings-" + uuid + ".sarif\"")
+                                .build();
+                        } catch (IOException ioException) {
+                            LOGGER.error(ioException.getMessage(), ioException);
+                            return Response.status(Status.INTERNAL_SERVER_ERROR).entity("An error occurred while generating SARIF file").build();
+                        }
+                    }
                     if (source != null) {
                         final List<Finding> filteredList = findings.stream().filter(finding -> source.name().equals(finding.getVulnerability().get("source"))).collect(Collectors.toList());
                         return Response.ok(filteredList).header(TOTAL_COUNT_HEADER, filteredList.size()).build();
@@ -113,7 +136,8 @@ public class FindingResource extends AlpineResource {
     @Path("/project/{uuid}/export")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Returns the findings for the specified project as FPF"
+            value = "Returns the findings for the specified project as FPF",
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -145,7 +169,8 @@ public class FindingResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Triggers Vulnerability Analysis on a specific project",
-            response = Project.class
+            response = Project.class,
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -187,7 +212,8 @@ public class FindingResource extends AlpineResource {
             value = "Returns a list of all findings",
             response = Finding.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings"),
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -250,7 +276,8 @@ public class FindingResource extends AlpineResource {
             value = "Returns a list of all findings grouped by vulnerability",
             response = GroupedFinding.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings"),
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -296,6 +323,47 @@ public class FindingResource extends AlpineResource {
             final PaginatedResult result = qm.getAllFindingsGroupedByVulnerability(filters, showInactive);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
+    }
+
+    private String generateSARIF(List<Finding> findings) throws IOException {
+        final PebbleEngine engine = new PebbleEngine.Builder()
+            .newLineTrimming(false)
+            .defaultEscapingStrategy("json")
+            .build();
+        final PebbleTemplate sarifTemplate = engine.getTemplate("templates/findings/sarif.peb");
+
+        final Map<String, Object> context = new HashMap<>();
+        final About about = new About();
+
+        // Using "vulnId" as key, forming a list of unique vulnerabilities across all findings
+        // Also converts cweName to PascalCase, since it will be used as rule.name in the SARIF file
+        List<Map<String, Object>> uniqueVulnerabilities = findings.stream()
+            .collect(Collectors.toMap(
+                finding -> finding.getVulnerability().get("vulnId"),
+                FindingResource::convertCweNameToPascalCase,
+                (existingVuln, replacementVuln) -> existingVuln))
+            .values()
+            .stream()
+            .toList();
+
+        context.put("findings", findings);
+        context.put("dependencyTrackVersion", about.getVersion());
+        context.put("uniqueVulnerabilities", uniqueVulnerabilities);
+
+        try (final Writer writer = new StringWriter()) {
+            sarifTemplate.evaluate(writer, context);
+            return writer.toString();
+        }
+    }
+
+    private static Map<String, Object> convertCweNameToPascalCase(Finding finding) {
+        final Object cweName = finding.getVulnerability()
+            .get("cweName");
+        if (cweName != null) {
+            final String pascalCasedCweName = WordUtils.capitalizeFully(cweName.toString()).replaceAll("\\s", "");
+            finding.getVulnerability().put("cweName", pascalCasedCweName);
+        }
+        return finding.getVulnerability();
     }
 
 }

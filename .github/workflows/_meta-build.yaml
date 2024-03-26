@@ -24,10 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # tag=v4.1.1
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # tag=v4.1.2
 
       - name: Set up JDK
-        uses: actions/setup-java@9704b39bf258b59bc04b50fa2dd55e9ed76b47a8 # tag=v4.1.0
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # tag=v4.2.1
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -74,7 +74,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # tag=v4.1.1
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # tag=v4.1.2
 
       - name: Download Artifacts
         uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # tag=v4.1.4
@@ -86,13 +86,13 @@ jobs:
         uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # tag=v3.0.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # tag=v3.1.0
+        uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # tag=v3.2.0
         id: buildx
         with:
           install: true
 
       - name: Login to Docker.io
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # tag=v3.0.0
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # tag=v3.1.0
         if: ${{ inputs.publish-container }}
         with:
           registry: docker.io
@@ -109,7 +109,7 @@ jobs:
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@af5a7ed5ba88268d5278f7203fb52cd833f66d6e # tag=v5.2.0
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # tag=v5.3.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
@@ -133,6 +133,6 @@ jobs:
 
       - name: Upload Trivy Scan Results to GitHub Security Tab
         if: ${{ inputs.publish-container }}
-        uses: github/codeql-action/upload-sarif@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # tag=v3.24.6
+        uses: github/codeql-action/upload-sarif@1b1aada464948af03b950897e5eb522f92603cc2 # tag=v3.24.9
         with:
           sarif_file: 'trivy-results.sarif'

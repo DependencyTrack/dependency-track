@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -248,7 +248,8 @@ public class Component implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_IDX")
-    @Size(max = 255)
+    @Column(name = "PURL", length = 786)
+    @Size(max = 786)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @ApiModelProperty(dataType = "string")
@@ -256,7 +257,8 @@ public class Component implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_COORDINATES_IDX")
-    @Size(max = 255)
+    @Column(name = "PURLCOORDINATES", length = 786)
+    @Size(max = 786)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String purlCoordinates; // Field should contain only type, namespace, name, and version. Everything up to the qualifiers
@@ -367,7 +369,6 @@ public class Component implements Serializable {
     private transient DependencyMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
     private transient boolean isNew;
-    private transient int usedBy;
     private transient JsonObject cacheResult;
     private transient Set<String> dependencyGraph;
     private transient boolean expandDependencyGraph;
@@ -581,6 +582,7 @@ public class Component implements Serializable {
     }
 
     @JsonSerialize(using = CustomPackageURLSerializer.class)
+    @ApiModelProperty(dataType = "string", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
     public PackageURL getPurlCoordinates() {
         if (purlCoordinates == null) {
             return null;
@@ -769,10 +771,13 @@ public class Component implements Serializable {
         this.repositoryMeta = repositoryMeta;
     }
 
+    @JsonIgnore
+    @ApiModelProperty(hidden = true)
     public boolean isNew() {
         return isNew;
     }
 
+    @JsonIgnore
     public void setNew(final boolean aNew) {
         isNew = aNew;
     }
@@ -785,31 +790,30 @@ public class Component implements Serializable {
         this.lastInheritedRiskScore = lastInheritedRiskScore;
     }
 
+    @JsonIgnore
+    @ApiModelProperty(hidden = true)
     public String getBomRef() {
         return bomRef;
     }
 
+    @JsonIgnore
     public void setBomRef(String bomRef) {
         this.bomRef = bomRef;
     }
 
+    @JsonIgnore
+    @ApiModelProperty(hidden = true)
     public List<org.cyclonedx.model.License> getLicenseCandidates() {
         return licenseCandidates;
     }
 
+    @JsonIgnore
     public void setLicenseCandidates(final List<org.cyclonedx.model.License> licenseCandidates) {
         this.licenseCandidates = licenseCandidates;
     }
 
-    public int getUsedBy() {
-        return usedBy;
-    }
-
-    public void setUsedBy(int usedBy) {
-        this.usedBy = usedBy;
-    }
-
     @JsonIgnore
+    @ApiModelProperty(hidden = true)
     public JsonObject getCacheResult() {
         return cacheResult;
     }

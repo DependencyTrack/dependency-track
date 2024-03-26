@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -134,6 +134,7 @@ public class TeamResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals("My Team", json.getString("name"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        Assert.assertTrue(json.getJsonArray("apiKeys").isEmpty());
     }
 
     @Test

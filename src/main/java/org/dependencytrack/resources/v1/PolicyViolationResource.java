@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -61,7 +61,8 @@ public class PolicyViolationResource extends AlpineResource {
             value = "Returns a list of all policy violations for the entire portfolio",
             response = PolicyViolation.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations"),
+            notes = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -84,7 +85,8 @@ public class PolicyViolationResource extends AlpineResource {
             value = "Returns a list of all policy violations for a specific project",
             response = PolicyViolation.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations"),
+            notes = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -119,7 +121,8 @@ public class PolicyViolationResource extends AlpineResource {
             value = "Returns a list of all policy violations for a specific component",
             response = PolicyViolation.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations"),
+            notes = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 
 package org.dependencytrack.model;
@@ -84,7 +84,7 @@ public class ComponentAnalysisCache implements Serializable {
     private String targetType;
 
     @Persistent
-    @Column(name = "TARGET", allowsNull = "false")
+    @Column(name = "TARGET", allowsNull = "false", length = 786)
     @NotNull
     private String target;
 

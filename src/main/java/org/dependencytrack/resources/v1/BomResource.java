@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -50,7 +50,6 @@ import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 import org.dependencytrack.resources.v1.vo.IsTokenBeingProcessedResponse;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.validation.Validator;
@@ -92,7 +91,8 @@ public class BomResource extends AlpineResource {
     @Produces({CycloneDxMediaType.APPLICATION_CYCLONEDX_XML, CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @ApiOperation(
             value = "Returns dependency metadata for a project in CycloneDX format",
-            response = String.class
+            response = String.class,
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -161,7 +161,8 @@ public class BomResource extends AlpineResource {
     @Produces(CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
     @ApiOperation(
             value = "Returns dependency metadata for a specific component in CycloneDX format",
-            response = String.class
+            response = String.class,
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -207,14 +208,25 @@ public class BomResource extends AlpineResource {
     @ApiOperation(
             value = "Upload a supported bill of material format document",
             notes = """
-                    Expects CycloneDX and a valid project UUID. If a UUID is not specified, \
-                    then the projectName and projectVersion must be specified. \
-                    Optionally, if autoCreate is specified and 'true' and the project does not exist, \
-                    the project will be created. In this scenario, the principal making the request will \
-                    additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission.
-                    The BOM will be validated against the CycloneDX schema. If schema validation fails, \
-                    a response with problem details in RFC 9457 format will be returned. In this case, \
-                    the response's content type will be application/problem+json.""",
+                    <p>
+                      Expects CycloneDX and a valid project UUID. If a UUID is not specified,
+                      then the <code>projectName</code> and <code>projectVersion</code> must be specified.
+                      Optionally, if <code>autoCreate</code> is specified and <code>true</code> and the project does not exist,
+                      the project will be created. In this scenario, the principal making the request will
+                      additionally need the <strong>PORTFOLIO_MANAGEMENT</strong> or
+                      <strong>PROJECT_CREATION_UPLOAD</strong> permission.
+                    </p>
+                    <p>
+                      The BOM will be validated against the CycloneDX schema. If schema validation fails,
+                      a response with problem details in RFC 9457 format will be returned. In this case,
+                      the response's content type will be <code>application/problem+json</code>.
+                    </p>
+                    <p>
+                      The maximum allowed length of the <code>bom</code> value is 20'000'000 characters.
+                      When uploading large BOMs, the <code>POST</code> endpoint is preferred,
+                      as it does not have this limit.
+                    </p>
+                    <p>Requires permission <strong>BOM_UPLOAD</strong></p>""",
             response = BomUploadResponse.class,
             nickname = "UploadBomBase64Encoded"
     )
@@ -225,7 +237,7 @@ public class BomResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
-    public Response uploadBom(BomSubmitRequest request) {
+    public Response uploadBom(@ApiParam(required = true) BomSubmitRequest request) {
         final Validator validator = getValidator();
         if (request.getProject() != null) { // behavior in v3.0.0
             failOnValidationError(
@@ -286,14 +298,20 @@ public class BomResource extends AlpineResource {
     @ApiOperation(
             value = "Upload a supported bill of material format document",
             notes = """
-                    Expects CycloneDX and a valid project UUID. If a UUID is not specified, \
-                    then the projectName and projectVersion must be specified. \
-                    Optionally, if autoCreate is specified and 'true' and the project does not exist, \
-                    the project will be created. In this scenario, the principal making the request will \
-                    additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission.
-                    The BOM will be validated against the CycloneDX schema. If schema validation fails, \
-                    a response with problem details in RFC 9457 format will be returned. In this case, \
-                    the response's content type will be application/problem+json.""",
+                   <p>
+                      Expects CycloneDX and a valid project UUID. If a UUID is not specified,
+                      then the <code>projectName</code> and <code>projectVersion</code> must be specified.
+                      Optionally, if <code>autoCreate</code> is specified and <code>true</code> and the project does not exist,
+                      the project will be created. In this scenario, the principal making the request will
+                      additionally need the <strong>PORTFOLIO_MANAGEMENT</strong> or
+                      <strong>PROJECT_CREATION_UPLOAD</strong> permission.
+                    </p>
+                    <p>
+                      The BOM will be validated against the CycloneDX schema. If schema validation fails,
+                      a response with problem details in RFC 9457 format will be returned. In this case,
+                      the response's content type will be <code>application/problem+json</code>.
+                    </p>
+                    <p>Requires permission <strong>BOM_UPLOAD</strong></p>""",
             response = BomUploadResponse.class,
             nickname = "UploadBom"
     )
@@ -311,9 +329,7 @@ public class BomResource extends AlpineResource {
                                @FormDataParam("parentName") String parentName,
                                @FormDataParam("parentVersion") String parentVersion,
                                @FormDataParam("parentUUID") String parentUUID,
-                               final FormDataMultiPart multiPart) {
-
-        final List<FormDataBodyPart> artifactParts = multiPart.getFields("bom");
+                               @ApiParam(type = "string") @FormDataParam("bom") final List<FormDataBodyPart> artifactParts) {
         if (projectUuid != null) { // behavior in v3.0.0
             try (QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, projectUuid);
@@ -358,7 +374,24 @@ public class BomResource extends AlpineResource {
     @GET
     @Path("/token/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.", notes = "Deprecated. Use /v1/event/token/{uuid} instead.", response = IsTokenBeingProcessedResponse.class)
+    @ApiOperation(
+            value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
+            notes = """
+                    <p>
+                      This endpoint is intended to be used in conjunction with uploading a supported BOM document.
+                      Upon upload, a token will be returned. The token can then be queried using this endpoint to
+                      determine if any tasks (such as vulnerability analysis) is being performed on the BOM:
+                      <ul>
+                        <li>A value of <code>true</code> indicates processing is occurring.</li>
+                        <li>A value of <code>false</code> indicates that no processing is occurring for the specified token.</li>
+                      </ul>
+                      However, a value of <code>false</code> also does not confirm the token is valid,
+                      only that no processing is associated with the specified token.
+                    </p>
+                    <p>Requires permission <strong>BOM_UPLOAD</strong></p>
+                    <p><strong>Deprecated</strong>. Use <code>/v1/event/token/{uuid}</code> instead.</p>""",
+            response = IsTokenBeingProcessedResponse.class
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })

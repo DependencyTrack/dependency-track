@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -54,7 +54,8 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
     @ApiOperation(
             value = "Returns a list of all ConfigProperties for the specified groupName",
             response = ConfigProperty.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -82,7 +83,8 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a config property",
-            response = ConfigProperty.class
+            response = ConfigProperty.class,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -109,7 +111,8 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
     @ApiOperation(
             value = "Updates an array of config properties",
             response = ConfigProperty.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

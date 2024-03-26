@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -66,7 +66,8 @@ public class MetricsResource extends AlpineResource {
     @ApiOperation(
             value = "Returns the sum of all vulnerabilities in the database by year and month",
             response = VulnerabilityMetrics.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -84,7 +85,8 @@ public class MetricsResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns current metrics for the entire portfolio",
-            response = PortfolioMetrics.class
+            response = PortfolioMetrics.class,
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -102,7 +104,9 @@ public class MetricsResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns historical metrics for the entire portfolio from a specific date",
-            notes = "Date format must be YYYYMMDD",
+            notes = """
+                    <p>Date format must be <code>YYYYMMDD</code></p>
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>""",
             response = PortfolioMetrics.class,
             responseContainer = "List"
     )
@@ -130,7 +134,8 @@ public class MetricsResource extends AlpineResource {
     @ApiOperation(
             value = "Returns X days of historical metrics for the entire portfolio",
             response = PortfolioMetrics.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -152,7 +157,8 @@ public class MetricsResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Requests a refresh of the portfolio metrics",
-            response = PortfolioMetrics.class
+            response = PortfolioMetrics.class,
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -168,7 +174,8 @@ public class MetricsResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns current metrics for a specific project",
-            response = ProjectMetrics.class
+            response = ProjectMetrics.class,
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -199,7 +206,9 @@ public class MetricsResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns historical metrics for a specific project from a specific date",
-            notes = "Date format must be YYYYMMDD",
+            notes = """
+                    <p>Date format must be <code>YYYYMMDD</code></p>
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>""",
             response = ProjectMetrics.class,
             responseContainer = "List"
     )
@@ -225,7 +234,8 @@ public class MetricsResource extends AlpineResource {
     @ApiOperation(
             value = "Returns X days of historical metrics for a specific project",
             response = ProjectMetrics.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -247,7 +257,8 @@ public class MetricsResource extends AlpineResource {
     @Path("/project/{uuid}/refresh")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Requests a refresh of a specific projects metrics"
+            value = "Requests a refresh of a specific projects metrics",
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -278,7 +289,8 @@ public class MetricsResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns current metrics for a specific component",
-            response = DependencyMetrics.class
+            response = DependencyMetrics.class,
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -309,7 +321,9 @@ public class MetricsResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns historical metrics for a specific component from a specific date",
-            notes = "Date format must be YYYYMMDD",
+            notes = """
+                    <p>Date format must be <code>YYYYMMDD</code></p>
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>""",
             response = DependencyMetrics.class,
             responseContainer = "List"
     )
@@ -338,7 +352,8 @@ public class MetricsResource extends AlpineResource {
     @ApiOperation(
             value = "Returns X days of historical metrics for a specific component",
             response = DependencyMetrics.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -360,7 +375,8 @@ public class MetricsResource extends AlpineResource {
     @Path("/component/{uuid}/refresh")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Requests a refresh of a specific components metrics"
+            value = "Requests a refresh of a specific components metrics",
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

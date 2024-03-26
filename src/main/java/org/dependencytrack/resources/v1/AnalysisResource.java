@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -68,7 +68,8 @@ public class AnalysisResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Retrieves an analysis trail",
-            response = Analysis.class
+            response = Analysis.class,
+            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -115,7 +116,8 @@ public class AnalysisResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Records an analysis decision",
-            response = Analysis.class
+            response = Analysis.class,
+            notes = "<p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

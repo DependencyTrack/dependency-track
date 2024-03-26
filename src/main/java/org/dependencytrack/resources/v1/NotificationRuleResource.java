@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -59,7 +59,7 @@ import java.util.List;
  * @since 3.2.0
  */
 @Path("/v1/notification/rule")
-@Api(authorizations = @Authorization(value = "X-Api-Key"))
+@Api(value = "notification", authorizations = @Authorization(value = "X-Api-Key"))
 public class NotificationRuleResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(NotificationRuleResource.class);
@@ -70,7 +70,8 @@ public class NotificationRuleResource extends AlpineResource {
             value = "Returns a list of all notification rules",
             response = NotificationRule.class,
             responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of notification rules")
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of notification rules"),
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
 
     )
     @ApiResponses(value = {
@@ -90,7 +91,8 @@ public class NotificationRuleResource extends AlpineResource {
     @ApiOperation(
             value = "Creates a new notification rule",
             response = NotificationRule.class,
-            code = 201
+            code = 201,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -126,7 +128,8 @@ public class NotificationRuleResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a notification rule",
-            response = NotificationRule.class
+            response = NotificationRule.class,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -157,7 +160,8 @@ public class NotificationRuleResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a notification rule",
-            code = 204
+            code = 204,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -182,7 +186,8 @@ public class NotificationRuleResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Adds a project to a notification rule",
-            response = NotificationRule.class
+            response = NotificationRule.class,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The rule already has the specified project assigned"),
@@ -223,7 +228,8 @@ public class NotificationRuleResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Removes a project from a notification rule",
-            response = NotificationRule.class
+            response = NotificationRule.class,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The rule does not have the specified project assigned"),
@@ -264,7 +270,8 @@ public class NotificationRuleResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Adds a team to a notification rule",
-            response = NotificationRule.class
+            response = NotificationRule.class,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The rule already has the specified team assigned"),
@@ -305,7 +312,8 @@ public class NotificationRuleResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Removes a team from a notification rule",
-            response = NotificationRule.class
+            response = NotificationRule.class,
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The rule does not have the specified team assigned"),

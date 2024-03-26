@@ -15,7 +15,7 @@
   ~ limitations under the License.
   ~
   ~ SPDX-License-Identifier: Apache-2.0
-  ~ Copyright (c) Steve Springett. All Rights Reserved.
+  ~ Copyright (c) OWASP Foundation. All Rights Reserved.
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -85,7 +85,7 @@
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.2.0</lib.awaitility.version>
         <lib.checkstyle.version>10.12.5</lib.checkstyle.version>
-        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.16.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
+        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.17.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
         <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.16.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
         <lib.cloud-sql-postgres-socket-factory.version>1.16.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>

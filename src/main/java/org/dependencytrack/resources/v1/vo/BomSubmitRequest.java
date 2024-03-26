@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1.vo;
 
@@ -23,6 +23,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.swagger.annotations.ApiModelProperty;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -76,13 +77,13 @@ public final class BomSubmitRequest {
     }
 
     @JsonCreator
-    public BomSubmitRequest(@JsonProperty(value = "project", required = false) String project,
-                            @JsonProperty(value = "projectName", required = false) String projectName,
-                            @JsonProperty(value = "projectVersion", required = false) String projectVersion,
-                            @JsonProperty(value = "autoCreate", required = false) boolean autoCreate,
-                            @JsonProperty(value = "parentUUID", required = false) String parentUUID,
-                            @JsonProperty(value = "parentName", required = false) String parentName,
-                            @JsonProperty(value = "parentVersion", required = false) String parentVersion,
+    public BomSubmitRequest(@JsonProperty(value = "project") String project,
+                            @JsonProperty(value = "projectName") String projectName,
+                            @JsonProperty(value = "projectVersion") String projectVersion,
+                            @JsonProperty(value = "autoCreate") boolean autoCreate,
+                            @JsonProperty(value = "parentUUID") String parentUUID,
+                            @JsonProperty(value = "parentName") String parentName,
+                            @JsonProperty(value = "parentVersion") String parentVersion,
                             @JsonProperty(value = "bom", required = true) String bom) {
         this.project = project;
         this.projectName = projectName;
@@ -94,26 +95,32 @@ public final class BomSubmitRequest {
         this.bom = bom;
     }
 
+    @ApiModelProperty(example = "38640b33-4ba9-4733-bdab-cbfc40c6f8aa")
     public String getProject() {
         return project;
     }
 
+    @ApiModelProperty(example = "Example Application")
     public String getProjectName() {
         return projectName;
     }
 
+    @ApiModelProperty(example = "1.0.0")
     public String getProjectVersion() {
         return projectVersion;
     }
 
+    @ApiModelProperty(example = "5341f53c-611b-4388-9d9c-731026dc5eec")
     public String getParentUUID() {
         return parentUUID;
     }
 
+    @ApiModelProperty(example = "Example Application Parent")
     public String getParentName() {
         return parentName;
     }
 
+    @ApiModelProperty(example = "1.0.0")
     public String getParentVersion() {
         return parentVersion;
     }
@@ -122,6 +129,15 @@ public final class BomSubmitRequest {
         return autoCreate;
     }
 
+    @ApiModelProperty(
+            value = "Base64 encoded BOM",
+            required = true,
+            example = """
+                    ewogICJib21Gb3JtYXQiOiAiQ3ljbG9uZURYIiwKICAic3BlY1ZlcnNpb24iOiAi\
+                    MS40IiwKICAiY29tcG9uZW50cyI6IFsKICAgIHsKICAgICAgInR5cGUiOiAibGli\
+                    cmFyeSIsCiAgICAgICJuYW1lIjogImFjbWUtbGliIiwKICAgICAgInZlcnNpb24i\
+                    OiAiMS4wLjAiCiAgICB9CiAgXQp9"""
+    )
     public String getBom() {
         return bom;
     }

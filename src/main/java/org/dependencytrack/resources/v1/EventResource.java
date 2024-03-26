@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -22,10 +22,10 @@ import alpine.event.framework.Event;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import org.dependencytrack.resources.v1.vo.IsTokenBeingProcessedResponse;
 
 import javax.ws.rs.GET;
@@ -49,12 +49,21 @@ public class EventResource extends AlpineResource {
     @GET
     @Path("/token/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
-            notes = "This endpoint is intended to be used in conjunction with other API calls which return a token for asynchronous tasks. " +
-                    "The token can then be queried using this endpoint to determine if the task is complete. " +
-                    "A value of true indicates processing is occurring. A value of false indicates that no processing is " +
-                    "occurring for the specified token. However, a value of false also does not confirm the token is valid, " +
-                    "only that no processing is associated with the specified token.", response = IsTokenBeingProcessedResponse.class)
+    @ApiOperation(
+            value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
+            response = IsTokenBeingProcessedResponse.class,
+            notes = """
+                    <p>
+                      This endpoint is intended to be used in conjunction with other API calls which return a token for asynchronous tasks.
+                      The token can then be queried using this endpoint to determine if the task is complete:
+                      <ul>
+                        <li>A value of <code>true</code> indicates processing is occurring.</li>
+                        <li>A value of <code>false</code> indicates that no processing is occurring for the specified token.</li>
+                      </ul>
+                      However, a value of <code>false</code> also does not confirm the token is valid,
+                      only that no processing is associated with the specified token.
+                    </p>"""
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })

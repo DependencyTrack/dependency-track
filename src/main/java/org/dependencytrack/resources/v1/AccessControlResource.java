@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -65,7 +65,8 @@ public class AccessControlResource extends AlpineResource {
     @ApiOperation(
             value = "Returns the projects assigned to the specified team",
             response = String.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -94,7 +95,8 @@ public class AccessControlResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Adds an ACL mapping",
-            response = AclMappingRequest.class
+            response = AclMappingRequest.class,
+            notes = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -130,7 +132,8 @@ public class AccessControlResource extends AlpineResource {
     @Path("/mapping/team/{teamUuid}/project/{projectUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Removes an ACL mapping"
+            value = "Removes an ACL mapping",
+            notes = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

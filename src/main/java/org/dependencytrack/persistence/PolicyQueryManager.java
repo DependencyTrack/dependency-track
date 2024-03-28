@@ -18,9 +18,13 @@
  */
 package org.dependencytrack.persistence;
 
+import alpine.model.ApiKey;
+import alpine.model.Team;
+import alpine.model.UserPrincipal;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.Policy;
@@ -30,12 +34,16 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
+import org.dependencytrack.util.DateUtil;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 final class PolicyQueryManager extends QueryManager implements IQueryManager {
 
@@ -346,22 +354,31 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * Returns a List of all Policy violations for the entire portfolio.
+     * Returns a List of all Policy violations for the entire portfolio filtered by ACL and other optional filters.
      * @return a List of all Policy violations
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getPolicyViolations(boolean includeSuppressed) {
+    public PaginatedResult getPolicyViolations(boolean includeSuppressed, boolean showInactive, Map<String, String> filters) {
+        final PaginatedResult result;
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        final Map<String, Object> params = new HashMap<>();
+        final List<String> filterCriteria = new ArrayList<>();
         if (!includeSuppressed) {
-            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+            filterCriteria.add("(analysis.suppressed == false || analysis.suppressed == null)");
         }
+        if (!showInactive) {
+            filterCriteria.add("(project.active == true || project.active == null)");
+        }
+        processViolationsFilters(filters, params, filterCriteria);
         if (orderBy == null) {
             query.setOrdering("timestamp desc, project.name, project.version, component.name, component.version");
         }
-        final PaginatedResult result = execute(query);
+        final String queryFilter = String.join(" && ", filterCriteria);
+        preprocessACLs(query, queryFilter, params, false);
+        result = execute(query, params);
         for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
-            violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
-            violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.getPolicyCondition().getPolicy(); // force policy to be included since it's not the default
+            violation.getComponent().getResolvedLicense(); // force resolved license to be included since it's not the default
             violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
         }
         return result;
@@ -609,6 +626,114 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class);
         query.setFilter("component == :component && policyViolation.type == :type && analysisState != null && analysisState != :notSet");
         return getCount(query, component, type, ViolationAnalysisState.NOT_SET);
+    }
+
+    private void processViolationsFilters(Map<String, String> filters, Map<String, Object> params, List<String> filterCriteria) {
+        for (Map.Entry<String, String> filter : filters.entrySet()) {
+            switch (filter.getKey()) {
+                case "violationState" -> processArrayFilter(params, filterCriteria, "violationState", filter.getValue(), "policyCondition.policy.violationState");
+                case "riskType" -> processArrayFilter(params, filterCriteria, "riskType", filter.getValue(), "type");
+                case "policy" -> processArrayFilter(params, filterCriteria, "policy", filter.getValue(), "policyCondition.policy.uuid");
+                case "analysisState" -> processArrayFilter(params, filterCriteria, "analysisState", filter.getValue(), "analysis.analysisState");
+                case "occurredOnDateFrom" -> processDateFilter(params, filterCriteria, "occuredOnDateFrom", filter.getValue(), true);
+                case "occurredOnDateTo" -> processDateFilter(params, filterCriteria, "occuredOnDateTo", filter.getValue(), false);
+                case "textSearchField" -> processInputFilter(params, filterCriteria, "textInput", filter.getValue(), filters.get("textSearchInput"));
+            }
+        }
+    }
+
+    private void processArrayFilter(Map<String, Object> params, List<String> filterCriteria, String paramName, String filter, String column) {
+        if (filter != null && !filter.isEmpty()) {
+            StringBuilder filterBuilder = new StringBuilder("(");
+            String[] arrayFilter = filter.split(",");
+            for (int i = 0, arrayFilterLength = arrayFilter.length; i < arrayFilterLength; i++) {
+                filterBuilder.append(column).append(" == :").append(paramName).append(i);
+                switch (paramName) {
+                    case "violationState" -> params.put(paramName + i, Policy.ViolationState.valueOf(arrayFilter[i]));
+                    case "riskType" -> params.put(paramName + i, PolicyViolation.Type.valueOf(arrayFilter[i]));
+                    case "policy" -> params.put(paramName + i, UUID.fromString(arrayFilter[i]));
+                    case "analysisState" -> {
+                        if (arrayFilter[i].equals("NOT_SET")) {
+                            filterBuilder.append(" || ").append(column).append(" == null");
+                        }
+                        params.put(paramName + i, ViolationAnalysisState.valueOf(arrayFilter[i]));
+                    }
+                }
+                if (i < arrayFilterLength - 1) {
+                    filterBuilder.append(" || ");
+                }
+            }
+            filterBuilder.append(")");
+            filterCriteria.add(filterBuilder.toString());
+        }
+    }
+
+    private void processDateFilter(Map<String, Object> params, List<String> filterCriteria, String paramName, String filter, boolean fromValue) {
+        if (filter != null && !filter.isEmpty()) {
+            params.put(paramName, DateUtil.fromISO8601(filter + (fromValue ? "T00:00:00" : "T23:59:59")));
+            filterCriteria.add("(timestamp " + (fromValue ? ">= :" : "<= :") + paramName + ")");
+        }
+    }
+
+    private void processInputFilter(Map<String, Object> params, List<String> filterCriteria, String paramName, String filter, String input) {
+        if (filter != null && !filter.isEmpty() && input != null && !input.isEmpty()) {
+            StringBuilder filterBuilder = new StringBuilder("(");
+            String[] inputFilter = filter.split(",");
+            for (int i = 0, inputFilterLength = inputFilter.length; i < inputFilterLength; i++) {
+                switch (inputFilter[i].toLowerCase()) {
+                    case "policy_name" -> filterBuilder.append("policyCondition.policy.name");
+                    case "component" -> filterBuilder.append("component.name");
+                    case "license" -> filterBuilder.append("component.resolvedLicense.licenseId.toLowerCase().matches(:").append(paramName).append(") || component.license");
+                    case "project_name" -> filterBuilder.append("project.name.toLowerCase().matches(:").append(paramName).append(") || project.version");
+                }
+                filterBuilder.append(".toLowerCase().matches(:").append(paramName).append(")");
+                if (i < inputFilterLength - 1) {
+                    filterBuilder.append(" || ");
+                }
+            }
+            params.put(paramName, ".*" + input.toLowerCase() + ".*");
+            filterBuilder.append(")");
+            filterCriteria.add(filterBuilder.toString());
+        }
+    }
+
+    private void preprocessACLs(final Query<PolicyViolation> query, final String inputFilter, final Map<String, Object> params, final boolean bypass) {
+        if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
+            final List<Team> teams;
+            if (super.principal instanceof UserPrincipal) {
+                final UserPrincipal userPrincipal = ((UserPrincipal) super.principal);
+                teams = userPrincipal.getTeams();
+                if (super.hasAccessManagementPermission(userPrincipal)) {
+                    query.setFilter(inputFilter);
+                    return;
+                }
+            } else {
+                final ApiKey apiKey = ((ApiKey) super.principal);
+                teams = apiKey.getTeams();
+                if (super.hasAccessManagementPermission(apiKey)) {
+                    query.setFilter(inputFilter);
+                    return;
+                }
+            }
+            if (teams != null && teams.size() > 0) {
+                final StringBuilder sb = new StringBuilder();
+                for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
+                    final Team team = super.getObjectById(Team.class, teams.get(i).getId());
+                    sb.append(" project.accessTeams.contains(:team").append(i).append(") ");
+                    params.put("team" + i, team);
+                    if (i < teamsSize-1) {
+                        sb.append(" || ");
+                    }
+                }
+                if (inputFilter != null) {
+                    query.setFilter(inputFilter + " && (" + sb.toString() + ")");
+                } else {
+                    query.setFilter(sb.toString());
+                }
+            }
+        } else {
+            query.setFilter(inputFilter);
+        }
     }
 
 }

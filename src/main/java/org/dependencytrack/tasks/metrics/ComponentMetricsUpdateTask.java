@@ -96,13 +96,16 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                         .forEach(aliasesSeen::add);
 
                 counters.vulnerabilities++;
-
-                switch (vulnerability.getSeverity()) {
-                    case CRITICAL -> counters.critical++;
-                    case HIGH -> counters.high++;
-                    case MEDIUM -> counters.medium++;
-                    case LOW, INFO -> counters.low++;
-                    case UNASSIGNED -> counters.unassigned++;
+                try {
+                    switch (vulnerability.getSeverity()) {
+                        case CRITICAL -> counters.critical++;
+                        case HIGH -> counters.high++;
+                        case MEDIUM -> counters.medium++;
+                        case LOW, INFO -> counters.low++;
+                        case UNASSIGNED -> counters.unassigned++;
+                    }
+                } catch (NullPointerException ex) {
+                    LOGGER.debug("Vulnerability severity is null for" + vulnerability.getSource() + "|" + vulnerability.getVulnId() + "->"+vulnerability.getSeverity());
                 }
             }
 

@@ -28,6 +28,8 @@ import org.dependencytrack.parser.vulndb.model.CvssV2Metric;
 import org.dependencytrack.parser.vulndb.model.CvssV3Metric;
 import org.dependencytrack.parser.vulndb.model.ExternalReference;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.VulnerabilityUtil;
+
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
 import us.springett.cvss.Score;
@@ -159,6 +161,13 @@ public final class ModelConverter {
                 break; // Always prefer use of the NVD scoring, if available
             }
         }
+        vuln.setSeverity(VulnerabilityUtil.getSeverity(
+                vuln.getCvssV2BaseScore(),
+                vuln.getCvssV3BaseScore(),
+                vuln.getOwaspRRLikelihoodScore(),
+                vuln.getOwaspRRTechnicalImpactScore(),
+                vuln.getOwaspRRBusinessImpactScore()
+        ));
 
         if (vulnDbVuln.nvdAdditionalInfo() != null) {
             final String cweString = vulnDbVuln.nvdAdditionalInfo().cweId();

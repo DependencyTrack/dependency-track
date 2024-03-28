@@ -55,6 +55,7 @@ import org.junit.Test;
 
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.client.Entity;
@@ -530,6 +531,68 @@ public class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(204, response.getStatus(), 0);
+    }
+
+    List<UUID> createProjects(int size, boolean accessible) {
+        List<UUID> projectUUIDs = new ArrayList<>();
+        for (int i=0; i<size; i++) {
+            Project project = qm.createProject("ABC", null, String.valueOf(i)+".0", null, null, null, true, false);
+            if (accessible) {
+                project.setAccessTeams(List.of(team));
+            }
+            projectUUIDs.add(project.getUuid());
+            qm.persist(project);
+        }
+        return projectUUIDs;
+    }
+
+    @Test
+    public void batchDeleteProjectsTest() {
+        // Enable portfolio access control.
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                null
+        );
+
+        List<UUID> uuidsOfAccessibleProjects = createProjects(9, true);
+        List<UUID> uuidsOfInaccessibleProjects = createProjects(1, false);
+
+        // Delete only accessible projects
+        Response response = target(V1_PROJECT + "/batchDelete")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .method("POST", Entity.json(uuidsOfAccessibleProjects));
+        Assert.assertEquals(204, response.getStatus(), 0);
+
+        // Delete only inaccessible projects
+        response = target(V1_PROJECT + "/batchDelete")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .method("POST", Entity.json(uuidsOfInaccessibleProjects));
+        Assert.assertEquals(403, response.getStatus(), 0);
+        JsonArray jsonResponse = parseJsonArray(response);
+        JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+        for (UUID uuid: uuidsOfInaccessibleProjects)  {
+            jsonArrayBuilder.add(uuid.toString());
+        }
+        JsonArray uuidsOfInaccessibleProjectsAsJson = jsonArrayBuilder.build();
+        Assert.assertEquals("", uuidsOfInaccessibleProjectsAsJson, jsonResponse);
+
+        // Delete mixed accessible + inaccessible projects
+        List<UUID> uuidsOfMixedProjects = new ArrayList<>();
+        uuidsOfAccessibleProjects = createProjects(9, true);
+        uuidsOfMixedProjects.addAll(uuidsOfAccessibleProjects);
+        uuidsOfMixedProjects.addAll(uuidsOfInaccessibleProjects);
+        response = target(V1_PROJECT + "/batchDelete")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .method("POST", Entity.json(uuidsOfMixedProjects));
+        Assert.assertEquals(207, response.getStatus(), 0);
+        jsonResponse = parseJsonArray(response);
+        Assert.assertEquals("", uuidsOfInaccessibleProjectsAsJson, jsonResponse);
     }
 
     @Test

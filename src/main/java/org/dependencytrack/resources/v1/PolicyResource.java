@@ -33,6 +33,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.validation.Validator;
@@ -92,8 +93,8 @@ public class PolicyResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response getPolicy(
-            @ApiParam(value = "The UUID of the policy to retrieve", required = true)
-            @PathParam("uuid") String uuid) {
+            @ApiParam(value = "The UUID of the policy to retrieve", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Policy policy = qm.getObjectByUuid(Policy.class, uuid);
             if (policy != null) {
@@ -193,8 +194,8 @@ public class PolicyResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response deletePolicy(
-            @ApiParam(value = "The UUID of the policy to delete", required = true)
-            @PathParam("uuid") String uuid) {
+            @ApiParam(value = "The UUID of the policy to delete", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Policy policy = qm.getObjectByUuid(Policy.class, uuid);
             if (policy != null) {
@@ -222,10 +223,10 @@ public class PolicyResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response addProjectToPolicy(
-            @ApiParam(value = "The UUID of the policy to add a project to", required = true)
-            @PathParam("policyUuid") String policyUuid,
-            @ApiParam(value = "The UUID of the project to add to the rule", required = true)
-            @PathParam("projectUuid") String projectUuid) {
+            @ApiParam(value = "The UUID of the policy to add a project to", format = "uuid", required = true)
+            @PathParam("policyUuid") @ValidUuid String policyUuid,
+            @ApiParam(value = "The UUID of the project to add to the rule", format = "uuid", required = true)
+            @PathParam("projectUuid") @ValidUuid String projectUuid) {
         try (QueryManager qm = new QueryManager()) {
             final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
             if (policy == null) {
@@ -261,10 +262,10 @@ public class PolicyResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response removeProjectFromPolicy(
-            @ApiParam(value = "The UUID of the policy to remove the project from", required = true)
-            @PathParam("policyUuid") String policyUuid,
-            @ApiParam(value = "The UUID of the project to remove from the policy", required = true)
-            @PathParam("projectUuid") String projectUuid) {
+            @ApiParam(value = "The UUID of the policy to remove the project from", format = "uuid", required = true)
+            @PathParam("policyUuid") @ValidUuid String policyUuid,
+            @ApiParam(value = "The UUID of the project to remove from the policy", format = "uuid", required = true)
+            @PathParam("projectUuid") @ValidUuid String projectUuid) {
         try (QueryManager qm = new QueryManager()) {
             final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
             if (policy == null) {
@@ -300,10 +301,10 @@ public class PolicyResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response addTagToPolicy(
-            @ApiParam(value = "The UUID of the policy to add a project to", required = true)
-            @PathParam("policyUuid") String policyUuid,
+            @ApiParam(value = "The UUID of the policy to add a project to", format = "uuid", required = true)
+            @PathParam("policyUuid") @ValidUuid String policyUuid,
             @ApiParam(value = "The name of the tag to add to the rule", required = true)
-            @PathParam("tagName") String tagName) {
+            @PathParam("tagName")String tagName) {
         try (QueryManager qm = new QueryManager()) {
             final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
             if (policy == null) {
@@ -340,8 +341,8 @@ public class PolicyResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response removeTagFromPolicy(
-            @ApiParam(value = "The UUID of the policy to remove the tag from", required = true)
-            @PathParam("policyUuid") String policyUuid,
+            @ApiParam(value = "The UUID of the policy to remove the tag from", format = "uuid", required = true)
+            @PathParam("policyUuid") @ValidUuid String policyUuid,
             @ApiParam(value = "The name of the tag to remove from the policy", required = true)
             @PathParam("tagName") String tagName) {
         try (QueryManager qm = new QueryManager()) {

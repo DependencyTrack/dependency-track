@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.validation.Validator;
@@ -70,8 +71,8 @@ public class PolicyConditionResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response createPolicyCondition(
-            @ApiParam(value = "The UUID of the policy", required = true)
-            @PathParam("uuid") String uuid,
+            @ApiParam(value = "The UUID of the policy", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
             PolicyCondition jsonPolicyCondition) {
         final Validator validator = super.getValidator();
         failOnValidationError(
@@ -134,8 +135,8 @@ public class PolicyConditionResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response deletePolicyCondition(
-            @ApiParam(value = "The UUID of the policy condition to delete", required = true)
-            @PathParam("uuid") String uuid) {
+            @ApiParam(value = "The UUID of the policy condition to delete", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final PolicyCondition pc = qm.getObjectByUuid(PolicyCondition.class, uuid);
             if (pc != null) {

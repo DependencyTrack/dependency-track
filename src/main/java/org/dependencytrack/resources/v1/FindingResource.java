@@ -49,6 +49,7 @@ import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.GroupedFinding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.ws.rs.GET;
@@ -95,7 +96,8 @@ public class FindingResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
-    public Response getFindingsByProject(@PathParam("uuid") String uuid,
+    public Response getFindingsByProject(@ApiParam(value = "The UUID of the project", format = "uuid", required = true)
+                                         @PathParam("uuid") @ValidUuid String uuid,
                                          @ApiParam(value = "Optionally includes suppressed findings")
                                          @QueryParam("suppressed") boolean suppressed,
                                          @ApiParam(value = "Optionally limit findings to specific sources of vulnerability intelligence")
@@ -145,7 +147,8 @@ public class FindingResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
-    public Response exportFindingsByProject(@PathParam("uuid") String uuid) {
+    public Response exportFindingsByProject(@ApiParam(value = "The UUID of the project", format = "uuid", required = true)
+                                            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
@@ -179,8 +182,8 @@ public class FindingResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
     public Response analyzeProject(
-            @ApiParam(value = "The UUID of the project to analyze", required = true)
-            @PathParam("uuid") String uuid) {
+            @ApiParam(value = "The UUID of the project to analyze", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {

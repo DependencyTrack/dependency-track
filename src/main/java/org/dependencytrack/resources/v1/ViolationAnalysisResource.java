@@ -38,6 +38,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest;
 import org.dependencytrack.util.NotificationUtil;
@@ -74,10 +75,10 @@ public class ViolationAnalysisResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The component or policy violation could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response retrieveAnalysis(@ApiParam(value = "The UUID of the component", required = true)
-                                     @QueryParam("component") String componentUuid,
-                                     @ApiParam(value = "The UUID of the policy violation", required = true)
-                                     @QueryParam("policyViolation") String violationUuid) {
+    public Response retrieveAnalysis(@ApiParam(value = "The UUID of the component", format = "uuid", required = true)
+                                     @QueryParam("component") @ValidUuid String componentUuid,
+                                     @ApiParam(value = "The UUID of the policy violation", format = "uuid", required = true)
+                                     @QueryParam("policyViolation") @ValidUuid String violationUuid) {
         failOnValidationError(
                 new ValidationTask(RegexSequence.Pattern.UUID, componentUuid, "Component is not a valid UUID"),
                 new ValidationTask(RegexSequence.Pattern.UUID, violationUuid, "Policy violation is not a valid UUID")

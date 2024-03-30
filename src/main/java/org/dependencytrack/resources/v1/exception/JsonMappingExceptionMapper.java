@@ -25,9 +25,6 @@ import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.dependencytrack.resources.v1.vo.VexSubmitRequest;
 
 import javax.annotation.Priority;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -39,12 +36,6 @@ import java.util.Objects;
 @Provider
 @Priority(1)
 public class JsonMappingExceptionMapper implements ExceptionMapper<JsonMappingException> {
-
-    @Context
-    private HttpServletRequest request;
-
-    @Context
-    private ResourceInfo resourceInfo;
 
     @Override
     public Response toResponse(final JsonMappingException exception) {

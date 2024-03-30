@@ -36,6 +36,7 @@ import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.VexUploadEvent;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
@@ -88,8 +89,8 @@ public class VexResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
     public Response exportProjectAsCycloneDx (
-            @ApiParam(value = "The UUID of the project to export", required = true)
-            @PathParam("uuid") String uuid,
+            @ApiParam(value = "The UUID of the project to export", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
             @ApiParam(value = "Force the resulting VEX to be downloaded as a file (defaults to 'false')")
             @QueryParam("download") boolean download) {
         try (QueryManager qm = new QueryManager()) {

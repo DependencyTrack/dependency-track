@@ -31,6 +31,8 @@ import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Hash;
 import org.cyclonedx.model.LicenseChoice;
 import org.cyclonedx.model.Swid;
+import org.cyclonedx.model.Property;
+import org.cyclonedx.model.component.evidence.Occurrence;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
@@ -545,8 +547,9 @@ public class ModelConverter {
             component.setResolvedLicense(null);
         }
 
+        List<ExternalReference> references = new ArrayList<>();
+
         if (cycloneDxComponent.getExternalReferences() != null && !cycloneDxComponent.getExternalReferences().isEmpty()) {
-            List<ExternalReference> references = new ArrayList<>();
             for (org.cyclonedx.model.ExternalReference cycloneDxRef: cycloneDxComponent.getExternalReferences()) {
                 ExternalReference ref = new ExternalReference();
                 ref.setType(cycloneDxRef.getType());
@@ -554,10 +557,29 @@ public class ModelConverter {
                 ref.setComment(cycloneDxRef.getComment());
                 references.add(ref);
             }
-            component.setExternalReferences(references);
-        } else {
-            component.setExternalReferences(null);
         }
+
+        if (cycloneDxComponent.getProperties() != null && !cycloneDxComponent.getProperties().isEmpty()) {
+            for (final Property property : cycloneDxComponent.getProperties()) {
+                if (property.getName().toLowerCase().equals("srcfile")) {
+                    ExternalReference ref = new ExternalReference();
+                    ref.setType(org.cyclonedx.model.ExternalReference.Type.EVIDENCE);
+                    ref.setUrl(property.getValue());
+                    references.add(ref);
+                }
+            }
+        }
+
+        if (cycloneDxComponent.getEvidence() != null) {
+            for (final Occurrence occurrence : cycloneDxComponent.getEvidence().getOccurrences()) {
+                ExternalReference ref = new ExternalReference();
+                ref.setType(org.cyclonedx.model.ExternalReference.Type.EVIDENCE);
+                ref.setUrl(occurrence.getLocation());
+            }
+        }
+
+        component.setExternalReferences(references);
+
 
         if (cycloneDxComponent.getComponents() != null && !cycloneDxComponent.getComponents().isEmpty()) {
             final Collection<Component> components = new ArrayList<>();

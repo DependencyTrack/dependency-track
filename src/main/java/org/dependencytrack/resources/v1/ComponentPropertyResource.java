@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentProperty;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.validation.Validator;
@@ -56,17 +57,18 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
     @ApiOperation(
             value = "Returns a list of all ComponentProperties for the specified component",
             response = ComponentProperty.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProperties(
-            @ApiParam(value = "The UUID of the component to retrieve properties for", required = true)
-            @PathParam("uuid") String uuid) {
+            @ApiParam(value = "The UUID of the component to retrieve properties for", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
@@ -98,7 +100,8 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
     @ApiOperation(
             value = "Creates a new component property",
             response = ComponentProperty.class,
-            code = 201
+            code = 201,
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -108,8 +111,8 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response createProperty(
-            @ApiParam(value = "The UUID of the component to create a property for", required = true)
-            @PathParam("uuid") String uuid,
+            @ApiParam(value = "The UUID of the component to create a property for", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
             ComponentProperty json) {
         final Validator validator = super.getValidator();
         failOnValidationError(
@@ -154,7 +157,8 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a project property",
-            response = ComponentProperty.class
+            response = ComponentProperty.class,
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -163,8 +167,8 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response updateProperty(
-            @ApiParam(value = "The UUID of the component to create a property for", required = true)
-            @PathParam("uuid") String uuid,
+            @ApiParam(value = "The UUID of the component to create a property for", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
             ComponentProperty json) {
         final Validator validator = super.getValidator();
         failOnValidationError(
@@ -196,7 +200,8 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a config property",
-            response = ComponentProperty.class
+            response = ComponentProperty.class,
+            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -205,8 +210,8 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response deleteProperty(
-            @ApiParam(value = "The UUID of the component to delete a property from", required = true)
-            @PathParam("uuid") String uuid,
+            @ApiParam(value = "The UUID of the component to delete a property from", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
             ComponentProperty json) {
         final Validator validator = super.getValidator();
         failOnValidationError(

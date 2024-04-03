@@ -30,7 +30,7 @@ Dependency-Track supports the following default repositories:
 |            | Google Android   | 5                |
 | npm        | NPM              | 1                |
 | nuget      | NuGet            | 1                |
-| pypi       | PyPi             | 1                |
+| pypi       | PyPI             | 1                |
 | cpan       | CPAN             | 1                |
 
 

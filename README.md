@@ -76,7 +76,7 @@ CI/CD environments.
   * NPM (Javascript)
   * CPAN (Perl)
   * NuGet (.NET)
-  * Pypi (Python)
+  * PyPI (Python)
   * More coming soon.
 * Identifies APIs and external service components including:
   * Service provider

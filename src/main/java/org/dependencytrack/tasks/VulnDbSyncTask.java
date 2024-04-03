@@ -112,6 +112,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
             }
         }
     }
+
     /**
      * Synchronizes the VulnDB vulnerabilities with the internal Dependency-Track database.
      *

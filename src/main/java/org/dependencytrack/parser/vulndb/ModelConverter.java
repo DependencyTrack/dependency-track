@@ -24,12 +24,13 @@ import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.parser.common.resolver.CveResolver;
 import org.dependencytrack.parser.vulndb.model.Author;
 import org.dependencytrack.parser.vulndb.model.CvssV2Metric;
 import org.dependencytrack.parser.vulndb.model.CvssV3Metric;
 import org.dependencytrack.parser.vulndb.model.ExternalReference;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.VulnerabilityUtil;
+
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
 import us.springett.cvss.Score;
@@ -169,14 +170,14 @@ public final class ModelConverter {
 
         if (vulnDbVuln.nvdAdditionalInfo() != null) {
             final String cweString = vulnDbVuln.nvdAdditionalInfo().cweId();
-            final String cve_idString = vulnDbVuln.nvdAdditionalInfo().cveId();
+            final String cveString = vulnDbVuln.nvdAdditionalInfo().cveId();
             if (cweString != null && cweString.startsWith("CWE-")) {
                 final Cwe cwe = CweResolver.getInstance().lookup(cweString);
                 if (cwe != null) {
                     vuln.addCwe(cwe);
                 }
             }
-            cveId = cve_idString;
+            cveId = cveString;
         }
         if (!cveId.isEmpty()) {
             setAliasIfValid(vuln, qm, cveId);
@@ -261,37 +262,36 @@ public final class ModelConverter {
     }
     /**
      * Set corresponding Alias to vulnDbVuln
-     * If the input `cve_idString` represents a valid CVE ID, this function sets
+     * If the input `cveString` represents a valid CVE ID, this function sets
      * the corresponding aliases for the `vuln` object by calling `computeAliases`.
      *
      * @param vuln the `Vulnerability` object for which to set the aliases
      * @param qm the `QueryManager` object used for synchronization
-     * @param cve_idString the string that may represent a valid CVE ID
+     * @param cveString the string that may represent a valid CVE ID
      */
-    private static void setAliasIfValid(Vulnerability vuln,QueryManager qm, String cve_idString) {
-        final String cve_id = CveResolver.getInstance().getValidCveId(cve_idString);
-        if (cve_id != null) {
-        vuln.setAliases(computeAliases(vuln,qm,cve_id));
+    private static void setAliasIfValid(Vulnerability vuln,QueryManager qm, String cveString) {
+        final String cveId = VulnerabilityUtil.getValidCveId(cveString);
+        final List<VulnerabilityAlias> aliases = new ArrayList<>();
+        if (cveId != null) {
+            aliases.add(computeAlias(vuln,qm,cveId));
+            vuln.setAliases(aliases);
         }
     }
     /**
-     * Computes a list of `VulnerabilityAlias` objects for the given `vulnerability` and valid `cve_id`.
-     * The aliases are computed by creating a new `VulnerabilityAlias` object with the `vulnDbId` set to the
-     * `vulnerability`'s `vulnId` and the `cveId` set to the valid `cve_id`. The `VulnerabilityAlias` object
-     * is then synchronized using the `qm` object and added to a list that is returned as a result.
+     * Computes a list of `VulnerabilityAlias` objects for the given `vulnerability` and valid `cveId`.
+     * The aliases are computed by creating a new `VulnerabilityAlias` object with the `vulnDbId`
+     * and the `cveId`. The `VulnerabilityAlias` object is then synchronized using the `qm` object.
      *
      * @param vulnerability the `Vulnerability` object for which to compute the aliases
      * @param qm the `QueryManager` object used for synchronization
-     * @param cve_id the valid CVE ID string
-     * @return a list of computed `VulnerabilityAlias` objects
+     * @param cveId the valid CVE ID string
+     * @return a `VulnerabilityAlias` object
      */
-    private static List<VulnerabilityAlias> computeAliases(Vulnerability vulnerability, QueryManager qm, String cve_id) {
-        List<VulnerabilityAlias> vulnerabilityAliasList = new ArrayList<>();
+    private static VulnerabilityAlias computeAlias(Vulnerability vulnerability, QueryManager qm, String cveId) {
         final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
         vulnerabilityAlias.setVulnDbId(vulnerability.getVulnId());
-        vulnerabilityAlias.setCveId(cve_id);
+        vulnerabilityAlias.setCveId(cveId);
         qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
-        vulnerabilityAliasList.add(vulnerabilityAlias);
-        return vulnerabilityAliasList;
+        return vulnerabilityAlias;
     }
 }

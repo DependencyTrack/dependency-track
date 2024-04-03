@@ -170,11 +170,26 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     @Override
     public List<Project> getAllProjects(boolean excludeInactive) {
+        return getAllProjects(excludeInactive, false);
+    }
+
+    /**
+     * Returns a list of all projects.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of Projects
+     */
+    public List<Project> getAllProjects(boolean excludeInactive, boolean onlyId) {
         final Query<Project> query = pm.newQuery(Project.class);
+        String queryFilter = null;
         if (excludeInactive) {
-            query.setFilter("active == true || active == null");
+            queryFilter = "active == true || active == null";
         }
         query.setOrdering("id asc");
+
+        preprocessACLs(query, queryFilter);
+        if (onlyId) {
+            query.getFetchPlan().setGroup(Project.FetchGroup.ID.name());
+        }
         return query.executeList();
     }
 
@@ -246,7 +261,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Map<String, Object> params = filterBuilder.getParams();
 
         preprocessACLs(query, queryFilter, params, false);
-        query.setFilter(queryFilter);
         query.setRange(0, 1);
         final Project project = singleResult(query.executeWithMap(params));
         if (project != null) {
@@ -891,44 +905,19 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * A similar method exists in ComponentQueryManager
+     * Extra team filter when ACL management is enable
+     */
+    private void preprocessACLs(final Query<Project> query, final String inputFilter) {
+        final var params = new HashMap<String, Object>();
+        preprocessACLs(query, inputFilter, params, false);
+        query.setNamedParameters(params);
+    }
+
+    /**
+     * Extra team filter when ACL management is enable
      */
     private void preprocessACLs(final Query<Project> query, final String inputFilter, final Map<String, Object> params, final boolean bypass) {
-        if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
-            final List<Team> teams;
-            if (super.principal instanceof final UserPrincipal userPrincipal) {
-                teams = userPrincipal.getTeams();
-                if (super.hasAccessManagementPermission(userPrincipal)) {
-                    query.setFilter(inputFilter);
-                    return;
-                }
-            } else {
-                final ApiKey apiKey = ((ApiKey) super.principal);
-                teams = apiKey.getTeams();
-                if (super.hasAccessManagementPermission(apiKey)) {
-                    query.setFilter(inputFilter);
-                    return;
-                }
-            }
-            if (teams != null && teams.size() > 0) {
-                final StringBuilder sb = new StringBuilder();
-                for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
-                    final Team team = super.getObjectById(Team.class, teams.get(i).getId());
-                    sb.append(" accessTeams.contains(:team").append(i).append(") ");
-                    params.put("team" + i, team);
-                    if (i < teamsSize-1) {
-                        sb.append(" || ");
-                    }
-                }
-                if (inputFilter != null && !inputFilter.isBlank()) {
-                    query.setFilter(inputFilter + " && (" + sb.toString() + ")");
-                } else {
-                    query.setFilter(sb.toString());
-                }
-            }
-        } else if (StringUtils.trimToNull(inputFilter) != null) {
-            query.setFilter(inputFilter);
-        }
+        preprocessACLs(query, inputFilter, params, bypass, "accessTeams");
     }
 
     /**

@@ -29,6 +29,7 @@ import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.lang3.StringUtils;
 import com.google.common.collect.Lists;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOQuery;
@@ -370,6 +371,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<Project> getAllProjects(boolean excludeInactive) {
         return getProjectQueryManager().getAllProjects(excludeInactive);
+    }
+
+    public List<Project> getAllProjects(boolean excludeInactive, boolean onlyId) {
+        return getProjectQueryManager().getAllProjects(excludeInactive, onlyId);
     }
 
     public PaginatedResult getProjects(final String name, final boolean excludeInactive, final boolean onlyRoot, final Team notAssignedToTeam) {
@@ -1074,10 +1079,6 @@ public class QueryManager extends AlpineQueryManager {
         return getMetricsQueryManager().getMostRecentPortfolioMetrics();
     }
 
-    public PaginatedResult getPortfolioMetrics() {
-        return getMetricsQueryManager().getPortfolioMetrics();
-    }
-
     public List<PortfolioMetrics> getPortfolioMetricsSince(Date since) {
         return getMetricsQueryManager().getPortfolioMetricsSince(since);
     }
@@ -1258,6 +1259,18 @@ public class QueryManager extends AlpineQueryManager {
         commitSearchIndex(true, clazz);
     }
 
+    public boolean hasAccessManagementPermission(final Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("principal");
+        } else if (principal instanceof UserPrincipal) {
+            return hasAccessManagementPermission((UserPrincipal)principal);
+        } else if (principal instanceof ApiKey) {
+            return hasAccessManagementPermission((ApiKey)principal);
+        } else {
+            throw new UnsupportedOperationException(principal.getClass().getName());
+        }
+    }
+
     public boolean hasAccessManagementPermission(final UserPrincipal userPrincipal) {
         return getProjectQueryManager().hasAccessManagementPermission(userPrincipal);
     }
@@ -1353,6 +1366,58 @@ public class QueryManager extends AlpineQueryManager {
         final Query<T> query = pm.newQuery(clazz, ":uuids.contains(uuid)");
         query.setParameters(uuids);
         return query;
+    }
+
+    private static List<Team> getTeams(final Principal principal) {
+        if (principal instanceof UserPrincipal) {
+            final UserPrincipal userPrincipal = ((UserPrincipal) principal);
+            return userPrincipal.getTeams();
+        } else {
+            final ApiKey apiKey = ((ApiKey) principal);
+            return apiKey.getTeams();
+        }
+    }
+
+    /**
+     * Extra team filter when ACL management is enable
+     * 
+     * @param query The query to adapt for ACL
+     * @param inputFilter Query filter, will be completed if relevant and applied 
+     * @param params Map of named parameters
+     * @param bypass When true, access management acl is bypassed
+     * @param accessTeamsPath Pass the the project teams for access
+     * @param <T> Candidate class for the query
+     */
+    protected <T> void preprocessACLs(final Query<T> query, final String inputFilter, final Map<String, Object> params,
+                                      final boolean bypass, final String accessTeamsPath) {
+        if (principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
+            if (hasAccessManagementPermission(principal)) {
+                query.setFilter(inputFilter);
+                return;
+            }
+            final List<Team> teams = QueryManager.getTeams(principal);
+            if (teams != null && teams.size() > 0) {
+                final StringBuilder sb = new StringBuilder();
+                int i = 0;
+                for (final var lazzyTeam : teams) {
+                    if (sb.length() > 0) {
+                        sb.append(" || ");
+                    }
+                    final Team team = getObjectById(Team.class, lazzyTeam.getId());
+                    sb.append(accessTeamsPath).append(".contains(:team").append(i).append(")");
+                    params.put("team" + i, team);
+                    i++;
+                }
+
+                if (StringUtils.trimToNull(inputFilter) != null) {
+                    sb.insert(0, "(" + inputFilter + ") && (");
+                    sb.append(")");
+                }
+                query.setFilter(sb.toString());
+            }
+        } else if (StringUtils.trimToNull(inputFilter) != null) {
+            query.setFilter(inputFilter);
+        }
     }
 
     /**

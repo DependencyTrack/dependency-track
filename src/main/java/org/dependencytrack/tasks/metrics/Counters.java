@@ -33,25 +33,29 @@ import java.util.Date;
  *
  * @since 4.6.0
  */
-final class Counters {
+final public class Counters {
 
-    int critical, high, medium, low, unassigned;
-    double inheritedRiskScore;
-    int components, vulnerableComponents, projects, vulnerableProjects;
-    int vulnerabilities, suppressions, findingsTotal, findingsAudited, findingsUnaudited;
-    int policyViolationsFail, policyViolationsWarn, policyViolationsInfo,
+    public int critical, high, medium, low, unassigned;
+    public double inheritedRiskScore;
+    public int components, vulnerableComponents, projects, vulnerableProjects;
+    public int vulnerabilities, suppressions, findingsTotal, findingsAudited, findingsUnaudited;
+    public int policyViolationsFail, policyViolationsWarn, policyViolationsInfo,
             policyViolationsTotal, policyViolationsAudited, policyViolationsUnaudited,
             policyViolationsSecurityTotal, policyViolationsSecurityAudited, policyViolationsSecurityUnaudited,
             policyViolationsLicenseTotal, policyViolationsLicenseAudited, policyViolationsLicenseUnaudited,
             policyViolationsOperationalTotal, policyViolationsOperationalAudited, policyViolationsOperationalUnaudited;
 
-    final Date measuredAt;
+    public final Date measuredAt;
 
-    Counters() {
-        this.measuredAt = new Date();
+    public Counters() {
+        this(new Date());
     }
 
-    DependencyMetrics createComponentMetrics(final Component component) {
+    public Counters(Date date) {
+        this.measuredAt = date;
+    }
+
+    public DependencyMetrics createComponentMetrics(final Component component) {
         final var metrics = new DependencyMetrics();
         metrics.setComponent(component);
         metrics.setProject(component.getProject());
@@ -86,7 +90,7 @@ final class Counters {
         return metrics;
     }
 
-    ProjectMetrics createProjectMetrics(final Project project) {
+    public ProjectMetrics createProjectMetrics(final Project project) {
         final var metrics = new ProjectMetrics();
         metrics.setProject(project);
         metrics.setCritical(this.critical);
@@ -122,7 +126,7 @@ final class Counters {
         return metrics;
     }
 
-    PortfolioMetrics createPortfolioMetrics() {
+    public PortfolioMetrics createPortfolioMetrics() {
         final var metrics = new PortfolioMetrics();
         metrics.setCritical(this.critical);
         metrics.setHigh(this.high);
@@ -159,7 +163,7 @@ final class Counters {
         return metrics;
     }
 
-    boolean hasChanged(final DependencyMetrics comparedTo) {
+    public boolean hasChanged(final DependencyMetrics comparedTo) {
         return comparedTo == null
                 || comparedTo.getCritical() != this.critical
                 || comparedTo.getHigh() != this.high
@@ -189,7 +193,7 @@ final class Counters {
                 || comparedTo.getPolicyViolationsOperationalUnaudited() != this.policyViolationsOperationalUnaudited;
     }
 
-    boolean hasChanged(final ProjectMetrics comparedTo) {
+    public boolean hasChanged(final ProjectMetrics comparedTo) {
         return comparedTo == null
                 || comparedTo.getCritical() != this.critical
                 || comparedTo.getHigh() != this.high
@@ -221,7 +225,7 @@ final class Counters {
                 || comparedTo.getVulnerableComponents() != this.vulnerableComponents;
     }
 
-    boolean hasChanged(final PortfolioMetrics comparedTo) {
+    public boolean hasChanged(final PortfolioMetrics comparedTo) {
         return comparedTo == null
                 || comparedTo.getCritical() != this.critical
                 || comparedTo.getHigh() != this.high

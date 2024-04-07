@@ -2,7 +2,7 @@
 title: Database Support
 category: Getting Started
 chapter: 1
-order: 6
+order: 7
 ---
 
 Dependency-Track includes an embedded H2 database enabled by default. The intended purpose of this 

@@ -2,7 +2,7 @@
 title: Configuration
 category: Getting Started
 chapter: 1
-order: 5
+order: 6
 ---
 
 ### API server

@@ -13,7 +13,7 @@ public class NixpkgsMetaAnalyzerTest {
         final var component2 = new Component();
         component1.setPurl(new PackageURL("pkg:nixpkgs/SDL_sound@1.0.3"));
         component2.setPurl(new PackageURL("pkg:nixpkgs/amarok@2.9.71"));
-        final var analyzer = NixpkgsMetaAnalyzer.getNixpkgsMetaAnalyzer();
+        final var analyzer = new NixpkgsMetaAnalyzer();
         Assert.assertTrue(analyzer.isApplicable(component1));
         Assert.assertTrue(analyzer.isApplicable(component2));
         Assert.assertEquals(RepositoryType.NIXPKGS, analyzer.supportedRepositoryType());

@@ -141,7 +141,7 @@ public interface IMetaAnalyzer {
                     return analyzer;
                 }
             } else if ("nixpkgs".equals(component.getPurl().getType())) {
-                IMetaAnalyzer analyzer = NixpkgsMetaAnalyzer.getNixpkgsMetaAnalyzer();
+                IMetaAnalyzer analyzer = new NixpkgsMetaAnalyzer();
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }

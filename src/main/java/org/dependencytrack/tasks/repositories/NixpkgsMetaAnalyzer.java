@@ -19,6 +19,8 @@
 package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
@@ -36,51 +38,64 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class NixpkgsMetaAnalyzer extends AbstractMetaAnalyzer {
     private static final Logger LOGGER = Logger.getLogger(NixpkgsMetaAnalyzer.class);
     private static final String DEFAULT_CHANNEL_URL = "https://channels.nixos.org/nixpkgs-unstable/packages.json.br";
-    private static NixpkgsMetaAnalyzer nixpkgsMetaAnalyzer = new NixpkgsMetaAnalyzer();
-    // this doesn't really make sense wrt the "AbstractMetaAnalyzer"
-    // because this statically known url will just redirect us to
-    // the actual URL
-    private final HashMap<String, String> latestVersion;
+    private static final Cache<String, Map<String, String>> CACHE = Caffeine.newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1)
+            .build();
 
-    private NixpkgsMetaAnalyzer() {
+    NixpkgsMetaAnalyzer() {
         this.baseUrl = DEFAULT_CHANNEL_URL;
-        HashMap<String, String> newLatestVersion = new HashMap<>();
+    }
 
-        try (final CloseableHttpClient client = HttpClients.createDefault()) {
-            try (final CloseableHttpResponse packagesResponse = processHttpRequest5(client)) {
-                if (packagesResponse != null && packagesResponse.getCode() == HttpStatus.SC_OK) {
-                    var reader = new BufferedReader(new InputStreamReader(packagesResponse.getEntity().getContent()));
-                    var packages = new JSONObject(new JSONTokener(reader)).getJSONObject("packages").toMap().values();
-                    packages.forEach(pkg -> {
-                        // FUTUREWORK(mangoiv): there are potentially packages with the same pname
-                        if (pkg instanceof HashMap jsonPkg) {
-                            final var pname = jsonPkg.get("pname");
-                            final var version = jsonPkg.get("version");
-                            newLatestVersion.putIfAbsent((String) pname, (String) version);
-                        }
-                    });
+    /**
+     * {@inheritDoc}
+     */
+    public MetaModel analyze(Component component) {
+        Map<String, String> latestVersions = CACHE.get("nixpkgs", cacheKey -> {
+            final var versions = new HashMap<String, String>();
+            try (final CloseableHttpClient client = HttpClients.createDefault()) {
+                try (final CloseableHttpResponse packagesResponse = processHttpRequest5(client)) {
+                    if (packagesResponse != null && packagesResponse.getCode() == HttpStatus.SC_OK) {
+                        var reader = new BufferedReader(new InputStreamReader(packagesResponse.getEntity().getContent()));
+                        var packages = new JSONObject(new JSONTokener(reader)).getJSONObject("packages").toMap().values();
+                        packages.forEach(pkg -> {
+                            // FUTUREWORK(mangoiv): there are potentially packages with the same pname
+                            if (pkg instanceof HashMap jsonPkg) {
+                                final var pname = jsonPkg.get("pname");
+                                final var version = jsonPkg.get("version");
+                                versions.putIfAbsent((String) pname, (String) version);
+                            }
+                        });
 
 
+                    }
                 }
+            } catch (IOException ex) {
+                LOGGER.debug(ex.toString());
+                handleRequestException(LOGGER, ex);
+            } catch (Exception ex) {
+                LOGGER.debug(ex.toString());
+                throw new MetaAnalyzerException(ex);
             }
-        } catch (IOException ex) {
-            LOGGER.debug(ex.toString());
-            handleRequestException(LOGGER, ex);
-        } catch (Exception ex) {
-            LOGGER.debug(ex.toString());
-            throw new MetaAnalyzerException(ex);
+            return versions;
+        });
+        final var meta = new MetaModel(component);
+        final var purl = component.getPurl();
+        if (purl != null) {
+            final var newerVersion = latestVersions.get(purl.getName());
+            if (newerVersion != null) {
+                meta.setLatestVersion(newerVersion);
+            }
         }
-        this.latestVersion = newLatestVersion;
-        LOGGER.info("finished updating the nixpkgs meta analyzer");
+        return meta;
     }
 
-    public static NixpkgsMetaAnalyzer getNixpkgsMetaAnalyzer() {
-        return nixpkgsMetaAnalyzer;
-    }
 
     private CloseableHttpResponse processHttpRequest5(CloseableHttpClient client) throws IOException {
         try {
@@ -97,14 +112,6 @@ public class NixpkgsMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     /**
-     * updates the NixpkgsMetaAnalyzer asynchronously by fetching a new version
-     * of the standard channel
-     */
-    public void updateNixpkgsMetaAnalyzer() {
-        new Thread(() -> nixpkgsMetaAnalyzer = new NixpkgsMetaAnalyzer()).start();
-    }
-
-    /**
      * {@inheritDoc}
      */
     public RepositoryType supportedRepositoryType() {
@@ -115,23 +122,7 @@ public class NixpkgsMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public boolean isApplicable(Component component) {
-        // FUTUREWORK(mangoiv): add nixpkgs to https://github.com/package-url/packageurl-java/blob/master/src/main/java/com/github/packageurl/PackageURL.java
         final var purl = component.getPurl();
         return purl != null && "nixpkgs".equals(purl.getType());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public MetaModel analyze(Component component) {
-        final var meta = new MetaModel(component);
-        final var purl = component.getPurl();
-        if (purl != null) {
-            final var newerVersion = latestVersion.get(purl.getName());
-            if (newerVersion != null) {
-                meta.setLatestVersion(newerVersion);
-            }
-        }
-        return meta;
     }
 }

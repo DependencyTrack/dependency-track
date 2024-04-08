@@ -48,7 +48,6 @@ public class HackageMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public boolean isApplicable(Component component) {
-        // FUTUREWORK(mangoiv): add hackage to https://github.com/package-url/packageurl-java/blob/master/src/main/java/com/github/packageurl/PackageURL.java
         final var purl = component.getPurl();
         return purl != null && "hackage".equals(purl.getType());
     }

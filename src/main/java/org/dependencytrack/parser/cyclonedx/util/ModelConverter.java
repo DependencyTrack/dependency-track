@@ -281,21 +281,17 @@ public class ModelConverter {
 
         final String cdxPropertyName = trimToNull(cdxProperty.getName());
         if (cdxPropertyName == null) {
-            // TODO: What to do here?
-            //   * Generate groupName and propertyName?
-            //   * Log a warning and ignore?
             return null;
         }
 
         // Treat property names according to the CycloneDX namespace syntax:
-        //   https://cyclonedx.github.io/cyclonedx-property-taxonomy/
-        final int lastSeparatorIndex = cdxPropertyName.lastIndexOf(':');
-        if (lastSeparatorIndex < 0) {
-            property.setGroupName("internal");
+        // https://cyclonedx.github.io/cyclonedx-property-taxonomy/
+        final int firstSeparatorIndex = cdxPropertyName.indexOf(':');
+        if (firstSeparatorIndex < 0) {
             property.setPropertyName(cdxPropertyName);
         } else {
-            property.setGroupName(cdxPropertyName.substring(0, lastSeparatorIndex));
-            property.setPropertyName(cdxPropertyName.substring(lastSeparatorIndex + 1));
+            property.setGroupName(cdxPropertyName.substring(0, firstSeparatorIndex));
+            property.setPropertyName(cdxPropertyName.substring(firstSeparatorIndex + 1));
         }
 
         return property;
@@ -808,8 +804,18 @@ public class ModelConverter {
 
         final List<org.cyclonedx.model.Property> cdxProperties = new ArrayList<>();
         for (final T dtProperty : dtProperties) {
+            if (dtProperty.getPropertyType() == PropertyType.ENCRYPTEDSTRING) {
+                // We treat encrypted properties as internal.
+                // They shall not be leaked when exporting.
+                continue;
+            }
+
             final var cdxProperty = new org.cyclonedx.model.Property();
-            cdxProperty.setName("%s:%s".formatted(dtProperty.getGroupName(), dtProperty.getPropertyName()));
+            if (dtProperty.getGroupName() == null) {
+                cdxProperty.setName(dtProperty.getPropertyName());
+            } else {
+                cdxProperty.setName("%s:%s".formatted(dtProperty.getGroupName(), dtProperty.getPropertyName()));
+            }
             cdxProperty.setValue(dtProperty.getPropertyValue());
             cdxProperties.add(cdxProperty);
         }

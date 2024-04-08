@@ -470,7 +470,15 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
 
     private void processComponentProperties(final QueryManager qm, final Component component, final List<ComponentProperty> properties) {
         if (properties == null || properties.isEmpty()) {
-            // TODO: Should we delete pre-existing properties that no longer exist in the BOM?
+            // TODO: We currently remove all existing properties that are no longer included in the BOM.
+            //   This is to stay consistent with the BOM being the source of truth. However, this may feel
+            //   counter-intuitive to some users, who might expect their manual changes to persist.
+            //   If we want to support that, we need a way to track which properties were added and / or
+            //   modified manually.
+            if (component.getProperties() != null) {
+                qm.getPersistenceManager().deletePersistentAll(component.getProperties());
+            }
+
             return;
         }
 
@@ -483,7 +491,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             return;
         }
 
-        for (final ComponentProperty property : component.getProperties()) {
+        for (final ComponentProperty property : properties) {
             final Optional<ComponentProperty> optionalPersistentProperty = component.getProperties().stream()
                     .filter(persistentProperty -> Objects.equals(persistentProperty.getGroupName(), property.getGroupName()))
                     .filter(persistentProperty -> Objects.equals(persistentProperty.getPropertyName(), property.getPropertyName()))

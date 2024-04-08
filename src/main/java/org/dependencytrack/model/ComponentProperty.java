@@ -23,6 +23,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.google.common.base.MoreObjects;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -54,8 +55,7 @@ public class ComponentProperty implements IConfigProperty, Serializable {
     private Component component;
 
     @Persistent
-    @Column(name = "GROUPNAME", allowsNull = "false")
-    @NotBlank
+    @Column(name = "GROUPNAME")
     @Size(min = 1, max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "\\P{Cc}+", message = "The groupName must not contain control characters")
@@ -71,7 +71,7 @@ public class ComponentProperty implements IConfigProperty, Serializable {
 
     @Persistent
     @Column(name = "PROPERTYVALUE", length = 1024)
-    @Size(min = 0, max = 1024)
+    @Size(max = 1024)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "\\P{Cc}+", message = "The propertyValue must not contain control characters")
     private String propertyValue;
@@ -142,6 +142,20 @@ public class ComponentProperty implements IConfigProperty, Serializable {
 
     public void setDescription(final String description) {
         this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("id", id)
+                .add("component", component)
+                .add("groupName", groupName)
+                .add("propertyName", propertyName)
+                .add("propertyValue", propertyValue)
+                .add("propertyType", propertyType)
+                .add("description", description)
+                .omitNullValues()
+                .toString();
     }
 
 }

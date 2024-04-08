@@ -35,6 +35,7 @@ import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
@@ -244,7 +245,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
         // TODO: Implement for legacy version of the task.
         if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTaskV2) {
-            assertThat(component.getProperties()).satisfiesExactly(
+            assertThat(component.getProperties()).satisfiesExactlyInAnyOrder(
                     property -> {
                         assertThat(property.getGroupName()).isEqualTo("foo");
                         assertThat(property.getPropertyName()).isEqualTo("bar");
@@ -253,7 +254,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                         assertThat(property.getDescription()).isNull();
                     },
                     property -> {
-                        assertThat(property.getGroupName()).isEqualTo("internal");
+                        assertThat(property.getGroupName()).isNull();
                         assertThat(property.getPropertyName()).isEqualTo("foo");
                         assertThat(property.getPropertyValue()).isEqualTo("bar");
                         assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
@@ -915,6 +916,94 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
         assertThat(qm.getAllComponents(project)).isNotEmpty();
         assertThat(qm.getAllServiceComponents(project)).isNotEmpty();
+    }
+
+    @Test
+    public void informWithExistingComponentPropertiesAndBomWithoutComponentProperties() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setClassifier(Classifier.LIBRARY);
+        qm.persist(component);
+
+        final var componentProperty = new ComponentProperty();
+        componentProperty.setComponent(component);
+        componentProperty.setPropertyName("foo");
+        componentProperty.setPropertyValue("bar");
+        componentProperty.setPropertyType(PropertyType.STRING);
+        qm.persist(componentProperty);
+
+        final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()), """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib"
+                    }
+                  ]
+                }
+                """.getBytes());
+        bomUploadProcessingTaskSupplier.get().inform(bomUploadEvent);
+        awaitBomProcessedNotification();
+
+        qm.getPersistenceManager().refresh(component);
+        assertThat(component.getProperties()).isEmpty();
+    }
+
+    @Test
+    public void informWithExistingComponentPropertiesAndBomWithComponentProperties() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setClassifier(Classifier.LIBRARY);
+        qm.persist(component);
+
+        final var componentProperty = new ComponentProperty();
+        componentProperty.setComponent(component);
+        componentProperty.setPropertyName("foo");
+        componentProperty.setPropertyValue("bar");
+        componentProperty.setPropertyType(PropertyType.STRING);
+        qm.persist(componentProperty);
+
+        final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()), """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib",
+                      "properties": [
+                        {
+                          "name": "foo",
+                          "value": "baz"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes());
+        bomUploadProcessingTaskSupplier.get().inform(bomUploadEvent);
+        awaitBomProcessedNotification();
+
+        qm.getPersistenceManager().refresh(componentProperty);
+        assertThat(componentProperty.getGroupName()).isNull();
+        assertThat(componentProperty.getPropertyName()).isEqualTo("foo");
+        assertThat(componentProperty.getPropertyValue()).isEqualTo("baz");
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/1905

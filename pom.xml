@@ -111,7 +111,7 @@
         <lib.log4j-over-slf4j.version>2.0.12</lib.log4j-over-slf4j.version>
         <lib.org-kohsuke-github-api.version>1.318</lib.org-kohsuke-github-api.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>12.6.1.jre11</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>12.7.0.jre11-preview</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.7.2</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->

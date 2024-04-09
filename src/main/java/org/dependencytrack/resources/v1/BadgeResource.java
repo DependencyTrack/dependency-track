@@ -29,6 +29,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.misc.Badger;
 
@@ -72,8 +73,8 @@ public class BadgeResource extends AlpineResource {
     })
     @AuthenticationNotRequired
     public Response getProjectVulnerabilitiesBadge(
-            @ApiParam(value = "The UUID of the project to retrieve metrics for", required = true)
-            @PathParam("uuid") String uuid) {
+            @ApiParam(value = "The UUID of the project to retrieve metrics for", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             if (isBadgeSupportEnabled(qm)) {
                 final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -138,8 +139,8 @@ public class BadgeResource extends AlpineResource {
     })
     @AuthenticationNotRequired
     public Response getProjectPolicyViolationsBadge(
-            @ApiParam(value = "The UUID of the project to retrieve a badge for", required = true)
-            @PathParam("uuid") String uuid) {
+            @ApiParam(value = "The UUID of the project to retrieve a badge for", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             if (isBadgeSupportEnabled(qm)) {
                 final Project project = qm.getObjectByUuid(Project.class, uuid);

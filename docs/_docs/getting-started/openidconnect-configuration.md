@@ -2,7 +2,7 @@
 title: OpenID Connect Configuration
 category: Getting Started
 chapter: 1
-order: 10
+order: 11
 ---
 
 > OpenID Connect is supported in Dependency-Track 4.0.0 and above

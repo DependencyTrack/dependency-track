@@ -1,0 +1,300 @@
+{
+    "current_page": 1,
+    "total_entries": 1,
+    "results": [
+      {
+        "vulndb_id": 1,
+        "title": "test title",
+        "classifications": [
+          {
+            "id": 1,
+            "name": "test vulnerability",
+            "longname": "test vulnerability 1 1",
+            "description": "test test",
+            "mediumtext": "some text"
+          }
+        ],
+        "authors": [
+          {
+            "id": 23,
+            "name": "test author",
+            "company": "test company"
+          }
+        ],
+        "ext_references": [
+          {
+            "value": "http://example.com",
+            "type": "Vendor URL"
+          }
+        ],
+        "ext_texts": [
+          {
+            "type": "external test texts",
+            "value": "external test texts value"
+          }
+        ],
+        "cvss_metrics": [
+          {
+            "id": 1111,
+            "access_vector": "NETWORK",
+            "access_complexity": "MEDIUM",
+            "authentication": "NONE",
+            "confidentiality_impact": "PARTIAL",
+            "integrity_impact": "NONE",
+            "availability_impact": "NONE",
+            "source": "http://nvd.nist.gov",
+            "generated_on": "0017-00-00T00:00:37Z",
+            "cve_id": "1234-0000",
+            "score": 4.3,
+            "calculated_cvss_base_score": 4.3
+          }
+        ],
+        "cvss_version_three_metrics": [
+          {
+            "id": 1111,
+            "attack_vector": "NETWORK",
+            "attack_complexity": "LOW",
+            "privileges_required": "NONE",
+            "user_interaction": "REQUIRED",
+            "scope": "UNCHANGED",
+            "confidentiality_impact": "LOW",
+            "integrity_impact": "NONE",
+            "availability_impact": "NONE",
+            "source": "http://nvd.nist.gov",
+            "generated_on": "0017-00-00T00:00:37Z",
+            "cve_id": "1234-0000",
+            "score": 4.3,
+            "calculated_cvss_base_score": 4.3
+        }
+        ],
+        "nvd_additional_information": [
+          {
+            "summary": "test summary",
+            "cwe_id": "test1",
+            "cve_id": "CVE-1234-0000"
+          }
+        ],
+        "vendors": [
+          {
+            "vendor": {
+              "id": 1,
+              "name": "vendor one test",
+              "short_name": "test",
+              "vendor_url": "http://test.com",
+              "products": [
+                {
+                  "id": 45,
+                  "name": "test product name",
+                  "versions": [
+                    {
+                      "id": 2,
+                      "name": "version 2",
+                      "affected": false,
+                      "cpe": [
+                        {
+                          "cpe": "test cpe",
+                          "type": "test type"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "vulndb_id": 2,
+        "title": "test title",
+        "classifications": [
+          {
+            "id": 1,
+            "name": "test vulnerability",
+            "longname": "test vulnerability 1 1",
+            "description": "test test",
+            "mediumtext": "some text"
+          }
+        ],
+        "authors": [
+          {
+            "id": 23,
+            "name": "test author",
+            "company": "test company"
+          }
+        ],
+        "ext_references": [
+          {
+            "value": "http://example.com",
+            "type": "Vendor URL"
+          }
+        ],
+        "ext_texts": [
+          {
+            "type": "external test texts",
+            "value": "external test texts value"
+          }
+        ],
+        "cvss_metrics": [
+          {
+            "id": 1111,
+            "access_vector": "NETWORK",
+            "access_complexity": "MEDIUM",
+            "authentication": "NONE",
+            "confidentiality_impact": "PARTIAL",
+            "integrity_impact": "NONE",
+            "availability_impact": "NONE",
+            "source": "http://nvd.nist.gov",
+            "generated_on": "0017-00-00T00:00:37Z",
+            "cve_id": null,
+            "score": 4.3,
+            "calculated_cvss_base_score": 4.3
+          }
+        ],
+        "cvss_version_three_metrics": [
+          {
+            "id": 1111,
+            "attack_vector": "NETWORK",
+            "attack_complexity": "LOW",
+            "privileges_required": "NONE",
+            "user_interaction": "REQUIRED",
+            "scope": "UNCHANGED",
+            "confidentiality_impact": "LOW",
+            "integrity_impact": "NONE",
+            "availability_impact": "NONE",
+            "source": "http://nvd.nist.gov",
+            "generated_on": "0017-00-00T00:00:37Z",
+            "cve_id": "1234-0000",
+            "score": 4.3,
+            "calculated_cvss_base_score": 4.3
+          }
+        ],
+        "nvd_additional_information": [],
+        "vendors": [
+          {
+            "vendor": {
+              "id": 1,
+              "name": "vendor one test",
+              "short_name": "test",
+              "vendor_url": "http://test.com",
+              "products": [
+                {
+                  "id": 45,
+                  "name": "test product name",
+                  "versions": [
+                    {
+                      "id": 2,
+                      "name": "version 2",
+                      "affected": false,
+                      "cpe": [
+                        {
+                          "cpe": "test cpe",
+                          "type": "test type"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "vulndb_id": 3,
+        "title": "test title",
+        "classifications": [
+          {
+            "id": 1,
+            "name": "test vulnerability",
+            "longname": "test vulnerability 1 1",
+            "description": "test test",
+            "mediumtext": "some text"
+          }
+        ],
+        "authors": [
+          {
+            "id": 23,
+            "name": "test author",
+            "company": "test company"
+          }
+        ],
+        "ext_references": [
+          {
+            "value": "http://example.com",
+            "type": "Vendor URL"
+          }
+        ],
+        "ext_texts": [
+          {
+            "type": "external test texts",
+            "value": "external test texts value"
+          }
+        ],
+        "cvss_metrics": [
+          {
+            "id": 1111,
+            "access_vector": "NETWORK",
+            "access_complexity": "MEDIUM",
+            "authentication": "NONE",
+            "confidentiality_impact": "PARTIAL",
+            "integrity_impact": "NONE",
+            "availability_impact": "NONE",
+            "source": "http://nvd.nist.gov",
+            "generated_on": "0017-00-00T00:00:37Z",
+            "cve_id": null,
+            "score": 4.3,
+            "calculated_cvss_base_score": 4.3
+          }
+        ],
+        "cvss_version_three_metrics": [
+          {
+            "id": 1111,
+            "attack_vector": "NETWORK",
+            "attack_complexity": "LOW",
+            "privileges_required": "NONE",
+            "user_interaction": "REQUIRED",
+            "scope": "UNCHANGED",
+            "confidentiality_impact": "LOW",
+            "integrity_impact": "NONE",
+            "availability_impact": "NONE",
+            "source": "http://nvd.nist.gov",
+            "generated_on": "0017-00-00T00:00:37Z",
+            "cve_id": null,
+            "score": 4.3,
+            "calculated_cvss_base_score": 4.3
+          }
+        ],
+        "nvd_additional_information": [],
+        "vendors": [
+          {
+            "vendor": {
+              "id": 1,
+              "name": "vendor one test",
+              "short_name": "test",
+              "vendor_url": "http://test.com",
+              "products": [
+                {
+                  "id": 45,
+                  "name": "test product name",
+                  "versions": [
+                    {
+                      "id": 2,
+                      "name": "version 2",
+                      "affected": false,
+                      "cpe": [
+                        {
+                          "cpe": "test cpe",
+                          "type": "test type"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }

@@ -43,6 +43,7 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 
@@ -89,8 +90,8 @@ public class ComponentResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getAllComponents(
-            @ApiParam(value = "The UUID of the project to retrieve components for", required = true)
-            @PathParam("uuid") String uuid,
+            @ApiParam(value = "The UUID of the project to retrieve components for", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
             @ApiParam(value = "Optionally exclude recent components so only outdated components are returned", required = false)
             @QueryParam("onlyOutdated") boolean onlyOutdated,
             @ApiParam(value = "Optionally exclude transitive dependencies so only direct dependencies are returned", required = false)
@@ -125,8 +126,8 @@ public class ComponentResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByUuid(
-            @ApiParam(value = "The UUID of the component to retrieve", required = true)
-            @PathParam("uuid") String uuid,
+            @ApiParam(value = "The UUID of the component to retrieve", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
             @ApiParam(value = "Optionally includes third-party metadata about the component from external repositories", required = false)
             @QueryParam("includeRepositoryMetaData") boolean includeRepositoryMetaData) {
         try (QueryManager qm = new QueryManager()) {
@@ -177,8 +178,8 @@ public class ComponentResource extends AlpineResource {
                                            @QueryParam("cpe") String cpe,
                                            @ApiParam(value = "The swidTagId of the component")
                                            @QueryParam("swidTagId") String swidTagId,
-                                           @ApiParam(value = "The project the component belongs to")
-                                           @QueryParam("project") String projectUuid) {
+                                           @ApiParam(value = "The project the component belongs to", format = "uuid")
+                                           @QueryParam("project") @ValidUuid String projectUuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Project project = null;
             if (projectUuid != null) {
@@ -249,7 +250,8 @@ public class ComponentResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
-    public Response createComponent(@PathParam("uuid") String uuid, Component jsonComponent) {
+    public Response createComponent(@ApiParam(value = "The UUID of the project to create a component for", format = "uuid", required = true)
+                                    @PathParam("uuid") @ValidUuid String uuid, Component jsonComponent) {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonComponent, "author"),
@@ -466,8 +468,8 @@ public class ComponentResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response deleteComponent(
-            @ApiParam(value = "The UUID of the component to delete", required = true)
-            @PathParam("uuid") String uuid) {
+            @ApiParam(value = "The UUID of the component to delete", format = "uuid", required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid, Component.FetchGroup.ALL.name());
             if (component != null) {
@@ -516,8 +518,8 @@ public class ComponentResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getDependencyGraphForComponent(
-            @ApiParam(value = "The UUID of the project to get the expanded dependency graph for", required = true)
-            @PathParam("projectUuid") String projectUuid,
+            @ApiParam(value = "The UUID of the project to get the expanded dependency graph for", format = "uuid", required = true)
+            @PathParam("projectUuid") @ValidUuid String projectUuid,
             @ApiParam(value = "List of UUIDs of the components (separated by |) to get the expanded dependency graph for", required = true)
             @PathParam("componentUuids") String componentUuids) {
         try (QueryManager qm = new QueryManager()) {

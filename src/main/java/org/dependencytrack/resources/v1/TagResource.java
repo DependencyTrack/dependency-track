@@ -30,6 +30,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.ws.rs.GET;
@@ -57,8 +58,8 @@ public class TagResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getTags(@ApiParam(value = "The UUID of the policy", required = true)
-                            @PathParam("policyUuid") String policyUuid){
+    public Response getTags(@ApiParam(value = "The UUID of the policy", format = "uuid", required = true)
+                            @PathParam("policyUuid") @ValidUuid String policyUuid){
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getTags(policyUuid);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();

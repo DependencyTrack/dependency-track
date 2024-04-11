@@ -80,9 +80,9 @@ public class BadgerTest {
     public void generateViolationsWithViolationsGenerateExpectedSvg() throws Exception {
         ProjectMetrics metrics = new ProjectMetrics();
         metrics.setPolicyViolationsTotal(1 + 2 + 3);
-        metrics.setPolicyViolationsFail(1);
-        metrics.setPolicyViolationsWarn(2);
-        metrics.setPolicyViolationsInfo(3);
+        metrics.setPolicyViolationsFailTotal(1);
+        metrics.setPolicyViolationsWarnTotal(2);
+        metrics.setPolicyViolationsInfoTotal(3);
         Badger badger = new Badger();
         String svg = badger.generateViolations(metrics);
         Assert.assertEquals(strip(svg), strip(expectedSvg("project-violations.svg")));

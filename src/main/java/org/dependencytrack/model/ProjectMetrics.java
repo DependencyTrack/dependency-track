@@ -112,16 +112,40 @@ public class ProjectMetrics implements Serializable {
     private double inheritedRiskScore;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_FAIL", allowsNull = "true") // New column, must allow nulls on existing data bases)
-    private Integer policyViolationsFail;
+    @Column(name = "POLICYVIOLATIONS_FAIL_TOTAL", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private Integer policyViolationsFailTotal;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_WARN", allowsNull = "true") // New column, must allow nulls on existing data bases)
-    private Integer policyViolationsWarn;
+    @Column(name = "POLICYVIOLATIONS_FAIL_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private Integer policyViolationsFailAudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_INFO", allowsNull = "true") // New column, must allow nulls on existing data bases)
-    private Integer policyViolationsInfo;
+    @Column(name = "POLICYVIOLATIONS_FAIL_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private Integer policyViolationsFailUnaudited;
+
+    @Persistent
+    @Column(name = "POLICYVIOLATIONS_WARN_TOTAL", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private Integer policyViolationsWarnTotal;
+
+    @Persistent
+    @Column(name = "POLICYVIOLATIONS_WARN_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private Integer policyViolationsWarnAudited;
+
+    @Persistent
+    @Column(name = "POLICYVIOLATIONS_WARN_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private Integer policyViolationsWarnUnaudited;
+
+    @Persistent
+    @Column(name = "POLICYVIOLATIONS_INFO_TOTAL", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private Integer policyViolationsInfoTotal;
+
+    @Persistent
+    @Column(name = "POLICYVIOLATIONS_INFO_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private Integer policyViolationsInfoAudited;
+
+    @Persistent
+    @Column(name = "POLICYVIOLATIONS_INFO_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private Integer policyViolationsInfoUnaudited;
 
     @Persistent
     @Column(name = "POLICYVIOLATIONS_TOTAL", allowsNull = "true") // New column, must allow nulls on existing data bases)
@@ -305,28 +329,76 @@ public class ProjectMetrics implements Serializable {
         this.inheritedRiskScore = inheritedRiskScore;
     }
 
-    public int getPolicyViolationsFail() {
-        return policyViolationsFail;
+    public int getPolicyViolationsFailTotal() {
+        return policyViolationsFailTotal;
     }
 
-    public void setPolicyViolationsFail(int policyViolationsFail) {
-        this.policyViolationsFail = policyViolationsFail;
+    public void setPolicyViolationsFailTotal(int policyViolationsFailTotal) {
+        this.policyViolationsFailTotal = policyViolationsFailTotal;
     }
 
-    public int getPolicyViolationsWarn() {
-        return policyViolationsWarn;
+    public int getPolicyViolationsFailAudited() {
+        return policyViolationsFailAudited;
     }
 
-    public void setPolicyViolationsWarn(int policyViolationsWarn) {
-        this.policyViolationsWarn = policyViolationsWarn;
+    public void setPolicyViolationsFailAudited(int policyViolationsFailAudited) {
+        this.policyViolationsFailAudited = policyViolationsFailAudited;
     }
 
-    public int getPolicyViolationsInfo() {
-        return policyViolationsInfo;
+    public int getPolicyViolationsFailUnaudited() {
+        return policyViolationsFailUnaudited;
     }
 
-    public void setPolicyViolationsInfo(int policyViolationsInfo) {
-        this.policyViolationsInfo = policyViolationsInfo;
+    public void setPolicyViolationsFailUnaudited(int policyViolationsFailUnaudited) {
+        this.policyViolationsFailUnaudited = policyViolationsFailUnaudited;
+    }
+
+    public int getPolicyViolationsWarnTotal() {
+        return policyViolationsWarnTotal;
+    }
+
+    public void setPolicyViolationsWarnTotal(int policyViolationsWarnTotal) {
+        this.policyViolationsWarnTotal = policyViolationsWarnTotal;
+    }
+
+    public int getPolicyViolationsWarnAudited() {
+        return policyViolationsWarnAudited;
+    }
+
+    public void setPolicyViolationsWarnAudited(int policyViolationsWarnAudited) {
+        this.policyViolationsWarnAudited = policyViolationsWarnAudited;
+    }
+
+    public int getPolicyViolationsWarnUnaudited() {
+        return policyViolationsWarnUnaudited;
+    }
+
+    public void setPolicyViolationsWarnUnaudited(int policyViolationsWarnUnaudited) {
+        this.policyViolationsWarnUnaudited = policyViolationsWarnUnaudited;
+    }
+
+    public int getPolicyViolationsInfoTotal() {
+        return policyViolationsInfoTotal;
+    }
+
+    public void setPolicyViolationsInfoTotal(int policyViolationsInfoTotal) {
+        this.policyViolationsInfoTotal = policyViolationsInfoTotal;
+    }
+
+    public int getPolicyViolationsInfoAudited() {
+        return policyViolationsInfoAudited;
+    }
+
+    public void setPolicyViolationsInfoAudited(int policyViolationsInfoAudited) {
+        this.policyViolationsInfoAudited = policyViolationsInfoAudited;
+    }
+
+    public int getPolicyViolationsInfoUnaudited() {
+        return policyViolationsInfoUnaudited;
+    }
+
+    public void setPolicyViolationsInfoUnaudited(int policyViolationsInfoUnaudited) {
+        this.policyViolationsInfoUnaudited = policyViolationsInfoUnaudited;
     }
 
     public int getPolicyViolationsTotal() {

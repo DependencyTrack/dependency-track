@@ -113,12 +113,15 @@ final class Counters {
         metrics.setFindingsAudited(this.findingsAudited);
         metrics.setFindingsUnaudited(this.findingsUnaudited);
         metrics.setInheritedRiskScore(this.inheritedRiskScore);
+        metrics.setPolicyViolationsFail(this.policyViolationsFailTotal);
         metrics.setPolicyViolationsFailTotal(this.policyViolationsFailTotal);
         metrics.setPolicyViolationsFailAudited(this.policyViolationsFailAudited);
         metrics.setPolicyViolationsFailUnaudited(this.policyViolationsFailUnaudited);
+        metrics.setPolicyViolationsWarn(this.policyViolationsWarnTotal);
         metrics.setPolicyViolationsWarnTotal(this.policyViolationsWarnTotal);
         metrics.setPolicyViolationsWarnAudited(this.policyViolationsWarnAudited);
         metrics.setPolicyViolationsWarnUnaudited(this.policyViolationsWarnUnaudited);
+        metrics.setPolicyViolationsInfo(this.policyViolationsInfoTotal);
         metrics.setPolicyViolationsInfoTotal(this.policyViolationsInfoTotal);
         metrics.setPolicyViolationsInfoAudited(this.policyViolationsInfoAudited);
         metrics.setPolicyViolationsInfoUnaudited(this.policyViolationsInfoUnaudited);
@@ -156,12 +159,15 @@ final class Counters {
         metrics.setProjects(this.projects);
         metrics.setVulnerableProjects(this.vulnerableProjects);
         metrics.setInheritedRiskScore(this.inheritedRiskScore);
+        metrics.setPolicyViolationsFail(this.policyViolationsFailTotal);
         metrics.setPolicyViolationsFailTotal(this.policyViolationsFailTotal);
         metrics.setPolicyViolationsFailAudited(this.policyViolationsFailAudited);
         metrics.setPolicyViolationsFailUnaudited(this.policyViolationsFailUnaudited);
+        metrics.setPolicyViolationsWarn(this.policyViolationsWarnTotal);
         metrics.setPolicyViolationsWarnTotal(this.policyViolationsWarnTotal);
         metrics.setPolicyViolationsWarnAudited(this.policyViolationsWarnAudited);
         metrics.setPolicyViolationsWarnUnaudited(this.policyViolationsWarnUnaudited);
+        metrics.setPolicyViolationsInfo(this.policyViolationsInfoTotal);
         metrics.setPolicyViolationsInfoTotal(this.policyViolationsInfoTotal);
         metrics.setPolicyViolationsInfoAudited(this.policyViolationsInfoAudited);
         metrics.setPolicyViolationsInfoUnaudited(this.policyViolationsInfoUnaudited);
@@ -183,120 +189,126 @@ final class Counters {
     }
 
     boolean hasChanged(final DependencyMetrics comparedTo) {
-        return true;
-//        return comparedTo == null
-//                || comparedTo.getCritical() != this.critical
-//                || comparedTo.getHigh() != this.high
-//                || comparedTo.getMedium() != this.medium
-//                || comparedTo.getLow() != this.low
-//                || comparedTo.getUnassigned() != this.unassigned
-//                || comparedTo.getVulnerabilities() != this.vulnerabilities
-//                || comparedTo.getSuppressed() != this.suppressions
-//                || comparedTo.getFindingsTotal() != this.findingsTotal
-//                || comparedTo.getFindingsAudited() != this.findingsAudited
-//                || comparedTo.getFindingsUnaudited() != this.findingsUnaudited
-//                || comparedTo.getInheritedRiskScore() != this.inheritedRiskScore
-//                || comparedTo.getPolicyViolationsFailTotal() != this.policyViolationsFailTotal
-//                || comparedTo.getPolicyViolationsFailAudited() != this.policyViolationsFailAudited
-//                || comparedTo.getPolicyViolationsFailUnaudited() != this.policyViolationsFailUnaudited
-//                || comparedTo.getPolicyViolationsWarnTotal() != this.policyViolationsWarnTotal
-//                || comparedTo.getPolicyViolationsWarnAudited() != this.policyViolationsWarnAudited
-//                || comparedTo.getPolicyViolationsWarnUnaudited() != this.policyViolationsWarnUnaudited
-//                || comparedTo.getPolicyViolationsInfoTotal() != this.policyViolationsInfoTotal
-//                || comparedTo.getPolicyViolationsInfoAudited() != this.policyViolationsInfoAudited
-//                || comparedTo.getPolicyViolationsInfoUnaudited() != this.policyViolationsInfoUnaudited
-//                || comparedTo.getPolicyViolationsTotal() != this.policyViolationsTotal
-//                || comparedTo.getPolicyViolationsAudited() != this.policyViolationsAudited
-//                || comparedTo.getPolicyViolationsUnaudited() != this.policyViolationsUnaudited
-//                || comparedTo.getPolicyViolationsSecurityTotal() != this.policyViolationsSecurityTotal
-//                || comparedTo.getPolicyViolationsSecurityAudited() != this.policyViolationsSecurityAudited
-//                || comparedTo.getPolicyViolationsSecurityUnaudited() != this.policyViolationsSecurityUnaudited
-//                || comparedTo.getPolicyViolationsLicenseTotal() != this.policyViolationsLicenseTotal
-//                || comparedTo.getPolicyViolationsLicenseAudited() != this.policyViolationsLicenseAudited
-//                || comparedTo.getPolicyViolationsLicenseUnaudited() != this.policyViolationsLicenseUnaudited
-//                || comparedTo.getPolicyViolationsOperationalTotal() != this.policyViolationsOperationalTotal
-//                || comparedTo.getPolicyViolationsOperationalAudited() != this.policyViolationsOperationalAudited
-//                || comparedTo.getPolicyViolationsOperationalUnaudited() != this.policyViolationsOperationalUnaudited;
+        return comparedTo == null
+                || comparedTo.getCritical() != this.critical
+                || comparedTo.getHigh() != this.high
+                || comparedTo.getMedium() != this.medium
+                || comparedTo.getLow() != this.low
+                || comparedTo.getUnassigned() != this.unassigned
+                || comparedTo.getVulnerabilities() != this.vulnerabilities
+                || comparedTo.getSuppressed() != this.suppressions
+                || comparedTo.getFindingsTotal() != this.findingsTotal
+                || comparedTo.getFindingsAudited() != this.findingsAudited
+                || comparedTo.getFindingsUnaudited() != this.findingsUnaudited
+                || comparedTo.getInheritedRiskScore() != this.inheritedRiskScore
+                || comparedTo.getPolicyViolationsFail() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailTotal() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailAudited() != this.policyViolationsFailAudited
+                || comparedTo.getPolicyViolationsFailUnaudited() != this.policyViolationsFailUnaudited
+                || comparedTo.getPolicyViolationsWarn() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnTotal() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnAudited() != this.policyViolationsWarnAudited
+                || comparedTo.getPolicyViolationsWarnUnaudited() != this.policyViolationsWarnUnaudited
+                || comparedTo.getPolicyViolationsInfo() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoTotal() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoAudited() != this.policyViolationsInfoAudited
+                || comparedTo.getPolicyViolationsInfoUnaudited() != this.policyViolationsInfoUnaudited
+                || comparedTo.getPolicyViolationsTotal() != this.policyViolationsTotal
+                || comparedTo.getPolicyViolationsAudited() != this.policyViolationsAudited
+                || comparedTo.getPolicyViolationsUnaudited() != this.policyViolationsUnaudited
+                || comparedTo.getPolicyViolationsSecurityTotal() != this.policyViolationsSecurityTotal
+                || comparedTo.getPolicyViolationsSecurityAudited() != this.policyViolationsSecurityAudited
+                || comparedTo.getPolicyViolationsSecurityUnaudited() != this.policyViolationsSecurityUnaudited
+                || comparedTo.getPolicyViolationsLicenseTotal() != this.policyViolationsLicenseTotal
+                || comparedTo.getPolicyViolationsLicenseAudited() != this.policyViolationsLicenseAudited
+                || comparedTo.getPolicyViolationsLicenseUnaudited() != this.policyViolationsLicenseUnaudited
+                || comparedTo.getPolicyViolationsOperationalTotal() != this.policyViolationsOperationalTotal
+                || comparedTo.getPolicyViolationsOperationalAudited() != this.policyViolationsOperationalAudited
+                || comparedTo.getPolicyViolationsOperationalUnaudited() != this.policyViolationsOperationalUnaudited;
     }
 
     boolean hasChanged(final ProjectMetrics comparedTo) {
-        return true;
-//        return comparedTo == null
-//                || comparedTo.getCritical() != this.critical
-//                || comparedTo.getHigh() != this.high
-//                || comparedTo.getMedium() != this.medium
-//                || comparedTo.getLow() != this.low
-//                || comparedTo.getUnassigned() != this.unassigned
-//                || comparedTo.getVulnerabilities() != this.vulnerabilities
-//                || comparedTo.getSuppressed() != this.suppressions
-//                || comparedTo.getFindingsTotal() != this.findingsTotal
-//                || comparedTo.getFindingsAudited() != this.findingsAudited
-//                || comparedTo.getFindingsUnaudited() != this.findingsUnaudited
-//                || comparedTo.getInheritedRiskScore() != this.inheritedRiskScore
-//                || comparedTo.getPolicyViolationsFailTotal() != this.policyViolationsFailTotal
-//                || comparedTo.getPolicyViolationsFailAudited() != this.policyViolationsFailAudited
-//                || comparedTo.getPolicyViolationsFailUnaudited() != this.policyViolationsFailUnaudited
-//                || comparedTo.getPolicyViolationsWarnTotal() != this.policyViolationsWarnTotal
-//                || comparedTo.getPolicyViolationsWarnAudited() != this.policyViolationsWarnAudited
-//                || comparedTo.getPolicyViolationsWarnUnaudited() != this.policyViolationsWarnUnaudited
-//                || comparedTo.getPolicyViolationsInfoTotal() != this.policyViolationsInfoTotal
-//                || comparedTo.getPolicyViolationsInfoAudited() != this.policyViolationsInfoAudited
-//                || comparedTo.getPolicyViolationsInfoUnaudited() != this.policyViolationsInfoUnaudited
-//                || comparedTo.getPolicyViolationsTotal() != this.policyViolationsTotal
-//                || comparedTo.getPolicyViolationsAudited() != this.policyViolationsAudited
-//                || comparedTo.getPolicyViolationsUnaudited() != this.policyViolationsUnaudited
-//                || comparedTo.getPolicyViolationsSecurityTotal() != this.policyViolationsSecurityTotal
-//                || comparedTo.getPolicyViolationsSecurityAudited() != this.policyViolationsSecurityAudited
-//                || comparedTo.getPolicyViolationsSecurityUnaudited() != this.policyViolationsSecurityUnaudited
-//                || comparedTo.getPolicyViolationsLicenseTotal() != this.policyViolationsLicenseTotal
-//                || comparedTo.getPolicyViolationsLicenseAudited() != this.policyViolationsLicenseAudited
-//                || comparedTo.getPolicyViolationsLicenseUnaudited() != this.policyViolationsLicenseUnaudited
-//                || comparedTo.getPolicyViolationsOperationalTotal() != this.policyViolationsOperationalTotal
-//                || comparedTo.getPolicyViolationsOperationalAudited() != this.policyViolationsOperationalAudited
-//                || comparedTo.getPolicyViolationsOperationalUnaudited() != this.policyViolationsOperationalUnaudited
-//                || comparedTo.getComponents() != this.components
-//                || comparedTo.getVulnerableComponents() != this.vulnerableComponents;
+        return comparedTo == null
+                || comparedTo.getCritical() != this.critical
+                || comparedTo.getHigh() != this.high
+                || comparedTo.getMedium() != this.medium
+                || comparedTo.getLow() != this.low
+                || comparedTo.getUnassigned() != this.unassigned
+                || comparedTo.getVulnerabilities() != this.vulnerabilities
+                || comparedTo.getSuppressed() != this.suppressions
+                || comparedTo.getFindingsTotal() != this.findingsTotal
+                || comparedTo.getFindingsAudited() != this.findingsAudited
+                || comparedTo.getFindingsUnaudited() != this.findingsUnaudited
+                || comparedTo.getInheritedRiskScore() != this.inheritedRiskScore
+                || comparedTo.getPolicyViolationsFail() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailTotal() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailAudited() != this.policyViolationsFailAudited
+                || comparedTo.getPolicyViolationsFailUnaudited() != this.policyViolationsFailUnaudited
+                || comparedTo.getPolicyViolationsWarn() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnTotal() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnAudited() != this.policyViolationsWarnAudited
+                || comparedTo.getPolicyViolationsWarnUnaudited() != this.policyViolationsWarnUnaudited
+                || comparedTo.getPolicyViolationsInfo() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoTotal() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoAudited() != this.policyViolationsInfoAudited
+                || comparedTo.getPolicyViolationsInfoUnaudited() != this.policyViolationsInfoUnaudited
+                || comparedTo.getPolicyViolationsTotal() != this.policyViolationsTotal
+                || comparedTo.getPolicyViolationsAudited() != this.policyViolationsAudited
+                || comparedTo.getPolicyViolationsUnaudited() != this.policyViolationsUnaudited
+                || comparedTo.getPolicyViolationsSecurityTotal() != this.policyViolationsSecurityTotal
+                || comparedTo.getPolicyViolationsSecurityAudited() != this.policyViolationsSecurityAudited
+                || comparedTo.getPolicyViolationsSecurityUnaudited() != this.policyViolationsSecurityUnaudited
+                || comparedTo.getPolicyViolationsLicenseTotal() != this.policyViolationsLicenseTotal
+                || comparedTo.getPolicyViolationsLicenseAudited() != this.policyViolationsLicenseAudited
+                || comparedTo.getPolicyViolationsLicenseUnaudited() != this.policyViolationsLicenseUnaudited
+                || comparedTo.getPolicyViolationsOperationalTotal() != this.policyViolationsOperationalTotal
+                || comparedTo.getPolicyViolationsOperationalAudited() != this.policyViolationsOperationalAudited
+                || comparedTo.getPolicyViolationsOperationalUnaudited() != this.policyViolationsOperationalUnaudited
+                || comparedTo.getComponents() != this.components
+                || comparedTo.getVulnerableComponents() != this.vulnerableComponents;
     }
 
     boolean hasChanged(final PortfolioMetrics comparedTo) {
-        return true;
-//        return comparedTo == null
-//                || comparedTo.getCritical() != this.critical
-//                || comparedTo.getHigh() != this.high
-//                || comparedTo.getMedium() != this.medium
-//                || comparedTo.getLow() != this.low
-//                || comparedTo.getUnassigned() != this.unassigned
-//                || comparedTo.getVulnerabilities() != this.vulnerabilities
-//                || comparedTo.getInheritedRiskScore() != this.inheritedRiskScore
-//                || comparedTo.getPolicyViolationsFailTotal() != this.policyViolationsFailTotal
-//                || comparedTo.getPolicyViolationsFailAudited() != this.policyViolationsFailAudited
-//                || comparedTo.getPolicyViolationsFailUnaudited() != this.policyViolationsFailUnaudited
-//                || comparedTo.getPolicyViolationsWarnTotal() != this.policyViolationsWarnTotal
-//                || comparedTo.getPolicyViolationsWarnAudited() != this.policyViolationsWarnAudited
-//                || comparedTo.getPolicyViolationsWarnUnaudited() != this.policyViolationsWarnUnaudited
-//                || comparedTo.getPolicyViolationsInfoTotal() != this.policyViolationsInfoTotal
-//                || comparedTo.getPolicyViolationsInfoAudited() != this.policyViolationsInfoAudited
-//                || comparedTo.getPolicyViolationsInfoUnaudited() != this.policyViolationsInfoUnaudited
-//                || comparedTo.getPolicyViolationsTotal() != this.policyViolationsTotal
-//                || comparedTo.getPolicyViolationsAudited() != this.policyViolationsAudited
-//                || comparedTo.getPolicyViolationsUnaudited() != this.policyViolationsUnaudited
-//                || comparedTo.getPolicyViolationsSecurityTotal() != this.policyViolationsSecurityTotal
-//                || comparedTo.getPolicyViolationsSecurityAudited() != this.policyViolationsSecurityAudited
-//                || comparedTo.getPolicyViolationsSecurityUnaudited() != this.policyViolationsSecurityUnaudited
-//                || comparedTo.getPolicyViolationsLicenseTotal() != this.policyViolationsLicenseTotal
-//                || comparedTo.getPolicyViolationsLicenseAudited() != this.policyViolationsLicenseAudited
-//                || comparedTo.getPolicyViolationsLicenseUnaudited() != this.policyViolationsLicenseUnaudited
-//                || comparedTo.getPolicyViolationsOperationalTotal() != this.policyViolationsOperationalTotal
-//                || comparedTo.getPolicyViolationsOperationalAudited() != this.policyViolationsOperationalAudited
-//                || comparedTo.getPolicyViolationsOperationalUnaudited() != this.policyViolationsOperationalUnaudited
-//                || comparedTo.getComponents() != this.components
-//                || comparedTo.getVulnerableComponents() != this.vulnerableComponents
-//                || comparedTo.getSuppressed() != this.suppressions
-//                || comparedTo.getFindingsTotal() != this.findingsTotal
-//                || comparedTo.getFindingsAudited() != this.findingsAudited
-//                || comparedTo.getFindingsUnaudited() != this.findingsUnaudited
-//                || comparedTo.getProjects() != this.projects
-//                || comparedTo.getVulnerableProjects() != this.vulnerableProjects;
+        return comparedTo == null
+                || comparedTo.getCritical() != this.critical
+                || comparedTo.getHigh() != this.high
+                || comparedTo.getMedium() != this.medium
+                || comparedTo.getLow() != this.low
+                || comparedTo.getUnassigned() != this.unassigned
+                || comparedTo.getVulnerabilities() != this.vulnerabilities
+                || comparedTo.getInheritedRiskScore() != this.inheritedRiskScore
+                || comparedTo.getPolicyViolationsFail() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailTotal() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailAudited() != this.policyViolationsFailAudited
+                || comparedTo.getPolicyViolationsFailUnaudited() != this.policyViolationsFailUnaudited
+                || comparedTo.getPolicyViolationsWarn() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnTotal() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnAudited() != this.policyViolationsWarnAudited
+                || comparedTo.getPolicyViolationsWarnUnaudited() != this.policyViolationsWarnUnaudited
+                || comparedTo.getPolicyViolationsInfo() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoTotal() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoAudited() != this.policyViolationsInfoAudited
+                || comparedTo.getPolicyViolationsInfoUnaudited() != this.policyViolationsInfoUnaudited
+                || comparedTo.getPolicyViolationsTotal() != this.policyViolationsTotal
+                || comparedTo.getPolicyViolationsAudited() != this.policyViolationsAudited
+                || comparedTo.getPolicyViolationsUnaudited() != this.policyViolationsUnaudited
+                || comparedTo.getPolicyViolationsSecurityTotal() != this.policyViolationsSecurityTotal
+                || comparedTo.getPolicyViolationsSecurityAudited() != this.policyViolationsSecurityAudited
+                || comparedTo.getPolicyViolationsSecurityUnaudited() != this.policyViolationsSecurityUnaudited
+                || comparedTo.getPolicyViolationsLicenseTotal() != this.policyViolationsLicenseTotal
+                || comparedTo.getPolicyViolationsLicenseAudited() != this.policyViolationsLicenseAudited
+                || comparedTo.getPolicyViolationsLicenseUnaudited() != this.policyViolationsLicenseUnaudited
+                || comparedTo.getPolicyViolationsOperationalTotal() != this.policyViolationsOperationalTotal
+                || comparedTo.getPolicyViolationsOperationalAudited() != this.policyViolationsOperationalAudited
+                || comparedTo.getPolicyViolationsOperationalUnaudited() != this.policyViolationsOperationalUnaudited
+                || comparedTo.getComponents() != this.components
+                || comparedTo.getVulnerableComponents() != this.vulnerableComponents
+                || comparedTo.getSuppressed() != this.suppressions
+                || comparedTo.getFindingsTotal() != this.findingsTotal
+                || comparedTo.getFindingsAudited() != this.findingsAudited
+                || comparedTo.getFindingsUnaudited() != this.findingsUnaudited
+                || comparedTo.getProjects() != this.projects
+                || comparedTo.getVulnerableProjects() != this.vulnerableProjects;
     }
 
 }

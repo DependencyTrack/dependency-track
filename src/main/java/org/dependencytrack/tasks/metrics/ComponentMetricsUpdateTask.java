@@ -252,7 +252,8 @@ public class ComponentMetricsUpdateTask implements Subscriber {
 
     // FIXME - Adam - this is throwing nulls
     private static long getTotalAuditedPolicyViolationsByState(final PersistenceManager pm, final Component component, final Policy.ViolationState violationState) throws Exception {
-        try (final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class)) {
+        return 0l;
+        /*try (final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class)) {
             query.setFilter("""
                     component == :component &&
                     suppressed == false &&
@@ -262,7 +263,7 @@ public class ComponentMetricsUpdateTask implements Subscriber {
             query.setParameters(component, ViolationAnalysisState.NOT_SET, violationState);
             query.setResult("count(this)");
             return query.executeResultUnique(Long.class);
-        }
+        }*/
     }
 
     public record PolicyViolationProjection(Enum<?> type, Enum<?> violationState) {

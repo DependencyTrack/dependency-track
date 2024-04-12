@@ -112,7 +112,7 @@ public class ProjectMetrics implements Serializable {
     private double inheritedRiskScore;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_FAILL", allowsNull = "true") // New column, must allow nulls on existing databases)
+    @Column(name = "POLICYVIOLATIONS_FAIL", allowsNull = "true") // New column, must allow nulls on existing databases)
     @Deprecated
     private Integer policyViolationsFail;
 
@@ -167,11 +167,11 @@ public class ProjectMetrics implements Serializable {
     private Integer policyViolationsTotal;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_AUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsAudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsUnaudited;
 
     @Persistent

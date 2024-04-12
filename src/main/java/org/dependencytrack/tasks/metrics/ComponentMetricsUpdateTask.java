@@ -142,19 +142,19 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                 counters.policyViolationsSecurityUnaudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityAudited;
             }
 
-            // FIXME - need to get the correct count for audited
-            //if (counters.policyViolationsFailTotal > 0) {
+            // FIXME - Adam need to get the correct count for audited
+            if (counters.policyViolationsFailTotal > 0) {
                 counters.policyViolationsFailAudited = toIntExact(getTotalAuditedPolicyViolationsByState(pm, component, Policy.ViolationState.FAIL));
                 counters.policyViolationsFailUnaudited = counters.policyViolationsFailTotal - counters.policyViolationsFailAudited;
-            //}
-            //if (counters.policyViolationsWarnTotal > 0) {
+            }
+            if (counters.policyViolationsWarnTotal > 0) {
                 counters.policyViolationsWarnAudited = toIntExact(getTotalAuditedPolicyViolationsByState(pm, component, Policy.ViolationState.WARN));
                 counters.policyViolationsWarnUnaudited = counters.policyViolationsWarnTotal - counters.policyViolationsWarnAudited;
-            //}
-            //if (counters.policyViolationsInfoTotal > 0) {
+            }
+            if (counters.policyViolationsInfoTotal > 0) {
                 counters.policyViolationsInfoAudited = toIntExact(getTotalAuditedPolicyViolationsByState(pm, component, Policy.ViolationState.INFO));
                 counters.policyViolationsInfoUnaudited = counters.policyViolationsInfoTotal - counters.policyViolationsInfoAudited;
-            //}
+            }
 
             counters.policyViolationsAudited = counters.policyViolationsLicenseAudited +
                     counters.policyViolationsOperationalAudited +
@@ -250,7 +250,7 @@ public class ComponentMetricsUpdateTask implements Subscriber {
         }
     }
 
-    // FIXME - this is throwing nulls
+    // FIXME - Adam - this is throwing nulls
     private static long getTotalAuditedPolicyViolationsByState(final PersistenceManager pm, final Component component, final Policy.ViolationState violationState) throws Exception {
         try (final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class)) {
             query.setFilter("""

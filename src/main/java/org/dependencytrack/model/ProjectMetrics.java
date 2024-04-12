@@ -112,39 +112,54 @@ public class ProjectMetrics implements Serializable {
     private double inheritedRiskScore;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_FAIL_TOTAL", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_FAILL", allowsNull = "true") // New column, must allow nulls on existing databases)
+    @Deprecated
+    private Integer policyViolationsFail;
+
+    @Persistent
+    @Column(name = "POLICYVIOLATIONS_FAIL_TOTAL", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsFailTotal;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_FAIL_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_FAIL_AUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsFailAudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_FAIL_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_FAIL_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsFailUnaudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_WARN_TOTAL", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_WARN", allowsNull = "true") // New column, must allow nulls on existing databases)
+    @Deprecated
+    private Integer policyViolationsWarn;
+
+    @Persistent
+    @Column(name = "POLICYVIOLATIONS_WARN_TOTAL", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsWarnTotal;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_WARN_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_WARN_AUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsWarnAudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_WARN_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_WARN_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsWarnUnaudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_INFO_TOTAL", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_INFO", allowsNull = "true") // New column, must allow nulls on existing databases)
+    @Deprecated
+    private Integer policyViolationsInfo;
+
+    @Persistent
+    @Column(name = "POLICYVIOLATIONS_INFO_TOTAL", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsInfoTotal;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_INFO_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_INFO_AUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsInfoAudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_INFO_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_INFO_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsInfoUnaudited;
 
     @Persistent
@@ -152,11 +167,11 @@ public class ProjectMetrics implements Serializable {
     private Integer policyViolationsTotal;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_AUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
+    @Column(name = "POLICYVIOLATIONS_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
     private Integer policyViolationsAudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
+    @Column(name = "POLICYVIOLATIONS_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
     private Integer policyViolationsUnaudited;
 
     @Persistent
@@ -329,6 +344,14 @@ public class ProjectMetrics implements Serializable {
         this.inheritedRiskScore = inheritedRiskScore;
     }
 
+    public int getPolicyViolationsFail() {
+        return policyViolationsFail;
+    }
+
+    public void setPolicyViolationsFail(int policyViolationsFail) {
+        this.policyViolationsFail = policyViolationsFail;
+    }
+
     public int getPolicyViolationsFailTotal() {
         return policyViolationsFailTotal;
     }
@@ -353,6 +376,14 @@ public class ProjectMetrics implements Serializable {
         this.policyViolationsFailUnaudited = policyViolationsFailUnaudited;
     }
 
+    public int getPolicyViolationsWarn() {
+        return policyViolationsWarn;
+    }
+
+    public void setPolicyViolationsWarn(int policyViolationsWarn) {
+        this.policyViolationsWarn = policyViolationsWarn;
+    }
+
     public int getPolicyViolationsWarnTotal() {
         return policyViolationsWarnTotal;
     }
@@ -375,6 +406,14 @@ public class ProjectMetrics implements Serializable {
 
     public void setPolicyViolationsWarnUnaudited(int policyViolationsWarnUnaudited) {
         this.policyViolationsWarnUnaudited = policyViolationsWarnUnaudited;
+    }
+
+    public int getPolicyViolationsInfo() {
+        return policyViolationsInfo;
+    }
+
+    public void setPolicyViolationsInfo(int policyViolationsInfo) {
+        this.policyViolationsInfo = policyViolationsInfo;
     }
 
     public int getPolicyViolationsInfoTotal() {

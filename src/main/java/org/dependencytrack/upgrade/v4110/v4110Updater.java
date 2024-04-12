@@ -44,6 +44,7 @@ public class v4110Updater extends AbstractUpgradeItem {
         dropCweTable(connection);
         computeVulnerabilitySeverities(connection);
         extendPurlColumnLengths(connection);
+        // FIXME - Adam - add an upgrade process here?
     }
 
     private static void dropCweTable(final Connection connection) throws Exception {

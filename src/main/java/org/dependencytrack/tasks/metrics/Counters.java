@@ -68,12 +68,15 @@ final class Counters {
         metrics.setFindingsAudited(this.findingsAudited);
         metrics.setFindingsUnaudited(this.findingsUnaudited);
         metrics.setInheritedRiskScore(this.inheritedRiskScore);
+        metrics.setPolicyViolationsFail(this.policyViolationsFailTotal);
         metrics.setPolicyViolationsFailTotal(this.policyViolationsFailTotal);
         metrics.setPolicyViolationsFailAudited(this.policyViolationsFailAudited);
         metrics.setPolicyViolationsFailUnaudited(this.policyViolationsFailUnaudited);
+        metrics.setPolicyViolationsWarn(this.policyViolationsWarnTotal);
         metrics.setPolicyViolationsWarnTotal(this.policyViolationsWarnTotal);
         metrics.setPolicyViolationsWarnAudited(this.policyViolationsWarnAudited);
         metrics.setPolicyViolationsWarnUnaudited(this.policyViolationsWarnUnaudited);
+        metrics.setPolicyViolationsInfo(this.policyViolationsInfoTotal);
         metrics.setPolicyViolationsInfoTotal(this.policyViolationsInfoTotal);
         metrics.setPolicyViolationsInfoAudited(this.policyViolationsInfoAudited);
         metrics.setPolicyViolationsInfoUnaudited(this.policyViolationsInfoUnaudited);

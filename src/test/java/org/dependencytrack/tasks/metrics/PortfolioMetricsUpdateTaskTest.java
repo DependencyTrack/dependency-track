@@ -78,12 +78,15 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
         assertThat(metrics.getFindingsAudited()).isZero();
         assertThat(metrics.getFindingsUnaudited()).isZero();
         assertThat(metrics.getInheritedRiskScore()).isZero();
+        assertThat(metrics.getPolicyViolationsFail()).isZero();
         assertThat(metrics.getPolicyViolationsFailTotal()).isZero();
         assertThat(metrics.getPolicyViolationsFailAudited()).isZero();
         assertThat(metrics.getPolicyViolationsFailUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsWarn()).isZero();
         assertThat(metrics.getPolicyViolationsWarnTotal()).isZero();
         assertThat(metrics.getPolicyViolationsWarnAudited()).isZero();
         assertThat(metrics.getPolicyViolationsWarnUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsInfo()).isZero();
         assertThat(metrics.getPolicyViolationsInfoTotal()).isZero();
         assertThat(metrics.getPolicyViolationsInfoAudited()).isZero();
         assertThat(metrics.getPolicyViolationsInfoUnaudited()).isZero();
@@ -176,12 +179,15 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
         assertThat(metrics.getFindingsAudited()).isEqualTo(1);
         assertThat(metrics.getFindingsUnaudited()).isEqualTo(1);
         assertThat(metrics.getInheritedRiskScore()).isEqualTo(10.0);
+        assertThat(metrics.getPolicyViolationsFail()).isZero();
         assertThat(metrics.getPolicyViolationsFailTotal()).isZero();
         assertThat(metrics.getPolicyViolationsFailAudited()).isZero();
         assertThat(metrics.getPolicyViolationsFailUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsWarn()).isZero();
         assertThat(metrics.getPolicyViolationsWarnTotal()).isZero();
         assertThat(metrics.getPolicyViolationsWarnAudited()).isZero();
         assertThat(metrics.getPolicyViolationsWarnUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsInfo()).isZero();
         assertThat(metrics.getPolicyViolationsInfoTotal()).isZero();
         assertThat(metrics.getPolicyViolationsInfoAudited()).isZero();
         assertThat(metrics.getPolicyViolationsInfoUnaudited()).isZero();
@@ -260,12 +266,15 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
         assertThat(metrics.getFindingsAudited()).isZero();
         assertThat(metrics.getFindingsUnaudited()).isZero();
         assertThat(metrics.getInheritedRiskScore()).isZero();
+        assertThat(metrics.getPolicyViolationsFail()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsFailTotal()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsFailAudited()).isZero();
         assertThat(metrics.getPolicyViolationsFailUnaudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsWarn()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsWarnTotal()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsWarnAudited()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsWarnUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsInfo()).isZero(); // Suppressed
         assertThat(metrics.getPolicyViolationsInfoTotal()).isZero(); // Suppressed
         assertThat(metrics.getPolicyViolationsInfoAudited()).isZero();
         assertThat(metrics.getPolicyViolationsInfoUnaudited()).isZero();

@@ -116,20 +116,20 @@ public class PortfolioMetrics implements Serializable {
     private double inheritedRiskScore;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_FAILL", allowsNull = "true") // New column, must allow nulls on existing databases)
+    @Column(name = "POLICYVIOLATIONS_FAIL", allowsNull = "true") // New column, must allow nulls on existing databases)
     @Deprecated
     private Integer policyViolationsFail;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_FAIL_TOTAL", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_FAIL_TOTAL", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsFailTotal;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_FAIL_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_FAIL_AUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsFailAudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_FAIL_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_FAIL_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsFailUnaudited;
 
     @Persistent
@@ -138,15 +138,15 @@ public class PortfolioMetrics implements Serializable {
     private Integer policyViolationsWarn;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_WARN_TOTAL", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_WARN_TOTAL", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsWarnTotal;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_WARN_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_WARN_AUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsWarnAudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_WARN_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_WARN_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsWarnUnaudited;
 
     @Persistent
@@ -155,15 +155,15 @@ public class PortfolioMetrics implements Serializable {
     private Integer policyViolationsInfo;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_INFO_TOTAL", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_INFO_TOTAL", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsInfoTotal;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_INFO_AUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_INFO_AUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsInfoAudited;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_INFO_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    @Column(name = "POLICYVIOLATIONS_INFO_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
     private Integer policyViolationsInfoUnaudited;
 
     @Persistent

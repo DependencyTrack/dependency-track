@@ -104,7 +104,7 @@ public class DependencyMetrics implements Serializable {
     private double inheritedRiskScore;
 
     @Persistent
-    @Column(name = "POLICYVIOLATIONS_FAILL", allowsNull = "true") // New column, must allow nulls on existing databases)
+    @Column(name = "POLICYVIOLATIONS_FAIL", allowsNull = "true") // New column, must allow nulls on existing databases)
     @Deprecated
     private Integer policyViolationsFail;
 

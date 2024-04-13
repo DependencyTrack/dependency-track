@@ -62,6 +62,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -1080,6 +1081,37 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertNotNull(json.getString("token"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+    }
+
+    @Test
+    public void getLastImportedProjectByNameTest() {
+        for (int i=0; i<1000; i++) {
+            Project project = qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, true, false);
+            qm.updateLastBomImport(project, new Date(), "CycloneDX 1.5");
+        }
+        Response response = target(V1_PROJECT + "/latestUpdated/Acme%20Example")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Acme Example", json.getString("name"));
+        Assert.assertEquals("999", json.getString("version"));
+    }
+
+    @Test
+    public void getLastImportedProjectWithUnknownNameTest() {
+        for (int i=0; i<10; i++) {
+            Project project = qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, true, false);
+            qm.updateLastBomImport(project, new Date(), "CycloneDX 1.5");
+        }
+        Response response = target(V1_PROJECT + "/latestUpdated/Unknown")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(404, response.getStatus(), 0);
     }
 
 }

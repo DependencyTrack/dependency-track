@@ -61,6 +61,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 final class ProjectQueryManager extends QueryManager implements IQueryManager {
@@ -373,6 +374,23 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     @Override
     public PaginatedResult getProjects(final Tag tag) {
         return getProjects(tag, false, false, false);
+    }
+
+    /**
+     * Returns an optional containing the project version with the latest BOM import date.
+     * @param name the name of the project
+     * @return the version of the project with the latest BOM update date
+     */
+    @Override
+    public Optional getLastImportedVersionProject(final String name) {
+        final PaginatedResult result = getProjects(name, false, false, null);
+        return result.getObjects()
+                .stream()
+                .min((o1, o2) -> {
+                    Project p1 = (Project) o1;
+                    Project p2 = (Project) o2;
+                    return p2.getLastBomImport().compareTo(p1.getLastBomImport());
+                });
     }
 
     /**

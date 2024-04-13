@@ -59,6 +59,7 @@ import javax.ws.rs.core.Response;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -130,6 +131,38 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getProject(uuid);
             if (project != null) {
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.ok(project).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+        }
+    }
+
+    @GET
+    @Path("/latestUpdated/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns the most recently updated version of a project by name",
+            response = Project.class,
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
+            @ApiResponse(code = 404, message = "The project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getLastImportedProjectVersionByProjectName(
+            @ApiParam(value = "The name of the project to retrieve", required = true)
+            @PathParam("name") String name) {
+        try (QueryManager qm = new QueryManager()) {
+            final Optional projectOption = qm.getLastImportedVersionProject(name);
+            if (projectOption.isPresent()) {
+                Project project = (Project) projectOption.get();
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     return Response.ok(project).build();
                 } else {

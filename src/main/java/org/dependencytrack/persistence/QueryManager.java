@@ -90,6 +90,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -384,6 +385,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public Project getProject(final String name, final String version) {
         return getProjectQueryManager().getProject(name, version);
+    }
+
+    public Optional getLastImportedVersionProject(final String name) {
+        return getProjectQueryManager().getLastImportedVersionProject(name);
     }
 
     public PaginatedResult getProjects(final Team team, final boolean excludeInactive, final boolean bypass, final boolean onlyRoot) {

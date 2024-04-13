@@ -356,8 +356,9 @@ public class PortfolioMetrics implements Serializable {
         this.inheritedRiskScore = inheritedRiskScore;
     }
 
+    @Deprecated
     public int getPolicyViolationsFail() {
-        return policyViolationsFailTotal;
+        return policyViolationsFailUnaudited;
     }
 
     public int getPolicyViolationsFailTotal() {
@@ -384,8 +385,9 @@ public class PortfolioMetrics implements Serializable {
         this.policyViolationsFailUnaudited = policyViolationsFailUnaudited;
     }
 
+    @Deprecated
     public int getPolicyViolationsWarn() {
-        return policyViolationsWarnTotal;
+        return policyViolationsWarnUnaudited;
     }
 
     public int getPolicyViolationsWarnTotal() {
@@ -412,8 +414,9 @@ public class PortfolioMetrics implements Serializable {
         this.policyViolationsWarnUnaudited = policyViolationsWarnUnaudited;
     }
 
+    @Deprecated
     public int getPolicyViolationsInfo() {
-        return policyViolationsInfoTotal;
+        return policyViolationsInfoUnaudited;
     }
 
     public int getPolicyViolationsInfoTotal() {

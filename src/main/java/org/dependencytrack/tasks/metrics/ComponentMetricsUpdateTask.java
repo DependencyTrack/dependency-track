@@ -21,6 +21,7 @@ package org.dependencytrack.tasks.metrics;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.dependencytrack.event.ComponentMetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
@@ -30,8 +31,6 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyViolation;
-import org.dependencytrack.model.ViolationAnalysis;
-import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.persistence.QueryManager;
@@ -115,60 +114,43 @@ public class ComponentMetricsUpdateTask implements Subscriber {
             for (final PolicyViolationProjection violation : getPolicyViolations(pm, component)) {
                 counters.policyViolationsTotal++;
 
-                if (violation.suppressed == null || !violation.suppressed) {
-                    counters.policyViolationsUnaudited++;
-                }
-
                 switch (PolicyViolation.Type.valueOf(violation.type().name())) {
-                    case LICENSE -> {
-                        counters.policyViolationsLicenseTotal++;
-                        if (violation.suppressed == null || !violation.suppressed) {
-                            counters.policyViolationsLicenseUnaudited++;
-                        }
-                    }
-                    case OPERATIONAL -> {
-                        counters.policyViolationsOperationalTotal++;
-                        if (violation.suppressed == null || !violation.suppressed) {
-                            counters.policyViolationsOperationalUnaudited++;
-                        }
-                    }
-                    case SECURITY -> {
-                        counters.policyViolationsSecurityTotal++;
-                        if (violation.suppressed == null || !violation.suppressed) {
-                            counters.policyViolationsSecurityUnaudited++;
-                        }
-                    }
+                    case LICENSE -> counters.policyViolationsLicenseTotal++;
+                    case OPERATIONAL -> counters.policyViolationsOperationalTotal++;
+                    case SECURITY -> counters.policyViolationsSecurityTotal++;
                 }
 
                 switch (Policy.ViolationState.valueOf(violation.violationState().name())) {
-                    case FAIL -> {
-                        counters.policyViolationsFailTotal++;
-                        if (violation.suppressed == null || !violation.suppressed) {
-                            counters.policyViolationsFailUnaudited++;
-                        }
+                    case FAIL -> counters.policyViolationsFailTotal++;
+                    case WARN -> counters.policyViolationsWarnTotal++;
+                    case INFO -> counters.policyViolationsInfoTotal++;
+                }
+
+
+                if (BooleanUtils.isTrue(violation.suppressed)) {
+                    counters.policyViolationsAudited++;
+
+                    switch (PolicyViolation.Type.valueOf(violation.type().name())) {
+                        case LICENSE -> counters.policyViolationsLicenseAudited++;
+                        case OPERATIONAL -> counters.policyViolationsOperationalAudited++;
+                        case SECURITY -> counters.policyViolationsSecurityAudited++;
                     }
-                    case WARN -> {
-                        counters.policyViolationsWarnTotal++;
-                        if (violation.suppressed == null || !violation.suppressed) {
-                            counters.policyViolationsWarnUnaudited++;
-                        }
-                    }
-                    case INFO -> {
-                        counters.policyViolationsInfoTotal++;
-                        if (violation.suppressed == null || !violation.suppressed) {
-                            counters.policyViolationsInfoUnaudited++;
-                        }
+
+                    switch (Policy.ViolationState.valueOf(violation.violationState().name())) {
+                        case FAIL -> counters.policyViolationsFailAudited++;
+                        case WARN -> counters.policyViolationsWarnAudited++;
+                        case INFO -> counters.policyViolationsInfoAudited++;
                     }
                 }
             }
 
-            counters.policyViolationsAudited = counters.policyViolationsTotal - counters.policyViolationsUnaudited;
-            counters.policyViolationsLicenseAudited = counters.policyViolationsLicenseTotal - counters.policyViolationsLicenseUnaudited;
-            counters.policyViolationsOperationalAudited = counters.policyViolationsOperationalTotal - counters.policyViolationsOperationalUnaudited;
-            counters.policyViolationsSecurityAudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityUnaudited;
-            counters.policyViolationsFailAudited = counters.policyViolationsFailTotal - counters.policyViolationsFailUnaudited;
-            counters.policyViolationsWarnAudited = counters.policyViolationsWarnTotal - counters.policyViolationsWarnUnaudited;
-            counters.policyViolationsInfoAudited = counters.policyViolationsInfoTotal - counters.policyViolationsInfoUnaudited;
+            counters.policyViolationsUnaudited = counters.policyViolationsTotal - counters.policyViolationsAudited;
+            counters.policyViolationsLicenseUnaudited = counters.policyViolationsLicenseTotal - counters.policyViolationsLicenseAudited;
+            counters.policyViolationsOperationalUnaudited = counters.policyViolationsOperationalTotal - counters.policyViolationsOperationalAudited;
+            counters.policyViolationsSecurityUnaudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityAudited;
+            counters.policyViolationsFailUnaudited = counters.policyViolationsFailTotal - counters.policyViolationsFailAudited;
+            counters.policyViolationsWarnUnaudited = counters.policyViolationsWarnTotal - counters.policyViolationsWarnAudited;
+            counters.policyViolationsInfoUnaudited = counters.policyViolationsInfoTotal - counters.policyViolationsInfoAudited;
 
 
             qm.runInTransaction(() -> {

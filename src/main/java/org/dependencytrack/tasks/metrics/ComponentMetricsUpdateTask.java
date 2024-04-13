@@ -115,51 +115,61 @@ public class ComponentMetricsUpdateTask implements Subscriber {
             for (final PolicyViolationProjection violation : getPolicyViolations(pm, component)) {
                 counters.policyViolationsTotal++;
 
+                if (violation.suppressed == null || !violation.suppressed) {
+                    counters.policyViolationsUnaudited++;
+                }
+
                 switch (PolicyViolation.Type.valueOf(violation.type().name())) {
-                    case LICENSE -> counters.policyViolationsLicenseTotal++;
-                    case OPERATIONAL -> counters.policyViolationsOperationalTotal++;
-                    case SECURITY -> counters.policyViolationsSecurityTotal++;
+                    case LICENSE -> {
+                        counters.policyViolationsLicenseTotal++;
+                        if (violation.suppressed == null || !violation.suppressed) {
+                            counters.policyViolationsLicenseUnaudited++;
+                        }
+                    }
+                    case OPERATIONAL -> {
+                        counters.policyViolationsOperationalTotal++;
+                        if (violation.suppressed == null || !violation.suppressed) {
+                            counters.policyViolationsOperationalUnaudited++;
+                        }
+                    }
+                    case SECURITY -> {
+                        counters.policyViolationsSecurityTotal++;
+                        if (violation.suppressed == null || !violation.suppressed) {
+                            counters.policyViolationsSecurityUnaudited++;
+                        }
+                    }
                 }
 
                 switch (Policy.ViolationState.valueOf(violation.violationState().name())) {
-                    case FAIL -> counters.policyViolationsFailTotal++;
-                    case WARN -> counters.policyViolationsWarnTotal++;
-                    case INFO -> counters.policyViolationsInfoTotal++;
+                    case FAIL -> {
+                        counters.policyViolationsFailTotal++;
+                        if (violation.suppressed == null || !violation.suppressed) {
+                            counters.policyViolationsFailUnaudited++;
+                        }
+                    }
+                    case WARN -> {
+                        counters.policyViolationsWarnTotal++;
+                        if (violation.suppressed == null || !violation.suppressed) {
+                            counters.policyViolationsWarnUnaudited++;
+                        }
+                    }
+                    case INFO -> {
+                        counters.policyViolationsInfoTotal++;
+                        if (violation.suppressed == null || !violation.suppressed) {
+                            counters.policyViolationsInfoUnaudited++;
+                        }
+                    }
                 }
-
             }
 
-            if (counters.policyViolationsLicenseTotal > 0) {
-                counters.policyViolationsLicenseAudited = toIntExact(getTotalAuditedPolicyViolationsByType(pm, component, PolicyViolation.Type.LICENSE));
-                counters.policyViolationsLicenseUnaudited = counters.policyViolationsLicenseTotal - counters.policyViolationsLicenseAudited;
-            }
-            if (counters.policyViolationsOperationalTotal > 0) {
-                counters.policyViolationsOperationalAudited = toIntExact(getTotalAuditedPolicyViolationsByType(pm, component, PolicyViolation.Type.OPERATIONAL));
-                counters.policyViolationsOperationalUnaudited = counters.policyViolationsOperationalTotal - counters.policyViolationsOperationalAudited;
-            }
-            if (counters.policyViolationsSecurityTotal > 0) {
-                counters.policyViolationsSecurityAudited = toIntExact(getTotalAuditedPolicyViolationsByType(pm, component, PolicyViolation.Type.SECURITY));
-                counters.policyViolationsSecurityUnaudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityAudited;
-            }
+            counters.policyViolationsAudited = counters.policyViolationsTotal - counters.policyViolationsUnaudited;
+            counters.policyViolationsLicenseAudited = counters.policyViolationsLicenseTotal - counters.policyViolationsLicenseUnaudited;
+            counters.policyViolationsOperationalAudited = counters.policyViolationsOperationalTotal - counters.policyViolationsOperationalUnaudited;
+            counters.policyViolationsSecurityAudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityUnaudited;
+            counters.policyViolationsFailAudited = counters.policyViolationsFailTotal - counters.policyViolationsFailUnaudited;
+            counters.policyViolationsWarnAudited = counters.policyViolationsWarnTotal - counters.policyViolationsWarnUnaudited;
+            counters.policyViolationsInfoAudited = counters.policyViolationsInfoTotal - counters.policyViolationsInfoUnaudited;
 
-            // FIXME - Adam need to get the correct count for audited
-            if (counters.policyViolationsFailTotal > 0) {
-                counters.policyViolationsFailAudited = toIntExact(getTotalAuditedPolicyViolationsByState(pm, component, Policy.ViolationState.FAIL));
-                counters.policyViolationsFailUnaudited = counters.policyViolationsFailTotal - counters.policyViolationsFailAudited;
-            }
-            if (counters.policyViolationsWarnTotal > 0) {
-                counters.policyViolationsWarnAudited = toIntExact(getTotalAuditedPolicyViolationsByState(pm, component, Policy.ViolationState.WARN));
-                counters.policyViolationsWarnUnaudited = counters.policyViolationsWarnTotal - counters.policyViolationsWarnAudited;
-            }
-            if (counters.policyViolationsInfoTotal > 0) {
-                counters.policyViolationsInfoAudited = toIntExact(getTotalAuditedPolicyViolationsByState(pm, component, Policy.ViolationState.INFO));
-                counters.policyViolationsInfoUnaudited = counters.policyViolationsInfoTotal - counters.policyViolationsInfoAudited;
-            }
-
-            counters.policyViolationsAudited = counters.policyViolationsLicenseAudited +
-                    counters.policyViolationsOperationalAudited +
-                    counters.policyViolationsSecurityAudited;
-            counters.policyViolationsUnaudited = counters.policyViolationsTotal - counters.policyViolationsAudited;
 
             qm.runInTransaction(() -> {
                 final DependencyMetrics latestMetrics = qm.getMostRecentDependencyMetrics(component);
@@ -229,44 +239,14 @@ public class ComponentMetricsUpdateTask implements Subscriber {
 
     private static List<PolicyViolationProjection> getPolicyViolations(final PersistenceManager pm, final Component component) throws Exception {
         try (final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class)) {
-            query.setFilter("component == :component && (analysis == null || analysis.suppressed == false)");
+            query.setFilter("component == :component");
             query.setParameters(component);
-            query.setResult("type, policyCondition.policy.violationState");
+            query.setResult("type, policyCondition.policy.violationState, analysis.suppressed");
             return List.copyOf(query.executeResultList(PolicyViolationProjection.class));
         }
     }
 
-    private static long getTotalAuditedPolicyViolationsByType(final PersistenceManager pm, final Component component, final PolicyViolation.Type violationType) throws Exception {
-        try (final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class)) {
-            query.setFilter("""
-                    component == :component &&
-                    suppressed == false &&
-                    analysisState != :notSet &&
-                    policyViolation.type == :violationType
-                    """);
-            query.setParameters(component, ViolationAnalysisState.NOT_SET, violationType);
-            query.setResult("count(this)");
-            return query.executeResultUnique(Long.class);
-        }
-    }
-
-    // FIXME - Adam - this is throwing nulls
-    private static long getTotalAuditedPolicyViolationsByState(final PersistenceManager pm, final Component component, final Policy.ViolationState violationState) throws Exception {
-        return 0l;
-        /*try (final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class)) {
-            query.setFilter("""
-                    component == :component &&
-                    suppressed == false &&
-                    analysisState != :notSet &&
-                    policyViolation.policyCondition.policy.violationState == :violationState
-                    """);
-            query.setParameters(component, ViolationAnalysisState.NOT_SET, violationState);
-            query.setResult("count(this)");
-            return query.executeResultUnique(Long.class);
-        }*/
-    }
-
-    public record PolicyViolationProjection(Enum<?> type, Enum<?> violationState) {
+    public record PolicyViolationProjection(Enum<?> type, Enum<?> violationState, Boolean suppressed) {
     }
 
 }

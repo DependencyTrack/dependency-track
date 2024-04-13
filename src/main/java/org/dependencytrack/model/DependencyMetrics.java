@@ -328,11 +328,7 @@ public class DependencyMetrics implements Serializable {
     }
 
     public int getPolicyViolationsFail() {
-        return policyViolationsFail;
-    }
-
-    public void setPolicyViolationsFail(int policyViolationsFail) {
-        this.policyViolationsFail = policyViolationsFail;
+        return policyViolationsFailTotal;
     }
 
     public int getPolicyViolationsFailTotal() {
@@ -360,11 +356,7 @@ public class DependencyMetrics implements Serializable {
     }
 
     public int getPolicyViolationsWarn() {
-        return policyViolationsWarn;
-    }
-
-    public void setPolicyViolationsWarn(int policyViolationsWarn) {
-        this.policyViolationsWarn = policyViolationsWarn;
+        return policyViolationsWarnTotal;
     }
 
     public int getPolicyViolationsWarnTotal() {
@@ -392,11 +384,7 @@ public class DependencyMetrics implements Serializable {
     }
 
     public int getPolicyViolationsInfo() {
-        return policyViolationsInfo;
-    }
-
-    public void setPolicyViolationsInfo(int policyViolationsInfo) {
-        this.policyViolationsInfo = policyViolationsInfo;
+        return policyViolationsInfoTotal;
     }
 
     public int getPolicyViolationsInfoTotal() {

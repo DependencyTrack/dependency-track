@@ -344,12 +344,9 @@ public class ProjectMetrics implements Serializable {
         this.inheritedRiskScore = inheritedRiskScore;
     }
 
+    @Deprecated
     public int getPolicyViolationsFail() {
-        return policyViolationsFail;
-    }
-
-    public void setPolicyViolationsFail(int policyViolationsFail) {
-        this.policyViolationsFail = policyViolationsFail;
+        return policyViolationsFailUnaudited;
     }
 
     public int getPolicyViolationsFailTotal() {
@@ -376,12 +373,9 @@ public class ProjectMetrics implements Serializable {
         this.policyViolationsFailUnaudited = policyViolationsFailUnaudited;
     }
 
+    @Deprecated
     public int getPolicyViolationsWarn() {
-        return policyViolationsWarn;
-    }
-
-    public void setPolicyViolationsWarn(int policyViolationsWarn) {
-        this.policyViolationsWarn = policyViolationsWarn;
+        return policyViolationsWarnUnaudited;
     }
 
     public int getPolicyViolationsWarnTotal() {
@@ -408,12 +402,9 @@ public class ProjectMetrics implements Serializable {
         this.policyViolationsWarnUnaudited = policyViolationsWarnUnaudited;
     }
 
+    @Deprecated
     public int getPolicyViolationsInfo() {
-        return policyViolationsInfo;
-    }
-
-    public void setPolicyViolationsInfo(int policyViolationsInfo) {
-        this.policyViolationsInfo = policyViolationsInfo;
+        return policyViolationsInfoUnaudited;
     }
 
     public int getPolicyViolationsInfoTotal() {

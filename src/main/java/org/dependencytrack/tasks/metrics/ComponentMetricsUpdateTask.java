@@ -126,7 +126,6 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                     case INFO -> counters.policyViolationsInfoTotal++;
                 }
 
-
                 if (BooleanUtils.isTrue(violation.suppressed)) {
                     counters.policyViolationsAudited++;
 

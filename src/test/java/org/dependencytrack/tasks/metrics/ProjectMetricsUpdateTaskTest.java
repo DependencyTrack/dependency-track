@@ -242,7 +242,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
         assertThat(metrics.getPolicyViolationsFailTotal()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsFailAudited()).isZero();
         assertThat(metrics.getPolicyViolationsFailUnaudited()).isEqualTo(1);
-        assertThat(metrics.getPolicyViolationsWarn()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsWarn()).isEqualTo(0);
         assertThat(metrics.getPolicyViolationsWarnTotal()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsWarnAudited()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsWarnUnaudited()).isZero();

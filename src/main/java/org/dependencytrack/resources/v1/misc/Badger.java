@@ -68,9 +68,9 @@ public class Badger {
         if (metrics == null) {
             return writeSvg(PROJECT_VIOLATIONS_NO_METRICS_TEMPLATE, context);
         } else if (metrics.getPolicyViolationsTotal() > 0) {
-            context.put("fail", String.valueOf(metrics.getPolicyViolationsFailTotal()));
-            context.put("warn", String.valueOf(metrics.getPolicyViolationsWarnTotal()));
-            context.put("info", String.valueOf(metrics.getPolicyViolationsInfoTotal()));
+            context.put("fail", String.valueOf(metrics.getPolicyViolationsFail()));
+            context.put("warn", String.valueOf(metrics.getPolicyViolationsWarn()));
+            context.put("info", String.valueOf(metrics.getPolicyViolationsInfo()));
             return writeSvg(PROJECT_VIOLATIONS_TEMPLATE, context);
         } else {
             return writeSvg(PROJECT_VIOLATIONS_NONE_TEMPLATE, context);

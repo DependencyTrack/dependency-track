@@ -63,6 +63,7 @@ public class ComponentProperty implements IConfigProperty, Serializable {
 
     @Persistent
     @Column(name = "COMPONENT_ID", allowsNull = "false")
+    @JsonIgnore
     private Component component;
 
     @Persistent

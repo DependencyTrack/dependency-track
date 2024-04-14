@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
+import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import com.fasterxml.jackson.core.StreamReadConstraints;
@@ -29,10 +30,12 @@ import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetadata;
+import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
@@ -115,12 +118,21 @@ public class BomResourceTest extends ResourceTest {
         projectManufacturer.setName("projectManufacturer");
         final var projectSupplier = new OrganizationalEntity();
         projectSupplier.setName("projectSupplier");
+
         var project = new Project();
         project.setName("acme-app");
         project.setClassifier(Classifier.APPLICATION);
         project.setManufacturer(projectManufacturer);
         project.setSupplier(projectSupplier);
         project = qm.createProject(project, null, false);
+
+        final var projectProperty = new ProjectProperty();
+        projectProperty.setProject(project);
+        projectProperty.setGroupName("foo");
+        projectProperty.setPropertyName("bar");
+        projectProperty.setPropertyValue("baz");
+        projectProperty.setPropertyType(IConfigProperty.PropertyType.STRING);
+        qm.persist(projectProperty);
 
         final var bomSupplier = new OrganizationalEntity();
         bomSupplier.setName("bomSupplier");
@@ -134,6 +146,7 @@ public class BomResourceTest extends ResourceTest {
 
         final var componentSupplier = new OrganizationalEntity();
         componentSupplier.setName("componentSupplier");
+
         var componentWithoutVuln = new Component();
         componentWithoutVuln.setProject(project);
         componentWithoutVuln.setName("acme-lib-a");
@@ -141,6 +154,14 @@ public class BomResourceTest extends ResourceTest {
         componentWithoutVuln.setSupplier(componentSupplier);
         componentWithoutVuln.setDirectDependencies("[]");
         componentWithoutVuln = qm.createComponent(componentWithoutVuln, false);
+
+        final var componentProperty = new ComponentProperty();
+        componentProperty.setComponent(componentWithoutVuln);
+        componentProperty.setGroupName("foo");
+        componentProperty.setPropertyName("bar");
+        componentProperty.setPropertyValue("baz");
+        componentProperty.setPropertyType(IConfigProperty.PropertyType.STRING);
+        qm.persist(componentProperty);
 
         var componentWithVuln = new Component();
         componentWithVuln.setProject(project);
@@ -238,7 +259,13 @@ public class BomResourceTest extends ResourceTest {
                               "name": "componentSupplier"
                             },
                             "name": "acme-lib-a",
-                            "version": "1.0.0"
+                            "version": "1.0.0",
+                            "properties": [
+                              {
+                                "name": "foo:bar",
+                                "value": "baz"
+                              }
+                            ]
                         },
                         {
                             "type": "library",

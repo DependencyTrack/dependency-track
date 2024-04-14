@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.tasks.scanners;
 
+import alpine.model.IConfigProperty;
 import alpine.security.crypto.DataEncryption;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.TrivyAnalysisEvent;
@@ -177,19 +178,30 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
+        
+        final var osComponent = new Component();
+        osComponent.setProject(project);
+        osComponent.setName("ubuntu");
+        osComponent.setVersion("22.04");
+        osComponent.setClassifier(Classifier.OPERATING_SYSTEM);
+        qm.persist(osComponent);
 
-        final var componentA = new Component();
-        componentA.setProject(project);
-        componentA.setName("libc6");
-        componentA.setVersion("2.35-0ubuntu3.4");
-        componentA.setClassifier(Classifier.LIBRARY);
-        componentA.setPurl("pkg:deb/ubuntu/libc6@2.35-0ubuntu3.4?arch=amd64&distro=ubuntu-22.04");
-        qm.persist(componentA);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("libc6");
+        component.setVersion("2.35-0ubuntu3.4");
+        component.setClassifier(Classifier.LIBRARY);
+        component.setPurl("pkg:deb/ubuntu/libc6@2.35-0ubuntu3.4?arch=amd64&distro=ubuntu-22.04");
+        qm.persist(component);
 
-        final var analysisEvent = new TrivyAnalysisEvent(List.of(componentA));
+        qm.createComponentProperty(component, "aquasecurity", "trivy:SrcName", "glibc", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "aquasecurity", "trivy:SrcVersion", "2.35", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "aquasecurity", "trivy:SrcRelease", "0ubuntu3.4", IConfigProperty.PropertyType.STRING, null);
+
+        final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
         new TrivyAnalysisTask().inform(analysisEvent);
 
-        assertThat(qm.getAllVulnerabilities(componentA)).isEmpty();
+        assertThat(qm.getAllVulnerabilities(component)).isEmpty();
     }
 
 }

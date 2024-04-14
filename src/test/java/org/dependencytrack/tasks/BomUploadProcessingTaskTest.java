@@ -134,13 +134,13 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @After
     public void tearDown() {
-        EVENTS.clear();
-        NOTIFICATIONS.clear();
-
         EventService.getInstance().unsubscribe(EventSubscriber.class);
         EventService.getInstance().unsubscribe(VulnerabilityAnalysisTask.class);
         EventService.getInstance().unsubscribe(NewVulnerableDependencyAnalysisTask.class);
         NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
+
+        EVENTS.clear();
+        NOTIFICATIONS.clear();
     }
 
     @Test

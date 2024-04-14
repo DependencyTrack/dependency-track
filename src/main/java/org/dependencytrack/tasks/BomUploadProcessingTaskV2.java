@@ -75,11 +75,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
@@ -491,21 +492,27 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
             return;
         }
 
-        for (final ComponentProperty property : properties) {
-            final Optional<ComponentProperty> optionalPersistentProperty = component.getProperties().stream()
-                    .filter(persistentProperty -> Objects.equals(persistentProperty.getGroupName(), property.getGroupName()))
-                    .filter(persistentProperty -> Objects.equals(persistentProperty.getPropertyName(), property.getPropertyName()))
-                    .findFirst();
-            if (optionalPersistentProperty.isEmpty()) {
-                property.setComponent(component);
-                qm.getPersistenceManager().makePersistent(property);
-                continue;
-            }
+        // Group properties by group, name, and value. Because CycloneDX supports duplicate
+        // property names, uniqueness can only be determined by also considering the value.
+        final var existingPropertiesByIdentity = component.getProperties().stream()
+                .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
+        final var incomingPropertiesByIdentity = properties.stream()
+                .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
 
-            final ComponentProperty persistentProperty = optionalPersistentProperty.get();
-            applyIfChanged(persistentProperty, property, ComponentProperty::getPropertyValue, persistentProperty::setPropertyValue);
-            applyIfChanged(persistentProperty, property, ComponentProperty::getPropertyType, persistentProperty::setPropertyType);
-            applyIfChanged(persistentProperty, property, ComponentProperty::getDescription, persistentProperty::setDescription);
+        final var propertyIdentities = new HashSet<ComponentProperty.Identity>();
+        propertyIdentities.addAll(existingPropertiesByIdentity.keySet());
+        propertyIdentities.addAll(incomingPropertiesByIdentity.keySet());
+
+        for (final ComponentProperty.Identity identity : propertyIdentities) {
+            final ComponentProperty existingProperty = existingPropertiesByIdentity.get(identity);
+            final ComponentProperty incomingProperty = incomingPropertiesByIdentity.get(identity);
+
+            if (existingProperty == null) {
+                incomingProperty.setComponent(component);
+                qm.getPersistenceManager().makePersistent(incomingProperty);
+            } else if (incomingProperty == null) {
+                qm.getPersistenceManager().deletePersistent(existingProperty);
+            }
         }
     }
 
@@ -719,7 +726,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
 
             if (isNotBlank(licenseCandidate.getName())) {
                 final License resolvedLicense = licenseCache.computeIfAbsent(licenseCandidate.getName(),
-                    licenseName -> resolveLicense(qm, licenseName));
+                        licenseName -> resolveLicense(qm, licenseName));
                 if (resolvedLicense != License.UNRESOLVED) {
                     component.setResolvedLicense(resolvedLicense);
                     component.setLicenseUrl(trimToNull(licenseCandidate.getUrl()));

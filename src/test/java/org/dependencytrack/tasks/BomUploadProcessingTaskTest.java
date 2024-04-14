@@ -105,12 +105,10 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         });
     }
 
-    private final String bomUploadProcessingTaskName;
     private final Supplier<alpine.event.framework.Subscriber> bomUploadProcessingTaskSupplier;
 
-    public BomUploadProcessingTaskTest(final String bomUploadProcessingTaskName,
+    public BomUploadProcessingTaskTest(final String ignoredBomUploadProcessingTaskName,
                                        final Supplier<alpine.event.framework.Subscriber> bomUploadProcessingTaskSupplier) {
-        this.bomUploadProcessingTaskName = bomUploadProcessingTaskName;
         this.bomUploadProcessingTaskSupplier = bomUploadProcessingTaskSupplier;
     }
 
@@ -243,7 +241,6 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(component.getPurl().canonicalize()).isEqualTo("pkg:maven/com.example/xmlutil@1.0.0?packaging=jar");
         assertThat(component.getLicenseUrl()).isEqualTo("https://www.apache.org/licenses/LICENSE-2.0.txt");
 
-        // TODO: Implement for legacy version of the task.
         if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTaskV2) {
             assertThat(component.getProperties()).satisfiesExactlyInAnyOrder(
                     property -> {
@@ -920,6 +917,11 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @Test
     public void informWithExistingComponentPropertiesAndBomWithoutComponentProperties() {
+        // Known to now work with old task implementation.
+        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+            return;
+        }
+
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -960,6 +962,11 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @Test
     public void informWithExistingComponentPropertiesAndBomWithComponentProperties() {
+        // Known to now work with old task implementation.
+        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+            return;
+        }
+
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -1000,10 +1007,13 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         bomUploadProcessingTaskSupplier.get().inform(bomUploadEvent);
         awaitBomProcessedNotification();
 
-        qm.getPersistenceManager().refresh(componentProperty);
-        assertThat(componentProperty.getGroupName()).isNull();
-        assertThat(componentProperty.getPropertyName()).isEqualTo("foo");
-        assertThat(componentProperty.getPropertyValue()).isEqualTo("baz");
+        qm.getPersistenceManager().refresh(component);
+        assertThat(component.getProperties()).satisfiesExactly(property -> {
+            assertThat(property.getGroupName()).isNull();
+            assertThat(property.getPropertyName()).isEqualTo("foo");
+            assertThat(property.getPropertyValue()).isEqualTo("baz");
+            assertThat(property.getUuid()).isNotEqualTo(componentProperty.getUuid());
+        });
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/1905

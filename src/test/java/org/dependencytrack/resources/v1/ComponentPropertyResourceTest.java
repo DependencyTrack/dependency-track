@@ -25,7 +25,6 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.Project;
-import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -39,6 +38,7 @@ import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
 
 public class ComponentPropertyResourceTest extends ResourceTest {
 
@@ -76,7 +76,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         propertyB.setGroupName("foo-b");
         propertyB.setPropertyName("bar-b");
         propertyB.setPropertyValue("baz-b");
-        propertyB.setPropertyType(PropertyType.ENCRYPTEDSTRING);
+        propertyB.setPropertyType(PropertyType.STRING);
         propertyB.setDescription("qux-b");
         qm.persist(propertyB);
 
@@ -86,24 +86,29 @@ public class ComponentPropertyResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
-                [
-                  {
-                    "groupName": "foo-a",
-                    "propertyName": "bar-a",
-                    "propertyValue": "baz-a",
-                    "propertyType": "STRING",
-                    "description": "qux-a"
-                  },
-                  {
-                    "groupName": "foo-b",
-                    "propertyName": "bar-b",
-                    "propertyValue": "HiddenDecryptedPropertyPlaceholder",
-                    "propertyType": "ENCRYPTEDSTRING",
-                    "description": "qux-b"
-                  }
-                ]
-                """);
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("property-a-uuid", equalTo(propertyA.getUuid().toString()))
+                .withMatcher("property-b-uuid", equalTo(propertyB.getUuid().toString()))
+                .isEqualTo("""
+                        [
+                          {
+                            "groupName": "foo-a",
+                            "propertyName": "bar-a",
+                            "propertyValue": "baz-a",
+                            "propertyType": "STRING",
+                            "description": "qux-a",
+                            "uuid": "${json-unit.matches:property-a-uuid}"
+                          },
+                          {
+                            "groupName": "foo-b",
+                            "propertyName": "bar-b",
+                            "propertyValue": "baz-b",
+                            "propertyType": "STRING",
+                            "description": "qux-b",
+                            "uuid": "${json-unit.matches:property-b-uuid}"
+                          }
+                        ]
+                        """);
     }
 
     @Test
@@ -148,13 +153,14 @@ public class ComponentPropertyResourceTest extends ResourceTest {
                   "propertyName": "bar",
                   "propertyValue": "baz",
                   "propertyType": "STRING",
-                  "description": "qux"
+                  "description": "qux",
+                  "uuid": "${json-unit.any-string}"
                 }
                 """);
     }
 
     @Test
-    public void createPropertyEncryptedTest() {
+    public void createPropertyWithoutGroupTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -168,10 +174,9 @@ public class ComponentPropertyResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                          "groupName": "foo",
                           "propertyName": "bar",
                           "propertyValue": "baz",
-                          "propertyType": "ENCRYPTEDSTRING",
+                          "propertyType": "STRING",
                           "description": "qux"
                         }
                         """, MediaType.APPLICATION_JSON));
@@ -180,11 +185,11 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
         assertThatJson(getPlainTextBody(response)).isEqualTo("""
                 {
-                  "groupName": "foo",
                   "propertyName": "bar",
-                  "propertyValue": "HiddenDecryptedPropertyPlaceholder",
-                  "propertyType": "ENCRYPTEDSTRING",
-                  "description": "qux"
+                  "propertyValue": "baz",
+                  "propertyType": "STRING",
+                  "description": "qux",
+                  "uuid": "${json-unit.any-string}"
                 }
                 """);
     }
@@ -223,11 +228,48 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(409);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
         assertThat(getPlainTextBody(response)).isEqualTo("""
-                A property with the specified component/group/name combination already exists.""");
+                A property with the specified component/group/name/value combination already exists.""");
     }
 
     @Test
-    public void createPropertyInvalidTest() {
+    public void createPropertyDisallowedPropertyTypeTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                          "groupName": "foo",
+                          "propertyName": "bar",
+                          "propertyValue": "baz",
+                          "propertyType": "ENCRYPTEDSTRING",
+                          "description": "qux"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "message": "Encrypted component property values are not supported",
+                    "messageTemplate": "Encrypted component property values are not supported",
+                    "path": "propertyType",
+                    "invalidValue":"ENCRYPTEDSTRING"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void createPropertyComponentNotFoundTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -255,81 +297,6 @@ public class ComponentPropertyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updatePropertyTest() {
-        final var project = new Project();
-        project.setName("acme-app");
-        qm.persist(project);
-
-        final var component = new Component();
-        component.setProject(project);
-        component.setName("acme-lib");
-        qm.persist(component);
-
-        final var property = new ComponentProperty();
-        property.setComponent(component);
-        property.setGroupName("foo");
-        property.setPropertyName("bar");
-        property.setPropertyValue("baz");
-        property.setPropertyType(PropertyType.STRING);
-        qm.persist(property);
-
-        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
-                .header(X_API_KEY, apiKey)
-                .post(Entity.entity("""
-                        {
-                          "groupName": "foo",
-                          "propertyName": "bar",
-                          "propertyValue": "qux"
-                        }
-                        """, MediaType.APPLICATION_JSON));
-
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
-                {
-                  "groupName": "foo",
-                  "propertyName": "bar",
-                  "propertyValue": "qux",
-                  "propertyType": "STRING"
-                }
-                """);
-    }
-
-    @Test
-    public void updatePropertyInvalidTest() {
-        final var project = new Project();
-        project.setName("acme-app");
-        qm.persist(project);
-
-        final var component = new Component();
-        component.setProject(project);
-        component.setName("acme-lib");
-        qm.persist(component);
-
-        final var property = new ComponentProperty();
-        property.setComponent(component);
-        property.setGroupName("foo");
-        property.setPropertyName("bar");
-        property.setPropertyValue("baz");
-        property.setPropertyType(PropertyType.STRING);
-        qm.persist(property);
-
-        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, UUID.randomUUID())).request()
-                .header(X_API_KEY, apiKey)
-                .post(Entity.entity("""
-                        {
-                          "groupName": "foo",
-                          "propertyName": "bar",
-                          "propertyValue": "qux"
-                        }
-                        """, MediaType.APPLICATION_JSON));
-
-        assertThat(response.getStatus()).isEqualTo(404);
-        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThat(getPlainTextBody(response)).isEqualTo("The component could not be found.");
-    }
-
-    @Test
     public void deletePropertyTest() {
         final var project = new Project();
         project.setName("acme-app");
@@ -348,15 +315,9 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         property.setPropertyType(PropertyType.STRING);
         qm.persist(property);
 
-        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+        final Response response = target("%s/%s/property/%s".formatted(V1_COMPONENT, component.getUuid(), property.getUuid())).request()
                 .header(X_API_KEY, apiKey)
-                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
-                .method("DELETE", Entity.entity("""
-                        {
-                          "groupName": "foo",
-                          "propertyName": "bar"
-                        }
-                        """, MediaType.APPLICATION_JSON));
+                .delete();
 
         assertThat(response.getStatus()).isEqualTo(204);
         assertThat(getPlainTextBody(response)).isEmpty();

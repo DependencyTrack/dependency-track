@@ -24,17 +24,20 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.MoreObjects;
+import org.dependencytrack.model.validation.EnumValue;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * @since 4.11.0
@@ -44,6 +47,14 @@ import java.io.Serializable;
 public class ComponentProperty implements IConfigProperty, Serializable {
 
     private static final long serialVersionUID = -7510889645969713080L;
+
+    public record Identity(String group, String name, String value) {
+
+        public Identity(final ComponentProperty property) {
+            this(property.getGroupName(), property.getPropertyName(), property.getPropertyValue());
+        }
+
+    }
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
@@ -79,6 +90,13 @@ public class ComponentProperty implements IConfigProperty, Serializable {
     @Persistent
     @Column(name = "PROPERTYTYPE", jdbcType = "VARCHAR", allowsNull = "false")
     @NotNull
+    // NB: Encrypted values are disallowed because it complicates identity management.
+    // Because duplicate groupName/propertyName combinations are allowed, the value
+    // is critical to determine property uniqueness. We'd need to decrypt encrypted
+    // values prior to uniqueness checks. We'd also open the door for attackers to
+    // guess the encrypted value. As of now, there is no known use-case for encrypted
+    // properties on the component level.
+    @EnumValue(disallowed = "ENCRYPTEDSTRING", message = "Encrypted component property values are not supported")
     private PropertyType propertyType;
 
     @Persistent
@@ -87,6 +105,12 @@ public class ComponentProperty implements IConfigProperty, Serializable {
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "\\P{Cc}+", message = "The description must not contain control characters")
     private String description;
+
+    @Persistent(customValueStrategy = "uuid")
+    @Unique(name = "COMPONENT_PROPERTY_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
+    @NotNull
+    private UUID uuid;
 
     public long getId() {
         return id;
@@ -144,6 +168,14 @@ public class ComponentProperty implements IConfigProperty, Serializable {
         this.description = description;
     }
 
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(final UUID uuid) {
+        this.uuid = uuid;
+    }
+
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
@@ -154,6 +186,7 @@ public class ComponentProperty implements IConfigProperty, Serializable {
                 .add("propertyValue", propertyValue)
                 .add("propertyType", propertyType)
                 .add("description", description)
+                .add("uuid", uuid)
                 .omitNullValues()
                 .toString();
     }

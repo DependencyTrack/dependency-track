@@ -563,8 +563,8 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().getComponentProperties(component);
     }
 
-    public ComponentProperty getComponentProperty(final Component component, final String groupName, final String propertyName) {
-        return getComponentQueryManager().getComponentProperty(component, groupName, propertyName);
+    public List<ComponentProperty> getComponentProperties(final Component component, final String groupName, final String propertyName) {
+        return getComponentQueryManager().getComponentProperties(component, groupName, propertyName);
     }
 
     public ComponentProperty createComponentProperty(final Component component, final String groupName, final String propertyName,
@@ -572,6 +572,10 @@ public class QueryManager extends AlpineQueryManager {
                                                      final String description) {
         return getComponentQueryManager()
                 .createComponentProperty(component, groupName, propertyName, propertyValue, propertyType, description);
+    }
+
+    public long deleteComponentPropertyByUuid(final Component component, final UUID uuid) {
+        return getComponentQueryManager().deleteComponentPropertyByUuid(component, uuid);
     }
 
     public PaginatedResult getLicenses() {

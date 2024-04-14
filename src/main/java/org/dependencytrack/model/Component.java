@@ -332,7 +332,7 @@ public class Component implements Serializable {
     private Collection<Component> children;
 
     @Persistent(mappedBy = "component", defaultFetchGroup = "false")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "groupName ASC, propertyName ASC"))
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "groupName ASC, propertyName ASC, id ASC"))
     private List<ComponentProperty> properties;
 
     @Persistent(table = "COMPONENTS_VULNERABILITIES")

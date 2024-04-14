@@ -194,9 +194,9 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         component.setPurl("pkg:deb/ubuntu/libc6@2.35-0ubuntu3.4?arch=amd64&distro=ubuntu-22.04");
         qm.persist(component);
 
-        qm.createComponentProperty(component, "aquasecurity:trivy", "SrcName", "glibc", IConfigProperty.PropertyType.STRING, null);
-        qm.createComponentProperty(component, "aquasecurity:trivy", "SrcVersion", "2.35", IConfigProperty.PropertyType.STRING, null);
-        qm.createComponentProperty(component, "aquasecurity:trivy", "SrcRelease", "0ubuntu3.4", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "aquasecurity", "trivy:SrcName", "glibc", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "aquasecurity", "trivy:SrcVersion", "2.35", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "aquasecurity", "trivy:SrcRelease", "0ubuntu3.4", IConfigProperty.PropertyType.STRING, null);
 
         final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
         new TrivyAnalysisTask().inform(analysisEvent);

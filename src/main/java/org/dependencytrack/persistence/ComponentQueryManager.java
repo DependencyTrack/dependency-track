@@ -847,7 +847,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
 
     @Override
     public List<ComponentProperty> getComponentProperties(final Component component) {
-        final Query<ComponentProperty> query = pm.newQuery(ComponentProperty.class, "component == :component");
+        final Query<ComponentProperty> query = pm.newQuery(ComponentProperty.class);
+        query.setFilter("component == :component");
+        query.setParameters(component);
         query.setOrdering("groupName ASC, propertyName ASC, id ASC");
         try {
             return List.copyOf(query.executeList());

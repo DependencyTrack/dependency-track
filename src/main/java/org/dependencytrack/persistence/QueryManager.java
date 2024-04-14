@@ -578,6 +578,10 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().deleteComponentPropertyByUuid(component, uuid);
     }
 
+    public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {
+        getComponentQueryManager().synchronizeComponentProperties(component, properties);
+    }
+
     public PaginatedResult getLicenses() {
         return getLicenseQueryManager().getLicenses();
     }

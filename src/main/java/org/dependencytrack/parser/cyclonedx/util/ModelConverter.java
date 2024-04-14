@@ -604,6 +604,13 @@ public class ModelConverter {
             component.setExternalReferences(null);
         }
 
+        final List<ComponentProperty> properties = convertToComponentProperties(cycloneDxComponent.getProperties());
+        if (component.getId() == 0) {
+            component.setProperties(properties);
+        } else {
+            qm.synchronizeComponentProperties(component, properties);
+        }
+
         if (cycloneDxComponent.getComponents() != null && !cycloneDxComponent.getComponents().isEmpty()) {
             final Collection<Component> components = new ArrayList<>();
             for (int i = 0; i < cycloneDxComponent.getComponents().size(); i++) {

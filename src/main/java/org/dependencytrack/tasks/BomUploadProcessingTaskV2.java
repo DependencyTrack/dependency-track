@@ -41,7 +41,6 @@ import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.License;
@@ -78,9 +77,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
@@ -442,11 +439,9 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
                 applyIfChanged(persistentComponent, component, Component::getLicenseExpression, persistentComponent::setLicenseExpression);
                 applyIfChanged(persistentComponent, component, Component::isInternal, persistentComponent::setInternal);
                 applyIfChanged(persistentComponent, component, Component::getExternalReferences, persistentComponent::setExternalReferences);
-
+                qm.synchronizeComponentProperties(persistentComponent, component.getProperties());
                 idsOfComponentsToDelete.remove(persistentComponent.getId());
             }
-
-            processComponentProperties(qm, persistentComponent, component.getProperties());
 
             // Update component identities in our Identity->BOMRef map,
             // as after persisting the components, their identities now include UUIDs.
@@ -467,58 +462,6 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
         }
 
         return persistentComponents;
-    }
-
-    private void processComponentProperties(final QueryManager qm, final Component component, final List<ComponentProperty> properties) {
-        if (component.isNew()) {
-            // If the component is new, its properties are already in the desired state.
-            return;
-        }
-
-        if (properties == null || properties.isEmpty()) {
-            // TODO: We currently remove all existing properties that are no longer included in the BOM.
-            //   This is to stay consistent with the BOM being the source of truth. However, this may feel
-            //   counter-intuitive to some users, who might expect their manual changes to persist.
-            //   If we want to support that, we need a way to track which properties were added and / or
-            //   modified manually.
-            if (component.getProperties() != null) {
-                qm.getPersistenceManager().deletePersistentAll(component.getProperties());
-            }
-
-            return;
-        }
-
-        if (component.getProperties() == null || component.getProperties().isEmpty()) {
-            for (final ComponentProperty property : properties) {
-                property.setComponent(component);
-                qm.getPersistenceManager().makePersistent(property);
-            }
-
-            return;
-        }
-
-        // Group properties by group, name, and value. Because CycloneDX supports duplicate
-        // property names, uniqueness can only be determined by also considering the value.
-        final var existingPropertiesByIdentity = component.getProperties().stream()
-                .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
-        final var incomingPropertiesByIdentity = properties.stream()
-                .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
-
-        final var propertyIdentities = new HashSet<ComponentProperty.Identity>();
-        propertyIdentities.addAll(existingPropertiesByIdentity.keySet());
-        propertyIdentities.addAll(incomingPropertiesByIdentity.keySet());
-
-        for (final ComponentProperty.Identity identity : propertyIdentities) {
-            final ComponentProperty existingProperty = existingPropertiesByIdentity.get(identity);
-            final ComponentProperty incomingProperty = incomingPropertiesByIdentity.get(identity);
-
-            if (existingProperty == null) {
-                incomingProperty.setComponent(component);
-                qm.getPersistenceManager().makePersistent(incomingProperty);
-            } else if (incomingProperty == null) {
-                qm.getPersistenceManager().deletePersistent(existingProperty);
-            }
-        }
     }
 
     private Map<ComponentIdentity, ServiceComponent> processServices(final QueryManager qm,

@@ -241,31 +241,29 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(component.getPurl().canonicalize()).isEqualTo("pkg:maven/com.example/xmlutil@1.0.0?packaging=jar");
         assertThat(component.getLicenseUrl()).isEqualTo("https://www.apache.org/licenses/LICENSE-2.0.txt");
 
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTaskV2) {
-            assertThat(component.getProperties()).satisfiesExactlyInAnyOrder(
-                    property -> {
-                        assertThat(property.getGroupName()).isEqualTo("foo");
-                        assertThat(property.getPropertyName()).isEqualTo("bar");
-                        assertThat(property.getPropertyValue()).isEqualTo("baz");
-                        assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
-                        assertThat(property.getDescription()).isNull();
-                    },
-                    property -> {
-                        assertThat(property.getGroupName()).isNull();
-                        assertThat(property.getPropertyName()).isEqualTo("foo");
-                        assertThat(property.getPropertyValue()).isEqualTo("bar");
-                        assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
-                        assertThat(property.getDescription()).isNull();
-                    },
-                    property -> {
-                        assertThat(property.getGroupName()).isEqualTo("foo");
-                        assertThat(property.getPropertyName()).isEqualTo("bar");
-                        assertThat(property.getPropertyValue()).isEqualTo("qux");
-                        assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
-                        assertThat(property.getDescription()).isNull();
-                    }
-            );
-        }
+        assertThat(component.getProperties()).satisfiesExactlyInAnyOrder(
+                property -> {
+                    assertThat(property.getGroupName()).isEqualTo("foo");
+                    assertThat(property.getPropertyName()).isEqualTo("bar");
+                    assertThat(property.getPropertyValue()).isEqualTo("baz");
+                    assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
+                    assertThat(property.getDescription()).isNull();
+                },
+                property -> {
+                    assertThat(property.getGroupName()).isNull();
+                    assertThat(property.getPropertyName()).isEqualTo("foo");
+                    assertThat(property.getPropertyValue()).isEqualTo("bar");
+                    assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
+                    assertThat(property.getDescription()).isNull();
+                },
+                property -> {
+                    assertThat(property.getGroupName()).isEqualTo("foo");
+                    assertThat(property.getPropertyName()).isEqualTo("bar");
+                    assertThat(property.getPropertyValue()).isEqualTo("qux");
+                    assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
+                    assertThat(property.getDescription()).isNull();
+                }
+        );
 
         assertThat(qm.getAllVulnerabilities(component)).hasSize(2);
         assertThat(NOTIFICATIONS).satisfiesExactly(
@@ -931,11 +929,6 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @Test
     public void informWithExistingComponentPropertiesAndBomWithoutComponentProperties() {
-        // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
-            return;
-        }
-
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -976,11 +969,6 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @Test
     public void informWithExistingComponentPropertiesAndBomWithComponentProperties() {
-        // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
-            return;
-        }
-
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);

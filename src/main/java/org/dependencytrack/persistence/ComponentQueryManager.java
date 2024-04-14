@@ -52,6 +52,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static org.dependencytrack.util.PersistenceUtil.assertNonPersistent;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
 
@@ -883,6 +888,57 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             return query.deletePersistentAll(component, uuid);
         } finally {
             query.closeAll();
+        }
+    }
+
+    public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {
+        assertPersistent(component, "component must be persistent");
+
+        if (properties == null || properties.isEmpty()) {
+            // TODO: We currently remove all existing properties that are no longer included in the BOM.
+            //   This is to stay consistent with the BOM being the source of truth. However, this may feel
+            //   counter-intuitive to some users, who might expect their manual changes to persist.
+            //   If we want to support that, we need a way to track which properties were added and / or
+            //   modified manually.
+            if (component.getProperties() != null) {
+                pm.deletePersistentAll(component.getProperties());
+            }
+
+            return;
+        }
+
+        properties.forEach(property -> assertNonPersistent(property, "property must not be persistent"));
+
+        if (component.getProperties() == null || component.getProperties().isEmpty()) {
+            for (final ComponentProperty property : properties) {
+                property.setComponent(component);
+                pm.makePersistent(property);
+            }
+
+            return;
+        }
+
+        // Group properties by group, name, and value. Because CycloneDX supports duplicate
+        // property names, uniqueness can only be determined by also considering the value.
+        final var existingPropertiesByIdentity = component.getProperties().stream()
+                .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
+        final var incomingPropertiesByIdentity = properties.stream()
+                .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
+
+        final var propertyIdentities = new HashSet<ComponentProperty.Identity>();
+        propertyIdentities.addAll(existingPropertiesByIdentity.keySet());
+        propertyIdentities.addAll(incomingPropertiesByIdentity.keySet());
+
+        for (final ComponentProperty.Identity identity : propertyIdentities) {
+            final ComponentProperty existingProperty = existingPropertiesByIdentity.get(identity);
+            final ComponentProperty incomingProperty = incomingPropertiesByIdentity.get(identity);
+
+            if (existingProperty == null) {
+                incomingProperty.setComponent(component);
+                pm.makePersistent(incomingProperty);
+            } else if (incomingProperty == null) {
+                pm.deletePersistent(existingProperty);
+            }
         }
     }
 

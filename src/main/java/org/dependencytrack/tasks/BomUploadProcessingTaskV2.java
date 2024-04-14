@@ -470,6 +470,11 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
     }
 
     private void processComponentProperties(final QueryManager qm, final Component component, final List<ComponentProperty> properties) {
+        if (component.isNew()) {
+            // If the component is new, its properties are already in the desired state.
+            return;
+        }
+
         if (properties == null || properties.isEmpty()) {
             // TODO: We currently remove all existing properties that are no longer included in the BOM.
             //   This is to stay consistent with the BOM being the source of truth. However, this may feel

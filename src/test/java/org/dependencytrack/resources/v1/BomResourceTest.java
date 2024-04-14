@@ -235,13 +235,7 @@ public class BomResourceTest extends ResourceTest {
                               "name": "projectSupplier"
                             },
                             "name": "acme-app",
-                            "version": "SNAPSHOT",
-                            "properties": [
-                              {
-                                "name": "foo:bar",
-                                "value": "baz"
-                              }
-                            ]
+                            "version": "SNAPSHOT"
                         },
                         "manufacture": {
                           "name": "projectManufacturer"

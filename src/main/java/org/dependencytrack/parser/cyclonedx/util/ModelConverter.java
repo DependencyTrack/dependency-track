@@ -73,6 +73,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -264,9 +265,11 @@ public class ModelConverter {
             return Collections.emptyList();
         }
 
+        final var identitiesSeen = new HashSet<ComponentProperty.Identity>();
         return cdxProperties.stream()
                 .map(ModelConverter::convertToComponentProperty)
                 .filter(Objects::nonNull)
+                .filter(property -> identitiesSeen.add(new ComponentProperty.Identity(property)))
                 .toList();
     }
 
@@ -873,7 +876,13 @@ public class ModelConverter {
                 cycloneComponent.setExternalReferences(references);
             }
             cycloneComponent.setSupplier(convert(project.getSupplier()));
-            cycloneComponent.setProperties(convert(project.getProperties()));
+
+            // NB: Project properties are currently used to configure integrations
+            // such as Defect Dojo. They can also contain encrypted values that most
+            // definitely are not safe to share. Before we can include project properties
+            // in BOM exports, we need a filtering mechanism.
+            // cycloneComponent.setProperties(convert(project.getProperties()));
+
             metadata.setComponent(cycloneComponent);
 
             if (project.getMetadata() != null) {

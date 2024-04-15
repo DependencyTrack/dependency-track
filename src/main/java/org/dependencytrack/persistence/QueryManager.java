@@ -387,7 +387,7 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProject(name, version);
     }
 
-    public Optional getLastImportedVersionProject(final String name) {
+    public Optional<Project> getLastImportedVersionProject(final String name) {
         return getProjectQueryManager().getLastImportedVersionProject(name);
     }
 

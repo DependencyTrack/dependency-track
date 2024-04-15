@@ -382,15 +382,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return the version of the project with the latest BOM update date
      */
     @Override
-    public Optional getLastImportedVersionProject(final String name) {
+    public Optional<Project> getLastImportedVersionProject(final String name) {
         final PaginatedResult result = getProjects(name, false, false, null);
-        return result.getObjects()
-                .stream()
-                .min((o1, o2) -> {
-                    Project p1 = (Project) o1;
-                    Project p2 = (Project) o2;
-                    return p2.getLastBomImport().compareTo(p1.getLastBomImport());
-                });
+        Query<Project> query = pm.newQuery(Project.class);
+        query.setFilter("name == :name");
+        query.setParameters(name);
+        query.setOrdering("lastBomImport DESC");
+        query.setRange(0, 1);
+        return Optional.ofNullable(query.executeUnique());
     }
 
     /**

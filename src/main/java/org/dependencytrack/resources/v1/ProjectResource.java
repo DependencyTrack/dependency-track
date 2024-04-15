@@ -160,9 +160,9 @@ public class ProjectResource extends AlpineResource {
             @ApiParam(value = "The name of the project to retrieve", required = true)
             @PathParam("name") String name) {
         try (QueryManager qm = new QueryManager()) {
-            final Optional projectOption = qm.getLastImportedVersionProject(name);
+            final Optional<Project> projectOption = qm.getLastImportedVersionProject(name);
             if (projectOption.isPresent()) {
-                Project project = (Project) projectOption.get();
+                Project project = projectOption.get();
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     return Response.ok(project).build();
                 } else {

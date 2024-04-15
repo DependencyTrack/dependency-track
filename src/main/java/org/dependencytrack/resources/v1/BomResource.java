@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.server.auth.PermissionRequired;
@@ -35,9 +34,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
@@ -468,9 +467,13 @@ public class BomResource extends AlpineResource {
     }
 
     static void validate(final byte[] bomBytes) {
-        if (!Config.getInstance().getPropertyAsBoolean(ConfigKey.BOM_VALIDATION_ENABLED)) {
-            return;
+        //EXPERIMENTAL: FUTURE RELEASES SHOULD REMOVE THIS BLOCK
+        try (QueryManager qm = new QueryManager()) {
+            if (!qm.isEnabled(ConfigPropertyConstants.BOM_VALIDATION_ENABLED)) {
+                return;
+            }
         }
+        //EXPERIMENTAL
 
         try {
             CycloneDxValidator.getInstance().validate(bomBytes);

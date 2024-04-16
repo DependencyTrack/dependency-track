@@ -310,6 +310,23 @@ doing keeping up with the work it's being exposed to. For example, a constantly 
 value combined with a high number of `executor_queued_tasks` may indicate that the configured `alpine.worker.pool.size` 
 is too small for the workload at hand.
 
+##### Search Indexes
+
+```yaml
+# HELP search_index_ram_used_bytes Memory usage of the index in bytes
+# TYPE search_index_ram_used_bytes gauge
+search_index_ram_used_bytes{index="<INDEX_NAME>",} 0.0
+# HELP search_index_docs_ram_total_objects Number of documents currently buffered in RAM
+# TYPE search_index_docs_ram_total_objects gauge
+search_index_docs_ram_total_objects{index="<INDEX_NAME>",} 0.0
+# HELP search_index_docs_total_objects Number of docs in this index, including docs not yet flushed (still in the RAM buffer), and including deletions
+# TYPE search_index_docs_total_objects gauge
+search_index_docs_total_objects{index="<INDEX_NAME>",} 0.0
+# HELP search_index_operations_total Total number of index operations
+# TYPE search_index_operations_total counter
+search_index_operations_total{index="<INDEX_NAME>",operation="<OPERATION>",} 0.0
+```
+
 ##### Retries
 
 Dependency-Track will occasionally retry requests to external services. Metrics about this behavior are

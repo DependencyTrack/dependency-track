@@ -42,6 +42,13 @@ public interface ObjectIndexer<T extends SearchDocument> {
     void add(T object);
 
     /**
+     * Update object in index.
+     * @param object the object to update
+     * @since 4.11.0
+     */
+    void update(T object);
+
+    /**
      * Remove object from index.
      * @param object the object to remove
      */

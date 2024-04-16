@@ -128,7 +128,7 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
 
     /**
      * This test documents the case where Trivy is unable to correlate a package with vulnerabilities
-     * in its database, unless additional properties are provided. When including libc6 in an SBOM,
+     * when additional properties are not provided. When including libc6 in an SBOM,
      * Trivy adds metadata to the component, which among other things includes alternative package names.
      * <p>
      * Here's an excerpt of the properties included:
@@ -174,11 +174,85 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
      * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/3369">Support component properties with Trivy</a>
      */
     @Test
-    public void testWithUnrecognizedPackageName() {
+    public void testWithPackageWithoutTrivyProperties() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
-        
+
+        final var osComponent = new Component();
+        osComponent.setProject(project);
+        osComponent.setName("ubuntu");
+        osComponent.setVersion("22.04");
+        osComponent.setClassifier(Classifier.OPERATING_SYSTEM);
+        qm.persist(osComponent);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("libc6");
+        component.setVersion("2.35-0ubuntu3.4");
+        component.setClassifier(Classifier.LIBRARY);
+        component.setPurl("pkg:deb/ubuntu/libc6@2.35-0ubuntu3.4?arch=amd64&distro=ubuntu-22.04");
+        qm.persist(component);
+
+        final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
+        new TrivyAnalysisTask().inform(analysisEvent);
+
+        assertThat(qm.getAllVulnerabilities(component)).isEmpty();
+    }
+
+     /**
+     * This test documents the case where Trivy is able to correlate a package with vulnerabilities
+     * when additional properties provided. When including libc6 in an SBOM,
+     * Trivy adds metadata to the component, which among other things includes alternative package names.
+     * <p>
+     * Here's an excerpt of the properties included:
+     * <pre>
+     * "properties": [
+     *   {
+     *     "name": "aquasecurity:trivy:LayerDiffID",
+     *     "value": "sha256:256d88da41857db513b95b50ba9a9b28491b58c954e25477d5dad8abb465430b"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:LayerDigest",
+     *     "value": "sha256:43f89b94cd7df92a2f7e565b8fb1b7f502eff2cd225508cbd7ea2d36a9a3a601"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:PkgID",
+     *     "value": "libc6@2.35-0ubuntu3.4"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:PkgType",
+     *     "value": "ubuntu"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:SrcName",
+     *     "value": "glibc"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:SrcRelease",
+     *     "value": "0ubuntu3.4"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:SrcVersion",
+     *     "value": "2.35"
+     *   }
+     * ]
+     * </pre>
+     * <p>
+     * To reproduce, run:
+     * <pre>
+     * docker run -it --rm aquasec/trivy image --format cyclonedx registry.hub.knime.com/knime/knime-full:r-5.1.2-433
+     * </pre>
+     *
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2560">Add support for CycloneDX component properties</a>
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/3369">Support component properties with Trivy</a>
+     */
+    @Test
+    public void testWithPackageWithTrivyProperties() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
         final var osComponent = new Component();
         osComponent.setProject(project);
         osComponent.setName("ubuntu");
@@ -201,7 +275,21 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
         new TrivyAnalysisTask().inform(analysisEvent);
 
-        assertThat(qm.getAllVulnerabilities(component)).isEmpty();
+        assertThat(qm.getAllVulnerabilities(component)).anySatisfy(vuln -> {
+            assertThat(vuln.getVulnId()).isEqualTo("CVE-2016-20013");
+            assertThat(vuln.getSource()).isEqualTo(Vulnerability.Source.NVD.name());
+
+            // NB: Can't assert specific values here, as we're testing against
+            // a moving target. These values may change over time. We do proper
+            // assertions in TrivyAnalyzerTaskTest.
+            assertThat(vuln.getTitle()).isBlank();
+            assertThat(vuln.getDescription()).isNotBlank();
+            assertThat(vuln.getCreated()).isNotNull();
+            assertThat(vuln.getPublished()).isNotNull();
+            assertThat(vuln.getUpdated()).isNotNull();
+            assertThat(vuln.getSeverity()).isNotNull();
+            assertThat(vuln.getReferences()).isNotBlank();
+        });
     }
 
 }

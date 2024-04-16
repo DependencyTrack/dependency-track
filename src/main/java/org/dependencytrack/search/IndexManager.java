@@ -412,16 +412,6 @@ public abstract class IndexManager implements AutoCloseable {
                 // do nothing...
             }
         }
-
-        if (docsRamTotalGauge != null) {
-            docsRamTotalGauge.close();
-        }
-        if (ramBytesUsedGauge != null) {
-            ramBytesUsedGauge.close();
-        }
-        if (numDocsGauge != null) {
-            numDocsGauge.close();
-        }
     }
 
     /**

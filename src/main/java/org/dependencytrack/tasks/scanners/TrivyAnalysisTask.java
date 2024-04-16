@@ -46,6 +46,7 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.TrivyAnalysisEvent;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
@@ -225,6 +226,10 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                         LOGGER.debug("add library %s".formatted(component.toString()));
                         app.addLibrary(new Library(name, component.getVersion()));
                     } else {
+                        String srcName = null;
+                        String srcVersion = null;
+                        String srcRelease = null;
+
                         String pkgType = component.getPurl().getType();
                         String arch = null;
                         Integer epoch = null;
@@ -246,6 +251,17 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                             }
                         }
 
+                        for (final ComponentProperty property : component.getProperties()) {
+
+                            if (property.getPropertyName().equals("trivy:SrcName")) {
+                                srcName = property.getPropertyValue();
+                            } else if (property.getPropertyName().equals("trivy:SrcVersion")) {
+                                srcVersion = property.getPropertyValue();
+                            } else if (property.getPropertyName().equals("trivy:SrcRelease")) {
+                                srcRelease = property.getPropertyValue();
+                            }
+                        }
+
                         final PackageInfo pkg = pkgs.computeIfAbsent(pkgType, ignored -> new PackageInfo());
 
                         versionKey += component.getVersion();
@@ -254,7 +270,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                         LOGGER.debug("Add key %s to map".formatted(key));
                         map.put(key, component);
                         LOGGER.debug("add package %s".formatted(component.toString()));
-                        pkg.addPackage(new Package(component.getName(), component.getVersion(), arch != null ? arch : "x86_64", epoch));
+                        pkg.addPackage(new Package(component.getName(), component.getVersion(), arch != null ? arch : "x86_64", epoch, srcName, srcVersion, srcRelease));
                     }
                 }
 

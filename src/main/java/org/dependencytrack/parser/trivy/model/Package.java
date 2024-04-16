@@ -32,21 +32,26 @@ public class Package {
     private String srcVersion;
     @SerializedName("src_epoch")
     private Integer srcEpoch;
+    @SerializedName("src_release")
+    private String srcRelease;
     private String[] licenses;
     private OS layer;
 
-    public Package(String name, String version, String arch, Integer epoch) {
+    public Package(String name, String version, String arch, Integer epoch, String srcName, String srcVersion, String srcRelease) {
 
         this.name = name;
         this.version = version;
         this.arch = arch;
         this.epoch = epoch;
 
-        this.srcName = name;
-        this.srcVersion = version;
+        this.srcName = (srcName == null) ? name : srcName;
+        this.srcVersion = (srcVersion == null) ? version : srcVersion;
         this.srcEpoch = epoch;
+        this.srcRelease = srcRelease;
 
         this.licenses = new String[] {};
         this.layer = new OS();
     }
+
+
 }

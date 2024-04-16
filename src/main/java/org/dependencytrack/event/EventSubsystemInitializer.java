@@ -91,10 +91,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
         //EXPERIMENTAL: FUTURE RELEASES SHOULD JUST REMOVE THE FOLLOWING BLOCK AND ENABLE THE COMMENT CODE
         try (QueryManager qm = new QueryManager()) {
             if (qm.isEnabled(ConfigPropertyConstants.BOM_PROCESSING_TASK_V2_ENABLED)) {
-                LOGGER.info("V2");
                 EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTaskV2.class);
             } else {
-                LOGGER.info("V1");
                 EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
             }
         }

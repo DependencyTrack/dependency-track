@@ -42,7 +42,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
-import alpine.common.logging.Logger;
 
 /**
  * JAX-RS resources for processing ConfigProperties
@@ -143,14 +142,11 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
                 if (item.getGroupName().equals("experimental") &&
                  item.getPropertyName().equals("bom.processing.task.v2.enabled")) {
                     final EventService EVENT_SERVICE = EventService.getInstance();
-                    final Logger LOGGER = Logger.getLogger(ConfigPropertyResource.class);
 
                     if (Boolean.parseBoolean(item.getPropertyValue())) {
-                        LOGGER.info("Set V2");
                         EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);
                         EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTaskV2.class);
                     } else {
-                        LOGGER.info("Set V1");
                         EVENT_SERVICE.unsubscribe(BomUploadProcessingTaskV2.class);
                         EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
                     }

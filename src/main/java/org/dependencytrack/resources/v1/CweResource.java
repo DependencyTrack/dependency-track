@@ -29,6 +29,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -55,6 +56,7 @@ public class CweResource extends AlpineResource {
             responseContainer = "List",
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of CWEs")
     )
+    @PaginatedApi
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })

@@ -48,7 +48,7 @@ public class TagResource extends AlpineResource {
     @Path("/{policyUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Returns a list of all tags",
+            value = "Returns a list of all tags associated with a given policy",
             response = Tag.class,
             responseContainer = "List",
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of tags"),

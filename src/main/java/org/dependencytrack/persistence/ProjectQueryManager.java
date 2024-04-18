@@ -383,7 +383,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     @Override
     public Optional<Project> getLastImportedVersionProject(final String name) {
-        final PaginatedResult result = getProjects(name, false, false, null);
         Query<Project> query = pm.newQuery(Project.class);
         query.setFilter("name == :name");
         query.setParameters(name);

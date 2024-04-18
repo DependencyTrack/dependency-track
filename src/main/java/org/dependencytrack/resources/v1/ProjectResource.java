@@ -143,10 +143,10 @@ public class ProjectResource extends AlpineResource {
     }
 
     @GET
-    @Path("/latestUpdated/{name}")
+    @Path("/latestImportedBom/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Returns the most recently updated version of a project by name",
+            value = "Returns the version with the most recent bom upload given a project name",
             response = Project.class,
             notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )

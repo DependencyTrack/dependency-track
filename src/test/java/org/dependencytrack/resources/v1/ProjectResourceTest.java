@@ -1089,7 +1089,7 @@ public class ProjectResourceTest extends ResourceTest {
             Project project = qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, true, false);
             qm.updateLastBomImport(project, new Date(), "CycloneDX 1.5");
         }
-        Response response = target(V1_PROJECT + "/latestUpdated/Acme%20Example")
+        Response response = target(V1_PROJECT + "/latestImportedBom/Acme%20Example")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -1107,7 +1107,7 @@ public class ProjectResourceTest extends ResourceTest {
             Project project = qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, true, false);
             qm.updateLastBomImport(project, new Date(), "CycloneDX 1.5");
         }
-        Response response = target(V1_PROJECT + "/latestUpdated/Unknown")
+        Response response = target(V1_PROJECT + "/latestImportedBom/Unknown")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);

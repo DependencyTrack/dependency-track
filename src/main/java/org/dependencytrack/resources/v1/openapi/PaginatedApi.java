@@ -61,6 +61,19 @@ import java.lang.annotation.Target;
                 paramType = "query",
                 defaultValue = "100",
                 value = "Number of elements to return per page. To be used in conjunction with <code>offset</code>."
+        ),
+        @ApiImplicitParam(
+                name = "sortName",
+                dataType = "string",
+                paramType = "query",
+                value = "Name of the resource field to sort on."
+        ),
+        @ApiImplicitParam(
+                name = "sortOrder",
+                dataType = "string",
+                paramType = "query",
+                allowableValues = "asc, desc",
+                value = "Ordering of items when sorting with <code>sortName</code>."
         )
 })
 public @interface PaginatedApi {

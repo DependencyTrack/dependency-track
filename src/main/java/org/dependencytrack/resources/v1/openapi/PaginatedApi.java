@@ -52,14 +52,12 @@ import java.lang.annotation.Target;
                 name = "offset",
                 dataType = "int",
                 paramType = "query",
-                defaultValue = "0",
                 value = "Offset to start returning elements from. To be used in conjunction with <code>limit</code>."
         ),
         @ApiImplicitParam(
                 name = "limit",
                 dataType = "int",
                 paramType = "query",
-                defaultValue = "100",
                 value = "Number of elements to return per page. To be used in conjunction with <code>offset</code>."
         ),
         @ApiImplicitParam(

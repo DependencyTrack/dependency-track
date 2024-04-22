@@ -64,6 +64,7 @@ import static org.apache.commons.io.IOUtils.resourceToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_ENABLED;
 
 public class BomResourceTest extends ResourceTest {
 
@@ -871,6 +872,14 @@ public class BomResourceTest extends ResourceTest {
     public void uploadBomInvalidJsonTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
+        qm.createConfigProperty(
+                BOM_VALIDATION_ENABLED.getGroupName(),
+                BOM_VALIDATION_ENABLED.getPropertyName(),
+                "true",
+                BOM_VALIDATION_ENABLED.getPropertyType(),
+                null
+        );
+
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
@@ -918,6 +927,14 @@ public class BomResourceTest extends ResourceTest {
     @Test
     public void uploadBomInvalidXmlTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        qm.createConfigProperty(
+          BOM_VALIDATION_ENABLED.getGroupName(),
+          BOM_VALIDATION_ENABLED.getPropertyName(),
+          "true",
+          BOM_VALIDATION_ENABLED.getPropertyType(),
+          null
+        );
 
         final var project = new Project();
         project.setName("acme-app");

@@ -102,7 +102,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @Parameterized.Parameters(name = "{index}: {0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {BomUploadProcessingTask.class.getSimpleName(), (Supplier<alpine.event.framework.Subscriber>) BomUploadProcessingTask::new},
+                {BomUploadProcessingTask.class.getSimpleName(), (Supplier<alpine.event.framework.Subscriber>) BomUploadProcessingTaskV2::new},
                 {BomUploadProcessingTaskV2.class.getSimpleName(), (Supplier<alpine.event.framework.Subscriber>) BomUploadProcessingTaskV2::new}
         });
     }
@@ -123,7 +123,6 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         EventService.getInstance().subscribe(RepositoryMetaEvent.class, EventSubscriber.class);
         EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, EventSubscriber.class);
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
-
 
         qm.createConfigProperty(
           BOM_PROCESSING_TASK_V2_ENABLED.getGroupName(),
@@ -301,7 +300,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @Test
     public void informWithEmptyBomTest() throws Exception {
         // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+        if (ignoredBomUploadProcessingTaskName == BomUploadProcessingTask.class.getSimpleName()) {
             return;
         }
 
@@ -324,9 +323,9 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     public void informWithInvalidCycloneDxBomTest() throws Exception {
 
         // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+        if (ignoredBomUploadProcessingTaskName == BomUploadProcessingTask.class.getSimpleName()) {
           return;
-      }
+        }
 
         qm.createConfigProperty(
           BOM_VALIDATION_ENABLED.getGroupName(),
@@ -372,7 +371,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @Test
     public void informWithNonExistentProjectTest() throws Exception {
         // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+        if (ignoredBomUploadProcessingTaskName == BomUploadProcessingTask.class.getSimpleName()) {
             return;
         }
 
@@ -396,7 +395,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @Test
     public void informWithComponentsUnderMetadataBomTest() throws Exception {
         // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+        if (ignoredBomUploadProcessingTaskName == BomUploadProcessingTask.class.getSimpleName()) {
             return;
         }
 
@@ -432,7 +431,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @Test
     public void informWithExistingDuplicateComponentsTest() {
         // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+        if (ignoredBomUploadProcessingTaskName == BomUploadProcessingTask.class.getSimpleName()) {
             return;
         }
 
@@ -518,7 +517,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @Test
     public void informWithBloatedBomTest() throws Exception {
         // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+        if (ignoredBomUploadProcessingTaskName == BomUploadProcessingTask.class.getSimpleName()) {
             return;
         }
 
@@ -574,7 +573,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @Test
     public void informWithCustomLicenseResolutionTest() throws Exception {
         // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+        if (ignoredBomUploadProcessingTaskName == BomUploadProcessingTask.class.getSimpleName()) {
             return;
         }
 
@@ -1049,7 +1048,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @Test // https://github.com/DependencyTrack/dependency-track/issues/1905
     public void informIssue1905Test() throws Exception {
         // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+        if (ignoredBomUploadProcessingTaskName == BomUploadProcessingTask.class.getSimpleName()) {
             return;
         }
 
@@ -1088,7 +1087,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @Test // https://github.com/DependencyTrack/dependency-track/issues/2519
     public void informIssue2519Test() throws Exception {
         // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+        if (ignoredBomUploadProcessingTaskName == BomUploadProcessingTask.class.getSimpleName()) {
             return;
         }
 
@@ -1166,7 +1165,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3371
     public void informIssue3371Test() throws Exception {
         // Known to now work with old task implementation.
-        if (bomUploadProcessingTaskSupplier.get() instanceof BomUploadProcessingTask) {
+        if (ignoredBomUploadProcessingTaskName == BomUploadProcessingTask.class.getSimpleName()) {
             return;
         }
 

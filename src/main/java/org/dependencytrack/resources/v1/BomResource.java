@@ -467,13 +467,11 @@ public class BomResource extends AlpineResource {
     }
 
     static void validate(final byte[] bomBytes) {
-        //EXPERIMENTAL: FUTURE RELEASES SHOULD REMOVE THIS BLOCK
         try (QueryManager qm = new QueryManager()) {
             if (!qm.isEnabled(ConfigPropertyConstants.BOM_VALIDATION_ENABLED)) {
                 return;
             }
         }
-        //EXPERIMENTAL
 
         try {
             CycloneDxValidator.getInstance().validate(bomBytes);

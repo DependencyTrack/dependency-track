@@ -149,6 +149,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
         try (QueryManager qm = new QueryManager()) {
             if (!qm.isEnabled(ConfigPropertyConstants.BOM_PROCESSING_TASK_V2_ENABLED)) {
                 new BomUploadProcessingTask().inform(event);
+                return;
             }
         }
         //EXPERIMENTAL

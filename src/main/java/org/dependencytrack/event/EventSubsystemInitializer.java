@@ -24,9 +24,6 @@ import alpine.event.framework.EventService;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.server.tasks.LdapSyncTask;
 import org.dependencytrack.RequirementsVerifier;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.tasks.BomUploadProcessingTask;
 import org.dependencytrack.tasks.BomUploadProcessingTaskV2;
 import org.dependencytrack.tasks.CallbackTask;
 import org.dependencytrack.tasks.ClearComponentAnalysisCacheTask;
@@ -88,17 +85,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
             return;
         }
 
-        //EXPERIMENTAL: FUTURE RELEASES SHOULD JUST REMOVE THE FOLLOWING BLOCK AND ENABLE THE COMMENT CODE
-        try (QueryManager qm = new QueryManager()) {
-            if (qm.isEnabled(ConfigPropertyConstants.BOM_PROCESSING_TASK_V2_ENABLED)) {
-                EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTaskV2.class);
-            } else {
-                EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
-            }
-        }
-        // EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTaskV2.class);
-        //EXPERIMENTAL
-
+        EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTaskV2.class);
         EVENT_SERVICE.subscribe(VexUploadEvent.class, VexUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
         EVENT_SERVICE.subscribe(InternalAnalysisEvent.class, InternalAnalysisTask.class);
@@ -142,17 +129,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
         LOGGER.info("Shutting down asynchronous event subsystem");
         TaskScheduler.getInstance().shutdown();
 
-        //EXPERIMENTAL: FUTURE RELEASES SHOULD JUST REMOVE THE FOLLOWING BLOCK AND ENABLE THE COMMENT CODE
-        try (QueryManager qm = new QueryManager()) {
-            if (qm.isEnabled(ConfigPropertyConstants.BOM_PROCESSING_TASK_V2_ENABLED)) {
-                EVENT_SERVICE.unsubscribe(BomUploadProcessingTaskV2.class);
-            } else {
-                EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);
-            }
-        }
-        // EVENT_SERVICE.unsubscribe(BomUploadProcessingTaskV2.class);
-        //EXPERIMENTAL
 
+        EVENT_SERVICE.unsubscribe(BomUploadProcessingTaskV2.class);
         EVENT_SERVICE.unsubscribe(VexUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
         EVENT_SERVICE.unsubscribe(InternalAnalysisTask.class);

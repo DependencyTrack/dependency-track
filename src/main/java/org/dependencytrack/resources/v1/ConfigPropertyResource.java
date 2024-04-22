@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.event.framework.EventService;
 import alpine.model.ConfigProperty;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.annotations.Api;
@@ -27,10 +26,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.tasks.BomUploadProcessingTask;
-import org.dependencytrack.tasks.BomUploadProcessingTaskV2;
 
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -137,21 +133,6 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             for (ConfigProperty item : list) {
                 final ConfigProperty property = qm.getConfigProperty(item.getGroupName(), item.getPropertyName());
                 returnList.add(updatePropertyValue(qm, item, property).getEntity());
-
-                //EXPERIMENTAL: FUTURE RELEASES SHOULD REMOVE THIS BLOCK
-                if (item.getGroupName().equals("experimental") &&
-                 item.getPropertyName().equals("bom.processing.task.v2.enabled")) {
-                    final EventService EVENT_SERVICE = EventService.getInstance();
-
-                    if (Boolean.parseBoolean(item.getPropertyValue())) {
-                        EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);
-                        EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTaskV2.class);
-                    } else {
-                        EVENT_SERVICE.unsubscribe(BomUploadProcessingTaskV2.class);
-                        EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
-                    }
-                 }
-                //EXPERIMENTAL
             }
         }
         return Response.ok(returnList).build();

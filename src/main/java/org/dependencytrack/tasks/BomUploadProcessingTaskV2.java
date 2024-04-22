@@ -41,6 +41,7 @@ import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.License;
@@ -143,6 +144,14 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
         if (!(e instanceof final BomUploadEvent event)) {
             return;
         }
+
+        //EXPERIMENTAL: FUTURE RELEASES SHOULD JUST REMOVE THE FOLLOWING BLOCK
+        try (QueryManager qm = new QueryManager()) {
+            if (!qm.isEnabled(ConfigPropertyConstants.BOM_PROCESSING_TASK_V2_ENABLED)) {
+                new BomUploadProcessingTask().inform(event);
+            }
+        }
+        //EXPERIMENTAL
 
         final var ctx = new Context(event.getChainIdentifier(), event.getProject(), event.getBom());
         try (var ignoredMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, ctx.project.getUuid().toString());

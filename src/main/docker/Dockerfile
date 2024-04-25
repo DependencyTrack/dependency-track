@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21.0.2_13-jre-jammy@sha256:d9f7b8326b9d396d070432982a998015a04ffb8885b145e97777a5ae324a8df1 AS jre-build
+FROM eclipse-temurin:22.0.1_8-jre-jammy@sha256:0931475ba48540a2a66db7e5be0f1c8ee7415da19c1bb8abcc3e496b766a1f51 AS jre-build
 
 FROM debian:stable-slim@sha256:ff394977014e94e9a7c67bb22f5014ea069d156b86e001174f4bae6f4618297a
 

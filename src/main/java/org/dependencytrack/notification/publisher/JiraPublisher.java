@@ -21,10 +21,10 @@ package org.dependencytrack.notification.publisher;
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
-import alpine.security.crypto.DataEncryption;
 import io.pebbletemplates.pebble.PebbleEngine;
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.DebugDataEncryption;
 
 import javax.json.JsonObject;
 import java.util.Map;
@@ -90,7 +90,7 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
             final ConfigProperty jiraUsernameProp = qm.getConfigProperty(JIRA_USERNAME.getGroupName(), JIRA_USERNAME.getPropertyName());
             final String jiraUsername = (jiraUsernameProp == null) ? null : jiraUsernameProp.getPropertyValue();
             final ConfigProperty jiraPasswordProp = qm.getConfigProperty(JIRA_PASSWORD.getGroupName(), JIRA_PASSWORD.getPropertyName());
-            final String jiraPassword = (jiraPasswordProp == null || jiraPasswordProp.getPropertyValue() == null) ? null : DataEncryption.decryptAsString(jiraPasswordProp.getPropertyValue());
+            final String jiraPassword = (jiraPasswordProp == null || jiraPasswordProp.getPropertyValue() == null) ? null : DebugDataEncryption.decryptAsString(jiraPasswordProp.getPropertyValue());
             return new AuthCredentials(jiraUsername, jiraPassword);
         } catch (final Exception e) {
             throw new PublisherException("An error occurred during the retrieval of Jira credentials", e);

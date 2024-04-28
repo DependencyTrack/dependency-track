@@ -24,7 +24,6 @@ import alpine.common.metrics.Metrics;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
 import io.micrometer.core.instrument.Timer;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.common.ConfigKey;
@@ -38,6 +37,7 @@ import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CacheStampedeBlocker;
+import org.dependencytrack.util.DebugDataEncryption;
 import org.dependencytrack.util.PurlUtil;
 
 import javax.json.Json;
@@ -168,7 +168,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                         try {
                             String decryptedPassword = null;
                             if (repository.getPassword() != null) {
-                                decryptedPassword = DataEncryption.decryptAsString(repository.getPassword());
+                                decryptedPassword = DebugDataEncryption.decryptAsString(repository.getPassword());
                             }
                             analyzer.setRepositoryUsernameAndPassword(repository.getUsername(), decryptedPassword);
                         } catch (Exception e) {

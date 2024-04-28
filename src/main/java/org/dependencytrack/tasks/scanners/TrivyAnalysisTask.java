@@ -25,7 +25,6 @@ import alpine.common.util.UrlUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
 import com.google.gson.Gson;
 import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
@@ -65,6 +64,7 @@ import org.dependencytrack.parser.trivy.model.Result;
 import org.dependencytrack.parser.trivy.model.ScanRequest;
 import org.dependencytrack.parser.trivy.model.TrivyResponse;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.DebugDataEncryption;
 import org.dependencytrack.util.NotificationUtil;
 
 import java.nio.charset.StandardCharsets;
@@ -151,7 +151,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 apiBaseUrl = getApiBaseUrl().get();
 
                 try {
-                    apiToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+                    apiToken = DebugDataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
                 } catch (Exception ex) {
                     LOGGER.error("An error occurred decrypting the Trivy API token; Skipping", ex);
                     return;

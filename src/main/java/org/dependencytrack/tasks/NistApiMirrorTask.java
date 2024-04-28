@@ -25,7 +25,6 @@ import alpine.event.framework.Event;
 import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
 import io.github.jeremylong.openvulnerability.client.HttpAsyncClientSupplier;
 import io.github.jeremylong.openvulnerability.client.nvd.CveItem;
 import io.github.jeremylong.openvulnerability.client.nvd.DefCveItem;
@@ -53,6 +52,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.Vulnerability.Source;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.DebugDataEncryption;
 import org.dependencytrack.util.PersistenceUtil.Diff;
 import org.dependencytrack.util.PersistenceUtil.Differ;
 
@@ -126,7 +126,7 @@ public class NistApiMirrorTask implements Subscriber {
                     .map(StringUtils::trimToNull)
                     .map(encryptedApiKey -> {
                         try {
-                            return DataEncryption.decryptAsString(encryptedApiKey);
+                            return DebugDataEncryption.decryptAsString(encryptedApiKey);
                         } catch (Exception ex) {
                             LOGGER.warn("Failed to decrypt API key; Continuing without authentication", ex);
                             return null;

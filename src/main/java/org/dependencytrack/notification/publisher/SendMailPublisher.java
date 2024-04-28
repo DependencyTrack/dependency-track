@@ -24,12 +24,12 @@ import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
 import alpine.model.Team;
 import alpine.notification.Notification;
-import alpine.security.crypto.DataEncryption;
 import alpine.server.mail.SendMail;
 import alpine.server.mail.SendMailException;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.DebugDataEncryption;
 
 import javax.json.JsonObject;
 import javax.json.JsonString;
@@ -42,9 +42,9 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_PREFIX;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_FROM_ADDR;
-import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_PREFIX;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_PASSWORD;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_HOSTNAME;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_PORT;
@@ -130,7 +130,7 @@ public class SendMailPublisher implements Publisher {
         final boolean smtpAuth = (smtpUser != null && encryptedSmtpPassword != null);
         final String decryptedSmtpPassword;
         try {
-            decryptedSmtpPassword = (encryptedSmtpPassword != null) ? DataEncryption.decryptAsString(encryptedSmtpPassword) : null;
+            decryptedSmtpPassword = (encryptedSmtpPassword != null) ? DebugDataEncryption.decryptAsString(encryptedSmtpPassword) : null;
         } catch (Exception e) {
             LOGGER.error("Failed to decrypt SMTP password (%s)".formatted(ctx), e);
             return;

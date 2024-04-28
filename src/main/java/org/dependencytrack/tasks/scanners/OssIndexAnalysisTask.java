@@ -25,7 +25,6 @@ import alpine.common.util.Pageable;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
@@ -55,6 +54,7 @@ import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.DebugDataEncryption;
 import org.dependencytrack.util.HttpUtil;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
@@ -156,7 +156,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                 } else {
                     try {
                         apiUsername = apiUsernameProperty.getPropertyValue();
-                        apiToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+                        apiToken = DebugDataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
                     } catch (Exception ex) {
                         LOGGER.error("An error occurred decrypting the OSS Index API Token. Skipping", ex);
                         return;

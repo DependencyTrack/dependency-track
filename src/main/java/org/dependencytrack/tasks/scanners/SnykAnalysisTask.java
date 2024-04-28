@@ -28,7 +28,6 @@ import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
 import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
 import io.github.resilience4j.retry.Retry;
@@ -58,6 +57,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.snyk.SnykParser;
 import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.DebugDataEncryption;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.RoundRobinAccessor;
 import org.json.JSONArray;
@@ -196,7 +196,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                 apiVersion = apiVersionProperty.getPropertyValue();
 
                 try {
-                    final String decryptedToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+                    final String decryptedToken = DebugDataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
                     apiTokenSupplier = createTokenSupplier(decryptedToken);
                 } catch (Exception ex) {
                     LOGGER.error("An error occurred decrypting the Snyk API Token; Skipping", ex);

@@ -100,7 +100,7 @@ public class FindingAttribution implements Serializable {
         this.analyzerIdentity = analyzerIdentity;
         this.attributedOn = new Date();
         this.alternateIdentifier = alternateIdentifier;
-        this.referenceUrl = referenceUrl;
+        this.referenceUrl = maybeTrimUrl(referenceUrl);
     }
 
     public long getId() {
@@ -157,7 +157,7 @@ public class FindingAttribution implements Serializable {
     }
 
     public void setReferenceUrl(String referenceUrl) {
-        this.referenceUrl = referenceUrl;
+        this.referenceUrl = maybeTrimUrl(referenceUrl);
     }
 
     public UUID getUuid() {
@@ -167,4 +167,18 @@ public class FindingAttribution implements Serializable {
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
+
+    private static String maybeTrimUrl(final String url) {
+        if (url == null || url.length() <= 255) {
+            return url;
+        }
+
+        final String[] parts = url.split("\\?", 2);
+        if (parts.length == 2 && parts[0].length() <= 255) {
+            return parts[0];
+        }
+
+        return parts[0].substring(0, 255);
+    }
+
 }

@@ -18,14 +18,19 @@
  */
 package org.dependencytrack.util;
 
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.datanucleus.enhancement.Persistable;
 import org.dependencytrack.persistence.QueryManager;
+import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
+import org.postgresql.util.PSQLState;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -258,6 +263,27 @@ public final class PersistenceUtil {
         }
 
         return objectId;
+    }
+
+    public static boolean isUniqueConstraintViolation(final Throwable throwable) {
+        // NB: DataNucleus doesn't map constraint violation exceptions,
+        //   so we have to depend on underlying JDBC driver's exception to
+        //   tell us what happened. Leaky abstraction FTW.
+        final Throwable rootCause = ExceptionUtils.getRootCause(throwable);
+
+        // H2 has a dedicated exception for this.
+        if (rootCause instanceof JdbcSQLIntegrityConstraintViolationException) {
+            return true;
+        }
+
+        // Other RDBMSes use the SQL state to communicate errors.
+        if (rootCause instanceof final SQLException se) {
+            return MysqlErrorNumbers.SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION.equals(se.getSQLState()) // MySQL
+                    || PSQLState.UNIQUE_VIOLATION.getState().equals(se.getSQLState()) // PostgreSQL
+                    || "23000".equals(se.getSQLState()); // SQL Server
+        }
+
+        return false;
     }
 
 }

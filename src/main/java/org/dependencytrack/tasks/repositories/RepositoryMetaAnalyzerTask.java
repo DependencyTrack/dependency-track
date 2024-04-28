@@ -50,6 +50,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
+
 public class RepositoryMetaAnalyzerTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(RepositoryMetaAnalyzerTask.class);
@@ -175,7 +177,23 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     }
                     analyzer.setRepositoryBaseUrl(repository.getUrl());
                     model = analyzer.analyze(component);
-                    qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.REPOSITORY, repository.getUrl(), repository.getType().name(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl()).toString(), new Date(), buildRepositoryComponentAnalysisCacheResult(model));
+
+                    try {
+                        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.REPOSITORY, repository.getUrl(), repository.getType().name(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl()).toString(), new Date(), buildRepositoryComponentAnalysisCacheResult(model));
+                    } catch (RuntimeException e) {
+                        if (isUniqueConstraintViolation(e)) {
+                            LOGGER.debug("""
+                                    Encountered unique constraint violation while updating cache. \
+                                    This happens when repository metadata analysis is executed for the same \
+                                    component multiple times concurrently, and is safe to ignore. \
+                                    [targetHost=%s, source=%s, target=%s]\
+                                    """.formatted(repository.getUrl(), repository.getType(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl())), e);
+                            qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
+                            return;
+                        } else {
+                            throw e;
+                        }
+                    }
                 }
 
                 if (StringUtils.trimToNull(model.getLatestVersion()) != null) {
@@ -187,7 +205,22 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     metaComponent.setPublished(model.getPublishedTimestamp());
                     metaComponent.setLatestVersion(model.getLatestVersion());
                     metaComponent.setLastCheck(new Date());
-                    qm.synchronizeRepositoryMetaComponent(metaComponent);
+                    try {
+                        qm.synchronizeRepositoryMetaComponent(metaComponent);
+                    } catch (RuntimeException e) {
+                        if (isUniqueConstraintViolation(e)) {
+                            LOGGER.debug("""
+                                    Encountered unique constraint violation while synchronizing metadata. \
+                                    This happens when repository metadata analysis is executed for the same \
+                                    component multiple times concurrently, and is safe to ignore. \
+                                    [targetHost=%s, source=%s, target=%s]\
+                                    """.formatted(repository.getUrl(), repository.getType(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl())), e);
+                            qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
+                            return;
+                        } else {
+                            throw e;
+                        }
+                    }
                     // Since the component metadata found and captured from this repository, return from this
                     // method without attempting to query additional repositories.
                     LOGGER.debug("Found component metadata for: " + component.getUuid() + " using repository: "

@@ -41,6 +41,8 @@ import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import java.util.Date;
 
+import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
+
 /**
  * A base class that has logic common or useful to all classes that extend it.
  *
@@ -112,7 +114,21 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
 
     protected synchronized void updateAnalysisCacheStats(QueryManager qm, Vulnerability.Source source, String
             targetHost, String target, JsonObject result) {
-        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target, new Date(), result);
+        try {
+            qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target, new Date(), result);
+        } catch (RuntimeException e) {
+            if (isUniqueConstraintViolation(e)) {
+                LOGGER.debug("""
+                        Encountered unique constraint violation while updating cache. \
+                        This happens when vulnerability analysis is executed for the same \
+                        component identity multiple times concurrently, and is safe to ignore. \
+                        [targetHost=%s, source=%s, target=%s]\
+                        """.formatted(targetHost, source, target), e);
+                qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
+            } else {
+                throw e;
+            }
+        }
     }
 
     protected void addVulnerabilityToCache(Component component, Vulnerability vulnerability) {

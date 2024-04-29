@@ -316,6 +316,9 @@ public class NotificationRule implements Serializable {
     }
 
     public ZonedDateTime getLastExecutionTime() {
+        if (lastExecutionTime == null) {
+            return ZonedDateTime.now();
+        }
         return lastExecutionTime;
     }
 

@@ -18,21 +18,25 @@
  */
 package org.dependencytrack.resources.v1.exception;
 
-import org.junit.Test;
+import alpine.server.resources.GlobalExceptionHandler;
 
-import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
 
-import static org.assertj.core.api.Assertions.assertThat;
+/**
+ * An {@link ExceptionMapper} to handle {@link ClientErrorException}s, that would otherwise be
+ * handled by Alpine's {@link GlobalExceptionHandler}, resulting in a misleading {@code HTTP 500} response.
+ *
+ * @since 4.11.0
+ */
+@Provider
+public class ClientErrorExceptionMapper implements ExceptionMapper<ClientErrorException> {
 
-public class NotFoundExceptionMapperTest {
-
-    @Test
-    @SuppressWarnings("resource")
-    public void testToResponse() {
-        final Response response = new NotFoundExceptionMapper().toResponse(new NotFoundException());
-        assertThat(response.getStatus()).isEqualTo(404);
-        assertThat(response.getEntity()).isNull();
+    @Override
+    public Response toResponse(final ClientErrorException exception) {
+        return exception.getResponse();
     }
 
 }

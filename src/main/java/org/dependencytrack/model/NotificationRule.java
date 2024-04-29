@@ -22,6 +22,9 @@ import alpine.common.validation.RegexSequence;
 import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.server.json.TrimmedStringDeserializer;
+
+import com.asahaf.javacron.InvalidExpressionException;
+import com.asahaf.javacron.Schedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,6 +48,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -147,6 +151,20 @@ public class NotificationRule implements Serializable {
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     private UUID uuid;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "CRON_CONFIG", allowsNull = "true") // new column, must allow nulls on existing databases
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    // @Pattern(regexp = RegexSequence.Definition.CRON, message = "The message may only contain characters valid in cron strings")
+    private String cronConfig;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "LAST_EXECUTION_TIME", allowsNull = "true") // new column, must allow nulls on existing databases
+    private ZonedDateTime lastExecutionTime;
+
+    @Persistent
+    @Column(name = "PUBLISH_ONLY_WITH_UPDATES", allowsNull = "true") // new column, must allow nulls on existing databases
+    private boolean publishOnlyWithUpdates;
 
     public long getId() {
         return id;
@@ -281,5 +299,37 @@ public class NotificationRule implements Serializable {
 
     public void setUuid(@NotNull UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public Schedule getCronConfig() throws InvalidExpressionException {
+        var cronSchedule = Schedule.create(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue());
+        if (this.cronConfig != null) {
+            cronSchedule = Schedule.create(this.cronConfig);
+        }
+        return cronSchedule;
+    }
+
+    public void setCronConfig(Schedule cronSchedule) {
+        if (cronSchedule == null) {
+            this.cronConfig = ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue();
+            return;
+        }
+        this.cronConfig = cronSchedule.getExpression();
+    }
+
+    public ZonedDateTime getLastExecutionTime() {
+        return lastExecutionTime;
+    }
+
+    public void setLastExecutionTime(ZonedDateTime lastExecutionTime) {
+        this.lastExecutionTime = lastExecutionTime;
+    }
+
+    public boolean getPublishOnlyWithUpdates() {
+        return publishOnlyWithUpdates;
+    }
+
+    public void setPublishOnlyWithUpdates(boolean publishOnlyWithUpdates) {
+        this.publishOnlyWithUpdates = publishOnlyWithUpdates;
     }
 }

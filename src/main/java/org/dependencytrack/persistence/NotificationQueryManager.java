@@ -22,6 +22,8 @@ import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
@@ -30,6 +32,8 @@ import org.dependencytrack.notification.publisher.Publisher;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+
+import java.time.ZonedDateTime;
 import java.util.List;
 
 public class NotificationQueryManager extends QueryManager implements IQueryManager {
@@ -69,6 +73,9 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setEnabled(true);
         rule.setNotifyChildren(true);
         rule.setLogSuccessfulPublish(false);
+        rule.setCronConfig(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue());
+        rule.setLastExecutionTime(ZonedDateTime.now());
+        rule.setPublishOnlyWithUpdates(false);
         return persist(rule);
     }
 
@@ -86,6 +93,9 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setNotificationLevel(transientRule.getNotificationLevel());
         rule.setPublisherConfig(transientRule.getPublisherConfig());
         rule.setNotifyOn(transientRule.getNotifyOn());
+        rule.setCronConfig(transientRule.getCronConfig());
+        rule.setLastExecutionTime(transientRule.getLastExecutionTime());
+        rule.setPublishOnlyWithUpdates(transientRule.getPublishOnlyWithUpdates());
         return persist(rule);
     }
 

@@ -23,8 +23,6 @@ import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.server.json.TrimmedStringDeserializer;
 
-import com.asahaf.javacron.InvalidExpressionException;
-import com.asahaf.javacron.Schedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -301,20 +299,20 @@ public class NotificationRule implements Serializable {
         this.uuid = uuid;
     }
 
-    public Schedule getCronConfig() throws InvalidExpressionException {
-        var cronSchedule = Schedule.create(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue());
+    public String getCronConfig() {
+        var cronConfig = ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue();
         if (this.cronConfig != null) {
-            cronSchedule = Schedule.create(this.cronConfig);
+            cronConfig = this.cronConfig;
         }
-        return cronSchedule;
+        return cronConfig;
     }
 
-    public void setCronConfig(Schedule cronSchedule) {
-        if (cronSchedule == null) {
+    public void setCronConfig(String cronConfig) {
+        if (cronConfig == null) {
             this.cronConfig = ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue();
             return;
         }
-        this.cronConfig = cronSchedule.getExpression();
+        this.cronConfig = cronConfig;
     }
 
     public ZonedDateTime getLastExecutionTime() {

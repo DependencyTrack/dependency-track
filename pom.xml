@@ -110,6 +110,7 @@
         <lib.httpclient5.version>5.3.1</lib.httpclient5.version>
         <lib.log4j-over-slf4j.version>2.0.13</lib.log4j-over-slf4j.version>
         <lib.org-kohsuke-github-api.version>1.318</lib.org-kohsuke-github-api.version>
+        <lib.com-asahaf-javacron.version>1.4.0</lib.com-asahaf-javacron.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.6.1.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
@@ -378,6 +379,12 @@
             <groupId>org.kohsuke</groupId>
             <artifactId>github-api</artifactId>
             <version>${lib.org-kohsuke-github-api.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.asahaf.javacron</groupId>
+            <artifactId>javacron</artifactId>
+            <version>${lib.com-asahaf-javacron.version}</version>
         </dependency>
 
         <!-- Test Dependencies -->

@@ -57,6 +57,13 @@ alpine.worker.threads=0
 alpine.worker.thread.multiplier=4
 
 # Required
+# Defines the maximum duration for which Dependency-Track will wait for queued
+# events and notifications to be processed when shutting down.
+# During shutdown, newly dispatched events will not be accepted.
+# The duration must be specified in ISO 8601 notation (https://en.wikipedia.org/wiki/ISO_8601#Durations).
+alpine.worker.pool.drain.timeout.duration=PT5S
+
+# Required
 # Defines the path to the data directory. This directory will hold logs, keys,
 # and any database or index files along with application-specific files or 
 # directories.

@@ -18,13 +18,16 @@
  */
 package org.dependencytrack.notification;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.notification.NotificationService;
 import alpine.notification.Subscription;
 import org.dependencytrack.RequirementsVerifier;
+import org.dependencytrack.common.ConfigKey;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import java.time.Duration;
 
 /**
  * Initializes the notification subsystem and configures the notification router
@@ -38,6 +41,9 @@ public class NotificationSubsystemInitializer implements ServletContextListener 
 
     // Starts the NotificationService
     private static final NotificationService NOTIFICATION_SERVICE = NotificationService.getInstance();
+
+    private static final Duration DRAIN_TIMEOUT_DURATION =
+            Duration.parse(Config.getInstance().getProperty(ConfigKey.ALPINE_WORKER_POOL_DRAIN_TIMEOUT_DURATION));
 
     /**
      * {@inheritDoc}
@@ -57,6 +63,6 @@ public class NotificationSubsystemInitializer implements ServletContextListener 
     @Override
     public void contextDestroyed(final ServletContextEvent event) {
         LOGGER.info("Shutting down notification service");
-        NOTIFICATION_SERVICE.shutdown();
+        NOTIFICATION_SERVICE.shutdown(DRAIN_TIMEOUT_DURATION);
     }
 }

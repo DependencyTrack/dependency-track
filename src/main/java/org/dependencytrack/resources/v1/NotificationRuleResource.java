@@ -326,7 +326,7 @@ public class NotificationRuleResource extends AlpineResource {
     public Response removeTeamFromRule(
             @ApiParam(value = "The UUID of the rule to remove the project from", format = "uuid", required = true)
             @PathParam("ruleUuid") @ValidUuid String ruleUuid,
-            @ApiParam(value = "The UUID of the project to remove from the rule", format = "uuid", required = true)
+            @ApiParam(value = "The UUID of the team to remove from the rule", format = "uuid", required = true)
             @PathParam("teamUuid") @ValidUuid String teamUuid) {
         try (QueryManager qm = new QueryManager()) {
             final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);

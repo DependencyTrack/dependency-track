@@ -180,4 +180,15 @@ public class NotificationRuleTest {
         Assert.assertEquals(team, rule.getTeams().get(0));
         Assert.assertEquals(oidcUser, rule.getTeams().get(0).getOidcUsers().get(0));
     }
+
+    @Test
+    public void testTags(){
+        List<Tag> tags = new ArrayList<>();
+        Tag tag = new Tag();
+        tags.add(tag);
+        NotificationRule rule = new NotificationRule();
+        rule.setTags(tags);
+        Assert.assertEquals(1, rule.getTags().size());
+        Assert.assertEquals(tag, rule.getTags().get(0));
+    }
 }

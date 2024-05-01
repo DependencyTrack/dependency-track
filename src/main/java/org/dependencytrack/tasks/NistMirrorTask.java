@@ -41,13 +41,19 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.EpssMirrorEvent;
+import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.NistApiMirrorEvent;
 import org.dependencytrack.event.NistMirrorEvent;
+import org.dependencytrack.model.AffectedVersionAttribution;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.listener.IndexingInstanceLifecycleListener;
+import org.dependencytrack.persistence.listener.L2CacheEvictingInstanceLifecycleListener;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -64,9 +70,12 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
+import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
+import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_DOWNLOAD_FEEDS;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
@@ -78,7 +87,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NistMirrorTask implements LoggableSubscriber {
+public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSubscriber {
 
     private enum ResourceType {
         CVE_YEAR_DATA,
@@ -363,8 +372,10 @@ public class NistMirrorTask implements LoggableSubscriber {
         final long start = System.currentTimeMillis();
         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
             if (!isApiEnabled) {
-                final NvdParser parser = new NvdParser();
+                final NvdParser parser = new NvdParser(this::processVulnerability);
                 parser.parse(uncompressedFile);
+                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, VulnerableSoftware.class));
             } else {
                 LOGGER.debug("""
                         %s was successfully downloaded and uncompressed, but will not be parsed because \
@@ -376,6 +387,22 @@ public class NistMirrorTask implements LoggableSubscriber {
         }
         final long end = System.currentTimeMillis();
         metricParseTime += end - start;
+    }
+
+    private void processVulnerability(final Vulnerability vuln, final List<VulnerableSoftware> vsList) {
+        try (final var qm = new QueryManager().withL2CacheDisabled()) {
+            qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+            qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
+            qm.getPersistenceManager().addInstanceLifecycleListener(new IndexingInstanceLifecycleListener(Event::dispatch),
+                    Vulnerability.class, VulnerableSoftware.class);
+            qm.getPersistenceManager().addInstanceLifecycleListener(new L2CacheEvictingInstanceLifecycleListener(qm),
+                    AffectedVersionAttribution.class, Vulnerability.class, VulnerableSoftware.class);
+
+            final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
+            synchronizeVulnerableSoftware(qm, persistentVuln, vsList);
+        } catch (RuntimeException e) {
+            LOGGER.error("An unexpected error occurred while processing %s".formatted(vuln.getVulnId()), e);
+        }
     }
 
     /**

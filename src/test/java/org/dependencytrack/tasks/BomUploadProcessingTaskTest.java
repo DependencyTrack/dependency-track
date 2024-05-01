@@ -275,6 +275,13 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                     assertThat(property.getPropertyValue()).isEqualTo("qux");
                     assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
                     assertThat(property.getDescription()).isNull();
+                },
+                property -> {
+                    assertThat(property.getGroupName()).isNull();
+                    assertThat(property.getPropertyName()).isEqualTo("long");
+                    assertThat(property.getPropertyValue()).isEqualTo("a".repeat(1021) + "...");
+                    assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
+                    assertThat(property.getDescription()).isNull();
                 }
         );
 

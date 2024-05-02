@@ -66,6 +66,7 @@ import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Calendar;
@@ -98,7 +99,7 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
         NONE // DO NOT PARSE THIS TYPE
     }
 
-    public static final String NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
+    public static final Path DEFAULT_NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().toPath().resolve("nist").toAbsolutePath();
     private static final String CVE_JSON_11_MODIFIED_URL = "/json/cve/1.1/nvdcve-1.1-modified.json.gz";
     private static final String CVE_JSON_11_BASE_URL = "/json/cve/1.1/nvdcve-1.1-%d.json.gz";
     private static final String CVE_JSON_11_MODIFIED_META = "/json/cve/1.1/nvdcve-1.1-modified.meta";
@@ -142,9 +143,16 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
                 .bindTo(Metrics.getRegistry());
     }
 
+    private final Path mirrorDirPath;
     private boolean mirroredWithoutErrors = true;
 
     public NistMirrorTask() {
+        this(DEFAULT_NVD_MIRROR_DIR);
+    }
+
+    NistMirrorTask(final Path mirrorDirPath) {
+        this.mirrorDirPath = mirrorDirPath;
+
         try (final QueryManager qm = new QueryManager()) {
             this.isEnabled = qm.isEnabled(VULNERABILITY_SOURCE_NVD_ENABLED);
             this.isApiEnabled = qm.isEnabled(VULNERABILITY_SOURCE_NVD_API_ENABLED);
@@ -156,7 +164,7 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
             if (this.nvdFeedsUrl.endsWith("/")) {
                 this.nvdFeedsUrl = this.nvdFeedsUrl.substring(0, this.nvdFeedsUrl.length()-1);
             }
-         }
+        }
     }
 
     /**
@@ -183,7 +191,7 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
 
             final long start = System.currentTimeMillis();
             LOGGER.info("Starting NIST mirroring task");
-            final File mirrorPath = new File(NVD_MIRROR_DIR);
+            final File mirrorPath = mirrorDirPath.toFile();
             setOutputDir(mirrorPath.getAbsolutePath());
             getAllFiles();
             final long end = System.currentTimeMillis();

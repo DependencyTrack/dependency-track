@@ -34,6 +34,7 @@
         <class>org.dependencytrack.model.LicenseGroup</class>
         <class>org.dependencytrack.model.NotificationPublisher</class>
         <class>org.dependencytrack.model.NotificationRule</class>
+        <class>org.dependencytrack.model.ScheduledNotificationRule</class>
         <class>org.dependencytrack.model.Policy</class>
         <class>org.dependencytrack.model.PolicyCondition</class>
         <class>org.dependencytrack.model.PolicyViolation</class>

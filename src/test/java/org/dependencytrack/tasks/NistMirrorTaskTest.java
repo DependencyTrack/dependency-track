@@ -68,21 +68,14 @@ public class NistMirrorTaskTest extends PersistenceCapableTest {
 
     @Test
     public void test() throws Exception {
-        // Gzip the JSON feed file to match the format returned by the NVD.
-        // NB: The file is a truncated version of an actual feed file.
-        // It only contains the first three CVEs. Truncation was done with jq:
-        //   jq 'del(.CVE_Items[3:])' ~/.dependency-track/nist/nvdcve-1.1-2022.json > nvdcve-1.1-2022.json
-        final var byteArrayOutputStream = new ByteArrayOutputStream();
-        try (final var gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
-            gzipOutputStream.write(resourceToByteArray("/unit/nvd/feed/nvdcve-1.1-2022.json"));
-        }
+        final byte[] gzippedFeedFileBytes = gzipResource("/unit/nvd/feed/nvdcve-1.1-2022.json");
 
         wireMock.stubFor(get(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(404)));
         wireMock.stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2022.json.gz"))
                 .willReturn(aResponse()
-                        .withBody(byteArrayOutputStream.toByteArray())));
+                        .withBody(gzippedFeedFileBytes)));
         wireMock.stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2022.meta"))
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/feed/nvdcve-1.1-2022.meta"))));
@@ -170,6 +163,56 @@ public class NistMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vuln.getSeverity()).isEqualTo(Severity.MEDIUM);
                 }
         );
+    }
+
+    @Test
+    public void testWithDuplicateCpes() throws Exception {
+        final byte[] gzippedFeedFileBytes = gzipResource("/unit/nvd/feed/nvdcve-1.1-2021_duplicate-cpes.json");
+
+        wireMock.stubFor(get(anyUrl())
+                .willReturn(aResponse()
+                        .withStatus(404)));
+        wireMock.stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2021.json.gz"))
+                .willReturn(aResponse()
+                        .withBody(gzippedFeedFileBytes)));
+
+        final Path mirrorDirPath = Files.createTempDirectory(null);
+        mirrorDirPath.toFile().deleteOnExit();
+
+        new NistMirrorTask(mirrorDirPath).inform(new NistMirrorEvent());
+
+        final List<Vulnerability> vulns = qm.getVulnerabilities().getList(Vulnerability.class);
+        assertThat(vulns).hasSize(1);
+
+        final Vulnerability vuln = vulns.get(0);
+        assertThat(vuln.getVulnerableSoftware()).satisfiesExactlyInAnyOrder(
+                vs -> {
+                    assertThat(vs.getCpe22()).isEqualTo("cpe:/o:intel:ethernet_controller_e810_firmware:::~~~linux~~");
+                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:o:intel:ethernet_controller_e810_firmware:*:*:*:*:*:linux:*:*");
+                },
+                vs -> {
+                    assertThat(vs.getCpe22()).isEqualTo("cpe:/o:fedoraproject:fedora:33");
+                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:o:fedoraproject:fedora:33:*:*:*:*:*:*:*");
+                },
+                vs -> {
+                    assertThat(vs.getCpe22()).isEqualTo("cpe:/o:fedoraproject:fedora:34");
+                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:o:fedoraproject:fedora:34:*:*:*:*:*:*:*");
+                },
+                vs -> {
+                    // This CPE appears twice in the feed file. We must only record it once.
+                    assertThat(vs.getCpe22()).isEqualTo("cpe:/o:fedoraproject:fedora:35");
+                    assertThat(vs.getCpe23()).isEqualTo("cpe:2.3:o:fedoraproject:fedora:35:*:*:*:*:*:*:*");
+                }
+        );
+    }
+
+    private byte[] gzipResource(final String resourcePath) throws Exception {
+        final var byteArrayOutputStream = new ByteArrayOutputStream();
+        try (final var gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
+            gzipOutputStream.write(resourceToByteArray(resourcePath));
+        }
+
+        return byteArrayOutputStream.toByteArray();
     }
 
 }

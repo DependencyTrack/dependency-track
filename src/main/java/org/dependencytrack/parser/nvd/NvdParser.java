@@ -50,6 +50,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+
+import static org.dependencytrack.parser.nvd.api20.ModelConverter.distinctIgnoringDatastoreIdentity;
 
 /**
  * Parser and processor of NVD data feeds.
@@ -223,7 +226,10 @@ public final class NvdParser {
             vsList.addAll(reconcile(vulnerableSoftwareInNode, nodeOperator));
         }
 
-        vulnerabilityConsumer.accept(vulnerability, vsList);
+        final List<VulnerableSoftware> uniqueVsList = vsList.stream()
+                .filter(distinctIgnoringDatastoreIdentity())
+                .collect(Collectors.toList());
+        vulnerabilityConsumer.accept(vulnerability, uniqueVsList);
     }
 
     /**

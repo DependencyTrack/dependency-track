@@ -2,13 +2,12 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Policy;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.json.JsonArray;
@@ -17,14 +16,11 @@ import java.util.List;
 
 public class TagResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                        new ResourceConfig(TagResource.class)
-                                .register(ApiFilter.class)
-                                .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(TagResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Test
     public void getAllTagsWithOrderingTest() {
@@ -35,7 +31,7 @@ public class TagResourceTest extends ResourceTest {
         qm.createProject("Project B", null, "1", List.of(qm.getTagByName("Tag 2"), qm.getTagByName("Tag 3"), qm.getTagByName("Tag 4")), null, null, true, false);
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
 
-        Response response = target(V1_TAG + "/" + policy.getUuid())
+        Response response = jersey.target(V1_TAG + "/" + policy.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -60,7 +56,7 @@ public class TagResourceTest extends ResourceTest {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         policy.setProjects(List.of(qm.getProject("Project A", "1"), qm.getProject("Project C", "1")));
 
-        Response response = target(V1_TAG + "/" + policy.getUuid())
+        Response response = jersey.target(V1_TAG + "/" + policy.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();

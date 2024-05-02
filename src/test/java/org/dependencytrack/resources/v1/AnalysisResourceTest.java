@@ -28,6 +28,7 @@ import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
 import net.jcip.annotations.NotThreadSafe;
 import org.apache.http.HttpStatus;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Analysis;
@@ -44,11 +45,10 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
 import org.dependencytrack.util.NotificationUtil;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.json.Json;
@@ -68,15 +68,12 @@ import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeou
 @NotThreadSafe
 public class AnalysisResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                        new ResourceConfig(AnalysisResource.class)
-                                .register(ApiFilter.class)
-                                .register(AuthenticationFilter.class)
-                                .register(AuthorizationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(AnalysisResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class)
+                    .register(AuthorizationFilter.class));
 
     public static class NotificationSubscriber implements Subscriber {
 
@@ -99,10 +96,11 @@ public class AnalysisResourceTest extends ResourceTest {
         NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
     }
 
+    @After
     @Override
-    public void tearDown() throws Exception {
+    public void after() throws Exception {
         NOTIFICATIONS.clear();
-        super.tearDown();
+        super.after();
     }
 
     @Test
@@ -128,7 +126,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true);
         qm.makeAnalysisComment(analysis, "Analysis comment here", "Jane Doe");
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", project.getUuid())
                 .queryParam("component", component.getUuid())
                 .queryParam("vulnerability", vulnerability.getUuid())
@@ -170,7 +168,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", project.getUuid())
                 .queryParam("component", component.getUuid())
                 .queryParam("vulnerability", vulnerability.getUuid())
@@ -200,7 +198,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("component", component.getUuid())
                 .queryParam("vulnerability", vulnerability.getUuid())
                 .request()
@@ -229,7 +227,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", UUID.randomUUID())
                 .queryParam("component", component.getUuid())
                 .queryParam("vulnerability", vulnerability.getUuid())
@@ -260,7 +258,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", project.getUuid())
                 .queryParam("component", UUID.randomUUID())
                 .queryParam("vulnerability", vulnerability.getUuid())
@@ -291,7 +289,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         qm.createVulnerability(vulnerability, false);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", project.getUuid())
                 .queryParam("component", component.getUuid())
                 .queryParam("vulnerability", UUID.randomUUID())
@@ -305,7 +303,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
     @Test
     public void retrieveAnalysisUnauthorizedTest() {
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", UUID.randomUUID())
                 .queryParam("component", UUID.randomUUID())
                 .queryParam("vulnerability", UUID.randomUUID())
@@ -339,7 +337,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
                 AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
@@ -395,7 +393,7 @@ public class AnalysisResourceTest extends ResourceTest {
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), null, null, null, null, null, null);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
@@ -450,7 +448,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 vulnerability.getUuid().toString(), AnalysisState.EXPLOITABLE, AnalysisJustification.NOT_SET,
                 AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
@@ -528,7 +526,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
                 AnalysisResponse.WILL_NOT_FIX, "Analysis details here", null, true);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
@@ -577,7 +575,7 @@ public class AnalysisResourceTest extends ResourceTest {
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), null, null, null, null, null, null);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
@@ -641,7 +639,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
                 AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
@@ -673,7 +671,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
                 AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
@@ -705,7 +703,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 UUID.randomUUID().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
                 AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
@@ -743,7 +741,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
                 AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
@@ -794,7 +792,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 UUID.randomUUID().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
                 AnalysisResponse.UPDATE, "Analysis details here", "Analysis comment here", false);
 
-        final Response response = target(V1_ANALYSIS)
+        final Response response = jersey.target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));

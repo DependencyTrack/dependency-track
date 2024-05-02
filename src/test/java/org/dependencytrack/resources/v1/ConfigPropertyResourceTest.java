@@ -18,17 +18,16 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
 import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.json.JsonArray;
@@ -40,21 +39,18 @@ import java.util.Arrays;
 
 public class ConfigPropertyResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(ConfigPropertyResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(ConfigPropertyResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Test
     public void getConfigPropertiesTest() {
         qm.createConfigProperty("my.group", "my.string", "ABC", IConfigProperty.PropertyType.STRING, "A string");
         qm.createConfigProperty("my.group", "my.integer", "1", IConfigProperty.PropertyType.INTEGER, "A integer");
         qm.createConfigProperty("my.group", "my.password", "password", IConfigProperty.PropertyType.ENCRYPTEDSTRING, "A password");
-        Response response = target(V1_CONFIG_PROPERTY).request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -83,7 +79,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         ConfigProperty property = qm.createConfigProperty("my.group", "my.string", "ABC", IConfigProperty.PropertyType.STRING, "A string");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("DEF");
-        Response response = target(V1_CONFIG_PROPERTY).request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -101,7 +97,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         ConfigProperty property = qm.createConfigProperty("my.group", "my.boolean", "false", IConfigProperty.PropertyType.BOOLEAN, "A boolean");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("true");
-        Response response = target(V1_CONFIG_PROPERTY).request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -119,7 +115,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         ConfigProperty property = qm.createConfigProperty("my.group", "my.number", "7.75", IConfigProperty.PropertyType.NUMBER, "A number");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("5.50");
-        Response response = target(V1_CONFIG_PROPERTY).request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -137,7 +133,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         ConfigProperty property = qm.createConfigProperty(ConfigPropertyConstants.TASK_SCHEDULER_LDAP_SYNC_CADENCE.getGroupName(), "my.cadence", "24", IConfigProperty.PropertyType.INTEGER, "A cadence");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("-2");
-        Response response = target(V1_CONFIG_PROPERTY).request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -150,7 +146,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         ConfigProperty property = qm.createConfigProperty(ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getGroupName(), ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getPropertyName(), "24", IConfigProperty.PropertyType.INTEGER, ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getDescription());
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("-1");
-        Response response = target(V1_CONFIG_PROPERTY).request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -163,7 +159,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         ConfigProperty property = qm.createConfigProperty("my.group", "my.url", "http://localhost", IConfigProperty.PropertyType.URL, "A url");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("http://localhost/path");
-        Response response = target(V1_CONFIG_PROPERTY).request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -181,7 +177,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         ConfigProperty property = qm.createConfigProperty("my.group", "my.uuid", "a496cabc-749d-4751-b9e5-3b49b656d018", IConfigProperty.PropertyType.UUID, "A uuid");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("fe03c401-b5a1-4b86-bc3b-1b7a68f0f78d");
-        Response response = target(V1_CONFIG_PROPERTY).request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -199,7 +195,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         ConfigProperty property = qm.createConfigProperty("my.group", "my.encryptedString", "aaaaa", IConfigProperty.PropertyType.ENCRYPTEDSTRING, "A encrypted string");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("bbbbb");
-        Response response = target(V1_CONFIG_PROPERTY).request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -224,7 +220,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         prop4 = qm.detach(ConfigProperty.class, prop4.getId());
         prop3.setPropertyValue("XYZ");
         prop4.setPropertyValue("-2");
-        Response response = target(V1_CONFIG_PROPERTY+"/aggregate").request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY+"/aggregate").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(Arrays.asList(prop1, prop2, prop3, prop4), MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -245,7 +241,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         ConfigProperty property = qm.createConfigProperty("my.group", ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(), "maven;npm;maven", IConfigProperty.PropertyType.STRING, "List of ecosystems");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("maven;npm;maven");
-        Response response = target(V1_CONFIG_PROPERTY).request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);

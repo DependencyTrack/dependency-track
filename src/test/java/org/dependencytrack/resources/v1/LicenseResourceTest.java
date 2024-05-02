@@ -21,15 +21,14 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.License;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.json.JsonArray;
@@ -40,24 +39,23 @@ import javax.ws.rs.core.Response;
 
 public class LicenseResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(LicenseResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(LicenseResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Before
-    public void loadDefaultLicenses() {
-        DefaultObjectGenerator dog = new DefaultObjectGenerator();
-        dog.contextInitialized(null);
+    @Override
+    public void before() throws Exception {
+        super.before();
+        final var generator = new DefaultObjectGenerator();
+        generator.loadDefaultLicenses();
     }
 
     @Test
     public void getLicensesTest() {
-        Response response = target(V1_LICENSE).request()
+        Response response = jersey.target(V1_LICENSE).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -73,7 +71,7 @@ public class LicenseResourceTest extends ResourceTest {
 
     @Test
     public void getLicensesConciseTest() {
-        Response response = target(V1_LICENSE + "/concise").request()
+        Response response = jersey.target(V1_LICENSE + "/concise").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -89,7 +87,7 @@ public class LicenseResourceTest extends ResourceTest {
 
     @Test
     public void getLicense() {
-        Response response = target(V1_LICENSE + "/Apache-2.0").request()
+        Response response = jersey.target(V1_LICENSE + "/Apache-2.0").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -104,7 +102,7 @@ public class LicenseResourceTest extends ResourceTest {
 
     @Test
     public void getLicenseInvalid() {
-        Response response = target(V1_LICENSE + "/blah").request()
+        Response response = jersey.target(V1_LICENSE + "/blah").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -118,7 +116,7 @@ public class LicenseResourceTest extends ResourceTest {
         License license = new License();
         license.setName("Acme Example");
         license.setLicenseId("Acme-Example-License");
-        Response response = target(V1_LICENSE)
+        Response response = jersey.target(V1_LICENSE)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(license, MediaType.APPLICATION_JSON));
@@ -139,7 +137,7 @@ public class LicenseResourceTest extends ResourceTest {
         License license = new License();
         license.setName("Apache License 2.0");
         license.setLicenseId("Apache-2.0");
-        Response response = target(V1_LICENSE)
+        Response response = jersey.target(V1_LICENSE)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(license, MediaType.APPLICATION_JSON));
@@ -153,7 +151,7 @@ public class LicenseResourceTest extends ResourceTest {
     public void createCustomLicenseWithoutLicenseId() {
         License license = new License();
         license.setName("Acme Example");
-        Response response = target(V1_LICENSE)
+        Response response = jersey.target(V1_LICENSE)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(license, MediaType.APPLICATION_JSON));
@@ -169,7 +167,7 @@ public class LicenseResourceTest extends ResourceTest {
         license.setCustomLicense(true);
         qm.createCustomLicense(license, false);
 
-        Response response = target(V1_LICENSE + "/" + license.getLicenseId())
+        Response response = jersey.target(V1_LICENSE + "/" + license.getLicenseId())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -184,7 +182,7 @@ public class LicenseResourceTest extends ResourceTest {
         license1.setName("Acme Example");
         License license2 = qm.createCustomLicense(license1, false);
         license1.setCustomLicense(false);
-        Response response = target(V1_LICENSE + "/" + license1.getLicenseId())
+        Response response = jersey.target(V1_LICENSE + "/" + license1.getLicenseId())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();

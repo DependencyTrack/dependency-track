@@ -23,18 +23,17 @@ import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.search.IndexManager;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.json.JsonObject;
@@ -47,14 +46,11 @@ import static org.awaitility.Awaitility.await;
 
 public class SearchResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                        new ResourceConfig(SearchResource.class)
-                                .register(ApiFilter.class)
-                                .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(SearchResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     private static final ConcurrentLinkedQueue<Event> EVENTS = new ConcurrentLinkedQueue<>();
 
@@ -68,23 +64,24 @@ public class SearchResourceTest extends ResourceTest {
     }
 
     @Before
-    public void setUp() throws Exception {
-        super.setUp();
+    @Override
+    public void before() throws Exception {
+        super.before();
 
         SingleThreadedEventService.getInstance().subscribe(IndexEvent.class, EventSubscriber.class);
     }
 
     @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-
+    @Override
+    public void after() throws Exception {
         SingleThreadedEventService.getInstance().unsubscribe(EventSubscriber.class);
         EVENTS.clear();
+        super.after();
     }
 
     @Test
     public void searchTest() {
-        Response response = target(V1_SEARCH).queryParam("query", "tomcat").request()
+        Response response = jersey.target(V1_SEARCH).queryParam("query", "tomcat").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -95,7 +92,7 @@ public class SearchResourceTest extends ResourceTest {
 
     @Test
     public void searchProjectTest() {
-        Response response = target(V1_SEARCH + "/project").queryParam("query", "acme").request()
+        Response response = jersey.target(V1_SEARCH + "/project").queryParam("query", "acme").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -106,7 +103,7 @@ public class SearchResourceTest extends ResourceTest {
 
     @Test
     public void searchComponentTest() {
-        Response response = target(V1_SEARCH + "/component").queryParam("query", "bootstrap").request()
+        Response response = jersey.target(V1_SEARCH + "/component").queryParam("query", "bootstrap").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -117,7 +114,7 @@ public class SearchResourceTest extends ResourceTest {
 
     @Test
     public void searchServiceComponentTest() {
-        Response response = target(V1_SEARCH + "/service").queryParam("query", "stock-ticker").request()
+        Response response = jersey.target(V1_SEARCH + "/service").queryParam("query", "stock-ticker").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -128,7 +125,7 @@ public class SearchResourceTest extends ResourceTest {
 
     @Test
     public void searchLicenseTest() {
-        Response response = target(V1_SEARCH + "/license").queryParam("query", "Apache").request()
+        Response response = jersey.target(V1_SEARCH + "/license").queryParam("query", "Apache").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -139,7 +136,7 @@ public class SearchResourceTest extends ResourceTest {
 
     @Test
     public void searchVulnerabilityTest() {
-        Response response = target(V1_SEARCH + "/vulnerability").queryParam("query", "CVE-2020").request()
+        Response response = jersey.target(V1_SEARCH + "/vulnerability").queryParam("query", "CVE-2020").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -150,7 +147,7 @@ public class SearchResourceTest extends ResourceTest {
 
     @Test
     public void reindexWithBadIndexTypes() {
-        Response response = target(V1_SEARCH + "/reindex").queryParam("type", "BAD_TYPE_1", "BAD_TYPE_2").request()
+        Response response = jersey.target(V1_SEARCH + "/reindex").queryParam("type", "BAD_TYPE_1", "BAD_TYPE_2").request()
                 .header(X_API_KEY, apiKey)
                 .post(null, Response.class);
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -161,7 +158,7 @@ public class SearchResourceTest extends ResourceTest {
 
     @Test
     public void reindexWithMixedIndexTypes() {
-        Response response = target(V1_SEARCH + "/reindex").queryParam("type", "BAD_TYPE_1", IndexManager.IndexType.VULNERABILITY.name(), IndexManager.IndexType.LICENSE).request()
+        Response response = jersey.target(V1_SEARCH + "/reindex").queryParam("type", "BAD_TYPE_1", IndexManager.IndexType.VULNERABILITY.name(), IndexManager.IndexType.LICENSE).request()
                 .header(X_API_KEY, apiKey)
                 .post(null, Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);

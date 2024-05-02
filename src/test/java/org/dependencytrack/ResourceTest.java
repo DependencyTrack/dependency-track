@@ -27,10 +27,6 @@ import alpine.server.auth.PasswordService;
 import alpine.server.persistence.PersistenceManagerFactory;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.QueryManager;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.grizzly.connector.GrizzlyConnectorProvider;
-import org.glassfish.jersey.test.JerseyTest;
-import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -44,7 +40,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ResourceTest extends JerseyTest {
+public abstract class ResourceTest {
 
     protected final String V1_ANALYSIS = "/v1/analysis";
     protected final String V1_BADGE = "/v1/badge";
@@ -110,7 +106,7 @@ public abstract class ResourceTest extends JerseyTest {
     }
 
     @After
-    public void after() {
+    public void after() throws Exception {
         // PersistenceManager will refuse to close when there's an active transaction
         // that was neither committed nor rolled back. Unfortunately some areas of the
         // code base can leave such a broken state behind if they run into unexpected
@@ -121,19 +117,6 @@ public abstract class ResourceTest extends JerseyTest {
         }
 
         PersistenceManagerFactory.tearDown();
-    }
-
-    @Override
-    protected TestContainerFactory getTestContainerFactory() {
-        return new DTGrizzlyWebTestContainerFactory();
-    }
-
-    @Override
-    protected void configureClient(final ClientConfig config) {
-        // Prevent InaccessibleObjectException with JDK >= 16 when performing PATCH requests
-        // using the default HttpUrlConnection connector provider.
-        // See https://github.com/eclipse-ee4j/jersey/issues/4825
-        config.connectorProvider(new GrizzlyConnectorProvider());
     }
 
     public void initializeWithPermissions(Permissions... permissions) {

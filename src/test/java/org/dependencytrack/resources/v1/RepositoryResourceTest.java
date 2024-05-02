@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
@@ -27,11 +28,9 @@ import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.json.JsonArray;
@@ -44,14 +43,11 @@ import java.util.List;
 
 public class RepositoryResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                        new ResourceConfig(RepositoryResource.class)
-                                .register(ApiFilter.class)
-                                .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(RepositoryResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Before
     public void before() throws Exception {
@@ -62,7 +58,7 @@ public class RepositoryResourceTest extends ResourceTest {
 
     @Test
     public void getRepositoriesTest() {
-        Response response = target(V1_REPOSITORY).request()
+        Response response = jersey.target(V1_REPOSITORY).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -81,7 +77,7 @@ public class RepositoryResourceTest extends ResourceTest {
 
     @Test
     public void getRepositoriesByTypeTest() {
-        Response response = target(V1_REPOSITORY + "/MAVEN").request()
+        Response response = jersey.target(V1_REPOSITORY + "/MAVEN").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -108,7 +104,7 @@ public class RepositoryResourceTest extends ResourceTest {
         meta.setLatestVersion("2.0.0");
         meta.setRepositoryType(RepositoryType.MAVEN);
         qm.persist(meta);
-        Response response = target(V1_REPOSITORY + "/latest")
+        Response response = jersey.target(V1_REPOSITORY + "/latest")
                 .queryParam("purl", "pkg:/maven/org.acme/example-component@1.0.0")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -134,7 +130,7 @@ public class RepositoryResourceTest extends ResourceTest {
         meta.setLatestVersion("2.0.0");
         meta.setRepositoryType(RepositoryType.MAVEN);
         qm.persist(meta);
-        Response response = target(V1_REPOSITORY + "/latest")
+        Response response = jersey.target(V1_REPOSITORY + "/latest")
                 .queryParam("purl", "pkg:/generic/org.acme/example-component@1.0.0")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -153,7 +149,7 @@ public class RepositoryResourceTest extends ResourceTest {
         meta.setLatestVersion("2.0.0");
         meta.setRepositoryType(RepositoryType.MAVEN);
         qm.persist(meta);
-        Response response = target(V1_REPOSITORY + "/latest")
+        Response response = jersey.target(V1_REPOSITORY + "/latest")
                 .queryParam("purl", "g:/g/g/g")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -164,7 +160,7 @@ public class RepositoryResourceTest extends ResourceTest {
 
     @Test
     public void getRepositoryMetaUntrackedComponentTest() {
-        Response response = target(V1_REPOSITORY + "/latest")
+        Response response = jersey.target(V1_REPOSITORY + "/latest")
                 .queryParam("purl", "pkg:/maven/org.acme/example-component@1.0.0")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -187,12 +183,12 @@ public class RepositoryResourceTest extends ResourceTest {
         repository.setIdentifier("test");
         repository.setUrl("www.foobar.com");
         repository.setType(RepositoryType.MAVEN);
-        Response response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+        Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
                 .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus());
 
 
-        response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
+        response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(16), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
@@ -219,12 +215,12 @@ public class RepositoryResourceTest extends ResourceTest {
         repository.setUrl("www.foobar.com");
         repository.setType(RepositoryType.MAVEN);
         RepositoryResource repositoryResource = new RepositoryResource();
-        Response response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+        Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
                 .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus());
 
 
-        response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
+        response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(16), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
@@ -249,12 +245,12 @@ public class RepositoryResourceTest extends ResourceTest {
         repository.setIdentifier("test");
         repository.setUrl("www.foobar.com");
         repository.setType(RepositoryType.MAVEN);
-        Response response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+        Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
                 .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus());
 
 
-        response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
+        response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(16), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
@@ -280,7 +276,7 @@ public class RepositoryResourceTest extends ResourceTest {
         repository.setIdentifier("test");
         repository.setUrl("www.foobar.com");
         repository.setType(RepositoryType.MAVEN);
-        Response response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+        Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
                 .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus());
         try (QueryManager qm = new QueryManager()) {
@@ -288,7 +284,7 @@ public class RepositoryResourceTest extends ResourceTest {
             for (Repository repository1 : repositoryList) {
                 if (repository1.getIdentifier().equals("test")) {
                     repository1.setAuthenticationRequired(false);
-                    response = target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                    response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
                             .post(Entity.entity(repository1, MediaType.APPLICATION_JSON));
                     Assert.assertEquals(200, response.getStatus());
                     break;

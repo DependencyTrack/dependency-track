@@ -21,14 +21,13 @@ package org.dependencytrack.resources.v1;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.Project;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
@@ -42,14 +41,11 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 public class ComponentPropertyResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                        new ResourceConfig(ComponentPropertyResource.class)
-                                .register(ApiFilter.class)
-                                .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(ComponentPropertyResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Test
     public void getPropertiesTest() {
@@ -80,7 +76,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         propertyB.setDescription("qux-b");
         qm.persist(propertyB);
 
-        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
@@ -113,7 +109,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
 
     @Test
     public void getPropertiesInvalidTest() {
-        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, UUID.randomUUID())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, UUID.randomUUID())).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
 
@@ -133,7 +129,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -170,7 +166,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -213,7 +209,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         property.setPropertyType(PropertyType.STRING);
         qm.persist(property);
 
-        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -242,7 +238,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -279,7 +275,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Response response = target("%s/%s/property".formatted(V1_COMPONENT, UUID.randomUUID())).request()
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, UUID.randomUUID())).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -315,7 +311,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         property.setPropertyType(PropertyType.STRING);
         qm.persist(property);
 
-        final Response response = target("%s/%s/property/%s".formatted(V1_COMPONENT, component.getUuid(), property.getUuid())).request()
+        final Response response = jersey.target("%s/%s/property/%s".formatted(V1_COMPONENT, component.getUuid(), property.getUuid())).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
 

@@ -24,6 +24,7 @@ import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import com.fasterxml.jackson.core.StreamReadConstraints;
 import org.apache.http.HttpStatus;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.AnalysisResponse;
@@ -44,10 +45,8 @@ import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.json.JsonObject;
@@ -63,21 +62,18 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_ENABLED;
+import static org.hamcrest.CoreMatchers.equalTo;
 
 public class BomResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(BomResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)
-                        .register(MultiPartFeature.class)
-                        .register(JsonMappingExceptionMapper.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(BomResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class)
+                    .register(MultiPartFeature.class)
+                    .register(JsonMappingExceptionMapper.class));
 
     @Test
     public void exportProjectAsCycloneDxTest() {
@@ -87,7 +83,7 @@ public class BomResourceTest extends ResourceTest {
         c.setName("sample-component");
         c.setVersion("1.0");
         Component component = qm.createComponent(c, false);
-        Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid()).request()
+        Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -98,7 +94,7 @@ public class BomResourceTest extends ResourceTest {
 
     @Test
     public void exportProjectAsCycloneDxInvalidTest() {
-        Response response = target(V1_BOM + "/cyclonedx/project/" + UUID.randomUUID()).request()
+        Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + UUID.randomUUID()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -202,7 +198,7 @@ public class BomResourceTest extends ResourceTest {
                 ));
         qm.persist(project);
 
-        final Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .queryParam("variant", "inventory")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -374,7 +370,7 @@ public class BomResourceTest extends ResourceTest {
                 ));
         qm.persist(project);
 
-        final Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .queryParam("variant", "withVulnerabilities")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -568,7 +564,7 @@ public class BomResourceTest extends ResourceTest {
                 ));
         qm.persist(project);
 
-        final Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
                 .queryParam("variant", "vdr")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -705,7 +701,7 @@ public class BomResourceTest extends ResourceTest {
         c.setName("sample-component");
         c.setVersion("1.0");
         Component component = qm.createComponent(c, false);
-        Response response = target(V1_BOM + "/cyclonedx/component/" + component.getUuid()).request()
+        Response response = jersey.target(V1_BOM + "/cyclonedx/component/" + component.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -716,7 +712,7 @@ public class BomResourceTest extends ResourceTest {
 
     @Test
     public void exportComponentAsCycloneDxInvalid() {
-        Response response = target(V1_BOM + "/cyclonedx/component/" + UUID.randomUUID()).request()
+        Response response = jersey.target(V1_BOM + "/cyclonedx/component/" + UUID.randomUUID()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -731,7 +727,7 @@ public class BomResourceTest extends ResourceTest {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(project.getUuid().toString(), null, null, false, bomString);
-        Response response = target(V1_BOM).request()
+        Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -746,7 +742,7 @@ public class BomResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(UUID.randomUUID().toString(), null, null, false, bomString);
-        Response response = target(V1_BOM).request()
+        Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -760,7 +756,7 @@ public class BomResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", true, bomString);
-        Response response = target(V1_BOM).request()
+        Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -776,7 +772,7 @@ public class BomResourceTest extends ResourceTest {
     public void uploadBomUnauthorizedTest() throws Exception {
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", true, bomString);
-        Response response = target(V1_BOM).request()
+        Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(401, response.getStatus(), 0);
@@ -790,7 +786,7 @@ public class BomResourceTest extends ResourceTest {
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         // Upload parent project
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Parent", "1.0", true, bomString);
-        Response response = target(V1_BOM).request()
+        Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -802,7 +798,7 @@ public class BomResourceTest extends ResourceTest {
 
         // Upload first child, search parent by UUID
         request = new BomSubmitRequest(null, "Acme Example", "1.0", true, parentUUID, null, null, bomString);
-        response = target(V1_BOM).request()
+        response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -818,7 +814,7 @@ public class BomResourceTest extends ResourceTest {
 
         // Upload second child, search parent by name+ver
         request = new BomSubmitRequest(null, "Acme Example", "2.0", true, null, "Acme Parent", "1.0", bomString);
-        response = target(V1_BOM).request()
+        response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -833,7 +829,7 @@ public class BomResourceTest extends ResourceTest {
 
         // Upload third child, specify parent's UUID, name, ver. Name and ver are ignored when UUID is specified.
         request = new BomSubmitRequest(null, "Acme Example", "3.0", true, parentUUID, "Non-existent parent", "1.0", bomString);
-        response = target(V1_BOM).request()
+        response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -852,7 +848,7 @@ public class BomResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", true, UUID.randomUUID().toString(), null, null, bomString);
-        Response response = target(V1_BOM).request()
+        Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -860,7 +856,7 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertEquals("The parent component could not be found.", body);
 
         request = new BomSubmitRequest(null, "Acme Example", "2.0", true, null, "Non-existent parent", null, bomString);
-        response = target(V1_BOM).request()
+        response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -901,7 +897,7 @@ public class BomResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        final Response response = target(V1_BOM).request()
+        final Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -953,7 +949,7 @@ public class BomResourceTest extends ResourceTest {
                 </bom>
                 """.getBytes());
 
-        final Response response = target(V1_BOM).request()
+        final Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
@@ -988,7 +984,7 @@ public class BomResourceTest extends ResourceTest {
 
         final String bom = "a".repeat(StreamReadConstraints.DEFAULT_MAX_STRING_LEN + 1);
 
-        final Response response = target(V1_BOM).request()
+        final Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {

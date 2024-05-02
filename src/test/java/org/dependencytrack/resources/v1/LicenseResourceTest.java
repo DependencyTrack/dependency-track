@@ -46,9 +46,11 @@ public class LicenseResourceTest extends ResourceTest {
                     .register(AuthenticationFilter.class));
 
     @Before
-    public void loadDefaultLicenses() {
-        DefaultObjectGenerator dog = new DefaultObjectGenerator();
-        dog.contextInitialized(null);
+    @Override
+    public void before() throws Exception {
+        super.before();
+        final var generator = new DefaultObjectGenerator();
+        generator.loadDefaultLicenses();
     }
 
     @Test

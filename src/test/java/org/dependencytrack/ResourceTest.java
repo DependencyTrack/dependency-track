@@ -19,10 +19,8 @@
 package org.dependencytrack;
 
 import alpine.Config;
-import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
-import alpine.server.auth.JsonWebToken;
 import alpine.server.auth.PasswordService;
 import alpine.server.persistence.PersistenceManagerFactory;
 import org.dependencytrack.auth.Permissions;
@@ -80,12 +78,12 @@ public abstract class ResourceTest {
     protected final String SIZE = "size";
     protected final String TOTAL_COUNT_HEADER = "X-Total-Count";
     protected final String X_API_KEY = "X-Api-Key";
-
     protected final String V1_TAG = "/v1/tag";
 
+    // Hashing is expensive. Do it once and re-use across tests as much as possible.
+    protected static final String TEST_USER_PASSWORD_HASH = new String(PasswordService.createHash("testuser".toCharArray()));
+
     protected QueryManager qm;
-    protected ManagedUser testUser;
-    protected String jwt;
     protected Team team;
     protected String apiKey;
 
@@ -98,10 +96,7 @@ public abstract class ResourceTest {
     public void before() throws Exception {
         // Add a test user and team with API key. Optional if this is used, but its available to all tests.
         this.qm = new QueryManager();
-        testUser = qm.createManagedUser("testuser", String.valueOf(PasswordService.createHash("testuser".toCharArray())));
-        this.jwt = new JsonWebToken().createToken(testUser);
         team = qm.createTeam("Test Users", true);
-        qm.addUserToTeam(testUser, team);
         this.apiKey = team.getApiKeys().get(0).getKey();
     }
 
@@ -124,10 +119,8 @@ public abstract class ResourceTest {
         for (Permissions permission: permissions) {
             permissionList.add(qm.createPermission(permission.name(), null));
         }
-        testUser.setPermissions(permissionList);
         team.setPermissions(permissionList);
         qm.persist(team);
-        testUser = qm.persist(testUser);
     }
 
     protected String getPlainTextBody(Response response) {

@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
-import alpine.server.auth.PasswordService;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.JerseyTestRule;
@@ -52,8 +51,8 @@ public class PermissionResourceTest extends ResourceTest {
     @Before
     public void before() throws Exception {
         super.before();
-        DefaultObjectGenerator generator = new DefaultObjectGenerator();
-        generator.contextInitialized(null);
+        final var generator = new DefaultObjectGenerator();
+        generator.loadDefaultPermissions();
     }
 
     @Test
@@ -72,7 +71,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void addPermissionToUserTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         qm.close();
         Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/" + username).request()
@@ -99,7 +98,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void addPermissionToUserInvalidPermissionTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         qm.close();
         Response response = jersey.target(V1_PERMISSION + "/BLAH/user/" + username).request()
@@ -113,7 +112,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void addPermissionToUserDuplicateTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         Permission permission = qm.getPermission(Permissions.PORTFOLIO_MANAGEMENT.name());
         user.getPermissions().add(permission);
@@ -128,7 +127,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void removePermissionFromUserTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         Permission permission = qm.getPermission(Permissions.PORTFOLIO_MANAGEMENT.name());
         user.getPermissions().add(permission);
@@ -157,7 +156,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void removePermissionFromUserInvalidPermissionTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         qm.close();
         Response response = jersey.target(V1_PERMISSION + "/BLAH/user/" + username).request()
@@ -171,7 +170,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void removePermissionFromUserNoChangesTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         Response response = jersey.target(V1_PERMISSION + "/BOM_UPLOAD/user/" + username).request()
                 .header(X_API_KEY, apiKey)

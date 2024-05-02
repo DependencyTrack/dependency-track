@@ -18,18 +18,13 @@
  */
 package org.dependencytrack.resources.v1;
 
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
-import static org.dependencytrack.resources.v1.FindingResource.MEDIA_TYPE_SARIF_JSON;
-import static org.hamcrest.CoreMatchers.equalTo;
-
 import alpine.Config;
 import alpine.model.About;
 import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import javax.ws.rs.core.HttpHeaders;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -40,29 +35,30 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
+import static org.dependencytrack.resources.v1.FindingResource.MEDIA_TYPE_SARIF_JSON;
+import static org.hamcrest.CoreMatchers.equalTo;
+
 public class FindingResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(FindingResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(FindingResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Test
     public void getFindingsByProjectTest() {
@@ -82,7 +78,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -124,7 +120,7 @@ public class FindingResourceTest extends ResourceTest {
 
     @Test
     public void getFindingsByProjectInvalidTest() {
-        Response response = target(V1_FINDING + "/project/" + UUID.randomUUID().toString()).request()
+        Response response = jersey.target(V1_FINDING + "/project/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -151,7 +147,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString() + "/export").request()
+        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString() + "/export").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -201,7 +197,7 @@ public class FindingResourceTest extends ResourceTest {
 
     @Test
     public void exportFindingsByProjectInvalidTest() {
-        Response response = target(V1_FINDING + "/project/" + UUID.randomUUID().toString() + "/export").request()
+        Response response = jersey.target(V1_FINDING + "/project/" + UUID.randomUUID().toString() + "/export").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -259,7 +255,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -310,7 +306,7 @@ public class FindingResourceTest extends ResourceTest {
 
         Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -356,7 +352,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c3, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING)
+        Response response = jersey.target(V1_FINDING)
                 .queryParam("sortName", "component.projectName")
                 .queryParam("sortOrder", "asc")
                 .request()
@@ -423,7 +419,7 @@ public class FindingResourceTest extends ResourceTest {
             aclToggle.setPropertyValue("true");
             qm.persist(aclToggle);
         }
-        Response response = target(V1_FINDING).request()
+        Response response = jersey.target(V1_FINDING).request()
                 .header(X_API_KEY, team.getApiKeys().get(0).getKey())
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -472,7 +468,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c6, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING + "/grouped").request()
+        Response response = jersey.target(V1_FINDING + "/grouped").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -557,7 +553,7 @@ public class FindingResourceTest extends ResourceTest {
             aclToggle.setPropertyValue("true");
             qm.persist(aclToggle);
         }
-        Response response = target(V1_FINDING + "/grouped").request()
+        Response response = jersey.target(V1_FINDING + "/grouped").request()
                 .header(X_API_KEY, team.getApiKeys().get(0).getKey())
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -616,7 +612,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v3, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
 
-        Response response = target(V1_FINDING + "/project/" + project.getUuid().toString()).request()
+        Response response = jersey.target(V1_FINDING + "/project/" + project.getUuid().toString()).request()
             .header(HttpHeaders.ACCEPT, MEDIA_TYPE_SARIF_JSON)
             .header(X_API_KEY, apiKey)
             .get(Response.class);

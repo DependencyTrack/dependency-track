@@ -20,13 +20,12 @@ package org.dependencytrack.resources.v1;
 
 import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Project;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
@@ -41,13 +40,10 @@ import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BADGE_EN
 
 public class BadgeResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                        new ResourceConfig(BadgeResource.class)
-                                .register(ApiFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(BadgeResource.class)
+                    .register(ApiFilter.class));
 
     @Override
     public void before() throws Exception {
@@ -58,7 +54,7 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectVulnerabilitiesByUuidTest() {
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
-        Response response = target(V1_BADGE + "/vulns/project/" + project.getUuid()).request()
+        Response response = jersey.target(V1_BADGE + "/vulns/project/" + project.getUuid()).request()
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
@@ -68,14 +64,14 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectVulnerabilitiesByUuidProjectDisabledTest() {
         disableBadge();
-        Response response = target(V1_BADGE + "/vulns/project/" + UUID.randomUUID()).request()
+        Response response = jersey.target(V1_BADGE + "/vulns/project/" + UUID.randomUUID()).request()
                 .get(Response.class);
         Assert.assertEquals(204, response.getStatus(), 0);
     }
 
     @Test
     public void projectVulnerabilitiesByUuidProjectNotFoundTest() {
-        Response response = target(V1_BADGE + "/vulns/project/" + UUID.randomUUID()).request()
+        Response response = jersey.target(V1_BADGE + "/vulns/project/" + UUID.randomUUID()).request()
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
     }
@@ -83,7 +79,7 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectVulnerabilitiesByNameAndVersionTest() {
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
-        Response response = target(V1_BADGE + "/vulns/project/Acme%20Example/1.0.0").request()
+        Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example/1.0.0").request()
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
@@ -93,14 +89,14 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectVulnerabilitiesByNameAndVersionDisabledTest() {
         disableBadge();
-        Response response = target(V1_BADGE + "/vulns/project/ProjectNameDoesNotExist/1.0.0").request()
+        Response response = jersey.target(V1_BADGE + "/vulns/project/ProjectNameDoesNotExist/1.0.0").request()
                 .get(Response.class);
         Assert.assertEquals(204, response.getStatus(), 0);
     }
 
     @Test
     public void projectVulnerabilitiesByNameAndVersionProjectNotFoundTest() {
-        Response response = target(V1_BADGE + "/vulns/project/ProjectNameDoesNotExist/1.0.0").request()
+        Response response = jersey.target(V1_BADGE + "/vulns/project/ProjectNameDoesNotExist/1.0.0").request()
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
     }
@@ -108,7 +104,7 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectVulnerabilitiesByNameAndVersionVersionNotFoundTest() {
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
-        Response response = target(V1_BADGE + "/vulns/project/Acme%20Example/1.2.0").request()
+        Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example/1.2.0").request()
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
     }
@@ -116,7 +112,7 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectPolicyViolationsByUuidTest() {
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
-        Response response = target(V1_BADGE + "/violations/project/" + project.getUuid()).request()
+        Response response = jersey.target(V1_BADGE + "/violations/project/" + project.getUuid()).request()
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
@@ -126,14 +122,14 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectPolicyViolationsByUuidProjectDisabledTest() {
         disableBadge();
-        Response response = target(V1_BADGE + "/violations/project/" + UUID.randomUUID()).request()
+        Response response = jersey.target(V1_BADGE + "/violations/project/" + UUID.randomUUID()).request()
                 .get(Response.class);
         Assert.assertEquals(204, response.getStatus(), 0);
     }
 
     @Test
     public void projectPolicyViolationsByUuidProjectNotFoundTest() {
-        Response response = target(V1_BADGE + "/violations/project/" + UUID.randomUUID()).request()
+        Response response = jersey.target(V1_BADGE + "/violations/project/" + UUID.randomUUID()).request()
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
     }
@@ -141,7 +137,7 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectPolicyViolationsByNameAndVersionTest() {
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
-        Response response = target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0").request()
+        Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0").request()
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
@@ -151,14 +147,14 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectPolicyViolationsByNameAndVersionDisabledTest() {
         disableBadge();
-        Response response = target(V1_BADGE + "/violations/project/ProjectNameDoesNotExist/1.0.0").request()
+        Response response = jersey.target(V1_BADGE + "/violations/project/ProjectNameDoesNotExist/1.0.0").request()
                 .get(Response.class);
         Assert.assertEquals(204, response.getStatus(), 0);
     }
 
     @Test
     public void projectPolicyViolationsByNameAndVersionProjectNotFoundTest() {
-        Response response = target(V1_BADGE + "/violations/project/ProjectNameDoesNotExist/1.0.0").request()
+        Response response = jersey.target(V1_BADGE + "/violations/project/ProjectNameDoesNotExist/1.0.0").request()
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
     }
@@ -166,7 +162,7 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectPolicyViolationsByNameAndVersionVersionNotFoundTest() {
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
-        Response response = target(V1_BADGE + "/violations/project/Acme%20Example/1.2.0").request()
+        Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.2.0").request()
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
     }

@@ -21,7 +21,9 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
+import alpine.model.ManagedUser;
 import alpine.model.Team;
+import alpine.server.auth.JsonWebToken;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.JerseyTestRule;
@@ -114,6 +116,8 @@ public class TeamResourceTest extends ResourceTest {
         Assert.assertEquals(401, response.getStatus());
 
         // not an api-key
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        final String jwt = new JsonWebToken().createToken(testUser);
         response = jersey.target(V1_TEAM + "/self").request().header("Authorization", "Bearer " + jwt).get(Response.class);
         Assert.assertEquals(400, response.getStatus());
     }

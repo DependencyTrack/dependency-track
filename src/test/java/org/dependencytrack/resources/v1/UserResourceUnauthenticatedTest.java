@@ -25,6 +25,7 @@ import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -39,6 +40,15 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
     public static JerseyTestRule jersey = new JerseyTestRule(
             new ResourceConfig(UserResource.class)
                     .register(ApiFilter.class));
+
+    private ManagedUser testUser;
+
+    @Before
+    public void before() throws Exception {
+        super.before();
+        testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        qm.addUserToTeam(testUser, team);
+    }
 
     @Test
     public void validateCredentialsTest() {

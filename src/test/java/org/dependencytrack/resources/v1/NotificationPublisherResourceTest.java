@@ -19,7 +19,6 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
-import alpine.model.ConfigProperty;
 import alpine.notification.NotificationLevel;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
@@ -58,8 +57,8 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     @Before
     public void before() throws Exception {
         super.before();
-        DefaultObjectGenerator generator = new DefaultObjectGenerator();
-        generator.contextInitialized(null);
+        final var generator = new DefaultObjectGenerator();
+        generator.loadDefaultNotificationPublishers();
     }
 
     @Test
@@ -346,13 +345,13 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         slackPublisher.setName(slackPublisher.getName()+" Updated");
         qm.persist(slackPublisher);
         qm.detach(NotificationPublisher.class, slackPublisher.getId());
-        ConfigProperty property = qm.getConfigProperty(
+        qm.createConfigProperty(
                 ConfigPropertyConstants.NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED.getGroupName(),
-                ConfigPropertyConstants.NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED.getPropertyName()
+                ConfigPropertyConstants.NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED.getDescription()
         );
-        property.setPropertyValue("true");
-        qm.persist(property);
-        qm.detach(ConfigProperty.class, property.getId());
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/restoreDefaultTemplates").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));

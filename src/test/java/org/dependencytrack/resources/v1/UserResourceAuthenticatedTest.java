@@ -22,7 +22,7 @@ import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
 import alpine.model.Team;
-import alpine.server.auth.PasswordService;
+import alpine.server.auth.JsonWebToken;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.JerseyTestRule;
@@ -31,6 +31,7 @@ import org.dependencytrack.model.IdentifiableObject;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -49,11 +50,21 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
+    private ManagedUser testUser;
+    private String jwt;
+
+    @Before
+    public void before() throws Exception {
+        super.before();
+        testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        this.jwt = new JsonWebToken().createToken(testUser);
+        qm.addUserToTeam(testUser, team);
+    }
+
     @Test
     public void getManagedUsersTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
         for (int i=0; i<1000; i++) {
-            qm.createManagedUser("managed-user-" + i, hashedPassword);
+            qm.createManagedUser("managed-user-" + i, TEST_USER_PASSWORD_HASH);
         }
         Response response = jersey.target(V1_USER + "/managed").request()
                 .header(X_API_KEY, apiKey)
@@ -351,7 +362,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void createManagedUserDuplicateUsernameTest() {
-        qm.createManagedUser("blackbeard", String.valueOf(PasswordService.createHash("password".toCharArray())));
+        qm.createManagedUser("blackbeard", TEST_USER_PASSWORD_HASH);
         ManagedUser user = new ManagedUser();
         user.setFullname("Captain BlackBeard");
         user.setEmail("blackbeard@example.com");
@@ -369,8 +380,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void updateManagedUserTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         ManagedUser user = new ManagedUser();
         user.setUsername("blackbeard");
         user.setFullname("Dr BlackBeard, Ph.D.");
@@ -394,8 +404,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void updateManagedUserInvalidFullnameTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         ManagedUser user = new ManagedUser();
         user.setUsername("blackbeard");
         user.setFullname("");
@@ -414,8 +423,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void updateManagedUserInvalidEmailTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         ManagedUser user = new ManagedUser();
         user.setUsername("blackbeard");
         user.setFullname("Captain BlackBeard");
@@ -434,8 +442,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void updateManagedUserInvalidUsernameTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         ManagedUser user = new ManagedUser();
         user.setUsername("");
         user.setFullname("Captain BlackBeard");
@@ -454,8 +461,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void deleteManagedUserTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         ManagedUser user = new ManagedUser();
         user.setUsername("blackbeard");
         Response response = jersey.target(V1_USER + "/managed").request()
@@ -495,8 +501,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void addTeamToUserTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         Team team = qm.createTeam("Pirates", false);
         IdentifiableObject ido = new IdentifiableObject();
         ido.setUuid(team.getUuid().toString());
@@ -518,8 +523,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void addTeamToUserInvalidTeamTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         IdentifiableObject ido = new IdentifiableObject();
         ido.setUuid(UUID.randomUUID().toString());
         ManagedUser user = new ManagedUser();
@@ -551,9 +555,8 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void addTeamToUserDuplicateMembershipTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
         Team team = qm.createTeam("Pirates", false);
-        ManagedUser user = qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        ManagedUser user = qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         qm.addUserToTeam(user, team);
         IdentifiableObject ido = new IdentifiableObject();
         ido.setUuid(team.getUuid().toString());
@@ -569,9 +572,8 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void removeTeamFromUserTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
         Team team = qm.createTeam("Pirates", false);
-        ManagedUser user = qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        ManagedUser user = qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         qm.addUserToTeam(user, team);
         IdentifiableObject ido = new IdentifiableObject();
         ido.setUuid(team.getUuid().toString());

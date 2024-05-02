@@ -65,8 +65,8 @@ public class NotificationRuleResourceTest extends ResourceTest {
     @Before
     public void before() throws Exception {
         super.before();
-        DefaultObjectGenerator generator = new DefaultObjectGenerator();
-        generator.contextInitialized(null);
+        final var generator = new DefaultObjectGenerator();
+        generator.loadDefaultNotificationPublishers();
     }
 
     @Test

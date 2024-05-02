@@ -19,8 +19,10 @@
 package org.dependencytrack.tasks;
 
 import alpine.common.logging.Logger;
+import alpine.common.util.UrlUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.cyclonedx.BomParserFactory;
@@ -220,7 +222,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)
                         .group(NotificationGroup.BOM_PROCESSED)
-                        .title(NotificationConstants.Title.BOM_PROCESSED)
+                        .title(NotificationConstants.Title.BOM_PROCESSED + " on Project: [" + event.getProject().getName() + "]")
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("A " + bomFormat.getFormatShortName() + " BOM was processed")
                         .subject(new BomConsumedOrProcessed(detachedProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
@@ -229,12 +231,16 @@ public class BomUploadProcessingTask implements Subscriber {
                 if (bomProcessingFailedProject != null) {
                     bomProcessingFailedProject = qm.detach(Project.class, bomProcessingFailedProject.getId());
                 }
+                final ConfigProperty baseUrlProperty = qm.getConfigProperty(
+                    ConfigPropertyConstants.GENERAL_BASE_URL.getGroupName(),
+                    ConfigPropertyConstants.GENERAL_BASE_URL.getPropertyName()
+                );
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)
                         .group(NotificationGroup.BOM_PROCESSING_FAILED)
-                        .title(NotificationConstants.Title.BOM_PROCESSING_FAILED)
+                        .title(NotificationConstants.Title.BOM_PROCESSING_FAILED + " on Project: [" + event.getProject().getName() + "]")
                         .level(NotificationLevel.ERROR)
-                        .content("An error occurred while processing a BOM")
+                        .content("An error occurred while processing a BOM: " + UrlUtil.normalize(baseUrlProperty.getPropertyValue()) + "/projects/" + event.getProject().getUuid())
                         .subject(new BomProcessingFailed(bomProcessingFailedProject, Base64.getEncoder().encodeToString(bomBytes), ex.getMessage(), bomProcessingFailedBomFormat, bomProcessingFailedBomVersion)));
             } finally {
                 qm.commitSearchIndex(true, Component.class);

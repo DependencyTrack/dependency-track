@@ -22,14 +22,19 @@ import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ScheduledNotificationRule;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+
+import java.time.ZonedDateTime;
 import java.util.List;
 
 public class NotificationQueryManager extends QueryManager implements IQueryManager {
@@ -73,6 +78,29 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
     }
 
     /**
+     * Creates a new ScheduledNotificationRule.
+     * @param name the name of the rule
+     * @param scope the scope
+     * @param level the level
+     * @param publisher the publisher
+     * @return a new ScheduledNotificationRule
+     */
+    public ScheduledNotificationRule createScheduledNotificationRule(String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
+        final ScheduledNotificationRule rule = new ScheduledNotificationRule();
+        rule.setName(name);
+        rule.setScope(scope);
+        rule.setNotificationLevel(level);
+        rule.setPublisher(publisher);
+        rule.setEnabled(true);
+        rule.setNotifyChildren(true);
+        rule.setLogSuccessfulPublish(false);
+        rule.setCronConfig(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue());
+        rule.setLastExecutionTime(ZonedDateTime.now());
+        rule.setPublishOnlyWithUpdates(false);
+        return persist(rule);
+    }
+
+    /**
      * Updated an existing NotificationRule.
      * @param transientRule the rule to update
      * @return a NotificationRule
@@ -88,6 +116,26 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setNotifyOn(transientRule.getNotifyOn());
         return persist(rule);
     }
+    
+    /**
+     * Updated an existing ScheduledNotificationRule.
+     * @param transientRule the rule to update
+     * @return a ScheduledNotificationRule
+     */
+    public ScheduledNotificationRule updateScheduledNotificationRule(ScheduledNotificationRule transientRule) {
+        final ScheduledNotificationRule rule = getObjectByUuid(ScheduledNotificationRule.class, transientRule.getUuid());
+        rule.setName(transientRule.getName());
+        rule.setEnabled(transientRule.isEnabled());
+        rule.setNotifyChildren(transientRule.isNotifyChildren());
+        rule.setLogSuccessfulPublish(transientRule.isLogSuccessfulPublish());
+        rule.setNotificationLevel(transientRule.getNotificationLevel());
+        rule.setPublisherConfig(transientRule.getPublisherConfig());
+        rule.setNotifyOn(transientRule.getNotifyOn());
+        rule.setCronConfig(transientRule.getCronConfig());
+        rule.setLastExecutionTime(transientRule.getLastExecutionTime());
+        rule.setPublishOnlyWithUpdates(transientRule.getPublishOnlyWithUpdates());
+        return persist(rule);
+    }
 
     /**
      * Returns a paginated list of all notification rules.
@@ -95,6 +143,23 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      */
     public PaginatedResult getNotificationRules() {
         final Query<NotificationRule> query = pm.newQuery(NotificationRule.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
+        if (filter != null) {
+            query.setFilter("name.toLowerCase().matches(:name) || publisher.name.toLowerCase().matches(:name)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
+    }
+    
+    /**
+     * Returns a paginated list of all scheduled notification rules.
+     * @return a paginated list of ScheduledNotificationRules
+     */
+    public PaginatedResult getScheduledNotificationRules() {
+        final Query<ScheduledNotificationRule> query = pm.newQuery(ScheduledNotificationRule.class);
         if (orderBy == null) {
             query.setOrdering("name asc");
         }

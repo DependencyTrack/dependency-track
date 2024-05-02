@@ -64,6 +64,7 @@ import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.ScheduledNotificationRule;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vex;
@@ -1223,6 +1224,18 @@ public class QueryManager extends AlpineQueryManager {
 
     public void removeTeamFromNotificationRules(final Team team) {
         getNotificationQueryManager().removeTeamFromNotificationRules(team);
+    }
+
+    public ScheduledNotificationRule createScheduledNotificationRule(String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
+        return getNotificationQueryManager().createScheduledNotificationRule(name, scope, level, publisher);
+    }
+
+    public ScheduledNotificationRule updateScheduledNotificationRule(ScheduledNotificationRule transientRule) {
+        return getNotificationQueryManager().updateScheduledNotificationRule(transientRule);
+    }
+
+    public PaginatedResult getScheduledNotificationRules() {
+        return getNotificationQueryManager().getScheduledNotificationRules();
     }
 
     /**

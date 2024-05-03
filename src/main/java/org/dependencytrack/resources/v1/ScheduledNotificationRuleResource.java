@@ -103,7 +103,9 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
     public Response createScheduledNotificationRule(ScheduledNotificationRule jsonRule) {
         final Validator validator = super.getValidator();
         failOnValidationError(
-                validator.validateProperty(jsonRule, "name")
+            validator.validateProperty(jsonRule, "name"),
+            validator.validateProperty(jsonRule, "cronConfig"),
+            validator.validateProperty(jsonRule, "lastExecutionTime")
         );
 
         try (QueryManager qm = new QueryManager()) {
@@ -141,7 +143,9 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonRule, "name"),
-                validator.validateProperty(jsonRule, "publisherConfig")
+                validator.validateProperty(jsonRule, "publisherConfig"),
+                validator.validateProperty(jsonRule, "cronConfig"),
+                validator.validateProperty(jsonRule, "lastExecutionTime")
         );
 
         try (QueryManager qm = new QueryManager()) {

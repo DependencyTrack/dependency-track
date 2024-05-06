@@ -455,6 +455,9 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         componentB.setVersion("2.0.0");
         qm.persist(componentB);
 
+        final Component transientComponentA = qm.makeTransient(componentA);
+        final Component transientComponentB = qm.makeTransient(componentB);
+
         final byte[] bomBytes = """
                 {
                   "bomFormat": "CycloneDX",
@@ -494,7 +497,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                     assertThat(indexEvent.getIndexableClass()).isEqualTo(Component.class);
                     assertThat(indexEvent.getAction()).isEqualTo(IndexEvent.Action.UPDATE);
                     final var searchDoc = (ComponentDocument) indexEvent.getDocument();
-                    assertThat(searchDoc.uuid()).isEqualTo(componentA.getUuid());
+                    assertThat(searchDoc.uuid()).isEqualTo(transientComponentA.getUuid());
                 },
                 event -> {
                     assertThat(event).isInstanceOf(IndexEvent.class);
@@ -502,7 +505,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                     assertThat(indexEvent.getIndexableClass()).isEqualTo(Component.class);
                     assertThat(indexEvent.getAction()).isEqualTo(IndexEvent.Action.DELETE);
                     final var searchDoc = (ComponentDocument) indexEvent.getDocument();
-                    assertThat(searchDoc.uuid()).isEqualTo(componentB.getUuid());
+                    assertThat(searchDoc.uuid()).isEqualTo(transientComponentB.getUuid());
                 },
                 event -> {
                     assertThat(event).isInstanceOf(IndexEvent.class);

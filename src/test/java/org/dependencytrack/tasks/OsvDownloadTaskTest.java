@@ -285,6 +285,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
                  }
                 """)));
 
+        qm.getPersistenceManager().evictAll();
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.GITHUB, "GHSA-57j2-w4cx-62h2");
         assertThat(vuln).isNotNull();
 

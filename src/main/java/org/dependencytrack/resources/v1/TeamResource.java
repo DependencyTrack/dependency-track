@@ -272,7 +272,7 @@ public class TeamResource extends AlpineResource {
         try (final var qm = new QueryManager()) {
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
 
-            return qm.runInTransaction(() -> {
+            return qm.callInTransaction(() -> {
                 final ApiKey apiKey = qm.getApiKey(key);
                 if (apiKey == null) {
                     return Response

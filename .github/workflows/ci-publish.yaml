@@ -38,6 +38,7 @@ jobs:
     with:
       app-version: ${{ needs.read-version.outputs.version }}
       publish-container: true
+      ref-name: ${{ github.ref_name }}
     permissions:
       security-events: write # Required to upload trivy's SARIF output
     secrets:

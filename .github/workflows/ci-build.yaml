@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'master'          # Default branch
+      - 'feature-**'      # Feature branches
       - '[0-9]+.[0-9]+.x' # Release branches
     paths-ignore:
       - '**/*.md'
@@ -11,6 +12,7 @@ on:
   pull_request:
     branches:
       - 'master'          # Default branch
+      - 'feature-**'      # Feature branches
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -23,7 +25,8 @@ jobs:
     uses: ./.github/workflows/_meta-build.yaml
     with:
       app-version: "snapshot"
-      publish-container: ${{ github.ref == 'refs/heads/master' }}
+      publish-container: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'feature-') }}
+      ref-name: ${{ github.ref_name }}
     permissions:
       security-events: write # Required to upload trivy's SARIF output
     secrets:

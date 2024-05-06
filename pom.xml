@@ -83,11 +83,12 @@
         <!-- Dependency Versions -->
         <frontend.version>4.10.0</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
-        <lib.awaitility.version>4.2.0</lib.awaitility.version>
-        <lib.checkstyle.version>10.12.5</lib.checkstyle.version>
+        <lib.awaitility.version>4.2.1</lib.awaitility.version>
+        <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
+        <lib.checkstyle.version>10.16.0</lib.checkstyle.version>
         <lib.cloud-sql-connector-jdbc-sqlserver.version>1.18.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
-        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.16.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
-        <lib.cloud-sql-postgres-socket-factory.version>1.16.0</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.18.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.18.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.26.1</lib.commons-compress.version>
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
@@ -95,26 +96,30 @@
         <lib.cyclonedx-java.version>8.0.3</lib.cyclonedx-java.version>
         <lib.greenmail.version>1.6.15</lib.greenmail.version>
         <lib.jaxb.runtime.version>2.3.9</lib.jaxb.runtime.version>
+        <lib.json-java.version>20240303</lib.json-java.version>
         <lib.json-unit.version>3.2.7</lib.json-unit.version>
         <lib.lucene.version>8.11.3</lib.lucene.version>
+        <lib.maven-artifact.version>3.9.6</lib.maven-artifact.version>
         <lib.mockserver-netty.version>5.15.0</lib.mockserver-netty.version>
         <lib.open-vulnerability-clients.version>6.0.1</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>3.2.2</lib.pebble.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
+        <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.testcontainers.version>1.19.7</lib.testcontainers.version>
-        <lib.woodstox.version>6.6.0</lib.woodstox.version>
+        <lib.wiremock.version>2.35.2</lib.wiremock.version>
+        <lib.woodstox.version>6.6.2</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.httpclient5.version>5.3.1</lib.httpclient5.version>
         <lib.log4j-over-slf4j.version>2.0.13</lib.log4j-over-slf4j.version>
-        <lib.org-kohsuke-github-api.version>1.318</lib.org-kohsuke-github-api.version>
+        <lib.org-kohsuke-github-api.version>1.321</lib.org-kohsuke-github-api.version>
         <lib.com-asahaf-javacron.version>1.4.0</lib.com-asahaf-javacron.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.6.1.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.7.2</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.postgresql.version>42.7.3</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
@@ -202,7 +207,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20240303</version>
+            <version>${lib.json-java.version}</version>
         </dependency>
 
         <dependency>
@@ -265,14 +270,12 @@
             <groupId>oauth.signpost</groupId>
             <artifactId>signpost-core</artifactId>
             <version>${lib.signpost-core.version}</version>
-            <scope>compile</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.brotli/dec -->
         <dependency>
             <groupId>org.brotli</groupId>
             <artifactId>dec</artifactId>
-            <version>0.1.2</version>
+            <version>${lib.brotli-decoder.version}</version>
         </dependency>
 
         <dependency>
@@ -290,7 +293,7 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
-            <version>3.9.6</version>
+            <version>${lib.maven-artifact.version}</version>
         </dependency>
 
         <dependency>
@@ -398,6 +401,7 @@
             <groupId>pl.pragmatists</groupId>
             <artifactId>JUnitParams</artifactId>
             <version>${lib.junit-params.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>
@@ -421,13 +425,13 @@
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-jre8</artifactId>
-            <version>2.35.2</version>
+            <version>${lib.wiremock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.github.stefanbirkner</groupId>
             <artifactId>system-rules</artifactId>
-            <version>1.19.0</version>
+            <version>${lib.system-rules.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

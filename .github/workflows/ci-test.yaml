@@ -44,8 +44,8 @@ jobs:
 
       - name: Execute unit tests
         run: |-
-          mvn clean
-          mvn test -P enhance
+          mvn -B --no-transfer-progress clean
+          mvn -B --no-transfer-progress test -P enhance
 
       # Publishing coverage to Codacy is only possible for builds of push events.
       # PRs from forks do not get access to repository secrets.

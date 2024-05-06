@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks;
 
 import alpine.common.logging.Logger;
+import alpine.persistence.Transaction;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
@@ -46,9 +47,7 @@ abstract class AbstractNistMirrorTask {
     Vulnerability synchronizeVulnerability(final QueryManager qm, final Vulnerability vuln) {
         PersistenceUtil.assertNonPersistent(vuln, "vuln must not be persistent");
 
-        return qm.runInTransaction(trx -> {
-            trx.setSerializeRead(true); // SELECT ... FOR UPDATE
-
+        return qm.callInTransaction(Transaction.defaultOptions().withSerializeRead(true), () -> {
             Vulnerability persistentVuln = getVulnerabilityByCveId(qm, vuln.getVulnId());
             if (persistentVuln == null) {
                 persistentVuln = qm.getPersistenceManager().makePersistent(vuln);
@@ -70,9 +69,7 @@ abstract class AbstractNistMirrorTask {
         assertPersistent(persistentVuln, "vuln must be persistent");
         assertNonPersistentAll(vsList, "vsList must not be persistent");
 
-        qm.runInTransaction(tx -> {
-            tx.setSerializeRead(false);
-
+        qm.runInTransaction(() -> {
             // Get all VulnerableSoftware records that are currently associated with the vulnerability.
             // Note: For SOME ODD REASON, duplicate (as in, same database ID and all) VulnerableSoftware
             // records are returned, when operating on data that was originally created by the feed-based

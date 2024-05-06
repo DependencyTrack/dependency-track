@@ -56,6 +56,7 @@ public class ProjectProperty implements IConfigProperty, Serializable {
 
     @Persistent
     @Column(name = "PROJECT_ID", allowsNull = "false")
+    @JsonIgnore
     private Project project;
 
     @Persistent

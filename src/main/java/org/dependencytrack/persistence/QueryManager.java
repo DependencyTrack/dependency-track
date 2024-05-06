@@ -98,9 +98,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -1452,59 +1449,6 @@ public class QueryManager extends AlpineQueryManager {
         final Query<T> query = pm.newQuery(clazz, ":uuids.contains(uuid)");
         query.setParameters(uuids);
         return query;
-    }
-
-    /**
-     * Convenience method to execute a given {@link Runnable} within the context of a {@link Transaction}.
-     * <p>
-     * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
-     *
-     * @param runnable The {@link Runnable} to execute
-     * @since 4.6.0
-     */
-    public void runInTransaction(final Runnable runnable) {
-        runInTransaction((Function<Transaction, Void>) trx -> {
-            runnable.run();
-            return null;
-        });
-    }
-
-    public void runInTransaction(final Consumer<Transaction> consumer) {
-        runInTransaction((Function<Transaction, Void>) trx -> {
-            consumer.accept(trx);
-            return null;
-        });
-    }
-
-    /**
-     * Convenience method to execute a given {@link Supplier} within the context of a {@link Transaction}.
-     * <p>
-     * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
-     *
-     * @param supplier The {@link Supplier} to execute
-     * @since 4.9.0
-     */
-    public <T> T runInTransaction(final Supplier<T> supplier) {
-        return runInTransaction((Function<Transaction, T>) trx -> supplier.get());
-    }
-
-    public <T> T runInTransaction(final Function<Transaction, T> function) {
-        final Transaction trx = pm.currentTransaction();
-        final boolean isJoiningExisting = trx.isActive();
-        try {
-            if (!isJoiningExisting) {
-                trx.begin();
-            }
-            final T result = function.apply(trx);
-            if (!isJoiningExisting) {
-                trx.commit();
-            }
-            return result;
-        } finally {
-            if (!isJoiningExisting && trx.isActive()) {
-                trx.rollback();
-            }
-        }
     }
 
     /**

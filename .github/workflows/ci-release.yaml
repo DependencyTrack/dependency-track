@@ -61,7 +61,7 @@ jobs:
           cache: 'maven'
 
       - name: Set Version
-        run: mvn versions:set -DnewVersion=${VERSION}
+        run: mvn -B --no-transfer-progress versions:set -DnewVersion=${VERSION}
 
       - name: Commit Version
         env:
@@ -123,7 +123,7 @@ jobs:
           ref: ${{ needs.prepare-release.outputs.release-branch }}
 
       - name: Set SNAPSHOT Version after Release
-        run: mvn versions:set -DnewVersion=${NEXT_VERSION}
+        run: mvn -B --no-transfer-progress versions:set -DnewVersion=${NEXT_VERSION}
 
       - name: Commit SNAPSHOT Version
         env:

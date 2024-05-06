@@ -41,6 +41,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
@@ -94,8 +95,10 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                 case HIGHEST_SEMVER_CHILD -> this.updateHighestSemVerChildCollectionMetrics(project, pm, counters);
             }
 
+            AtomicBoolean metricsChanged = new AtomicBoolean(false);
             qm.runInTransaction(() -> {
                 final ProjectMetrics latestMetrics = qm.getMostRecentProjectMetrics(project);
+                metricsChanged.set(counters.hasChanged(latestMetrics));
                 if (!counters.hasChanged(latestMetrics)) {
                     LOGGER.debug("Metrics of project " + uuid + " did not change");
                     latestMetrics.setLastOccurrence(counters.measuredAt);
@@ -116,7 +119,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                     DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
 
             Project parent = project.getParent();
-            if(parent != null && parent.getCollectionLogic() != ProjectCollectionLogic.NONE) {
+            if(parent != null && parent.getCollectionLogic() != ProjectCollectionLogic.NONE && metricsChanged.get()) {
                 LOGGER.debug("Scheduling metrics update of project's parent collection " + parent.getUuid());
                 Event.dispatch(new ProjectMetricsUpdateEvent(parent.getUuid()));
             }

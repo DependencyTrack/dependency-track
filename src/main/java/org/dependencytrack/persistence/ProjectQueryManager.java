@@ -534,11 +534,20 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         project.setDescription(transientProject.getDescription());
         project.setVersion(transientProject.getVersion());
         project.setClassifier(transientProject.getClassifier());
-        project.setCollectionLogic(transientProject.getCollectionLogic());
         project.setCpe(transientProject.getCpe());
         project.setPurl(transientProject.getPurl());
         project.setSwidTagId(transientProject.getSwidTagId());
         project.setExternalReferences(transientProject.getExternalReferences());
+
+        // prevent illegal states of collection projects (must not contain components or services)
+        if(transientProject.getCollectionLogic() != null
+                && !project.getCollectionLogic().equals(transientProject.getCollectionLogic())) {
+            if(!transientProject.getCollectionLogic().equals(ProjectCollectionLogic.NONE)
+                    && (hasComponents(project) || hasServiceComponents(project))) {
+                throw new IllegalArgumentException("Project cannot be made a collection project while it has components or services!");
+            }
+            project.setCollectionLogic(transientProject.getCollectionLogic());
+        }
 
         if (Boolean.TRUE.equals(project.isActive()) && !Boolean.TRUE.equals(transientProject.isActive()) && hasActiveChild(project)){
             throw new IllegalArgumentException("Project cannot be set to inactive if active children are present.");
@@ -590,6 +599,11 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             } else {
                 project.setCollectionTag(null);
             }
+            // Force loading parent. This seems useless but somehow the code block above magically unloads the parent,
+            // making it missing in the API response. Following line enforces it to be available again.
+            // For reference see following Unit Test which would fail without this:
+            // org.dependencytrack.resources.v1.ProjectResourceTest.patchProjectParentTest
+            project.getParent();
 
             return persist(project);
         });

@@ -242,6 +242,18 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
         query.deletePersistentAll(project);
     }
 
+    @Override
+    public boolean hasServiceComponents(final Project project) {
+        final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project");
+        query.setParameters(project);
+        query.setResult("count(this)");
+        try {
+            return query.executeResultUnique(Long.class) > 0;
+        } finally {
+            query.closeAll();
+        }
+    }
+
     /**
      * Deletes a ServiceComponent and all objects dependant on the service.
      * @param service the ServiceComponent to delete

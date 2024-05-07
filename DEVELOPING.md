@@ -359,7 +359,7 @@ and giving the rest of the team write permissions to their repository.
 
 To address the use cases above, contributors to the Dependency-Track project can request a *feature branch*
 from a maintainer. Feature branches follow the `feature-*` naming pattern, and are subject to branch protection rules.
-Just like for the `maser` branch, changes pushed to a `feature` branch trigger a container image build.
+Just like for the `master` branch, changes pushed to a `feature` branch trigger a container image build.
 Images built from `feature` branches are tagged with the name of the branch, for example for a branch named `feature-foobar`:
 
 ```

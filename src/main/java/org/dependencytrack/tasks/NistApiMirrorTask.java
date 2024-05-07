@@ -146,13 +146,12 @@ public class NistApiMirrorTask extends AbstractNistMirrorTask implements Subscri
                 .namingPattern(getClass().getSimpleName() + "-%d")
                 .uncaughtExceptionHandler(new LoggableUncaughtExceptionHandler())
                 .build();
-        final var executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), factory);
 
         final long startTimeNs = System.nanoTime();
         final var numMirrored = new AtomicInteger(0);
         ZonedDateTime lastModified;
         try (final NvdCveClient client = createApiClient(apiUrl, apiKey, lastModifiedEpochSeconds)) {
-            try {
+            try (final var executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), factory)) {
                 while (client.hasNext()) {
                     for (final DefCveItem defCveItem : client.next()) {
                         final CveItem cveItem = defCveItem.getCve();
@@ -184,28 +183,6 @@ public class NistApiMirrorTask extends AbstractNistMirrorTask implements Subscri
                                 }
                             }
                         });
-                    }
-                }
-            } finally {
-                // Copied from ExecutorService#close (available since JDK 19).
-                // This code can be replaced with try-with-resources after upgrade to Java 21.
-                // https://github.com/openjdk/jdk/blob/890adb6410dab4606a4f26a942aed02fb2f55387/src/java.base/share/classes/java/util/concurrent/ExecutorService.java#L410-L429
-                boolean terminated = executor.isTerminated();
-                if (!terminated) {
-                    executor.shutdown();
-                    boolean interrupted = false;
-                    while (!terminated) {
-                        try {
-                            terminated = executor.awaitTermination(1L, TimeUnit.DAYS);
-                        } catch (InterruptedException ex) {
-                            if (!interrupted) {
-                                executor.shutdownNow();
-                                interrupted = true;
-                            }
-                        }
-                    }
-                    if (interrupted) {
-                        Thread.currentThread().interrupt();
                     }
                 }
             }

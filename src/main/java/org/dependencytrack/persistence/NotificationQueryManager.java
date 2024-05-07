@@ -37,6 +37,7 @@ import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -103,7 +104,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setNotifyChildren(true);
         rule.setLogSuccessfulPublish(false);
         rule.setCronConfig(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue());
-        rule.setLastExecutionTime(ZonedDateTime.now());
+        rule.setLastExecutionTime(ZonedDateTime.now(ZoneOffset.UTC));
         rule.setPublishOnlyWithUpdates(false);
         return persist(rule);
     }

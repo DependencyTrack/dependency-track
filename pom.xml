@@ -80,6 +80,10 @@
     </ciManagement>
 
     <properties>
+        <!-- Java Version -->
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+
         <!-- Dependency Versions -->
         <frontend.version>4.11.0</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>

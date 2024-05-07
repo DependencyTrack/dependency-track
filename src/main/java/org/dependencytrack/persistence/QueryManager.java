@@ -87,6 +87,7 @@ import javax.jdo.Query;
 import javax.jdo.Transaction;
 import javax.json.JsonObject;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -673,6 +674,10 @@ public class QueryManager extends AlpineQueryManager {
         return getPolicyQueryManager().getAllPolicyViolations(project);
     }
 
+    public Map<Project, List<PolicyViolation>> getNewPolicyViolationsForProjectsSince(ZonedDateTime zonedDateTime, List<Long> projectIds){
+        return getPolicyQueryManager().getNewPolicyViolationsForProjectsSince(zonedDateTime, projectIds);
+    }
+
     public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
         return getPolicyQueryManager().getPolicyViolations(project, includeSuppressed);
     }
@@ -772,6 +777,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<Vulnerability> getVulnerabilitiesForNpmModule(String module) {
         return getVulnerabilityQueryManager().getVulnerabilitiesForNpmModule(module);
+    }
+
+    public Map<Project, List<Vulnerability>> getNewVulnerabilitiesForProjectsSince(ZonedDateTime zonedDateTime, List<Long> projectIds){
+        return getVulnerabilityQueryManager().getNewVulnerabilitiesForProjectsSince(zonedDateTime, projectIds);
     }
 
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {

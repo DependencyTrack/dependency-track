@@ -20,6 +20,8 @@ package org.dependencytrack.persistence;
 
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+
+import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
@@ -30,12 +32,16 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
-
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 final class PolicyQueryManager extends QueryManager implements IQueryManager {
 
@@ -289,6 +295,35 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             query.setOrdering("timestamp desc, component.name, component.version");
         }
         return (List<PolicyViolation>)query.execute(project.getId());
+    }
+
+    /**
+     * Returns a List of all Policy objects since given datetime for given project ids.
+     * @param dateTime DateTime, since which the policy violations shall be fetched
+     * @param projectIds IDs of the projects, that shall be used for filtering
+     * @return a List of {@link PolicyViolation}s
+     */
+    @SuppressWarnings("unchecked")
+    public Map<Project, List<PolicyViolation>> getNewPolicyViolationsForProjectsSince(ZonedDateTime dateTime, List<Long> projectIds){
+        String queryString = "SELECT PROJECT_ID, ID " +
+        "FROM POLICYVIOLATION " +
+        "WHERE (TIMESTAMP BETWEEN ? AND ?) ";
+        if(projectIds != null && !projectIds.isEmpty()){
+            queryString.concat("AND (PROJECT_ID IN ?) ");
+        }
+        queryString.concat("ORDER BY PROJECT_ID ASC");
+        final Query<Object> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, queryString);
+        final List<Object[]> totalList = (List<Object[]>)query.execute(dateTime, ZonedDateTime.now(ZoneOffset.UTC), projectIds);
+        Map<Project, List<PolicyViolation>> projectPolicyViolations = new HashMap<>();
+        for(Object[] obj : totalList){
+            Project project = getObjectById(Project.class, obj[0]);
+            PolicyViolation policyViolation = getObjectById(PolicyViolation.class, obj[1]);
+            if(!projectPolicyViolations.containsKey(project)){
+                projectPolicyViolations.put(project, new ArrayList<>());
+            }
+            projectPolicyViolations.get(project).add(policyViolation);
+        }
+        return projectPolicyViolations;
     }
 
     /**

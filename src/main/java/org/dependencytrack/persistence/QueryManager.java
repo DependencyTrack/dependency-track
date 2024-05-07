@@ -89,6 +89,7 @@ import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -718,6 +719,10 @@ public class QueryManager extends AlpineQueryManager {
         return getPolicyQueryManager().getAllPolicyViolations(project);
     }
 
+    public Map<Project, List<PolicyViolation>> getNewPolicyViolationsForProjectsSince(ZonedDateTime zonedDateTime, List<Long> projectIds){
+        return getPolicyQueryManager().getNewPolicyViolationsForProjectsSince(zonedDateTime, projectIds);
+    }
+
     public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
         return getPolicyQueryManager().getPolicyViolations(project, includeSuppressed);
     }
@@ -813,6 +818,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public Vulnerability getVulnerabilityByVulnId(Vulnerability.Source source, String vulnId, boolean includeVulnerableSoftware) {
         return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
+    }
+
+    public Map<Project, List<Vulnerability>> getNewVulnerabilitiesForProjectsSince(ZonedDateTime zonedDateTime, List<Long> projectIds){
+        return getVulnerabilityQueryManager().getNewVulnerabilitiesForProjectsSince(zonedDateTime, projectIds);
     }
 
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {

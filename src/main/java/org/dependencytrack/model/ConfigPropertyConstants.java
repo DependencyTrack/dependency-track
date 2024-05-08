@@ -43,6 +43,8 @@ public enum ConfigPropertyConstants {
     SCANNER_INTERNAL_FUZZY_ENABLED("scanner", "internal.fuzzy.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable non-exact fuzzy matching using the internal analyzer"),
     SCANNER_INTERNAL_FUZZY_EXCLUDE_PURL("scanner", "internal.fuzzy.exclude.purl", "true", PropertyType.BOOLEAN, "Flag to enable/disable fuzzy matching on components that have a Package URL (PURL) defined"),
     SCANNER_INTERNAL_FUZZY_EXCLUDE_INTERNAL("scanner", "internal.fuzzy.exclude.internal", "true", PropertyType.BOOLEAN, "Flag to enable/disable fuzzy matching on components that are marked internal."),
+    SCANNER_INTERNAL_DEDUPLICATES_ENABLED("scanner", "internal.deduplication.enabled", null, PropertyType.BOOLEAN, "Flag to enable/disable alias-based deduplication"),
+    SCANNER_INTERNAL_DEDUPLICATES("scanner", "internal.deduplication.list", "true", PropertyType.STRING, "List of source priorities for alias-based deduplication"),
     SCANNER_NPMAUDIT_ENABLED("scanner", "npmaudit.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable NPM Audit"),
     SCANNER_OSSINDEX_ENABLED("scanner", "ossindex.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable Sonatype OSS Index"),
     SCANNER_OSSINDEX_ALIAS_SYNC_ENABLED("scanner", "ossindex.alias.sync.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable alias synchronization for OSS Index"),

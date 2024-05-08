@@ -25,8 +25,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.tasks.OsvDownloadTask;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.persistence.ConfigPropertyQueryManager;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -80,4 +83,30 @@ public class IntegrationResource extends AlpineResource {
                 .collect(Collectors.toList());
         return Response.ok(ecosystems).build();
     }
+
+    @GET
+    @Path("/sources")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Return a list of available vulnerability sources",
+            response = String.class,
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "Vulnerability sources is empty")
+    })
+    public Response sendSources() {
+        ConfigPropertyQueryManager configPropertyQueryManager = new ConfigPropertyQueryManager();
+        List<String> sourcesList = configPropertyQueryManager.retrieveEnabledSources()
+        .stream()
+        .map(Vulnerability.Source::toString)
+        .collect(Collectors.toList());
+
+        configPropertyQueryManager.updateProperties(sourcesList);
+
+        return Response.ok(sourcesList).build();
+    }
+
 }

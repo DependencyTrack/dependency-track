@@ -348,6 +348,11 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         final Component result = persist(component);
         Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, Component.class);
+        //Update PriorityList with new Enabled/Disabled Sources to avoid conflicts
+        ConfigPropertyQueryManager configPropertyQueryManager = new ConfigPropertyQueryManager();
+        if(configPropertyQueryManager.isDedupEnabled()){
+            configPropertyQueryManager.updatePropertiesFromEnabledSources();
+        }
         return result;
     }
 

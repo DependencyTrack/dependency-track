@@ -1243,6 +1243,10 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().updateScheduledNotificationRule(transientRule);
     }
 
+    public ScheduledNotificationRule updateScheduledNotificationRuleToNowUtc(ScheduledNotificationRule transientRule) {
+        return getNotificationQueryManager().updateScheduledNotificationRuleToNowUtc(transientRule);
+    }
+
     public PaginatedResult getScheduledNotificationRules() {
         return getNotificationQueryManager().getScheduledNotificationRules();
     }

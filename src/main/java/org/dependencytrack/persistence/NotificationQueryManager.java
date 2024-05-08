@@ -138,6 +138,12 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         return persist(rule);
     }
 
+    public ScheduledNotificationRule updateScheduledNotificationRuleLastExecutionTimeToNowUtc(ScheduledNotificationRule transientRule) {
+        final ScheduledNotificationRule rule = getObjectByUuid(ScheduledNotificationRule.class, transientRule.getUuid());
+        rule.setLastExecutionTime(ZonedDateTime.now(ZoneOffset.UTC));
+        return persist(rule);
+    }
+
     /**
      * Returns a paginated list of all notification rules.
      * @return a paginated list of NotificationRules

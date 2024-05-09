@@ -20,12 +20,11 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 import us.springett.owasp.riskrating.Level;
 
@@ -34,18 +33,15 @@ import javax.ws.rs.core.Response;
 
 public class CalculatorResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(CalculatorResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(CalculatorResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Test
     public void getCvssScoresV3Test() {
-        Response response = target(V1_CALCULATOR + "/cvss")
+        Response response = jersey.target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -61,7 +57,7 @@ public class CalculatorResourceTest extends ResourceTest {
 
     @Test
     public void getCvssScoresV2Test() {
-        Response response = target(V1_CALCULATOR + "/cvss")
+        Response response = jersey.target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "(AV:N/AC:L/Au:N/C:P/I:P/A:P)")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -77,7 +73,7 @@ public class CalculatorResourceTest extends ResourceTest {
 
     @Test
     public void getCvssScoresInvalidTest() {
-        Response response = target(V1_CALCULATOR + "/cvss")
+        Response response = jersey.target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "foobar")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -90,7 +86,7 @@ public class CalculatorResourceTest extends ResourceTest {
 
     @Test
     public void getOwaspRRScoresTest() {
-        Response response = target(V1_CALCULATOR + "/owasp")
+        Response response = jersey.target(V1_CALCULATOR + "/owasp")
                 .queryParam("vector", "SL:1/M:1/O:0/S:2/ED:1/EE:1/A:1/ID:1/LC:2/LI:1/LAV:1/LAC:1/FD:1/RD:1/NC:2/PV:3")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -109,7 +105,7 @@ public class CalculatorResourceTest extends ResourceTest {
 
     @Test
     public void getOwaspScoresInvalidTest() {
-        Response response = target(V1_CALCULATOR + "/owasp")
+        Response response = jersey.target(V1_CALCULATOR + "/owasp")
                 .queryParam("vector", "foobar")
                 .request()
                 .header(X_API_KEY, apiKey)

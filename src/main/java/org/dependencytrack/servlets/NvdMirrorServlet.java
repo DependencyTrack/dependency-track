@@ -36,7 +36,7 @@ public class NvdMirrorServlet extends FileSystemResourceServlet {
     public void init(final ServletConfig config) throws ServletException {
         LOGGER.info("Initializing NVD mirror");
         super.init(config);
-        super.setDirectory(NistMirrorTask.NVD_MIRROR_DIR);
+        super.setDirectory(NistMirrorTask.DEFAULT_NVD_MIRROR_DIR.toString());
         super.setAbsolute(true);
     }
 

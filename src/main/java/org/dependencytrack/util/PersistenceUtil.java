@@ -201,6 +201,22 @@ public final class PersistenceUtil {
         }
     }
 
+    /**
+     * Utility method to ensure that a given {@link Collection} is <strong>not</strong> in a persistent state.
+     *
+     * @param objects The {@link Collection} to check the state of
+     * @param message Message to use for the exception, if object is persistent
+     * @see #assertNonPersistent(Object, String)
+     * @since 4.11.0
+     */
+    public static void assertNonPersistentAll(final Collection<?> objects, final String message) {
+        if (objects == null || objects.isEmpty()) {
+            return;
+        }
+
+        objects.forEach(object -> assertNonPersistent(object, message));
+    }
+
     private static boolean isPersistent(final Object object) {
         final ObjectState objectState = JDOHelper.getObjectState(object);
         return objectState == PERSISTENT_CLEAN

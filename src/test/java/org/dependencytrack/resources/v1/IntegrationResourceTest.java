@@ -21,13 +21,12 @@ package org.dependencytrack.resources.v1;
 import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.json.JsonArray;
@@ -38,14 +37,11 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
 
 public class IntegrationResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(IntegrationResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(IntegrationResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Before
     public void before() throws Exception {
@@ -64,7 +60,7 @@ public class IntegrationResourceTest extends ResourceTest {
 
     @Test
     public void getEcosystemsTest() {
-        Response response = target(V1_OSV_ECOSYSTEM).request()
+        Response response = jersey.target(V1_OSV_ECOSYSTEM).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -74,7 +70,7 @@ public class IntegrationResourceTest extends ResourceTest {
         Assert.assertFalse(json.isEmpty());
         var total = json.size();
 
-        response = target(V1_OSV_ECOSYSTEM + "/inactive").request()
+        response = jersey.target(V1_OSV_ECOSYSTEM + "/inactive").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);

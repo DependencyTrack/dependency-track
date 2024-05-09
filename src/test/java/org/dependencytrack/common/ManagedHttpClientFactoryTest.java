@@ -36,7 +36,7 @@ public class ManagedHttpClientFactoryTest {
 
     @Before
     public void before() {
-        environmentVariables.set("http_proxy", "http://acme\\username:password@127.0.0.1:1080");
+        environmentVariables.set("http_proxy", "http://acme%5Cusername:password@127.0.0.1:1080");
         environmentVariables.set("no_proxy", "localhost:443,127.0.0.1:8080,example.com,www.example.net");
     }
 

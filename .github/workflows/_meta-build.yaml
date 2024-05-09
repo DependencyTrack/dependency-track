@@ -11,6 +11,10 @@ on:
         required: false
         default: false
         description: "publish and scan the container image once its built"
+      ref-name:
+        type: string
+        required: true
+        description: "Short ref name of the branch or tag that triggered the workflow run"
     secrets:
       registry-0-usr:
         required: true
@@ -30,7 +34,7 @@ jobs:
         uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # tag=v4.2.1
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'maven'
 
       - name: Setup CycloneDX CLI
@@ -43,12 +47,12 @@ jobs:
 
       - name: Build with Maven
         run: |-
-          mvn clean
-          mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
-          mvn clean -P clean-exclude-wars
-          mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
-          mvn clean -P clean-exclude-wars
-          mvn cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
+          mvn -B --no-transfer-progress clean
+          mvn -B --no-transfer-progress package -Dmaven.test.skip=true -P enhance -P embedded-jetty -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
+          mvn -B --no-transfer-progress clean -P clean-exclude-wars
+          mvn -B --no-transfer-progress package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
+          mvn -B --no-transfer-progress clean -P clean-exclude-wars
+          mvn -B --no-transfer-progress cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # tag=v4.3.3
@@ -102,9 +106,17 @@ jobs:
       - name: Set Container Tags
         id: tags
         run: |-
-          TAGS="docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}"
-          if [[ "${{ inputs.app-version }}" != "snapshot" ]]; then
-            TAGS="${TAGS},docker.io/dependencytrack/${{ matrix.distribution }}:latest"
+          IMAGE_NAME="docker.io/dependencytrack/${{ matrix.distribution }}"
+          REF_NAME="${{ inputs.ref-name }}"
+          TAGS=""
+          
+          if [[ $REF_NAME == feature-* ]]; then
+            TAGS="${IMAGE_NAME}:${REF_NAME,,}"
+          else
+            TAGS="${IMAGE_NAME}:${{ inputs.app-version }}"
+            if [[ "${{ inputs.app-version }}" != "snapshot" ]]; then
+              TAGS="${TAGS},${IMAGE_NAME}:latest"
+            fi
           fi
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 

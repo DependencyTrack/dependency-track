@@ -18,11 +18,10 @@
  */
 package org.dependencytrack.resources.v1.exception;
 
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.GET;
@@ -33,17 +32,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ClientErrorExceptionMapperTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                        new ResourceConfig(TestResource.class)
-                                .register(ClientErrorExceptionMapper.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(TestResource.class)
+                    .register(ClientErrorExceptionMapper.class));
 
     @Test
     public void testNotFound() {
-        final Response response = target("/does/not/exist")
+        final Response response = jersey.target("/does/not/exist")
                 .request()
                 .get();
 
@@ -52,7 +48,7 @@ public class ClientErrorExceptionMapperTest extends ResourceTest {
 
     @Test
     public void testMethodNotAllowed() {
-        final Response response = target("/test/foo")
+        final Response response = jersey.target("/test/foo")
                 .request()
                 .delete();
 

@@ -183,7 +183,7 @@ public final class ModelConverter {
                 .collect(Collectors.toList());
     }
 
-    private static Predicate<VulnerableSoftware> distinctIgnoringDatastoreIdentity() {
+    public static Predicate<VulnerableSoftware> distinctIgnoringDatastoreIdentity() {
         final var seen = new HashSet<Integer>();
         return vs -> seen.add(vs.hashCodeWithoutDatastoreIdentity());
     }

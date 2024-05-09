@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.model.ApiKey;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -362,6 +363,8 @@ public class BomResource extends AlpineResource {
                         project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, null, parent, null, true, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
+                        ApiKey apikey = ApiKey.class.cast(principal);
+                        LOGGER.info("Project " + project.toString() + " created" + (apikey.getTeams().isEmpty() ? "" : " by group " + apikey.getTeams().get(0).getName()));
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }

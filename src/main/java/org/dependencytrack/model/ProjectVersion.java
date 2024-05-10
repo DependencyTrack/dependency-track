@@ -34,15 +34,18 @@ public class ProjectVersion implements Serializable {
 
     private String version;
 
+    private Boolean active;
+
     public ProjectVersion() {
         this.uuid = null;
         this.version = null;
+        this.active = null;
     }
 
-    public ProjectVersion(UUID uuid, String version) {
+    public ProjectVersion(UUID uuid, String version, Boolean active) {
         this.uuid = uuid;
         this.version = version;
-
+        this.active = active;
     }
 
     public void setUuid(UUID uuid) {
@@ -59,5 +62,13 @@ public class ProjectVersion implements Serializable {
 
     public String getVersion() {
         return version;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
+    public Boolean getActive() {
+        return active;
     }
 }

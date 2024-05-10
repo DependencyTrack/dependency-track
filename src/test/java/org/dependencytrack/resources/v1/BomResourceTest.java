@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
+import alpine.model.ApiKey;
 import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
@@ -64,6 +65,7 @@ import static org.apache.commons.io.IOUtils.resourceToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_ENABLED;
 
 public class BomResourceTest extends ResourceTest {
@@ -739,7 +741,6 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertNotNull(json.getString("token"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
-        Assert.assertEquals("Test Users", qm.getApiKey(apiKey).getTeams().get(0).getName());
     }
 
     @Test
@@ -771,6 +772,8 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
         Project project = qm.getProject("Acme Example", "1.0");
         Assert.assertNotNull(project);
+        Assert.assertTrue(qm.getApiKey(apiKey) instanceof ApiKey);
+        Assert.assertEquals("Test Users", qm.getApiKey(apiKey).getTeams().get(0).getName());
     }
 
     @Test

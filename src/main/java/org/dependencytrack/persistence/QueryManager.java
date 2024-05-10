@@ -28,6 +28,7 @@ import alpine.model.UserPrincipal;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
+import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import com.google.common.collect.Lists;
@@ -92,6 +93,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -387,11 +390,11 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects(team, excludeInactive, bypass, onlyRoot);
     }
 
-    public PaginatedResult getProjectsWithoutDescendantsOf(final boolean excludeInactive, final Project project){
+    public PaginatedResult getProjectsWithoutDescendantsOf(final boolean excludeInactive, final Project project) {
         return getProjectQueryManager().getProjectsWithoutDescendantsOf(excludeInactive, project);
     }
 
-    public PaginatedResult getProjectsWithoutDescendantsOf(final String name, final boolean excludeInactive, final Project project){
+    public PaginatedResult getProjectsWithoutDescendantsOf(final String name, final boolean excludeInactive, final Project project) {
         return getProjectQueryManager().getProjectsWithoutDescendantsOf(name, excludeInactive, project);
     }
 
@@ -407,15 +410,15 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects(classifier, includeMetrics, excludeInactive, onlyRoot);
     }
 
-    public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+    public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
         return getProjectQueryManager().getChildrenProjects(uuid, includeMetrics, excludeInactive);
     }
 
-    public PaginatedResult getChildrenProjects(final Tag tag, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+    public PaginatedResult getChildrenProjects(final Tag tag, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
         return getProjectQueryManager().getChildrenProjects(tag, uuid, includeMetrics, excludeInactive);
     }
 
-    public PaginatedResult getChildrenProjects(final Classifier classifier, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+    public PaginatedResult getChildrenProjects(final Classifier classifier, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
         return getProjectQueryManager().getChildrenProjects(classifier, uuid, includeMetrics, excludeInactive);
     }
 
@@ -645,7 +648,7 @@ public class QueryManager extends AlpineQueryManager {
         return getPolicyQueryManager().addPolicyViolationIfNotExist(pv);
     }
 
-    public PolicyViolation clonePolicyViolation(PolicyViolation sourcePolicyViolation, Component destinationComponent){
+    public PolicyViolation clonePolicyViolation(PolicyViolation sourcePolicyViolation, Component destinationComponent) {
         return getPolicyQueryManager().clonePolicyViolation(sourcePolicyViolation, destinationComponent);
     }
 
@@ -1246,7 +1249,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public synchronized void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {
-        getCacheQueryManager().updateComponentAnalysisCache(cacheType, targetHost, targetType, target, lastOccurrence,  result);
+        getCacheQueryManager().updateComponentAnalysisCache(cacheType, targetHost, targetType, target, lastOccurrence, result);
     }
 
     public void clearComponentAnalysisCache() {
@@ -1264,7 +1267,7 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Commits the Lucene index.
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @param clazz the indexable class to commit the index of
+     * @param clazz       the indexable class to commit the index of
      */
     public void commitSearchIndex(boolean commitIndex, Class clazz) {
         if (commitIndex) {
@@ -1301,11 +1304,11 @@ public class QueryManager extends AlpineQueryManager {
      * <p>
      * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
      *
-     * @param clazz Class of the object to fetch
-     * @param uuid {@link UUID} of the object to fetch
+     * @param clazz       Class of the object to fetch
+     * @param uuid        {@link UUID} of the object to fetch
      * @param fetchGroups Fetch groups to use for this operation
      * @return The object if found, otherwise {@code null}
-     * @param <T> Type of the object
+     * @param <T>         Type of the object
      * @throws Exception When closing the query failed
      * @since 4.6.0
      */
@@ -1354,7 +1357,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param clazz Class of the object to fetch
      * @param uuids {@link UUID} list of uuids to fetch
      * @return The list of objects found
-     * @param <T> Type of the object
+     * @param <T>   Type of the object
      * @since 4.9.0
      */
     public <T> List<T> getObjectsByUuids(final Class<T> clazz, final List<UUID> uuids) {
@@ -1368,7 +1371,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param clazz Class of the object to fetch
      * @param uuids {@link UUID} list of uuids to fetch
      * @return The query to execute
-     * @param <T> Type of the object
+     * @param <T>   Type of the object
      * @since 4.9.0
      */
     public <T> Query<T> getObjectsByUuidsQuery(final Class<T> clazz, final List<UUID> uuids) {
@@ -1398,10 +1401,11 @@ public class QueryManager extends AlpineQueryManager {
         runInTransaction(() -> {
             pm.deletePersistentAll(team.getApiKeys());
 
-            final Query<?> aclDeleteQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
-                    DELETE FROM "PROJECT_ACCESS_TEAMS" WHERE "PROJECT_ACCESS_TEAMS"."TEAM_ID" = ?""");
-            aclDeleteQuery.setParameters(team.getId());
-            executeAndClose(aclDeleteQuery);
+            try (var ignored = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+                final Query<?> aclDeleteQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                        DELETE FROM "PROJECT_ACCESS_TEAMS" WHERE "PROJECT_ACCESS_TEAMS"."TEAM_ID" = ?""");
+                executeAndCloseWithArray(aclDeleteQuery, team.getId());
+            }
 
             pm.deletePersistent(team);
         });
@@ -1439,7 +1443,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Returns a list of all {@link RepositoryMetaComponent} objects by {@link RepositoryQueryManager.RepositoryMetaComponentSearch} UUID.
-     * @param list a list of {@link RepositoryQueryManager.RepositoryMetaComponentSearch}
+     * @param list      a list of {@link RepositoryQueryManager.RepositoryMetaComponentSearch}
      * @param batchSize the batch size
      * @return a list of {@link RepositoryMetaComponent} objects
      * @since 4.9.0

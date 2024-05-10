@@ -31,7 +31,6 @@ import org.dependencytrack.util.InternalComponentIdentifier;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.Transaction;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -95,20 +94,11 @@ public class InternalComponentIdentificationTask implements Subscriber {
                     }
 
                     if (component.isInternal() != internal) {
-                        final Transaction trx = pm.currentTransaction();
-                        try {
-                            trx.begin();
-                            component.setInternal(internal);
-                            trx.commit();
-                        } finally {
-                            if (trx.isActive()) {
-                                trx.rollback();
-                            }
-                        }
+                        qm.runInTransaction(() -> component.setInternal(internal));
                     }
                 }
 
-                final long lastId = components.get(components.size() - 1).getId();
+                final long lastId = components.getLast().getId();
                 components = fetchNextComponentsPage(pm, lastId);
             }
         }

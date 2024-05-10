@@ -57,11 +57,11 @@ jobs:
         uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # tag=v4.2.1
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'maven'
 
       - name: Set Version
-        run: mvn versions:set -DnewVersion=${VERSION}
+        run: mvn -B --no-transfer-progress versions:set -DnewVersion=${VERSION}
 
       - name: Commit Version
         env:
@@ -123,7 +123,7 @@ jobs:
           ref: ${{ needs.prepare-release.outputs.release-branch }}
 
       - name: Set SNAPSHOT Version after Release
-        run: mvn versions:set -DnewVersion=${NEXT_VERSION}
+        run: mvn -B --no-transfer-progress versions:set -DnewVersion=${NEXT_VERSION}
 
       - name: Commit SNAPSHOT Version
         env:

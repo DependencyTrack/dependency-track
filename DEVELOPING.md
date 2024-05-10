@@ -18,7 +18,7 @@ This document primarily covers the API server. Please refer to the frontend repo
 
 There are a few things you'll need on your journey:
 
-* JDK 17+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
+* JDK 21+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
 * Maven (comes bundled with IntelliJ and Eclipse)
 * A Java IDE of your preference (we recommend IntelliJ, but any other IDE is fine as well)
 * Docker (optional)
@@ -359,7 +359,7 @@ and giving the rest of the team write permissions to their repository.
 
 To address the use cases above, contributors to the Dependency-Track project can request a *feature branch*
 from a maintainer. Feature branches follow the `feature-*` naming pattern, and are subject to branch protection rules.
-Just like for the `maser` branch, changes pushed to a `feature` branch trigger a container image build.
+Just like for the `master` branch, changes pushed to a `feature` branch trigger a container image build.
 Images built from `feature` branches are tagged with the name of the branch, for example for a branch named `feature-foobar`:
 
 ```

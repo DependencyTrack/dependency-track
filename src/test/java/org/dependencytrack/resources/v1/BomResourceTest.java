@@ -739,6 +739,7 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertNotNull(json.getString("token"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        Assert.assertEquals("Test Users", qm.getApiKey(apiKey).getTeams().get(0).getName());
     }
 
     @Test
@@ -753,7 +754,6 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("The project could not be found.", body);
-        Assert.assertEquals("Test Users", qm.getApiKey(apiKey).getTeams().get(0).getName());
     }
 
     @Test

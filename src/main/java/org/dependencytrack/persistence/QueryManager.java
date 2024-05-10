@@ -1469,17 +1469,16 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public void recursivelyDeleteTeam(Team team) {
-        pm.setProperty("datanucleus.query.sql.allowAll", true);
-        final Transaction trx = pm.currentTransaction();
-        pm.currentTransaction().begin();
-        pm.deletePersistentAll(team.getApiKeys());
-        String aclDeleteQuery = """
-            DELETE FROM \"PROJECT_ACCESS_TEAMS\" WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?
-        """;
-        final Query query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, aclDeleteQuery);
-        query.executeWithArray(team.getId());
-        pm.deletePersistent(team);
-        pm.currentTransaction().commit();
+        runInTransaction(() -> {
+            pm.deletePersistentAll(team.getApiKeys());
+
+            final Query<?> aclDeleteQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "PROJECT_ACCESS_TEAMS" WHERE "PROJECT_ACCESS_TEAMS"."TEAM_ID" = ?""");
+            aclDeleteQuery.setParameters(team.getId());
+            executeAndClose(aclDeleteQuery);
+
+            pm.deletePersistent(team);
+        });
     }
 
     /**

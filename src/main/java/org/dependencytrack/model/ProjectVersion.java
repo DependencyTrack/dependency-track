@@ -64,10 +64,6 @@ public class ProjectVersion implements Serializable {
         return version;
     }
 
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
-
     public Boolean getActive() {
         return active;
     }

@@ -26,45 +26,5 @@ import java.util.UUID;
  * Value object holding UUID and version for a project
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProjectVersion implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    private UUID uuid;
-
-    private String version;
-
-    private Boolean active;
-
-    public ProjectVersion() {
-        this.uuid = null;
-        this.version = null;
-        this.active = null;
-    }
-
-    public ProjectVersion(UUID uuid, String version, Boolean active) {
-        this.uuid = uuid;
-        this.version = version;
-        this.active = active;
-    }
-
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-    }
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public Boolean getActive() {
-        return active;
-    }
+public record ProjectVersion(UUID uuid, String version, Boolean active) implements Serializable {
 }

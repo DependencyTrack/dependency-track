@@ -34,6 +34,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.PublishTrigger;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -89,6 +90,46 @@ public class NotificationPublisherResource extends AlpineResource {
     public Response getAllNotificationPublishers() {
         try (QueryManager qm = new QueryManager()) {
             final List<NotificationPublisher> publishers = qm.getAllNotificationPublishers();
+            return Response.ok(publishers).build();
+        }
+    }
+
+    @GET
+    @Path("/event")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all event-driven notification publishers",
+            response = NotificationPublisher.class,
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response getAllEventNotificationPublishers() {
+        try (QueryManager qm = new QueryManager()) {
+            final List<NotificationPublisher> publishers = qm.getAllNotificationPublishersOfType(PublishTrigger.EVENT);
+            return Response.ok(publishers).build();
+        }
+    }
+
+    @GET
+    @Path("/scheduled")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all scheduled notification publishers",
+            response = NotificationPublisher.class,
+            responseContainer = "List",
+            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response getAllScheduledNotificationPublishers() {
+        try (QueryManager qm = new QueryManager()) {
+            final List<NotificationPublisher> publishers = qm.getAllNotificationPublishersOfType(PublishTrigger.SCHEDULE);
             return Response.ok(publishers).build();
         }
     }

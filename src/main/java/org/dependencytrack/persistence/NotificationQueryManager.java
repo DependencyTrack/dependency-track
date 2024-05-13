@@ -27,6 +27,7 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.PublishTrigger;
 import org.dependencytrack.model.ScheduledNotificationRule;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
@@ -183,12 +184,32 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * This method if designed NOT to provide paginated results.
      * @return list of all NotificationPublisher objects
      */
-    @SuppressWarnings("unchecked")
     public List<NotificationPublisher> getAllNotificationPublishers() {
+        return getAllNotificationPublishersOfType(PublishTrigger.ALL);
+    }
+
+    /**
+     * Retrieves all NotificationPublishers matching the corresponding trigger type.
+     * This methoid is designed NOT to provide paginated results.
+     * @param trigger
+     * @return list of all matching NotificationPublisher objects
+     */
+    public List<NotificationPublisher> getAllNotificationPublishersOfType(PublishTrigger trigger) {
         final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class);
         query.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
         query.setOrdering("name asc");
-        return (List<NotificationPublisher>)query.execute();
+        switch (trigger) {
+            case SCHEDULE:
+                query.setFilter("publishScheduled == :publishScheduled");
+                query.setParameters(true);
+                return List.copyOf(query.executeList());
+            case EVENT:
+                query.setFilter("publishScheduled == :publishScheduled || publishScheduled == null");
+                query.setParameters(false);
+                return List.copyOf(query.executeList());
+            default:
+                return List.copyOf(query.executeList());
+        }
     }
 
     /**

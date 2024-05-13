@@ -61,6 +61,7 @@ import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.model.PublishTrigger;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
@@ -1203,6 +1204,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<NotificationPublisher> getAllNotificationPublishers() {
         return getNotificationQueryManager().getAllNotificationPublishers();
+    }
+
+    public List<NotificationPublisher> getAllNotificationPublishersOfType(PublishTrigger trigger) {
+        return getNotificationQueryManager().getAllNotificationPublishersOfType(trigger);
     }
 
     public NotificationPublisher getNotificationPublisher(final String name) {

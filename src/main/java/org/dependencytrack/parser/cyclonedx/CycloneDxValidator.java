@@ -126,7 +126,7 @@ public class CycloneDxValidator {
             }
 
             CycloneDxSchema.Version schemaVersion = null;
-            while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+            while (jsonParser.nextToken() != null) {
                 final String fieldName = jsonParser.getCurrentName();
                 if ("specVersion".equals(fieldName)) {
                     if (jsonParser.nextToken() == JsonToken.VALUE_STRING) {

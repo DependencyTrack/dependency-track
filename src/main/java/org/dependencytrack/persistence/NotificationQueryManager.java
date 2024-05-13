@@ -230,7 +230,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      */
     public NotificationPublisher createNotificationPublisher(final String name, final String description,
                                                              final Class<? extends Publisher> publisherClass, final String templateContent,
-                                                             final String templateMimeType, final boolean defaultPublisher) {
+                                                             final String templateMimeType, final boolean defaultPublisher, final boolean publishScheduled) {
         pm.currentTransaction().begin();
         final NotificationPublisher publisher = new NotificationPublisher();
         publisher.setName(name);
@@ -239,6 +239,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         publisher.setTemplate(templateContent);
         publisher.setTemplateMimeType(templateMimeType);
         publisher.setDefaultPublisher(defaultPublisher);
+        publisher.setPublishScheduled(publishScheduled);
         pm.makePersistent(publisher);
         pm.currentTransaction().commit();
         pm.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());

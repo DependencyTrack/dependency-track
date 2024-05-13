@@ -555,7 +555,7 @@ public final class NotificationUtil {
                 qm.createNotificationPublisher(
                         publisher.getPublisherName(), publisher.getPublisherDescription(),
                         publisher.getPublisherClass(), templateContent, publisher.getTemplateMimeType(),
-                        publisher.isDefaultPublisher()
+                        publisher.isDefaultPublisher(), publisher.isPublishScheduled()
                 );
             } else {
                 existingPublisher.setName(publisher.getPublisherName());
@@ -564,6 +564,7 @@ public final class NotificationUtil {
                 existingPublisher.setTemplate(templateContent);
                 existingPublisher.setTemplateMimeType(publisher.getTemplateMimeType());
                 existingPublisher.setDefaultPublisher(publisher.isDefaultPublisher());
+                existingPublisher.setPublishScheduled(publisher.isPublishScheduled());
                 qm.updateNotificationPublisher(existingPublisher);
             }
         }

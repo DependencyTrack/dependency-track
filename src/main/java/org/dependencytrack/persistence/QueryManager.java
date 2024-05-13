@@ -1216,7 +1216,13 @@ public class QueryManager extends AlpineQueryManager {
     public NotificationPublisher createNotificationPublisher(final String name, final String description,
                                                              final Class<? extends Publisher> publisherClass, final String templateContent,
                                                              final String templateMimeType, final boolean defaultPublisher) {
-        return getNotificationQueryManager().createNotificationPublisher(name, description, publisherClass, templateContent, templateMimeType, defaultPublisher);
+        return createNotificationPublisher(name, description, publisherClass, templateContent, templateMimeType, defaultPublisher, false);
+    }
+
+    public NotificationPublisher createNotificationPublisher(final String name, final String description,
+                                                             final Class<? extends Publisher> publisherClass, final String templateContent,
+                                                             final String templateMimeType, final boolean defaultPublisher, final boolean publishScheduled) {
+        return getNotificationQueryManager().createNotificationPublisher(name, description, publisherClass, templateContent, templateMimeType, defaultPublisher, publishScheduled);
     }
 
     public NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {

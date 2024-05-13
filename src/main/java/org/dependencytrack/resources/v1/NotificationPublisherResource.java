@@ -135,7 +135,7 @@ public class NotificationPublisherResource extends AlpineResource {
                 NotificationPublisher notificationPublisherCreated = qm.createNotificationPublisher(
                         jsonNotificationPublisher.getName(), jsonNotificationPublisher.getDescription(),
                         castedPublisherClass, jsonNotificationPublisher.getTemplate(), jsonNotificationPublisher.getTemplateMimeType(),
-                        jsonNotificationPublisher.isDefaultPublisher()
+                        jsonNotificationPublisher.isDefaultPublisher(), jsonNotificationPublisher.isPublishScheduled()
                 );
                 return Response.status(Response.Status.CREATED).entity(notificationPublisherCreated).build();
             } else {

@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 public class CycloneDxValidatorTest {
 
@@ -160,6 +161,19 @@ public class CycloneDxValidatorTest {
                         """
                                 cvc-attribute.3: The value 'foo' of attribute 'type' on element 'component' is not \
                                 valid with respect to its type, 'classification'.""");
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3696
+    public void testValidateJsonWithSpecVersionAtTheBottom() {
+        assertThatNoException()
+                .isThrownBy(() -> validator.validate("""
+                        {
+                          "metadata": {},
+                          "components": [],
+                          "bomFormat": "CycloneDX",
+                          "specVersion": "1.5"
+                        }
+                        """.getBytes()));
     }
 
 }

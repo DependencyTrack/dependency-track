@@ -31,6 +31,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.ClassUtils;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
@@ -88,6 +89,7 @@ import javax.json.JsonObject;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -349,6 +351,30 @@ public class QueryManager extends AlpineQueryManager {
     public QueryManager withL2CacheDisabled() {
         pm.setProperty(PropertyNames.PROPERTY_CACHE_L2_TYPE, "none");
         return this;
+    }
+
+    /**
+     * Get the IDs of the {@link Team}s a given {@link Principal} is a member of.
+     *
+     * @return A {@link Set} of {@link Team} IDs
+     * @since 4.11.1
+     */
+    protected Set<Long> getTeamIds(final Principal principal) {
+        final var principalTeamIds = new HashSet<Long>();
+
+        if (principal instanceof final UserPrincipal userPrincipal
+                && userPrincipal.getTeams() != null) {
+            for (final Team userInTeam : userPrincipal.getTeams()) {
+                principalTeamIds.add(userInTeam.getId());
+            }
+        } else if (principal instanceof final ApiKey apiKey
+                && apiKey.getTeams() != null) {
+            for (final Team userInTeam : apiKey.getTeams()) {
+                principalTeamIds.add(userInTeam.getId());
+            }
+        }
+
+        return principalTeamIds;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1281,6 +1307,16 @@ public class QueryManager extends AlpineQueryManager {
      */
     public void commitSearchIndex(Class clazz) {
         commitSearchIndex(true, clazz);
+    }
+
+    public boolean hasAccessManagementPermission(final Object principal) {
+        if (principal instanceof final UserPrincipal userPrincipal) {
+            return hasAccessManagementPermission(userPrincipal);
+        } else if (principal instanceof final ApiKey apiKey) {
+            return hasAccessManagementPermission(apiKey);
+        }
+
+        throw new IllegalArgumentException("Provided principal is of invalid type " + ClassUtils.getName(principal));
     }
 
     public boolean hasAccessManagementPermission(final UserPrincipal userPrincipal) {

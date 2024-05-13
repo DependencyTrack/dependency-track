@@ -100,8 +100,7 @@ public class Finding implements Serializable {
 
     // language=SQL
     public static final String QUERY_ALL_FINDINGS = """
-            SELECT DISTINCT
-                   "COMPONENT"."UUID"
+            SELECT "COMPONENT"."UUID"
                  , "COMPONENT"."NAME"
                  , "COMPONENT"."GROUP"
                  , "COMPONENT"."VERSION"
@@ -147,8 +146,6 @@ public class Finding implements Serializable {
                AND "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
              INNER JOIN "PROJECT"
                 ON "COMPONENT"."PROJECT_ID" = "PROJECT"."ID"
-              LEFT JOIN "PROJECT_ACCESS_TEAMS"
-                ON "PROJECT"."ID" = "PROJECT_ACCESS_TEAMS"."PROJECT_ID"
             """;
 
     private final UUID project;

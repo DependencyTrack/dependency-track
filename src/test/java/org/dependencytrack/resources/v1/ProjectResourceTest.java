@@ -695,7 +695,8 @@ public class ProjectResourceTest extends ResourceTest {
                               "name": "tag4"
                             }
                           ],
-                          "active": false
+                          "active": false,
+                          "collectionLogic":"NONE"
                         }
                         """);
     }
@@ -767,7 +768,8 @@ public class ProjectResourceTest extends ResourceTest {
                           },
                           "properties": [],
                           "tags": [],
-                          "active": true
+                          "active": true,
+                          "collectionLogic":"NONE"
                         }
                         """);
 

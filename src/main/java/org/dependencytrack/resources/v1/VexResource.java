@@ -36,6 +36,7 @@ import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.VexUploadEvent;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
@@ -223,6 +224,9 @@ public class VexResource extends AlpineResource {
             if (! qm.hasAccess(super.getPrincipal(), project)) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
+            if(!project.getCollectionLogic().equals(ProjectCollectionLogic.NONE)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("VEX cannot be uploaded to collection project.").build();
+            }
             final byte[] decoded = Base64.getDecoder().decode(encodedVexData);
             BomResource.validate(decoded);
             final VexUploadEvent vexUploadEvent = new VexUploadEvent(project.getUuid(), decoded);
@@ -242,6 +246,9 @@ public class VexResource extends AlpineResource {
             if (project != null) {
                 if (! qm.hasAccess(super.getPrincipal(), project)) {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
+                if(!project.getCollectionLogic().equals(ProjectCollectionLogic.NONE)) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("VEX cannot be uploaded to collection project.").build();
                 }
                 try (InputStream in = bodyPartEntity.getInputStream()) {
                     final byte[] content = IOUtils.toByteArray(new BOMInputStream((in)));

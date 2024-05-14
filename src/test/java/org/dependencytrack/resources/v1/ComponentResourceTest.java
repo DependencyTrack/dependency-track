@@ -26,11 +26,7 @@ import com.github.packageurl.PackageURL;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.RepositoryMetaComponent;
-import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.*;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -516,6 +512,23 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertEquals(component.getSha512(), json.getString("sha512"));
         Assert.assertEquals(component.getSha3_512(), json.getString("sha3_512"));
         Assert.assertEquals(component.getMd5(), json.getString("md5"));
+    }
+
+    @Test
+    public void createComponentCollectionProjectTest() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        // make project a collection project
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.updateProject(project, false);
+
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(component, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
     }
 
     @Test

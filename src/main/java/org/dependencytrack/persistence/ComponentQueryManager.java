@@ -891,6 +891,18 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         }
     }
 
+    @Override
+    public boolean hasComponents(final Project project) {
+        final Query<Component> query = pm.newQuery(Component.class, "project == :project");
+        query.setParameters(project);
+        query.setResult("count(this)");
+        try {
+            return query.executeResultUnique(Long.class) > 0;
+        } finally {
+            query.closeAll();
+        }
+    }
+
     public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {
         assertPersistent(component, "component must be persistent");
 

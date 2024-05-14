@@ -41,11 +41,17 @@ public class v4110Updater extends AbstractUpgradeItem {
 
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
+        setProjectCollectionLogicDefault(connection);
         dropCweTable(connection);
         computeVulnerabilitySeverities(connection);
         extendPurlColumnLengths(connection);
     }
-
+    private static void setProjectCollectionLogicDefault(final Connection connection) throws Exception {
+        LOGGER.info("Setting collection logic of all projects to default NONE");
+        try (final Statement stmt = connection.createStatement()) {
+            stmt.execute("UPDATE \"PROJECT\" SET \"COLLECTION_LOGIC\" = 'NONE'");
+        }
+    }
     private static void dropCweTable(final Connection connection) throws Exception {
         final boolean shouldReEnableAutoCommit = connection.getAutoCommit();
         connection.setAutoCommit(false);

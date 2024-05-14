@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.persistence.PaginatedResult;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.*;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
@@ -28,7 +27,7 @@ import org.junit.Test;
 import java.util.Date;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 public class ProjectQueryManagerTest extends PersistenceCapableTest {
 
@@ -55,6 +54,44 @@ public class ProjectQueryManagerTest extends PersistenceCapableTest {
         Assert.assertNotNull(finding);
         Assert.assertFalse(finding.getAttribution().isEmpty());
         Assert.assertEquals(new Date(1708559165229L),finding.getAttribution().get("attributedOn"));
+    }
+
+    @Test
+    public void testUpdateProjectPreventCollectionProjectWithExistingComponentsTest() {
+        Project project = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, true, false);
+        Component comp = new Component();
+        comp.setId(111L);
+        comp.setName("name");
+        comp.setProject(project);
+        comp.setVersion("1.0");
+        comp.setCopyright("Copyright Acme");
+        qm.createComponent(comp, true);
+
+        // avoid direct persistent update in next step
+        final Project detached = qm.detach(Project.class, project.getId());
+        detached.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> qm.updateProject(detached, false))
+                .withMessage("Project cannot be made a collection project while it has components or services!");
+    }
+
+    @Test
+    public void testUpdateProjectPreventCollectionProjectWithExistingServiceTest() {
+        Project project = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, true, false);
+        ServiceComponent service = new ServiceComponent();
+        service.setName("name");
+        service.setProject(project);
+        service.setVersion("1.0");
+        qm.createServiceComponent(service, false);
+
+        // avoid direct persistent update in next step
+        final Project detached = qm.detach(Project.class, project.getId());
+        detached.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> qm.updateProject(detached, false))
+                .withMessage("Project cannot be made a collection project while it has components or services!");
     }
 
 }

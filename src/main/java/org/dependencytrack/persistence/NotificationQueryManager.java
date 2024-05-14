@@ -145,7 +145,6 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setPublisherConfig(transientRule.getPublisherConfig());
         rule.setNotifyOn(transientRule.getNotifyOn());
         rule.setCronConfig(transientRule.getCronConfig());
-        rule.setLastExecutionTime(transientRule.getLastExecutionTime());
         rule.setPublishOnlyWithUpdates(transientRule.getPublishOnlyWithUpdates());
         return persist(rule);
     }

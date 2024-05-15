@@ -151,7 +151,7 @@ public class SendScheduledNotificationTask implements Runnable {
                     LOGGER.debug(e.getMessage());
                 }
                 // }
-                qm.updateScheduledNotificationRuleToNowUtc(scheduledNotificationRule);
+                qm.updateScheduledNotificationRuleLastExecutionTimeToNowUtc(scheduledNotificationRule);
             }
 
         } catch (Exception e) {

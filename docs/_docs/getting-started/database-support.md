@@ -14,14 +14,18 @@ Dependency-Track supports the following database servers:
 
 | RDBMS                | Supported Versions | Recommended |
 |:---------------------|:-------------------|:------------|
-| PostgreSQL           | >= 9.0             | ✅           |
-| Microsoft SQL Server | >= 2012            | ✅           |
+| PostgreSQL           | >= 12.0            | ✅           |
+| Microsoft SQL Server | >= 2017            | ⚠️          |
 | MySQL                | 5.6 - 5.7          | ❌           |
 
 Dependency-Track requires extensive unicode support, which is not provided per default in MySQL.
 Both PostgreSQL and SQL Server have been proven to work very well in production deployments, while
 MySQL / MariaDB can require [lots of extra care](https://github.com/DependencyTrack/dependency-track/issues/271#issuecomment-1108923693). 
 **Only use MySQL if you know what you're doing**!
+
+> Support for H2, Microsoft SQL Server, and MySQL will be dropped in Dependency-Track v5.
+> From then onwards, the project will focus on PostgreSQL. When setting up a new instance
+> of Dependency-Track v4.x, consider using PostgreSQL.
 
 Refer to the [Configuration] documentation for how database settings may be changed.
 

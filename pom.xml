@@ -307,8 +307,8 @@
             <version>${lib.jdbc-driver.mssql.version}</version>
         </dependency>
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <version>${lib.jdbc-driver.mysql.version}</version>
             <exclusions>
                 <!--

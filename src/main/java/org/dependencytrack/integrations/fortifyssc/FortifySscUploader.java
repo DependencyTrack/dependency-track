@@ -31,7 +31,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
@@ -81,7 +81,7 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
             return;
         }
         try {
-            final FortifySscClient client = new FortifySscClient(this, new URL(sscUrl.getPropertyValue()));
+            final FortifySscClient client = new FortifySscClient(this, URI.create(sscUrl.getPropertyValue()).toURL());
             final String token = client.generateOneTimeUploadToken(DebugDataEncryption.decryptAsString(citoken.getPropertyValue()));
             if (token != null) {
                 client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), payload);

@@ -128,13 +128,12 @@ public class NotificationPublisherResource extends AlpineResource {
                 return Response.status(Response.Status.BAD_REQUEST).entity("The creation of a new default publisher is forbidden").build();
             }
 
-            Class<?> publisherClass = Class.forName(jsonNotificationPublisher.getPublisherClass());
+            Class<? extends Publisher> publisherClass = Class.forName(jsonNotificationPublisher.getPublisherClass()).asSubclass(Publisher.class);
 
             if (Publisher.class.isAssignableFrom(publisherClass)) {
-                Class<Publisher> castedPublisherClass = (Class<Publisher>) publisherClass;
                 NotificationPublisher notificationPublisherCreated = qm.createNotificationPublisher(
                         jsonNotificationPublisher.getName(), jsonNotificationPublisher.getDescription(),
-                        castedPublisherClass, jsonNotificationPublisher.getTemplate(), jsonNotificationPublisher.getTemplateMimeType(),
+                        publisherClass, jsonNotificationPublisher.getTemplate(), jsonNotificationPublisher.getTemplateMimeType(),
                         jsonNotificationPublisher.isDefaultPublisher()
                 );
                 return Response.status(Response.Status.CREATED).entity(notificationPublisherCreated).build();
@@ -283,9 +282,9 @@ public class NotificationPublisherResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response testSmtpPublisherConfig(@FormParam("destination") String destination) {
         try(QueryManager qm = new QueryManager()) {
-            Class defaultEmailPublisherClass = SendMailPublisher.class;
+            Class<? extends Publisher> defaultEmailPublisherClass = SendMailPublisher.class;
             NotificationPublisher emailNotificationPublisher = qm.getDefaultNotificationPublisher(defaultEmailPublisherClass);
-            final Publisher emailPublisher = (Publisher) defaultEmailPublisherClass.getDeclaredConstructor().newInstance();
+            final Publisher emailPublisher = defaultEmailPublisherClass.getDeclaredConstructor().newInstance();
             final JsonObject config = Json.createObjectBuilder()
                     .add(Publisher.CONFIG_DESTINATION, destination)
                     .add(Publisher.CONFIG_TEMPLATE_KEY, emailNotificationPublisher.getTemplate())

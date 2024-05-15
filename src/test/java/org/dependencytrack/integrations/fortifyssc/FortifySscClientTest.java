@@ -29,7 +29,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -47,7 +47,7 @@ public class FortifySscClientTest {
                 .willReturn(WireMock.aResponse().withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                         .withBody("{ \"data\": { \"token\": \"db975c97-98b1-4988-8d6a-9c3e044dfff3\" }}").withStatus(201)));
         FortifySscUploader uploader = new FortifySscUploader();
-        FortifySscClient client = new FortifySscClient(uploader, new URL(wireMockRule.baseUrl() + "/ssc"));
+        FortifySscClient client = new FortifySscClient(uploader, URI.create(wireMockRule.baseUrl() + "/ssc").toURL());
         String token = client.generateOneTimeUploadToken("2d5e4a06-945e-405f-a3c2-112bb3053453");
         Assert.assertEquals("db975c97-98b1-4988-8d6a-9c3e044dfff3", token);
     }
@@ -59,7 +59,7 @@ public class FortifySscClientTest {
                 .withRequestBody(WireMock.equalToJson("{\"fileTokenType\":\"UPLOAD\"}"))
                 .willReturn(WireMock.aResponse().withHeader(HttpHeaders.CONTENT_TYPE, "application/json").withStatus(401)));
         FortifySscUploader uploader = new FortifySscUploader();
-        FortifySscClient client = new FortifySscClient(uploader, new URL(wireMockRule.baseUrl() + "/ssc"));
+        FortifySscClient client = new FortifySscClient(uploader, URI.create(wireMockRule.baseUrl() + "/ssc").toURL());
         String token = client.generateOneTimeUploadToken("wrong");
         Assert.assertNull(token);
     }
@@ -75,7 +75,7 @@ public class FortifySscClientTest {
                 .withQueryParam("entityId", new EqualToPattern(applicationVersion))
                 .willReturn(WireMock.aResponse().withHeader(HttpHeaders.CONTENT_TYPE, "application/xml").withStatus(200)));
         FortifySscUploader uploader = new FortifySscUploader();
-        FortifySscClient client = new FortifySscClient(uploader, new URL(wireMockRule.baseUrl() + "/ssc"));
+        FortifySscClient client = new FortifySscClient(uploader, URI.create(wireMockRule.baseUrl() + "/ssc").toURL());
         InputStream stream = new ByteArrayInputStream("test input" .getBytes());
         client.uploadDependencyTrackFindings(token, applicationVersion, stream);
 
@@ -99,7 +99,7 @@ public class FortifySscClientTest {
                 .withQueryParam("entityId", new EqualToPattern(applicationVersion))
                 .willReturn(WireMock.aResponse().withHeader(HttpHeaders.CONTENT_TYPE, "application/xml").withStatus(400)));
         FortifySscUploader uploader = new FortifySscUploader();
-        FortifySscClient client = new FortifySscClient(uploader, new URL(wireMockRule.baseUrl() + "/ssc"));
+        FortifySscClient client = new FortifySscClient(uploader, URI.create(wireMockRule.baseUrl() + "/ssc").toURL());
         InputStream stream = new ByteArrayInputStream("test input" .getBytes());
         client.uploadDependencyTrackFindings(token, applicationVersion, stream);
 

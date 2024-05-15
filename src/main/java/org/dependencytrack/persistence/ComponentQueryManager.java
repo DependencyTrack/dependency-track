@@ -179,7 +179,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             querySring +=
                 " && this.project.directDependencies.matches('%\"uuid\":\"'+this.uuid+'\"%') "; // only direct dependencies
         }
-        final Query<Component> query = pm.newQuery(querySring);
+        final Query<?> query = pm.newQuery(Query.JDOQL, querySring);
         query.getFetchPlan().setMaxFetchDepth(2);
         if (orderBy == null) {
             query.setOrdering("name asc, version desc");
@@ -789,7 +789,8 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     private void getParentDependenciesOfComponent(Project project, Component childComponent, Map<String, Component> dependencyGraph) {
         String queryUuid = ".*" + childComponent.getUuid().toString() + ".*";
         final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
-        List<Component> parentComponents = (List<Component>) query.executeWithArray(queryUuid, project);
+        query.setParameters(queryUuid, project);
+        List<Component> parentComponents = executeAndCloseList(query);
         for (Component parentComponent : parentComponents) {
             parentComponent.setExpandDependencyGraph(true);
             if(parentComponent.getDependencyGraph() == null) {

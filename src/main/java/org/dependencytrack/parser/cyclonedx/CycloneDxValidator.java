@@ -129,7 +129,7 @@ public class CycloneDxValidator {
 
             Version schemaVersion = null;
             while (jsonParser.nextToken() != null) {
-                final String fieldName = jsonParser.getCurrentName();
+                final String fieldName = jsonParser.currentName();
                 if ("specVersion".equals(fieldName)) {
                     if (jsonParser.nextToken() == JsonToken.VALUE_STRING) {
                         final String specVersion = jsonParser.getValueAsString();

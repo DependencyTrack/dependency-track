@@ -18,12 +18,26 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
+@RunWith(JUnitParamsRunner.class)
 public class CycloneDxValidatorTest {
 
     private CycloneDxValidator validator;
@@ -174,6 +188,34 @@ public class CycloneDxValidatorTest {
                           "specVersion": "1.5"
                         }
                         """.getBytes()));
+    }
+
+    @SuppressWarnings("unused")
+    private Object[] testValidateWithValidBomParameters() throws Exception {
+        final PathMatcher pathMatcherJson = FileSystems.getDefault().getPathMatcher("glob:**/valid-bom-*.json");
+        final PathMatcher pathMatcherXml = FileSystems.getDefault().getPathMatcher("glob:**/valid-bom-*.xml");
+        final var bomFilePaths = new ArrayList<Path>();
+
+        Files.walkFileTree(Paths.get("./src/test/resources/unit/cyclonedx"), new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                if (pathMatcherJson.matches(file) || pathMatcherXml.matches(file)) {
+                    bomFilePaths.add(file);
+                }
+
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return bomFilePaths.stream().sorted().toArray();
+    }
+
+    @Test
+    @Parameters(method = "testValidateWithValidBomParameters")
+    public void testValidateWithValidBom(final Path bomFilePath) throws Exception {
+        final byte[] bomBytes = Files.readAllBytes(bomFilePath);
+
+        assertThatNoException().isThrownBy(() -> validator.validate(bomBytes));
     }
 
 }

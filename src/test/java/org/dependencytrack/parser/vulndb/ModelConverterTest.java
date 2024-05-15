@@ -5,7 +5,6 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.parser.vulndb.model.CvssV3Metric;
 import org.dependencytrack.parser.vulndb.model.Results;
 import org.dependencytrack.persistence.QueryManager;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
 public class ModelConverterTest {
-    private List<Object> resultList;
+    private List<?> resultList;
 
     @Before
     public void setUp() throws Exception {
@@ -29,10 +28,9 @@ public class ModelConverterTest {
         File file = new File(filePath);
         final VulnDbParser parser = new VulnDbParser();
         try {
-        final Results results = parser.parse(file, org.dependencytrack.parser.vulndb.model.Vulnerability.class);
+        final Results<Vulnerability> results = parser.parse(file, org.dependencytrack.parser.vulndb.model.Vulnerability.class);
         resultList = results.getResults();
         } catch (IOException ex) {
-            ex.printStackTrace();
             fail("Failed to parse file: " + ex.getMessage());
         }
     }

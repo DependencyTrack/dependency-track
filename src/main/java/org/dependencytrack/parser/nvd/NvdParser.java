@@ -96,7 +96,7 @@ public final class NvdParser {
             // keeping the overall memory footprint low.
             JsonToken currentToken;
             while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-                final String fieldName = jsonParser.getCurrentName();
+                final String fieldName = jsonParser.currentName();
                 currentToken = jsonParser.nextToken();
                 if ("CVE_Items".equals(fieldName)) {
                     if (currentToken == JsonToken.START_ARRAY) {

@@ -175,7 +175,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     public void updateNotificationPublisherTest() {
         NotificationPublisher notificationPublisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",
-                (Class) SendMailPublisher.class, "template", "text/html",
+                SendMailPublisher.class, "template", "text/html",
                 false
         );
         notificationPublisher.setName("Updated Publisher name");
@@ -198,7 +198,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     public void updateUnknownNotificationPublisherTest() {
         NotificationPublisher notificationPublisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",
-                (Class) SendMailPublisher.class, "template", "text/html",
+                SendMailPublisher.class, "template", "text/html",
                 false
         );
         notificationPublisher = qm.detach(NotificationPublisher.class, notificationPublisher.getId());
@@ -247,7 +247,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     public void updateNotificationPublisherWithInvalidClassTest() {
         NotificationPublisher notificationPublisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",
-                (Class) SendMailPublisher.class, "template", "text/html",
+                SendMailPublisher.class, "template", "text/html",
                 false
         );
         notificationPublisher.setPublisherClass("unknownClass");
@@ -264,7 +264,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     public void updateNotificationPublisherWithClassNotImplementingPublisherInterfaceTest() {
         NotificationPublisher notificationPublisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",
-                (Class) SendMailPublisher.class, "template", "text/html",
+                SendMailPublisher.class, "template", "text/html",
                 false
         );
         notificationPublisher.setPublisherClass(NotificationPublisherResource.class.getName());
@@ -281,7 +281,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     public void deleteNotificationPublisherWithNoRulesTest() {
         NotificationPublisher publisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",
-                (Class) SendMailPublisher.class, "template", "text/html",
+                SendMailPublisher.class, "template", "text/html",
                 false
         );
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/" + publisher.getUuid()).request()
@@ -295,7 +295,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     public void deleteNotificationPublisherWithLinkedNotificationRulesTest() {
         NotificationPublisher publisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",
-                (Class) SendMailPublisher.class, "template", "text/html",
+                SendMailPublisher.class, "template", "text/html",
                 false
         );
         NotificationRule firstRule = qm.createNotificationRule("Example Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);

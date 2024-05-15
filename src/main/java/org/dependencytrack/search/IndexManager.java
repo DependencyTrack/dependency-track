@@ -560,7 +560,7 @@ public abstract class IndexManager implements AutoCloseable {
             if (LOGGER.isDebugEnabled()) {
                 checkIndex.setInfoStream(System.out);
             } else {
-                checkIndex.setInfoStream(new NullPrintStream());
+                checkIndex.setInfoStream(NullPrintStream.INSTANCE);
             }
             CheckIndex.Status status = checkIndex.checkIndex();
             if (status.clean) {

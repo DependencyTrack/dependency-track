@@ -169,13 +169,12 @@ public class NotificationPublisherResource extends AlpineResource {
                 return Response.status(Response.Status.BAD_REQUEST).entity("The creation of a new default publisher is forbidden").build();
             }
 
-            Class<?> publisherClass = Class.forName(jsonNotificationPublisher.getPublisherClass());
+            Class<? extends Publisher> publisherClass = Class.forName(jsonNotificationPublisher.getPublisherClass()).asSubclass(Publisher.class);
 
             if (Publisher.class.isAssignableFrom(publisherClass)) {
-                Class<Publisher> castedPublisherClass = (Class<Publisher>) publisherClass;
                 NotificationPublisher notificationPublisherCreated = qm.createNotificationPublisher(
                         jsonNotificationPublisher.getName(), jsonNotificationPublisher.getDescription(),
-                        castedPublisherClass, jsonNotificationPublisher.getTemplate(), jsonNotificationPublisher.getTemplateMimeType(),
+                        publisherClass, jsonNotificationPublisher.getTemplate(), jsonNotificationPublisher.getTemplateMimeType(),
                         jsonNotificationPublisher.isDefaultPublisher(), jsonNotificationPublisher.isPublishScheduled()
                 );
                 return Response.status(Response.Status.CREATED).entity(notificationPublisherCreated).build();

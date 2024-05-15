@@ -30,7 +30,7 @@ import java.util.List;
 public class Results<T> {
     private int page;
     private int total;
-    private List<T> results = new ArrayList();
+    private List<T> results = new ArrayList<>();
     private String rawResults;
     private String errorCondition;
 
@@ -57,6 +57,7 @@ public class Results<T> {
         return this.results;
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public void setResults(List objects) {
         this.results = objects;
     }

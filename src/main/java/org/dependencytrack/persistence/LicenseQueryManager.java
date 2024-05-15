@@ -187,7 +187,8 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
      */
     public void deleteLicense(final License license, final boolean commitIndex) {
         final Query<PolicyCondition> query = pm.newQuery(PolicyCondition.class, "subject == :subject && value == :value");
-        List<PolicyCondition> policyConditions = (List<PolicyCondition>)query.execute(PolicyCondition.Subject.LICENSE ,license.getUuid().toString());
+        query.setParameters(PolicyCondition.Subject.LICENSE, license.getUuid().toString());
+        List<PolicyCondition> policyConditions = executeAndCloseList(query);
         commitSearchIndex(commitIndex, License.class);
         delete(license);
         for (PolicyCondition policyCondition : policyConditions) {

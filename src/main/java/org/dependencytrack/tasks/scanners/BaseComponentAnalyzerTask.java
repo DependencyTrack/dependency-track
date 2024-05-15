@@ -124,7 +124,6 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                         component identity multiple times concurrently, and is safe to ignore. \
                         [targetHost=%s, source=%s, target=%s]\
                         """.formatted(targetHost, source, target), e);
-                qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
             } else {
                 throw e;
             }

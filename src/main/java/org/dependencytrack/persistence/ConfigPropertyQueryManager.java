@@ -28,7 +28,6 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_EN
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_INTERNAL_DEDUPLICATES;
@@ -60,14 +59,13 @@ public class ConfigPropertyQueryManager extends ConfigPropertyResource{
         SCANNER_TRIVY_ENABLED,
         VULNERABILITY_SOURCE_NVD_API_ENABLED, //VULNERABILITY_SOURCE_NVD_ENABLED
         VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED, //NEEDS VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED
-        VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED //NEEDS VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED
+        VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED
     };
 
     private static final Map<ConfigPropertyConstants, ConfigPropertyConstants> needsDependency = new HashMap<ConfigPropertyConstants, ConfigPropertyConstants>() {{
         put(SCANNER_OSSINDEX_ALIAS_SYNC_ENABLED, SCANNER_OSSINDEX_ENABLED);
         put(SCANNER_SNYK_ALIAS_SYNC_ENABLED, SCANNER_SNYK_ENABLED);
         put(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED, VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED);
-        put(VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED, VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED);
     }};
 
     public void updatePropertiesFromEnabledSources(){
@@ -124,7 +122,7 @@ public class ConfigPropertyQueryManager extends ConfigPropertyResource{
             String result = makeQuery(qm, SCANNER_INTERNAL_DEDUPLICATES).getPropertyValue();
 
             if (result == null || result.isEmpty() || !isDedupEnabled()) {
-                return new ArrayList<>();
+                return null;
             }
 
             return Arrays.stream(result.split(";"))

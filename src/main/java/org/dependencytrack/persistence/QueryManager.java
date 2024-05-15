@@ -85,7 +85,6 @@ import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.Transaction;
 import javax.json.JsonObject;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -1414,23 +1413,6 @@ public class QueryManager extends AlpineQueryManager {
         final Query<T> query = pm.newQuery(clazz, ":uuids.contains(uuid)");
         query.setParameters(uuids);
         return query;
-    }
-
-    /**
-     * Convenience method to ensure that any active transaction is rolled back.
-     * <p>
-     * Calling this method may sometimes be necessary due to {@link AlpineQueryManager#persist(Object)}
-     * no performing a rollback in case committing the transaction fails. This can impact other persistence
-     * operations performed in the same session (e.g. {@code NucleusTransactionException: Invalid state. Transaction has already started}).
-     *
-     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2677">Issue 2677</a>
-     * @since 4.8.0
-     */
-    public void ensureNoActiveTransaction() {
-        final Transaction trx = pm.currentTransaction();
-        if (trx != null && trx.isActive()) {
-            trx.rollback();
-        }
     }
 
     public void recursivelyDeleteTeam(Team team) {

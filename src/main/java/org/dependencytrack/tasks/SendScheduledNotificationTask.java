@@ -146,12 +146,11 @@ public class SendScheduledNotificationTask implements Runnable {
                             .useStartTLS(smtpSslTls)
                             .trustCert(smtpTrustCert);
                     sendMail.send();
+                    qm.updateScheduledNotificationRuleLastExecutionTimeToNowUtc(scheduledNotificationRule);
                 } catch (SendMailException | RuntimeException e) {
                     LOGGER.debug("Failed to send notification email ");
                     LOGGER.debug(e.getMessage());
                 }
-                // }
-                qm.updateScheduledNotificationRuleLastExecutionTimeToNowUtc(scheduledNotificationRule);
             }
 
         } catch (Exception e) {

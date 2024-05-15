@@ -802,10 +802,6 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
     }
 
-    public List<Vulnerability> getVulnerabilitiesForNpmModule(String module) {
-        return getVulnerabilityQueryManager().getVulnerabilitiesForNpmModule(module);
-    }
-
     public Map<Project, List<Vulnerability>> getNewVulnerabilitiesForProjectsSince(ZonedDateTime zonedDateTime, List<Long> projectIds){
         return getVulnerabilityQueryManager().getNewVulnerabilitiesForProjectsSince(zonedDateTime, projectIds);
     }

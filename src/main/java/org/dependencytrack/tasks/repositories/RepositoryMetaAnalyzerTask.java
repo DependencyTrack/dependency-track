@@ -89,7 +89,6 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     // Refreshing the object by querying for it again is preventative
                     LOGGER.info("Performing component repository metadata analysis against " + components.size() + " components");
                     for (final Component component : components) {
-                        qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
                         analyze(qm, qm.getObjectById(Component.class, component.getId()));
                     }
                     LOGGER.info("Completed component repository metadata analysis against " + components.size() + " components");
@@ -102,7 +101,6 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                         final List<Component> components = qm.getAllComponents(project);
                         LOGGER.debug("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
                         for (final Component component : components) {
-                            qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
                             analyze(qm, component);
                         }
                         LOGGER.debug("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
@@ -188,7 +186,6 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                                     component multiple times concurrently, and is safe to ignore. \
                                     [targetHost=%s, source=%s, target=%s]\
                                     """.formatted(repository.getUrl(), repository.getType(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl())), e);
-                            qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
                             return;
                         } else {
                             throw e;
@@ -215,7 +212,6 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                                     component multiple times concurrently, and is safe to ignore. \
                                     [targetHost=%s, source=%s, target=%s]\
                                     """.formatted(repository.getUrl(), repository.getType(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl())), e);
-                            qm.ensureNoActiveTransaction(); // Workaround for https://github.com/DependencyTrack/dependency-track/issues/2677
                             return;
                         } else {
                             throw e;

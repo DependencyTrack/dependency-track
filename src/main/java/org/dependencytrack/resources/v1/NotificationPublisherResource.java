@@ -169,21 +169,20 @@ public class NotificationPublisherResource extends AlpineResource {
                 return Response.status(Response.Status.BAD_REQUEST).entity("The creation of a new default publisher is forbidden").build();
             }
 
-            Class<? extends Publisher> publisherClass = Class.forName(jsonNotificationPublisher.getPublisherClass()).asSubclass(Publisher.class);
-
-            if (Publisher.class.isAssignableFrom(publisherClass)) {
-                NotificationPublisher notificationPublisherCreated = qm.createNotificationPublisher(
-                        jsonNotificationPublisher.getName(), jsonNotificationPublisher.getDescription(),
-                        publisherClass, jsonNotificationPublisher.getTemplate(), jsonNotificationPublisher.getTemplateMimeType(),
-                        jsonNotificationPublisher.isDefaultPublisher(), jsonNotificationPublisher.isPublishScheduled()
-                );
-                return Response.status(Response.Status.CREATED).entity(notificationPublisherCreated).build();
-            } else {
-                return Response.status(Response.Status.BAD_REQUEST).entity("The class "+jsonNotificationPublisher.getPublisherClass()+" does not implement "+Publisher.class.getName()).build();
-            }
-
+            final Class<? extends Publisher> publisherClass = Class.forName(jsonNotificationPublisher.getPublisherClass()).asSubclass(Publisher.class);
+            final NotificationPublisher notificationPublisherCreated = qm.createNotificationPublisher(
+                    jsonNotificationPublisher.getName(),
+                    jsonNotificationPublisher.getDescription(),
+                    publisherClass,
+                    jsonNotificationPublisher.getTemplate(),
+                    jsonNotificationPublisher.getTemplateMimeType(),
+                    jsonNotificationPublisher.isDefaultPublisher(), jsonNotificationPublisher.isPublishScheduled()
+            );
+            return Response.status(Response.Status.CREATED).entity(notificationPublisherCreated).build();
+        } catch (ClassCastException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("The class " + jsonNotificationPublisher.getPublisherClass() + " does not implement " + Publisher.class.getName()).build();
         } catch (ClassNotFoundException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("The class "+jsonNotificationPublisher.getPublisherClass()+" cannot be found").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity("The class " + jsonNotificationPublisher.getPublisherClass() + " cannot be found").build();
         }
     }
 

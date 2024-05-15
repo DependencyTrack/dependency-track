@@ -188,6 +188,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
         final var task = new GitHubAdvisoryMirrorTask();
         task.updateDatasource(List.of(ghAdvisory));
 
+        qm.getPersistenceManager().evictAll();
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.GITHUB, "GHSA-57j2-w4cx-62h2");
         assertThat(vuln).isNotNull();
 

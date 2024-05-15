@@ -95,6 +95,7 @@
         <lib.cloud-sql-postgres-socket-factory.version>1.18.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.26.1</lib.commons-compress.version>
+        <lib.commons-text.version>1.12.0</lib.commons-text.version>
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>9.0.0</lib.cyclonedx-java.version>
@@ -307,8 +308,8 @@
             <version>${lib.jdbc-driver.mssql.version}</version>
         </dependency>
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <version>${lib.jdbc-driver.mysql.version}</version>
             <exclusions>
                 <!--
@@ -359,6 +360,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>${lib.commons-compress.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>${lib.commons-text.version}</version>
         </dependency>
 
         <dependency>
@@ -540,6 +547,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
+                <version>3.2.0</version>
                 <executions>
                     <execution>
                         <id>merge-services-bom</id>

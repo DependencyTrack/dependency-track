@@ -30,6 +30,7 @@ import org.dependencytrack.persistence.QueryManager;
 import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Set;
@@ -85,7 +86,7 @@ abstract class AbstractConfigPropertyResource extends AlpineResource {
                 property.setPropertyValue(null);
             } else {
                 try {
-                    final URL url = new URL(json.getPropertyValue());
+                    final URL url = URI.create(json.getPropertyValue()).toURL();
                     property.setPropertyValue(url.toExternalForm());
                 } catch (MalformedURLException e) {
                     return Response.status(Response.Status.BAD_REQUEST).entity("The property expected a URL but the URL was malformed.").build();

@@ -816,25 +816,26 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @param project a Project object
      * @param tags a List of Tag objects
      */
-    @SuppressWarnings("unchecked")
     @Override
     public void bind(Project project, List<Tag> tags) {
-        final Query<Tag> query = pm.newQuery(Tag.class, "projects.contains(:project)");
-        final List<Tag> currentProjectTags = (List<Tag>)query.execute(project);
-        pm.currentTransaction().begin();
-        for (final Tag tag: currentProjectTags) {
-            if (!tags.contains(tag)) {
-                tag.getProjects().remove(project);
+        runInTransaction(() -> {
+            final Query<Tag> query = pm.newQuery(Tag.class, "projects.contains(:project)");
+            query.setParameters(project);
+            final List<Tag> currentProjectTags = executeAndCloseList(query);
+
+            for (final Tag tag : currentProjectTags) {
+                if (!tags.contains(tag)) {
+                    tag.getProjects().remove(project);
+                }
             }
-        }
-        project.setTags(tags);
-        for (final Tag tag: tags) {
-            final List<Project> projects = tag.getProjects();
-            if (!projects.contains(project)) {
-                projects.add(project);
+            project.setTags(tags);
+            for (final Tag tag : tags) {
+                final List<Project> projects = tag.getProjects();
+                if (!projects.contains(project)) {
+                    projects.add(project);
+                }
             }
-        }
-        pm.currentTransaction().commit();
+        });
     }
 
     /**
@@ -1210,7 +1211,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Query<Project> query = pm.newQuery(Project.class);
         query.setFilter("name == :name");
         query.setParameters(project.getName());
-        query.setResult("uuid, version");
+        query.setResult("uuid, version, active");
         return query.executeResultList(ProjectVersion.class);
     }
 }

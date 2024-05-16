@@ -18,9 +18,6 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.model.ApiKey;
-import alpine.model.Team;
-import alpine.model.UserPrincipal;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
@@ -39,7 +36,6 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -347,44 +343,37 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
     }
 
     private void preprocessACLs(StringBuilder queryFilter, final Map<String, Object> params) {
-        if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)) {
-            final List<Team> teams;
-            if (super.principal instanceof UserPrincipal userPrincipal) {
-                teams = userPrincipal.getTeams();
-                if (super.hasAccessManagementPermission(userPrincipal)) {
-                    return;
-                }
-            } else if (super.principal instanceof final ApiKey apiKey) {
-                teams = apiKey.getTeams();
-                if (super.hasAccessManagementPermission(apiKey)) {
-                    return;
-                }
-            } else {
-                teams = Collections.emptyList();
-            }
-            if (teams != null && !teams.isEmpty()) {
-                final StringBuilder sb = new StringBuilder();
-                for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
-                    final Team team = super.getObjectById(Team.class, teams.get(i).getId());
-                    sb.append(" \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = :team").append(i);
-                    params.put("team" + i, team.getId());
-                    if (i < teamsSize - 1) {
-                        sb.append(" OR ");
-                    }
-                }
-                if (queryFilter != null && !queryFilter.isEmpty()) {
-                    queryFilter.append(" AND (").append(sb).append(")");
-                } else if (queryFilter != null) {
-                    queryFilter.append("WHERE (").append(sb).append(")");
-                }
-            } else {
-                params.put("false", false);
-                if (queryFilter != null && !queryFilter.isEmpty()) {
-                    queryFilter.append(" AND :false");
-                } else if (queryFilter != null) {
-                    queryFilter.append("WHERE :false");
-                }
-            }
+        if (!isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)
+                || hasAccessManagementPermission(this.principal)) {
+            return;
         }
+
+        if (queryFilter.isEmpty()) {
+            queryFilter.append(" WHERE ");
+        } else {
+            queryFilter.append(" AND ");
+        }
+
+        final var teamIds = new ArrayList<>(getTeamIds(principal));
+        if (teamIds.isEmpty()) {
+            queryFilter.append(":false");
+            params.put("false", false);
+            return;
+        }
+
+        // NB: Need to work around the fact that the RDBMSes can't agree on how to do member checks. Oh joy! :)))
+        final var teamIdChecks = new ArrayList<String>();
+        for (int i = 0; i < teamIds.size(); i++) {
+            teamIdChecks.add("\"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = :teamId" + i);
+            params.put("teamId" + i, teamIds.get(i));
+        }
+
+        queryFilter.append("""
+                EXISTS (
+                  SELECT 1
+                    FROM "PROJECT_ACCESS_TEAMS"
+                   WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
+                     AND (%s)
+                )""".formatted(String.join(" OR ", teamIdChecks)));
     }
 }

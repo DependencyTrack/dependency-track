@@ -68,7 +68,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         method.setAccessible(true);
         method.invoke(generator);
 
-        qm.getPersistenceManager().refresh(license);
+        qm.getPersistenceManager().evictAll();
         assertThat(license.getLicenseId()).isEqualTo("LGPL-2.1+");
         assertThat(license.getName()).isEqualTo("GNU Lesser General Public License v2.1 or later");
         assertThat(license.getComment()).isNotEqualTo("comment");

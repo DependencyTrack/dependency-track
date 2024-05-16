@@ -64,6 +64,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -272,7 +273,7 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
     private void doDownload(final String urlString, final ResourceType resourceType) {
         File file;
         try {
-            final URL url = new URL(urlString);
+            final URL url = URI.create(urlString).toURL();
             String filename = url.getFile();
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();

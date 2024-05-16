@@ -28,9 +28,11 @@ import alpine.model.UserPrincipal;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
+import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.ClassUtils;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
@@ -83,18 +85,17 @@ import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.Transaction;
 import javax.json.JsonObject;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+
+import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -351,6 +352,30 @@ public class QueryManager extends AlpineQueryManager {
         return this;
     }
 
+    /**
+     * Get the IDs of the {@link Team}s a given {@link Principal} is a member of.
+     *
+     * @return A {@link Set} of {@link Team} IDs
+     * @since 4.11.1
+     */
+    protected Set<Long> getTeamIds(final Principal principal) {
+        final var principalTeamIds = new HashSet<Long>();
+
+        if (principal instanceof final UserPrincipal userPrincipal
+                && userPrincipal.getTeams() != null) {
+            for (final Team userInTeam : userPrincipal.getTeams()) {
+                principalTeamIds.add(userInTeam.getId());
+            }
+        } else if (principal instanceof final ApiKey apiKey
+                && apiKey.getTeams() != null) {
+            for (final Team userInTeam : apiKey.getTeams()) {
+                principalTeamIds.add(userInTeam.getId());
+            }
+        }
+
+        return principalTeamIds;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// BEGIN WRAPPER METHODS                                                                                      ////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -390,11 +415,11 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects(team, excludeInactive, bypass, onlyRoot);
     }
 
-    public PaginatedResult getProjectsWithoutDescendantsOf(final boolean excludeInactive, final Project project){
+    public PaginatedResult getProjectsWithoutDescendantsOf(final boolean excludeInactive, final Project project) {
         return getProjectQueryManager().getProjectsWithoutDescendantsOf(excludeInactive, project);
     }
 
-    public PaginatedResult getProjectsWithoutDescendantsOf(final String name, final boolean excludeInactive, final Project project){
+    public PaginatedResult getProjectsWithoutDescendantsOf(final String name, final boolean excludeInactive, final Project project) {
         return getProjectQueryManager().getProjectsWithoutDescendantsOf(name, excludeInactive, project);
     }
 
@@ -410,15 +435,15 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects(classifier, includeMetrics, excludeInactive, onlyRoot);
     }
 
-    public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+    public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
         return getProjectQueryManager().getChildrenProjects(uuid, includeMetrics, excludeInactive);
     }
 
-    public PaginatedResult getChildrenProjects(final Tag tag, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+    public PaginatedResult getChildrenProjects(final Tag tag, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
         return getProjectQueryManager().getChildrenProjects(tag, uuid, includeMetrics, excludeInactive);
     }
 
-    public PaginatedResult getChildrenProjects(final Classifier classifier, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+    public PaginatedResult getChildrenProjects(final Classifier classifier, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
         return getProjectQueryManager().getChildrenProjects(classifier, uuid, includeMetrics, excludeInactive);
     }
 
@@ -648,7 +673,7 @@ public class QueryManager extends AlpineQueryManager {
         return getPolicyQueryManager().addPolicyViolationIfNotExist(pv);
     }
 
-    public PolicyViolation clonePolicyViolation(PolicyViolation sourcePolicyViolation, Component destinationComponent){
+    public PolicyViolation clonePolicyViolation(PolicyViolation sourcePolicyViolation, Component destinationComponent) {
         return getPolicyQueryManager().clonePolicyViolation(sourcePolicyViolation, destinationComponent);
     }
 
@@ -769,10 +794,6 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
     }
 
-    public List<Vulnerability> getVulnerabilitiesForNpmModule(String module) {
-        return getVulnerabilityQueryManager().getVulnerabilitiesForNpmModule(module);
-    }
-
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {
         getVulnerabilityQueryManager().addVulnerability(vulnerability, component, analyzerIdentity);
     }
@@ -891,10 +912,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final PackageURL purl) {
         return getVulnerableSoftwareQueryManager().getAllVulnerableSoftware(cpePart, cpeVendor, cpeProduct, purl);
-    }
-
-    public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
-        return getComponentQueryManager().matchSingleIdentity(project, cid);
     }
 
     public Component matchSingleIdentityExact(final Project project, final ComponentIdentity cid) {
@@ -1249,7 +1266,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public synchronized void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {
-        getCacheQueryManager().updateComponentAnalysisCache(cacheType, targetHost, targetType, target, lastOccurrence,  result);
+        getCacheQueryManager().updateComponentAnalysisCache(cacheType, targetHost, targetType, target, lastOccurrence, result);
     }
 
     public void clearComponentAnalysisCache() {
@@ -1267,7 +1284,7 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Commits the Lucene index.
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @param clazz the indexable class to commit the index of
+     * @param clazz       the indexable class to commit the index of
      */
     public void commitSearchIndex(boolean commitIndex, Class clazz) {
         if (commitIndex) {
@@ -1281,6 +1298,16 @@ public class QueryManager extends AlpineQueryManager {
      */
     public void commitSearchIndex(Class clazz) {
         commitSearchIndex(true, clazz);
+    }
+
+    public boolean hasAccessManagementPermission(final Object principal) {
+        if (principal instanceof final UserPrincipal userPrincipal) {
+            return hasAccessManagementPermission(userPrincipal);
+        } else if (principal instanceof final ApiKey apiKey) {
+            return hasAccessManagementPermission(apiKey);
+        }
+
+        throw new IllegalArgumentException("Provided principal is of invalid type " + ClassUtils.getName(principal));
     }
 
     public boolean hasAccessManagementPermission(final UserPrincipal userPrincipal) {
@@ -1304,11 +1331,11 @@ public class QueryManager extends AlpineQueryManager {
      * <p>
      * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
      *
-     * @param clazz Class of the object to fetch
-     * @param uuid {@link UUID} of the object to fetch
+     * @param clazz       Class of the object to fetch
+     * @param uuid        {@link UUID} of the object to fetch
      * @param fetchGroups Fetch groups to use for this operation
      * @return The object if found, otherwise {@code null}
-     * @param <T> Type of the object
+     * @param <T>         Type of the object
      * @throws Exception When closing the query failed
      * @since 4.6.0
      */
@@ -1357,7 +1384,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param clazz Class of the object to fetch
      * @param uuids {@link UUID} list of uuids to fetch
      * @return The list of objects found
-     * @param <T> Type of the object
+     * @param <T>   Type of the object
      * @since 4.9.0
      */
     public <T> List<T> getObjectsByUuids(final Class<T> clazz, final List<UUID> uuids) {
@@ -1371,7 +1398,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param clazz Class of the object to fetch
      * @param uuids {@link UUID} list of uuids to fetch
      * @return The query to execute
-     * @param <T> Type of the object
+     * @param <T>   Type of the object
      * @since 4.9.0
      */
     public <T> Query<T> getObjectsByUuidsQuery(final Class<T> clazz, final List<UUID> uuids) {
@@ -1380,88 +1407,18 @@ public class QueryManager extends AlpineQueryManager {
         return query;
     }
 
-    /**
-     * Convenience method to execute a given {@link Runnable} within the context of a {@link Transaction}.
-     * <p>
-     * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
-     *
-     * @param runnable The {@link Runnable} to execute
-     * @since 4.6.0
-     */
-    public void runInTransaction(final Runnable runnable) {
-        runInTransaction((Function<Transaction, Void>) trx -> {
-            runnable.run();
-            return null;
-        });
-    }
-
-    public void runInTransaction(final Consumer<Transaction> consumer) {
-        runInTransaction((Function<Transaction, Void>) trx -> {
-            consumer.accept(trx);
-            return null;
-        });
-    }
-
-    /**
-     * Convenience method to execute a given {@link Supplier} within the context of a {@link Transaction}.
-     * <p>
-     * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
-     *
-     * @param supplier The {@link Supplier} to execute
-     * @since 4.9.0
-     */
-    public <T> T runInTransaction(final Supplier<T> supplier) {
-        return runInTransaction((Function<Transaction, T>) trx -> supplier.get());
-    }
-
-    public <T> T runInTransaction(final Function<Transaction, T> function) {
-        final Transaction trx = pm.currentTransaction();
-        final boolean isJoiningExisting = trx.isActive();
-        try {
-            if (!isJoiningExisting) {
-                trx.begin();
-            }
-            final T result = function.apply(trx);
-            if (!isJoiningExisting) {
-                trx.commit();
-            }
-            return result;
-        } finally {
-            if (!isJoiningExisting && trx.isActive()) {
-                trx.rollback();
-            }
-        }
-    }
-
-    /**
-     * Convenience method to ensure that any active transaction is rolled back.
-     * <p>
-     * Calling this method may sometimes be necessary due to {@link AlpineQueryManager#persist(Object)}
-     * no performing a rollback in case committing the transaction fails. This can impact other persistence
-     * operations performed in the same session (e.g. {@code NucleusTransactionException: Invalid state. Transaction has already started}).
-     *
-     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2677">Issue 2677</a>
-     * @since 4.8.0
-     */
-    public void ensureNoActiveTransaction() {
-        final Transaction trx = pm.currentTransaction();
-        if (trx != null && trx.isActive()) {
-            trx.rollback();
-        }
-    }
-
     public void recursivelyDeleteTeam(Team team) {
-        pm.setProperty("datanucleus.query.sql.allowAll", true);
-        final Transaction trx = pm.currentTransaction();
-        pm.currentTransaction().begin();
-        pm.deletePersistentAll(team.getApiKeys());
-        String aclDeleteQuery = """
-            DELETE FROM \"PROJECT_ACCESS_TEAMS\" WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?
-        """;
-        final Query query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, aclDeleteQuery);
-        query.executeWithArray(team.getId());
-        pm.deletePersistent(team);
-        pm.currentTransaction().commit();
+        runInTransaction(() -> {
+            pm.deletePersistentAll(team.getApiKeys());
+
+            try (var ignored = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+                final Query<?> aclDeleteQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                        DELETE FROM "PROJECT_ACCESS_TEAMS" WHERE "PROJECT_ACCESS_TEAMS"."TEAM_ID" = ?""");
+                executeAndCloseWithArray(aclDeleteQuery, team.getId());
+            }
+
+            pm.deletePersistent(team);
+        });
     }
 
     /**
@@ -1496,7 +1453,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Returns a list of all {@link RepositoryMetaComponent} objects by {@link RepositoryQueryManager.RepositoryMetaComponentSearch} UUID.
-     * @param list a list of {@link RepositoryQueryManager.RepositoryMetaComponentSearch}
+     * @param list      a list of {@link RepositoryQueryManager.RepositoryMetaComponentSearch}
      * @param batchSize the batch size
      * @return a list of {@link RepositoryMetaComponent} objects
      * @since 4.9.0

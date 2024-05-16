@@ -420,7 +420,7 @@ public class BomResource extends AlpineResource {
             }
             final byte[] decoded = Base64.getDecoder().decode(encodedBomData);
             try (final ByteArrayInputStream bain = new ByteArrayInputStream(decoded)) {
-                final byte[] content = IOUtils.toByteArray(new BOMInputStream((bain)));
+                final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(bain).get());
                 validate(content);
                 final BomUploadEvent bomUploadEvent = new BomUploadEvent(qm.getPersistenceManager().detachCopy(project), content);
                 Event.dispatch(bomUploadEvent);
@@ -444,7 +444,7 @@ public class BomResource extends AlpineResource {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
                 }
                 try (InputStream in = bodyPartEntity.getInputStream()) {
-                    final byte[] content = IOUtils.toByteArray(new BOMInputStream((in)));
+                    final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(in).get());
                     validate(content);
                     // todo: make option to combine all the bom data so components are reconciled in a single pass.
                     // todo: https://github.com/DependencyTrack/dependency-track/issues/130

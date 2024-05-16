@@ -237,7 +237,7 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
 
         final ComponentAnalysisCache cacheEntry = cacheEntries.get(0);
         assertThat(cacheEntry.getTarget()).isEqualTo("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
-        List result = new ArrayList<Integer>();
+        final var result = new ArrayList<>();
         result.add(1);
         assertThat(cacheEntry.getResult())
                 .containsEntry("vulnIds", Json.createArrayBuilder(result).build());

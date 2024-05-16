@@ -127,7 +127,7 @@ public class VulnDbParser {
     private List<Cpe> parseCpes(JSONArray rso) {
         List<Cpe> cpes = null;
         if (rso != null) {
-            cpes = new ArrayList();
+            cpes = new ArrayList<>();
 
             for (int i = 0; i < rso.length(); ++i) {
                 JSONObject object = rso.getJSONObject(i);
@@ -142,7 +142,7 @@ public class VulnDbParser {
     private List<Product> parseProducts(JSONArray rso) {
         List<Product> products = null;
         if (rso != null) {
-            products = new ArrayList();
+            products = new ArrayList<>();
 
             for (int i = 0; i < rso.length(); ++i) {
                 JSONObject object = rso.getJSONObject(i);
@@ -159,7 +159,7 @@ public class VulnDbParser {
     private List<Vendor> parseVendors(JSONArray rso) {
         List<Vendor> vendors = null;
         if (rso != null) {
-            vendors = new ArrayList();
+            vendors = new ArrayList<>();
 
             for (int i = 0; i < rso.length(); ++i) {
                 JSONObject object = rso.getJSONObject(i);
@@ -189,7 +189,7 @@ public class VulnDbParser {
     private List<Version> parseVersions(JSONArray rso) {
         List<Version> versions = null;
         if (rso != null) {
-            versions = new ArrayList();
+            versions = new ArrayList<>();
 
             for (int i = 0; i < rso.length(); ++i) {
                 JSONObject object = rso.getJSONObject(i);
@@ -207,7 +207,7 @@ public class VulnDbParser {
     private List<Vulnerability> parseVulnerabilities(JSONArray rso) {
         List<Vulnerability> vulnerabilities = null;
         if (rso != null) {
-            vulnerabilities = new ArrayList();
+            vulnerabilities = new ArrayList<>();
 
             for (int i = 0; i < rso.length(); ++i) {
                 JSONObject object = rso.getJSONObject(i);

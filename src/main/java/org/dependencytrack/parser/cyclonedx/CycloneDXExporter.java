@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
-import org.cyclonedx.BomGeneratorFactory;
-import org.cyclonedx.CycloneDxSchema;
+import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
+import org.cyclonedx.generators.BomGeneratorFactory;
 import org.cyclonedx.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
@@ -95,10 +95,12 @@ public class CycloneDXExporter {
     }
 
     public String export(final Bom bom, final Format format) throws GeneratorException {
+        // TODO: The output version should be user-controllable.
+
         if (Format.JSON == format) {
-            return BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom).toJsonString();
+            return BomGeneratorFactory.createJson(Version.VERSION_15, bom).toJsonString();
         } else {
-            return BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom).toXmlString();
+            return BomGeneratorFactory.createXml(Version.VERSION_15, bom).toXmlString();
         }
     }
 

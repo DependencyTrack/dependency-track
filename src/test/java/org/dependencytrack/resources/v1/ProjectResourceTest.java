@@ -268,6 +268,36 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    public void validateProjectVersionsActiveInactiveTest() {
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        qm.createProject("ABC", null, "2.0", null, null, null, false, false);
+        qm.createProject("ABC", null, "3.0", null, null, null, true, false);
+
+        Response response = jersey.target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("ABC", json.getString("name"));
+        Assert.assertEquals(3, json.getJsonArray("versions").size());
+
+        Assert.assertNotNull(json.getJsonArray("versions").getJsonObject(0).getJsonString("uuid").getString());
+        Assert.assertEquals("1.0", json.getJsonArray("versions").getJsonObject(0).getJsonString("version").getString());
+        Assert.assertTrue(json.getJsonArray("versions").getJsonObject(0).getBoolean("active"));
+
+        Assert.assertNotNull(json.getJsonArray("versions").getJsonObject(1).getJsonString("uuid").getString());
+        Assert.assertEquals("2.0", json.getJsonArray("versions").getJsonObject(1).getJsonString("version").getString());
+        Assert.assertFalse(json.getJsonArray("versions").getJsonObject(1).getBoolean("active"));
+
+        Assert.assertNotNull(json.getJsonArray("versions").getJsonObject(2).getJsonString("uuid").getString());
+        Assert.assertEquals("3.0", json.getJsonArray("versions").getJsonObject(2).getJsonString("version").getString());
+        Assert.assertTrue(json.getJsonArray("versions").getJsonObject(2).getBoolean("active"));
+    }
+
+    @Test
     public void getProjectByInvalidUuidTest() {
         qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Response response = jersey.target(V1_PROJECT + "/" + UUID.randomUUID())
@@ -665,7 +695,8 @@ public class ProjectResourceTest extends ResourceTest {
                               "name": "tag4"
                             }
                           ],
-                          "active": false
+                          "active": false,
+                          "children": []
                         }
                         """);
     }
@@ -742,7 +773,7 @@ public class ProjectResourceTest extends ResourceTest {
                         """);
 
         // Ensure the parent was updated.
-        qm.getPersistenceManager().refresh(project);
+        qm.getPersistenceManager().evictAll();
         assertThat(project.getParent()).isNotNull();
         assertThat(project.getParent().getUuid()).isEqualTo(newParent.getUuid());
     }
@@ -767,7 +798,7 @@ public class ProjectResourceTest extends ResourceTest {
         assertThat(getPlainTextBody(response)).isEqualTo("The UUID of the parent project could not be found.");
 
         // Ensure the parent was not modified.
-        qm.getPersistenceManager().refresh(project);
+        qm.getPersistenceManager().evictAll();
         assertThat(project.getParent()).isNotNull();
         assertThat(project.getParent().getUuid()).isEqualTo(parent.getUuid());
     }

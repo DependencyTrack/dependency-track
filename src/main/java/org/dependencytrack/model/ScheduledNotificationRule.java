@@ -152,7 +152,6 @@ public class ScheduledNotificationRule implements Serializable {
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "CRON_CONFIG", allowsNull = "true") // new column, must allow nulls on existing databases
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    // @Pattern(regexp = RegexSequence.Definition.CRON, message = "The message may only contain characters valid in cron strings")
     private String cronConfig;
 
     @Persistent(defaultFetchGroup = "true")

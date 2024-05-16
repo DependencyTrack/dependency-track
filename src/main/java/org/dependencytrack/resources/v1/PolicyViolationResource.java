@@ -21,13 +21,17 @@ package org.dependencytrack.resources.v1;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.PolicyViolation;
@@ -54,24 +58,30 @@ import java.util.Collection;
  * @since 4.0.0
  */
 @Path("/v1/violation")
-@Api(value = "violation", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "violation")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class PolicyViolationResource extends AlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all policy violations for the entire portfolio",
-            response = PolicyViolation.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations"),
-            notes = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
+    @Operation(
+            summary = "Returns a list of all policy violations for the entire portfolio",
+            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
     @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response getViolations(@ApiParam(value = "Optionally includes suppressed violations")
+    public Response getViolations(@Parameter(description = "Optionally includes suppressed violations")
                                   @QueryParam("suppressed") boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getPolicyViolations(suppressed);
@@ -84,23 +94,25 @@ public class PolicyViolationResource extends AlpineResource {
     @GET
     @Path("/project/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all policy violations for a specific project",
-            response = PolicyViolation.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations"),
-            notes = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
+    @Operation(
+            summary = "Returns a list of all policy violations for a specific project",
+            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
     @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response getViolationsByProject(@ApiParam(value = "The UUID of the project", format = "uuid", required = true)
+    public Response getViolationsByProject(@Parameter(description = "The UUID of the project", schema = @Schema(type = "string", format = "uuid"), required = true)
                                            @PathParam("uuid") @ValidUuid String uuid,
-                                           @ApiParam(value = "Optionally includes suppressed violations")
+                                           @Parameter(description = "Optionally includes suppressed violations")
                                            @QueryParam("suppressed") boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -122,23 +134,25 @@ public class PolicyViolationResource extends AlpineResource {
     @GET
     @Path("/component/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all policy violations for a specific component",
-            response = PolicyViolation.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations"),
-            notes = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
+    @Operation(
+            summary = "Returns a list of all policy violations for a specific component",
+            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
     @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
-            @ApiResponse(code = 404, message = "The component could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The component could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response getViolationsByComponent(@ApiParam(value = "The UUID of the component", format = "uuid", required = true)
+    public Response getViolationsByComponent(@Parameter(description = "The UUID of the component", schema = @Schema(type = "string", format = "uuid"), required = true)
                                              @PathParam("uuid") @ValidUuid String uuid,
-                                             @ApiParam(value = "Optionally includes suppressed violations")
+                                             @Parameter(description = "Optionally includes suppressed violations")
                                              @QueryParam("suppressed") boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);

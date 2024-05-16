@@ -26,12 +26,15 @@ import alpine.model.OidcUser;
 import alpine.model.UserPrincipal;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Analysis;
@@ -61,26 +64,30 @@ import javax.ws.rs.core.Response;
  * @since 3.1.0
  */
 @Path("/v1/analysis")
-@Api(value = "analysis", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "analysis")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class AnalysisResource extends AlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Retrieves an analysis trail",
-            response = Analysis.class,
-            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
+    @Operation(
+            summary = "Retrieves an analysis trail",
+            description = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The project, component, or vulnerability could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Analysis.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The project, component, or vulnerability could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
-    public Response retrieveAnalysis(@ApiParam(value = "The UUID of the project", format = "uuid")
+    public Response retrieveAnalysis(@Parameter(description = "The UUID of the project", schema = @Schema(type = "string", format = "uuid"))
                                      @QueryParam("project") String projectUuid,
-                                     @ApiParam(value = "The UUID of the component", format = "uuid", required = true)
+                                     @Parameter(description = "The UUID of the component", schema = @Schema(type = "string", format = "uuid"), required = true)
                                      @QueryParam("component") String componentUuid,
-                                     @ApiParam(value = "The UUID of the vulnerability", format = "uuid", required = true)
+                                     @Parameter(description = "The UUID of the vulnerability", schema = @Schema(type = "string", format = "uuid"), required = true)
                                      @QueryParam("vulnerability") String vulnerabilityUuid) {
         failOnValidationError(
                 new ValidationTask(RegexSequence.Pattern.UUID, projectUuid, "Project is not a valid UUID", false), // this is optional
@@ -114,14 +121,14 @@ public class AnalysisResource extends AlpineResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Records an analysis decision",
-            response = Analysis.class,
-            notes = "<p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"
+    @Operation(
+            summary = "Records an analysis decision",
+            description = "<p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The project, component, or vulnerability could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Analysis.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The project, component, or vulnerability could not be found")
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
     public Response updateAnalysis(AnalysisRequest request) {

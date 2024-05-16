@@ -23,13 +23,17 @@ import alpine.model.Team;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.validation.ValidUuid;
@@ -57,7 +61,11 @@ import java.util.List;
  * @since 3.3.0
  */
 @Path("/v1/acl")
-@Api(value = "acl", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "acl")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class AccessControlResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(AccessControlResource.class);
@@ -65,24 +73,26 @@ public class AccessControlResource extends AlpineResource {
     @GET
     @Path("/team/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns the projects assigned to the specified team",
-            response = String.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects"),
-            notes = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Returns the projects assigned to the specified team",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the team could not be found"),
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of projects", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Project.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the team could not be found"),
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    public Response retrieveProjects (@ApiParam(value = "The UUID of the team to retrieve mappings for", format = "uuid", required = true)
+    public Response retrieveProjects (@Parameter(description = "The UUID of the team to retrieve mappings for", schema = @Schema(type = "string", format = "uuid"), required = true)
                                       @PathParam("uuid") @ValidUuid String uuid,
-                                      @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
+                                      @Parameter(description = "Optionally excludes inactive projects from being returned", required = false)
                                       @QueryParam("excludeInactive") boolean excludeInactive,
-                                      @ApiParam(value = "Optionally excludes children projects from being returned", required = false)
+                                      @Parameter(description = "Optionally excludes children projects from being returned", required = false)
                                       @QueryParam("onlyRoot") boolean onlyRoot) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
@@ -98,15 +108,15 @@ public class AccessControlResource extends AlpineResource {
     @PUT
     @Path("/mapping")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Adds an ACL mapping",
-            response = AclMappingRequest.class,
-            notes = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Adds an ACL mapping",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the team or project could not be found"),
-            @ApiResponse(code = 409, message = "A mapping with the same team and project already exists")
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the team or project could not be found"),
+            @ApiResponse(responseCode = "409", description = "A mapping with the same team and project already exists")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response addMapping(AclMappingRequest request) {
@@ -136,19 +146,20 @@ public class AccessControlResource extends AlpineResource {
     @DELETE
     @Path("/mapping/team/{teamUuid}/project/{projectUuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Removes an ACL mapping",
-            notes = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Removes an ACL mapping",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the team or project could not be found"),
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the team or project could not be found"),
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response deleteMapping(
-            @ApiParam(value = "The UUID of the team to delete the mapping for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the team to delete the mapping for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("teamUuid") @ValidUuid String teamUuid,
-            @ApiParam(value = "The UUID of the project to delete the mapping for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to delete the mapping for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("projectUuid") @ValidUuid String projectUuid) {
         try (QueryManager qm = new QueryManager()) {
             final Team team = qm.getObjectByUuid(Team.class, teamUuid);

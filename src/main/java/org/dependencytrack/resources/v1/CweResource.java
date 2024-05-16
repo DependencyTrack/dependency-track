@@ -20,13 +20,17 @@ package org.dependencytrack.resources.v1;
 
 import alpine.persistence.PaginatedResult;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
@@ -45,20 +49,24 @@ import javax.ws.rs.core.Response;
  * @since 3.0.0
  */
 @Path("/v1/cwe")
-@Api(value = "cwe", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "cwe")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class CweResource extends AlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all CWEs",
-            response = Cwe.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of CWEs")
-    )
+    @Operation(summary = "Returns a list of all CWEs")
     @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of CWEs", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Cwe.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getCwes() {
         final PaginatedResult cwes = CweResolver.getInstance().all(getAlpineRequest().getPagination());
@@ -68,16 +76,15 @@ public class CweResource extends AlpineResource {
     @GET
     @Path("/{cweId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a specific CWE",
-            response = Cwe.class
-    )
+    @Operation(
+            summary = "Returns a specific CWE")
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The CWE could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Cwe.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The CWE could not be found")
     })
     public Response getCwe(
-            @ApiParam(value = "The CWE ID of the CWE to retrieve", required = true)
+            @Parameter(description = "The CWE ID of the CWE to retrieve", required = true)
             @PathParam("cweId") int cweId) {
         final Cwe cwe = CweResolver.getInstance().lookup(cweId);
         if (cwe != null) {

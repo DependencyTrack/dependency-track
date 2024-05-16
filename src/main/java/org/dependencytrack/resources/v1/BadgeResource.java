@@ -22,11 +22,13 @@ import alpine.common.util.BooleanUtil;
 import alpine.model.ConfigProperty;
 import alpine.server.auth.AuthenticationNotRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.validation.ValidUuid;
@@ -48,7 +50,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BADGE_EN
  * @since 3.6.0
  */
 @Path("/v1/badge")
-@Api(value = "badge")
+@Tag(name = "badge")
 public class BadgeResource extends AlpineResource {
 
     private static final String SVG_MEDIA_TYPE = "image/svg+xml";
@@ -62,18 +64,17 @@ public class BadgeResource extends AlpineResource {
     @GET
     @Path("/vulns/project/{uuid}")
     @Produces(SVG_MEDIA_TYPE)
-    @ApiOperation(
-            value = "Returns current metrics for a specific project",
-            response = ProjectMetrics.class
-    )
+    @Operation(
+            summary = "Returns current metrics for a specific project")
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Badge support is disabled. No content will be returned."),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "204", description = "Badge support is disabled. No content will be returned."),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @AuthenticationNotRequired
     public Response getProjectVulnerabilitiesBadge(
-            @ApiParam(value = "The UUID of the project to retrieve metrics for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             if (isBadgeSupportEnabled(qm)) {
@@ -94,20 +95,19 @@ public class BadgeResource extends AlpineResource {
     @GET
     @Path("/vulns/project/{name}/{version}")
     @Produces(SVG_MEDIA_TYPE)
-    @ApiOperation(
-            value = "Returns current metrics for a specific project",
-            response = ProjectMetrics.class
-    )
+    @Operation(
+            summary = "Returns current metrics for a specific project")
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Badge support is disabled. No content will be returned."),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "204", description = "Badge support is disabled. No content will be returned."),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @AuthenticationNotRequired
     public Response getProjectVulnerabilitiesBadge(
-            @ApiParam(value = "The name of the project to query on", required = true)
+            @Parameter(description = "The name of the project to query on", required = true)
             @PathParam("name") String name,
-            @ApiParam(value = "The version of the project to query on", required = true)
+            @Parameter(description = "The version of the project to query on", required = true)
             @PathParam("version") String version) {
         try (QueryManager qm = new QueryManager()) {
             if (isBadgeSupportEnabled(qm)) {
@@ -128,18 +128,17 @@ public class BadgeResource extends AlpineResource {
     @GET
     @Path("/violations/project/{uuid}")
     @Produces(SVG_MEDIA_TYPE)
-    @ApiOperation(
-            value = "Returns a policy violations badge for a specific project",
-            response = String.class
-    )
+    @Operation(
+            summary = "Returns a policy violations badge for a specific project")
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Badge support is disabled. No content will be returned."),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "204", description = "Badge support is disabled. No content will be returned."),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @AuthenticationNotRequired
     public Response getProjectPolicyViolationsBadge(
-            @ApiParam(value = "The UUID of the project to retrieve a badge for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to retrieve a badge for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             if (isBadgeSupportEnabled(qm)) {
@@ -160,20 +159,19 @@ public class BadgeResource extends AlpineResource {
     @GET
     @Path("/violations/project/{name}/{version}")
     @Produces(SVG_MEDIA_TYPE)
-    @ApiOperation(
-            value = "Returns a policy violations badge for a specific project",
-            response = String.class
-    )
+    @Operation(
+            summary = "Returns a policy violations badge for a specific project")
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Badge support is disabled. No content will be returned."),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "204", description = "Badge support is disabled. No content will be returned."),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @AuthenticationNotRequired
     public Response getProjectPolicyViolationsBadge(
-            @ApiParam(value = "The name of the project to query on", required = true)
+            @Parameter(description = "The name of the project to query on", required = true)
             @PathParam("name") String name,
-            @ApiParam(value = "The version of the project to query on", required = true)
+            @Parameter(description = "The version of the project to query on", required = true)
             @PathParam("version") String version) {
         try (QueryManager qm = new QueryManager()) {
             if (isBadgeSupportEnabled(qm)) {

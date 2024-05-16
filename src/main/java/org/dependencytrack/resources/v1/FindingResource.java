@@ -26,13 +26,17 @@ import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.text.WordUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.PolicyEvaluationEvent;
@@ -41,11 +45,11 @@ import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.GroupedFinding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -74,7 +78,11 @@ import java.util.stream.Collectors;
  * @since 3.1.0
  */
 @Path("/v1/finding")
-@Api(value = "finding", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "finding")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class FindingResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(FindingResource.class);
@@ -83,24 +91,26 @@ public class FindingResource extends AlpineResource {
     @GET
     @Path("/project/{uuid}")
     @Produces({MediaType.APPLICATION_JSON, MEDIA_TYPE_SARIF_JSON})
-    @ApiOperation(
-            value = "Returns a list of all findings for a specific project or generates SARIF file if Accept: application/sarif+json header is provided",
-            response = Finding.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings"),
-            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
+    @Operation(
+            summary = "Returns a list of all findings for a specific project or generates SARIF file if Accept: application/sarif+json header is provided",
+            description = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of findings", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
-    public Response getFindingsByProject(@ApiParam(value = "The UUID of the project", format = "uuid", required = true)
+    public Response getFindingsByProject(@Parameter(description = "The UUID of the project", schema = @Schema(type = "string", format = "uuid"), required = true)
                                          @PathParam("uuid") @ValidUuid String uuid,
-                                         @ApiParam(value = "Optionally includes suppressed findings")
+                                         @Parameter(description = "Optionally includes suppressed findings")
                                          @QueryParam("suppressed") boolean suppressed,
-                                         @ApiParam(value = "Optionally limit findings to specific sources of vulnerability intelligence")
+                                         @Parameter(description = "Optionally limit findings to specific sources of vulnerability intelligence")
                                          @QueryParam("source") Vulnerability.Source source,
                                          @HeaderParam("accept") String acceptHeader) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
@@ -137,17 +147,18 @@ public class FindingResource extends AlpineResource {
     @GET
     @Path("/project/{uuid}/export")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns the findings for the specified project as FPF",
-            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
+    @Operation(
+            summary = "Returns the findings for the specified project as FPF",
+            description = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
-    public Response exportFindingsByProject(@ApiParam(value = "The UUID of the project", format = "uuid", required = true)
+    public Response exportFindingsByProject(@Parameter(description = "The UUID of the project", schema = @Schema(type = "string", format = "uuid"), required = true)
                                             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -170,19 +181,19 @@ public class FindingResource extends AlpineResource {
     @POST
     @Path("/project/{uuid}/analyze")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Triggers Vulnerability Analysis on a specific project",
-            response = Project.class,
-            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
+    @Operation(
+            summary = "Triggers Vulnerability Analysis on a specific project",
+            description = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = BomUploadResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
     public Response analyzeProject(
-            @ApiParam(value = "The UUID of the project to analyze", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to analyze", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -211,46 +222,48 @@ public class FindingResource extends AlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all findings",
-            response = Finding.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings"),
-            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
+    @Operation(
+            summary = "Returns a list of all findings",
+            description = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of findings", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
     })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
-    public Response getAllFindings(@ApiParam(value = "Show inactive projects")
+    public Response getAllFindings(@Parameter(description = "Show inactive projects")
                                    @QueryParam("showInactive") boolean showInactive,
-                                   @ApiParam(value = "Show suppressed findings")
+                                   @Parameter(description = "Show suppressed findings")
                                    @QueryParam("showSuppressed") boolean showSuppressed,
-                                   @ApiParam(value = "Filter by severity")
+                                   @Parameter(description = "Filter by severity")
                                    @QueryParam("severity") String severity,
-                                   @ApiParam(value = "Filter by analysis status")
+                                   @Parameter(description = "Filter by analysis status")
                                    @QueryParam("analysisStatus") String analysisStatus,
-                                   @ApiParam(value = "Filter by vendor response")
+                                   @Parameter(description = "Filter by vendor response")
                                    @QueryParam("vendorResponse") String vendorResponse,
-                                   @ApiParam(value = "Filter published from this date")
+                                   @Parameter(description = "Filter published from this date")
                                    @QueryParam("publishDateFrom") String publishDateFrom,
-                                   @ApiParam(value = "Filter published to this date")
+                                   @Parameter(description = "Filter published to this date")
                                    @QueryParam("publishDateTo") String publishDateTo,
-                                   @ApiParam(value = "Filter attributed on from this date")
+                                   @Parameter(description = "Filter attributed on from this date")
                                    @QueryParam("attributedOnDateFrom") String attributedOnDateFrom,
-                                   @ApiParam(value = "Filter attributed on to this date")
+                                   @Parameter(description = "Filter attributed on to this date")
                                    @QueryParam("attributedOnDateTo") String attributedOnDateTo,
-                                   @ApiParam(value = "Filter the text input in these fields")
+                                   @Parameter(description = "Filter the text input in these fields")
                                    @QueryParam("textSearchField") String textSearchField,
-                                   @ApiParam(value = "Filter by this text input")
+                                   @Parameter(description = "Filter by this text input")
                                    @QueryParam("textSearchInput") String textSearchInput,
-                                   @ApiParam(value = "Filter CVSSv2 from this value")
+                                   @Parameter(description = "Filter CVSSv2 from this value")
                                    @QueryParam("cvssv2From") String cvssv2From,
-                                   @ApiParam(value = "Filter CVSSv2 from this Value")
+                                   @Parameter(description = "Filter CVSSv2 from this Value")
                                    @QueryParam("cvssv2To") String cvssv2To,
-                                   @ApiParam(value = "Filter CVSSv3 from this value")
+                                   @Parameter(description = "Filter CVSSv3 from this value")
                                    @QueryParam("cvssv3From") String cvssv3From,
-                                   @ApiParam(value = "Filter CVSSv3 from this Value")
+                                   @Parameter(description = "Filter CVSSv3 from this Value")
                                    @QueryParam("cvssv3To") String cvssv3To) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Map<String, String> filters = new HashMap<>();
@@ -275,40 +288,42 @@ public class FindingResource extends AlpineResource {
     @GET
     @Path("/grouped")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all findings grouped by vulnerability",
-            response = GroupedFinding.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings"),
-            notes = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
+    @Operation(
+            summary = "Returns a list of all findings grouped by vulnerability",
+            description = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of findings", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
     })
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
-    public Response getAllFindings(@ApiParam(value = "Show inactive projects")
+    public Response getAllFindings(@Parameter(description = "Show inactive projects")
                                    @QueryParam("showInactive") boolean showInactive,
-                                   @ApiParam(value = "Filter by severity")
+                                   @Parameter(description = "Filter by severity")
                                    @QueryParam("severity") String severity,
-                                   @ApiParam(value = "Filter published from this date")
+                                   @Parameter(description = "Filter published from this date")
                                    @QueryParam("publishDateFrom") String publishDateFrom,
-                                   @ApiParam(value = "Filter published to this date")
+                                   @Parameter(description = "Filter published to this date")
                                    @QueryParam("publishDateTo") String publishDateTo,
-                                   @ApiParam(value = "Filter the text input in these fields")
+                                   @Parameter(description = "Filter the text input in these fields")
                                    @QueryParam("textSearchField") String textSearchField,
-                                   @ApiParam(value = "Filter by this text input")
+                                   @Parameter(description = "Filter by this text input")
                                    @QueryParam("textSearchInput") String textSearchInput,
-                                   @ApiParam(value = "Filter CVSSv2 from this value")
+                                   @Parameter(description = "Filter CVSSv2 from this value")
                                    @QueryParam("cvssv2From") String cvssv2From,
-                                   @ApiParam(value = "Filter CVSSv2 to this value")
+                                   @Parameter(description = "Filter CVSSv2 to this value")
                                    @QueryParam("cvssv2To") String cvssv2To,
-                                   @ApiParam(value = "Filter CVSSv3 from this value")
+                                   @Parameter(description = "Filter CVSSv3 from this value")
                                    @QueryParam("cvssv3From") String cvssv3From,
-                                   @ApiParam(value = "Filter CVSSv3 to this value")
+                                   @Parameter(description = "Filter CVSSv3 to this value")
                                    @QueryParam("cvssv3To") String cvssv3To,
-                                   @ApiParam(value = "Filter occurrences in projects from this value")
+                                   @Parameter(description = "Filter occurrences in projects from this value")
                                    @QueryParam("occurrencesFrom") String occurrencesFrom,
-                                   @ApiParam(value = "Filter occurrences in projects to this value")
+                                   @Parameter(description = "Filter occurrences in projects to this value")
                                    @QueryParam("occurrencesTo") String occurrencesTo) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Map<String, String> filters = new HashMap<>();

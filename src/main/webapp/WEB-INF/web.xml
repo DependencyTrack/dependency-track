@@ -116,7 +116,7 @@
         <servlet-class>alpine.server.AlpineServlet</servlet-class>
         <init-param>
             <param-name>jersey.config.server.provider.packages</param-name>
-            <param-value>io.swagger.jaxrs.listing,alpine.server.filters,alpine.server.resources,org.dependencytrack.resources,org.dependencytrack.filters</param-value>
+            <param-value>alpine.server.filters,alpine.server.resources,org.dependencytrack.resources,org.dependencytrack.filters</param-value>
         </init-param>
         <init-param>
             <param-name>jersey.config.server.provider.classnames</param-name>
@@ -124,10 +124,6 @@
         </init-param>
         <init-param>
             <param-name>jersey.config.beanValidation.enableOutputValidationErrorEntity.server</param-name>
-            <param-value>true</param-value>
-        </init-param>
-        <init-param>
-            <param-name>swagger.pretty.print</param-name>
             <param-value>true</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>

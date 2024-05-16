@@ -20,12 +20,15 @@ package org.dependencytrack.resources.v1;
 
 import alpine.event.framework.Event;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.resources.v1.vo.IsTokenBeingProcessedResponse;
 
@@ -44,16 +47,19 @@ import java.util.UUID;
  * @since 4.11.0
  */
 @Path("/v1/event")
-@Api(value = "event", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "event")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class EventResource extends AlpineResource {
 
     @GET
     @Path("/token/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
-            response = IsTokenBeingProcessedResponse.class,
-            notes = """
+    @Operation(
+            summary = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
+            description = """
                     <p>
                       This endpoint is intended to be used in conjunction with other API calls which return a token for asynchronous tasks.
                       The token can then be queried using this endpoint to determine if the task is complete:
@@ -66,10 +72,11 @@ public class EventResource extends AlpineResource {
                     </p>"""
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = IsTokenBeingProcessedResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response isTokenBeingProcessed (
-            @ApiParam(value = "The UUID of the token to query", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the token to query", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         final boolean value = Event.isEventBeingProcessed(UUID.fromString(uuid));
         IsTokenBeingProcessedResponse response = new IsTokenBeingProcessedResponse();

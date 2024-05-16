@@ -25,13 +25,17 @@ import alpine.server.auth.LdapConnectionWrapper;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.cache.CacheManager;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
@@ -60,7 +64,11 @@ import java.util.stream.Collectors;
  * @since 3.3.0
  */
 @Path("/v1/ldap")
-@Api(value = "ldap", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "ldap")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class LdapResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(LdapResource.class);
@@ -68,12 +76,9 @@ public class LdapResource extends AlpineResource {
     @GET
     @Path("/groups")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns the DNs of all accessible groups within the directory",
-            response = String.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of ldap groups that match the specified search criteria"),
-            notes = """
+    @Operation(
+            summary = "Returns the DNs of all accessible groups within the directory",
+            description = """
                     <p>
                       This API performs a pass-through query to the configured LDAP server.
                       Search criteria results are cached using default Alpine CacheManager policy.
@@ -81,7 +86,12 @@ public class LdapResource extends AlpineResource {
                     <p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"""
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of ldap groups that match the specified search criteria", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(type = "string")))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response retrieveLdapGroups () {
@@ -119,18 +129,17 @@ public class LdapResource extends AlpineResource {
     @GET
     @Path("/team/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns the DNs of all groups mapped to the specified team",
-            response = String.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Returns the DNs of all groups mapped to the specified team",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the team could not be found"),
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = MappedLdapGroup.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the team could not be found"),
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    public Response retrieveLdapGroups (@ApiParam(value = "The UUID of the team to retrieve mappings for", format = "uuid", required = true)
+    public Response retrieveLdapGroups (@Parameter(description = "The UUID of the team to retrieve mappings for", schema = @Schema(type = "string", format = "uuid"), required = true)
                                         @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
@@ -146,15 +155,15 @@ public class LdapResource extends AlpineResource {
     @PUT
     @Path("/mapping")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Adds a mapping",
-            response = MappedLdapGroup.class,
-            notes = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Adds a mapping",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the team could not be found"),
-            @ApiResponse(code = 409, message = "A mapping with the same team and dn already exists")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = MappedLdapGroup.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the team could not be found"),
+            @ApiResponse(responseCode = "409", description = "A mapping with the same team and dn already exists")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response addMapping(MappedLdapGroupRequest request) {
@@ -181,18 +190,18 @@ public class LdapResource extends AlpineResource {
     @DELETE
     @Path("/mapping/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Removes a mapping",
-            response = MappedLdapGroup.class,
-            notes = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Removes a mapping",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the mapping could not be found"),
+            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the mapping could not be found"),
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response deleteMapping(
-            @ApiParam(value = "The UUID of the mapping to delete", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the mapping to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final MappedLdapGroup mapping = qm.getObjectByUuid(MappedLdapGroup.class, uuid);

@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 
@@ -199,7 +199,7 @@ public class Project implements Serializable {
     @Size(max = 786)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @ApiModelProperty(dataType = "string")
+    @Schema(type = "string")
     private String purl;
 
     @Persistent
@@ -280,7 +280,7 @@ public class Project implements Serializable {
     private List<ExternalReference> externalReferences;
 
     @Persistent(mappedBy = "project")
-    @ApiModelProperty(accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private ProjectMetadata metadata;
 
     private transient String bomRef;

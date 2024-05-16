@@ -19,12 +19,15 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 import us.springett.owasp.riskrating.MissingFactorException;
@@ -44,21 +47,23 @@ import javax.ws.rs.core.Response;
  * @since 3.0.0
  */
 @Path("/v1/calculator")
-@Api(value = "calculator", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "calculator")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class CalculatorResource extends AlpineResource {
 
     @GET
     @Path("/cvss")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns the CVSS base score, impact sub-score and exploitability sub-score",
-            response = Score.class
-    )
+    @Operation(summary = "Returns the CVSS base score, impact sub-score and exploitability sub-score")
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "number"))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getCvssScores(
-            @ApiParam(value = "A valid CVSSv2 or CVSSv3 vector", required = true)
+            @Parameter(description = "A valid CVSSv2 or CVSSv3 vector", required = true)
             @QueryParam("vector") String vector) {
         try {
             final Cvss cvss = Cvss.fromVector(vector);
@@ -73,15 +78,13 @@ public class CalculatorResource extends AlpineResource {
     @GET
     @Path("/owasp")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns the OWASP Risk Rating likelihood score, technical impact score and business impact score",
-            response = us.springett.owasp.riskrating.Score.class
-    )
+    @Operation(summary = "Returns the OWASP Risk Rating likelihood score, technical impact score and business impact score")
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "number"))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getOwaspRRScores(
-            @ApiParam(value = "A valid OWASP Risk Rating vector", required = true)
+            @Parameter(description = "A valid OWASP Risk Rating vector", required = true)
             @QueryParam("vector") String vector) {
         try {
             final OwaspRiskRating owaspRiskRating = OwaspRiskRating.fromVector(vector);

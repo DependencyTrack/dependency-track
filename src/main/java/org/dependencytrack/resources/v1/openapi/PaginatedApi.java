@@ -18,8 +18,10 @@
  */
 package org.dependencytrack.resources.v1.openapi;
 
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -33,45 +35,39 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-@ApiImplicitParams({
-        @ApiImplicitParam(
+@Parameters({
+        @Parameter(
                 name = "pageNumber",
-                dataType = "int",
-                paramType = "query",
-                defaultValue = "1",
-                value = "The page to return. To be used in conjunction with <code>pageSize</code>."
+                in = ParameterIn.QUERY,
+                schema = @Schema(defaultValue = "1"),
+                description = "The page to return. To be used in conjunction with <code>pageSize</code>."
         ),
-        @ApiImplicitParam(
+        @Parameter(
                 name = "pageSize",
-                dataType = "int",
-                paramType = "query",
-                defaultValue = "100",
-                value = "Number of elements to return per page. To be used in conjunction with <code>pageNumber</code>."
+                in = ParameterIn.QUERY,
+                schema = @Schema(defaultValue = "100"),
+                description = "Number of elements to return per page. To be used in conjunction with <code>pageNumber</code>."
         ),
-        @ApiImplicitParam(
+        @Parameter(
                 name = "offset",
-                dataType = "int",
-                paramType = "query",
-                value = "Offset to start returning elements from. To be used in conjunction with <code>limit</code>."
+                in = ParameterIn.QUERY,
+                description = "Offset to start returning elements from. To be used in conjunction with <code>limit</code>."
         ),
-        @ApiImplicitParam(
+        @Parameter(
                 name = "limit",
-                dataType = "int",
-                paramType = "query",
-                value = "Number of elements to return per page. To be used in conjunction with <code>offset</code>."
+                in = ParameterIn.QUERY,
+                description = "Number of elements to return per page. To be used in conjunction with <code>offset</code>."
         ),
-        @ApiImplicitParam(
+        @Parameter(
                 name = "sortName",
-                dataType = "string",
-                paramType = "query",
-                value = "Name of the resource field to sort on."
+                in = ParameterIn.QUERY,
+                description = "Name of the resource field to sort on."
         ),
-        @ApiImplicitParam(
+        @Parameter(
                 name = "sortOrder",
-                dataType = "string",
-                paramType = "query",
-                allowableValues = "asc, desc",
-                value = "Ordering of items when sorting with <code>sortName</code>."
+                in = ParameterIn.QUERY,
+                schema = @Schema(allowableValues = "asc, desc"),
+                description = "Ordering of items when sorting with <code>sortName</code>."
         )
 })
 public @interface PaginatedApi {

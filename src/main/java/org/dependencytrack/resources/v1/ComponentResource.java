@@ -73,7 +73,29 @@ import java.util.Map;
 @Path("/v1/component")
 @Api(value = "component", authorizations = @Authorization(value = "X-Api-Key"))
 public class ComponentResource extends AlpineResource {
-
+    
+    @GET
+    @Path("/all")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all components",
+            response = Component.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of components"),
+            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    )
+    @PaginatedApi
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getComponents(
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final PaginatedResult result = qm.getComponents();
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build()
+        }
+    }
+    
     @GET
     @Path("/project/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)

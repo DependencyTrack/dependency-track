@@ -110,7 +110,6 @@ public enum ConfigPropertyConstants {
     SEARCH_INDEXES_CONSISTENCY_CHECK_ENABLED("search-indexes", "consistency.check.enabled", "true", PropertyType.BOOLEAN, "Flag to enable lucene indexes periodic consistency check"),
     SEARCH_INDEXES_CONSISTENCY_CHECK_CADENCE("search-indexes", "consistency.check.cadence", "4320", PropertyType.INTEGER, "Lucene indexes consistency check cadence (in minutes)"),
     SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD("search-indexes", "consistency.check.delta.threshold", "20", PropertyType.INTEGER, "Threshold used to trigger an index rebuild when comparing database table and corresponding lucene index (in percentage). It must be an integer between 1 and 100"),
-    BOM_PROCESSING_TASK_V2_ENABLED("experimental", "bom.processing.task.v2.enabled", "false", PropertyType.BOOLEAN, "Flag to enable BOM UPLOAD V2"),
     BOM_VALIDATION_ENABLED("artifact", "bom.validation.enabled", "true", PropertyType.BOOLEAN, "Flag to control bom validation");
 
     private String groupName;

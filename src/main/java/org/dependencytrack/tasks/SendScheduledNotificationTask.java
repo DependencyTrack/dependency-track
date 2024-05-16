@@ -18,145 +18,121 @@
  */
 package org.dependencytrack.tasks;
 
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
+import java.io.StringReader;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonReader;
 
+import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.NotificationPublisher;
-import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Rule;
 import org.dependencytrack.model.ScheduledNotificationRule;
-import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.publisher.PublishContext;
+import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.notification.publisher.SendMailPublisher;
+import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.persistence.QueryManager;
 
 import alpine.common.logging.Logger;
-import alpine.security.crypto.DataEncryption;
-import alpine.server.mail.SendMail;
-import alpine.server.mail.SendMailException;
-import io.pebbletemplates.pebble.PebbleEngine;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_FROM_ADDR;
-import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_PASSWORD;
-import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_HOSTNAME;
-import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_PORT;
-import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SSLTLS;
-import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_TRUSTCERT;
-import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_USERNAME;
+import alpine.notification.Notification;
 import static org.dependencytrack.notification.publisher.Publisher.CONFIG_TEMPLATE_KEY;
 import static org.dependencytrack.notification.publisher.Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY;
 
 public class SendScheduledNotificationTask implements Runnable {
-    private ScheduledNotificationRule scheduledNotificationRule;
-    private ScheduledExecutorService service;
+    private UUID scheduledNotificationRuleUuid;
     private static final Logger LOGGER = Logger.getLogger(SendScheduledNotificationTask.class);
 
-    public SendScheduledNotificationTask(ScheduledNotificationRule scheduledNotificationRule, ScheduledExecutorService service) {
-        this.scheduledNotificationRule = scheduledNotificationRule;
-        this.service = service;
+    public SendScheduledNotificationTask(UUID scheduledNotificationRuleUuid) {
+        this.scheduledNotificationRuleUuid = scheduledNotificationRuleUuid;
     }
 
     @Override
     public void run() {
-        String content = "";
-        final String mimeType;
-        final boolean smtpEnabled;
-        final String smtpFrom;
-        final String smtpHostname;
-        final int smtpPort;
-        final String smtpUser;
-        final String encryptedSmtpPassword;
-        final boolean smtpSslTls;
-        final boolean smtpTrustCert;
-        Map<Project, List<Vulnerability>> newProjectVulnerabilities;
-        Map<Project, List<PolicyViolation>> newProjectPolicyViolations;
+        try (var qm = new QueryManager()) {
+            var rule = qm.getObjectByUuid(ScheduledNotificationRule.class, scheduledNotificationRuleUuid);
+            for (NotificationGroup group : rule.getNotifyOn()) {
+                final Notification notificationProxy = new Notification()
+                        .scope(rule.getScope())
+                        .group(group)
+                        .title(rule.getName())
+                        .level(rule.getNotificationLevel())
+                        .content("") // TODO: evaluate use and creation of content here
+                        .subject(null); // TODO: generate helper class here
 
-        try (QueryManager qm = new QueryManager()) {
-            scheduledNotificationRule = qm.getObjectByUuid(ScheduledNotificationRule.class, scheduledNotificationRule.getUuid());
-            if (scheduledNotificationRule == null) {
-                LOGGER.info("shutdown ExecutorService for Scheduled notification " + scheduledNotificationRule.getUuid());
-                service.shutdown();
-            } else {
-                // if (scheduledNotificationRule.getLastExecutionTime().equals(scheduledNotificationRule.getCreated())) {
-                //     LOGGER.info("schedulednotification just created. No Information to show");
-                // } else {
-                final List<Long> projectIds = scheduledNotificationRule.getProjects().stream().map(proj -> proj.getId()).toList();
-                newProjectVulnerabilities = qm.getNewVulnerabilitiesForProjectsSince(scheduledNotificationRule.getLastExecutionTime(), projectIds);
-                newProjectPolicyViolations = qm.getNewPolicyViolationsForProjectsSince(scheduledNotificationRule.getLastExecutionTime(), projectIds);
+                final PublishContext ctx = PublishContext.from(notificationProxy);
+                final PublishContext ruleCtx =ctx.withRule(rule);
 
-                NotificationPublisher notificationPublisher = qm.getNotificationPublisher("Email");
-
-                JsonObject notificationPublisherConfig = Json.createObjectBuilder()
-                        .add(CONFIG_TEMPLATE_MIME_TYPE_KEY, notificationPublisher.getTemplateMimeType())
-                        .add(CONFIG_TEMPLATE_KEY, notificationPublisher.getTemplate())
-                        .build();
-
-                PebbleEngine pebbleEngine = new PebbleEngine.Builder().build();
-                String literalTemplate = notificationPublisherConfig.getString(CONFIG_TEMPLATE_KEY);
-                final PebbleTemplate template = pebbleEngine.getLiteralTemplate(literalTemplate);
-                mimeType = notificationPublisherConfig.getString(CONFIG_TEMPLATE_MIME_TYPE_KEY);
-
-                final Map<String, Object> context = new HashMap<>();
-                context.put("length", newProjectVulnerabilities.size());
-                context.put("vulnerabilities", newProjectVulnerabilities);
-                context.put("policyviolations", newProjectPolicyViolations);
-                final Writer writer = new StringWriter();
-                template.evaluate(writer, context);
-                content = writer.toString();
-
-                smtpEnabled = qm.isEnabled(EMAIL_SMTP_ENABLED);
-                if (!smtpEnabled) {
-                    System.out.println("SMTP is not enabled; Skipping notification ");
-                    return;
+                // Not all publishers need configuration (i.e. ConsolePublisher)
+                JsonObject config = Json.createObjectBuilder().build();
+                if (rule.getPublisherConfig() != null) {
+                    try (StringReader stringReader = new StringReader(rule.getPublisherConfig());
+                         final JsonReader jsonReader = Json.createReader(stringReader)) {
+                        config = jsonReader.readObject();
+                    } catch (Exception e) {
+                        LOGGER.error("An error occurred while preparing the configuration for the notification publisher (%s)".formatted(ruleCtx), e);
+                    }
                 }
-                smtpFrom = qm.getConfigProperty(EMAIL_SMTP_FROM_ADDR.getGroupName(),EMAIL_SMTP_FROM_ADDR.getPropertyName()).getPropertyValue();
-                smtpHostname = qm.getConfigProperty(EMAIL_SMTP_SERVER_HOSTNAME.getGroupName(),EMAIL_SMTP_SERVER_HOSTNAME.getPropertyName()).getPropertyValue();
-                smtpPort = Integer.parseInt(qm.getConfigProperty(EMAIL_SMTP_SERVER_PORT.getGroupName(),EMAIL_SMTP_SERVER_PORT.getPropertyName()).getPropertyValue());
-                smtpUser = qm.getConfigProperty(EMAIL_SMTP_USERNAME.getGroupName(),EMAIL_SMTP_USERNAME.getPropertyName()).getPropertyValue();
-                encryptedSmtpPassword = qm.getConfigProperty(EMAIL_SMTP_PASSWORD.getGroupName(),EMAIL_SMTP_PASSWORD.getPropertyName()).getPropertyValue();
-                smtpSslTls = qm.isEnabled(EMAIL_SMTP_SSLTLS);
-                smtpTrustCert = qm.isEnabled(EMAIL_SMTP_TRUSTCERT);
-                final boolean smtpAuth = (smtpUser != null && encryptedSmtpPassword != null);
-                final String decryptedSmtpPassword;
                 try {
-                    decryptedSmtpPassword = (encryptedSmtpPassword != null) ? DataEncryption.decryptAsString(encryptedSmtpPassword) : null;
-                } catch (Exception e) {
-                    System.out.println("Failed to decrypt SMTP password");
-                    return;
-                }
-                // String[] destinations = scheduledNotificationRule.getDestinations().split(" ");
-                try {
-                    final SendMail sendMail = new SendMail()
-                            .from(smtpFrom)
-                            // .to(destinations)
-                            .subject("[Dependency-Track] " + "ScheduledNotification")
-                            .body(content)
-                            .bodyMimeType(mimeType)
-                            .host(smtpHostname)
-                            .port(smtpPort)
-                            .username(smtpUser)
-                            .password(decryptedSmtpPassword)
-                            .smtpauth(smtpAuth)
-                            .useStartTLS(smtpSslTls)
-                            .trustCert(smtpTrustCert);
-                    sendMail.send();
-                    qm.updateScheduledNotificationRuleLastExecutionTimeToNowUtc(scheduledNotificationRule);
-                } catch (SendMailException | RuntimeException e) {
-                    LOGGER.debug("Failed to send notification email ");
-                    LOGGER.debug(e.getMessage());
+                    NotificationPublisher notificationPublisher = rule.getPublisher();
+                    final Class<?> publisherClass = Class.forName(notificationPublisher.getPublisherClass());
+                    if (Publisher.class.isAssignableFrom(publisherClass)) {
+                        final Publisher publisher = (Publisher) publisherClass.getDeclaredConstructor().newInstance();
+                        JsonObject notificationPublisherConfig = Json.createObjectBuilder()
+                                .add(CONFIG_TEMPLATE_MIME_TYPE_KEY, notificationPublisher.getTemplateMimeType())
+                                .add(CONFIG_TEMPLATE_KEY, notificationPublisher.getTemplate())
+                                .addAll(Json.createObjectBuilder(config))
+                                .build();
+                        if (publisherClass != SendMailPublisher.class || rule.getTeams().isEmpty() || rule.getTeams() == null) {
+                            publisher.inform(ruleCtx, restrictNotificationToRuleProjects(notificationProxy, rule), notificationPublisherConfig);
+                        } else {
+                            ((SendMailPublisher) publisher).inform(ruleCtx, restrictNotificationToRuleProjects(notificationProxy, rule), notificationPublisherConfig, rule.getTeams());
+                        }
+                    } else {
+                        LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName() + " (%s)".formatted(ruleCtx));
+                    }
+                } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException
+                        | InvocationTargetException | IllegalAccessException e) {
+                    LOGGER.error(
+                            "An error occurred while instantiating a notification publisher (%s)".formatted(ruleCtx),
+                            e);
+                } catch (PublisherException publisherException) {
+                    LOGGER.error("An error occurred during the publication of the notification (%s)".formatted(ruleCtx),
+                            publisherException);
                 }
             }
-
-        } catch (Exception e) {
-            LOGGER.debug(e.getMessage());
         }
-
     }
 
+    private Notification restrictNotificationToRuleProjects(final Notification initialNotification, final Rule rule) {
+        Notification restrictedNotification = initialNotification;
+        if (canRestrictNotificationToRuleProjects(initialNotification, rule)) {
+            Set<String> ruleProjectsUuids = rule.getProjects().stream().map(Project::getUuid).map(UUID::toString).collect(Collectors.toSet());
+            restrictedNotification = new Notification();
+            restrictedNotification.setGroup(initialNotification.getGroup());
+            restrictedNotification.setLevel(initialNotification.getLevel());
+            restrictedNotification.scope(initialNotification.getScope());
+            restrictedNotification.setContent(initialNotification.getContent());
+            restrictedNotification.setTitle(initialNotification.getTitle());
+            restrictedNotification.setTimestamp(initialNotification.getTimestamp());
+            if (initialNotification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
+                Set<Project> restrictedProjects = subject.getAffectedProjects().stream().filter(project -> ruleProjectsUuids.contains(project.getUuid().toString())).collect(Collectors.toSet());
+                NewVulnerabilityIdentified restrictedSubject = new NewVulnerabilityIdentified(subject.getVulnerability(), subject.getComponent(), restrictedProjects, null);
+                restrictedNotification.setSubject(restrictedSubject);
+            }
+        }
+        return restrictedNotification;
+    }
+
+    private boolean canRestrictNotificationToRuleProjects(final Notification initialNotification, final Rule rule) {
+        return initialNotification.getSubject() instanceof NewVulnerabilityIdentified
+                && rule.getProjects() != null
+                && !rule.getProjects().isEmpty();
+    }
 }

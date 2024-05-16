@@ -62,7 +62,7 @@ import java.util.UUID;
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NotificationRule implements Serializable {
+public class NotificationRule implements Rule, Serializable {
 
     private static final long serialVersionUID = 2534439091019367263L;
 

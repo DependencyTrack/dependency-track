@@ -21,6 +21,7 @@ package org.dependencytrack.notification.publisher;
 import alpine.notification.Notification;
 import com.google.common.base.MoreObjects;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.Rule;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
@@ -114,7 +115,7 @@ public record PublishContext(String notificationGroup, String notificationLevel,
      * @param rule The applicable {@link NotificationRule}
      * @return This {@link PublishContext}
      */
-    public PublishContext withRule(final NotificationRule rule) {
+    public PublishContext withRule(final Rule rule) {
         return new PublishContext(this.notificationGroup, this.notificationLevel, this.notificationScope, this.notificationTimestamp,
                 this.notificationSubjects, rule.getName(), rule.getScope().name(), rule.getNotificationLevel().name(), rule.isLogSuccessfulPublish());
     }

@@ -63,7 +63,7 @@ import java.util.UUID;
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ScheduledNotificationRule implements Serializable {
+public class ScheduledNotificationRule implements Rule, Serializable {
     private static final long serialVersionUID = 3390485832822256096L;
 
     @PrimaryKey

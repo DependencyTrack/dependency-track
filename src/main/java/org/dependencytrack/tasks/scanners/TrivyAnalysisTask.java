@@ -259,6 +259,14 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                                 srcVersion = property.getPropertyValue();
                             } else if (property.getPropertyName().equals("trivy:SrcRelease")) {
                                 srcRelease = property.getPropertyValue();
+                            } else if (!pkgType.contains("-") && property.getPropertyName().equals("trivy:PkgType")) {
+                                pkgType = property.getPropertyValue();
+
+                                String distro = component.getPurl().getQualifiers().get("distro");
+
+                                if (distro != null) {
+                                    pkgType += "-" + distro;
+                                }
                             }
                         }
 
@@ -292,6 +300,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         pkgs.forEach((key, value) -> {
             var info = new BlobInfo();
             info.setPackageInfos(new PackageInfo[]{value});
+            LOGGER.debug("looking for os %s".formatted(key));
             if (os.get(key) != null) {
                 info.setOS(os.get(key));
             }

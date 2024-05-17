@@ -271,6 +271,8 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         qm.createComponentProperty(component, "aquasecurity", "trivy:SrcName", "glibc", IConfigProperty.PropertyType.STRING, null);
         qm.createComponentProperty(component, "aquasecurity", "trivy:SrcVersion", "2.35", IConfigProperty.PropertyType.STRING, null);
         qm.createComponentProperty(component, "aquasecurity", "trivy:SrcRelease", "0ubuntu3.4", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "aquasecurity", "trivy:PkgType", "ubuntu", IConfigProperty.PropertyType.STRING, null);
+
 
         final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
         new TrivyAnalysisTask().inform(analysisEvent);
@@ -292,4 +294,94 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         });
     }
 
+     /**
+     * This test documents the case where Trivy generates a sbom and operative system is not entirely on distro qualifier.
+     * <p>
+     * Here's an excerpt of the properties included:
+     * <pre>
+     * "properties": [
+     *   {
+     *     "name": "aquasecurity:trivy:LayerDiffID",
+     *    "value": "sha256:7815e55122d4badd6ca652188bb24c925a9c8d710ee712fbb7f3cff29900943c"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:LayerDigest",
+     *     "value": "sha256:bd6651fa9674b8273dfcd61f21610a43fc31ea7b6d0123e7508a89510477deb4"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:PkgID",
+     *     "value": "git@2.43.0-r0"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:PkgType",
+     *     "value": "alpine"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:SrcName",
+     *     "value": "git"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:SrcVersion",
+     *     "value": "2.43.0-r0"
+     *   },
+     *   {
+     *     "name": "aquasecurity:trivy:SrcVersion",
+     *     "value": "2.35"
+     *   }
+     * ]
+     * </pre>
+     * <p>
+     * To reproduce, run:
+     * <pre>
+     * docker run -it --rm aquasec/trivy image --format cyclonedx aquasec/trivy:0.51.1
+     * </pre>
+     *
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2560">Add support for CycloneDX component properties</a>
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/3369">Support component properties with Trivy</a>
+     */
+    @Test
+    public void testWithPackageWithTrivyPropertiesWithDistroWithoutOS() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var osComponent = new Component();
+        osComponent.setProject(project);
+        osComponent.setName("alpine");
+        osComponent.setVersion("3.19.1");
+        osComponent.setClassifier(Classifier.OPERATING_SYSTEM);
+        qm.persist(osComponent);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("git");
+        component.setVersion("2.43.0-r0");
+        component.setClassifier(Classifier.LIBRARY);
+        component.setPurl("pkg:apk/alpine/git@2.43.0-r0?arch=x86_64&distro=3.19.1");
+        qm.persist(component);
+
+        qm.createComponentProperty(component, "aquasecurity", "trivy:PkgID", "git@2.43.0-r0", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "aquasecurity", "trivy:PkgType", "alpine", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "aquasecurity", "trivy:SrcName", "git", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "aquasecurity", "trivy:SrcVersion", "2.43.0-r0", IConfigProperty.PropertyType.STRING, null);
+
+        final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
+        new TrivyAnalysisTask().inform(analysisEvent);
+
+        assertThat(qm.getAllVulnerabilities(component)).anySatisfy(vuln -> {
+            assertThat(vuln.getVulnId()).isEqualTo("CVE-2024-32002");
+            assertThat(vuln.getSource()).isEqualTo(Vulnerability.Source.NVD.name());
+
+            // NB: Can't assert specific values here, as we're testing against
+            // a moving target. These values may change over time. We do proper
+            // assertions in TrivyAnalyzerTaskTest.
+            assertThat(vuln.getTitle()).isNotBlank();
+            assertThat(vuln.getDescription()).isNotBlank();
+            assertThat(vuln.getCreated()).isNotNull();
+            assertThat(vuln.getPublished()).isNotNull();
+            assertThat(vuln.getUpdated()).isNotNull();
+            assertThat(vuln.getSeverity()).isNotNull();
+            assertThat(vuln.getReferences()).isNotBlank();
+        });
+    }
 }

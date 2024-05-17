@@ -91,7 +91,11 @@ public class VexResource extends AlpineResource {
             description = "<p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "string"))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A VEX for a project in CycloneDX format",
+                    content = @Content(schema = @Schema(type = "string"))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
             @ApiResponse(responseCode = "404", description = "The project could not be found")
@@ -151,7 +155,11 @@ public class VexResource extends AlpineResource {
                     <p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"""
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = BomUploadResponse.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Token to be used for checking VEX processing progress",
+                    content = @Content(schema = @Schema(implementation = BomUploadResponse.class))
+            ),
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid VEX",
@@ -207,7 +215,11 @@ public class VexResource extends AlpineResource {
                     <p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"""
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = BomUploadResponse.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Token to be used for checking VEX processing progress",
+                    content = @Content(schema = @Schema(implementation = BomUploadResponse.class))
+            ),
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid VEX",

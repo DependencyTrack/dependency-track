@@ -37,7 +37,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.ViolationAnalysis;
@@ -78,7 +77,11 @@ public class ViolationAnalysisResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Analysis.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A violation analysis trail",
+                    content = @Content(schema = @Schema(implementation = ViolationAnalysis.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The component or policy violation could not be found")
     })
@@ -113,7 +116,11 @@ public class ViolationAnalysisResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_VIOLATION_ANALYSIS</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Analysis.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The created violation analysis",
+                    content = @Content(schema = @Schema(implementation = ViolationAnalysis.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The component or policy violation could not be found")
     })

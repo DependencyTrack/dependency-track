@@ -77,6 +77,7 @@ public class LicenseGroupResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of all license groups",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of license groups", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = LicenseGroup.class)))
             ),
@@ -98,6 +99,11 @@ public class LicenseGroupResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A specific license group",
+                    content = @Content(schema = @Schema(implementation = LicenseGroup.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The license group could not be found")
     })
@@ -123,7 +129,11 @@ public class LicenseGroupResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = LicenseGroup.class))),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created license group",
+                    content = @Content(schema = @Schema(implementation = LicenseGroup.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "409", description = "A license group with the specified name already exists")
     })
@@ -153,7 +163,11 @@ public class LicenseGroupResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = LicenseGroup.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated license group",
+                    content = @Content(schema = @Schema(implementation = LicenseGroup.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The license group could not be found")
     })
@@ -184,7 +198,7 @@ public class LicenseGroupResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "204", description = "License group removed successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the license group could not be found")
     })
@@ -212,7 +226,11 @@ public class LicenseGroupResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = LicenseGroup.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated license group",
+                    content = @Content(schema = @Schema(implementation = LicenseGroup.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The license group already has the specified license assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The license group or license could not be found")
@@ -252,7 +270,11 @@ public class LicenseGroupResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = LicenseGroup.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated license group",
+                    content = @Content(schema = @Schema(implementation = LicenseGroup.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The license is not a member with the license group"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The license group or license could not be found")

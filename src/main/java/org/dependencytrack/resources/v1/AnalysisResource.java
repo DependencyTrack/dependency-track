@@ -78,7 +78,11 @@ public class AnalysisResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_VULNERABILITY</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Analysis.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "An analysis trail",
+                    content = @Content(schema = @Schema(implementation = Analysis.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The project, component, or vulnerability could not be found")
     })
@@ -126,7 +130,11 @@ public class AnalysisResource extends AlpineResource {
             description = "<p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Analysis.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The created analysis",
+                    content = @Content(schema = @Schema(implementation = Analysis.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The project, component, or vulnerability could not be found")
     })

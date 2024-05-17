@@ -88,6 +88,7 @@ public class LdapResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "DNs of all accessible groups within the directory",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of ldap groups that match the specified search criteria", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(type = "string")))
             ),
@@ -134,7 +135,11 @@ public class LdapResource extends AlpineResource {
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = MappedLdapGroup.class)))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "DNs of all groups mapped to the specified team",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = MappedLdapGroup.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the team could not be found"),
     })
@@ -160,7 +165,11 @@ public class LdapResource extends AlpineResource {
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = MappedLdapGroup.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The created mapping",
+                    content = @Content(schema = @Schema(implementation = MappedLdapGroup.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the team could not be found"),
             @ApiResponse(responseCode = "409", description = "A mapping with the same team and dn already exists")
@@ -195,7 +204,7 @@ public class LdapResource extends AlpineResource {
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "204", description = "Mapping removed successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the mapping could not be found"),
     })

@@ -82,7 +82,11 @@ public class DependencyGraphResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DependencyGraphResponse.class)))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of specific components and services from project UUID",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = DependencyGraphResponse.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to a specified component is forbidden"),
             @ApiResponse(responseCode = "404", description = "Any component can be found"),
@@ -121,7 +125,11 @@ public class DependencyGraphResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DependencyGraphResponse.class)))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of specific components and services from component UUID",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = DependencyGraphResponse.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to a specified component is forbidden"),
             @ApiResponse(responseCode = "404", description = "Any component can be found"),

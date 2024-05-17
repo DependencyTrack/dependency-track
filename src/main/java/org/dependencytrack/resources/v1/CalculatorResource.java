@@ -59,7 +59,11 @@ public class CalculatorResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns the CVSS base score, impact sub-score and exploitability sub-score")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "number"))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The calculated scores",
+                    content = @Content(schema = @Schema(implementation = Score.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getCvssScores(
@@ -80,7 +84,11 @@ public class CalculatorResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns the OWASP Risk Rating likelihood score, technical impact score and business impact score")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "number"))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The calculated scores",
+                    content = @Content(schema = @Schema(implementation = us.springett.owasp.riskrating.Score.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getOwaspRRScores(

@@ -72,7 +72,11 @@ public class EventResource extends AlpineResource {
                     </p>"""
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = IsTokenBeingProcessedResponse.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The processing status of the provided token",
+                    content = @Content(schema = @Schema(implementation = IsTokenBeingProcessedResponse.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response isTokenBeingProcessed (

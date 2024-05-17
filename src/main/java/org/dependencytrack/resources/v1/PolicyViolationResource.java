@@ -75,6 +75,7 @@ public class PolicyViolationResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of all policy violations for the entire portfolio",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
             ),
@@ -102,6 +103,7 @@ public class PolicyViolationResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of all policy violations for a specific project",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
             ),
@@ -142,6 +144,7 @@ public class PolicyViolationResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of all policy violations for a specific component",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
             ),

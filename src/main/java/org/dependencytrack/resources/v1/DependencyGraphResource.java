@@ -23,12 +23,16 @@ import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
@@ -62,26 +66,29 @@ import java.util.UUID;
  * JAX-RS resources for processing requests related to DependencyGraph.
  */
 @Path("/v1/dependencyGraph")
-@Api(value = "dependencyGraph", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "dependencyGraph")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class DependencyGraphResource extends AlpineResource {
 
     @GET
     @Path("/project/{uuid}/directDependencies")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of specific components and services from project UUID",
-            response = DependencyGraphResponse.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    @Operation(
+            summary = "Returns a list of specific components and services from project UUID",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to a specified component is forbidden"),
-            @ApiResponse(code = 404, message = "Any component can be found"),
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DependencyGraphResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to a specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "Any component can be found"),
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getComponentsAndServicesByProjectUuid(@ApiParam(value = "The UUID of the project", format = "uuid", required = true)
+    public Response getComponentsAndServicesByProjectUuid(@Parameter(description = "The UUID of the project", schema = @Schema(type = "string", format = "uuid"), required = true)
                                                           final @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -109,19 +116,18 @@ public class DependencyGraphResource extends AlpineResource {
     @Path("/component/{uuid}/directDependencies")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of specific components and services from component UUID",
-            response = DependencyGraphResponse.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    @Operation(
+            summary = "Returns a list of specific components and services from component UUID",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to a specified component is forbidden"),
-            @ApiResponse(code = 404, message = "Any component can be found"),
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DependencyGraphResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to a specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "Any component can be found"),
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getComponentsAndServicesByComponentUuid(@ApiParam(value = "The UUID of the component", format = "uuid", required = true)
+    public Response getComponentsAndServicesByComponentUuid(@Parameter(description = "The UUID of the component", schema = @Schema(type = "string", format = "uuid"), required = true)
                                                             final @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);

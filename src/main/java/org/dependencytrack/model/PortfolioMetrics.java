@@ -20,8 +20,7 @@ package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -53,22 +52,22 @@ public class PortfolioMetrics implements Serializable {
 
     @Persistent
     @Column(name = "CRITICAL")
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     private int critical;
 
     @Persistent
     @Column(name = "HIGH")
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     private int high;
 
     @Persistent
     @Column(name = "MEDIUM")
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     private int medium;
 
     @Persistent
     @Column(name = "LOW")
-    @ApiModelProperty(required = true)
+    @Schema(required = true)
     private int low;
 
     @Persistent
@@ -179,14 +178,14 @@ public class PortfolioMetrics implements Serializable {
     @Column(name = "FIRST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "PORTFOLIOMETRICS_FIRST_OCCURRENCE_IDX")
-    @ApiModelProperty(required = true, dataType = "number")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, type = "number")
     private Date firstOccurrence;
 
     @Persistent
     @Column(name = "LAST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "PORTFOLIOMETRICS_LAST_OCCURRENCE_IDX")
-    @ApiModelProperty(required = true, dataType = "number")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, type = "number")
     private Date lastOccurrence;
 
     public long getId() {

@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.resources.v1.problems;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class InvalidBomProblemDetails extends ProblemDetails {
 
-    @ApiModelProperty(value = "Errors identified during schema validation")
+    @Schema(description = "Errors identified during schema validation")
     private List<String> errors;
 
     public List<String> getErrors() {

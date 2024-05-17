@@ -20,11 +20,15 @@ package org.dependencytrack.resources.v1;
 
 import alpine.model.ConfigProperty;
 import alpine.server.auth.PermissionRequired;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -46,19 +50,22 @@ import java.util.List;
  * @since 3.2.0
  */
 @Path("/v1/configProperty")
-@Api(value = "configProperty", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "configProperty")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class ConfigPropertyResource extends AbstractConfigPropertyResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all ConfigProperties for the specified groupName",
-            response = ConfigProperty.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Returns a list of all ConfigProperties for the specified groupName",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ConfigProperty.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getConfigProperties() {
@@ -81,14 +88,14 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Updates a config property",
-            response = ConfigProperty.class,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Updates a config property",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The config property could not be found"),
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ConfigProperty.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The config property could not be found"),
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response updateConfigProperty(ConfigProperty json) {
@@ -108,15 +115,14 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
     @Path("aggregate")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Updates an array of config properties",
-            response = ConfigProperty.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Updates an array of config properties",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "One or more config properties could not be found"),
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ConfigProperty.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "One or more config properties could not be found"),
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response updateConfigProperty(List<ConfigProperty> list) {

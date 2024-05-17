@@ -21,12 +21,16 @@ package org.dependencytrack.resources.v1;
 import alpine.event.framework.Event;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.time.DateUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.ComponentMetricsUpdateEvent;
@@ -58,20 +62,23 @@ import java.util.List;
  * @since 3.0.0
  */
 @Path("/v1/metrics")
-@Api(value = "metrics", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "metrics")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class MetricsResource extends AlpineResource {
 
     @GET
     @Path("/vulnerability")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns the sum of all vulnerabilities in the database by year and month",
-            response = VulnerabilityMetrics.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    @Operation(
+            summary = "Returns the sum of all vulnerabilities in the database by year and month",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = VulnerabilityMetrics.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getVulnerabilityMetrics() {
@@ -84,13 +91,13 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/portfolio/current")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns current metrics for the entire portfolio",
-            response = PortfolioMetrics.class,
-            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    @Operation(
+            summary = "Returns current metrics for the entire portfolio",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = PortfolioMetrics.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getPortfolioCurrentMetrics() {
@@ -103,20 +110,19 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/portfolio/since/{date}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns historical metrics for the entire portfolio from a specific date",
-            notes = """
+    @Operation(
+            summary = "Returns historical metrics for the entire portfolio from a specific date",
+            description = """
                     <p>Date format must be <code>YYYYMMDD</code></p>
-                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>""",
-            response = PortfolioMetrics.class,
-            responseContainer = "List"
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"""
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = PortfolioMetrics.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getPortfolioMetricsSince(
-            @ApiParam(value = "The start date to retrieve metrics for", required = true)
+            @Parameter(description = "The start date to retrieve metrics for", required = true)
             @PathParam("date") String date) {
 
         final Date since = DateUtil.parseShortDate(date);
@@ -132,18 +138,17 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/portfolio/{days}/days")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns X days of historical metrics for the entire portfolio",
-            response = PortfolioMetrics.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    @Operation(
+            summary = "Returns X days of historical metrics for the entire portfolio",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = PortfolioMetrics.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getPortfolioMetricsXDays(
-            @ApiParam(value = "The number of days back to retrieve metrics for", required = true)
+            @Parameter(description = "The number of days back to retrieve metrics for", required = true)
             @PathParam("days") int days) {
 
         final Date since = DateUtils.addDays(new Date(), -days);
@@ -156,13 +161,13 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/portfolio/refresh")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Requests a refresh of the portfolio metrics",
-            response = PortfolioMetrics.class,
-            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Requests a refresh of the portfolio metrics",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response RefreshPortfolioMetrics() {
@@ -173,19 +178,19 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/project/{uuid}/current")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns current metrics for a specific project",
-            response = ProjectMetrics.class,
-            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    @Operation(
+            summary = "Returns current metrics for a specific project",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ProjectMetrics.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectCurrentMetrics(
-            @ApiParam(value = "The UUID of the project to retrieve metrics for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -205,24 +210,23 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/project/{uuid}/since/{date}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns historical metrics for a specific project from a specific date",
-            notes = """
+    @Operation(
+            summary = "Returns historical metrics for a specific project from a specific date",
+            description = """
                     <p>Date format must be <code>YYYYMMDD</code></p>
-                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>""",
-            response = ProjectMetrics.class,
-            responseContainer = "List"
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"""
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProjectMetrics.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectMetricsSince(
-            @ApiParam(value = "The UUID of the project to retrieve metrics for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
-            @ApiParam(value = "The start date to retrieve metrics for", required = true)
+            @Parameter(description = "The start date to retrieve metrics for", required = true)
             @PathParam("date") String date) {
 
         final Date since = DateUtil.parseShortDate(date);
@@ -232,22 +236,21 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/project/{uuid}/days/{days}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns X days of historical metrics for a specific project",
-            response = ProjectMetrics.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    @Operation(
+            summary = "Returns X days of historical metrics for a specific project",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProjectMetrics.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectMetricsXDays(
-            @ApiParam(value = "The UUID of the project to retrieve metrics for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
-            @ApiParam(value = "The number of days back to retrieve metrics for", required = true)
+            @Parameter(description = "The number of days back to retrieve metrics for", required = true)
             @PathParam("days") int days) {
 
         final Date since = DateUtils.addDays(new Date(), -days);
@@ -257,18 +260,19 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/project/{uuid}/refresh")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Requests a refresh of a specific projects metrics",
-            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Requests a refresh of a specific projects metrics",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response RefreshProjectMetrics(
-            @ApiParam(value = "The UUID of the project to refresh metrics on", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to refresh metrics on", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -288,19 +292,19 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/component/{uuid}/current")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns current metrics for a specific component",
-            response = DependencyMetrics.class,
-            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    @Operation(
+            summary = "Returns current metrics for a specific component",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
-            @ApiResponse(code = 404, message = "The component could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = DependencyMetrics.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The component could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentCurrentMetrics(
-            @ApiParam(value = "The UUID of the component to retrieve metrics for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the component to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
@@ -320,24 +324,23 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/component/{uuid}/since/{date}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns historical metrics for a specific component from a specific date",
-            notes = """
+    @Operation(
+            summary = "Returns historical metrics for a specific component from a specific date",
+            description = """
                     <p>Date format must be <code>YYYYMMDD</code></p>
-                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>""",
-            response = DependencyMetrics.class,
-            responseContainer = "List"
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"""
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
-            @ApiResponse(code = 404, message = "The component could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DependencyMetrics.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The component could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentMetricsSince(
-            @ApiParam(value = "The UUID of the component to retrieve metrics for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the component to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
-            @ApiParam(value = "The start date to retrieve metrics for", required = true)
+            @Parameter(description = "The start date to retrieve metrics for", required = true)
             @PathParam("date") String date) {
 
         final Date since = DateUtil.parseShortDate(date);
@@ -350,22 +353,21 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/component/{uuid}/days/{days}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns X days of historical metrics for a specific component",
-            response = DependencyMetrics.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    @Operation(
+            summary = "Returns X days of historical metrics for a specific component",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
-            @ApiResponse(code = 404, message = "The component could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = DependencyMetrics.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The component could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentMetricsXDays(
-            @ApiParam(value = "The UUID of the component to retrieve metrics for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the component to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
-            @ApiParam(value = "The number of days back to retrieve metrics for", required = true)
+            @Parameter(description = "The number of days back to retrieve metrics for", required = true)
             @PathParam("days") int days) {
 
         final Date since = DateUtils.addDays(new Date(), -days);
@@ -375,18 +377,19 @@ public class MetricsResource extends AlpineResource {
     @GET
     @Path("/component/{uuid}/refresh")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Requests a refresh of a specific components metrics",
-            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Requests a refresh of a specific components metrics",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
-            @ApiResponse(code = 404, message = "The component could not be found")
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The component could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response RefreshComponentMetrics(
-            @ApiParam(value = "The UUID of the component to refresh metrics on", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the component to refresh metrics on", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);

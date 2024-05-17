@@ -23,7 +23,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -95,32 +95,32 @@ public final class BomSubmitRequest {
         this.bom = bom;
     }
 
-    @ApiModelProperty(example = "38640b33-4ba9-4733-bdab-cbfc40c6f8aa")
+    @Schema(example = "38640b33-4ba9-4733-bdab-cbfc40c6f8aa")
     public String getProject() {
         return project;
     }
 
-    @ApiModelProperty(example = "Example Application")
+    @Schema(example = "Example Application")
     public String getProjectName() {
         return projectName;
     }
 
-    @ApiModelProperty(example = "1.0.0")
+    @Schema(example = "1.0.0")
     public String getProjectVersion() {
         return projectVersion;
     }
 
-    @ApiModelProperty(example = "5341f53c-611b-4388-9d9c-731026dc5eec")
+    @Schema(example = "5341f53c-611b-4388-9d9c-731026dc5eec")
     public String getParentUUID() {
         return parentUUID;
     }
 
-    @ApiModelProperty(example = "Example Application Parent")
+    @Schema(example = "Example Application Parent")
     public String getParentName() {
         return parentName;
     }
 
-    @ApiModelProperty(example = "1.0.0")
+    @Schema(example = "1.0.0")
     public String getParentVersion() {
         return parentVersion;
     }
@@ -129,8 +129,8 @@ public final class BomSubmitRequest {
         return autoCreate;
     }
 
-    @ApiModelProperty(
-            value = "Base64 encoded BOM",
+    @Schema(
+            description = "Base64 encoded BOM",
             required = true,
             example = """
                     ewogICJib21Gb3JtYXQiOiAiQ3ljbG9uZURYIiwKICAic3BlY1ZlcnNpb24iOiAi\

@@ -22,12 +22,15 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +43,8 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
+import org.dependencytrack.resources.v1.problems.ProblemDetails;
+import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 import org.dependencytrack.resources.v1.vo.VexSubmitRequest;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -69,7 +74,11 @@ import java.util.List;
  * @since 4.5.0
  */
 @Path("/v1/vex")
-@Api(value = "vex", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "vex")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class VexResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(VexResource.class);
@@ -77,21 +86,21 @@ public class VexResource extends AlpineResource {
     @GET
     @Path("/cyclonedx/project/{uuid}")
     @Produces({CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON, MediaType.APPLICATION_OCTET_STREAM})
-    @ApiOperation(
-            value = "Returns a VEX for a project in CycloneDX format",
-            response = String.class,
-            notes = "<p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"
+    @Operation(
+            summary = "Returns a VEX for a project in CycloneDX format",
+            description = "<p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
     public Response exportProjectAsCycloneDx (
-            @ApiParam(value = "The UUID of the project to export", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to export", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
-            @ApiParam(value = "Force the resulting VEX to be downloaded as a file (defaults to 'false')")
+            @Parameter(description = "Force the resulting VEX to be downloaded as a file (defaults to 'false')")
             @QueryParam("download") boolean download) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -122,9 +131,9 @@ public class VexResource extends AlpineResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Upload a supported VEX document",
-            notes = """
+    @Operation(
+            summary = "Upload a supported VEX document",
+            description = """
                     <p>
                       Expects CycloneDX and a valid project UUID. If a UUID is not specified,
                       then the <code>projectName</code> and <code>projectVersion</code> must be specified.
@@ -142,10 +151,18 @@ public class VexResource extends AlpineResource {
                     <p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"""
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Invalid VEX", response = InvalidBomProblemDetails.class),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = BomUploadResponse.class))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid VEX",
+                    content = @Content(
+                            schema = @Schema(implementation = InvalidBomProblemDetails.class),
+                            mediaType = ProblemDetails.MEDIA_TYPE_JSON
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
     public Response uploadVex(VexSubmitRequest request) {
@@ -175,9 +192,9 @@ public class VexResource extends AlpineResource {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Upload a supported VEX document",
-            notes = """
+    @Operation(
+            summary = "Upload a supported VEX document",
+            description = """
                     <p>
                       Expects CycloneDX and a valid project UUID. If a UUID is not specified,
                       then the <code>projectName</code> and <code>projectVersion</code> must be specified.
@@ -190,16 +207,24 @@ public class VexResource extends AlpineResource {
                     <p>Requires permission <strong>VULNERABILITY_ANALYSIS</strong></p>"""
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Invalid VEX", response = InvalidBomProblemDetails.class),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = BomUploadResponse.class))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid VEX",
+                    content = @Content(
+                            schema = @Schema(implementation = InvalidBomProblemDetails.class),
+                            mediaType = ProblemDetails.MEDIA_TYPE_JSON
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
     public Response uploadVex(@FormDataParam("project") String projectUuid,
                               @FormDataParam("projectName") String projectName,
                               @FormDataParam("projectVersion") String projectVersion,
-                              @ApiParam(type = "string") @FormDataParam("vex") final List<FormDataBodyPart> artifactParts) {
+                              @Parameter(schema = @Schema(type = "string")) @FormDataParam("vex") final List<FormDataBodyPart> artifactParts) {
         if (projectUuid != null) {
             try (QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, projectUuid);

@@ -24,13 +24,17 @@ import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Repository;
@@ -62,21 +66,27 @@ import static org.dependencytrack.resources.v1.AbstractConfigPropertyResource.EN
  * @since 3.1.0
  */
 @Path("/v1/repository")
-@Api(value = "repository", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "repository")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class RepositoryResource extends AlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all repositories",
-            response = Repository.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of repositories"),
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Returns a list of all repositories",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of repositories", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Repository.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getRepositories() {
@@ -89,20 +99,22 @@ public class RepositoryResource extends AlpineResource {
     @GET
     @Path("/{type}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns repositories that support the specific type",
-            response = Repository.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of repositories"),
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Returns repositories that support the specific type",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of repositories", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Repository.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getRepositoriesByType(
-            @ApiParam(value = "The type of repositories to retrieve", required = true)
+            @Parameter(description = "The type of repositories to retrieve", required = true)
             @PathParam("type") RepositoryType type) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getRepositories(type);
@@ -113,18 +125,17 @@ public class RepositoryResource extends AlpineResource {
     @GET
     @Path("/latest")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Attempts to resolve the latest version of the component available in the configured repositories",
-            response = RepositoryMetaComponent.class
-    )
+    @Operation(
+            summary = "Attempts to resolve the latest version of the component available in the configured repositories")
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "The request was successful, but no repositories are configured to support the specified Package URL"),
-            @ApiResponse(code = 400, message = "The specified Package URL is invalid and not in the correct format"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The repository metadata for the specified component cannot be found"),
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = RepositoryMetaComponent.class))),
+            @ApiResponse(responseCode = "204", description = "The request was successful, but no repositories are configured to support the specified Package URL"),
+            @ApiResponse(responseCode = "400", description = "The specified Package URL is invalid and not in the correct format"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The repository metadata for the specified component cannot be found"),
     })
     public Response getRepositoryMetaComponent(
-            @ApiParam(value = "The Package URL for the component to query", required = true)
+            @Parameter(description = "The Package URL for the component to query", required = true)
             @QueryParam("purl") String purl) {
         try {
             final PackageURL packageURL = new PackageURL(purl);
@@ -150,15 +161,14 @@ public class RepositoryResource extends AlpineResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Creates a new repository",
-            response = Repository.class,
-            code = 201,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Creates a new repository",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 409, message = "A repository with the specified identifier already exists")
+            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = Repository.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "409", description = "A repository with the specified identifier already exists")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response createRepository(Repository jsonRepository) {
@@ -190,14 +200,14 @@ public class RepositoryResource extends AlpineResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Updates a repository",
-            response = Repository.class,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Updates a repository",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the repository could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Repository.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the repository could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response updateRepository(Repository jsonRepository) {
@@ -232,18 +242,18 @@ public class RepositoryResource extends AlpineResource {
     @Path("/{uuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a repository",
-            code = 204,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Deletes a repository",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the repository could not be found")
+            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the repository could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response deleteRepository(
-            @ApiParam(value = "The UUID of the repository to delete", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the repository to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Repository repository = qm.getObjectByUuid(Repository.class, uuid);

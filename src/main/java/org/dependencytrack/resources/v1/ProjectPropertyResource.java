@@ -19,12 +19,16 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.auth.PermissionRequired;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Project;
@@ -52,25 +56,28 @@ import java.util.List;
  * @since 3.4.0
  */
 @Path("/v1/project/{uuid}/property")
-@Api(value = "projectProperty", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "projectProperty")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class ProjectPropertyResource extends AbstractConfigPropertyResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all ProjectProperties for the specified project",
-            response = ProjectProperty.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Returns a list of all ProjectProperties for the specified project",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProjectProperty.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response getProperties(
-            @ApiParam(value = "The UUID of the project to retrieve properties for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to retrieve properties for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -100,21 +107,20 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Creates a new project property",
-            response = ProjectProperty.class,
-            code = 201,
-            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Creates a new project property",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found"),
-            @ApiResponse(code = 409, message = "A property with the specified project/group/name combination already exists")
+            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = ProjectProperty.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found"),
+            @ApiResponse(responseCode = "409", description = "A property with the specified project/group/name combination already exists")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response createProperty(
-            @ApiParam(value = "The UUID of the project to create a property for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to create a property for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
             ProjectProperty json) {
         final Validator validator = super.getValidator();
@@ -158,19 +164,19 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Updates a project property",
-            response = ProjectProperty.class,
-            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Updates a project property",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found"),
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ProjectProperty.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found"),
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response updateProperty(
-            @ApiParam(value = "The UUID of the project to create a property for", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to create a property for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
             ProjectProperty json) {
         final Validator validator = super.getValidator();
@@ -201,19 +207,19 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a config property",
-            response = ProjectProperty.class,
-            notes = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    @Operation(
+            summary = "Deletes a config property",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project or project property could not be found"),
+            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project or project property could not be found"),
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response deleteProperty(
-            @ApiParam(value = "The UUID of the project to delete a property from", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to delete a property from", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
             ProjectProperty json) {
         final Validator validator = super.getValidator();

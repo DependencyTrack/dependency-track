@@ -24,16 +24,19 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
-import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -69,21 +72,24 @@ import java.util.List;
  * @since 3.2.0
  */
 @Path("/v1/notification/publisher")
-@Api(value = "notification", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "notification")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class NotificationPublisherResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(NotificationPublisherResource.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all notification publishers",
-            response = NotificationPublisher.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Returns a list of all notification publishers",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationPublisher.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getAllNotificationPublishers() {
@@ -96,16 +102,15 @@ public class NotificationPublisherResource extends AlpineResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Creates a new notification publisher",
-            response = NotificationPublisher.class,
-            code = 201,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Creates a new notification publisher",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Invalid notification class or trying to modify a default publisher"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 409, message = "Conflict with an existing publisher's name")
+            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = NotificationPublisher.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid notification class or trying to modify a default publisher"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "409", description = "Conflict with an existing publisher's name")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response createNotificationPublisher(NotificationPublisher jsonNotificationPublisher) {
@@ -148,16 +153,16 @@ public class NotificationPublisherResource extends AlpineResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Updates a notification publisher",
-            response = NotificationRule.class,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Updates a notification publisher",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Invalid notification class or trying to modify a default publisher"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The notification publisher could not be found"),
-            @ApiResponse(code = 409, message = "Conflict with an existing publisher's name")
+            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = NotificationPublisher.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid notification class or trying to modify a default publisher"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The notification publisher could not be found"),
+            @ApiResponse(responseCode = "409", description = "Conflict with an existing publisher's name")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response updateNotificationPublisher(NotificationPublisher jsonNotificationPublisher) {
@@ -211,18 +216,18 @@ public class NotificationPublisherResource extends AlpineResource {
     @Path("/{notificationPublisherUuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a notification publisher and all related notification rules",
-            code = 204,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Deletes a notification publisher and all related notification rules",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Deleting a default notification publisher is forbidden"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the notification publisher could not be found")
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "400", description = "Deleting a default notification publisher is forbidden"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the notification publisher could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
-    public Response deleteNotificationPublisher(@ApiParam(value = "The UUID of the notification publisher to delete", format = "uuid", required = true)
+    public Response deleteNotificationPublisher(@Parameter(description = "The UUID of the notification publisher to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
                                                @PathParam("notificationPublisherUuid") @ValidUuid String notificationPublisherUuid) {
         try (QueryManager qm = new QueryManager()) {
             final NotificationPublisher notificationPublisher = qm.getObjectByUuid(NotificationPublisher.class, notificationPublisherUuid);
@@ -243,12 +248,13 @@ public class NotificationPublisherResource extends AlpineResource {
     @Path("/restoreDefaultTemplates")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Restore the default notification publisher templates using the ones in the solution classpath",
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Restore the default notification publisher templates using the ones in the solution classpath",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response restoreDefaultTemplates() {
@@ -271,12 +277,13 @@ public class NotificationPublisherResource extends AlpineResource {
     @Path("/test/smtp")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Dispatches a SMTP notification test",
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Dispatches a SMTP notification test",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response testSmtpPublisherConfig(@FormParam("destination") String destination) {

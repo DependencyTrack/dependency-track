@@ -21,9 +21,9 @@ package org.dependencytrack.notification.publisher;
 import org.apache.commons.io.FileUtils;
 import org.dependencytrack.util.NotificationUtil;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;

@@ -44,7 +44,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import javax.json.Json;
+import jakarta.json.Json;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;

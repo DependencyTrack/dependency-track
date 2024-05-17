@@ -10,8 +10,8 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.json.JsonArray;
-import javax.ws.rs.core.Response;
+import jakarta.json.JsonArray;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 
 public class TagResourceTest extends ResourceTest {

@@ -23,8 +23,8 @@ import alpine.notification.NotificationService;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
 
 import static org.mockito.Mockito.mock;
 

@@ -23,7 +23,7 @@ import alpine.security.crypto.DataEncryption;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.json.JsonObjectBuilder;
+import jakarta.json.JsonObjectBuilder;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;

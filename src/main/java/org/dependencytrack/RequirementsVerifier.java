@@ -23,8 +23,8 @@ import alpine.common.logging.Logger;
 import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.exception.RequirementsException;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 public class RequirementsVerifier implements ServletContextListener {
 

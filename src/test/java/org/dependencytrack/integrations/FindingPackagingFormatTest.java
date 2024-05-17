@@ -20,19 +20,22 @@ package org.dependencytrack.integrations;
 
 import alpine.Config;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.json.JsonArray;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 public class FindingPackagingFormatTest extends PersistenceCapableTest {
 

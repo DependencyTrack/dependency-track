@@ -21,8 +21,8 @@ package org.dependencytrack.resources.v1.vo;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * Defines a custom Dependency request object used when adding or removing a component as a dependency to/from a project.

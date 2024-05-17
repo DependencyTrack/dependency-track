@@ -21,7 +21,7 @@ package org.dependencytrack.resources.v1.vo;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * Defines a custom request object used when adding a new MappedOidcGroup.

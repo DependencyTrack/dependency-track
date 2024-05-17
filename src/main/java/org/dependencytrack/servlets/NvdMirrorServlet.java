@@ -22,8 +22,8 @@ import alpine.common.logging.Logger;
 import alpine.server.servlets.FileSystemResourceServlet;
 import org.dependencytrack.tasks.NistMirrorTask;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
 
 public class NvdMirrorServlet extends FileSystemResourceServlet {
 

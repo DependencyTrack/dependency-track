@@ -33,8 +33,8 @@ import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
 import org.dependencytrack.util.NotificationUtil;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

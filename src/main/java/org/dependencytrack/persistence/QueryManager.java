@@ -85,10 +85,10 @@ import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
+import jakarta.json.JsonObject;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.json.JsonObject;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;

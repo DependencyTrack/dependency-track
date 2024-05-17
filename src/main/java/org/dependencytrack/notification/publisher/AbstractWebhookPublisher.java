@@ -29,7 +29,7 @@ import org.dependencytrack.util.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 
 public abstract class AbstractWebhookPublisher implements Publisher {

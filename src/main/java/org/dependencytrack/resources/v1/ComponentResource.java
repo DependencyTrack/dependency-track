@@ -75,7 +75,6 @@ import java.util.Map;
 public class ComponentResource extends AlpineResource {
     
     @GET
-    @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all components",
@@ -89,7 +88,7 @@ public class ComponentResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getComponents(
+    public Response getComponents() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getComponents();
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build()

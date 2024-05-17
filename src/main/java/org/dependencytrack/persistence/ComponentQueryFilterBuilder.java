@@ -41,6 +41,12 @@ class ComponentQueryFilterBuilder {
         this.filterCriteria = new ArrayList<>();
     }
 
+    ComponentQueryFilterBuilder withFuzzyName(String name) {
+        params.put("name", name);
+        filterCriteria.add("(name.toLowerCase().matches(:name))");
+        return this;
+    }
+    
     ComponentQueryFilterBuilder withAuthor(string author) {
         params.put("author", author);
         filterCriteria.add("(author == :author)");

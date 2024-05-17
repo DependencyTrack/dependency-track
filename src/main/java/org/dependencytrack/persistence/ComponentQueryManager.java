@@ -89,13 +89,19 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         if (orderBy == null) {
             query.setOrdering("name asc, version desc");
         }
+
+        final var filterBuilder = new ProjectQueryFilterBuilder();
+
         if (filter != null) {
-            query.setFilter("name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
-            result = execute(query, filterString);
-        } else {
-            result = execute(query);
-        }
+            filterBuilder = filterBuilder.withFuzzyName(filterString);
+        } 
+
+        final String queryFilter = filterBuilder.buildFilter(); 
+        final Map<String, Object> params = filterBuilder.getParams();
+
+        preprocessACLs(query, queryFilter, params, false);
+        result = execute(query, params);
         if (includeMetrics) {
             // Populate each Component object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.

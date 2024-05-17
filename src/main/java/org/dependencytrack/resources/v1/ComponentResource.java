@@ -88,7 +88,9 @@ public class ComponentResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getComponents() {
+    public Response getComponents(
+            @ApiParam(value = "The optional author of the component to query on", required = false)
+            @QueryParam("author") String author) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getComponents();
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build()

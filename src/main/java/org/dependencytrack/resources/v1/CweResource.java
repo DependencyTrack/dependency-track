@@ -63,6 +63,7 @@ public class CweResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of all CWEs",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of CWEs", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = Cwe.class)))
             ),
@@ -79,7 +80,11 @@ public class CweResource extends AlpineResource {
     @Operation(
             summary = "Returns a specific CWE")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Cwe.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A CWE matching the provided ID",
+                    content = @Content(schema = @Schema(implementation = Cwe.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The CWE could not be found")
     })

@@ -77,6 +77,7 @@ public class PolicyResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of all policies",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policies", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = Policy.class)))
             ),
@@ -98,7 +99,11 @@ public class PolicyResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Policy.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A specific policy",
+                    content = @Content(schema = @Schema(implementation = Policy.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The policy could not be found")
     })
@@ -124,7 +129,11 @@ public class PolicyResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = Policy.class))),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created policy",
+                    content = @Content(schema = @Schema(implementation = Policy.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "409", description = "A policy with the specified name already exists")
     })
@@ -164,7 +173,11 @@ public class PolicyResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Policy.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated policy",
+                    content = @Content(schema = @Schema(implementation = Policy.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The policy could not be found")
     })
@@ -198,7 +211,7 @@ public class PolicyResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "204", description = "Policy removed successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the policy could not be found")
     })
@@ -226,7 +239,11 @@ public class PolicyResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Policy.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated policy",
+                    content = @Content(schema = @Schema(implementation = Policy.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The policy already has the specified project assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The policy or project could not be found")
@@ -265,7 +282,11 @@ public class PolicyResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Policy.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated policy",
+                    content = @Content(schema = @Schema(implementation = Policy.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The policy does not have the specified project assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The policy or project could not be found")
@@ -304,7 +325,11 @@ public class PolicyResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Policy.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated policy",
+                    content = @Content(schema = @Schema(implementation = Policy.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The policy already has the specified tag assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The policy or tag could not be found")
@@ -344,6 +369,11 @@ public class PolicyResource extends AlpineResource {
             description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated policy",
+                    content = @Content(schema = @Schema(implementation = Policy.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The policy does not have the specified tag assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The policy or tag could not be found")

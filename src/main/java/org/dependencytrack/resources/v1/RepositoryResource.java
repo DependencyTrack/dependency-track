@@ -83,6 +83,7 @@ public class RepositoryResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of all repositories",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of repositories", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = Repository.class)))
             ),
@@ -107,6 +108,7 @@ public class RepositoryResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of repositories that support the provided type",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of repositories", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = Repository.class)))
             ),
@@ -128,7 +130,11 @@ public class RepositoryResource extends AlpineResource {
     @Operation(
             summary = "Attempts to resolve the latest version of the component available in the configured repositories")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = RepositoryMetaComponent.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The latest version of the component available in the configured repositories",
+                    content = @Content(schema = @Schema(implementation = RepositoryMetaComponent.class))
+            ),
             @ApiResponse(responseCode = "204", description = "The request was successful, but no repositories are configured to support the specified Package URL"),
             @ApiResponse(responseCode = "400", description = "The specified Package URL is invalid and not in the correct format"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -166,7 +172,11 @@ public class RepositoryResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = Repository.class))),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created repository",
+                    content = @Content(schema = @Schema(implementation = Repository.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "409", description = "A repository with the specified identifier already exists")
     })
@@ -205,7 +215,11 @@ public class RepositoryResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Repository.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated repository",
+                    content = @Content(schema = @Schema(implementation = Repository.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the repository could not be found")
     })
@@ -247,7 +261,7 @@ public class RepositoryResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "204", description = "Repository removed successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the repository could not be found")
     })

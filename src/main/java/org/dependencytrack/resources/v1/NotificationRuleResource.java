@@ -84,6 +84,7 @@ public class NotificationRuleResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of all notification rules",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of notification rules", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationRule.class)))
             ),
@@ -105,7 +106,11 @@ public class NotificationRuleResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = NotificationRule.class))),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created notification rule",
+                    content = @Content(schema = @Schema(implementation = NotificationRule.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the notification publisher could not be found")
     })
@@ -142,7 +147,11 @@ public class NotificationRuleResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = NotificationRule.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated notification rule",
+                    content = @Content(schema = @Schema(implementation = NotificationRule.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the notification rule could not be found")
     })
@@ -174,7 +183,7 @@ public class NotificationRuleResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "204", description = "Notification rule removed successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the notification rule could not be found")
     })
@@ -200,7 +209,11 @@ public class NotificationRuleResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = NotificationRule.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated notification rule",
+                    content = @Content(schema = @Schema(implementation = NotificationRule.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The rule already has the specified project assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The notification rule or project could not be found")
@@ -242,7 +255,11 @@ public class NotificationRuleResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = NotificationRule.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated notification rule",
+                    content = @Content(schema = @Schema(implementation = NotificationRule.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The rule does not have the specified project assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The notification rule or project could not be found")
@@ -284,7 +301,11 @@ public class NotificationRuleResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = NotificationRule.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated notification rule",
+                    content = @Content(schema = @Schema(implementation = NotificationRule.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The rule already has the specified team assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The notification rule or team could not be found")
@@ -326,7 +347,11 @@ public class NotificationRuleResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = NotificationRule.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated notification rule",
+                    content = @Content(schema = @Schema(implementation = NotificationRule.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The rule does not have the specified team assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The notification rule or team could not be found")

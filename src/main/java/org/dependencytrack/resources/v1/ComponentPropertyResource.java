@@ -63,11 +63,15 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Returns a list of all ComponentProperties for the specified component",
+            summary = "Returns a list of all properties for the specified component",
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ComponentProperty.class)))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all properties for the specified component",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ComponentProperty.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
             @ApiResponse(responseCode = "404", description = "The project could not be found")
@@ -109,7 +113,11 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
             description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = ComponentProperty.class))),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created component",
+                    content = @Content(schema = @Schema(implementation = ComponentProperty.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
             @ApiResponse(responseCode = "404", description = "The component could not be found"),
@@ -167,7 +175,7 @@ public class ComponentPropertyResource extends AbstractConfigPropertyResource {
             description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "204", description = "Property removed successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
             @ApiResponse(responseCode = "404", description = "The component or component property could not be found"),

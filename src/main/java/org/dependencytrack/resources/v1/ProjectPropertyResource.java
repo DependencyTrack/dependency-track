@@ -70,7 +70,11 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
             description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProjectProperty.class)))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all ProjectProperties for the specified project",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProjectProperty.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
             @ApiResponse(responseCode = "404", description = "The project could not be found")
@@ -112,7 +116,11 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
             description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = ProjectProperty.class))),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created project property",
+                    content = @Content(schema = @Schema(implementation = ProjectProperty.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
             @ApiResponse(responseCode = "404", description = "The project could not be found"),
@@ -169,7 +177,11 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
             description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ProjectProperty.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated project property",
+                    content = @Content(schema = @Schema(implementation = ProjectProperty.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
             @ApiResponse(responseCode = "404", description = "The project could not be found"),
@@ -212,7 +224,7 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
             description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "204", description = "Project property removed successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
             @ApiResponse(responseCode = "404", description = "The project or project property could not be found"),

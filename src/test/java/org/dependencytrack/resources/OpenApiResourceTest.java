@@ -23,6 +23,7 @@ import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -42,6 +43,8 @@ public class OpenApiResourceTest extends ResourceTest {
     @Test
     public void testOpenApiJson() {
         final Response response = jersey.target("/openapi.json")
+                // NB: Initial generation of the OpenAPI spec can take a while in CI.
+                .property(ClientProperties.READ_TIMEOUT, "60000")
                 .request()
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
@@ -59,6 +62,8 @@ public class OpenApiResourceTest extends ResourceTest {
     @Test
     public void testOpenApiYaml() {
         final Response response = jersey.target("/openapi.yaml")
+                // NB: Initial generation of the OpenAPI spec can take a while in CI.
+                .property(ClientProperties.READ_TIMEOUT, "60000")
                 .request()
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);

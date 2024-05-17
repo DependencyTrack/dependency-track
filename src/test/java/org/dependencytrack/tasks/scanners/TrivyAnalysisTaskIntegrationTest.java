@@ -271,6 +271,8 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         qm.createComponentProperty(component, "aquasecurity", "trivy:SrcName", "glibc", IConfigProperty.PropertyType.STRING, null);
         qm.createComponentProperty(component, "aquasecurity", "trivy:SrcVersion", "2.35", IConfigProperty.PropertyType.STRING, null);
         qm.createComponentProperty(component, "aquasecurity", "trivy:SrcRelease", "0ubuntu3.4", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "aquasecurity", "trivy:PkgType", "ubuntu", IConfigProperty.PropertyType.STRING, null);
+
 
         final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
         new TrivyAnalysisTask().inform(analysisEvent);

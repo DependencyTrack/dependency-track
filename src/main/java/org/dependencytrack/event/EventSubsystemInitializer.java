@@ -57,8 +57,8 @@ import org.dependencytrack.tasks.scanners.SnykAnalysisTask;
 import org.dependencytrack.tasks.scanners.TrivyAnalysisTask;
 import org.dependencytrack.tasks.scanners.VulnDbAnalysisTask;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 import java.time.Duration;
 
 /**

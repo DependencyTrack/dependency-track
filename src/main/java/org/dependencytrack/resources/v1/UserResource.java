@@ -28,7 +28,6 @@ import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.security.crypto.KeyManager;
 import alpine.server.auth.AlpineAuthenticationException;
 import alpine.server.auth.AuthenticationNotRequired;
 import alpine.server.auth.Authenticator;
@@ -57,17 +56,17 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.owasp.security.logging.SecurityMarkers;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.security.Principal;
 import java.util.List;
 
@@ -110,8 +109,7 @@ public class UserResource extends AlpineResource {
             final Principal principal = auth.authenticate();
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful user login / username: " + username);
             final List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal) principal);
-            final KeyManager km = KeyManager.getInstance();
-            final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
+            final JsonWebToken jwt = new JsonWebToken();
             final String token = jwt.createToken(principal, permissions);
             return Response.ok(token).build();
         } catch (AlpineAuthenticationException e) {
@@ -160,8 +158,7 @@ public class UserResource extends AlpineResource {
             final Principal principal = authService.authenticate();
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful OpenID Connect login / username: " + principal.getName());
             final List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal) principal);
-            final KeyManager km = KeyManager.getInstance();
-            final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
+            final JsonWebToken jwt = new JsonWebToken();
             final String token = jwt.createToken(principal, permissions);
             return Response.ok(token).build();
         } catch (AlpineAuthenticationException e) {

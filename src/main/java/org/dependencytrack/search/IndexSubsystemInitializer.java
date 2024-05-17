@@ -21,8 +21,8 @@ package org.dependencytrack.search;
 import alpine.common.logging.Logger;
 import org.dependencytrack.RequirementsVerifier;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 import java.util.Arrays;
 
 /**

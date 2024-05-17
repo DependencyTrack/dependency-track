@@ -93,6 +93,6 @@ public final class DateUtil {
         if (dateString == null) {
             return null;
         }
-        return javax.xml.bind.DatatypeConverter.parseDateTime(dateString).getTime();
+        return jakarta.xml.bind.DatatypeConverter.parseDateTime(dateString).getTime();
     }
 }

@@ -31,8 +31,8 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DebugDataEncryption;
 
-import javax.json.JsonObject;
-import javax.json.JsonString;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;

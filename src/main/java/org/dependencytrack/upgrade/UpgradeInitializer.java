@@ -34,10 +34,10 @@ import org.datanucleus.store.schema.SchemaAwareStoreManager;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.persistence.QueryManager;
 
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;

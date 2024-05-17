@@ -23,7 +23,7 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import io.pebbletemplates.pebble.PebbleEngine;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.PrintStream;
 

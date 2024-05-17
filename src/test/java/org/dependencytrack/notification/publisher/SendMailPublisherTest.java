@@ -12,19 +12,19 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMultipart;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMultipart;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.icegreen.greenmail.configuration.GreenMailConfiguration.aConfig;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_PREFIX;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_FROM_ADDR;
-import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_PREFIX;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_PASSWORD;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_HOSTNAME;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_PORT;

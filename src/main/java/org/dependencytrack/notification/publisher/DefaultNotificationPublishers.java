@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.notification.publisher;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 
 public enum DefaultNotificationPublishers {
 

@@ -40,9 +40,9 @@ import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.junit.Test;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

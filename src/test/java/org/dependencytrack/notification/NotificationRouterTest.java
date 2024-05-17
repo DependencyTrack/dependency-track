@@ -43,7 +43,7 @@ import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

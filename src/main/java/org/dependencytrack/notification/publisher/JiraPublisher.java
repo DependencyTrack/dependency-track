@@ -26,7 +26,7 @@ import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DebugDataEncryption;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.util.Map;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_PASSWORD;

@@ -21,7 +21,7 @@ package org.dependencytrack.notification.publisher;
 import alpine.notification.Notification;
 import io.pebbletemplates.pebble.PebbleEngine;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 public class SlackPublisher extends AbstractWebhookPublisher implements Publisher {
 

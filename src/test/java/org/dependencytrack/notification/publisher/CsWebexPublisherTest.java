@@ -30,7 +30,7 @@ import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;

@@ -20,6 +20,9 @@ package org.dependencytrack.tasks;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,9 +33,11 @@ import javax.json.JsonReader;
 
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Rule;
 import org.dependencytrack.model.ScheduledNotificationRule;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
@@ -58,13 +63,40 @@ public class SendScheduledNotificationTask implements Runnable {
         try (var qm = new QueryManager()) {
             var rule = qm.getObjectByUuid(ScheduledNotificationRule.class, scheduledNotificationRuleUuid);
             for (NotificationGroup group : rule.getNotifyOn()) {
+                final List<Long> projectIds = rule.getProjects().stream().map(proj -> proj.getId()).toList();
                 final Notification notificationProxy = new Notification()
                         .scope(rule.getScope())
                         .group(group)
-                        .title(rule.getName())
-                        .level(rule.getNotificationLevel())
-                        .content("") // TODO: evaluate use and creation of content here
-                        .subject(null); // TODO: generate helper class here
+                        .title(generateNotificationTitle(rule, group))
+                        .level(rule.getNotificationLevel());
+
+                switch (group) {
+                    case NEW_VULNERABILITY:
+                        var newProjectVulnerabilities = qm.getNewVulnerabilitiesForProjectsSince(rule.getLastExecutionTime(), projectIds);
+                        if(newProjectVulnerabilities.isEmpty() && rule.getPublishOnlyWithUpdates())
+                            continue;
+                        notificationProxy
+                                .content(generateVulnerabilityNotificationContent(rule,
+                                                                     newProjectVulnerabilities.values().stream().flatMap(List::stream).toList(),
+                                                                     newProjectVulnerabilities.keySet().stream().toList(),
+                                                                     rule.getLastExecutionTime()))
+                                .subject(null); // TODO: generate helper class here
+                        break;
+                    case POLICY_VIOLATION:
+                        var newProjectPolicyViolations = qm.getNewPolicyViolationsForProjectsSince(rule.getLastExecutionTime(), projectIds);
+                        if(newProjectPolicyViolations.isEmpty() && rule.getPublishOnlyWithUpdates())
+                            continue;
+                        notificationProxy
+                            .content(generatePolicyNotificationContent(rule,
+                                                                 newProjectPolicyViolations.values().stream().flatMap(List::stream).toList(),
+                                                                 newProjectPolicyViolations.keySet().stream().toList(),
+                                                                 rule.getLastExecutionTime()))
+                            .subject(null); // TODO: generate helper class here
+                        break;
+                    default:
+                        LOGGER.error(group.name() + " is not a supported notification group for scheduled publishing");
+                        continue;
+                }
 
                 final PublishContext ctx = PublishContext.from(notificationProxy);
                 final PublishContext ruleCtx =ctx.withRule(rule);
@@ -134,5 +166,33 @@ public class SendScheduledNotificationTask implements Runnable {
         return initialNotification.getSubject() instanceof NewVulnerabilityIdentified
                 && rule.getProjects() != null
                 && !rule.getProjects().isEmpty();
+    }
+
+    private String generateNotificationTitle(final Rule rule, final NotificationGroup group) {
+        return "Scheduled Notification: " + group.name();
+    }
+
+    private String generateVulnerabilityNotificationContent(final Rule rule, final List<Vulnerability> vulnerabilities, final List<Project> projects, final ZonedDateTime lastExecutionTime) {
+        final String content;
+
+        if (vulnerabilities.isEmpty()) {
+            content = "No new vulnerabilities found.";
+        } else {
+            content = "In total, " + vulnerabilities.size() + " new vulnerabilities in " + projects.size() + " projects were found since " + lastExecutionTime.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS) + ".";
+        }
+
+        return content;
+    }
+
+    private String generatePolicyNotificationContent(final Rule rule, final List<PolicyViolation> policyViolations, final List<Project> projects, final ZonedDateTime lastExecutionTime) {
+        final String content;
+
+        if (policyViolations.isEmpty()) {
+            content = "No new policy violations found.";
+        } else {
+            content = "In total, " + policyViolations.size() + " new policy violations in " + projects.size() + " projects were found since " + lastExecutionTime.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS) + ".";
+        }
+
+        return content;
     }
 }

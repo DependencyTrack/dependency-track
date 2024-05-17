@@ -267,11 +267,6 @@
             <version>${lib.swagger.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-jaxrs2-servlet-initializer-v2</artifactId>
-            <version>${lib.swagger.version}</version>
-        </dependency>
-        <dependency>
             <groupId>io.swagger.parser.v3</groupId>
             <artifactId>swagger-parser</artifactId>
             <version>${lib.swagger-parser.version}</version>

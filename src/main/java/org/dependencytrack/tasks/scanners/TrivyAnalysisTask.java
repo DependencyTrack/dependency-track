@@ -259,8 +259,9 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                                 srcVersion = property.getPropertyValue();
                             } else if (property.getPropertyName().equals("trivy:SrcRelease")) {
                                 srcRelease = property.getPropertyValue();
-                            } else if (property.getPropertyName().equals("trivy:PkgType")) {
+                            } else if (!pkgType.contains("-") && property.getPropertyName().equals("trivy:PkgType")) {
                                 pkgType = property.getPropertyValue();
+
                                 String distro = component.getPurl().getQualifiers().get("distro");
 
                                 if (distro != null) {

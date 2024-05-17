@@ -318,6 +318,9 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         for(Object[] obj : totalList){
             Project project = getObjectById(Project.class, obj[0]);
             PolicyViolation policyViolation = getObjectById(PolicyViolation.class, obj[1]);
+            if(project == null || policyViolation == null){
+                continue;
+            }
             if(!projectPolicyViolations.containsKey(project)){
                 projectPolicyViolations.put(project, new ArrayList<>());
             }

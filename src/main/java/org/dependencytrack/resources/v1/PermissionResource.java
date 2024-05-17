@@ -72,7 +72,11 @@ public class PermissionResource extends AlpineResource {
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Permissions.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all permissions",
+                    content = @Content(schema = @Schema(implementation = Permissions.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
@@ -92,7 +96,11 @@ public class PermissionResource extends AlpineResource {
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = UserPrincipal.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated user",
+                    content = @Content(schema = @Schema(implementation = UserPrincipal.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The user already has the specified permission assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The user could not be found")
@@ -133,7 +141,11 @@ public class PermissionResource extends AlpineResource {
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = UserPrincipal.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated user",
+                    content = @Content(schema = @Schema(implementation = UserPrincipal.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The user already has the specified permission assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The user could not be found")
@@ -174,7 +186,11 @@ public class PermissionResource extends AlpineResource {
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Team.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated team",
+                    content = @Content(schema = @Schema(implementation = Team.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The team already has the specified permission assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The team could not be found")
@@ -215,7 +231,11 @@ public class PermissionResource extends AlpineResource {
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Team.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated team",
+                    content = @Content(schema = @Schema(implementation = Team.class))
+            ),
             @ApiResponse(responseCode = "304", description = "The team already has the specified permission assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The team could not be found")

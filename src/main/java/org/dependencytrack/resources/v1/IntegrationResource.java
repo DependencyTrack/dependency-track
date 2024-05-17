@@ -58,6 +58,7 @@ public class IntegrationResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of all ecosystems in OSV",
                     content = @Content(array = @ArraySchema(schema = @Schema(type = "string")))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
@@ -79,6 +80,7 @@ public class IntegrationResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of available inactive ecosystems in OSV to be selected by user",
                     content = @Content(array = @ArraySchema(schema = @Schema(type = "string")))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")

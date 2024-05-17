@@ -30,6 +30,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchManager;
 import org.dependencytrack.search.SearchManager;
 import org.dependencytrack.search.SearchResult;
@@ -65,7 +66,11 @@ public class SearchResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = SearchResult.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The search result",
+                    content = @Content(schema = @Schema(implementation = SearchResult.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -83,7 +88,11 @@ public class SearchResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = SearchResult.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The search result",
+                    content = @Content(schema = @Schema(implementation = SearchResult.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -101,7 +110,11 @@ public class SearchResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = SearchResult.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The search result",
+                    content = @Content(schema = @Schema(implementation = SearchResult.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -119,7 +132,11 @@ public class SearchResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = SearchResult.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The search result",
+                    content = @Content(schema = @Schema(implementation = SearchResult.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -137,7 +154,11 @@ public class SearchResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = SearchResult.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The search result",
+                    content = @Content(schema = @Schema(implementation = SearchResult.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -155,7 +176,11 @@ public class SearchResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = SearchResult.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The search result",
+                    content = @Content(schema = @Schema(implementation = SearchResult.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -173,7 +198,11 @@ public class SearchResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = SearchResult.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The search result",
+                    content = @Content(schema = @Schema(implementation = SearchResult.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -197,7 +226,11 @@ public class SearchResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Token to be used for checking index rebuild progress",
+                    content = @Content(schema = @Schema(implementation = BomUploadResponse.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "400", description = "No valid index type was provided")
     })

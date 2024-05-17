@@ -77,6 +77,7 @@ public class ServiceResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
+                    description = "A list of all services for a given project",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of services", schema = @Schema(format = "integer")),
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = ServiceComponent.class)))
             ),
@@ -110,7 +111,11 @@ public class ServiceResource extends AlpineResource {
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ServiceComponent.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A specific service",
+                    content = @Content(schema = @Schema(implementation = ServiceComponent.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified service is forbidden"),
             @ApiResponse(responseCode = "404", description = "The service could not be found")
@@ -144,7 +149,11 @@ public class ServiceResource extends AlpineResource {
             description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = ServiceComponent.class))),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created service",
+                    content = @Content(schema = @Schema(implementation = ServiceComponent.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
             @ApiResponse(responseCode = "404", description = "The project could not be found")
@@ -197,7 +206,11 @@ public class ServiceResource extends AlpineResource {
             description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ServiceComponent.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated service",
+                    content = @Content(schema = @Schema(implementation = ServiceComponent.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified service is forbidden"),
             @ApiResponse(responseCode = "404", description = "The UUID of the service could not be found"),
@@ -248,7 +261,7 @@ public class ServiceResource extends AlpineResource {
             description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204"),
+            @ApiResponse(responseCode = "204", description = "Service removed successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Access to the specified service is forbidden"),
             @ApiResponse(responseCode = "404", description = "The UUID of the service could not be found")

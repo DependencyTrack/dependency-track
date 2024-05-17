@@ -112,6 +112,7 @@
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>3.2.2</lib.pebble.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
+        <lib.swagger-parser.version>2.1.22</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.testcontainers.version>1.19.8</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
@@ -270,6 +271,12 @@
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-jaxrs2-servlet-initializer-v2</artifactId>
             <version>${lib.swagger.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.parser.v3</groupId>
+            <artifactId>swagger-parser</artifactId>
+            <version>${lib.swagger-parser.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

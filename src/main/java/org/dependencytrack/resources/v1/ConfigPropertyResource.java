@@ -64,7 +64,11 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ConfigProperty.class)))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all ConfigProperties for the specified groupName",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ConfigProperty.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
@@ -93,7 +97,11 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ConfigProperty.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated config property",
+                    content = @Content(schema = @Schema(implementation = ConfigProperty.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The config property could not be found"),
     })
@@ -120,7 +128,11 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ConfigProperty.class)))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated config properties",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ConfigProperty.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "One or more config properties could not be found"),
     })

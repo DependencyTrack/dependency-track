@@ -89,7 +89,11 @@ public class NotificationPublisherResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationPublisher.class)))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all notification publishers",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationPublisher.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
@@ -145,7 +149,11 @@ public class NotificationPublisherResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = NotificationPublisher.class))),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created notification publisher",
+                    content = @Content(schema = @Schema(implementation = NotificationPublisher.class))
+            ),
             @ApiResponse(responseCode = "400", description = "Invalid notification class or trying to modify a default publisher"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "409", description = "Conflict with an existing publisher's name")
@@ -196,7 +204,11 @@ public class NotificationPublisherResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = NotificationPublisher.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated notification publisher",
+                    content = @Content(schema = @Schema(implementation = NotificationPublisher.class))
+            ),
             @ApiResponse(responseCode = "400", description = "Invalid notification class or trying to modify a default publisher"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The notification publisher could not be found"),
@@ -259,7 +271,7 @@ public class NotificationPublisherResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "204", description = "Notification publisher removed successfully"),
             @ApiResponse(responseCode = "400", description = "Deleting a default notification publisher is forbidden"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the notification publisher could not be found")
@@ -291,7 +303,7 @@ public class NotificationPublisherResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "200", description = "Default templates restored successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
@@ -320,7 +332,7 @@ public class NotificationPublisherResource extends AlpineResource {
             description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "200", description = "Test notification dispatched successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)

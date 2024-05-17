@@ -333,7 +333,7 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
      * <p>
      * To reproduce, run:
      * <pre>
-     * docker run -it --rm aquasec/trivy image --format cyclonedx registry.hub.knime.com/knime/knime-full:r-5.1.2-433
+     * docker run -it --rm aquasec/trivy image --format cyclonedx aquasec/trivy:0.51.1
      * </pre>
      *
      * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2560">Add support for CycloneDX component properties</a>

@@ -515,6 +515,7 @@
                 <filtering>true</filtering>
                 <includes>
                     <include>application.version</include>
+                    <include>openapi-configuration.yaml</include>
                 </includes>
             </resource>
         </resources>

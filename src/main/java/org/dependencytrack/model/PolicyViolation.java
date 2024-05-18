@@ -22,6 +22,7 @@ import alpine.common.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -79,6 +80,7 @@ public class PolicyViolation implements Serializable {
 
     @Persistent
     @Column(name = "TIMESTAMP", allowsNull = "false")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date timestamp;
 
     @Persistent

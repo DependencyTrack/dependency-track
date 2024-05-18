@@ -244,6 +244,7 @@ public class Project implements Serializable {
     @Persistent
     @Index(name = "PROJECT_LASTBOMIMPORT_IDX")
     @Column(name = "LAST_BOM_IMPORTED")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date lastBomImport;
 
     /**

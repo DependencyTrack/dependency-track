@@ -26,7 +26,7 @@ public class IsTokenBeingProcessedResponse implements Serializable {
 
     private static final long serialVersionUID = -7592468766586686855L;
 
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Boolean processing;
 
     public void setProcessing(Boolean processing) {

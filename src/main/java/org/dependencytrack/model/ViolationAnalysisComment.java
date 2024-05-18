@@ -22,6 +22,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -57,6 +58,7 @@ public class ViolationAnalysisComment implements Serializable {
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "TIMESTAMP", allowsNull = "false")
     @NotNull
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date timestamp;
 
     @Persistent(defaultFetchGroup = "true")

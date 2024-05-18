@@ -20,6 +20,7 @@ package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
 import javax.jdo.annotations.Column;
@@ -55,6 +56,7 @@ public class FindingAttribution implements Serializable {
     @Persistent
     @Column(name = "ATTRIBUTED_ON", allowsNull = "false")
     @NotNull
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date attributedOn;
 
     @Persistent

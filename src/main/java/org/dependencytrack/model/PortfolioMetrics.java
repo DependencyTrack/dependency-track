@@ -52,22 +52,22 @@ public class PortfolioMetrics implements Serializable {
 
     @Persistent
     @Column(name = "CRITICAL")
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int critical;
 
     @Persistent
     @Column(name = "HIGH")
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int high;
 
     @Persistent
     @Column(name = "MEDIUM")
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int medium;
 
     @Persistent
     @Column(name = "LOW")
-    @Schema(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int low;
 
     @Persistent
@@ -178,14 +178,14 @@ public class PortfolioMetrics implements Serializable {
     @Column(name = "FIRST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "PORTFOLIOMETRICS_FIRST_OCCURRENCE_IDX")
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, type = "number")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date firstOccurrence;
 
     @Persistent
     @Column(name = "LAST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "PORTFOLIOMETRICS_LAST_OCCURRENCE_IDX")
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, type = "number")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date lastOccurrence;
 
     public long getId() {

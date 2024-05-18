@@ -20,6 +20,7 @@ package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -85,6 +86,7 @@ public class RepositoryMetaComponent implements Serializable {
      */
     @Persistent
     @Column(name = "PUBLISHED")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date published;
 
     /**
@@ -94,6 +96,7 @@ public class RepositoryMetaComponent implements Serializable {
     @Column(name = "LAST_CHECK", allowsNull = "false")
     @Index(name = "REPOSITORY_META_COMPONENT_LASTCHECK_IDX")
     @NotNull
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date lastCheck;
 
 

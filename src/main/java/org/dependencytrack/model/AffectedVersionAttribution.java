@@ -20,6 +20,7 @@ package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.dependencytrack.model.Vulnerability.Source;
 
 import javax.jdo.annotations.Column;
@@ -64,10 +65,12 @@ public class AffectedVersionAttribution implements Serializable {
 
     @Persistent
     @Column(name = "FIRST_SEEN", allowsNull = "false")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date firstSeen;
 
     @Persistent
     @Column(name = "LAST_SEEN", allowsNull = "false")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date lastSeen;
 
     @Persistent

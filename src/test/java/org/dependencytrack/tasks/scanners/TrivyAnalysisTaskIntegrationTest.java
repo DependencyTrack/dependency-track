@@ -26,14 +26,17 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.images.PullPolicy;
 import org.testcontainers.utility.DockerImageName;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,23 +45,38 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_BA
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_ENABLED;
 import static org.testcontainers.containers.wait.strategy.Wait.forLogMessage;
 
+@RunWith(Parameterized.class)
 public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
 
-    private static GenericContainer<?> trivyContainer;
+    @Parameterized.Parameters(name = "[{index}] trivyVersion={0}")
+    public static Collection<?> testParameters() {
+        return Arrays.asList(new Object[][]{
+                {"0.51.1"}, // Pre breaking change of Application#libraries -> Application#packages
+                {"0.51.2"}, // Post breaking change of Application#libraries -> Application#packages
+                {"latest"}
+        });
+    }
 
-    @BeforeClass
+    private final String trivyVersion;
+    private GenericContainer<?> trivyContainer;
+
+    public TrivyAnalysisTaskIntegrationTest(String trivyVersion) {
+        this.trivyVersion = trivyVersion;
+    }
+
+    @Before
+    @Override
     @SuppressWarnings("resource")
-    public static void setUpClass() {
-        trivyContainer = new GenericContainer<>(DockerImageName.parse("aquasec/trivy:latest"))
+    public void before() throws Exception {
+        super.before();
+
+        trivyContainer = new GenericContainer<>(DockerImageName.parse("aquasec/trivy:" + trivyVersion))
                 .withImagePullPolicy(PullPolicy.alwaysPull())
                 .withCommand("server --listen :8080 --token TrivyToken")
                 .withExposedPorts(8080)
                 .waitingFor(forLogMessage(".*Listening :8080.*", 1));
         trivyContainer.start();
-    }
 
-    @Before
-    public void setUp() throws Exception {
         qm.createConfigProperty(
                 SCANNER_TRIVY_ENABLED.getGroupName(),
                 SCANNER_TRIVY_ENABLED.getPropertyName(),
@@ -82,11 +100,14 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         );
     }
 
-    @AfterClass
-    public static void tearDownClass() {
+    @After
+    @Override
+    public void after() {
         if (trivyContainer != null) {
             trivyContainer.stop();
         }
+
+        super.after();
     }
 
     @Test

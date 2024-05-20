@@ -20,7 +20,7 @@ jobs:
       release-branch: ${{ steps.variables.outputs.release-branch }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # tag=v4.1.5
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # tag=v4.1.6
 
       - name: Setup Environment
         id: variables
@@ -51,7 +51,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # tag=v4.1.5
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # tag=v4.1.6
 
       - name: Set up JDK
         uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # tag=v4.2.1
@@ -118,7 +118,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # tag=v4.1.5
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # tag=v4.1.6
         with:
           ref: ${{ needs.prepare-release.outputs.release-branch }}
 

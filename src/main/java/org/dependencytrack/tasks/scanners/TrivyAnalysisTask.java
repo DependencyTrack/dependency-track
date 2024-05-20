@@ -53,7 +53,6 @@ import org.dependencytrack.parser.trivy.TrivyParser;
 import org.dependencytrack.parser.trivy.model.Application;
 import org.dependencytrack.parser.trivy.model.BlobInfo;
 import org.dependencytrack.parser.trivy.model.DeleteRequest;
-import org.dependencytrack.parser.trivy.model.Library;
 import org.dependencytrack.parser.trivy.model.OS;
 import org.dependencytrack.parser.trivy.model.Options;
 import org.dependencytrack.parser.trivy.model.Package;
@@ -224,7 +223,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                         map.put(key, component);
 
                         LOGGER.debug("add library %s".formatted(component.toString()));
-                        app.addLibrary(new Library(name, component.getVersion()));
+                        app.addPackage(new Package(name, component.getVersion(), null, null, null, null, null));
                     } else {
                         String srcName = null;
                         String srcVersion = null;

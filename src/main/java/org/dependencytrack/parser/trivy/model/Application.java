@@ -19,20 +19,51 @@
 package org.dependencytrack.parser.trivy.model;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Application {
-    private String type;
-    private ArrayList<Library> libraries;
 
-    public Application(String type) {
+    private String type;
+    private List<Package> packages;
+
+    /**
+     * NB: GSON doesn't support serialization of getters, it can only deal with fields.
+     * Need to have libraries as redundant field to packages, with Jackson we could just
+     * use a computed getter with {@link com.fasterxml.jackson.annotation.JsonGetter}.
+     * Migrate this to Jackson eventually.
+     *
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/3737">GitHub issue</a>
+     * @deprecated Kept for compatibility with Trivy <= 0.51.1
+     */
+    @Deprecated(forRemoval = true)
+    private List<Package> libraries;
+
+    public Application(final String type) {
         this.type = type;
-        this.libraries = new ArrayList<Library>();
+        this.packages = new ArrayList<>();
+        this.libraries = new ArrayList<>();
     }
 
-    public String getType() { return type; }
-    public void setType(String value) { this.type = value; }
+    public String getType() {
+        return type;
+    }
 
-    public ArrayList<Library> getLibraries() { return libraries; }
-    public void setLibraries(ArrayList<Library> value) { this.libraries = value; }
-    public void addLibrary(Library value) { this.libraries.add(value); }
+    public void setType(String value) {
+        this.type = value;
+    }
+
+    public List<Package> getPackages() {
+        return packages;
+    }
+
+    public void setPackages(List<Package> value) {
+        this.packages = value;
+        this.libraries = value;
+    }
+
+    public void addPackage(Package value) {
+        this.packages.add(value);
+        this.libraries.add(value);
+    }
+
 }

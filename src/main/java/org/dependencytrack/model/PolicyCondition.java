@@ -77,7 +77,8 @@ public class PolicyCondition implements Serializable {
         COMPONENT_HASH,
         CWE,
         VULNERABILITY_ID,
-        VERSION_DISTANCE
+        VERSION_DISTANCE,
+        EPSS
     }
 
     @PrimaryKey

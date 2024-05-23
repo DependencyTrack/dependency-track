@@ -76,7 +76,7 @@ public class EpssPolicyEvaluator extends AbstractPolicyEvaluator {
             case NUMERIC_GREATER_THAN_OR_EQUAL -> vulnerabilityEpss.compareTo(conditionDecimalValue) >= 0;
             case NUMERIC_EQUAL -> vulnerabilityEpss.compareTo(conditionDecimalValue) == 0;
             case NUMERIC_NOT_EQUAL -> vulnerabilityEpss.compareTo(conditionDecimalValue) != 0;
-            case NUMERIC_LESSER_THAN_OR_EQUAL -> vulnerabilityEpss.compareTo(conditionDecimalValue) >= 0;
+            case NUMERIC_LESSER_THAN_OR_EQUAL -> vulnerabilityEpss.compareTo(conditionDecimalValue) <= 0;
             case NUMERIC_LESS_THAN -> vulnerabilityEpss.compareTo(conditionDecimalValue) < 0;
             default -> {
                 LOGGER.warn("Operator %s is not supported for EPSS conditions".formatted(operator));

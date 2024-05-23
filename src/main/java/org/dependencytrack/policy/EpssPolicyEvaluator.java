@@ -30,7 +30,7 @@ import org.dependencytrack.model.Vulnerability;
 import alpine.common.logging.Logger;
 
 public class EpssPolicyEvaluator extends AbstractPolicyEvaluator {
-    private static final Logger LOGGER = Logger.getLogger(CpePolicyEvaluator.class);
+    private static final Logger LOGGER = Logger.getLogger(EpssPolicyEvaluator.class);
 
     /**
      * {@inheritDoc}

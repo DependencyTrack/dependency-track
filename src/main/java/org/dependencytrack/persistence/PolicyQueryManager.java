@@ -324,10 +324,11 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             if(project == null || policyViolation == null){
                 continue;
             }
+            var detachedPolicyViolation = pm.detachCopy(policyViolation);
             if(!projectPolicyViolations.containsKey(project)){
                 projectPolicyViolations.put(project, new ArrayList<>());
             }
-            projectPolicyViolations.get(project).add(policyViolation);
+            projectPolicyViolations.get(project).add(detachedPolicyViolation);
         }
         return projectPolicyViolations;
     }

@@ -306,14 +306,17 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     @SuppressWarnings("unchecked")
     public Map<Project, List<PolicyViolation>> getNewPolicyViolationsForProjectsSince(ZonedDateTime dateTime, List<Long> projectIds){
         String queryString = "SELECT PROJECT_ID, ID " +
-        "FROM POLICYVIOLATION " +
-        "WHERE (TIMESTAMP BETWEEN ? AND ?) ";
-        if(projectIds != null && !projectIds.isEmpty()){
+                "FROM POLICYVIOLATION " +
+                "WHERE (TIMESTAMP BETWEEN ? AND ?) ";
+        boolean hasProjectLimitation = projectIds != null && !projectIds.isEmpty();
+        if(hasProjectLimitation){
             queryString.concat("AND (PROJECT_ID IN ?) ");
         }
         queryString.concat("ORDER BY PROJECT_ID ASC");
         final Query<Object> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, queryString);
-        final List<Object[]> totalList = (List<Object[]>)query.execute(dateTime, ZonedDateTime.now(ZoneOffset.UTC), projectIds);
+        final List<Object[]> totalList = hasProjectLimitation
+                ? (List<Object[]>) query.execute(dateTime, ZonedDateTime.now(ZoneOffset.UTC), projectIds)
+                : (List<Object[]>) query.execute(dateTime, ZonedDateTime.now(ZoneOffset.UTC));
         Map<Project, List<PolicyViolation>> projectPolicyViolations = new HashMap<>();
         for(Object[] obj : totalList){
             Project project = getObjectById(Project.class, obj[0]);

@@ -77,6 +77,7 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
@@ -1214,8 +1215,8 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().getNotificationPublisher(name);
     }
 
-    public NotificationPublisher getDefaultNotificationPublisher(final Class<? extends Publisher> clazz) {
-        return getNotificationQueryManager().getDefaultNotificationPublisher(clazz);
+    public NotificationPublisher getDefaultNotificationPublisher(final DefaultNotificationPublishers defaultPublisher) {
+        return getNotificationQueryManager().getDefaultNotificationPublisher(defaultPublisher);
     }
 
     public NotificationPublisher createNotificationPublisher(final String name, final String description,

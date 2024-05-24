@@ -30,6 +30,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.PublishTrigger;
 import org.dependencytrack.model.ScheduledNotificationRule;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.Publisher;
 
 import javax.jdo.PersistenceManager;
@@ -227,8 +228,8 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @param clazz The Class of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    public NotificationPublisher getDefaultNotificationPublisher(final Class<? extends Publisher> clazz) {
-        return getDefaultNotificationPublisher(clazz.getCanonicalName());
+    public NotificationPublisher getDefaultNotificationPublisher(final DefaultNotificationPublishers defaultPublisher) {
+        return getDefaultNotificationPublisher(defaultPublisher.getPublisherName(), defaultPublisher.getPublisherClass().getCanonicalName());
     }
 
     /**
@@ -236,11 +237,11 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @param clazz The Class of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    private NotificationPublisher getDefaultNotificationPublisher(final String clazz) {
-        final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class, "publisherClass == :publisherClass && defaultPublisher == true");
+    private NotificationPublisher getDefaultNotificationPublisher(final String publisherName, final String clazz) {
+        final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class, "name == :name && publisherClass == :publisherClass && defaultPublisher == true");
         query.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
         query.setRange(0, 1);
-        return singleResult(query.execute(clazz));
+        return singleResult(query.execute(publisherName, clazz));
     }
 
     /**
@@ -275,7 +276,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         if (transientPublisher.getId() > 0) {
             publisher = getObjectById(NotificationPublisher.class, transientPublisher.getId());
         } else if (transientPublisher.isDefaultPublisher()) {
-            publisher = getDefaultNotificationPublisher(transientPublisher.getPublisherClass());
+            publisher = getDefaultNotificationPublisher(transientPublisher.getName(), transientPublisher.getPublisherClass());
         }
         if (publisher != null) {
             publisher.setName(transientPublisher.getName());

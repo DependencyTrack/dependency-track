@@ -39,9 +39,9 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
-import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
@@ -324,9 +324,9 @@ public class NotificationPublisherResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response testSmtpPublisherConfig(@FormParam("destination") String destination) {
         try(QueryManager qm = new QueryManager()) {
-            Class defaultEmailPublisherClass = SendMailPublisher.class;
-            NotificationPublisher emailNotificationPublisher = qm.getDefaultNotificationPublisher(defaultEmailPublisherClass);
-            final Publisher emailPublisher = (Publisher) defaultEmailPublisherClass.getDeclaredConstructor().newInstance();
+            DefaultNotificationPublishers defaultEmailPublisher = DefaultNotificationPublishers.EMAIL;
+            NotificationPublisher emailNotificationPublisher = qm.getDefaultNotificationPublisher(defaultEmailPublisher);
+            final Publisher emailPublisher = (Publisher) defaultEmailPublisher.getPublisherClass().getDeclaredConstructor().newInstance();
             final JsonObject config = Json.createObjectBuilder()
                     .add(Publisher.CONFIG_DESTINATION, destination)
                     .add(Publisher.CONFIG_TEMPLATE_KEY, emailNotificationPublisher.getTemplate())

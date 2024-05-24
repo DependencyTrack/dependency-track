@@ -220,7 +220,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
 
     @Test
     public void updateExistingDefaultNotificationPublisherTest() {
-        NotificationPublisher notificationPublisher = qm.getDefaultNotificationPublisher(SendMailPublisher.class);
+        NotificationPublisher notificationPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.EMAIL);
         notificationPublisher.setName(notificationPublisher.getName() + " Updated");
         Response response = target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
@@ -325,7 +325,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
 
     @Test
     public void deleteDefaultNotificationPublisherTest() {
-        NotificationPublisher notificationPublisher = qm.getDefaultNotificationPublisher((Class) SendMailPublisher.class);
+        NotificationPublisher notificationPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.EMAIL);
         Response response = target(V1_NOTIFICATION_PUBLISHER + "/" + notificationPublisher.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -347,7 +347,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
 
     @Test
     public void restoreDefaultTemplatesTest() {
-        NotificationPublisher slackPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherClass());
+        NotificationPublisher slackPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.SLACK);
         slackPublisher.setName(slackPublisher.getName()+" Updated");
         qm.persist(slackPublisher);
         qm.detach(NotificationPublisher.class, slackPublisher.getId());
@@ -364,7 +364,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         qm.getPersistenceManager().refreshAll();
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertFalse(qm.isEnabled(ConfigPropertyConstants.NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED));
-        slackPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherClass());
+        slackPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.SLACK);
         Assert.assertEquals(DefaultNotificationPublishers.SLACK.getPublisherName(), slackPublisher.getName());
     }
 }

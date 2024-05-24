@@ -550,7 +550,7 @@ public final class NotificationUtil {
                 }
             }
             final String templateContent = FileUtils.readFileToString(templateFile, UTF_8);
-            final NotificationPublisher existingPublisher = qm.getDefaultNotificationPublisher(publisher.getPublisherClass());
+            final NotificationPublisher existingPublisher = qm.getDefaultNotificationPublisher(publisher);
             if (existingPublisher == null) {
                 qm.createNotificationPublisher(
                         publisher.getPublisherName(), publisher.getPublisherDescription(),

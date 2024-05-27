@@ -160,7 +160,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         final PaginatedResult result;
         String querySring ="SELECT FROM org.dependencytrack.model.Component WHERE project == :project ";
         if (filter != null) {
-            querySring += " && (project == :project) && name.toLowerCase().matches(:name)";
+            querySring += " && (project == :project) && (name.toLowerCase().matches(:filter) || group.toLowerCase().matches(:filter))";
         }
         if (onlyOutdated) {
             // Components are considered outdated when metadata does exists, but the version is different than latestVersion

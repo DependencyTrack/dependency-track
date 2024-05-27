@@ -1,0 +1,44 @@
+{{ notification.title }}
+
+{{ notification.content }}
+
+===================================================================================================
+
+{% if notification.group == "NEW_VULNERABILITY" %}
+{% for entry in subject.newProjectVulnerabilitiesBySeverity %}
+Project-Name: {{ entry.key.name }}
+Project-URL:  {{ baseUrl }}/projects/{{ entry.key.uuid }}
+{% for severityEntry in entry.value %}
+    - {{ severityEntry.key }}: {{ severityEntry.value|length }} new vulnerabilities
+{% endfor %}
+{% endfor %}
+
+---------------------------------------------------------------------------------------------------
+
+Details to all {{ subject.newVulnerabilitiesTotal|length }} new vulnerabilities:
+{% for entry in subject.newProjectVulnerabilities %}
+-------------------------------------------------
+Project-Name: {{ entry.key.name }}
+{% for vuln in entry.value %}
+
+ID:          {{ vuln.vulnId }}
+Severity:    {{ vuln.severity }}
+Description: {{ vuln.description }}
+Source:      {{ vuln.source }}
+{% endfor %}
+{% endfor %}
+{% elseif notification.group == "POLICY_VIOLATION" %}
+
+New Policy Violations: {{ subject.newPolicyViolationsTotal|length }}
+PolicyViolations:
+{% for projectEntry in subject.newProjectPolicyViolations %}
+{{ projectEntry.key.name }} ({{ projectEntry.key.uuid }})
+{% for policyEntry in projectEntry.value %}
+- [{{ policyEntry.type }}] {{ policyEntry.timestamp }} {{ policyEntry.policyCondition }}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+===================================================================================================
+
+{{ timestamp }}

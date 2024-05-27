@@ -28,6 +28,8 @@ import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
+import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
+import org.dependencytrack.notification.vo.ScheduledPolicyViolationsIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 
@@ -102,6 +104,11 @@ public record PublishContext(String notificationGroup, String notificationLevel,
             notificationSubjects.put(SUBJECT_VULNERABILITY, Vulnerability.convert(subject.getVulnerability()));
         } else if (notification.getSubject() instanceof final VexConsumedOrProcessed subject) {
             notificationSubjects.put(SUBJECT_PROJECT, Project.convert(subject.getProject()));
+        } else if (notification.getSubject() instanceof final ScheduledNewVulnerabilitiesIdentified subject) {
+            notificationSubjects.put(SUBJECT_PROJECTS, subject.getNewProjectVulnerabilities().keySet().stream().map(Project::convert).toList());
+            notificationSubjects.put(SUBJECT_VULNERABILITIES, subject.getNewVulnerabilitiesTotal().stream().map(Vulnerability::convert).toList());
+        } else if (notification.getSubject() instanceof final ScheduledPolicyViolationsIdentified subject) {
+            notificationSubjects.put(SUBJECT_PROJECTS, subject.getNewProjectPolicyViolations().keySet().stream().map(Project::convert).toList());
         }
 
         return new PublishContext(notification.getGroup(), Optional.ofNullable(notification.getLevel()).map(Enum::name).orElse(null),

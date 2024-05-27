@@ -34,6 +34,7 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
@@ -49,6 +50,8 @@ import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
+import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
+import org.dependencytrack.notification.vo.ScheduledPolicyViolationsIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.parser.common.resolver.CweResolver;
@@ -533,6 +536,95 @@ public final class NotificationUtil {
         builder.add("uuid", policy.getUuid().toString());
         builder.add("name", policy.getName());
         builder.add("violationState", policy.getViolationState().name());
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final ScheduledNewVulnerabilitiesIdentified vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        
+        if (vo.getNewProjectVulnerabilities() != null && vo.getNewProjectVulnerabilities().size() > 0) {
+            final JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
+            for (final Map.Entry<Project, List<Vulnerability>> entry : vo.getNewProjectVulnerabilities().entrySet()) {
+                final JsonObjectBuilder projectBuilder = Json.createObjectBuilder();
+                projectBuilder.add("project", toJson(entry.getKey()));
+                final JsonArrayBuilder vulnsBuilder = Json.createArrayBuilder();
+                for (final Vulnerability vulnerability : entry.getValue()) {
+                    vulnsBuilder.add(toJson(vulnerability));
+                }
+                projectBuilder.add("vulnerabilities", vulnsBuilder.build());
+                projectsBuilder.add(projectBuilder.build());
+            }
+            builder.add("newProjectVulnerabilities", projectsBuilder.build());
+        }
+        if(vo.getNewProjectVulnerabilitiesBySeverity() != null && vo.getNewProjectVulnerabilitiesBySeverity().size() > 0) {
+            final JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
+            for (final Map.Entry<Project, Map<Severity, List<Vulnerability>>> entry : vo.getNewProjectVulnerabilitiesBySeverity().entrySet()) {
+                final JsonObjectBuilder projectBuilder = Json.createObjectBuilder();
+                projectBuilder.add("project", toJson(entry.getKey()));
+                final JsonArrayBuilder vulnsBySeverityBuilder = Json.createArrayBuilder();
+                for (final Map.Entry<Severity, List<Vulnerability>> vulnEntry : entry.getValue().entrySet()) {
+                    final JsonObjectBuilder severityBuilder = Json.createObjectBuilder();
+                    severityBuilder.add("severity", vulnEntry.getKey().name());
+                    final JsonArrayBuilder vulnsBuilder = Json.createArrayBuilder();
+                    for (final Vulnerability vulnerability : vulnEntry.getValue()) {
+                        vulnsBuilder.add(toJson(vulnerability));
+                    }
+                    severityBuilder.add("vulnerabilities", vulnsBuilder.build());
+                    vulnsBySeverityBuilder.add(severityBuilder.build());
+                }
+                projectBuilder.add("vulnerabilitiesBySeverity", vulnsBySeverityBuilder.build());
+                projectsBuilder.add(projectBuilder.build());
+            }
+            builder.add("newProjectVulnerabilitiesBySeverity", projectsBuilder.build());
+        }
+        if (vo.getNewVulnerabilitiesTotal() != null && vo.getNewVulnerabilitiesTotal().size() > 0) {
+            final JsonArrayBuilder vulnsBuilder = Json.createArrayBuilder();
+            for (final Vulnerability vulnerability : vo.getNewVulnerabilitiesTotal()) {
+                vulnsBuilder.add(toJson(vulnerability));
+            }
+            builder.add("newVulnerabilitiesTotal", vulnsBuilder.build());
+        }
+        if(vo.getNewVulnerabilitiesTotalBySeverity() != null && vo.getNewVulnerabilitiesTotalBySeverity().size() > 0) {
+            final JsonArrayBuilder vulnsBySeverityBuilder = Json.createArrayBuilder();
+            for (final Map.Entry<Severity, List<Vulnerability>> vulnEntry : vo.getNewVulnerabilitiesTotalBySeverity().entrySet()) {
+                final JsonObjectBuilder severityBuilder = Json.createObjectBuilder();
+                severityBuilder.add("severity", vulnEntry.getKey().name());
+                final JsonArrayBuilder vulnsBuilder = Json.createArrayBuilder();
+                for (final Vulnerability vulnerability : vulnEntry.getValue()) {
+                    vulnsBuilder.add(toJson(vulnerability));
+                }
+                severityBuilder.add("vulnerabilities", vulnsBuilder.build());
+                vulnsBySeverityBuilder.add(severityBuilder.build());
+            }
+            builder.add("newVulnerabilitiesTotalBySeverity", vulnsBySeverityBuilder.build());
+        }
+
+        return builder.build();
+    }
+
+    public static JsonObject toJson(ScheduledPolicyViolationsIdentified vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        if (vo.getNewProjectPolicyViolations() != null && vo.getNewProjectPolicyViolations().size() > 0) {
+            final JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
+            for (final Map.Entry<Project, List<PolicyViolation>> entry : vo.getNewProjectPolicyViolations().entrySet()) {
+                final JsonObjectBuilder projectBuilder = Json.createObjectBuilder();
+                projectBuilder.add("project", toJson(entry.getKey()));
+                final JsonArrayBuilder violationsBuilder = Json.createArrayBuilder();
+                for (final PolicyViolation policyViolation : entry.getValue()) {
+                    violationsBuilder.add(toJson(policyViolation));
+                }
+                projectBuilder.add("policyViolations", violationsBuilder.build());
+                projectsBuilder.add(projectBuilder.build());
+            }
+            builder.add("newProjectPolicyViolations", projectsBuilder.build());
+        }
+        if (vo.getNewPolicyViolationsTotal() != null && vo.getNewPolicyViolationsTotal().size() > 0) {
+            final JsonArrayBuilder violationsBuilder = Json.createArrayBuilder();
+            for (final PolicyViolation policyViolation : vo.getNewPolicyViolationsTotal()) {
+                violationsBuilder.add(toJson(policyViolation));
+            }
+            builder.add("newPolicyViolationsTotal", violationsBuilder.build());
+        }
         return builder.build();
     }
 

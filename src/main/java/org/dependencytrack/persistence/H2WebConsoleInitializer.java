@@ -16,17 +16,16 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-
 package org.dependencytrack.persistence;
 
 import alpine.Config;
 import alpine.common.logging.Logger;
-import org.h2.server.web.WebServlet;
+import org.h2.server.web.JakartaWebServlet;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.ServletRegistration;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
+import jakarta.servlet.ServletRegistration;
 import java.util.Map;
 
 public class H2WebConsoleInitializer implements ServletContextListener {
@@ -56,7 +55,7 @@ public class H2WebConsoleInitializer implements ServletContextListener {
         LOGGER.warn("Building and exposing H2 web servlet to "+h2ConsolePath);
         LOGGER.warn("It should only be enabled for development purposes to avoid security risks related to production data leak.");
         ServletContext servletContext = event.getServletContext();
-        WebServlet h2WebServlet = new WebServlet();
+        JakartaWebServlet h2WebServlet = new JakartaWebServlet();
         ServletRegistration.Dynamic registration = servletContext.addServlet("h2Console", h2WebServlet);
         registration.addMapping(h2ConsolePath+"/*");
         registration.setLoadOnStartup(1);

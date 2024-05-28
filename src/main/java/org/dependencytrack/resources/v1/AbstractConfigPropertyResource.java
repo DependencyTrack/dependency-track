@@ -27,7 +27,7 @@ import alpine.server.resources.AlpineResource;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URI;

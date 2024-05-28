@@ -41,8 +41,8 @@ import org.junit.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 
+import jakarta.json.Json;
 import javax.jdo.Query;
-import javax.json.Json;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

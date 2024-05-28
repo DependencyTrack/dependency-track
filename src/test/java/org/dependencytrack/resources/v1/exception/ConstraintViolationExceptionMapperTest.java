@@ -26,14 +26,14 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.validation.constraints.Pattern;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.validation.constraints.Pattern;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,7 +64,7 @@ public class ConstraintViolationExceptionMapperTest extends ResourceTest {
                           },
                           {
                             "message": "must match \\"^[a-z]+$\\"",
-                            "messageTemplate": "{javax.validation.constraints.Pattern.message}",
+                            "messageTemplate": "{jakarta.validation.constraints.Pattern.message}",
                             "path": "get.arg2",
                             "invalidValue": "666"
                           }

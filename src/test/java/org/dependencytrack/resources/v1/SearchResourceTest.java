@@ -36,8 +36,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.json.JsonObject;
-import javax.ws.rs.core.Response;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.core.Response;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentLinkedQueue;
 

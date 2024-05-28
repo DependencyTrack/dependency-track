@@ -20,6 +20,7 @@ package org.dependencytrack.tasks;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -43,6 +44,8 @@ import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
+import org.dependencytrack.notification.vo.ScheduledPolicyViolationsIdentified;
 import org.dependencytrack.persistence.QueryManager;
 
 import alpine.common.logging.Logger;
@@ -62,8 +65,9 @@ public class SendScheduledNotificationTask implements Runnable {
     public void run() {
         try (var qm = new QueryManager()) {
             var rule = qm.getObjectByUuid(ScheduledNotificationRule.class, scheduledNotificationRuleUuid);
+            final List<Long> projectIds = rule.getProjects().stream().map(proj -> proj.getId()).toList();
+            
             for (NotificationGroup group : rule.getNotifyOn()) {
-                final List<Long> projectIds = rule.getProjects().stream().map(proj -> proj.getId()).toList();
                 final Notification notificationProxy = new Notification()
                         .scope(rule.getScope())
                         .group(group)
@@ -75,23 +79,25 @@ public class SendScheduledNotificationTask implements Runnable {
                         var newProjectVulnerabilities = qm.getNewVulnerabilitiesForProjectsSince(rule.getLastExecutionTime(), projectIds);
                         if(newProjectVulnerabilities.isEmpty() && rule.getPublishOnlyWithUpdates())
                             continue;
+                        ScheduledNewVulnerabilitiesIdentified vulnSubject = new ScheduledNewVulnerabilitiesIdentified(newProjectVulnerabilities);
                         notificationProxy
                                 .content(generateVulnerabilityNotificationContent(rule,
-                                                                     newProjectVulnerabilities.values().stream().flatMap(List::stream).toList(),
+                                                                     vulnSubject.getNewVulnerabilitiesTotal(),
                                                                      newProjectVulnerabilities.keySet().stream().toList(),
                                                                      rule.getLastExecutionTime()))
-                                .subject(null); // TODO: generate helper class here
+                                .subject(vulnSubject);
                         break;
                     case POLICY_VIOLATION:
-                        var newProjectPolicyViolations = qm.getNewPolicyViolationsForProjectsSince(rule.getLastExecutionTime(), projectIds);
+                        var newProjectPolicyViolations = qm.getNewPolicyViolationsForProjectsSince(ZonedDateTime.of(2023, 05, 20, 0, 0, 0, 0, ZoneId.systemDefault())/* rule.getLastExecutionTime() */, projectIds);
                         if(newProjectPolicyViolations.isEmpty() && rule.getPublishOnlyWithUpdates())
                             continue;
+                        ScheduledPolicyViolationsIdentified policySubject = new ScheduledPolicyViolationsIdentified(newProjectPolicyViolations);
                         notificationProxy
                             .content(generatePolicyNotificationContent(rule,
-                                                                 newProjectPolicyViolations.values().stream().flatMap(List::stream).toList(),
+                                                                 policySubject.getNewPolicyViolationsTotal(),
                                                                  newProjectPolicyViolations.keySet().stream().toList(),
                                                                  rule.getLastExecutionTime()))
-                            .subject(null); // TODO: generate helper class here
+                            .subject(policySubject);
                         break;
                     default:
                         LOGGER.error(group.name() + " is not a supported notification group for scheduled publishing");

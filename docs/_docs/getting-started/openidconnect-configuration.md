@@ -2,14 +2,14 @@
 title: OpenID Connect Configuration
 category: Getting Started
 chapter: 1
-order: 11
+order: 12
 ---
 
 > OpenID Connect is supported in Dependency-Track 4.0.0 and above
 
 In the context of OAuth2 / OIDC, Dependency-Track's frontend acts as _client_ while the API server acts as _resource server_ (see [OAuth2 roles](https://tools.ietf.org/html/rfc6749#section-1.1)).
 Due to this, the frontend requires additional configuration, which is currently only supported when deploying it separately from the API server.
-Refer to the [Configuration]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}) and [Docker deployment]({{ site.baseurl }}{% link _docs/getting-started/deploy-docker.md %}) pages for instructions. The “bundled” Docker image and "Classic" Dependency-Track deployments using solely the [executable WAR]({{ site.baseurl }}{% link _docs/getting-started/deploy-exewar.md %}) are not supported!
+Refer to the [Configuration]({{ site.baseurl }}{% link _docs/getting-started/configuration-apiserver.md %}) and [Docker deployment]({{ site.baseurl }}{% link _docs/getting-started/deploy-docker.md %}) pages for instructions. The “bundled” Docker image and "Classic" Dependency-Track deployments using solely the [executable WAR]({{ site.baseurl }}{% link _docs/getting-started/deploy-exewar.md %}) are not supported!
 
 If configured properly, users will be able to sign in by clicking the _OpenID_ button on the login page:
 
@@ -37,7 +37,7 @@ Multiple identity providers have been tested, the following are some example con
 Note that some providers may not support specific features like team synchronization, or require further configuration to make them work.
 If you find that the provider of your choice does not work with Dependency-Track, please [file an issue](https://github.com/DependencyTrack/dependency-track/issues).
 
-For a complete overview of available configuration options for both API server and frontend, please refer to the [Configuration page]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}).
+For a complete overview of available configuration options for both API server and frontend, please refer to the [Configuration page]({{ site.baseurl }}{% link _docs/getting-started/configuration-apiserver.md %}#openid-connect).
 
 #### Auth0
 

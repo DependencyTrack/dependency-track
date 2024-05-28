@@ -2,7 +2,7 @@
 title: Database Support
 category: Getting Started
 chapter: 1
-order: 7
+order: 8
 ---
 
 Dependency-Track includes an embedded H2 database enabled by default. The intended purpose of this 
@@ -193,7 +193,7 @@ java -cp h2-2.1.214.jar org.h2.tools.RunScript \
 
 
 [About Pool Sizing]: https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing
-[Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration.md %}
+[Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration-apiserver.md %}
 [HikariCP]: https://github.com/brettwooldridge/HikariCP
 [Monitoring]: {{ site.baseurl }}{% link _docs/getting-started/monitoring.md %}
 [SQL mode]: https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html

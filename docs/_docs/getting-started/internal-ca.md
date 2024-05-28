@@ -2,7 +2,7 @@
 title: Internal Certificate Authorities
 category: Getting Started
 chapter: 1
-order: 12
+order: 13
 ---
 
 Many organizations use their own [certificate authority](https://en.wikipedia.org/wiki/Certificate_authority) (CA) to 

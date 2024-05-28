@@ -20,7 +20,6 @@ package org.dependencytrack.tasks;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -88,7 +87,7 @@ public class SendScheduledNotificationTask implements Runnable {
                                 .subject(vulnSubject);
                         break;
                     case POLICY_VIOLATION:
-                        var newProjectPolicyViolations = qm.getNewPolicyViolationsForProjectsSince(ZonedDateTime.of(2023, 05, 20, 0, 0, 0, 0, ZoneId.systemDefault())/* rule.getLastExecutionTime() */, projectIds);
+                        var newProjectPolicyViolations = qm.getNewPolicyViolationsForProjectsSince(rule.getLastExecutionTime(), projectIds);
                         if(newProjectPolicyViolations.isEmpty() && rule.getPublishOnlyWithUpdates())
                             continue;
                         ScheduledPolicyViolationsIdentified policySubject = new ScheduledPolicyViolationsIdentified(newProjectPolicyViolations);

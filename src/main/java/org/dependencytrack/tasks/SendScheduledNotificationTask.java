@@ -131,6 +131,9 @@ public class SendScheduledNotificationTask implements Runnable {
                         } else {
                             ((SendMailPublisher) publisher).inform(ruleCtx, restrictNotificationToRuleProjects(notificationProxy, rule), notificationPublisherConfig, rule.getTeams());
                         }
+
+                        // update last execution time after successful publication to avoid duplicate notifications in the next run
+                        qm.updateScheduledNotificationRuleLastExecutionTimeToNowUtc(rule);
                     } else {
                         LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName() + " (%s)".formatted(ruleCtx));
                     }

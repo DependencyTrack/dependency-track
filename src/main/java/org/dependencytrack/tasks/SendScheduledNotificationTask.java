@@ -65,6 +65,8 @@ public class SendScheduledNotificationTask implements Runnable {
         try (var qm = new QueryManager()) {
             var rule = qm.getObjectByUuid(ScheduledNotificationRule.class, scheduledNotificationRuleUuid);
             final List<Long> projectIds = rule.getProjects().stream().map(proj -> proj.getId()).toList();
+            Boolean errorsDuringExecution = false;
+            Boolean atLeastOneSuccessfulPublish = false;
             
             for (NotificationGroup group : rule.getNotifyOn()) {
                 final Notification notificationProxy = new Notification()
@@ -100,6 +102,7 @@ public class SendScheduledNotificationTask implements Runnable {
                         break;
                     default:
                         LOGGER.error(group.name() + " is not a supported notification group for scheduled publishing");
+                        errorsDuringExecution |= true;
                         continue;
                 }
 
@@ -114,6 +117,7 @@ public class SendScheduledNotificationTask implements Runnable {
                         config = jsonReader.readObject();
                     } catch (Exception e) {
                         LOGGER.error("An error occurred while preparing the configuration for the notification publisher (%s)".formatted(ruleCtx), e);
+                        errorsDuringExecution |= true;
                     }
                 }
                 try {
@@ -131,21 +135,26 @@ public class SendScheduledNotificationTask implements Runnable {
                         } else {
                             ((SendMailPublisher) publisher).inform(ruleCtx, restrictNotificationToRuleProjects(notificationProxy, rule), notificationPublisherConfig, rule.getTeams());
                         }
-
-                        // update last execution time after successful publication to avoid duplicate notifications in the next run
-                        qm.updateScheduledNotificationRuleLastExecutionTimeToNowUtc(rule);
+                        atLeastOneSuccessfulPublish |= true;
                     } else {
                         LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName() + " (%s)".formatted(ruleCtx));
                     }
                 } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException
                         | InvocationTargetException | IllegalAccessException e) {
-                    LOGGER.error(
-                            "An error occurred while instantiating a notification publisher (%s)".formatted(ruleCtx),
-                            e);
+                    LOGGER.error("An error occurred while instantiating a notification publisher (%s)".formatted(ruleCtx), e);
+                    errorsDuringExecution |= true;
                 } catch (PublisherException publisherException) {
-                    LOGGER.error("An error occurred during the publication of the notification (%s)".formatted(ruleCtx),
-                            publisherException);
+                    LOGGER.error("An error occurred during the publication of the notification (%s)".formatted(ruleCtx), publisherException);
+                    errorsDuringExecution |= true;
                 }
+            }
+            if (!errorsDuringExecution || atLeastOneSuccessfulPublish) {
+                /*
+                 * Update last execution time after successful operation (even without
+                 * publishing) to avoid duplicate notifications in the next run and signalize
+                 * user indirectly, that operation has ended without failure
+                 */
+                qm.updateScheduledNotificationRuleLastExecutionTimeToNowUtc(rule);
             }
         }
     }

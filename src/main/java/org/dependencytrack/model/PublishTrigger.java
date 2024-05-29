@@ -21,8 +21,6 @@ package org.dependencytrack.model;
 
 /**
  * Provides a list of available triggers for publishers to send notifications.
- *
- * @author Max Schiller
  */
 public enum PublishTrigger {
     ALL,

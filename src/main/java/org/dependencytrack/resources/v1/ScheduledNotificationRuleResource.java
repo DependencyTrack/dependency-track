@@ -61,8 +61,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * JAX-RS resources for processing scheduled notification rules.
- *
- * @author Max Schiller
  */
 @Path("/v1/schedulednotification/rule")
 @Api(value = "schedulednotification", authorizations = @Authorization(value = "X-Api-Key"))

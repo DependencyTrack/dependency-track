@@ -34,6 +34,7 @@ public class ScheduledNotificationTaskInitializer implements ServletContextListe
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
+        LOGGER.info("Initializing scheduled notification task service");
         try (var qm = new QueryManager()) {
             var paginatedScheduledRules = qm.getScheduledNotificationRules();
             var scheduledRulesList = paginatedScheduledRules.getList(ScheduledNotificationRule.class);
@@ -53,6 +54,7 @@ public class ScheduledNotificationTaskInitializer implements ServletContextListe
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
+        LOGGER.info("Shutting down scheduled notification task service");
         ScheduledNotificationTaskManager.cancelAllActiveRuleTasks();
     }
 }

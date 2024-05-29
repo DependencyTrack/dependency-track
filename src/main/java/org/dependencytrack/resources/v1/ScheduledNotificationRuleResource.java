@@ -37,12 +37,10 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ScheduledNotificationRule;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.ScheduledNotificationTaskManager;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
-import org.dependencytrack.tasks.ActionOnDoneFutureTask;
-import org.dependencytrack.tasks.SendScheduledNotificationTask;
-
 import com.asahaf.javacron.InvalidExpressionException;
 import com.asahaf.javacron.Schedule;
 
@@ -58,16 +56,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * JAX-RS resources for processing scheduled notification rules.
@@ -79,7 +68,6 @@ import java.util.concurrent.TimeUnit;
 public class ScheduledNotificationRuleResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(ScheduledNotificationRuleResource.class);
-    private static final HashMap<UUID, ScheduledFuture<?>> SCHEDULED_NOTIFY_TASKS = new HashMap<UUID, ScheduledFuture<?>>();
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -143,34 +131,14 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
                 Schedule schedule;
                 try {
                     schedule = Schedule.create(jsonRule.getCronConfig());
-                    scheduleNextRuleTask(rule.getUuid(), schedule);
-                } catch (InvalidExpressionException e) {        
+                    ScheduledNotificationTaskManager.scheduleNextRuleTask(rule.getUuid(), schedule);
+                } catch (InvalidExpressionException e) {
+                    LOGGER.error("Cron expression is invalid: " + jsonRule.getCronConfig());
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid cron expression").build();
                 }
             }
 
             return Response.status(Response.Status.CREATED).entity(rule).build();
-        }
-    }
-
-    private void scheduleNextRuleTask(UUID ruleUuid, Schedule schedule) {
-        var scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
-        var futureTask = new ActionOnDoneFutureTask(new SendScheduledNotificationTask(ruleUuid), () -> scheduleNextRuleTask(ruleUuid, schedule));
-
-        var future = scheduledExecutor.schedule(
-            futureTask,
-            schedule.nextDuration(TimeUnit.MILLISECONDS),
-            TimeUnit.MILLISECONDS);
-        SCHEDULED_NOTIFY_TASKS.put(ruleUuid, future);
-
-        LOGGER.info(">>>>>>>>>> Scheduled notification task for rule " + ruleUuid + " @ " + LocalDateTime.ofInstant(Instant.ofEpochMilli(schedule.nextDuration(TimeUnit.MILLISECONDS)), ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS) + " >>>>>>>>>>");
-    }
-
-    private void cancelActiveRuleTask(UUID ruleUuid) {
-        if (SCHEDULED_NOTIFY_TASKS.containsKey(ruleUuid)) {
-            SCHEDULED_NOTIFY_TASKS.get(ruleUuid).cancel(true);
-            SCHEDULED_NOTIFY_TASKS.remove(ruleUuid);
-            LOGGER.info("<<<<<<<<<< Canceled scheduled notification task for rule " + ruleUuid + " <<<<<<<<<<<<");
         }
     }
 
@@ -203,12 +171,13 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
                 rule = qm.updateScheduledNotificationRule(jsonRule);
 
                 try {
-                    cancelActiveRuleTask(jsonRule.getUuid());
+                    ScheduledNotificationTaskManager.cancelActiveRuleTask(jsonRule.getUuid());
                     if (rule.isEnabled()) {
                         var schedule = Schedule.create(jsonRule.getCronConfig());
-                        scheduleNextRuleTask(jsonRule.getUuid(), schedule);
+                        ScheduledNotificationTaskManager.scheduleNextRuleTask(jsonRule.getUuid(), schedule);
                     }
                 } catch (InvalidExpressionException e) {
+                    LOGGER.error("Cron expression is invalid: " + jsonRule.getCronConfig());
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid cron expression").build();
                 }
 
@@ -238,7 +207,7 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
             if (rule != null) {
                 qm.delete(rule);
 
-                cancelActiveRuleTask(jsonRule.getUuid());
+                ScheduledNotificationTaskManager.cancelActiveRuleTask(jsonRule.getUuid());
                 
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {

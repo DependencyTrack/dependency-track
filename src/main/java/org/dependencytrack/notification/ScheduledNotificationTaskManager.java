@@ -18,10 +18,6 @@
  */
 package org.dependencytrack.notification;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -33,32 +29,36 @@ import org.dependencytrack.tasks.SendScheduledNotificationTask;
 
 import com.asahaf.javacron.Schedule;
 
-import alpine.common.logging.Logger;
-
 public final class ScheduledNotificationTaskManager {
-    private static final Logger LOGGER = Logger.getLogger(ScheduledNotificationTaskManager.class);
     private static final HashMap<UUID, ScheduledFuture<?>> SCHEDULED_NOTIFY_TASKS = new HashMap<UUID, ScheduledFuture<?>>();
 
+    public static void scheduleNextRuleTask(UUID ruleUuid, Schedule schedule, long customDelay, TimeUnit delayUnit) {
+        scheduleNextRuleTask(ruleUuid, schedule, customDelay, delayUnit, () -> scheduleNextRuleTask(ruleUuid, schedule));
+    }
+
     public static void scheduleNextRuleTask(UUID ruleUuid, Schedule schedule) {
+        scheduleNextRuleTask(ruleUuid, schedule, schedule.nextDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+    }
+
+    public static void scheduleNextRuleTaskOnce(UUID ruleUuid, long customDelay, TimeUnit delayUnit){
+        scheduleNextRuleTask(ruleUuid, null, customDelay, delayUnit, () -> cancelActiveRuleTask(ruleUuid));
+    }
+
+    private static void scheduleNextRuleTask(UUID ruleUuid, Schedule schedule, long customDelay, TimeUnit delayUnit, Runnable actionAfterTaskCompletion){
         var scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
-        var futureTask = new ActionOnDoneFutureTask(new SendScheduledNotificationTask(ruleUuid), () -> scheduleNextRuleTask(ruleUuid, schedule));
+        var futureTask = new ActionOnDoneFutureTask(new SendScheduledNotificationTask(ruleUuid), actionAfterTaskCompletion);
 
         var future = scheduledExecutor.schedule(
                 futureTask,
-                schedule.nextDuration(TimeUnit.MILLISECONDS),
+                customDelay,
                 TimeUnit.MILLISECONDS);
         SCHEDULED_NOTIFY_TASKS.put(ruleUuid, future);
-
-        LOGGER.info(">>>>>>>>>> Scheduled notification task for rule " + ruleUuid + " @ " + LocalDateTime
-                .ofInstant(Instant.ofEpochMilli(schedule.nextDuration(TimeUnit.MILLISECONDS)), ZoneId.systemDefault())
-                .truncatedTo(ChronoUnit.SECONDS) + " >>>>>>>>>>");
     }
 
     public static void cancelActiveRuleTask(UUID ruleUuid) {
         if (SCHEDULED_NOTIFY_TASKS.containsKey(ruleUuid)) {
             SCHEDULED_NOTIFY_TASKS.get(ruleUuid).cancel(true);
             SCHEDULED_NOTIFY_TASKS.remove(ruleUuid);
-            LOGGER.info("<<<<<<<<<< Canceled scheduled notification task for rule " + ruleUuid + " <<<<<<<<<<<<");
         }
     }
 

@@ -34,6 +34,7 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Rule;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysis;
@@ -67,6 +68,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -700,10 +703,57 @@ public final class NotificationUtil {
         return "An violation analysis decision was made to a policy violation affecting a project";
     }
 
+    public static String generateVulnerabilityScheduledNotificationContent(final Rule rule, final List<Vulnerability> vulnerabilities, final List<Project> projects, final ZonedDateTime lastExecutionTime) {
+        final String content;
+
+        if (vulnerabilities.isEmpty()) {
+            content = "No new vulnerabilities found.";
+        } else {
+            content = "In total, " + vulnerabilities.size() + " new vulnerabilities in " + projects.size() + " projects were found since " + lastExecutionTime.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS) + ".";
+        }
+
+        return content;
+    }
+
+    public static String generatePolicyScheduledNotificationContent(final Rule rule, final List<PolicyViolation> policyViolations, final List<Project> projects, final ZonedDateTime lastExecutionTime) {
+        final String content;
+
+        if (policyViolations.isEmpty()) {
+            content = "No new policy violations found.";
+        } else {
+            content = "In total, " + policyViolations.size() + " new policy violations in " + projects.size() + " projects were found since " + lastExecutionTime.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS) + ".";
+        }
+
+        return content;
+    }
+
     public static String generateNotificationTitle(String messageType, Project project) {
         if (project != null) {
             return messageType + " on Project: [" + project.toString() + "]";
         }
         return messageType;
+    }
+
+    public static String generateNotificationTitle(NotificationGroup notificationGroup, List<Project> projects) {
+        String messageType;
+
+        switch (notificationGroup) {
+            case NEW_VULNERABILITY:
+                messageType = NotificationConstants.Title.NEW_VULNERABILITY;
+                break;
+            case POLICY_VIOLATION:
+                messageType = NotificationConstants.Title.POLICY_VIOLATION;
+                break;
+            default:
+                return notificationGroup.name();
+        }
+
+        if (projects != null) {
+            if (projects.size() == 1) {
+                return generateNotificationTitle(messageType, projects.get(0));
+            }
+        }
+
+        return messageType + " on " + projects.size() + " projects";
     }
 }

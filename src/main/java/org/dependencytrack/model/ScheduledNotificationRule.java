@@ -57,8 +57,6 @@ import java.util.UUID;
 
 /**
  * Defines a Model class for scheduled notification configurations.
- *
- * @author Max Schiller
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)

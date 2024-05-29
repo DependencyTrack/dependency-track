@@ -67,6 +67,8 @@ public class SendScheduledNotificationTask implements Runnable {
             final List<Long> projectIds = rule.getProjects().stream().map(proj -> proj.getId()).toList();
             Boolean errorsDuringExecution = false;
             Boolean atLeastOneSuccessfulPublish = false;
+
+            LOGGER.info("Processing notification publishing for scheduled notification rule " + rule.getUuid());
             
             for (NotificationGroup group : rule.getNotifyOn()) {
                 final Notification notificationProxy = new Notification()
@@ -101,7 +103,7 @@ public class SendScheduledNotificationTask implements Runnable {
                             .subject(policySubject);
                         break;
                     default:
-                        LOGGER.error(group.name() + " is not a supported notification group for scheduled publishing");
+                        LOGGER.warn(group.name() + " is not a supported notification group for scheduled publishing");
                         errorsDuringExecution |= true;
                         continue;
                 }
@@ -138,6 +140,7 @@ public class SendScheduledNotificationTask implements Runnable {
                         atLeastOneSuccessfulPublish |= true;
                     } else {
                         LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName() + " (%s)".formatted(ruleCtx));
+                        errorsDuringExecution |= true;
                     }
                 } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException
                         | InvocationTargetException | IllegalAccessException e) {
@@ -155,6 +158,10 @@ public class SendScheduledNotificationTask implements Runnable {
                  * user indirectly, that operation has ended without failure
                  */
                 qm.updateScheduledNotificationRuleLastExecutionTimeToNowUtc(rule);
+                LOGGER.info("Successfuly processed notification publishing for scheduled notification rule " + scheduledNotificationRuleUuid);
+            }
+            else {
+                LOGGER.error("Errors occured while processing notification publishing for scheduled notification rule " + scheduledNotificationRuleUuid);
             }
         }
     }

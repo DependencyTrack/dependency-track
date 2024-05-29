@@ -23,10 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -42,7 +39,6 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
-import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
 import org.dependencytrack.notification.vo.ScheduledPolicyViolationsIdentified;
 import org.dependencytrack.persistence.QueryManager;
@@ -133,9 +129,9 @@ public class SendScheduledNotificationTask implements Runnable {
                                 .addAll(Json.createObjectBuilder(config))
                                 .build();
                         if (publisherClass != SendMailPublisher.class || rule.getTeams().isEmpty() || rule.getTeams() == null) {
-                            publisher.inform(ruleCtx, restrictNotificationToRuleProjects(notificationProxy, rule), notificationPublisherConfig);
+                            publisher.inform(ruleCtx, notificationProxy, notificationPublisherConfig);
                         } else {
-                            ((SendMailPublisher) publisher).inform(ruleCtx, restrictNotificationToRuleProjects(notificationProxy, rule), notificationPublisherConfig, rule.getTeams());
+                            ((SendMailPublisher) publisher).inform(ruleCtx, notificationProxy, notificationPublisherConfig, rule.getTeams());
                         }
                         atLeastOneSuccessfulPublish |= true;
                     } else {
@@ -164,32 +160,6 @@ public class SendScheduledNotificationTask implements Runnable {
                 LOGGER.error("Errors occured while processing notification publishing for scheduled notification rule " + scheduledNotificationRuleUuid);
             }
         }
-    }
-
-    private Notification restrictNotificationToRuleProjects(final Notification initialNotification, final Rule rule) {
-        Notification restrictedNotification = initialNotification;
-        if (canRestrictNotificationToRuleProjects(initialNotification, rule)) {
-            Set<String> ruleProjectsUuids = rule.getProjects().stream().map(Project::getUuid).map(UUID::toString).collect(Collectors.toSet());
-            restrictedNotification = new Notification();
-            restrictedNotification.setGroup(initialNotification.getGroup());
-            restrictedNotification.setLevel(initialNotification.getLevel());
-            restrictedNotification.scope(initialNotification.getScope());
-            restrictedNotification.setContent(initialNotification.getContent());
-            restrictedNotification.setTitle(initialNotification.getTitle());
-            restrictedNotification.setTimestamp(initialNotification.getTimestamp());
-            if (initialNotification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
-                Set<Project> restrictedProjects = subject.getAffectedProjects().stream().filter(project -> ruleProjectsUuids.contains(project.getUuid().toString())).collect(Collectors.toSet());
-                NewVulnerabilityIdentified restrictedSubject = new NewVulnerabilityIdentified(subject.getVulnerability(), subject.getComponent(), restrictedProjects, null);
-                restrictedNotification.setSubject(restrictedSubject);
-            }
-        }
-        return restrictedNotification;
-    }
-
-    private boolean canRestrictNotificationToRuleProjects(final Notification initialNotification, final Rule rule) {
-        return initialNotification.getSubject() instanceof NewVulnerabilityIdentified
-                && rule.getProjects() != null
-                && !rule.getProjects().isEmpty();
     }
 
     private String generateNotificationTitle(final Rule rule, final NotificationGroup group) {

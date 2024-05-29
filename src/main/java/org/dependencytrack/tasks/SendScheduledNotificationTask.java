@@ -20,8 +20,6 @@ package org.dependencytrack.tasks;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import javax.json.Json;
@@ -30,11 +28,7 @@ import javax.json.JsonReader;
 
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.NotificationPublisher;
-import org.dependencytrack.model.PolicyViolation;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Rule;
 import org.dependencytrack.model.ScheduledNotificationRule;
-import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
@@ -42,6 +36,7 @@ import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
 import org.dependencytrack.notification.vo.ScheduledPolicyViolationsIdentified;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.NotificationUtil;
 
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
@@ -70,7 +65,7 @@ public class SendScheduledNotificationTask implements Runnable {
                 final Notification notificationProxy = new Notification()
                         .scope(rule.getScope())
                         .group(group)
-                        .title(generateNotificationTitle(rule, group))
+                        .title(NotificationUtil.generateNotificationTitle(group, rule.getProjects()))
                         .level(rule.getNotificationLevel());
 
                 switch (group) {
@@ -80,10 +75,11 @@ public class SendScheduledNotificationTask implements Runnable {
                             continue;
                         ScheduledNewVulnerabilitiesIdentified vulnSubject = new ScheduledNewVulnerabilitiesIdentified(newProjectVulnerabilities);
                         notificationProxy
-                                .content(generateVulnerabilityNotificationContent(rule,
-                                                                     vulnSubject.getNewVulnerabilitiesTotal(),
-                                                                     newProjectVulnerabilities.keySet().stream().toList(),
-                                                                     rule.getLastExecutionTime()))
+                                .content(NotificationUtil.generateVulnerabilityScheduledNotificationContent(
+                                        rule,
+                                        vulnSubject.getNewVulnerabilitiesTotal(),
+                                        newProjectVulnerabilities.keySet().stream().toList(),
+                                        rule.getLastExecutionTime()))
                                 .subject(vulnSubject);
                         break;
                     case POLICY_VIOLATION:
@@ -92,11 +88,12 @@ public class SendScheduledNotificationTask implements Runnable {
                             continue;
                         ScheduledPolicyViolationsIdentified policySubject = new ScheduledPolicyViolationsIdentified(newProjectPolicyViolations);
                         notificationProxy
-                            .content(generatePolicyNotificationContent(rule,
-                                                                 policySubject.getNewPolicyViolationsTotal(),
-                                                                 newProjectPolicyViolations.keySet().stream().toList(),
-                                                                 rule.getLastExecutionTime()))
-                            .subject(policySubject);
+                                .content(NotificationUtil.generatePolicyScheduledNotificationContent(
+                                        rule,
+                                        policySubject.getNewPolicyViolationsTotal(),
+                                        newProjectPolicyViolations.keySet().stream().toList(),
+                                        rule.getLastExecutionTime()))
+                                .subject(policySubject);
                         break;
                     default:
                         LOGGER.warn(group.name() + " is not a supported notification group for scheduled publishing");
@@ -160,33 +157,5 @@ public class SendScheduledNotificationTask implements Runnable {
                 LOGGER.error("Errors occured while processing notification publishing for scheduled notification rule " + scheduledNotificationRuleUuid);
             }
         }
-    }
-
-    private String generateNotificationTitle(final Rule rule, final NotificationGroup group) {
-        return "Scheduled Notification: " + group.name();
-    }
-
-    private String generateVulnerabilityNotificationContent(final Rule rule, final List<Vulnerability> vulnerabilities, final List<Project> projects, final ZonedDateTime lastExecutionTime) {
-        final String content;
-
-        if (vulnerabilities.isEmpty()) {
-            content = "No new vulnerabilities found.";
-        } else {
-            content = "In total, " + vulnerabilities.size() + " new vulnerabilities in " + projects.size() + " projects were found since " + lastExecutionTime.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS) + ".";
-        }
-
-        return content;
-    }
-
-    private String generatePolicyNotificationContent(final Rule rule, final List<PolicyViolation> policyViolations, final List<Project> projects, final ZonedDateTime lastExecutionTime) {
-        final String content;
-
-        if (policyViolations.isEmpty()) {
-            content = "No new policy violations found.";
-        } else {
-            content = "In total, " + policyViolations.size() + " new policy violations in " + projects.size() + " projects were found since " + lastExecutionTime.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS) + ".";
-        }
-
-        return content;
     }
 }

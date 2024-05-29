@@ -299,7 +299,7 @@ public class ScheduledNotificationRule implements Rule, Serializable {
     }
 
     public String getCronConfig() {
-        var cronConfig = ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue();
+        var cronConfig = ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_EXPRESSION.getDefaultPropertyValue();
         if (this.cronConfig != null) {
             cronConfig = this.cronConfig;
         }
@@ -308,7 +308,7 @@ public class ScheduledNotificationRule implements Rule, Serializable {
 
     public void setCronConfig(String cronConfig) {
         if (cronConfig == null) {
-            this.cronConfig = ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue();
+            this.cronConfig = ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_EXPRESSION.getDefaultPropertyValue();
             return;
         }
         this.cronConfig = cronConfig;

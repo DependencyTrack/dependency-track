@@ -97,7 +97,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setEnabled(true);
         rule.setNotifyChildren(true);
         rule.setLogSuccessfulPublish(false);
-        rule.setCronConfig(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_INTERVAL.getDefaultPropertyValue());
+        rule.setCronConfig(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_EXPRESSION.getDefaultPropertyValue());
         rule.setLastExecutionTime(ZonedDateTime.now(ZoneOffset.UTC));
         rule.setPublishOnlyWithUpdates(false);
         return persist(rule);

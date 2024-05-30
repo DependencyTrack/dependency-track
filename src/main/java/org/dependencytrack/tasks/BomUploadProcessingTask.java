@@ -704,10 +704,10 @@ public class BomUploadProcessingTask implements Subscriber {
         }
     }
 
-    private static License resolveLicense(final QueryManager qm, final String licenseId) {
+    private static License resolveLicense(final QueryManager qm, final String licenseIdOrName) {
         final Query<License> query = qm.getPersistenceManager().newQuery(License.class);
-        query.setFilter("licenseId == :licenseId");
-        query.setParameters(licenseId);
+        query.setFilter("licenseId == :licenseIdOrName || name == :licenseIdOrName");
+        query.setNamedParameters(Map.of("licenseIdOrName", licenseIdOrName));
         try {
             final License license = query.executeUnique();
             return license != null ? license : License.UNRESOLVED;

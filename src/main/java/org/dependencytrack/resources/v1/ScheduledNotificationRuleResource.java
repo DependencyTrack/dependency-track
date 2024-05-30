@@ -356,28 +356,20 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response executeScheduledNotificationRuleNow(ScheduledNotificationRule jsonRule) {
-        final Validator validator = super.getValidator();
-        failOnValidationError(
-                validator.validateProperty(jsonRule, "name"),
-                validator.validateProperty(jsonRule, "publisherConfig"),
-                validator.validateProperty(jsonRule, "cronConfig"),
-                validator.validateProperty(jsonRule, "lastExecutionTime")
-        );
-
         try (QueryManager qm = new QueryManager()) {
             ScheduledNotificationRule rule = qm.getObjectByUuid(ScheduledNotificationRule.class, jsonRule.getUuid());
             if (rule != null) {
                 try {
-                    ScheduledNotificationTaskManager.cancelActiveRuleTask(jsonRule.getUuid());
+                    ScheduledNotificationTaskManager.cancelActiveRuleTask(rule.getUuid());
                     if (rule.isEnabled()) {
                         // schedule must be passed too, to schedule the next execution according to cron expression again
-                        var schedule = Schedule.create(jsonRule.getCronConfig());
-                        ScheduledNotificationTaskManager.scheduleNextRuleTask(jsonRule.getUuid(), schedule, 0, TimeUnit.MILLISECONDS);
+                        var schedule = Schedule.create(rule.getCronConfig());
+                        ScheduledNotificationTaskManager.scheduleNextRuleTask(rule.getUuid(), schedule, 0, TimeUnit.MILLISECONDS);
                     } else {
-                        ScheduledNotificationTaskManager.scheduleNextRuleTaskOnce(jsonRule.getUuid(), 0, TimeUnit.MILLISECONDS);
+                        ScheduledNotificationTaskManager.scheduleNextRuleTaskOnce(rule.getUuid(), 0, TimeUnit.MILLISECONDS);
                     }
                 } catch (InvalidExpressionException e) {
-                    LOGGER.error("Cron expression is invalid: " + jsonRule.getCronConfig());
+                    LOGGER.error("Cron expression is invalid: " + rule.getCronConfig());
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid cron expression").build();
                 }
 

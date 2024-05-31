@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
@@ -45,8 +47,10 @@ import javax.validation.constraints.Size;
 import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.resources.v1.serializers.Iso8601ZonedDateTimeSerializer;
 
 import java.io.Serializable;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -154,6 +158,7 @@ public class ScheduledNotificationRule implements Rule, Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "LAST_EXECUTION_TIME", allowsNull = "true") // new column, must allow nulls on existing databases
+    @JsonSerialize(using = Iso8601ZonedDateTimeSerializer.class)
     private ZonedDateTime lastExecutionTime;
 
     @Persistent
@@ -314,7 +319,7 @@ public class ScheduledNotificationRule implements Rule, Serializable {
 
     public ZonedDateTime getLastExecutionTime() {
         if (lastExecutionTime == null) {
-            return ZonedDateTime.now();
+            return ZonedDateTime.now(ZoneOffset.UTC);
         }
         return lastExecutionTime;
     }

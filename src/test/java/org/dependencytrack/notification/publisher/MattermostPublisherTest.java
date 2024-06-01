@@ -106,6 +106,21 @@ public class MattermostPublisherTest extends AbstractWebhookPublisherTest<Matter
     }
 
     @Override
+    public void testInformWithNewVulnerableDependencyNotification() {
+        super.testInformWithNewVulnerableDependencyNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "username" : "Dependency Track",
+                          "icon_url" : "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                          "text" : "#### Vulnerable Dependency Introduced\\n\\n**Project**: \\n**Component**: componentName : componentVersion\\n[View Project](https://example.com/projects/) - [View Component](https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6)"
+                        }
+                        """)));
+    }
+
+    @Override
     public void testInformWithProjectAuditChangeNotification() {
         super.testInformWithProjectAuditChangeNotification();
 

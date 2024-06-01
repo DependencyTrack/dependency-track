@@ -38,6 +38,7 @@ import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.junit.Test;
 
 import javax.json.Json;
@@ -142,6 +143,27 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .group(NotificationGroup.NEW_VULNERABILITY)
                 .level(NotificationLevel.INFORMATIONAL)
                 .title(NotificationConstants.Title.NEW_VULNERABILITY)
+                .content("")
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+    }
+
+    @Test
+    public void testInformWithNewVulnerableDependencyNotification() {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var vuln = createVulnerability();
+
+        final var subject = new NewVulnerableDependency(component, List.of(vuln));
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.NEW_VULNERABLE_DEPENDENCY)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
                 .content("")
                 .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
                 .subject(subject);

@@ -46,7 +46,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
 
     public static final DateFormat[] SUPPORTED_DATE_FORMATS = new DateFormat[]{
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
-            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"),
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
     };
     private static final Logger LOGGER = Logger.getLogger(NugetMetaAnalyzer.class);
     private static final String DEFAULT_BASE_URL = "https://api.nuget.org";

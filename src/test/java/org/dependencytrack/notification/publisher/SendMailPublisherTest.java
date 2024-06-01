@@ -227,17 +227,17 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
                     GitHub Advisory Mirroring
                                                
                     --------------------------------------------------------------------------------
-                    
+                                        
                     Level:     ERROR
                     Scope:     SYSTEM
                     Group:     DATASOURCE_MIRRORING
-                    
+                                        
                     --------------------------------------------------------------------------------
-                    
+                                        
                     An error occurred mirroring the contents of GitHub Advisories. Check log for details.
-                    
+                                        
                     --------------------------------------------------------------------------------
-                    
+                                        
                     1970-01-01T18:31:06.000000666
                     """);
         });
@@ -255,9 +255,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
                     New Vulnerability Identified
-                    
+                                        
                     --------------------------------------------------------------------------------
-                    
+                                        
                     Vulnerability ID:  INT-001
                     Vulnerability URL: /vulnerability/?source=INTERNAL&vulnId=INT-001
                     Severity:          MEDIUM
@@ -268,13 +268,55 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
                     Version:           projectVersion
                     Description:       projectDescription
                     Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                    
+                                        
                     --------------------------------------------------------------------------------
-                    
-                    
-                    
+                                        
+                                        
+                                        
                     --------------------------------------------------------------------------------
-                    
+                                        
+                    1970-01-01T18:31:06.000000666
+                    """);
+        });
+    }
+
+    @Override
+    public void testInformWithNewVulnerableDependencyNotification() {
+        super.testInformWithNewVulnerableDependencyNotification();
+
+        assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Vulnerable Dependency Introduced");
+            assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
+            final MimeMultipart content = (MimeMultipart) message.getContent();
+            assertThat(content.getCount()).isEqualTo(1);
+            assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
+            assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
+                    Vulnerable Dependency Introduced
+                                        
+                    --------------------------------------------------------------------------------
+                                        
+                    Project:           pkg:maven/org.acme/projectName@projectVersion
+                    Project URL:       /projects/?uuid=c9c9539a-e381-4b36-ac52-6a7ab83b2c95
+                    Component:         componentName : componentVersion
+                    Component URL:     /component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6
+                                        
+                    Vulnerabilities
+                                        
+                    Vulnerability ID:  INT-001
+                    Vulnerability URL: /vulnerability/?source=INTERNAL&vulnId=INT-001
+                    Severity:          MEDIUM
+                    Source:            INTERNAL
+                    Description:
+                    vulnerabilityDescription
+                                        
+                                        
+                                        
+                    --------------------------------------------------------------------------------
+                                        
+                                        
+                                        
+                    --------------------------------------------------------------------------------
+                                        
                     1970-01-01T18:31:06.000000666
                     """);
         });
@@ -292,30 +334,30 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
                     Analysis Decision: Finding Suppressed
-                    
+                                        
                     --------------------------------------------------------------------------------
-                    
+                                        
                     Analysis Type:  Project Analysis
-                    
+                                        
                     Analysis State:    FALSE_POSITIVE
                     Suppressed:        true
                     Vulnerability ID:  INT-001
                     Vulnerability URL: /vulnerability/?source=INTERNAL&vulnId=INT-001
                     Severity:          MEDIUM
                     Source:            INTERNAL
-                    
+                                        
                     Component:         componentName : componentVersion
                     Component URL:     /component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6
                     Project:           pkg:maven/org.acme/projectName@projectVersion
                     Description:       projectDescription
                     Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                    
+                                        
                     --------------------------------------------------------------------------------
-                    
-                    
-                    
+                                        
+                                        
+                                        
                     --------------------------------------------------------------------------------
-                    
+                                        
                     1970-01-01T18:31:06.000000666
                     """);
         });

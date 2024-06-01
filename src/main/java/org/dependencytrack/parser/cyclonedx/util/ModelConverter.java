@@ -562,14 +562,14 @@ public class ModelConverter {
             for (final org.cyclonedx.model.License cycloneLicense : licenseOptions) {
                 if (cycloneLicense != null) {
                     if (StringUtils.isNotBlank(cycloneLicense.getId())) {
-                        final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
+                        final License license = qm.getLicenseByIdOrName(StringUtils.trimToNull(cycloneLicense.getId()));
                         if (license != null) {
                             component.setResolvedLicense(license);
                         }
                     }
                     else if (StringUtils.isNotBlank(cycloneLicense.getName()))
                     {
-                        final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                        final License license = qm.getLicenseByIdOrName(StringUtils.trimToNull(cycloneLicense.getName()));
                         if (license != null) {
                             component.setResolvedLicense(license);
                         } else {

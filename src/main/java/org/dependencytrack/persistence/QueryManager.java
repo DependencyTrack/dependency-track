@@ -620,6 +620,10 @@ public class QueryManager extends AlpineQueryManager {
         return getLicenseQueryManager().getLicense(licenseId);
     }
 
+    public License getLicenseByIdOrName(final String licenseIdOrName) {
+        return getLicenseQueryManager().getLicenseByIdOrName(licenseIdOrName);
+    }
+
     public License getCustomLicense(String licenseName) {
         return getLicenseQueryManager().getCustomLicense(licenseName);
     }

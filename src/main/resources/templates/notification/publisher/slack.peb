@@ -60,7 +60,7 @@
 		  "text": "{{ subject.component.toString | escape(strategy="json") }}"
 		}
 	  ]
-	},
+	}{% if baseUrl is not empty %},
 	{
 	  "type": "actions",
 	  "elements": [
@@ -84,6 +84,7 @@
 		}
 	  ]
 	}
+	{% endif %}
   ]
 }
 {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
@@ -132,7 +133,7 @@
 		  "text": "{{ subject.component.project.toString | escape(strategy="json") }}"
 		}
 	  ]
-	},
+	}{% if baseUrl is not empty %},
 	{
 	  "type": "actions",
 	  "elements": [
@@ -156,6 +157,7 @@
 		}
 	  ]
 	}
+	{% endif %}
   ]
 }
 {% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}
@@ -250,7 +252,7 @@
 		  "text": "{{ subject.project.toString | escape(strategy="json") }}"
 		}
 	  ]
-	},
+	}{% if baseUrl is not empty %},
 	{
 	  "type": "actions",
 	  "elements": [
@@ -283,6 +285,7 @@
 		}
 	  ]
 	}
+	{% endif %}
   ]
 }
 {% elseif notification.group == "POLICY_VIOLATION" %}
@@ -357,7 +360,7 @@
 		  "text": "{{ subject.project.toString | escape(strategy="json") }}"
 		}
 	  ]
-	},
+	}{% if baseUrl is not empty %},
 	{
 	  "type": "actions",
 	  "elements": [
@@ -381,6 +384,7 @@
 		}
 	  ]
 	}
+	{% endif %}
   ]
 }
 {% else %}

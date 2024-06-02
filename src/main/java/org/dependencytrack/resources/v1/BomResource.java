@@ -20,6 +20,8 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,10 +40,16 @@ import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
+import org.dependencytrack.model.Bom;
+import org.dependencytrack.model.Bom.Format;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.validation.ValidUuid;
+import org.dependencytrack.notification.NotificationConstants.Title;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.parser.cyclonedx.InvalidBomException;
@@ -461,7 +469,7 @@ public class BomResource extends AlpineResource {
             final byte[] decoded = Base64.getDecoder().decode(encodedBomData);
             try (final ByteArrayInputStream bain = new ByteArrayInputStream(decoded)) {
                 final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(bain).get());
-                validate(content);
+                validate(content, project);
                 final BomUploadEvent bomUploadEvent = new BomUploadEvent(qm.getPersistenceManager().detachCopy(project), content);
                 Event.dispatch(bomUploadEvent);
                 return Response.ok(Collections.singletonMap("token", bomUploadEvent.getChainIdentifier())).build();
@@ -485,7 +493,7 @@ public class BomResource extends AlpineResource {
                 }
                 try (InputStream in = bodyPartEntity.getInputStream()) {
                     final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(in).get());
-                    validate(content);
+                    validate(content, project);
                     // todo: make option to combine all the bom data so components are reconciled in a single pass.
                     // todo: https://github.com/DependencyTrack/dependency-track/issues/130
                     final BomUploadEvent bomUploadEvent = new BomUploadEvent(qm.getPersistenceManager().detachCopy(project), content);
@@ -506,7 +514,7 @@ public class BomResource extends AlpineResource {
         return Response.ok().build();
     }
 
-    static void validate(final byte[] bomBytes) {
+    static void validate(final byte[] bomBytes, final Project project) {
         try (QueryManager qm = new QueryManager()) {
             if (!qm.isEnabled(ConfigPropertyConstants.BOM_VALIDATION_ENABLED)) {
                 return;
@@ -529,12 +537,28 @@ public class BomResource extends AlpineResource {
                     .entity(problemDetails)
                     .build();
 
+            final var bomEncoded = Base64.getEncoder()
+                .encodeToString(bomBytes);
+            dispatchBomValidationFailedNotification(project, bomEncoded, problemDetails, Format.CYCLONEDX);
+
             throw new WebApplicationException(response);
         } catch (RuntimeException e) {
             LOGGER.error("Failed to validate BOM", e);
             final Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             throw new WebApplicationException(response);
         }
+    }
+
+
+    private static void dispatchBomValidationFailedNotification(final Project project, final String bom,
+        final InvalidBomProblemDetails problemDetails, final Bom.Format bomFormat) {
+        Notification.dispatch(new Notification()
+            .scope(NotificationScope.PORTFOLIO)
+            .group(NotificationGroup.BOM_VALIDATION_FAILED)
+            .level(NotificationLevel.ERROR)
+            .title(Title.BOM_VALIDATION_FAILED)
+            .content("An error occurred during BOM Validation")
+            .subject(new BomValidationFailed(project, bom, problemDetails, bomFormat)));
     }
 
 }

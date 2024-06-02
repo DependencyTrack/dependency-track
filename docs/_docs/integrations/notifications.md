@@ -53,6 +53,7 @@ multiple levels, while others can only ever have a single level.
 | PORTFOLIO | BOM_CONSUMED              | INFORMATIONAL | Notifications generated whenever a supported BOM is ingested and identified                                                       |
 | PORTFOLIO | BOM_PROCESSED             | INFORMATIONAL | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
 | PORTFOLIO | BOM_PROCESSING_FAILED     | ERROR         | Notifications generated whenever a BOM upload process fails                                                                       |
+| PORTFOLIO | BOM_VALIDATION_FAILED     | ERROR         | Notifications generated whenever an invalid BOM is uploaded                                                                       |
 | PORTFOLIO | POLICY_VIOLATION          | INFORMATIONAL | Notifications generated whenever a policy violation is identified                                                                 |
 
 ## Configuring Publishers

@@ -32,6 +32,7 @@ import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
+import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -185,6 +186,9 @@ public class NotificationRouter implements Subscriber {
                 limitToProject(ctx, rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final BomProcessingFailed subject) {
+                limitToProject(ctx, rules, result, notification, subject.getProject());
+            } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
+                    && notification.getSubject() instanceof final BomValidationFailed subject) {
                 limitToProject(ctx, rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final VexConsumedOrProcessed subject) {

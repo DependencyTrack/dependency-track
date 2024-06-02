@@ -178,6 +178,42 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Override
+    public void testInformWithBomValidationFailedNotification() {
+        super.testInformWithBomValidationFailedNotification();
+
+        assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Validation Failed");
+            assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
+            final MimeMultipart content = (MimeMultipart) message.getContent();
+            assertThat(content.getCount()).isEqualTo(1);
+            assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
+            assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
+                    Bill of Materials Validation Failed
+                                        
+                    --------------------------------------------------------------------------------
+                                        
+                    Project:           projectName
+                    Version:           projectVersion
+                    Description:       projectDescription
+                    Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
+                                        
+                    --------------------------------------------------------------------------------
+                                        
+                    Cause:
+                    
+                                        
+                    --------------------------------------------------------------------------------
+                                        
+                    An error occurred during BOM Validation
+                                        
+                    --------------------------------------------------------------------------------
+                                        
+                    1970-01-01T00:20:34.000000888
+                    """);
+        });
+    }
+
+    @Override
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
         super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 

@@ -75,6 +75,7 @@ Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}
 Description:       {{ subject.project.description }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+Errors:            {{ subject.errors }}
 {% elseif notification.group == "BOM_PROCESSED" %}
 Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}

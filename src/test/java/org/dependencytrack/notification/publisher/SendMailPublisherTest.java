@@ -196,6 +196,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
                     Version:           projectVersion
                     Description:       projectDescription
                     Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
+                    Errors:            [$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference]
                                         
                     --------------------------------------------------------------------------------
                                         

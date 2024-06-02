@@ -419,21 +419,14 @@
 	{
 	  "type": "section",
 	  "text": {
-	    "text": "{{ notification.content | escape(strategy="json") }} | {{ subject.problemDetails.title | escape(strategy="json") }}",
+	    "text": "{{ notification.content | escape(strategy="json") }}",
 		"type": "plain_text"
 	  }
 	},
 	{
 	  "type": "section",
 	  "text": {
-	    "text": "{{ subject.problemDetails.detail.toString | escape(strategy="json") }}",
-		"type": "plain_text"
-	  }
-	},
-	{
-	  "type": "section",
-	  "text": {
-	    "text": "{{ subject.problemDetails.errors.toString | escape(strategy="json") }}",
+	    "text": "{{ subject.errors.toString | escape(strategy="json") }}",
 		"type": "plain_text"
 	  }
 	}

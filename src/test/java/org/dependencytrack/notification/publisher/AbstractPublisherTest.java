@@ -102,7 +102,9 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
 
     @Test
     public void testInformWithBomValidationFailedNotification() {
-        final var subject = new BomValidationFailed(createProject(), "bomContent", createInvalidBomProblemDetails(), Bom.Format.CYCLONEDX);
+        final var errorsSample = List.of(
+            "$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference");
+        final var subject = new BomValidationFailed(createProject(), "bomContent", errorsSample, Bom.Format.CYCLONEDX);
 
         final var notification = new Notification()
                 .scope(NotificationScope.PORTFOLIO)
@@ -236,15 +238,6 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         project.setPurl("pkg:maven/org.acme/projectName@projectVersion");
         project.setTags(List.of(projectTag1, projectTag2));
         return project;
-    }
-
-    private static InvalidBomProblemDetails createInvalidBomProblemDetails() {
-        final var invalidBomProblemDetails = new InvalidBomProblemDetails();
-        invalidBomProblemDetails.setTitle("The uploaded BOM is invalid");
-        invalidBomProblemDetails.setDetail("Schema validation failed");
-        invalidBomProblemDetails.setStatus(400);
-        invalidBomProblemDetails.setErrors(List.of("$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference"));
-        return invalidBomProblemDetails;
     }
 
     private static Vulnerability createVulnerability() {

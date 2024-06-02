@@ -70,7 +70,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 

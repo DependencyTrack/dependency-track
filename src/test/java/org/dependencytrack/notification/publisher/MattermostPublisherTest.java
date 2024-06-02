@@ -61,6 +61,21 @@ public class MattermostPublisherTest extends AbstractWebhookPublisherTest<Matter
     }
 
     @Override
+    public void testInformWithBomValidationFailedNotification() {
+        super.testInformWithBomValidationFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "username": "Dependency Track",
+                          "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                          "text": "#### Bill of Materials Validation Failed\\nAn error occurred during BOM Validation\\n"
+                        }
+                        """)));
+    }
+
+    @Override
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
         super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 

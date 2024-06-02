@@ -28,6 +28,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.GroupedFinding;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.Vulnerability;
@@ -128,6 +129,10 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             final Finding finding = new Finding(UUID.fromString((String) o[29]), o);
             final Component component = getObjectByUuid(Component.class, (String) finding.getComponent().get("uuid"));
             final Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String) finding.getVulnerability().get("uuid"));
+            final Project project = component.getProject();
+            if (project != null) {
+                finding.getComponent().put("tags", project.getTags());
+            }
             final Analysis analysis = getAnalysis(component, vulnerability);
             final List<VulnerabilityAlias> aliases = detach(getVulnerabilityAliases(vulnerability));
             aliases.forEach(alias -> alias.setUuid(null));

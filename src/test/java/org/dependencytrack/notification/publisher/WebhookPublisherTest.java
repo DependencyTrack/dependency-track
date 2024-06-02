@@ -129,12 +129,7 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
                                 "content" : "bomContent",
                                 "format" : "CycloneDX"
                               },
-                              "problemDetails" : {
-                                   "status" : "400",
-                                   "title" : "The uploaded BOM is invalid",
-                                   "detail" : "Schema validation failed",
-                                   "errors" : "$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference"
-                                }
+                              "errors" : "$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference"
                             }
                           }
                         }

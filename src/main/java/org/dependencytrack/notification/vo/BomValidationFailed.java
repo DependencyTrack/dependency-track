@@ -18,21 +18,21 @@
  */
 package org.dependencytrack.notification.vo;
 
+import java.util.List;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
 
 public class BomValidationFailed {
 
     private Project project;
     private String bom;
-    private InvalidBomProblemDetails problemDetails;
+    private List<String> errors;
     private Bom.Format format;
 
-    public BomValidationFailed(final Project project, final String bom, final InvalidBomProblemDetails problemDetails, final Bom.Format format) {
+    public BomValidationFailed(final Project project, final String bom, final List<String> errors, final Bom.Format format) {
         this.project = project;
         this.bom = bom;
-        this.problemDetails = problemDetails;
+        this.errors = errors;
         this.format = format;
     }
 
@@ -44,8 +44,8 @@ public class BomValidationFailed {
         return bom;
     }
 
-    public InvalidBomProblemDetails getProblemDetails() {
-        return problemDetails;
+    public List<String> getErrors() {
+        return errors;
     }
 
     public Bom.Format getFormat() {

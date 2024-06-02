@@ -166,16 +166,9 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                             {
                               "type": "section",
                               "text": {
-                                "text": "An error occurred during BOM Validation | The uploaded BOM is invalid",
+                                "text": "An error occurred during BOM Validation",
                                 "type": "plain_text"
                               }
-                            },
-                            {
-                                "type" : "section",
-                                "text" : {
-                                  "text" : "Schema validation failed",
-                                  "type" : "plain_text"
-                                }
                             },
                             {
                                 "type" : "section",

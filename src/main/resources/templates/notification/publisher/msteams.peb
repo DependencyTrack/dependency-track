@@ -142,12 +142,8 @@
           "value": "{{ baseUrl }}/projects/{{ subject.project.uuid | escape(strategy='json') }}"
         },
         {
-          "name": "Summary",
-          "value": "{{ subject.problemDetails.title.toString | escape(strategy='json') }} - {{ subject.problemDetails.detail.toString | escape(strategy='json') }}"
-        },
-        {
           "name": "Errors",
-          "value": "{{ subject.problemDetails.errors.toString | escape(strategy='json') }}"
+          "value": "{{ subject.errors.toString | escape(strategy='json') }}"
         }
       ],
       {% else %}

@@ -539,7 +539,7 @@ public class BomResource extends AlpineResource {
 
             final var bomEncoded = Base64.getEncoder()
                 .encodeToString(bomBytes);
-            dispatchBomValidationFailedNotification(project, bomEncoded, problemDetails, Format.CYCLONEDX);
+            dispatchBomValidationFailedNotification(project, bomEncoded, problemDetails.getErrors(), Format.CYCLONEDX);
 
             throw new WebApplicationException(response);
         } catch (RuntimeException e) {
@@ -550,15 +550,14 @@ public class BomResource extends AlpineResource {
     }
 
 
-    private static void dispatchBomValidationFailedNotification(final Project project, final String bom,
-        final InvalidBomProblemDetails problemDetails, final Bom.Format bomFormat) {
+    private static void dispatchBomValidationFailedNotification(final Project project, final String bom, final List<String> errors, final Bom.Format bomFormat) {
         Notification.dispatch(new Notification()
             .scope(NotificationScope.PORTFOLIO)
             .group(NotificationGroup.BOM_VALIDATION_FAILED)
             .level(NotificationLevel.ERROR)
             .title(Title.BOM_VALIDATION_FAILED)
             .content("An error occurred during BOM Validation")
-            .subject(new BomValidationFailed(project, bom, problemDetails, bomFormat)));
+            .subject(new BomValidationFailed(project, bom, errors, bomFormat)));
     }
 
 }

@@ -313,28 +313,6 @@ public final class NotificationUtil {
         return componentBuilder.build();
     }
 
-    public static JsonObject toJson(final InvalidBomProblemDetails problemDetails) {
-        final JsonObjectBuilder builder = Json.createObjectBuilder();
-        final var errors = problemDetails.getErrors();
-
-        if (problemDetails.getType() != null) {
-            builder.add("type", problemDetails.getType().toString());
-        }
-        JsonUtil.add(builder, "status", problemDetails.getStatus().toString());
-        JsonUtil.add(builder, "title", problemDetails.getTitle());
-        JsonUtil.add(builder, "detail", problemDetails.getDetail());
-
-        if (errors != null && !errors.isEmpty()) {
-            final var commaSeparatedErrors = String.join(",", errors);
-            JsonUtil.add(builder, "errors", commaSeparatedErrors);
-        }
-
-        if (problemDetails.getInstance() != null) {
-            JsonUtil.add(builder, "instance", problemDetails.getInstance().toString());
-        }
-        return builder.build();
-    }
-
     public static JsonObject toJson(final Vulnerability vulnerability) {
         final JsonObjectBuilder vulnerabilityBuilder = Json.createObjectBuilder();
         vulnerabilityBuilder.add("uuid", vulnerability.getUuid().toString());
@@ -511,7 +489,7 @@ public final class NotificationUtil {
     }
 
     public static JsonObject toJson(final BomValidationFailed vo) {
-        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        final var builder = Json.createObjectBuilder();
         if (vo.getProject() != null) {
             builder.add("project", toJson(vo.getProject()));
         }
@@ -522,8 +500,10 @@ public final class NotificationUtil {
                     .build()
             );
         }
-        if (vo.getProblemDetails() != null) {
-            builder.add("problemDetails", toJson(vo.getProblemDetails()));
+        final var errors = vo.getErrors();
+        if (errors != null && !errors.isEmpty()) {
+            final var commaSeparatedErrors = String.join(",", errors);
+            JsonUtil.add(builder, "errors", commaSeparatedErrors);
         }
         return builder.build();
     }

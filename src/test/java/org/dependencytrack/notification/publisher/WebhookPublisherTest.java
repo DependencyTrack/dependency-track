@@ -102,6 +102,41 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
+    public void testInformWithBomValidationFailedNotification() {
+        super.testInformWithBomValidationFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "notification" : {
+                            "level" : "ERROR",
+                            "scope" : "PORTFOLIO",
+                            "group" : "BOM_VALIDATION_FAILED",
+                            "timestamp" : "1970-01-01T00:20:34.000000888",
+                            "title" : "Bill of Materials Validation Failed",
+                            "content" : "An error occurred during BOM Validation",
+                            "subject" : {
+                              "project" : {
+                                "uuid" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                "name" : "projectName",
+                                "version" : "projectVersion",
+                                "description" : "projectDescription",
+                                "purl" : "pkg:maven/org.acme/projectName@projectVersion",
+                                "tags" : "tag1,tag2"
+                              },
+                              "bom" : {
+                                "content" : "bomContent",
+                                "format" : "CycloneDX"
+                              },
+                              "errors" : "$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference"
+                            }
+                          }
+                        }
+                        """)));
+    }
+
+    @Override
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
         super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 

@@ -46,6 +46,7 @@ import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
+import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -476,6 +477,26 @@ public final class NotificationUtil {
         }
         if (vo.getCause() != null) {
             builder.add("cause", vo.getCause());
+        }
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final BomValidationFailed vo) {
+        final var builder = Json.createObjectBuilder();
+        if (vo.getProject() != null) {
+            builder.add("project", toJson(vo.getProject()));
+        }
+        if (vo.getBom() != null) {
+            builder.add("bom", Json.createObjectBuilder()
+                    .add("content", Optional.ofNullable(vo.getBom()).orElse("Unknown"))
+                    .add("format", Optional.ofNullable(vo.getFormat()).map(Bom.Format::getFormatShortName).orElse("Unknown"))
+                    .build()
+            );
+        }
+        final var errors = vo.getErrors();
+        if (errors != null && !errors.isEmpty()) {
+            final var commaSeparatedErrors = String.join(",", errors);
+            JsonUtil.add(builder, "errors", commaSeparatedErrors);
         }
         return builder.build();
     }

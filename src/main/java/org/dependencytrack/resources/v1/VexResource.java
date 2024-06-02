@@ -261,7 +261,7 @@ public class VexResource extends AlpineResource {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
             final byte[] decoded = Base64.getDecoder().decode(encodedVexData);
-            BomResource.validate(decoded);
+            BomResource.validate(decoded, project);
             final VexUploadEvent vexUploadEvent = new VexUploadEvent(project.getUuid(), decoded);
             Event.dispatch(vexUploadEvent);
             return Response.ok(Collections.singletonMap("token", vexUploadEvent.getChainIdentifier())).build();
@@ -282,7 +282,7 @@ public class VexResource extends AlpineResource {
                 }
                 try (InputStream in = bodyPartEntity.getInputStream()) {
                     final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(in).get());
-                    BomResource.validate(content);
+                    BomResource.validate(content, project);
                     final VexUploadEvent vexUploadEvent = new VexUploadEvent(project.getUuid(), content);
                     Event.dispatch(vexUploadEvent);
                     return Response.ok(Collections.singletonMap("token", vexUploadEvent.getChainIdentifier())).build();

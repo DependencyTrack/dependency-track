@@ -387,6 +387,51 @@
 	{% endif %}
   ]
 }
+{% elseif notification.group == "BOM_VALIDATION_FAILED" %}
+{
+  "blocks": [
+    {
+	  "type": "header",
+	  "text": {
+	    "type": "plain_text",
+		"text": "{{ notification.group | escape(strategy="json") }} | {{ subject.project.toString | escape(strategy="json") }}"
+	  }
+	},
+	{
+	  "type": "context",
+	  "elements": [
+	    {
+		  "text": "*{{ notification.level | escape(strategy="json") }}*  |  *{{ notification.scope | escape(strategy="json") }}*",
+		  "type": "mrkdwn"
+		}
+	  ]
+	},
+	{
+	  "type": "divider"
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ notification.title | escape(strategy="json") }}",
+		"type": "plain_text"
+	  }
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ notification.content | escape(strategy="json") }}",
+		"type": "plain_text"
+	  }
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ subject.errors.toString | escape(strategy="json") }}",
+		"type": "plain_text"
+	  }
+	}
+  ]
+}
 {% else %}
 {
   "blocks": [

@@ -115,6 +115,56 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
     }
 
     @Override
+    public void testInformWithBomValidationFailedNotification() {
+        super.testInformWithBomValidationFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "Bill of Materials Validation Failed",
+                          "title": "Bill of Materials Validation Failed",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T00:20:34.000000888",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Level",
+                                  "value": "ERROR"
+                                },
+                                {
+                                  "name": "Scope",
+                                  "value": "PORTFOLIO"
+                                },
+                                {
+                                  "name": "Group",
+                                  "value": "BOM_VALIDATION_FAILED"
+                                },
+                                {
+                                  "name": "Project",
+                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                },
+                                {
+                                  "name": "Project URL",
+                                  "value": "https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95"
+                                },
+                                {
+                                  "name": "Errors",
+                                  "value": "[$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference]"
+                                }
+                              ],
+                              "text": "An error occurred during BOM Validation"
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
         super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 

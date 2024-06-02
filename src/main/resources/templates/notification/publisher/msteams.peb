@@ -119,6 +119,33 @@
           "value": "{{ baseUrl }}/projects/{{ subject.project.uuid | escape(strategy='json') }}"
         }
       ],
+      {% elseif notification.group == "BOM_VALIDATION_FAILED" %}
+      "facts": [
+        {
+          "name": "Level",
+          "value": "{{ notification.level | escape(strategy="json") }}"
+        },
+        {
+          "name": "Scope",
+          "value": "{{ notification.scope | escape(strategy="json") }}"
+        },
+        {
+          "name": "Group",
+          "value": "{{ notification.group | escape(strategy="json") }}"
+        },
+        {
+          "name": "Project",
+          "value": "{{ subject.project.toString | escape(strategy="json") }}"
+        },
+        {
+          "name": "Project URL",
+          "value": "{{ baseUrl }}/projects/{{ subject.project.uuid | escape(strategy='json') }}"
+        },
+        {
+          "name": "Errors",
+          "value": "{{ subject.errors.toString | escape(strategy='json') }}"
+        }
+      ],
       {% else %}
       "facts": [
         {

@@ -129,6 +129,60 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
+    public void testInformWithBomValidationFailedNotification() {
+        super.testInformWithBomValidationFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "BOM_VALIDATION_FAILED | pkg:maven/org.acme/projectName@projectVersion"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*ERROR*  |  *PORTFOLIO*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "Bill of Materials Validation Failed",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "An error occurred during BOM Validation",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                                "type" : "section",
+                                "text" : {
+                                  "text" : "[$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference]",
+                                  "type" : "plain_text"
+                                 }
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
         super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 

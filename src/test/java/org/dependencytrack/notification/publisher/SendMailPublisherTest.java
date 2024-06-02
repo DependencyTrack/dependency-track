@@ -199,11 +199,6 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
                                         
                     --------------------------------------------------------------------------------
                                         
-                    Cause:
-                    
-                                        
-                    --------------------------------------------------------------------------------
-                                        
                     An error occurred during BOM Validation
                                         
                     --------------------------------------------------------------------------------

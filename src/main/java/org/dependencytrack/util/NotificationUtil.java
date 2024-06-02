@@ -48,6 +48,7 @@ import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
+import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -75,6 +76,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -311,6 +313,28 @@ public final class NotificationUtil {
         return componentBuilder.build();
     }
 
+    public static JsonObject toJson(final InvalidBomProblemDetails problemDetails) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        final var errors = problemDetails.getErrors();
+
+        if (problemDetails.getType() != null) {
+            builder.add("type", problemDetails.getType().toString());
+        }
+        JsonUtil.add(builder, "status", problemDetails.getStatus().toString());
+        JsonUtil.add(builder, "title", problemDetails.getTitle());
+        JsonUtil.add(builder, "detail", problemDetails.getDetail());
+
+        if (errors != null && !errors.isEmpty()) {
+            final var commaSeparatedErrors = String.join(",", errors);
+            JsonUtil.add(builder, "errors", commaSeparatedErrors);
+        }
+
+        if (problemDetails.getInstance() != null) {
+            JsonUtil.add(builder, "instance", problemDetails.getInstance().toString());
+        }
+        return builder.build();
+    }
+
     public static JsonObject toJson(final Vulnerability vulnerability) {
         final JsonObjectBuilder vulnerabilityBuilder = Json.createObjectBuilder();
         vulnerabilityBuilder.add("uuid", vulnerability.getUuid().toString());
@@ -482,6 +506,24 @@ public final class NotificationUtil {
         }
         if (vo.getCause() != null) {
             builder.add("cause", vo.getCause());
+        }
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final BomValidationFailed vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        if (vo.getProject() != null) {
+            builder.add("project", toJson(vo.getProject()));
+        }
+        if (vo.getBom() != null) {
+            builder.add("bom", Json.createObjectBuilder()
+                    .add("content", Optional.ofNullable(vo.getBom()).orElse("Unknown"))
+                    .add("format", Optional.ofNullable(vo.getFormat()).map(Bom.Format::getFormatShortName).orElse("Unknown"))
+                    .build()
+            );
+        }
+        if (vo.getProblemDetails() != null) {
+            builder.add("problemDetails", toJson(vo.getProblemDetails()));
         }
         return builder.build();
     }

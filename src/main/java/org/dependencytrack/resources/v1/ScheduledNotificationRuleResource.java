@@ -23,13 +23,29 @@ import alpine.model.Team;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.NotificationPublisher;
@@ -44,18 +60,6 @@ import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import com.asahaf.javacron.InvalidExpressionException;
 import com.asahaf.javacron.Schedule;
 
-import javax.validation.Validator;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -63,23 +67,30 @@ import java.util.concurrent.TimeUnit;
  * JAX-RS resources for processing scheduled notification rules.
  */
 @Path("/v1/schedulednotification/rule")
-@Api(value = "schedulednotification", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "schedulednotification")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class ScheduledNotificationRuleResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(ScheduledNotificationRuleResource.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all scheduled notification rules",
-            response = ScheduledNotificationRule.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of scheduled notification rules"),
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Returns a list of all scheduled notification rules",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all scheduled notification rules",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of scheduled notification rules", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ScheduledNotificationRule.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getAllScheduledNotificationRules() {
@@ -92,15 +103,18 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Creates a new scheduled notification rule",
-            response = ScheduledNotificationRule.class,
-            code = 201,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Creates a new scheduled notification rule",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the notification publisher could not be found")
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created scheduled notification rule",
+                    content = @Content(schema = @Schema(implementation = ScheduledNotificationRule.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the notification publisher could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response createScheduledNotificationRule(ScheduledNotificationRule jsonRule) {
@@ -144,14 +158,18 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Updates a scheduled notification rule",
-            response = ScheduledNotificationRule.class,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Updates a scheduled notification rule",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the scheduled notification rule could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated scheduled notification rule",
+                    content = @Content(schema = @Schema(implementation = ScheduledNotificationRule.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the notification publisher could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response updateScheduledNotificationRule(ScheduledNotificationRule jsonRule) {
@@ -190,14 +208,14 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a scheduled notification rule",
-            code = 204,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Deletes a scheduled notification rule",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the scheduled notification rule could not be found")
+            @ApiResponse(responseCode = "204", description = "The scheduled notification rule was deleted successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the scheduled notification rule could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response deleteScheduledNotificationRule(ScheduledNotificationRule jsonRule) {
@@ -219,21 +237,25 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
     @Path("/{ruleUuid}/project/{projectUuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Adds a project to a scheduled notification rule",
-            response = ScheduledNotificationRule.class,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Adds a project to a scheduled notification rule",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 304, message = "The rule already has the specified project assigned"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The scheduled notification rule or project could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated scheduled notification rule",
+                    content = @Content(schema = @Schema(implementation = ScheduledNotificationRule.class))
+            ),
+            @ApiResponse(responseCode = "304", description = "The rule already has the specified project assigned"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The scheduled notification rule or project could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response addProjectToRule(
-            @ApiParam(value = "The UUID of the rule to add a project to", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the rule to add a project to", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("ruleUuid") @ValidUuid String ruleUuid,
-            @ApiParam(value = "The UUID of the project to add to the rule", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to add to the rule", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("projectUuid") @ValidUuid String projectUuid) {
         try (QueryManager qm = new QueryManager()) {
             final ScheduledNotificationRule rule = qm.getObjectByUuid(ScheduledNotificationRule.class, ruleUuid);
@@ -261,21 +283,25 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
     @Path("/{ruleUuid}/project/{projectUuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Removes a project from a scheduled notification rule",
-            response = ScheduledNotificationRule.class,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Removes a project from a scheduled notification rule",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 304, message = "The rule does not have the specified project assigned"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The scheduled notification rule or project could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated scheduled notification rule",
+                    content = @Content(schema = @Schema(implementation = ScheduledNotificationRule.class))
+            ),
+            @ApiResponse(responseCode = "304", description = "The rule does not have the specified project assigned"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The scheduled notification rule or project could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response removeProjectFromRule(
-            @ApiParam(value = "The UUID of the rule to remove the project from", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the rule to remove the project from", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("ruleUuid") @ValidUuid String ruleUuid,
-            @ApiParam(value = "The UUID of the project to remove from the rule", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to remove from the rule", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("projectUuid") @ValidUuid String projectUuid) {
         try (QueryManager qm = new QueryManager()) {
             final ScheduledNotificationRule rule = qm.getObjectByUuid(ScheduledNotificationRule.class, ruleUuid);
@@ -303,21 +329,25 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
     @Path("/{ruleUuid}/team/{teamUuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Adds a team to a scheduled scheduled notification rule",
-            response = ScheduledNotificationRule.class,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Adds a team to a scheduled scheduled notification rule",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 304, message = "The rule already has the specified team assigned"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The scheduled notification rule or team could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated scheduled notification rule",
+                    content = @Content(schema = @Schema(implementation = ScheduledNotificationRule.class))
+            ),
+            @ApiResponse(responseCode = "304", description = "The rule already has the specified team assigned"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The scheduled notification rule or team could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response addTeamToRule(
-            @ApiParam(value = "The UUID of the rule to add a team to", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the rule to add a team to", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("ruleUuid") @ValidUuid String ruleUuid,
-            @ApiParam(value = "The UUID of the team to add to the rule", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the team to add to the rule", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("teamUuid") @ValidUuid String teamUuid) {
         try (QueryManager qm = new QueryManager()) {
             final ScheduledNotificationRule rule = qm.getObjectByUuid(ScheduledNotificationRule.class, ruleUuid);
@@ -345,14 +375,18 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
     @Path("/execute")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Executes a scheduled notification rule instantly ignoring the cron expression",
-            response = ScheduledNotificationRule.class,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Executes a scheduled notification rule instantly ignoring the cron expression",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the scheduled notification rule could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated scheduled notification rule",
+                    content = @Content(schema = @Schema(implementation = ScheduledNotificationRule.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the scheduled notification rule could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response executeScheduledNotificationRuleNow(ScheduledNotificationRule jsonRule) {
@@ -384,21 +418,25 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
     @Path("/{ruleUuid}/team/{teamUuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Removes a team from a scheduled notification rule",
-            response = ScheduledNotificationRule.class,
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Removes a team from a scheduled notification rule",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 304, message = "The rule does not have the specified team assigned"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The scheduled notification rule or team could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated scheduled notification rule",
+                    content = @Content(schema = @Schema(implementation = ScheduledNotificationRule.class))
+            ),
+            @ApiResponse(responseCode = "304", description = "The rule does not have the specified team assigned"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The scheduled notification rule or team could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response removeTeamFromRule(
-            @ApiParam(value = "The UUID of the rule to remove the project from", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the rule to remove the project from", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("ruleUuid") @ValidUuid String ruleUuid,
-            @ApiParam(value = "The UUID of the project to remove from the rule", format = "uuid", required = true)
+            @Parameter(description = "The UUID of the project to remove from the rule", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("teamUuid") @ValidUuid String teamUuid) {
         try (QueryManager qm = new QueryManager()) {
             final ScheduledNotificationRule rule = qm.getObjectByUuid(ScheduledNotificationRule.class, ruleUuid);

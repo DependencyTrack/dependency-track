@@ -18,9 +18,6 @@
  */
 package org.dependencytrack.notification;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-
 import org.dependencytrack.model.ScheduledNotificationRule;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -28,6 +25,8 @@ import com.asahaf.javacron.InvalidExpressionException;
 import com.asahaf.javacron.Schedule;
 
 import alpine.common.logging.Logger;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 public class ScheduledNotificationTaskInitializer implements ServletContextListener {
     private static final Logger LOGGER = Logger.getLogger(ScheduledNotificationTaskInitializer.class);

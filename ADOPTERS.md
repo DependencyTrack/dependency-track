@@ -13,7 +13,7 @@ production users that have added themselves (in alphabetical order):
 This is a list of adopters in early stages of production or
 pre-production (in alphabetical order):
 
-* [Apex Fintech Solutions](https://apexfintechsolutions.com/) has incorporated Dependency Track into their CI/CD Pipeline (As part of the DevSecops Program) to upload SBOM generated to the platform for detailed componenent analysis and understand the software inventory used for the application. The component analysis of the our mono repo helps in our Vulnerability management program and as well as give the more information on Transitive dependencies which traiditional SCA tools lack into.
+* [Apex Fintech Solutions](https://apexfintechsolutions.com/) has integrated OWASP Dependency-Track into their CI/CD pipeline as part of the DevSecOps program. This integration allows for the upload of SBOMs (Software Bill of Materials) to the platform for comprehensive component analysis and a detailed understanding of the software inventory used in applications. By analyzing the components in our monorepo, we enhance our vulnerability management program and gain valuable insights into transitive dependencies, which traditional SCA (Software Composition Analysis) tools often overlook.
 
 
 If you have adopted OWASP Depenency Track and would like to be included in this list,

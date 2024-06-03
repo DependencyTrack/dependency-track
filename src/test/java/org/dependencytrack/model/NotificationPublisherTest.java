@@ -75,6 +75,13 @@ public class NotificationPublisherTest {
     } 
 
     @Test
+    public void testPublishScheduled() {
+        NotificationPublisher publisher = new NotificationPublisher();
+        publisher.setPublishScheduled(true);
+        Assert.assertTrue(publisher.isPublishScheduled());
+    }
+
+    @Test
     public void testUuid() {
         UUID uuid = UUID.randomUUID();
         NotificationPublisher publisher = new NotificationPublisher();

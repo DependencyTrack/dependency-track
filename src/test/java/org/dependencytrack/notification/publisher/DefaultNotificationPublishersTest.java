@@ -31,6 +31,7 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("MS_TEAMS", DefaultNotificationPublishers.MS_TEAMS.name());
         Assert.assertEquals("MATTERMOST", DefaultNotificationPublishers.MATTERMOST.name());
         Assert.assertEquals("EMAIL", DefaultNotificationPublishers.EMAIL.name());
+        Assert.assertEquals("SCHEDULED_EMAIL", DefaultNotificationPublishers.SCHEDULED_EMAIL.name());
         Assert.assertEquals("CONSOLE", DefaultNotificationPublishers.CONSOLE.name());
         Assert.assertEquals("WEBHOOK", DefaultNotificationPublishers.WEBHOOK.name());
         Assert.assertEquals("JIRA", DefaultNotificationPublishers.JIRA.name());
@@ -44,6 +45,7 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("/templates/notification/publisher/slack.peb", DefaultNotificationPublishers.SLACK.getPublisherTemplateFile());
         Assert.assertEquals(MediaType.APPLICATION_JSON, DefaultNotificationPublishers.SLACK.getTemplateMimeType());
         Assert.assertTrue(DefaultNotificationPublishers.SLACK.isDefaultPublisher());
+        Assert.assertFalse(DefaultNotificationPublishers.SLACK.isPublishScheduled());
     }
 
     @Test
@@ -54,6 +56,7 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("/templates/notification/publisher/msteams.peb", DefaultNotificationPublishers.MS_TEAMS.getPublisherTemplateFile());
         Assert.assertEquals(MediaType.APPLICATION_JSON, DefaultNotificationPublishers.MS_TEAMS.getTemplateMimeType());
         Assert.assertTrue(DefaultNotificationPublishers.MS_TEAMS.isDefaultPublisher());
+        Assert.assertFalse(DefaultNotificationPublishers.MS_TEAMS.isPublishScheduled());
     }
 
     @Test
@@ -64,6 +67,7 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("/templates/notification/publisher/mattermost.peb", DefaultNotificationPublishers.MATTERMOST.getPublisherTemplateFile());
         Assert.assertEquals(MediaType.APPLICATION_JSON, DefaultNotificationPublishers.MATTERMOST.getTemplateMimeType());
         Assert.assertTrue(DefaultNotificationPublishers.MATTERMOST.isDefaultPublisher());
+        Assert.assertFalse(DefaultNotificationPublishers.MATTERMOST.isPublishScheduled());
     }
 
     @Test
@@ -74,6 +78,18 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("/templates/notification/publisher/email.peb", DefaultNotificationPublishers.EMAIL.getPublisherTemplateFile());
         Assert.assertEquals(MediaType.TEXT_PLAIN, DefaultNotificationPublishers.EMAIL.getTemplateMimeType());
         Assert.assertTrue(DefaultNotificationPublishers.EMAIL.isDefaultPublisher());
+        Assert.assertFalse(DefaultNotificationPublishers.EMAIL.isPublishScheduled());
+    }
+
+    @Test
+    public void testScheduledEmail() {
+        Assert.assertEquals("Scheduled Email", DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
+        Assert.assertEquals("Sends summarized notifications to an email address in a defined schedule", DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherDescription());
+        Assert.assertEquals(SendMailPublisher.class, DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherClass());
+        Assert.assertEquals("/templates/notification/publisher/scheduled_email.peb", DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherTemplateFile());
+        Assert.assertEquals(MediaType.TEXT_PLAIN, DefaultNotificationPublishers.SCHEDULED_EMAIL.getTemplateMimeType());
+        Assert.assertTrue(DefaultNotificationPublishers.SCHEDULED_EMAIL.isDefaultPublisher());
+        Assert.assertTrue(DefaultNotificationPublishers.SCHEDULED_EMAIL.isPublishScheduled());
     }
 
     @Test
@@ -84,6 +100,7 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("/templates/notification/publisher/console.peb", DefaultNotificationPublishers.CONSOLE.getPublisherTemplateFile());
         Assert.assertEquals(MediaType.TEXT_PLAIN, DefaultNotificationPublishers.CONSOLE.getTemplateMimeType());
         Assert.assertTrue(DefaultNotificationPublishers.CONSOLE.isDefaultPublisher());
+        Assert.assertFalse(DefaultNotificationPublishers.CONSOLE.isPublishScheduled());
     }
 
     @Test
@@ -94,6 +111,7 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("/templates/notification/publisher/webhook.peb", DefaultNotificationPublishers.WEBHOOK.getPublisherTemplateFile());
         Assert.assertEquals(MediaType.APPLICATION_JSON, DefaultNotificationPublishers.WEBHOOK.getTemplateMimeType());
         Assert.assertTrue(DefaultNotificationPublishers.WEBHOOK.isDefaultPublisher());
+        Assert.assertFalse(DefaultNotificationPublishers.WEBHOOK.isPublishScheduled());
     }
 
     @Test
@@ -104,5 +122,6 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("/templates/notification/publisher/jira.peb", DefaultNotificationPublishers.JIRA.getPublisherTemplateFile());
         Assert.assertEquals(MediaType.APPLICATION_JSON, DefaultNotificationPublishers.JIRA.getTemplateMimeType());
         Assert.assertTrue(DefaultNotificationPublishers.JIRA.isDefaultPublisher());
+        Assert.assertFalse(DefaultNotificationPublishers.JIRA.isPublishScheduled());
     }
 }

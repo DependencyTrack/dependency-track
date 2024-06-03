@@ -81,7 +81,7 @@
 
     <properties>
         <!-- Dependency Versions -->
-        <frontend.version>4.11.2</frontend.version>
+        <frontend.version>4.11.3</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.2.1</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>

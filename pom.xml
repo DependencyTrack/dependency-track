@@ -132,7 +132,7 @@
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.jetty.version>12.0.9</plugin.jetty.version>
+        <plugin.jetty.version>12.0.10</plugin.jetty.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
         <!-- CycloneDX CLI -->

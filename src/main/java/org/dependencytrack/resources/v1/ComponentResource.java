@@ -418,6 +418,7 @@ public class ComponentResource extends AlpineResource {
                 component.setSha3_256(StringUtils.trimToNull(jsonComponent.getSha3_256()));
                 component.setSha3_384(StringUtils.trimToNull(jsonComponent.getSha3_384()));
                 component.setSha3_512(StringUtils.trimToNull(jsonComponent.getSha3_512()));
+                component.setExternalReferences(jsonComponent.getExternalReferences());
 
                 final License resolvedLicense = qm.getLicense(jsonComponent.getLicense());
                 if (resolvedLicense != null) {

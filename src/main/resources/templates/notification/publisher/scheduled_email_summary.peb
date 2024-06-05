@@ -1,0 +1,125 @@
+<html>
+  <head>
+    <title>
+      {{ notification.title }}
+      -------------
+      {{ notification.description }}
+    </title>
+  </head>
+  <body>
+    <h2>Overview</h2>
+    <table>
+        <tbody>
+            <tr>
+                <td>Projects included in this rule</td>
+                <td>{{ subject.overview.affectedProjectsCount }}</td>
+            </tr>
+            <tr>
+                <td>Total new vulnerabilities</td>
+                <td>{{ subject.overview.newVulnerabilitiesCount }}</td>
+            </tr>{% if subject.overview.newVulnerabilitiesBySeverity|length > 0 %}{% for entry in subject.overview.newVulnerabilitiesBySeverity %}
+            <tr>
+                <td>New vulnerabilities ({{ entry.key }})</td>
+                <td>{{ entry.value }}</td>
+            </tr>{% endfor %}{% endif %}
+            <tr>
+                <td>Components affected by new vulnerabilities</td>
+                <td>{{ subject.overview.affectedComponentsCount }}</td>
+            </tr>
+            <tr>
+                <td>Suppressed new vulnerabilities (not included above)</td>
+                <td>{{ subject.overview.suppressedNewVulnerabilitiesCount }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Summary per project in this rule</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Project Name</th>
+          <th>Version</th>
+          <th>New Vulnerabilities</th>
+          <th>All Vulnerabilities</th>
+          <th>Suppressed Vulnerabilities</th>
+        </tr>
+      </thead>
+      <tbody>{% for entry in subject.summary.affectedProjectSummaries %}
+        <tr>
+          <td>
+            <a href="{{ baseUrl }}/projects/{{ entry.key.uuid }}">
+              {{ entry.key.name }}
+            </a>
+          </td>
+          <td>{{ entry.key.version }}</td>
+          <td>
+            {% for newVulnEntry in entry.value.newVulnerabilitiesBySeverity %}
+            {{ newVulnEntry.key }}: {{ newVulnEntry.value }}<br />
+            {% endfor %}
+          </td>
+          <td>
+            {% for projVulnEntry in entry.value.totalProjectVulnerabilitiesBySeverity %}
+            {{ projVulnEntry.key }}: {{ projVulnEntry.value }}<br />
+            {% endfor %}
+          </td>
+          <td>
+            {% for supprVulnEntry in entry.value.suppressedNewVulnerabilitiesBySeverity %}
+            {{ supprVulnEntry.key }}: {{ supprVulnEntry.value }}<br />
+            {% endfor %}
+          </td>
+        </tr>{% endfor %}
+      </tbody>
+    </table>
+
+    <h2>New vulnerabilities per project</h2>
+
+    {% if subject.details.affectedProjectFindings|length > 0 %}{% for affProjEntry in subject.details.affectedProjectFindings %}
+    <h3>Project "{{ affProjEntry.key.name }}"" [Version: {{ affProjEntry.key.version }}]</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Version</th>
+          <th>Group</th>
+          <th>Vulnerability</th>
+          <th>Severity</th>
+          <th>Analyzer</th>
+          <th>Attributed On</th>
+          <th>Analysis</th>
+          <th>Suppressed</th>
+        </tr>
+      </thead>
+      <tbody>{% for finding in findings %}
+        <tr>
+          <td>
+            <a href="{{ baseUrl }}/components/">
+              {{ affProjEntry.value.componentName }}
+            </a>
+          </td>
+          <td>{{ affProjEntry.value.componentVersion }}</td>
+          <td>
+            <a href="{{ baseUrl }}/components/">
+              {{ affProjEntry.value.componentGroup }}
+            </a>
+          </td>
+          <td>
+            <a href="{{ baseUrl }}/vulnerabilities/">
+              {{ affProjEntry.value.vulnerabilityId }}
+            </a>
+          </td>
+          <td>{{ affProjEntry.value.vulnerabilitySeverity }}</td>
+          <td>{{ affProjEntry.value.analyzer }}</td>
+          <td>{{ affProjEntry.value.attributedOn }}</td>
+          <td>{{ affProjEntry.value.analysisState }}</td>
+          <td>{{ affProjEntry.value.suppressed }}</td>
+        </tr>{% endfor %}
+      </tbody>
+    </table>
+    {% endfor %}{% endif %}
+  </body>
+  <footer>
+    <p>
+      {{ timestamp }}
+    </p>
+  </footer>
+</html>

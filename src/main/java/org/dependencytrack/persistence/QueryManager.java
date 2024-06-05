@@ -1157,6 +1157,10 @@ public class QueryManager extends AlpineQueryManager {
         return getFindingsQueryManager().getFindings(project, includeSuppressed);
     }
 
+    public List<Finding> getFindingsSince(Project project, boolean includeSuppressed, ZonedDateTime sinceAttributedOn) {
+        return getFindingsQueryManager().getFindings(project, includeSuppressed, sinceAttributedOn);
+    }
+
     public PaginatedResult getAllFindings(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
         return getFindingsSearchQueryManager().getAllFindings(filters, showSuppressed, showInactive);
     }

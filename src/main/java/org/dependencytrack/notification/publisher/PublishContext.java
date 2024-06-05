@@ -105,8 +105,7 @@ public record PublishContext(String notificationGroup, String notificationLevel,
         } else if (notification.getSubject() instanceof final VexConsumedOrProcessed subject) {
             notificationSubjects.put(SUBJECT_PROJECT, Project.convert(subject.getProject()));
         } else if (notification.getSubject() instanceof final ScheduledNewVulnerabilitiesIdentified subject) {
-            notificationSubjects.put(SUBJECT_PROJECTS, subject.getNewProjectVulnerabilities().keySet().stream().map(Project::convert).toList());
-            notificationSubjects.put(SUBJECT_VULNERABILITIES, subject.getNewVulnerabilitiesTotal().stream().map(Vulnerability::convert).toList());
+            notificationSubjects.put(SUBJECT_PROJECTS, subject.getSummary().getAffectedProjectSummaries().keySet().stream().map(Project::convert).toList());
         } else if (notification.getSubject() instanceof final ScheduledPolicyViolationsIdentified subject) {
             notificationSubjects.put(SUBJECT_PROJECTS, subject.getNewProjectPolicyViolations().keySet().stream().map(Project::convert).toList());
         }

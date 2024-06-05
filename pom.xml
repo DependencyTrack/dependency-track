@@ -213,6 +213,16 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Bean Validation API -->
+        <!-- 
+            Fix: "The type javax.validation.Payload cannot be resolved. It is indirectly referenced from required type com.github.packageurl.validator.PackageURL"
+         -->
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>2.0.1.Final</version>
+        </dependency>
+
         <dependency>
             <groupId>com.github.package-url</groupId>
             <artifactId>packageurl-java</artifactId>

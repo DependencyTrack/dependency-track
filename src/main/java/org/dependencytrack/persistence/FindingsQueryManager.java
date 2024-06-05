@@ -269,7 +269,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
     @SuppressWarnings("unchecked")
     public List<Finding> getFindings(Project project, boolean includeSuppressed, ZonedDateTime sinceAttributedOn) {
         final Query<Object[]> query;
-        if (sinceAttributedOn != null) {
+        if (sinceAttributedOn == null) {
             query = pm.newQuery(Query.SQL, Finding.QUERY);
             query.setParameters(project.getId());
         } else {

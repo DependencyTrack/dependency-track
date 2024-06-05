@@ -321,7 +321,7 @@ public class ScheduledNotificationRule implements Rule, Serializable {
         if (lastExecutionTime == null) {
             return ZonedDateTime.now(ZoneOffset.UTC);
         }
-        return lastExecutionTime;
+        return lastExecutionTime.withZoneSameInstant(ZoneOffset.UTC);
     }
 
     public void setLastExecutionTime(ZonedDateTime lastExecutionTime) {

@@ -35,6 +35,9 @@ import org.dependencytrack.model.VulnerabilityAlias;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -253,19 +256,26 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      */
     @SuppressWarnings("unchecked")
     public List<Finding> getFindings(Project project) {
-        return getFindings(project, false);
+        return getFindings(project, false, null);
     }
 
     /**
      * Returns a List of Finding objects for the specified project.
      * @param project the project to retrieve findings for
      * @param includeSuppressed determines if suppressed vulnerabilities should be included or not
+     * @param sinceAttributedOn only include findings that have been attributed on or after this datetime (optional)
      * @return a List of Finding objects
      */
     @SuppressWarnings("unchecked")
-    public List<Finding> getFindings(Project project, boolean includeSuppressed) {
-        final Query<Object[]> query = pm.newQuery(Query.SQL, Finding.QUERY);
-        query.setParameters(project.getId());
+    public List<Finding> getFindings(Project project, boolean includeSuppressed, ZonedDateTime sinceAttributedOn) {
+        final Query<Object[]> query;
+        if (sinceAttributedOn != null) {
+            query = pm.newQuery(Query.SQL, Finding.QUERY);
+            query.setParameters(project.getId());
+        } else {
+            query = pm.newQuery(Query.SQL, Finding.QUERY_SINCE_ATTRIBUTION);
+            query.setParameters(project.getId(), sinceAttributedOn, ZonedDateTime.now(ZoneOffset.UTC));
+        }
         final List<Object[]> list = query.executeList();
         final List<Finding> findings = new ArrayList<>();
         for (final Object[] o: list) {

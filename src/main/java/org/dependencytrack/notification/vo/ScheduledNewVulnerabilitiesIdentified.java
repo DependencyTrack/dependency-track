@@ -18,46 +18,34 @@
  */
 package org.dependencytrack.notification.vo;
 
-import java.util.EnumMap;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Severity;
-import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.scheduled.Details;
+import org.dependencytrack.model.scheduled.Overview;
+import org.dependencytrack.model.scheduled.Summary;
 
 public class ScheduledNewVulnerabilitiesIdentified {
-    private final Map<Project, List<Vulnerability>> newProjectVulnerabilities;
-    private final Map<Project, Map<Severity, List<Vulnerability>>> newProjectVulnerabilitiesBySeverity;
-    private final List<Vulnerability> newVulnerabilitiesTotal;
-    private final Map<Severity, List<Vulnerability>> newVulnerabilitiesTotalBySeverity;
+    private final Overview overview;
+    private final Summary summary;
+    private final Details details;
 
-    public ScheduledNewVulnerabilitiesIdentified(Map<Project, List<Vulnerability>> newProjectVulnerabilities) {
-        this.newProjectVulnerabilities = newProjectVulnerabilities;
-        this.newProjectVulnerabilitiesBySeverity = newProjectVulnerabilities.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().stream()
-                        .collect(Collectors.groupingBy(Vulnerability::getSeverity, () -> new EnumMap<>(Severity.class), Collectors.toList()))));
-        this.newVulnerabilitiesTotal = newProjectVulnerabilities.values().stream()
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
-        this.newVulnerabilitiesTotalBySeverity = newVulnerabilitiesTotal.stream()
-                .collect(Collectors.groupingBy(Vulnerability::getSeverity, () -> new EnumMap<>(Severity.class), Collectors.toList()));
+    public ScheduledNewVulnerabilitiesIdentified(final List<Project> ruleProjects, ZonedDateTime lastExecution) {
+        this.overview = new Overview(ruleProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
+        this.summary = new Summary(ruleProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
+        this.details = new Details(ruleProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
     }
 
-    public Map<Project, List<Vulnerability>> getNewProjectVulnerabilities() {
-        return newProjectVulnerabilities;
+    public Overview getOverview() {
+        return overview;
     }
 
-    public Map<Project, Map<Severity, List<Vulnerability>>> getNewProjectVulnerabilitiesBySeverity() {
-        return newProjectVulnerabilitiesBySeverity;
+    public Summary getSummary() {
+        return summary;
     }
 
-    public List<Vulnerability> getNewVulnerabilitiesTotal() {
-        return newVulnerabilitiesTotal;
-    }
-
-    public Map<Severity, List<Vulnerability>> getNewVulnerabilitiesTotalBySeverity() {
-        return newVulnerabilitiesTotalBySeverity;
+    public Details getDetails() {
+        return details;
     }
 }

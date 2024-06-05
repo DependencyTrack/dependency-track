@@ -51,7 +51,7 @@ public final class Overview {
                     componentCache.add(component);
 
                     Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, (String) finding.getVulnerability().get("uuid"));
-                    if (finding.getAnalysis().get("istSuppressed") instanceof Boolean suppressed) {
+                    if (finding.getAnalysis().get("isSuppressed") instanceof Boolean suppressed) {
                         if (suppressed) {
                             suppressedVulnerabilityCache.add(vulnerability);
                         } else {

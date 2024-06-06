@@ -64,15 +64,12 @@ public class SendScheduledNotificationTask implements Runnable {
             LOGGER.info("Processing notification publishing for scheduled notification rule " + rule.getUuid());
             
             for (NotificationGroup group : rule.getNotifyOn()) {
-                List<Project> affectedProjects = rule.getProjects() == null ? List.of() : rule.getProjects();
+                List<Project> affectedProjects = rule.getProjects() == null ? List.of() : qm.detach(rule.getProjects());
                 // if rule does not limit to specific projects, get all projects
                 if (affectedProjects.isEmpty()) {
                     List<Project> allProjects = qm.getProjects().getList(Project.class);
-                    affectedProjects.addAll(allProjects);
+                    affectedProjects.addAll(qm.detach(allProjects));
                 }
-
-                // detach the projects to avoid issues while modifying the list
-                affectedProjects = qm.detach(affectedProjects);
 
                 if (!affectedProjects.isEmpty() && rule.isNotifyChildren()) {
                     extendProjectListWithChildren(affectedProjects);

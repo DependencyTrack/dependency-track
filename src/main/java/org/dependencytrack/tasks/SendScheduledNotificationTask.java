@@ -64,10 +64,20 @@ public class SendScheduledNotificationTask implements Runnable {
             LOGGER.info("Processing notification publishing for scheduled notification rule " + rule.getUuid());
             
             for (NotificationGroup group : rule.getNotifyOn()) {
-                List<Project> affectedProjects = rule.getProjects();
+                List<Project> affectedProjects = rule.getProjects() == null ? List.of() : rule.getProjects();
                 // if rule does not limit to specific projects, get all projects
-                if (affectedProjects.isEmpty())
-                    affectedProjects = qm.getProjects().getList(Project.class);
+                if (affectedProjects.isEmpty()) {
+                    List<Project> allProjects = qm.getProjects().getList(Project.class);
+                    affectedProjects.addAll(allProjects);
+                }
+
+                // detach the projects to avoid issues while modifying the list
+                affectedProjects = qm.detach(affectedProjects);
+
+                if (!affectedProjects.isEmpty() && rule.isNotifyChildren()) {
+                    extendProjectListWithChildren(affectedProjects);
+                }
+
                 final Notification notificationProxy = new Notification()
                         .scope(rule.getScope())
                         .group(group)
@@ -160,6 +170,20 @@ public class SendScheduledNotificationTask implements Runnable {
             else {
                 LOGGER.error("Errors occured while processing notification publishing for scheduled notification rule " + scheduledNotificationRuleUuid);
             }
+        }
+        catch (Exception e) {
+            LOGGER.error("An error occurred while processing scheduled notification rule " + scheduledNotificationRuleUuid, e);
+        }
+    }
+
+    private void extendProjectListWithChildren(final List<Project> affectedProjects) {
+        var allProjects = List.copyOf(affectedProjects);
+        for (Project project : allProjects) {
+            if (project == null || project.getChildren() == null || project.getChildren().isEmpty()) {
+                continue;
+            }
+            var parentIndex = affectedProjects.indexOf(project);
+            affectedProjects.addAll(++parentIndex, project.getChildren());
         }
     }
 }

@@ -18,41 +18,55 @@
  */
 package org.dependencytrack.model.scheduled;
 
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Date;
 import org.dependencytrack.model.Finding;
+import org.dependencytrack.util.DateUtil;
 
 import alpine.common.logging.Logger;
 
 public class DetailInfo {
     private static final Logger LOGGER = Logger.getLogger(DetailInfo.class);
 
+    private final String componentUuid;
     private final String componentName;
     private final String componentVersion;
     private final String componentGroup;
+    private final String vulnerabilitySource;
     private final String vulnerabilityId;
     private final String vulnerabilitySeverity;
     private final String analyzer;
-    private Date attributedOn;
+    private final String attributionReferenceUrl;
+    private final String attributedOn;
     private final String analysisState;
-    private final Boolean suppressed;
+    private final String suppressed;
 
     public DetailInfo(Finding finding) {
-        this.componentName = (String) finding.getComponent().get("name");
-        this.componentVersion = (String) finding.getComponent().get("version");
-        this.componentGroup = (String) finding.getComponent().get("group");
-        this.vulnerabilityId = (String) finding.getVulnerability().get("vulnId");
-        this.vulnerabilitySeverity = (String) finding.getVulnerability().get("severity");
-        this.analyzer = (String) finding.getAttribution().get("analyzerIdentity");
-        try {
-            this.attributedOn = DateFormat.getDateTimeInstance().parse((String) finding.getAttribution().get("attributedOn"));
-        } catch (ParseException e) {
-            this.attributedOn = null;
-            LOGGER.error("An error occurred while parsing the attributedOn date for component" + this.componentName);
-        }
-        this.analysisState = (String) finding.getAnalysis().get("state");
-        this.suppressed = (Boolean) finding.getAnalysis().get("isSuppressed");
+        this.componentUuid = getValueOrUnknownIfNull(finding.getComponent().get("uuid"));
+        this.componentName = getValueOrUnknownIfNull(finding.getComponent().get("name"));
+        this.componentVersion = getValueOrUnknownIfNull(finding.getComponent().get("version"));
+        this.componentGroup = getValueOrUnknownIfNull(finding.getComponent().get("group"));
+        this.vulnerabilitySource = getValueOrUnknownIfNull(finding.getVulnerability().get("source"));
+        this.vulnerabilityId = getValueOrUnknownIfNull(finding.getVulnerability().get("vulnId"));
+        this.vulnerabilitySeverity = getValueOrUnknownIfNull(finding.getVulnerability().get("severity"));
+        this.analyzer = getValueOrUnknownIfNull(finding.getAttribution().get("analyzerIdentity"));
+        this.attributionReferenceUrl = getValueOrUnknownIfNull(finding.getAttribution().get("referenceUrl"));
+        this.attributedOn = getDateOrUnknownIfNull((Date) finding.getAttribution().get("attributedOn"));
+        this.analysisState = getValueOrUnknownIfNull(finding.getAnalysis().get("state"));
+        this.suppressed = finding.getAnalysis().get("isSuppressed") instanceof Boolean
+                ? (Boolean) finding.getAnalysis().get("isSuppressed") ? "Yes" : "No"
+                : "No";
+    }
+
+    private static String getValueOrUnknownIfNull(Object value) {
+        return value == null ? "" : value.toString();
+    }
+
+    private static String getDateOrUnknownIfNull(Date date) {
+        return date == null ? "Unknown" : DateUtil.toISO8601(date);
+    }
+
+    public String getComponentUuid() {
+        return componentUuid;
     }
 
     public String getComponentName() {
@@ -67,6 +81,10 @@ public class DetailInfo {
         return componentGroup;
     }
 
+    public String getVulnerabilitySource() {
+        return vulnerabilitySource;
+    }
+
     public String getVulnerabilityId() {
         return vulnerabilityId;
     }
@@ -79,7 +97,11 @@ public class DetailInfo {
         return analyzer;
     }
 
-    public Date getAttributedOn() {
+    public String getAttributionReferenceUrl() {
+        return attributionReferenceUrl;
+    }
+
+    public String getAttributedOn() {
         return attributedOn;
     }
 
@@ -87,7 +109,7 @@ public class DetailInfo {
         return analysisState;
     }
 
-    public Boolean getSuppressed() {
+    public String getSuppressed() {
         return suppressed;
     }
 }

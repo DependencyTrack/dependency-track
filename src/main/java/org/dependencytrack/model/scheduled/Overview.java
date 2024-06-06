@@ -45,7 +45,7 @@ public final class Overview {
 
         try (var qm = new QueryManager()) {
             for (Project project : affectedProjects) {
-                var findings = qm.getFindingsSince(project, false, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
+                var findings = qm.getFindingsSince(project, true, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
                 for (Finding finding : findings) {
                     Component component = qm.getObjectByUuid(Component.class, (String) finding.getComponent().get("uuid"));
                     componentCache.add(component);
@@ -56,11 +56,17 @@ public final class Overview {
                             suppressedVulnerabilityCache.add(vulnerability);
                         } else {
                             vulnerabilityCache.add(vulnerability);
-                            newVulnerabilitiesBySeverity.merge(vulnerability.getSeverity(), 1, Integer::sum);
                         }
                     }
                 }
             }
+        }
+
+        for (Severity severity : Severity.values()) {
+            newVulnerabilitiesBySeverity.put(severity, 0);
+        }
+        for (Vulnerability vulnerability : vulnerabilityCache) {
+            newVulnerabilitiesBySeverity.merge(vulnerability.getSeverity(), 1, Integer::sum);
         }
 
         affectedProjectsCount = affectedProjects.size();

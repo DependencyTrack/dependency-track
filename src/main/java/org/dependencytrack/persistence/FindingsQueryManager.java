@@ -259,9 +259,18 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      * @param project the project to retrieve findings for
      * @return a List of Finding objects
      */
-    @SuppressWarnings("unchecked")
     public List<Finding> getFindings(Project project) {
         return getFindings(project, false, null);
+    }
+
+    /**
+     * Returns a List of Finding objects for the specified project.
+     * @param project the project to retrieve findings for
+     * @param includeSuppressed determines if suppressed vulnerabilities should be included or not
+     * @return a List of Finding objects
+     */
+    public List<Finding> getFindings(Project project, boolean includeSuppressed) {
+        return getFindings(project, includeSuppressed, null);
     }
 
     /**

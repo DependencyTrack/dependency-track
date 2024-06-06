@@ -112,8 +112,8 @@
     {% if subject.details.affectedProjectFindings|length > 0 %}{% for
     affProjEntry in subject.details.affectedProjectFindings %}{% if affProjEntry.value|length > 0 %}
     <h3>
-      Project "{{ affProjEntry.key.name }}" [Version:
-      {{ affProjEntry.key.version }}]
+      Project "{{ affProjEntry.key.name }}"{% if affProjEntry.key.version %} [Version:
+      {{ affProjEntry.key.version }}]{% endif %}
     </h3>
     <div style="overflow-x: auto">
       <table>

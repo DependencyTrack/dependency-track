@@ -20,20 +20,19 @@ package org.dependencytrack.model.scheduled;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 
 public final class Details {
-    private final Map<Project, List<DetailInfo>> affectedProjectFindings = new TreeMap<>();
+    private final Map<Project, List<DetailInfo>> affectedProjectFindings = new LinkedHashMap<>();
 
     public Details(final List<Project> affectedProjects, ZonedDateTime lastExecution) {
         try (var qm = new QueryManager()) {
             for (Project project : affectedProjects) {
-                var findings = qm.getFindingsSince(project, false, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
+                var findings = qm.getFindingsSince(project, true, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
                 affectedProjectFindings.put(project, findings.stream().map(f -> new DetailInfo(f)).toList());
             }
         }

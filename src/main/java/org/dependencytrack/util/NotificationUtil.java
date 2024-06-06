@@ -586,13 +586,13 @@ public final class NotificationUtil {
 
     public static JsonObject toJson(final Overview overview) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
-        builder.add("affectedProjectsCount", overview.getAffectedProjectsCount());
-        builder.add("newVulnerabilitiesCount", overview.getNewVulnerabilitiesCount());
-        builder.add("affectedComponentsCount", overview.getAffectedComponentsCount());
-        builder.add("suppressedNewVulnerabilitiesCount", overview.getSuppressedNewVulnerabilitiesCount());
+        JsonUtil.add(builder, "affectedProjectsCount", overview.getAffectedProjectsCount());
+        JsonUtil.add(builder, "newVulnerabilitiesCount", overview.getNewVulnerabilitiesCount());
+        JsonUtil.add(builder, "affectedComponentsCount", overview.getAffectedComponentsCount());
+        JsonUtil.add(builder, "suppressedNewVulnerabilitiesCount", overview.getSuppressedNewVulnerabilitiesCount());
         final JsonObjectBuilder newVulnerabilitiesBySeverityBuilder = Json.createObjectBuilder();
         for (final Map.Entry<Severity, Integer> entry : overview.getNewVulnerabilitiesBySeverity().entrySet()) {
-            newVulnerabilitiesBySeverityBuilder.add(entry.getKey().name(), entry.getValue());
+            JsonUtil.add(newVulnerabilitiesBySeverityBuilder, entry.getKey().name(), entry.getValue());
         }
         builder.add("newVulnerabilitiesBySeverity", newVulnerabilitiesBySeverityBuilder.build());
         return builder.build();
@@ -602,8 +602,7 @@ public final class NotificationUtil {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         final JsonObjectBuilder affectedProjectSummariesBuilder = Json.createObjectBuilder();
         for (final Map.Entry<Project, SummaryInfo> entry : summary.getAffectedProjectSummaries().entrySet()) {
-            affectedProjectSummariesBuilder.add("projectName", entry.getKey().getName());
-            affectedProjectSummariesBuilder.add("projectVersion", entry.getKey().getVersion());
+            affectedProjectSummariesBuilder.add("project", toJson(entry.getKey()));
             affectedProjectSummariesBuilder.add("projectSummary", toJson(entry.getValue()));
         }
         builder.add("projectSummaries", affectedProjectSummariesBuilder.build());
@@ -615,19 +614,19 @@ public final class NotificationUtil {
         
         final JsonObjectBuilder newVulnerabilitiesBySeverityBuilder = Json.createObjectBuilder();
         for (final Map.Entry<Severity, Integer> entry : info.getNewVulnerabilitiesBySeverity().entrySet()) {
-            newVulnerabilitiesBySeverityBuilder.add(entry.getKey().name(), entry.getValue());
+            JsonUtil.add(newVulnerabilitiesBySeverityBuilder, entry.getKey().name(), entry.getValue());
         }
         builder.add("newVulnerabilitiesBySeverity", newVulnerabilitiesBySeverityBuilder.build());
         
         final JsonObjectBuilder totalProjectVulnerabilitiesBySeverityBuilder = Json.createObjectBuilder();
         for (final Map.Entry<Severity, Integer> entry : info.getTotalProjectVulnerabilitiesBySeverity().entrySet()) {
-            totalProjectVulnerabilitiesBySeverityBuilder.add(entry.getKey().name(), entry.getValue());
+            JsonUtil.add(totalProjectVulnerabilitiesBySeverityBuilder, entry.getKey().name(), entry.getValue());
         }
         builder.add("totalProjectVulnerabilitiesBySeverity", totalProjectVulnerabilitiesBySeverityBuilder.build());
         
         final JsonObjectBuilder suppressedNewVulnerabilitiesBySeverityBuilder = Json.createObjectBuilder();
         for (final Map.Entry<Severity, Integer> entry : info.getSuppressedNewVulnerabilitiesBySeverity().entrySet()) {
-            suppressedNewVulnerabilitiesBySeverityBuilder.add(entry.getKey().name(), entry.getValue());
+            JsonUtil.add(suppressedNewVulnerabilitiesBySeverityBuilder, entry.getKey().name(), entry.getValue());
         }
         builder.add("suppressedNewVulnerabilitiesBySeverity", suppressedNewVulnerabilitiesBySeverityBuilder.build());
         
@@ -638,19 +637,21 @@ public final class NotificationUtil {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         final JsonObjectBuilder affectedProjectFindingsBuilder = Json.createObjectBuilder();
         for (final Map.Entry<Project, List<DetailInfo>> entry : details.getAffectedProjectFindings().entrySet()) {
-            affectedProjectFindingsBuilder.add("projectName", entry.getKey().getName());
-            affectedProjectFindingsBuilder.add("projectVersion", entry.getKey().getVersion());
+            affectedProjectFindingsBuilder.add("project", toJson(entry.getKey()));
             final JsonObjectBuilder findingsBuilder = Json.createObjectBuilder();
             for (final DetailInfo detailInfo : entry.getValue()) {
-                findingsBuilder.add("componentName", detailInfo.getComponentName());
-                findingsBuilder.add("componentVersion", detailInfo.getComponentVersion());
-                findingsBuilder.add("componentGroup", detailInfo.getComponentGroup());
-                findingsBuilder.add("vulnerabilityId", detailInfo.getVulnerabilityId());
-                findingsBuilder.add("vulnerabilitySeverity", detailInfo.getVulnerabilitySeverity());
-                findingsBuilder.add("analyzer", detailInfo.getAnalyzer());
-                findingsBuilder.add("attributedOn", detailInfo.getAttributedOn() == null ? "---" : DateUtil.toISO8601(detailInfo.getAttributedOn()));
-                findingsBuilder.add("analysisState", detailInfo.getAnalysisState());
-                findingsBuilder.add("suppressed", detailInfo.getSuppressed());
+                JsonUtil.add(findingsBuilder, "componentUuid", detailInfo.getComponentUuid());
+                JsonUtil.add(findingsBuilder, "componentName", detailInfo.getComponentName());
+                JsonUtil.add(findingsBuilder, "componentVersion", detailInfo.getComponentVersion());
+                JsonUtil.add(findingsBuilder, "componentGroup", detailInfo.getComponentGroup());
+                JsonUtil.add(findingsBuilder, "vulnerabilitySource", detailInfo.getVulnerabilitySource());
+                JsonUtil.add(findingsBuilder, "vulnerabilityId", detailInfo.getVulnerabilityId());
+                JsonUtil.add(findingsBuilder, "vulnerabilitySeverity", detailInfo.getVulnerabilitySeverity());
+                JsonUtil.add(findingsBuilder, "analyzer", detailInfo.getAnalyzer());
+                JsonUtil.add(findingsBuilder, "attributionReferenceUrl", detailInfo.getAttributionReferenceUrl());
+                JsonUtil.add(findingsBuilder, "attributedOn", detailInfo.getAttributedOn());
+                JsonUtil.add(findingsBuilder, "analysisState", detailInfo.getAnalysisState());
+                JsonUtil.add(findingsBuilder, "suppressed", detailInfo.getSuppressed());
             }
             affectedProjectFindingsBuilder.add("projectFindings", findingsBuilder.build());
         }

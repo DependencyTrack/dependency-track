@@ -20,11 +20,12 @@ package org.dependencytrack.tasks;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.NotificationPublisher;
@@ -36,7 +37,6 @@ import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.NotificationUtil;
 
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
@@ -63,35 +63,27 @@ public class SendScheduledNotificationTask implements Runnable {
             Boolean atLeastOneSuccessfulPublish = false;
 
             LOGGER.info("Processing notification publishing for scheduled notification rule " + rule.getUuid());
+            final ZonedDateTime lastExecutionTime = ZonedDateTime.of(2024, 05, 16, 0, 0, 0, 0, ZoneOffset.UTC); // rule.getLastExecutionTime();
             
             for (NotificationGroup group : rule.getNotifyOn()) {
-                List<Project> affectedProjects = rule.getProjects() == null ? List.of() : qm.detach(rule.getProjects());
-                // if rule does not limit to specific projects, get all projects
-                if (affectedProjects.isEmpty()) {
-                    List<Project> allProjects = qm.getProjects().getList(Project.class);
-                    affectedProjects.addAll(qm.detach(allProjects));
-                }
-
-                if (!affectedProjects.isEmpty() && rule.isNotifyChildren()) {
-                    extendProjectListWithChildren(affectedProjects);
-                }
+                List<Project> affectedProjects = List.of();
+                affectedProjects = evaluateAffectedProjects(qm, rule);
 
                 final Notification notificationProxy = new Notification()
                         .scope(rule.getScope())
                         .group(group)
-                        .title(NotificationUtil.generateNotificationTitle(group, affectedProjects))
                         .level(rule.getNotificationLevel());
 
                 switch (group) {
                     case NEW_VULNERABILITY:
-                        ScheduledNewVulnerabilitiesIdentified vulnSubject = new ScheduledNewVulnerabilitiesIdentified(affectedProjects, ZonedDateTime.of(2023, 05, 20, 0, 0, 0, 0, ZoneId.systemDefault())/* rule.getLastExecutionTime() */);
+                        ScheduledNewVulnerabilitiesIdentified vulnSubject = new ScheduledNewVulnerabilitiesIdentified(affectedProjects, lastExecutionTime);
                         if(vulnSubject.getOverview().getNewVulnerabilitiesCount() == 0 && rule.getPublishOnlyWithUpdates())
                             continue;
                         notificationProxy
-                                .title("[Dependency-Track] Scheduled Notification of Rule “" + rule.getName() + "”")
+                                .title(vulnSubject.getOverview().getNewVulnerabilitiesCount() + " new Vulnerabilities in " + vulnSubject.getOverview().getAffectedComponentsCount() + " components in Scheduled Rule '" + rule.getName() + "'")
                                 .content("Find below a summary of new vulnerabilities since "
-                                        + rule.getLastExecutionTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                                        + " in Scheduled Notification Rule “" + rule.getName() + "”.")
+                                        + lastExecutionTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                                        + " in Scheduled Notification Rule '" + rule.getName() + "'.")
                                 .subject(vulnSubject);
                         break;
                     case POLICY_VIOLATION:
@@ -174,14 +166,56 @@ public class SendScheduledNotificationTask implements Runnable {
         }
     }
 
+    private List<Project> evaluateAffectedProjects(QueryManager qm, ScheduledNotificationRule rule) {
+        List<Project> affectedProjects;
+        /* 
+         * TODO:
+         * To workaround the inconsitent parent-child relationship in projects delivered
+         * by QueryManager.getAllProjects() (and some other multi-project methods), we
+         * need to retrieve them one by one by their UUIDs. This way it was empirically
+         * proven that the parent-child relationship is (more) consistent.
+         */
+        if(rule.getProjects().isEmpty()){
+            // if rule does not limit to specific projects, get all projects and their children, if configured
+            affectedProjects = qm.getAllProjects()
+                    .stream()
+                    .map(p -> qm.detach(qm.getProject(p.getUuid().toString())))
+                    .filter(p -> rule.isNotifyChildren() ? true : p.getParent() == null)
+                    .collect(Collectors.toList());
+        } else {
+            // use projects defined in rule and with children if rule is set to notify children
+            affectedProjects = rule.getProjects()
+                    .stream()
+                    .map(p -> qm.detach(qm.getProject(p.getUuid().toString())))
+                    .collect(Collectors.toList());
+            if (rule.isNotifyChildren()) {
+                extendProjectListWithChildren(affectedProjects);
+            }
+        }
+        return affectedProjects;
+    }
+
     private void extendProjectListWithChildren(final List<Project> affectedProjects) {
         var allProjects = List.copyOf(affectedProjects);
-        for (Project project : allProjects) {
-            if (project == null || project.getChildren() == null || project.getChildren().isEmpty()) {
-                continue;
+        try (var qm = new QueryManager()) {
+            for (Project project : allProjects) {
+                if (project == null || project.getChildren() == null || project.getChildren().isEmpty()) {
+                    continue;
+                }
+                var parentIndex = affectedProjects.indexOf(project);
+                var childCounter = 0;
+                for (Project child : project.getChildren()) {
+                    if (affectedProjects
+                            .stream()
+                            .filter(p -> p.getUuid().equals(child.getUuid()))
+                            .findAny()
+                            .isPresent()) {
+                        continue;
+                    }
+                    childCounter++;
+                    affectedProjects.add(parentIndex + childCounter, child);
+                }
             }
-            var parentIndex = affectedProjects.indexOf(project);
-            affectedProjects.addAll(++parentIndex, project.getChildren());
         }
     }
 }

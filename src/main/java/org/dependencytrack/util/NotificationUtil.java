@@ -44,11 +44,15 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
-import org.dependencytrack.model.scheduled.DetailInfo;
-import org.dependencytrack.model.scheduled.Details;
-import org.dependencytrack.model.scheduled.Overview;
-import org.dependencytrack.model.scheduled.Summary;
-import org.dependencytrack.model.scheduled.SummaryInfo;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationDetails;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationOverview;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummary;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummaryInfo;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityDetails;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityDetailsInfo;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityOverview;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilitySummary;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilitySummaryInfo;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -584,7 +588,7 @@ public final class NotificationUtil {
         return builder.build();
     }
 
-    public static JsonObject toJson(final Overview overview) {
+    public static JsonObject toJson(final VulnerabilityOverview overview) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         JsonUtil.add(builder, "affectedProjectsCount", overview.getAffectedProjectsCount());
         JsonUtil.add(builder, "newVulnerabilitiesCount", overview.getNewVulnerabilitiesCount());
@@ -598,10 +602,10 @@ public final class NotificationUtil {
         return builder.build();
     }
 
-    public static JsonObject toJson(final Summary summary){
+    public static JsonObject toJson(final VulnerabilitySummary summary){
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         final JsonObjectBuilder affectedProjectSummariesBuilder = Json.createObjectBuilder();
-        for (final Map.Entry<Project, SummaryInfo> entry : summary.getAffectedProjectSummaries().entrySet()) {
+        for (final Map.Entry<Project, VulnerabilitySummaryInfo> entry : summary.getAffectedProjectSummaries().entrySet()) {
             affectedProjectSummariesBuilder.add("project", toJson(entry.getKey()));
             affectedProjectSummariesBuilder.add("projectSummary", toJson(entry.getValue()));
         }
@@ -609,7 +613,7 @@ public final class NotificationUtil {
         return builder.build();
     }
 
-    private static JsonValue toJson(SummaryInfo info) {
+    private static JsonValue toJson(VulnerabilitySummaryInfo info) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         
         final JsonObjectBuilder newVulnerabilitiesBySeverityBuilder = Json.createObjectBuilder();
@@ -633,13 +637,13 @@ public final class NotificationUtil {
         return builder.build();
     }
 
-    private static JsonObject toJson(Details details) {
+    private static JsonObject toJson(VulnerabilityDetails details) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         final JsonObjectBuilder affectedProjectFindingsBuilder = Json.createObjectBuilder();
-        for (final Map.Entry<Project, List<DetailInfo>> entry : details.getAffectedProjectFindings().entrySet()) {
+        for (final Map.Entry<Project, List<VulnerabilityDetailsInfo>> entry : details.getAffectedProjectFindings().entrySet()) {
             affectedProjectFindingsBuilder.add("project", toJson(entry.getKey()));
             final JsonObjectBuilder findingsBuilder = Json.createObjectBuilder();
-            for (final DetailInfo detailInfo : entry.getValue()) {
+            for (final VulnerabilityDetailsInfo detailInfo : entry.getValue()) {
                 JsonUtil.add(findingsBuilder, "componentUuid", detailInfo.getComponentUuid());
                 JsonUtil.add(findingsBuilder, "componentName", detailInfo.getComponentName());
                 JsonUtil.add(findingsBuilder, "componentVersion", detailInfo.getComponentVersion());
@@ -661,27 +665,73 @@ public final class NotificationUtil {
 
     public static JsonObject toJson(ScheduledPolicyViolationsIdentified vo) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
-        if (vo.getNewProjectPolicyViolations() != null && vo.getNewProjectPolicyViolations().size() > 0) {
-            final JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
-            for (final Map.Entry<Project, List<PolicyViolation>> entry : vo.getNewProjectPolicyViolations().entrySet()) {
-                final JsonObjectBuilder projectBuilder = Json.createObjectBuilder();
-                projectBuilder.add("project", toJson(entry.getKey()));
-                final JsonArrayBuilder violationsBuilder = Json.createArrayBuilder();
-                for (final PolicyViolation policyViolation : entry.getValue()) {
-                    violationsBuilder.add(toJson(policyViolation));
-                }
-                projectBuilder.add("policyViolations", violationsBuilder.build());
-                projectsBuilder.add(projectBuilder.build());
-            }
-            builder.add("newProjectPolicyViolations", projectsBuilder.build());
+        builder.add("overview", toJson(vo.getOverview()));
+        builder.add("summary", toJson(vo.getSummary()));
+        builder.add("details", toJson(vo.getDetails()));
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final PolicyViolationOverview overview) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        JsonUtil.add(builder, "affectedProjectsCount", overview.getAffectedProjectsCount());
+        JsonUtil.add(builder, "newViolationsCount", overview.getNewViolationsCount());
+        JsonUtil.add(builder, "affectedComponentsCount", overview.getAffectedComponentsCount());
+        JsonUtil.add(builder, "suppressedNewViolationsCount", overview.getSuppressedViolationsCount());
+        final JsonObjectBuilder newViolationsByRiskTypeBuilder = Json.createObjectBuilder();
+        for (final Map.Entry<PolicyViolation.Type, Integer> entry : overview.getNewViolationsByRiskType().entrySet()) {
+            JsonUtil.add(newViolationsByRiskTypeBuilder, entry.getKey().name(), entry.getValue());
         }
-        if (vo.getNewPolicyViolationsTotal() != null && vo.getNewPolicyViolationsTotal().size() > 0) {
+        builder.add("newViolationsByRiskType", newViolationsByRiskTypeBuilder.build());
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final PolicyViolationSummary summary){
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        final JsonObjectBuilder affectedProjectSummariesBuilder = Json.createObjectBuilder();
+        for (final Map.Entry<Project, PolicyViolationSummaryInfo> entry : summary.getAffectedProjectSummaries().entrySet()) {
+            affectedProjectSummariesBuilder.add("project", toJson(entry.getKey()));
+            affectedProjectSummariesBuilder.add("projectSummary", toJson(entry.getValue()));
+        }
+        builder.add("affectedProjectSummaries", affectedProjectSummariesBuilder.build());
+        return builder.build();
+    }
+
+    private static JsonValue toJson(PolicyViolationSummaryInfo info) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        
+        final JsonObjectBuilder newViolationsByRiskTypeBuilder = Json.createObjectBuilder();
+        for (final Map.Entry<PolicyViolation.Type, Integer> entry : info.getNewViolationsByRiskType().entrySet()) {
+            JsonUtil.add(newViolationsByRiskTypeBuilder, entry.getKey().name(), entry.getValue());
+        }
+        builder.add("newViolationsByRiskType", newViolationsByRiskTypeBuilder.build());
+        
+        final JsonObjectBuilder totalProjectViolationsByRiskTypeBuilder = Json.createObjectBuilder();
+        for (final Map.Entry<PolicyViolation.Type, Integer> entry : info.getTotalProjectViolationsByRiskType().entrySet()) {
+            JsonUtil.add(totalProjectViolationsByRiskTypeBuilder, entry.getKey().name(), entry.getValue());
+        }
+        builder.add("totalProjectViolationsByRiskType", totalProjectViolationsByRiskTypeBuilder.build());
+        
+        final JsonObjectBuilder suppressedNewViolationsByRiskTypeBuilder = Json.createObjectBuilder();
+        for (final Map.Entry<PolicyViolation.Type, Integer> entry : info.getSuppressedNewViolationsByRiskType().entrySet()) {
+            JsonUtil.add(suppressedNewViolationsByRiskTypeBuilder, entry.getKey().name(), entry.getValue());
+        }
+        builder.add("suppressedNewViolationsByRiskType", suppressedNewViolationsByRiskTypeBuilder.build());
+        
+        return builder.build();
+    }
+
+    private static JsonObject toJson(PolicyViolationDetails details) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        final JsonObjectBuilder affectedProjectViolationsBuilder = Json.createObjectBuilder();
+        for (final Map.Entry<Project, List<PolicyViolationIdentified>> entry : details.getAffectedProjectViolations().entrySet()) {
+            affectedProjectViolationsBuilder.add("project", toJson(entry.getKey()));
             final JsonArrayBuilder violationsBuilder = Json.createArrayBuilder();
-            for (final PolicyViolation policyViolation : vo.getNewPolicyViolationsTotal()) {
-                violationsBuilder.add(toJson(policyViolation));
+            for (final PolicyViolationIdentified violation : entry.getValue()) {
+                violationsBuilder.add(toJson(violation));
             }
-            builder.add("newPolicyViolationsTotal", violationsBuilder.build());
+            affectedProjectViolationsBuilder.add("violations", violationsBuilder.build());
         }
+        builder.add("projectDetails", affectedProjectViolationsBuilder.build());
         return builder.build();
     }
 

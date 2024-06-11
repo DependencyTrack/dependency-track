@@ -22,30 +22,30 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.scheduled.Details;
-import org.dependencytrack.model.scheduled.Overview;
-import org.dependencytrack.model.scheduled.Summary;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityDetails;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityOverview;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilitySummary;
 
 public class ScheduledNewVulnerabilitiesIdentified {
-    private final Overview overview;
-    private final Summary summary;
-    private final Details details;
+    private final VulnerabilityOverview overview;
+    private final VulnerabilitySummary summary;
+    private final VulnerabilityDetails details;
 
-    public ScheduledNewVulnerabilitiesIdentified(final List<Project> ruleProjects, ZonedDateTime lastExecution) {
-        this.overview = new Overview(ruleProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
-        this.summary = new Summary(ruleProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
-        this.details = new Details(ruleProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
+    public ScheduledNewVulnerabilitiesIdentified(final List<Project> affectedProjects, ZonedDateTime lastExecution) {
+        this.overview = new VulnerabilityOverview(affectedProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
+        this.summary = new VulnerabilitySummary(affectedProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
+        this.details = new VulnerabilityDetails(affectedProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
     }
 
-    public Overview getOverview() {
+    public VulnerabilityOverview getOverview() {
         return overview;
     }
 
-    public Summary getSummary() {
+    public VulnerabilitySummary getSummary() {
         return summary;
     }
 
-    public Details getDetails() {
+    public VulnerabilityDetails getDetails() {
         return details;
     }
 }

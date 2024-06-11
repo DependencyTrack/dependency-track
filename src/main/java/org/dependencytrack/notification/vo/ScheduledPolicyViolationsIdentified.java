@@ -18,28 +18,34 @@
  */
 package org.dependencytrack.notification.vo;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
-
-import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationDetails;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationOverview;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummary;
 
 public class ScheduledPolicyViolationsIdentified {
-    private final Map<Project, List<PolicyViolation>> newProjectPolicyViolations;
-    private final List<PolicyViolation> newPolicyViolationsTotal;
+    private final PolicyViolationOverview overview;
+    private final PolicyViolationSummary summary;
+    private final PolicyViolationDetails details;
 
-    public ScheduledPolicyViolationsIdentified(Map<Project, List<PolicyViolation>> newProjectPolicyViolations) {
-        this.newProjectPolicyViolations = newProjectPolicyViolations;
-        this.newPolicyViolationsTotal = newProjectPolicyViolations.values().stream()
-                .flatMap(List::stream)
-                .collect(java.util.stream.Collectors.toList());
+    public ScheduledPolicyViolationsIdentified(final List<Project> affectedProjects, ZonedDateTime lastExecution) {
+        this.overview = new PolicyViolationOverview(affectedProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
+        this.summary = new PolicyViolationSummary(affectedProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
+        this.details = new PolicyViolationDetails(affectedProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
     }
 
-    public Map<Project, List<PolicyViolation>> getNewProjectPolicyViolations() {
-        return newProjectPolicyViolations;
+    public PolicyViolationOverview getOverview() {
+        return overview;
     }
 
-    public List<PolicyViolation> getNewPolicyViolationsTotal() {
-        return newPolicyViolationsTotal;
+    public PolicyViolationSummary getSummary() {
+        return summary;
+    }
+
+    public PolicyViolationDetails getDetails() {
+        return details;
     }
 }

@@ -36,6 +36,7 @@ import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
+import org.dependencytrack.notification.vo.ScheduledPolicyViolationsIdentified;
 import org.dependencytrack.persistence.QueryManager;
 
 import alpine.common.logging.Logger;
@@ -87,17 +88,15 @@ public class SendScheduledNotificationTask implements Runnable {
                                 .subject(vulnSubject);
                         break;
                     case POLICY_VIOLATION:
-                        // var newProjectPolicyViolations = qm.getNewPolicyViolationsForProjectsSince(rule.getLastExecutionTime(), projectIds);
-                        // if(newProjectPolicyViolations.isEmpty() && rule.getPublishOnlyWithUpdates())
-                        //     continue;
-                        // ScheduledPolicyViolationsIdentified policySubject = new ScheduledPolicyViolationsIdentified(newProjectPolicyViolations);
-                        // notificationProxy
-                        //         .content(NotificationUtil.generatePolicyScheduledNotificationContent(
-                        //                 rule,
-                        //                 policySubject.getNewPolicyViolationsTotal(),
-                        //                 newProjectPolicyViolations.keySet().stream().toList(),
-                        //                 rule.getLastExecutionTime()))
-                        //         .subject(policySubject);
+                    ScheduledPolicyViolationsIdentified policySubject = new ScheduledPolicyViolationsIdentified(affectedProjects, lastExecutionTime);
+                    if(policySubject.getOverview().getNewViolationsCount() == 0 && rule.getPublishOnlyWithUpdates())
+                        continue;
+                    notificationProxy
+                            .title(policySubject.getOverview().getNewViolationsCount() + " new Policy Violations in " + policySubject.getOverview().getAffectedComponentsCount() + " components in Scheduled Rule '" + rule.getName() + "'")
+                            .content("Find below a summary of new policy violations since "
+                                    + lastExecutionTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                                    + " in Scheduled Notification Rule '" + rule.getName() + "'.")
+                            .subject(policySubject);
                         break;
                     default:
                         LOGGER.warn(group.name() + " is not a supported notification group for scheduled publishing");

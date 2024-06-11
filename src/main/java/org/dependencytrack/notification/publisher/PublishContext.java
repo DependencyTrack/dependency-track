@@ -107,7 +107,7 @@ public record PublishContext(String notificationGroup, String notificationLevel,
         } else if (notification.getSubject() instanceof final ScheduledNewVulnerabilitiesIdentified subject) {
             notificationSubjects.put(SUBJECT_PROJECTS, subject.getSummary().getAffectedProjectSummaries().keySet().stream().map(Project::convert).toList());
         } else if (notification.getSubject() instanceof final ScheduledPolicyViolationsIdentified subject) {
-            notificationSubjects.put(SUBJECT_PROJECTS, subject.getNewProjectPolicyViolations().keySet().stream().map(Project::convert).toList());
+            notificationSubjects.put(SUBJECT_PROJECTS, subject.getSummary().getAffectedProjectSummaries().keySet().stream().map(Project::convert).toList());
         }
 
         return new PublishContext(notification.getGroup(), Optional.ofNullable(notification.getLevel()).map(Enum::name).orElse(null),

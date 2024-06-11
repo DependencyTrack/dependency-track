@@ -23,7 +23,6 @@ import java.util.List;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class ScheduledNewVulnerabilitiesIdentifiedTest {

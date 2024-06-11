@@ -283,7 +283,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
             query.setParameters(project.getId());
         } else {
             query = pm.newQuery(Query.SQL, Finding.QUERY_SINCE_ATTRIBUTION);
-            query.setParameters(project.getId(), sinceAttributedOn, ZonedDateTime.now(ZoneOffset.UTC));
+            query.setParameters(project.getId(), sinceAttributedOn.withZoneSameInstant(ZoneOffset.UTC), ZonedDateTime.now(ZoneOffset.UTC));
         }
         final List<Object[]> list = query.executeList();
         final List<Finding> findings = new ArrayList<>();

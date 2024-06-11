@@ -709,6 +709,10 @@ public class QueryManager extends AlpineQueryManager {
         return getPolicyQueryManager().getPolicyViolations(project, includeSuppressed);
     }
 
+    public PaginatedResult getPolicyViolationsSince(final Project project, boolean includeSuppressed, ZonedDateTime sinceOccurred) {
+        return getPolicyQueryManager().getPolicyViolations(project, includeSuppressed, sinceOccurred);
+    }
+
     public PaginatedResult getPolicyViolations(final Component component, boolean includeSuppressed) {
         return getPolicyQueryManager().getPolicyViolations(component, includeSuppressed);
     }

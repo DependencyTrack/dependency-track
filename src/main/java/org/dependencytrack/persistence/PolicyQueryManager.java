@@ -21,7 +21,6 @@ package org.dependencytrack.persistence;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 
-import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
@@ -39,9 +38,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 final class PolicyQueryManager extends QueryManager implements IQueryManager {
 
@@ -298,44 +295,9 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * Returns a List of all Policy objects since given datetime for given project ids.
-     * @param dateTime DateTime, since which the policy violations shall be fetched
-     * @param projectIds IDs of the projects, that shall be used for filtering
-     * @return a List of {@link PolicyViolation}s
-     */
-    @SuppressWarnings("unchecked")
-    public Map<Project, List<PolicyViolation>> getNewPolicyViolationsForProjectsSince(ZonedDateTime dateTime, List<Long> projectIds){
-        String queryString = "SELECT PROJECT_ID, ID " +
-                "FROM POLICYVIOLATION " +
-                "WHERE (TIMESTAMP BETWEEN ? AND ?) ";
-        boolean hasProjectLimitation = projectIds != null && !projectIds.isEmpty();
-        if(hasProjectLimitation){
-            queryString.concat("AND (PROJECT_ID IN ?) ");
-        }
-        queryString.concat("ORDER BY PROJECT_ID ASC");
-        final Query<Object> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, queryString);
-        final List<Object[]> totalList = hasProjectLimitation
-                ? (List<Object[]>) query.execute(dateTime, ZonedDateTime.now(ZoneOffset.UTC), projectIds)
-                : (List<Object[]>) query.execute(dateTime, ZonedDateTime.now(ZoneOffset.UTC));
-        Map<Project, List<PolicyViolation>> projectPolicyViolations = new HashMap<>();
-        for(Object[] obj : totalList){
-            Project project = getObjectById(Project.class, obj[0]);
-            PolicyViolation policyViolation = getObjectById(PolicyViolation.class, obj[1]);
-            if(project == null || policyViolation == null){
-                continue;
-            }
-            var detachedPolicyViolation = pm.detachCopy(policyViolation);
-            if(!projectPolicyViolations.containsKey(project)){
-                projectPolicyViolations.put(project, new ArrayList<>());
-            }
-            projectPolicyViolations.get(project).add(detachedPolicyViolation);
-        }
-        return projectPolicyViolations;
-    }
-
-    /**
      * Returns a List of all Policy violations for a specific project.
      * @param project the project to retrieve violations for
+     * @param includeSuppressed Whether to include suppressed violations or not
      * @return a List of all Policy violations
      */
     @SuppressWarnings("unchecked")
@@ -353,6 +315,39 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         } else {
             query.setFilter(queryFilter);
             result = execute(query, project.getId());
+        }
+        for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
+            violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
+            violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
+        }
+        return result;
+    }
+
+    /**
+     * Returns a List of all Policy violations for a specific project.
+     * @param project the project to retrieve violations for
+     * @param includeSuppressed Whether to include suppressed violations or not
+     * @param since the date to retrieve violations since
+     * @return a List of all Policy violations
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed, ZonedDateTime since) {
+        PaginatedResult result;
+        final String queryFilter = includeSuppressed
+                ? "project.id == :pid && timestamp >= :since"
+                : "project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null) && timestamp >= :since";
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc, component.name, component.version");
+        }
+        if (filter != null) {
+            query.setFilter(queryFilter + " && (policyCondition.policy.name.toLowerCase().matches(:filter) || component.name.toLowerCase().matches(:filter))");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            result = execute(query, project.getId(), Date.from(since.withZoneSameInstant(ZoneOffset.UTC).toInstant()), filterString);
+        } else {
+            query.setFilter(queryFilter);
+            result = execute(query, project.getId(), Date.from(since.withZoneSameInstant(ZoneOffset.UTC).toInstant()));
         }
         for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default

@@ -27,6 +27,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -81,20 +82,22 @@ public class PolicyEngine {
         final List<PolicyViolation> existingPolicyViolations = qm.detach(qm.getAllPolicyViolations(component));
         for (final Policy policy : policies) {
             if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())
-                    || isPolicyAssignedToProjectTag(policy, component.getProject())) {
+                || isPolicyAssignedToProjectTag(policy, component.getProject())) {
                 LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy (" + policy.getUuid() + ")");
                 final List<PolicyConditionViolation> policyConditionViolations = new ArrayList<>();
                 int policyConditionsViolated = 0;
                 for (final PolicyEvaluator evaluator : evaluators) {
                     evaluator.setQueryManager(qm);
-                    final List<PolicyConditionViolation> policyConditionViolationsFromEvaluator = evaluator.evaluate(policy, component);
-                    if (!policyConditionViolationsFromEvaluator.isEmpty()) {
-                        policyConditionViolations.addAll(policyConditionViolationsFromEvaluator);
-                        policyConditionsViolated += (int) policyConditionViolationsFromEvaluator.stream()
+                    if (!component.isInternal()) {
+                        final List<PolicyConditionViolation> policyConditionViolationsFromEvaluator = evaluator.evaluate(policy, component);
+                        if (!policyConditionViolationsFromEvaluator.isEmpty()) {
+                            policyConditionViolations.addAll(policyConditionViolationsFromEvaluator);
+                            policyConditionsViolated += (int) policyConditionViolationsFromEvaluator.stream()
                                 .map(pcv -> pcv.getPolicyCondition().getId())
                                 .sorted()
                                 .distinct()
                                 .count();
+                        }
                     }
                 }
                 if (Policy.Operator.ANY == policy.getOperator()) {
@@ -142,7 +145,7 @@ public class PolicyEngine {
         return switch (subject) {
             case CWE, SEVERITY, VULNERABILITY_ID, EPSS -> PolicyViolation.Type.SECURITY;
             case AGE, COORDINATES, PACKAGE_URL, CPE, SWID_TAGID, COMPONENT_HASH, VERSION, VERSION_DISTANCE ->
-                    PolicyViolation.Type.OPERATIONAL;
+                PolicyViolation.Type.OPERATIONAL;
             case LICENSE, LICENSE_GROUP -> PolicyViolation.Type.LICENSE;
         };
     }

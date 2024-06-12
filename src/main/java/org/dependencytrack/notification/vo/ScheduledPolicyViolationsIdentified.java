@@ -18,13 +18,17 @@
  */
 package org.dependencytrack.notification.vo;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationDetails;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationOverview;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummary;
+import org.dependencytrack.persistence.QueryManager;
 
 public class ScheduledPolicyViolationsIdentified {
     private final PolicyViolationOverview overview;
@@ -32,9 +36,16 @@ public class ScheduledPolicyViolationsIdentified {
     private final PolicyViolationDetails details;
 
     public ScheduledPolicyViolationsIdentified(final List<Project> affectedProjects, ZonedDateTime lastExecution) {
-        this.overview = new PolicyViolationOverview(affectedProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
-        this.summary = new PolicyViolationSummary(affectedProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
-        this.details = new PolicyViolationDetails(affectedProjects, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
+        try (var qm = new QueryManager()){
+            Map<Project, List<PolicyViolation>> affectedProjectViolations = new LinkedHashMap<>();
+            for (Project project : affectedProjects) {
+                var violations = qm.getPolicyViolationsSince(project, true, lastExecution).getList(PolicyViolation.class);
+                affectedProjectViolations.put(project, violations);
+            }
+            this.overview = new PolicyViolationOverview(affectedProjectViolations);
+            this.summary = new PolicyViolationSummary(affectedProjectViolations);
+            this.details = new PolicyViolationDetails(affectedProjectViolations);
+        }
     }
 
     public PolicyViolationOverview getOverview() {

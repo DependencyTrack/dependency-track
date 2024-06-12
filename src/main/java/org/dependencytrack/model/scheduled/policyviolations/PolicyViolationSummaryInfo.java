@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.dependencytrack.model.PolicyViolation;
-import org.dependencytrack.persistence.QueryManager;
 
 public final class PolicyViolationSummaryInfo {
     private final Map<PolicyViolation.Type, Integer> newViolationsByRiskType = new EnumMap<>(PolicyViolation.Type.class);
@@ -31,16 +30,14 @@ public final class PolicyViolationSummaryInfo {
     private final Map<PolicyViolation.Type, Integer> suppressedNewViolationsByRiskType = new EnumMap<>(PolicyViolation.Type.class);
 
     public PolicyViolationSummaryInfo(List<PolicyViolation> violations) {
-        try (var qm = new QueryManager()) {
-            for (PolicyViolation violation : violations) {
-                var analysis = violation.getAnalysis();
-                if (analysis != null && analysis.isSuppressed()) {
-                    suppressedNewViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
-                } else {
-                    newViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
-                }
-                totalProjectViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
+        for (PolicyViolation violation : violations) {
+            var analysis = violation.getAnalysis();
+            if (analysis != null && analysis.isSuppressed()) {
+                suppressedNewViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
+            } else {
+                newViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
             }
+            totalProjectViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
         }
     }
 

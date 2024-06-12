@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.model.scheduled.policyviolations;
 
-import java.time.ZonedDateTime;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,14 +35,13 @@ public final class PolicyViolationOverview {
     private final Integer affectedComponentsCount;
     private final Integer suppressedViolationsCount;
 
-    public PolicyViolationOverview(final List<Project> affectedProjects, ZonedDateTime lastExecution) {
+    public PolicyViolationOverview(Map<Project, List<PolicyViolation>> affectedProjectViolations) {
         var componentCache = new HashSet<Component>();
         var violationCache = new HashSet<PolicyViolation>();
         var suppressedViolationCache = new HashSet<PolicyViolation>();
 
         try (var qm = new QueryManager()) {
-            for (Project project : affectedProjects) {
-                var violations = qm.getPolicyViolationsSince(project, true, lastExecution).getList(PolicyViolation.class);
+            for (var violations : affectedProjectViolations.values()) {
                 for (PolicyViolation violation : violations) {
                     Component component = qm.getObjectByUuid(Component.class, violation.getComponent().getUuid().toString());
                     componentCache.add(component);
@@ -65,7 +63,7 @@ public final class PolicyViolationOverview {
             newViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
         }
 
-        affectedProjectsCount = affectedProjects.size();
+        affectedProjectsCount = affectedProjectViolations.size();
         newViolationsCount = violationCache.size();
         affectedComponentsCount = componentCache.size();
         suppressedViolationsCount = suppressedViolationCache.size();

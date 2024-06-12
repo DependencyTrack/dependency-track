@@ -18,25 +18,19 @@
  */
 package org.dependencytrack.model.scheduled.policyviolations;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.persistence.QueryManager;
 
 public final class PolicyViolationSummary {
     private final Map<Project, PolicyViolationSummaryInfo> affectedProjectSummaries = new LinkedHashMap<>();
-
-    public PolicyViolationSummary(final List<Project> affectedProjects, ZonedDateTime lastExecution) {
-        try (var qm = new QueryManager()) {
-            for (Project project : affectedProjects) {
-                var violations = qm.getPolicyViolationsSince(project, true, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
-                affectedProjectSummaries.put(project, new PolicyViolationSummaryInfo(violations.getList(PolicyViolation.class)));
-            }
+    
+    public PolicyViolationSummary(Map<Project, List<PolicyViolation>> affectedProjectViolations) {
+        for (var entry : affectedProjectViolations.entrySet()) {
+            affectedProjectSummaries.put(entry.getKey(), new PolicyViolationSummaryInfo(entry.getValue()));
         }
     }
 

@@ -24,21 +24,17 @@ import java.util.Map;
 
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 
 public final class PolicyViolationDetails {
-    private final Map<Project, List<PolicyViolationIdentified>> affectedProjectViolations = new LinkedHashMap<>();
+    private final Map<Project, List<PolicyViolation>> affectedProjectViolations = new LinkedHashMap<>();
 
     public PolicyViolationDetails(Map<Project, List<PolicyViolation>> affectedProjectViolations) {
         for (var entry : affectedProjectViolations.entrySet()) {
-            this.affectedProjectViolations.put(entry.getKey(), entry.getValue()
-                    .stream()
-                    .map(v -> new PolicyViolationIdentified(v, v.getComponent(), v.getProject()))
-                    .toList());
+            this.affectedProjectViolations.put(entry.getKey(), entry.getValue());
         }
     }
 
-    public Map<Project, List<PolicyViolationIdentified>> getAffectedProjectViolations() {
+    public Map<Project, List<PolicyViolation>> getAffectedProjectViolations() {
         return affectedProjectViolations;
     }
 }

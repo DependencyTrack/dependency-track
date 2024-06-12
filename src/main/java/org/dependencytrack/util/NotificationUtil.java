@@ -670,7 +670,7 @@ public final class NotificationUtil {
         JsonUtil.add(builder, "affectedProjectsCount", overview.getAffectedProjectsCount());
         JsonUtil.add(builder, "newViolationsCount", overview.getNewViolationsCount());
         JsonUtil.add(builder, "affectedComponentsCount", overview.getAffectedComponentsCount());
-        JsonUtil.add(builder, "suppressedNewViolationsCount", overview.getSuppressedViolationsCount());
+        JsonUtil.add(builder, "suppressedNewViolationsCount", overview.getSuppressedNewViolationsCount());
         final JsonObjectBuilder newViolationsByRiskTypeBuilder = Json.createObjectBuilder();
         for (final Map.Entry<PolicyViolation.Type, Integer> entry : overview.getNewViolationsByRiskType().entrySet()) {
             JsonUtil.add(newViolationsByRiskTypeBuilder, entry.getKey().name(), entry.getValue());

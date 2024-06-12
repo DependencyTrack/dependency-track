@@ -33,7 +33,7 @@ public final class PolicyViolationOverview {
     private final Integer newViolationsCount;
     private final Map<PolicyViolation.Type, Integer> newViolationsByRiskType = new EnumMap<>(PolicyViolation.Type.class);
     private final Integer affectedComponentsCount;
-    private final Integer suppressedViolationsCount;
+    private final Integer suppressedNewViolationsCount;
 
     public PolicyViolationOverview(Map<Project, List<PolicyViolation>> affectedProjectViolations) {
         var componentCache = new HashSet<Component>();
@@ -66,7 +66,7 @@ public final class PolicyViolationOverview {
         affectedProjectsCount = affectedProjectViolations.size();
         newViolationsCount = violationCache.size();
         affectedComponentsCount = componentCache.size();
-        suppressedViolationsCount = suppressedViolationCache.size();
+        suppressedNewViolationsCount = suppressedViolationCache.size();
     }
 
     public Integer getAffectedProjectsCount() {
@@ -85,7 +85,7 @@ public final class PolicyViolationOverview {
         return affectedComponentsCount;
     }
 
-    public Integer getSuppressedViolationsCount() {
-        return suppressedViolationsCount;
+    public Integer getSuppressedNewViolationsCount() {
+        return suppressedNewViolationsCount;
     }
 }

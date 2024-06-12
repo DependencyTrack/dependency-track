@@ -285,37 +285,37 @@
           </tr>
         </thead>
         <tbody>
-          {% for violationIdentified in affProjEntry.value %}
+          {% for violation in affProjEntry.value %}
           <tr>
             <td>
-              {{ violationIdentified.policyViolation.policyCondition.policy.violationState }}
+              {{ violation.policyCondition.policy.violationState }}
             </td>
             <td>
-              {{ violationIdentified.policyViolation.type }}
+              {{ violation.type }}
             </td>
             <td>
-              {{ violationIdentified.policyViolation.policyCondition.policy.name }}
+              {{ violation.policyCondition.policy.name }}
             </td>
             <td>
-              {% if violationIdentified.component.uuid is empty %}
-                {{ violationIdentified.component.name }}
+              {% if violation.component.uuid is empty %}
+                {{ violation.component.name }}
               {% else %}
-                <a href="{{ baseUrl }}/components/{{ violationIdentified.component.uuid }}">
-                  {{ violationIdentified.component.name }}
+                <a href="{{ baseUrl }}/components/{{ violation.component.uuid }}">
+                  {{ violation.component.name }}
                 </a>
               {% endif %}
             </td>
             <td>
-              {{ violationIdentified.component.version }}
+              {{ violation.component.version }}
             </td>
             <td>
-              {{ violationIdentified.policyViolation.timestamp }}
+              {{ violation.timestamp }}
             </td>
             <td>
-              {{ violationIdentified.policyViolation.analysis.analysisState }}
+              {{ violation.analysis.analysisState }}
             </td>
             <td>
-              {{ violationIdentified.policyViolation.analysis.isSuppressed }}
+              {{ violation.analysis.isSuppressed }}
             </td>
           </tr>
           {% endfor %}

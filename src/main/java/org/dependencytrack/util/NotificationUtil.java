@@ -723,10 +723,10 @@ public final class NotificationUtil {
     private static JsonObject toJson(PolicyViolationDetails details) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         final JsonObjectBuilder affectedProjectViolationsBuilder = Json.createObjectBuilder();
-        for (final Map.Entry<Project, List<PolicyViolationIdentified>> entry : details.getAffectedProjectViolations().entrySet()) {
+        for (final Map.Entry<Project, List<PolicyViolation>> entry : details.getAffectedProjectViolations().entrySet()) {
             affectedProjectViolationsBuilder.add("project", toJson(entry.getKey()));
             final JsonArrayBuilder violationsBuilder = Json.createArrayBuilder();
-            for (final PolicyViolationIdentified violation : entry.getValue()) {
+            for (final PolicyViolation violation : entry.getValue()) {
                 violationsBuilder.add(toJson(violation));
             }
             affectedProjectViolationsBuilder.add("violations", violationsBuilder.build());

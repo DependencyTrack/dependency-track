@@ -35,8 +35,7 @@ public class ScheduledNotificationTaskInitializer implements ServletContextListe
     public void contextInitialized(ServletContextEvent sce) {
         LOGGER.info("Initializing scheduled notification task service");
         try (var qm = new QueryManager()) {
-            var paginatedScheduledRules = qm.getScheduledNotificationRules();
-            var scheduledRulesList = paginatedScheduledRules.getList(ScheduledNotificationRule.class);
+            var scheduledRulesList = qm.getScheduledNotificationRules().getList(ScheduledNotificationRule.class);
             for (var scheduledRule : scheduledRulesList) {
                 try {
                     if (scheduledRule.isEnabled()) {

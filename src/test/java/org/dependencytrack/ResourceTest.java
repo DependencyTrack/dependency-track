@@ -61,6 +61,8 @@ public abstract class ResourceTest {
     protected final String V1_LICENSE = "/v1/license";
     protected final String V1_METRICS = "/v1/metrics";
     protected final String V1_NOTIFICATION_PUBLISHER = "/v1/notification/publisher";
+    protected final String V1_NOTIFICATION_PUBLISHER_EVENT = "/v1/notification/publisher/event";
+    protected final String V1_NOTIFICATION_PUBLISHER_SCHEDULED = "/v1/notification/publisher/scheduled";
     protected final String V1_NOTIFICATION_RULE = "/v1/notification/rule";
     protected final String V1_SCHEDULED_NOTIFICATION_RULE = "/v1/schedulednotification/rule";
     protected final String V1_OIDC = "/v1/oidc";

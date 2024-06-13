@@ -54,7 +54,6 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import alpine.common.util.UuidUtil;
 import alpine.model.Team;
-import alpine.notification.NotificationLevel;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -82,9 +81,9 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void getAllScheduledNotificationRulesTest(){
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule r1 = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
-        qm.createScheduledNotificationRule("Rule 2", NotificationScope.PORTFOLIO, NotificationLevel.WARNING, publisher);
-        qm.createScheduledNotificationRule("Rule 3", NotificationScope.SYSTEM, NotificationLevel.ERROR, publisher);
+        ScheduledNotificationRule r1 = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
+        qm.createScheduledNotificationRule("Rule 2", NotificationScope.PORTFOLIO, publisher);
+        qm.createScheduledNotificationRule("Rule 3", NotificationScope.SYSTEM, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -96,7 +95,6 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Assert.assertEquals("Rule 1", json.getJsonObject(0).getString("name"));
         Assert.assertTrue(json.getJsonObject(0).getBoolean("enabled"));
         Assert.assertEquals("PORTFOLIO", json.getJsonObject(0).getString("scope"));
-        Assert.assertEquals("INFORMATIONAL", json.getJsonObject(0).getString("notificationLevel"));
         Assert.assertEquals(0, json.getJsonObject(0).getJsonArray("notifyOn").size());
         Assert.assertTrue(UuidUtil.isValidUUID(json.getJsonObject(0).getString("uuid")));
         Assert.assertEquals("Slack", json.getJsonObject(0).getJsonObject("publisher").getString("name"));
@@ -116,7 +114,6 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = new ScheduledNotificationRule();
         rule.setName("Example Rule");
-        rule.setNotificationLevel(NotificationLevel.WARNING);
         rule.setScope(NotificationScope.SYSTEM);
         rule.setPublisher(publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
@@ -130,7 +127,6 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Assert.assertTrue(json.getBoolean("notifyChildren"));
         Assert.assertFalse(json.getBoolean("logSuccessfulPublish"));
         Assert.assertEquals("SYSTEM", json.getString("scope"));
-        Assert.assertEquals("WARNING", json.getString("notificationLevel"));
         Assert.assertEquals(0, json.getJsonArray("notifyOn").size());
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
         Assert.assertEquals("Slack", json.getJsonObject("publisher").getString("name"));
@@ -147,7 +143,6 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         rule.setEnabled(true);
         rule.setPublisherConfig("{ \"foo\": \"bar\" }");
         rule.setMessage("A message");
-        rule.setNotificationLevel(NotificationLevel.WARNING);
         rule.setScope(NotificationScope.SYSTEM);
         rule.setPublisher(publisher);
         rule.setCronConfig("0 * * * *");
@@ -164,7 +159,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void updateScheduledNotificationRuleTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
         rule.setName("Example Rule");
         rule.setNotifyOn(Collections.singleton(NotificationGroup.NEW_VULNERABILITY));
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
@@ -176,7 +171,6 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Assert.assertEquals("Example Rule", json.getString("name"));
         Assert.assertTrue(json.getBoolean("enabled"));
         Assert.assertEquals("PORTFOLIO", json.getString("scope"));
-        Assert.assertEquals("INFORMATIONAL", json.getString("notificationLevel"));
         Assert.assertEquals("NEW_VULNERABILITY", json.getJsonArray("notifyOn").getString(0));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
         Assert.assertEquals("Slack", json.getJsonObject("publisher").getString("name"));
@@ -185,7 +179,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void updateScheduledNotificationRuleInvalidTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
         rule = qm.detach(ScheduledNotificationRule.class, rule.getId());
         rule.setUuid(UUID.randomUUID());
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
@@ -200,7 +194,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void deleteScheduledNotificationRuleTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
         rule.setName("Example Rule");
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
                 .header(X_API_KEY, apiKey)
@@ -214,7 +208,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void addProjectToRuleTest() {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -243,7 +237,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void addProjectToRuleInvalidScopeTest() {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.SYSTEM, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.SYSTEM, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -256,7 +250,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void addProjectToRuleInvalidProjectTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -270,7 +264,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void addProjectToRuleDuplicateProjectTest() {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         List<Project> projects = new ArrayList<>();
         projects.add(project);
         rule.setProjects(projects);
@@ -286,7 +280,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void removeProjectFromRuleTest() {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         List<Project> projects = new ArrayList<>();
         projects.add(project);
         rule.setProjects(projects);
@@ -314,7 +308,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void removeProjectFromRuleInvalidScopeTest() {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.SYSTEM, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.SYSTEM, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -327,7 +321,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void removeProjectFromRuleInvalidProjectTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -341,7 +335,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void removeProjectFromRuleDuplicateProjectTest() {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -353,7 +347,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void addTeamToRuleTest(){
         Team team = qm.createTeam("Team Example", false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -381,7 +375,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void addTeamToRuleInvalidTeamTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -395,7 +389,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void addTeamToRuleDuplicateTeamTest() {
         Team team = qm.createTeam("Team Example", false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         List<Team> teams = new ArrayList<>();
         teams.add(team);
         rule.setTeams(teams);
@@ -411,7 +405,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void addTeamToRuleInvalidPublisherTest(){
         Team team = qm.createTeam("Team Example", false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
@@ -425,7 +419,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void addTeamToRuleWithCustomEmailPublisherTest() {
         final Team team = qm.createTeam("Team Example", false);
         final NotificationPublisher publisher = qm.createNotificationPublisher("foo", "description", SendMailPublisher.class, "template", "templateMimeType", false, true);
-        final ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        final ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         final ZonedDateTime testTime = ZonedDateTime.parse("2024-05-31T13:24:46Z", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         rule.setLastExecutionTime(testTime);
         final Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + team.getUuid()).request()
@@ -444,7 +438,6 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
                           "notifyChildren": true,
                           "logSuccessfulPublish": false,
                           "scope": "PORTFOLIO",
-                          "notificationLevel": "INFORMATIONAL",
                           "projects": [],
                           "teams": [
                             {
@@ -475,7 +468,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void removeTeamFromRuleTest() {
         Team team = qm.createTeam("Team Example", false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         List<Team> teams = new ArrayList<>();
         teams.add(team);
         rule.setTeams(teams);
@@ -502,7 +495,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void removeTeamFromRuleInvalidTeamTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -516,7 +509,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void removeTeamFromRuleDuplicateTeamTest() {
         Team team = qm.createTeam("Team Example", false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -528,7 +521,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void removeTeamToRuleInvalidPublisherTest(){
         Team team = qm.createTeam("Team Example", false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -541,7 +534,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void executeScheduledNotificationRuleNowTest(){
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/execute").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
@@ -555,7 +548,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void executeScheduledNotificationRuleNowInvalidRuleTest(){
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
-        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         // detach the rule to uncouple from database, else setUuid(...) will update the persistent entry and the request will be valid with http code 200
         rule = qm.detach(ScheduledNotificationRule.class, rule.getId());
         rule.setUuid(UUID.randomUUID());

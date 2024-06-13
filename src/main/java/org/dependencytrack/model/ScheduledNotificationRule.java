@@ -34,6 +34,7 @@ import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Join;
+import javax.jdo.annotations.NotPersistent;
 import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -109,8 +110,18 @@ public class ScheduledNotificationRule implements Rule, Serializable {
     @NotNull
     private NotificationScope scope;
 
-    @Persistent(defaultFetchGroup = "true")
-    @Column(name = "NOTIFICATION_LEVEL", jdbcType = "VARCHAR")
+    /*
+     * For standard notifications, this property is used to determine all
+     * notification rules with a level equal to or greater than the specified
+     * notification level.
+     * Only notification rules with the correct rule level with then be published.
+     * 
+     * For scheduled notifications, this property is unnecessary because they're
+     * published on-demand or by cron triggers instead through the internal
+     * notification service, so no notification level will be provided for filtering.
+     */
+    @JsonIgnore
+    @NotPersistent
     private NotificationLevel notificationLevel;
 
     @Persistent(table = "SCHEDULED_NOTIFICATIONRULE_PROJECTS", defaultFetchGroup = "true")
@@ -218,10 +229,6 @@ public class ScheduledNotificationRule implements Rule, Serializable {
 
     public NotificationLevel getNotificationLevel() {
         return notificationLevel;
-    }
-
-    public void setNotificationLevel(NotificationLevel notificationLevel) {
-        this.notificationLevel = notificationLevel;
     }
 
     public List<Project> getProjects() {

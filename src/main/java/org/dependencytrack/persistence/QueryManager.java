@@ -1317,8 +1317,8 @@ public class QueryManager extends AlpineQueryManager {
         getNotificationQueryManager().removeTeamFromNotificationRules(team);
     }
 
-    public ScheduledNotificationRule createScheduledNotificationRule(String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
-        return getNotificationQueryManager().createScheduledNotificationRule(name, scope, level, publisher);
+    public ScheduledNotificationRule createScheduledNotificationRule(String name, NotificationScope scope, NotificationPublisher publisher) {
+        return getNotificationQueryManager().createScheduledNotificationRule(name, scope, publisher);
     }
 
     public ScheduledNotificationRule updateScheduledNotificationRule(ScheduledNotificationRule transientRule) {

@@ -35,7 +35,6 @@ import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
 import alpine.model.Team;
-import alpine.notification.NotificationLevel;
 
 public class ScheduledNotificationRuleTest {
     @Test
@@ -64,13 +63,6 @@ public class ScheduledNotificationRuleTest {
         ScheduledNotificationRule rule = new ScheduledNotificationRule();
         rule.setScope(NotificationScope.PORTFOLIO);
         Assert.assertEquals(NotificationScope.PORTFOLIO, rule.getScope());
-    }
-
-    @Test
-    public void testNotificationLevel() {
-        ScheduledNotificationRule rule = new ScheduledNotificationRule();
-        rule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
-        Assert.assertEquals(NotificationLevel.INFORMATIONAL, rule.getNotificationLevel());
     }
 
     @Test

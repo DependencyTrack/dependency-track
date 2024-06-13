@@ -88,11 +88,10 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @param publisher the publisher
      * @return a new ScheduledNotificationRule
      */
-    public ScheduledNotificationRule createScheduledNotificationRule(String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
+    public ScheduledNotificationRule createScheduledNotificationRule(String name, NotificationScope scope, NotificationPublisher publisher) {
         final ScheduledNotificationRule rule = new ScheduledNotificationRule();
         rule.setName(name);
         rule.setScope(scope);
-        rule.setNotificationLevel(level);
         rule.setPublisher(publisher);
         rule.setEnabled(true);
         rule.setNotifyChildren(true);
@@ -131,7 +130,6 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setEnabled(transientRule.isEnabled());
         rule.setNotifyChildren(transientRule.isNotifyChildren());
         rule.setLogSuccessfulPublish(transientRule.isLogSuccessfulPublish());
-        rule.setNotificationLevel(transientRule.getNotificationLevel());
         rule.setPublisherConfig(transientRule.getPublisherConfig());
         rule.setNotifyOn(transientRule.getNotifyOn());
         rule.setCronConfig(transientRule.getCronConfig());

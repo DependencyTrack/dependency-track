@@ -136,7 +136,6 @@ public class ScheduledNotificationRuleResource extends AlpineResource {
             final ScheduledNotificationRule rule = qm.createScheduledNotificationRule(
                     StringUtils.trimToNull(jsonRule.getName()),
                     jsonRule.getScope(),
-                    jsonRule.getNotificationLevel(),
                     publisher
             );
             

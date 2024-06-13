@@ -103,7 +103,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
     public PaginatedResult getAllFindings(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
         StringBuilder queryFilter = new StringBuilder();
         Map<String, Object> params = new HashMap<>();
-        if (showInactive) {
+        if (!showInactive) {
             queryFilter.append(" WHERE (\"PROJECT\".\"ACTIVE\" = :active OR \"PROJECT\".\"ACTIVE\" IS NULL)");
             params.put("active", true);
         }
@@ -161,7 +161,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
     public PaginatedResult getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showInactive) {
         StringBuilder queryFilter = new StringBuilder();
         Map<String, Object> params = new HashMap<>();
-        if (showInactive) {
+        if (!showInactive) {
             queryFilter.append(" WHERE (\"PROJECT\".\"ACTIVE\" = :active OR \"PROJECT\".\"ACTIVE\" IS NULL)");
             params.put("active", true);
         }

@@ -83,7 +83,7 @@ public class SendScheduledNotificationTask implements Runnable {
                         if(vulnSubject.getOverview().getNewVulnerabilitiesCount() == 0 && rule.getPublishOnlyWithUpdates())
                             continue;
                         notificationProxy
-                                .title(vulnSubject.getOverview().getNewVulnerabilitiesCount() + " new Vulnerabilities in " + vulnSubject.getOverview().getAffectedComponentsCount() + " components in Scheduled Rule '" + rule.getName() + "'")
+                                .title(vulnSubject.getOverview().getNewVulnerabilitiesCount() + " new Vulnerabilitie(s) in " + vulnSubject.getOverview().getAffectedComponentsCount() + " component(s) in Scheduled Rule '" + rule.getName() + "'")
                                 .content("Find below a summary of new vulnerabilities since "
                                         + lastExecutionTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                                         + " in Scheduled Notification Rule '" + rule.getName() + "'.")
@@ -94,7 +94,7 @@ public class SendScheduledNotificationTask implements Runnable {
                     if(policySubject.getOverview().getNewViolationsCount() == 0 && rule.getPublishOnlyWithUpdates())
                         continue;
                     notificationProxy
-                            .title(policySubject.getOverview().getNewViolationsCount() + " new Policy Violations in " + policySubject.getOverview().getAffectedComponentsCount() + " components in Scheduled Rule '" + rule.getName() + "'")
+                            .title(policySubject.getOverview().getNewViolationsCount() + " new Policy Violation(s) in " + policySubject.getOverview().getAffectedComponentsCount() + " component(s) in Scheduled Rule '" + rule.getName() + "'")
                             .content("Find below a summary of new policy violations since "
                                     + lastExecutionTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                                     + " in Scheduled Notification Rule '" + rule.getName() + "'.")

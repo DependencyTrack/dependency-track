@@ -61,16 +61,18 @@ multiple levels, while others can only ever have a single level.
 A notification publisher is a Dependency-Track concept allowing users to describe the structure of a notification (i.e. MIME type, template) and how to send a notification (i.e. publisher class).
 The following notification publishers are included by default :
 
-| Publisher  | Description                                         |
-|------------|-----------------------------------------------------|
-| Slack      | Publishes notifications to Slack channels           |
-| Teams      | Publishes notifications to Microsoft Teams channels |
-| Mattermost | Publishes notifications to Mattermost channels      |
-| WebEx      | Publishes notifications to Cisco WebEx channels     |
-| Webhook    | Publishes notifications to a configurable endpoint  |
-| Email      | Sends notifications to an email address             |
-| Console    | Displays notifications on the system console        |
-| Jira       | Publishes notifications to Jira                     |
+| Publisher         | Description                                                                                    |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| Slack             | Publishes notifications to Slack channels                                                      |
+| Teams             | Publishes notifications to Microsoft Teams channels                                            |
+| Mattermost        | Publishes notifications to Mattermost channels                                                 |
+| WebEx             | Publishes notifications to Cisco WebEx channels                                                |
+| Webhook           | Publishes notifications to a configurable endpoint                                             |
+| Email             | Sends notifications to an email address                                                        |
+| Console           | Displays notifications on the system console                                                   |
+| Jira              | Publishes notifications to Jira                                                                |
+| Scheduled Email   | Sends a summary of all subscribed events since last notification to an email address           |
+| Scheduled Console | Displays a slim summary of all subscribed events since last notification to the system console |
 
 ### Templating
 

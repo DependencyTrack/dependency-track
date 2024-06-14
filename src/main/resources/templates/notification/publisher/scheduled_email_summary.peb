@@ -177,7 +177,7 @@
               {{ vulnerableComponent.analysisState }}
             </td>
             <td>
-              {{ vulnerableComponent.suppressed }}
+              {% if vulnerableComponent.isSuppressed %}Yes{% else %}No{% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -315,7 +315,7 @@
               {{ violation.analysis.analysisState }}
             </td>
             <td>
-              {{ violation.analysis.isSuppressed }}
+              {% if violation.analysis.isSuppressed %}✓{% else %}✗{% endif %}
             </td>
           </tr>
           {% endfor %}

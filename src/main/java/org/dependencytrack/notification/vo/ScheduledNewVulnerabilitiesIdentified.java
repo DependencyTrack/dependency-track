@@ -31,6 +31,10 @@ import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityOverview
 import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilitySummary;
 import org.dependencytrack.persistence.QueryManager;
 
+/**
+ * Main part of the ScheduledNewVulnerabilitiesIdentified Template Models.
+ * Contains the separate parts used in the template to display the new vulnerabilities identified since the last notification.
+ */
 public class ScheduledNewVulnerabilitiesIdentified {
     private final VulnerabilityOverview overview;
     private final VulnerabilitySummary summary;

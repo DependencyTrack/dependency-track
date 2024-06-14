@@ -29,6 +29,10 @@ import org.dependencytrack.tasks.SendScheduledNotificationTask;
 
 import com.asahaf.javacron.Schedule;
 
+/* 
+ * Holds all scheduled notification tasks to be able to cancel them if needed.
+ * This may be necessary if a rule is deleted or disabled.
+ */
 public final class ScheduledNotificationTaskManager {
     private static final HashMap<UUID, ScheduledFuture<?>> SCHEDULED_NOTIFY_TASKS = new HashMap<UUID, ScheduledFuture<?>>();
 

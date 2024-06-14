@@ -30,6 +30,10 @@ import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationOverv
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummary;
 import org.dependencytrack.persistence.QueryManager;
 
+/**
+ * Main part of the ScheduledPolicyViolationsIdentified Template Models.
+ * Contains the separate parts used in the template to display the new policy violations identified since the last notification.
+ */
 public class ScheduledPolicyViolationsIdentified {
     private final PolicyViolationOverview overview;
     private final PolicyViolationSummary summary;

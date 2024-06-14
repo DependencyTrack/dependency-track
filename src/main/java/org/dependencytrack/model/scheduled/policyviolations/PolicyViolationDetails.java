@@ -25,6 +25,10 @@ import java.util.Map;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 
+/* 
+ * Part of the ScheduledPolicyViolationsIdentified Template Models.
+ * Contains all detailed policy violations, grouped by the affected projects.
+ */
 public final class PolicyViolationDetails {
     private final Map<Project, List<PolicyViolation>> affectedProjectViolations = new LinkedHashMap<>();
 

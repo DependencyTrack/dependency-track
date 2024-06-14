@@ -28,6 +28,10 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 
+/* 
+ * Part of the ScheduledPolicyViolationsIdentified Template Models.
+ * Contains several key metrics to provide an overview of the policy violations identified.
+ */
 public final class PolicyViolationOverview {
     private final Integer affectedProjectsCount;
     private final Integer newViolationsCount;

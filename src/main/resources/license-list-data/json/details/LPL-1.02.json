@@ -11,16 +11,16 @@
       "url": "https://opensource.org/licenses/LPL-1.02",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:36:39Z",
+      "timestamp": "2024-05-22T17:18:39Z",
       "isWayBackLink": false,
       "order": 1
     },
     {
-      "match": "N/A",
+      "match": "false",
       "url": "http://plan9.bell-labs.com/plan9/license.html",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-02-08T16:36:49Z",
+      "isLive": true,
+      "timestamp": "2024-05-22T17:18:44Z",
       "isWayBackLink": false,
       "order": 0
     }

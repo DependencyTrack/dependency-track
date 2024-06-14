@@ -7,30 +7,30 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://opensource.apple.com/source/JBoss/JBoss-737/jboss-all/jetty/src/main/org/mortbay/util/UnixCrypt.java.auto.html",
+      "url": "https://archive.eclipse.org/jetty/8.0.1.v20110908/xref/org/eclipse/jetty/http/security/UnixCrypt.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:32:46Z",
+      "timestamp": "2024-05-22T17:26:18Z",
+      "isWayBackLink": false,
+      "order": 2
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.apple.com/source/JBoss/JBoss-737/jboss-all/jetty/src/main/org/mortbay/util/UnixCrypt.java.auto.html",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2024-05-22T17:26:18Z",
       "isWayBackLink": false,
       "order": 1
     },
     {
-      "match": "N/A",
+      "match": "false",
       "url": "https://foss.heptapod.net/python-libs/passlib/-/blob/branch/stable/LICENSE#L70",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-02-08T16:32:48Z",
+      "isLive": true,
+      "timestamp": "2024-05-22T17:26:19Z",
       "isWayBackLink": false,
       "order": 0
-    },
-    {
-      "match": "false",
-      "url": "https://archive.eclipse.org/jetty/8.0.1.v20110908/xref/org/eclipse/jetty/http/security/UnixCrypt.html",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:32:48Z",
-      "isWayBackLink": false,
-      "order": 2
     }
   ],
   "seeAlso": [

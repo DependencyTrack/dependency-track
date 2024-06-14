@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "EXEMPTION FOR BINARY LIBRARY-LIKE PACKAGES\n------------------------------------------\n\nThe second condition in the BSD licence (covering binary redistributions) does\nnot apply all the way down a chain of software. If binary package A includes\nPCRE2, it must respect the condition, but if package B is software that\nincludes package A, the condition is not imposed on package B unless it uses\nPCRE2 independently.\n",
+  "name": "PCRE2 exception",
+  "licenseComments": "This exception has been used with BSD-3-Clause.",
+  "seeAlso": [
+    "https://www.pcre.org/licence.txt"
+  ],
+  "licenseExceptionId": "PCRE2-exception",
+  "licenseExceptionTemplate": "EXEMPTION FOR BINARY LIBRARY-LIKE PACKAGES\n\n------------------------------------------\n\nThe second condition in the BSD licence (covering binary redistributions) does not apply all the way down a chain of software. If binary package A includes PCRE2, it must respect the condition, but if package B is software that includes package A, the condition is not imposed on package B unless it uses PCRE2 independently.\n\n",
+  "exceptionTextHtml": "\n\t\u003cp\u003e\n\tEXEMPTION FOR BINARY LIBRARY-LIKE PACKAGES\u003cbr /\u003e\n\n\t------------------------------------------\n\t\u003c/p\u003e\n\n\t\u003cp\u003e\n\tThe second condition in the BSD licence (covering binary redistributions) does\n\tnot apply all the way down a chain of software. If binary package A includes\n\tPCRE2, it must respect the condition, but if package B is software that\n\tincludes package A, the condition is not imposed on package B unless it uses\n\tPCRE2 independently.\n\t\u003c/p\u003e\n\n\t"
+}

@@ -20,7 +20,6 @@ package org.dependencytrack.tasks;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -69,7 +68,7 @@ public class SendScheduledNotificationTask implements Runnable {
             Boolean atLeastOneSuccessfulPublish = false;
 
             LOGGER.info("Processing notification publishing for scheduled notification rule " + rule.getUuid());
-            final ZonedDateTime lastExecutionTime = ZonedDateTime.of(2024, 05, 16, 0, 0, 0, 0, ZoneOffset.UTC); // rule.getLastExecutionTime();
+            final ZonedDateTime lastExecutionTime = rule.getLastExecutionTime();
             
             for (NotificationGroup group : rule.getNotifyOn()) {
                 List<Project> affectedProjects = List.of();

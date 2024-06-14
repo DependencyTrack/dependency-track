@@ -96,7 +96,7 @@ The template context is enhanced with the following variables :
 > subject will be present at all times. Some fields are optional since the underlying fields in the datamodel are optional.
 > The section below will describe the portfolio notifications in JSON format.
 
-#### NEW_VULNERABILITY
+#### NEW_VULNERABILITY (per event)
 This type of notification will always contain:
 * 1 component
 * 1 vulnerability
@@ -159,6 +159,96 @@ This type of notification will always contain:
 ```
 
 > The `cwe` field is deprecated and will be removed in a later version. Please use `cwes` instead.
+
+#### NEW_VULNERABILITY (scheduled summary)
+
+```json
+{
+  "notification": {
+    "level": "INFORMATIONAL",
+    "scope": "PORTFOLIO",
+    "group": "NEW_VULNERABILITY",
+    "timestamp": "2024-05-16T23:26:22.961",
+    "title": "123 new Vulnerabilities in 45 components in Scheduled Rule 'ABC'",
+    "content": "Find below a summary of new vulnerabilities since 2024-05-16T00:00:00Z in Scheduled Notification Rule 'ABC'.",
+    "subject": {
+      "overview": {
+        "affectedProjectsCount": 7,
+        "newVulnerabilitiesCount": 123,
+        "affectedComponentsCount": 45,
+        "suppressedNewVulnerabilitiesCount": 0,
+        "newVulnerabilitiesBySeverity": {
+          "CRITICAL": 13,
+          "HIGH": 24,
+          "MEDIUM": 56,
+          "LOW": 10,
+          "INFO": 17,
+          "UNASSIGNED": 3
+        }
+      },
+      "summary": {
+        "projectSummaries": [
+          {
+            "project": {
+              "uuid": "6fb1820f-5280-4577-ac51-40124aabe307",
+              "name": "Acme Example",
+              "version": "1.0.0"
+            },
+            "summary": {
+              "newVulnerabilitiesBySeverity": {
+                "CRITICAL": 3,
+                "HIGH": 4,
+                "LOW": 2,
+                "INFO": 7
+              },
+              "totalProjectVulnerabilitiesBySeverity": {
+                "CRITICAL": 35,
+                "HIGH": 57,
+                "MEDIUM": 13,
+                "LOW": 105,
+                "INFO": 23,
+                "UNASSIGNED": 13
+              },
+              "suppressedNewVulnerabilitiesBySeverity": {
+                "HIGH": 2,
+                "LOW": 5,
+                "INFO": 1
+              }
+            }
+          }
+        ]
+      },
+      "details": {
+        "projectDetails": [
+          {
+            "project": {
+              "uuid": "6fb1820f-5280-4577-ac51-40124aabe307",
+              "name": "Acme Example",
+              "version": "1.0.0"
+            },
+            "findings": [
+              {
+                "componentUuid": "4d0da61c-b462-4895-b296-da0b4bb34744",
+                "componentName": "axis",
+                "componentVersion": "1.4",
+                "componentGroup": "apache",
+                "vulnerabilitySource": "NVD",
+                "vulnerabilityId": "CVE-2012-5784",
+                "vulnerabilitySeverity": "MEDIUM",
+                "analyzer": "OSSINDEX_ANALYZER",
+                "attributionReferenceUrl": "https://ossindex.sonatype.org/vulnerability/CVE-2012-5784",
+                "attributedOn": "2024-05-16T12:34:39Z",
+                "analysisState": "IN_TRIAGE",
+                "suppressed": false
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
+```
 
 #### NEW_VULNERABLE_DEPENDENCY
 This type of notification will always contain:
@@ -324,7 +414,7 @@ This type of notification will always contain:
 }
 ```
 
-#### POLICY_VIOLATION
+#### POLICY_VIOLATION (per event)
 
 ```json
 {
@@ -362,6 +452,93 @@ This type of notification will always contain:
             "violationState": "FAIL"
           }
         }
+      }
+    }
+  }
+}
+```
+
+#### POLICY_VIOLATION (scheduled summary)
+
+```json
+{
+  "notification": {
+    "level": "INFORMATIONAL",
+    "scope": "PORTFOLIO",
+    "group": "POLICY_VIOLATION",
+    "timestamp": "2022-05-12T23:07:59.611303",
+    "title": "2 new Policy Violations in 2 components in Scheduled Rule 'Policy Guard'",
+    "content": "Find below a summary of new policy violations since 2022-05-12T00:00:00Z in Scheduled Notification Rule 'Policy Guard'.",
+    "subject": {
+      "overview": {
+        "affectedProjectsCount": 1,
+        "newViolationsCount": 2,
+        "affectedComponentsCount": 2,
+        "suppressedNewViolationsCount": 0,
+        "newViolationsByRiskType": {
+          "LICENSE": 0,
+          "SECURITY": 0,
+          "OPERATIONAL": 2
+        }
+      },
+      "summary": {
+        "affectedProjectSummaries": [
+          {
+            "project": {
+              "uuid": "7a36e5c0-9f09-42dd-b401-360da56c2abe",
+              "name": "Acme Example",
+              "version": "1.0.0"
+            },
+            "summary": {
+              "newViolationsByRiskType": {
+                "OPERATIONAL": 2
+              },
+              "totalProjectViolationsByRiskType": {
+                "LICENSE": 5,
+                "OPERATIONAL": 2
+              },
+              "suppressedNewViolationsByRiskType": {
+              }
+            }
+          }
+        ]
+      }
+      "details": {
+        "projectDetails": [
+          {
+            "project": {
+              "uuid": "7a36e5c0-9f09-42dd-b401-360da56c2abe",
+              "name": "Acme Example",
+              "version": "1.0.0"
+            },
+            "violations": [
+              {
+                "component": {
+                  "uuid": "4e04c695-9acd-46fc-9bf6-ed23d7eb551e",
+                  "group": "apache",
+                  "name": "axis",
+                  "version": "1.4"
+                },
+                "violation": {
+                  "uuid": "c82fcb50-029a-4636-a657-96242b20680e",
+                  "type": "OPERATIONAL",
+                  "timestamp": "2022-05-12T20:34:46Z",
+                  "policyCondition": {
+                    "uuid": "8e5c0a5b-71fb-45c5-afac-6c6a99742cbe",
+                    "subject": "COORDINATES",
+                    "operator": "MATCHES",
+                    "value": "{\"group\":\"apache\",\"name\":\"axis\",\"version\":\"*\"}",
+                    "policy": {
+                      "uuid": "6d4c7398-689a-4ec7-b5c5-9abb6b5393e9",
+                      "name": "Banned Components",
+                      "violationState": "FAIL"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
       }
     }
   }

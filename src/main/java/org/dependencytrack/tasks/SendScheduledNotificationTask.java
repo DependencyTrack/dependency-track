@@ -49,6 +49,10 @@ import jakarta.json.JsonReader;
 import static org.dependencytrack.notification.publisher.Publisher.CONFIG_TEMPLATE_KEY;
 import static org.dependencytrack.notification.publisher.Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY;
 
+/* 
+ * The scheduled notification task is responsible for processing scheduled notifications and publishing them with the configured publisher.
+ * This task must be executed by the scheduler at the defined cron interval of the referenced scheduled notification rule.
+ */
 public class SendScheduledNotificationTask implements Runnable {
     private UUID scheduledNotificationRuleUuid;
     private static final Logger LOGGER = Logger.getLogger(SendScheduledNotificationTask.class);

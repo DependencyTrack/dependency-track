@@ -165,17 +165,17 @@ public class ScheduledNotificationRule implements Rule, Serializable {
     private UUID uuid;
 
     @Persistent(defaultFetchGroup = "true")
-    @Column(name = "CRON_CONFIG", allowsNull = "true") // new column, must allow nulls on existing databases
+    @Column(name = "CRON_CONFIG")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String cronConfig;
 
     @Persistent(defaultFetchGroup = "true")
-    @Column(name = "LAST_EXECUTION_TIME", allowsNull = "true") // new column, must allow nulls on existing databases
+    @Column(name = "LAST_EXECUTION_TIME")
     @JsonSerialize(using = Iso8601ZonedDateTimeSerializer.class)
     private ZonedDateTime lastExecutionTime;
 
     @Persistent
-    @Column(name = "PUBLISH_ONLY_WITH_UPDATES", allowsNull = "true") // new column, must allow nulls on existing databases
+    @Column(name = "PUBLISH_ONLY_WITH_UPDATES")
     private boolean publishOnlyWithUpdates;
 
 

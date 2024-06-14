@@ -28,6 +28,10 @@ import alpine.common.logging.Logger;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 
+/* 
+ * Initializes the scheduled notification task service.
+ * It schedules the task executions for each enabled scheduled notification rule on startup, based on their cron configuration.
+ */
 public class ScheduledNotificationTaskInitializer implements ServletContextListener {
     private static final Logger LOGGER = Logger.getLogger(ScheduledNotificationTaskInitializer.class);
 

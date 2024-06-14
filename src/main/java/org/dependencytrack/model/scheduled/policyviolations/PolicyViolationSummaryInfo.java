@@ -24,6 +24,10 @@ import java.util.Map;
 
 import org.dependencytrack.model.PolicyViolation;
 
+/* 
+ * Part of the ScheduledPolicyViolationsIdentified Template Models.
+ * Contains detailed information about the amount of the identified policy violations grouped by their type.
+ */
 public final class PolicyViolationSummaryInfo {
     private final Map<PolicyViolation.Type, Integer> newViolationsByRiskType = new EnumMap<>(PolicyViolation.Type.class);
     private final Map<PolicyViolation.Type, Integer> totalProjectViolationsByRiskType = new EnumMap<>(PolicyViolation.Type.class);

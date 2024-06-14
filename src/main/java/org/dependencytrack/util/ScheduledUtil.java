@@ -20,6 +20,11 @@ package org.dependencytrack.util;
 
 import java.util.Date;
 
+/* 
+ * Helper class for scheduled notifications to provide more human-friendly output in the templates.
+ * This class is mainly used to provide default values for null objects, which may be common in the Finding objects
+ * used in the scheduled notification for new vulnerabilities.
+ */
 public class ScheduledUtil {
     public static String getValueOrEmptyIfNull(Object value) {
         return value == null ? "" : value.toString();

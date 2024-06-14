@@ -73,7 +73,7 @@
             <th>Version</th>
             <th>New Vulnerabilities</th>
             <th>All Vulnerabilities</th>
-            <th>Suppressed Vulnerabilities</th>
+            <th>Suppressed New Vulnerabilities</th>
           </tr>
         </thead>
         <tbody>

@@ -10,22 +10,22 @@
   "standardLicenseHeader": "This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.\n\n",
   "crossRef": [
     {
-      "match": "true",
-      "url": "https://www.mozilla.org/MPL/2.0/",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:41:22Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/MPL-2.0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:41:22Z",
+      "timestamp": "2024-05-22T17:21:16Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://www.mozilla.org/MPL/2.0/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-05-22T17:21:16Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

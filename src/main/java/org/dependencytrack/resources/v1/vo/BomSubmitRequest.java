@@ -117,6 +117,7 @@ public final class BomSubmitRequest {
         return projectVersion;
     }
 
+    @Schema(description = "Overwrite project tags")
     public List<Tag> getProjectTags() {
         return projectTags;
     }

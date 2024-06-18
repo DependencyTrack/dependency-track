@@ -314,7 +314,7 @@ public class BomResource extends AlpineResource {
                             }
                         }
 
-                        project = qm.createProject(StringUtils.trimToNull(request.getProjectName()), null, StringUtils.trimToNull(request.getProjectVersion()), null, parent, null, true, true);
+                        project = qm.createProject(StringUtils.trimToNull(request.getProjectName()), null, StringUtils.trimToNull(request.getProjectVersion()), request.getProjectTags(), parent, null, true, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
                     } else {

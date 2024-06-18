@@ -791,7 +791,9 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
         Project project = qm.getProject("Acme Example", "1.0");
         Assert.assertNotNull(project);
-        Assert.assertEquals(tags, project.getTags());
+        assertThat(project.getTags())
+          .extracting(Tag::getName)
+          .containsExactlyInAnyOrder("tag1", "tag2");
     }
 
     @Test

@@ -116,7 +116,6 @@
         <lib.testcontainers.version>1.19.8</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
         <lib.woodstox.version>6.6.2</lib.woodstox.version>
-        <lib.xerces.version>2.12.2</lib.xerces.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
@@ -349,19 +348,6 @@
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>cloud-sql-connector-jdbc-sqlserver</artifactId>
             <version>${lib.cloud-sql-connector-jdbc-sqlserver.version}</version>
-        </dependency>
-
-        <!-- Xerces -->
-        <dependency>
-            <groupId>xerces</groupId>
-            <artifactId>xercesImpl</artifactId>
-            <version>${lib.xerces.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xml-apis</groupId>
-                    <artifactId>xml-apis</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>

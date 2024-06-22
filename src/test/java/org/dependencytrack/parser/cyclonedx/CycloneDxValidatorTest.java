@@ -218,4 +218,27 @@ public class CycloneDxValidatorTest {
         assertThatNoException().isThrownBy(() -> validator.validate(bomBytes));
     }
 
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3831
+    public void testValidateJsonWithUrlContainingEncodedBrackets() {
+        assertThatNoException()
+                .isThrownBy(() -> validator.validate("""
+                        {
+                          "bomFormat": "CycloneDX",
+                          "specVersion": "1.5",
+                          "components": [
+                            {
+                              "type": "library",
+                              "name": "acme-library",
+                              "externalReferences": [
+                                {
+                                  "type": "website",
+                                  "url": "https://example.com/foo?bar=%5Bbaz%5D"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                        """.getBytes()));
+    }
+
 }

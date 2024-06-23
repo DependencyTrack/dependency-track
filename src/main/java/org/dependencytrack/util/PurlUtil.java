@@ -52,4 +52,23 @@ public class PurlUtil {
         }
     }
 
+    /**
+     * Attempt to parse a given package URL.
+     *
+     * @param purl The package URL to parse
+     * @return The parsed {@link PackageURL}, or {@code null} when parsing failed
+     * @since 4.12.0
+     */
+    public static PackageURL silentPurl(final String purl) {
+        if (purl == null) {
+            return null;
+        }
+
+        try {
+            return new PackageURL(purl);
+        } catch (MalformedPackageURLException ignored) {
+            return null;
+        }
+    }
+
 }

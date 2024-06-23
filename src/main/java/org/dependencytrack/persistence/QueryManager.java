@@ -72,6 +72,7 @@ import org.dependencytrack.model.Vex;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
+import org.dependencytrack.model.VulnIdAndSource;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityMetrics;
@@ -88,6 +89,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -1066,6 +1068,10 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilityAliases(vulnerability);
     }
 
+    public Map<VulnIdAndSource, List<VulnerabilityAlias>> getVulnerabilityAliases(final Collection<VulnIdAndSource> vulnIdAndSources) {
+        return getVulnerabilityQueryManager().getVulnerabilityAliases(vulnIdAndSources);
+    }
+
     List<Analysis> getAnalyses(Project project) {
         return getFindingsQueryManager().getAnalyses(project);
     }
@@ -1467,5 +1473,9 @@ public class QueryManager extends AlpineQueryManager {
         }
 
         return results;
+    }
+
+    public List<RepositoryMetaComponent> getRepositoryMetaComponents(final List<RepositoryQueryManager.RepositoryMetaComponentSearch> list) {
+        return getRepositoryQueryManager().getRepositoryMetaComponents(list);
     }
 }

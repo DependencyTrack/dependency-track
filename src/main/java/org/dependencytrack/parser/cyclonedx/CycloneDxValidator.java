@@ -22,13 +22,13 @@ import alpine.common.logging.Logger;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import org.codehaus.stax2.XMLInputFactory2;
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.ParseException;
 import org.cyclonedx.parsers.JsonParser;
 import org.cyclonedx.parsers.Parser;
 import org.cyclonedx.parsers.XmlParser;
 
+import javax.xml.XMLConstants;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -94,10 +94,13 @@ public class CycloneDxValidator {
     }
 
     private FormatAndVersion detectFormatAndSchemaVersion(final byte[] bomBytes) {
+        final var suppressedExceptions = new ArrayList<Exception>(2);
+
         try {
             final Version version = detectSchemaVersionFromJson(bomBytes);
             return new FormatAndVersion(Format.JSON, version);
         } catch (JsonParseException e) {
+            suppressedExceptions.add(e);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Failed to parse BOM as JSON", e);
             }
@@ -109,12 +112,15 @@ public class CycloneDxValidator {
             final Version version = detectSchemaVersionFromXml(bomBytes);
             return new FormatAndVersion(Format.XML, version);
         } catch (XMLStreamException e) {
+            suppressedExceptions.add(e);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Failed to parse BOM as XML", e);
             }
         }
 
-        throw new InvalidBomException("BOM is neither valid JSON nor XML");
+        final var exception = new InvalidBomException("BOM is neither valid JSON nor XML");
+        suppressedExceptions.forEach(exception::addSuppressed);
+        throw exception;
     }
 
     private Version detectSchemaVersionFromJson(final byte[] bomBytes) throws IOException {
@@ -157,7 +163,13 @@ public class CycloneDxValidator {
     }
 
     private Version detectSchemaVersionFromXml(final byte[] bomBytes) throws XMLStreamException {
-        final XMLInputFactory xmlInputFactory = XMLInputFactory2.newFactory();
+        final XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
+        xmlInputFactory.setProperty(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        // NB: Setting XMLConstants.ACCESS_EXTERNAL_DTD to empty string is recommended by SAST tools,
+        // but Woodstox does not support it: https://github.com/FasterXML/woodstox/issues/51
+        // Setting IS_SUPPORTING_EXTERNAL_ENTITIES to false achieves the same:
+        // https://github.com/FasterXML/woodstox/issues/50#issuecomment-388842419
+        xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
         final var bomBytesStream = new ByteArrayInputStream(bomBytes);
         final XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(bomBytesStream);
 

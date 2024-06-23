@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.junit.Before;
@@ -34,8 +35,13 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 @RunWith(JUnitParamsRunner.class)
 public class CycloneDxValidatorTest {
@@ -239,6 +245,37 @@ public class CycloneDxValidatorTest {
                           ]
                         }
                         """.getBytes()));
+    }
+
+    @Test
+    public void testValidateXmlWithXxeProtection() {
+        final var wireMock = new WireMockServer(options().dynamicPort());
+        wireMock.start();
+
+        try {
+            final Throwable throwable = catchThrowableOfType(
+                    () -> validator.validate("""
+                            <?xml version="1.0" encoding="UTF-8"?>
+                            <!DOCTYPE bom [<!ENTITY %% sp SYSTEM "http://localhost:%d/does-not-exist/file.dtd"> %%sp;]>
+                            <bom xmlns="http://cyclonedx.org/schema/bom/1.5"/>
+                            """.formatted(wireMock.port()).getBytes()),
+                    InvalidBomException.class
+            );
+
+            // Ensure we failed for the right reason.
+            assertThat(throwable.getSuppressed()).hasSize(2);
+            assertThat(throwable.getSuppressed()).anySatisfy(suppressed -> assertThat(suppressed)
+                    .hasMessageContaining("""
+                            Encountered a reference to external entity "sp", but stream reader has feature \
+                            "javax.xml.stream.isSupportingExternalEntities" disabled"""
+                    )
+            );
+
+            // Ensure that in fact no request was performed.
+            wireMock.verify(0, anyRequestedFor(anyUrl()));
+        } finally {
+            wireMock.stop();
+        }
     }
 
 }

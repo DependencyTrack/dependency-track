@@ -1172,7 +1172,8 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
             await("BOM Processed Notification")
                     .atMost(Duration.ofSeconds(3))
                     .untilAsserted(() -> assertThat(NOTIFICATIONS)
-                            .anyMatch(n -> NotificationGroup.BOM_PROCESSED.name().equals(n.getGroup())));
+                            .anyMatch(n -> NotificationGroup.BOM_PROCESSED.name().equals(n.getGroup())
+                                           && NotificationScope.PORTFOLIO.name().equals(n.getScope())));
         } catch (ConditionTimeoutException e) {
             final Optional<Notification> optionalNotification = NOTIFICATIONS.stream()
                     .filter(n -> NotificationGroup.BOM_PROCESSING_FAILED.name().equals(n.getGroup()))

@@ -157,7 +157,7 @@ public class TagResource extends AlpineResource {
     }
 
     @GET
-    @Path("/{policyUuid}")
+    @Path("/policy/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns a list of all tags associated with a given policy",
@@ -174,11 +174,43 @@ public class TagResource extends AlpineResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getTags(@Parameter(description = "The UUID of the policy", schema = @Schema(type = "string", format = "uuid"), required = true)
-                            @PathParam("policyUuid") @ValidUuid String policyUuid) {
+    public Response getTagsForPolicy(
+            @Parameter(description = "The UUID of the policy", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("uuid") @ValidUuid final String uuid
+    ) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = qm.getTags(policyUuid);
+            final PaginatedResult result = qm.getTagsForPolicy(uuid);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
+
+    @GET
+    @Path("/{policyUuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns a list of all tags associated with a given policy",
+            description = """
+                    <p><strong>Deprecated</strong>. Use <code>/api/v1/tag/policy/{uuid}</code> instead.</p>
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
+                    """
+    )
+    @PaginatedApi
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all tags associated with a given policy",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of tags", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Tag.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    @Deprecated(forRemoval = true)
+    public Response getTags(
+            @Parameter(description = "The UUID of the policy", required = true)
+            @PathParam("policyUuid") final UUID policyUuid
+    ) {
+        return getTagsForPolicy(String.valueOf(policyUuid));
+    }
+
 }

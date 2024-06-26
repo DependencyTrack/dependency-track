@@ -487,7 +487,7 @@ public class TagResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getAllTagsWithOrderingTest() {
+    public void getTagsForPolicyWithOrderingTest() {
         for (int i = 1; i < 5; i++) {
             qm.createTag("Tag " + i);
         }
@@ -495,7 +495,7 @@ public class TagResourceTest extends ResourceTest {
         qm.createProject("Project B", null, "1", List.of(qm.getTagByName("Tag 2"), qm.getTagByName("Tag 3"), qm.getTagByName("Tag 4")), null, null, true, false);
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
 
-        Response response = jersey.target(V1_TAG + "/" + policy.getUuid())
+        Response response = jersey.target(V1_TAG + "/policy/" + policy.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -509,7 +509,7 @@ public class TagResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getTagsWithPolicyProjectsFilterTest() {
+    public void getTagsForPolicyWithPolicyProjectsFilterTest() {
         for (int i = 1; i < 5; i++) {
             qm.createTag("Tag " + i);
         }
@@ -520,7 +520,7 @@ public class TagResourceTest extends ResourceTest {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         policy.setProjects(List.of(qm.getProject("Project A", "1"), qm.getProject("Project C", "1")));
 
-        Response response = jersey.target(V1_TAG + "/" + policy.getUuid())
+        Response response = jersey.target(V1_TAG + "/policy/" + policy.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -532,4 +532,20 @@ public class TagResourceTest extends ResourceTest {
         Assert.assertEquals(3, json.size());
         Assert.assertEquals("tag 1", json.getJsonObject(0).getString("name"));
     }
+
+    @Test
+    public void getTagWithNonUuidNameTest() {
+        // NB: This is just to ensure that requests to /api/v1/tag/<value>
+        // are not matched with the deprecated "getTagsForPolicy" endpoint.
+        // Once we implement an endpoint to request individual tags,
+        // this test should fail and adjusted accordingly.
+        qm.createTag("not-a-uuid");
+
+        final Response response = jersey.target(V1_TAG + "/not-a-uuid")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
 }

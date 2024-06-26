@@ -33,7 +33,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.validation.LowerCase;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.TagQueryManager.TagListRow;
@@ -108,9 +107,13 @@ public class TagResource extends AlpineResource {
     @PaginatedApi
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getTaggedProjects(
-            @Parameter(description = "Name of the tag to get projects for. Must be lowercase.", required = true)
-            @PathParam("name") @LowerCase final String tagName
+            @Parameter(description = "Name of the tag to get projects for", required = true)
+            @PathParam("name") final String tagName
     ) {
+        // TODO: Should enforce lowercase for tagName once we are sure that
+        //   users don't have any mixed-case tags in their system anymore.
+        //   Will likely need a migration to cleanup existing tags for this.
+
         final List<TaggedProjectRow> taggedProjectListRows;
         try (final var qm = new QueryManager(getAlpineRequest())) {
             taggedProjectListRows = qm.getTaggedProjects(tagName);
@@ -141,9 +144,13 @@ public class TagResource extends AlpineResource {
     @PaginatedApi
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getTaggedPolicies(
-            @Parameter(description = "Name of the tag to get policies for. Must be lowercase.", required = true)
-            @PathParam("name") @LowerCase final String tagName
+            @Parameter(description = "Name of the tag to get policies for", required = true)
+            @PathParam("name") final String tagName
     ) {
+        // TODO: Should enforce lowercase for tagName once we are sure that
+        //   users don't have any mixed-case tags in their system anymore.
+        //   Will likely need a migration to cleanup existing tags for this.
+
         final List<TaggedPolicyRow> taggedPolicyListRows;
         try (final var qm = new QueryManager(getAlpineRequest())) {
             taggedPolicyListRows = qm.getTaggedPolicies(tagName);

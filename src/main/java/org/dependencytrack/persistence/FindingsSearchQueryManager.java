@@ -25,7 +25,6 @@ import alpine.server.util.DbUtil;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.GroupedFinding;
 import org.dependencytrack.model.RepositoryMetaComponent;
@@ -343,37 +342,14 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
     }
 
     private void preprocessACLs(StringBuilder queryFilter, final Map<String, Object> params) {
-        if (!isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)
-                || hasAccessManagementPermission(this.principal)) {
-            return;
-        }
-
         if (queryFilter.isEmpty()) {
             queryFilter.append(" WHERE ");
         } else {
             queryFilter.append(" AND ");
         }
 
-        final var teamIds = new ArrayList<>(getTeamIds(principal));
-        if (teamIds.isEmpty()) {
-            queryFilter.append(":false");
-            params.put("false", false);
-            return;
-        }
-
-        // NB: Need to work around the fact that the RDBMSes can't agree on how to do member checks. Oh joy! :)))
-        final var teamIdChecks = new ArrayList<String>();
-        for (int i = 0; i < teamIds.size(); i++) {
-            teamIdChecks.add("\"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = :teamId" + i);
-            params.put("teamId" + i, teamIds.get(i));
-        }
-
-        queryFilter.append("""
-                EXISTS (
-                  SELECT 1
-                    FROM "PROJECT_ACCESS_TEAMS"
-                   WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
-                     AND (%s)
-                )""".formatted(String.join(" OR ", teamIdChecks)));
+        final Map.Entry<String, Map<String, Object>> projectAclConditionAndParams = getProjectAclSqlCondition();
+        queryFilter.append(projectAclConditionAndParams.getKey()).append(" ");
+        params.putAll(projectAclConditionAndParams.getValue());
     }
 }

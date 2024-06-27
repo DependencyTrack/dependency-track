@@ -1,0 +1,57 @@
+---
+title: Configuration - API Server
+category: Getting Started
+chapter: 1
+order: 6
+---
+<!--
+  GENERATED. DO NOT EDIT.
+
+  Generated with: {{ generateCommand }}
+-->
+{% for entry in propertiesByCategory %}
+### {{ entry.key }}
+
+{% for property in entry.value -%}
+#### {{ property.name }}
+
+{{ property.description }}
+
+<table>
+  <tbody style="border: 0">
+    <tr>
+      <th style="text-align: right">Required</th>
+      <td style="border-width: 0">{{ property.required ? "Yes" : "No" }}</td>
+    </tr>
+    <tr>
+      <th style="text-align: right">Type</th>
+      <td style="border-width: 0">{{ property.type }}</td>
+    </tr>
+    {% if property.validValues -%}
+    <tr>
+      <th style="text-align: right">Valid Values</th>
+      <td style="border-width: 0">{{ property.validValues }}</td>
+    </tr>
+    {% endif -%}
+    <tr>
+      <th style="text-align: right">Default</th>
+      <td style="border-width: 0">{{ property.defaultValue }}</td>
+    </tr>
+    {% if property.example -%}
+    <tr>
+      <th style="text-align: right">Example</th>
+      <td style="border-width: 0">{{ property.example }}</td>
+    </tr>
+    {% endif -%}
+    <tr>
+      <th style="text-align: right">ENV</th>
+      <td style="border-width: 0">{{ property.env }}</td>
+    </tr>
+  </tbody>
+</table>
+
+{% if not loop.last %}
+---
+{% endif %}
+{% endfor %}
+{% endfor %}

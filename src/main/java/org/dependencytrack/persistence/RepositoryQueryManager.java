@@ -31,6 +31,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -256,6 +257,10 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
      * @since 4.9.0
      */
     public List<RepositoryMetaComponent> getRepositoryMetaComponents(final List<RepositoryQueryManager.RepositoryMetaComponentSearch> list) {
+        if (list == null || list.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         final Query<RepositoryMetaComponent> query = pm.newQuery(RepositoryMetaComponent.class);
 
         // Dynamically build the filter string and populate the parameters

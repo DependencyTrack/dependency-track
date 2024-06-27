@@ -103,7 +103,7 @@
         <lib.jackson.version>2.17.1</lib.jackson.version>
         <lib.jackson-databind.version>2.17.1</lib.jackson-databind.version>
         <lib.json-java.version>20240303</lib.json-java.version>
-        <lib.json-unit.version>3.2.7</lib.json-unit.version>
+        <lib.json-unit.version>3.3.0</lib.json-unit.version>
         <lib.lucene.version>8.11.3</lib.lucene.version>
         <lib.maven-artifact.version>3.9.8</lib.maven-artifact.version>
         <lib.mockserver-netty.version>5.15.0</lib.mockserver-netty.version>

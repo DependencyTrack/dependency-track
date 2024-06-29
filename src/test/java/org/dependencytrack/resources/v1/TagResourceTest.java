@@ -8,14 +8,20 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.resources.v1.exception.ConstraintViolationExceptionMapper;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import jakarta.json.JsonArray;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -349,6 +355,275 @@ public class TagResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("0");
         assertThat(getPlainTextBody(response)).isEqualTo("[]");
+    }
+
+    @Test
+    public void tagProjectsTest() {
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        qm.persist(projectB);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(List.of(projectA.getUuid(), projectB.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(projectA.getTags()).satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+        assertThat(projectB.getTags()).satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+    }
+
+    @Test
+    public void tagProjectsWithTagNotExistsTest() {
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(List.of(projectA.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "A tag with name foo does not exist"
+                }
+                """);
+    }
+
+    @Test
+    public void tagProjectsWithNoProjectUuidsTest() {
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(Collections.emptyList()));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "message": "size must be between 1 and 100",
+                    "messageTemplate": "{jakarta.validation.constraints.Size.message}",
+                    "path": "tagProjects.arg1",
+                    "invalidValue": "[]"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void tagProjectsWithAclTest() {
+        qm.createConfigProperty(
+                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
+        );
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        qm.persist(projectB);
+
+        qm.createTag("foo");
+
+        projectA.addAccessTeam(team);
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(List.of(projectA.getUuid(), projectB.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(projectA.getTags()).satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+        assertThat(projectB.getTags()).isEmpty();
+    }
+
+    @Test
+    public void tagProjectsWhenAlreadyTaggedTest() {
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final Tag tag = qm.createTag("foo");
+        qm.bind(projectA, List.of(tag));
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(List.of(projectA.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(projectA.getTags()).satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+    }
+
+    @Test
+    public void untagProjectsTest() {
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        qm.persist(projectB);
+
+        final Tag tag = qm.createTag("foo");
+        qm.bind(projectA, List.of(tag));
+        qm.bind(projectB, List.of(tag));
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(projectA.getUuid(), projectB.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(projectA.getTags()).isEmpty();
+        assertThat(projectB.getTags()).isEmpty();
+    }
+
+    @Test
+    public void untagProjectsWithAclTest() {
+        qm.createConfigProperty(
+                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription()
+        );
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        qm.persist(projectB);
+
+        final Tag tag = qm.createTag("foo");
+        qm.bind(projectA, List.of(tag));
+        qm.bind(projectB, List.of(tag));
+
+        projectA.addAccessTeam(team);
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(projectA.getUuid(), projectB.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(projectA.getTags()).isEmpty();
+        assertThat(projectB.getTags()).satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+    }
+
+    @Test
+    public void untagProjectsWithTagNotExistsTest() {
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(projectA.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "A tag with name foo does not exist"
+                }
+                """);
+    }
+
+    @Test
+    public void untagProjectsWithNoProjectUuidsTest() {
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(Collections.emptyList()));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "message": "size must be between 1 and 100",
+                    "messageTemplate": "{jakarta.validation.constraints.Size.message}",
+                    "path": "untagProjects.arg1",
+                    "invalidValue": "[]"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void untagProjectsWithTooManyProjectUuidsTest() {
+        qm.createTag("foo");
+
+        final List<String> projectUuids = IntStream.range(0, 101)
+                .mapToObj(ignored -> UUID.randomUUID())
+                .map(UUID::toString)
+                .toList();
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(projectUuids));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "message": "size must be between 1 and 100",
+                    "messageTemplate": "{jakarta.validation.constraints.Size.message}",
+                    "path": "untagProjects.arg1",
+                    "invalidValue": "${json-unit.any-string}"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void untagProjectsWhenNotTaggedTest() {
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(projectA.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(projectA.getTags()).isEmpty();
     }
 
     @Test

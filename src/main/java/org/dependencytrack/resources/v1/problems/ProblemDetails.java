@@ -69,6 +69,15 @@ public class ProblemDetails {
     )
     private URI instance;
 
+    public ProblemDetails() {
+    }
+
+    public ProblemDetails(final int status, final String title, final String detail) {
+        this.status = status;
+        this.title = title;
+        this.detail = detail;
+    }
+
     public URI getType() {
         return type;
     }

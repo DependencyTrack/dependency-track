@@ -188,6 +188,22 @@ public final class PersistenceUtil {
     }
 
     /**
+     * Utility method to ensure that a given {@link Collection} is in a persistent state.
+     *
+     * @param objects The {@link Collection} to check the state of
+     * @param message Message to use for the exception, if object is not persistent
+     * @see #assertPersistent(Object, String)
+     * @since 4.12.0
+     */
+    public static void assertPersistentAll(final Collection<?> objects, final String message) {
+        if (objects == null || objects.isEmpty()) {
+            return;
+        }
+
+        objects.forEach(object -> assertPersistent(object, message));
+    }
+
+    /**
      * Utility method to ensure that a given object is <strong>not</strong> in a persistent state.
      *
      * @param object  The object to check the state of

@@ -350,12 +350,11 @@ public class PolicyResource extends AlpineResource {
             if (tag == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The tag could not be found.").build();
             }
-            final List<Tag> tags = policy.getTags();
-            if (tags != null && !tags.contains(tag)) {
-                policy.getTags().add(tag);
-                qm.persist(policy);
+
+            if (qm.bind(policy, List.of(tag))) {
                 return Response.ok(policy).build();
             }
+
             return Response.status(Response.Status.NOT_MODIFIED).build();
         }
     }

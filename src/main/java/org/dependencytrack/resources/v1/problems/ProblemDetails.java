@@ -29,7 +29,10 @@ import java.net.URI;
  */
 @Schema(
         description = "An RFC 9457 problem object",
-        subTypes = InvalidBomProblemDetails.class
+        subTypes = {
+                InvalidBomProblemDetails.class,
+                TagOperationProblemDetails.class
+        }
 )
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProblemDetails {

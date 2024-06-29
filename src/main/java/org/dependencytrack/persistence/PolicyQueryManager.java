@@ -27,6 +27,7 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
@@ -34,8 +35,12 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
 final class PolicyQueryManager extends QueryManager implements IQueryManager {
 
@@ -609,6 +614,35 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class);
         query.setFilter("component == :component && policyViolation.type == :type && analysisState != null && analysisState != :notSet");
         return getCount(query, component, type, ViolationAnalysisState.NOT_SET);
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public boolean bind(final Policy policy, final Collection<Tag> tags) {
+        assertPersistent(policy, "policy must be persistent");
+        assertPersistentAll(tags, "tags must be persistent");
+
+        return callInTransaction(() -> {
+            boolean modified = false;
+
+            for (final Tag tag : tags) {
+                if (!policy.getTags().contains(tag)) {
+                    policy.getTags().add(tag);
+
+                    if (tag.getPolicies() == null) {
+                        tag.setPolicies(new ArrayList<>(List.of(policy)));
+                    } else if (!tag.getPolicies().contains(policy)) {
+                        tag.getPolicies().add(policy);
+                    }
+
+                    modified = true;
+                }
+            }
+
+            return modified;
+        });
     }
 
 }

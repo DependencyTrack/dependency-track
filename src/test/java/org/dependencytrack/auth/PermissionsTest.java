@@ -21,23 +21,24 @@ package org.dependencytrack.auth;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.dependencytrack.auth.Permissions.Constants.PORTFOLIO_MANAGEMENT;
+import static org.dependencytrack.auth.Permissions.Constants.ACCESS_MANAGEMENT;
 import static org.dependencytrack.auth.Permissions.Constants.BOM_UPLOAD;
+import static org.dependencytrack.auth.Permissions.Constants.POLICY_MANAGEMENT;
+import static org.dependencytrack.auth.Permissions.Constants.POLICY_VIOLATION_ANALYSIS;
+import static org.dependencytrack.auth.Permissions.Constants.PORTFOLIO_MANAGEMENT;
+import static org.dependencytrack.auth.Permissions.Constants.PROJECT_CREATION_UPLOAD;
+import static org.dependencytrack.auth.Permissions.Constants.SYSTEM_CONFIGURATION;
+import static org.dependencytrack.auth.Permissions.Constants.TAG_MANAGEMENT;
+import static org.dependencytrack.auth.Permissions.Constants.VIEW_POLICY_VIOLATION;
 import static org.dependencytrack.auth.Permissions.Constants.VIEW_PORTFOLIO;
 import static org.dependencytrack.auth.Permissions.Constants.VIEW_VULNERABILITY;
 import static org.dependencytrack.auth.Permissions.Constants.VULNERABILITY_ANALYSIS;
-import static org.dependencytrack.auth.Permissions.Constants.VIEW_POLICY_VIOLATION;
 import static org.dependencytrack.auth.Permissions.Constants.VULNERABILITY_MANAGEMENT;
-import static org.dependencytrack.auth.Permissions.Constants.POLICY_VIOLATION_ANALYSIS;
-import static org.dependencytrack.auth.Permissions.Constants.ACCESS_MANAGEMENT;
-import static org.dependencytrack.auth.Permissions.Constants.SYSTEM_CONFIGURATION;
-import static org.dependencytrack.auth.Permissions.Constants.PROJECT_CREATION_UPLOAD;
-import static org.dependencytrack.auth.Permissions.Constants.POLICY_MANAGEMENT;
 public class PermissionsTest {
 
     @Test
     public void testPermissionEnums() {
-        Assert.assertEquals(12, Permissions.values().length);
+        Assert.assertEquals(13, Permissions.values().length);
         Assert.assertEquals("BOM_UPLOAD", Permissions.BOM_UPLOAD.name());
         Assert.assertEquals("VIEW_PORTFOLIO", Permissions.VIEW_PORTFOLIO.name());
         Assert.assertEquals("PORTFOLIO_MANAGEMENT", Permissions.PORTFOLIO_MANAGEMENT.name());
@@ -50,6 +51,7 @@ public class PermissionsTest {
         Assert.assertEquals("SYSTEM_CONFIGURATION", Permissions.SYSTEM_CONFIGURATION.name());
         Assert.assertEquals("PROJECT_CREATION_UPLOAD", Permissions.PROJECT_CREATION_UPLOAD.name());
         Assert.assertEquals("POLICY_MANAGEMENT", Permissions.POLICY_MANAGEMENT.name());
+        Assert.assertEquals("TAG_MANAGEMENT", Permissions.TAG_MANAGEMENT.name());
     }
 
     @Test
@@ -66,5 +68,6 @@ public class PermissionsTest {
         Assert.assertEquals("SYSTEM_CONFIGURATION", SYSTEM_CONFIGURATION);
         Assert.assertEquals("PROJECT_CREATION_UPLOAD", PROJECT_CREATION_UPLOAD);
         Assert.assertEquals("POLICY_MANAGEMENT", POLICY_MANAGEMENT);
+        Assert.assertEquals("TAG_MANAGEMENT", TAG_MANAGEMENT);
     }
 }

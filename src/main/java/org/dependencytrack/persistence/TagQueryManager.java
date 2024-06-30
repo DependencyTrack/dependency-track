@@ -19,9 +19,13 @@
 package org.dependencytrack.persistence;
 
 import alpine.common.logging.Logger;
+import alpine.model.ApiKey;
+import alpine.model.UserPrincipal;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.exception.TagOperationFailedException;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
@@ -35,6 +39,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TagQueryManager extends QueryManager implements IQueryManager {
@@ -46,6 +52,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
 
     /**
      * Constructs a new QueryManager.
+     *
      * @param pm a PersistenceManager object
      */
     TagQueryManager(final PersistenceManager pm) {
@@ -54,7 +61,8 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
 
     /**
      * Constructs a new QueryManager.
-     * @param pm a PersistenceManager object
+     *
+     * @param pm      a PersistenceManager object
      * @param request an AlpineRequest object
      */
     TagQueryManager(final PersistenceManager pm, final AlpineRequest request) {
@@ -128,6 +136,138 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
         }
     }
 
+    public record TagDeletionCandidateRow(
+            String name,
+            long projectCount,
+            long accessibleProjectCount,
+            long policyCount
+    ) {
+
+        @SuppressWarnings("unused") // DataNucleus will use this for MSSQL.
+        public TagDeletionCandidateRow(
+                final String name,
+                final int projectCount,
+                final int accessibleProjectCount,
+                final int policyCount
+        ) {
+            this(name, (long) projectCount, (long) accessibleProjectCount, (long) policyCount);
+        }
+
+    }
+
+    public void deleteTags(final Collection<String> tagNames) {
+        runInTransaction(() -> {
+            final Map.Entry<String, Map<String, Object>> projectAclConditionAndParams = getProjectAclSqlCondition();
+            final String projectAclCondition = projectAclConditionAndParams.getKey();
+            final Map<String, Object> projectAclConditionParams = projectAclConditionAndParams.getValue();
+
+            final var tagNameFilters = new ArrayList<String>(tagNames.size());
+            final var params = new HashMap<>(projectAclConditionParams);
+
+            int paramIndex = 0;
+            for (final String tagName : tagNames) {
+                final var paramName = "tagName" + (++paramIndex);
+                tagNameFilters.add("\"NAME\" = :" + paramName);
+                params.put(paramName, tagName);
+            }
+
+            final Query<?> candidateQuery = pm.newQuery(Query.SQL, /* language=SQL */ """
+                    SELECT "NAME"
+                         , (SELECT COUNT(*)
+                              FROM "PROJECTS_TAGS"
+                             INNER JOIN "PROJECT"
+                                ON "PROJECT"."ID" = "PROJECTS_TAGS"."PROJECT_ID"
+                             WHERE "PROJECTS_TAGS"."TAG_ID" = "TAG"."ID") AS "projectCount"
+                         , (SELECT COUNT(*)
+                              FROM "PROJECTS_TAGS"
+                             INNER JOIN "PROJECT"
+                                ON "PROJECT"."ID" = "PROJECTS_TAGS"."PROJECT_ID"
+                             WHERE "PROJECTS_TAGS"."TAG_ID" = "TAG"."ID"
+                               AND %s) AS "accessibleProjectCount"
+                         , (SELECT COUNT(*)
+                              FROM "POLICY_TAGS"
+                             INNER JOIN "POLICY"
+                                ON "POLICY"."ID" = "POLICY_TAGS"."POLICY_ID"
+                             WHERE "POLICY_TAGS"."TAG_ID" = "TAG"."ID") AS "policyCount"
+                      FROM "TAG"
+                     WHERE %s
+                    """.formatted(projectAclCondition, String.join(" OR ", tagNameFilters)));
+            candidateQuery.setNamedParameters(params);
+            final List<TagDeletionCandidateRow> candidateRows;
+            try {
+                candidateRows = List.copyOf(candidateQuery.executeResultList(TagDeletionCandidateRow.class));
+            } finally {
+                candidateQuery.closeAll();
+            }
+
+            final var errorByTagName = new HashMap<String, String>();
+
+            if (tagNames.size() > candidateRows.size()) {
+                final Set<String> candidateRowNames = candidateRows.stream()
+                        .map(TagDeletionCandidateRow::name)
+                        .collect(Collectors.toSet());
+                for (final String tagName : tagNames) {
+                    if (!candidateRowNames.contains(tagName)) {
+                        errorByTagName.put(tagName, "Tag does not exist");
+                    }
+                }
+
+                throw TagOperationFailedException.forDeletion(errorByTagName);
+            }
+
+            boolean hasPortfolioManagementPermission = false;
+            boolean hasPolicyManagementPermission = false;
+            if (principal == null) {
+                hasPortfolioManagementPermission = true;
+                hasPolicyManagementPermission = true;
+            } else {
+                if (principal instanceof final ApiKey apiKey) {
+                    hasPortfolioManagementPermission = hasPermission(apiKey, Permissions.Constants.PORTFOLIO_MANAGEMENT);
+                    hasPolicyManagementPermission = hasPermission(apiKey, Permissions.Constants.POLICY_MANAGEMENT);
+                } else if (principal instanceof final UserPrincipal user) {
+                    hasPortfolioManagementPermission = hasPermission(user, Permissions.Constants.PORTFOLIO_MANAGEMENT, /* includeTeams */ true);
+                    hasPolicyManagementPermission = hasPermission(user, Permissions.Constants.POLICY_MANAGEMENT, /* includeTeams */ true);
+                }
+            }
+
+            for (final TagDeletionCandidateRow row : candidateRows) {
+                if (row.projectCount() > 0 && !hasPortfolioManagementPermission) {
+                    errorByTagName.put(row.name(), """
+                            The tag is assigned to %d project(s), but the authenticated principal \
+                            is missing the %s permission.""".formatted(row.projectCount(), Permissions.PORTFOLIO_MANAGEMENT));
+                    continue;
+                }
+
+                final long inaccessibleProjectAssignmentCount =
+                        row.projectCount - row.accessibleProjectCount();
+                if (inaccessibleProjectAssignmentCount > 0) {
+                    errorByTagName.put(row.name(), """
+                            The tag is assigned to %d project(s) that are not accessible \
+                            by the authenticated principal.""".formatted(inaccessibleProjectAssignmentCount));
+                    continue;
+                }
+
+                if (row.policyCount() > 0 && !hasPolicyManagementPermission) {
+                    errorByTagName.put(row.name(), """
+                            The tag is assigned to %d policies, but the authenticated principal \
+                            is missing the %s permission.""".formatted(row.policyCount(), Permissions.POLICY_MANAGEMENT));
+                }
+            }
+
+            if (!errorByTagName.isEmpty()) {
+                throw TagOperationFailedException.forDeletion(errorByTagName);
+            }
+
+            final Query<Tag> deletionQuery = pm.newQuery(Tag.class);
+            deletionQuery.setFilter(":names.contains(name)");
+            try {
+                deletionQuery.deletePersistentAll(candidateRows.stream().map(TagDeletionCandidateRow::name).toList());
+            } finally {
+                deletionQuery.closeAll();
+            }
+        });
+    }
+
     /**
      * @since 4.12.0
      */
@@ -151,18 +291,18 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
 
         // language=SQL
         var sqlQuery = """
-            SELECT "PROJECT"."UUID" AS "uuid"
-                 , "PROJECT"."NAME" AS "name"
-                 , "PROJECT"."VERSION" AS "version"
-                 , COUNT(*) OVER() AS "totalCount"
-              FROM "PROJECT"
-             INNER JOIN "PROJECTS_TAGS"
-                ON "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
-             INNER JOIN "TAG"
-                ON "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
-             WHERE "TAG"."NAME" = :tag
-               AND %s
-            """.formatted(projectAclCondition);
+                SELECT "PROJECT"."UUID" AS "uuid"
+                     , "PROJECT"."NAME" AS "name"
+                     , "PROJECT"."VERSION" AS "version"
+                     , COUNT(*) OVER() AS "totalCount"
+                  FROM "PROJECT"
+                 INNER JOIN "PROJECTS_TAGS"
+                    ON "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
+                 INNER JOIN "TAG"
+                    ON "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
+                 WHERE "TAG"."NAME" = :tag
+                   AND %s
+                """.formatted(projectAclCondition);
 
         final var params = new HashMap<>(projectAclConditionParams);
         params.put("tag", tagName);

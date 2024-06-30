@@ -23,6 +23,7 @@ import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -33,12 +34,13 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.UUID;
+
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 
 public class PermissionResourceTest extends ResourceTest {
 
@@ -62,11 +64,64 @@ public class PermissionResourceTest extends ResourceTest {
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(12, json.size());
-        Assert.assertEquals("ACCESS_MANAGEMENT", json.getJsonObject(0).getString("name"));
-        Assert.assertEquals("Allows the management of users, teams, and API keys", json.getJsonObject(0).getString("description"));
+        assertThatJson(getPlainTextBody(response))
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .isEqualTo("""
+                        [
+                          {
+                            "description": "Allows the management of users, teams, and API keys",
+                            "name": "ACCESS_MANAGEMENT"
+                          },
+                          {
+                            "description": "Allows the ability to upload CycloneDX Software Bill of Materials (SBOM)",
+                            "name": "BOM_UPLOAD"
+                          },
+                          {
+                            "description": "Allows the creation, modification, and deletion of policy",
+                            "name": "POLICY_MANAGEMENT"
+                          },
+                          {
+                            "description": "Provides the ability to make analysis decisions on policy violations",
+                            "name": "POLICY_VIOLATION_ANALYSIS"
+                          },
+                          {
+                            "description": "Allows the creation, modification, and deletion of data in the portfolio",
+                            "name": "PORTFOLIO_MANAGEMENT"
+                          },
+                          {
+                            "description": "Provides the ability to optionally create project (if non-existent) on BOM or scan upload",
+                            "name": "PROJECT_CREATION_UPLOAD"
+                          },
+                          {
+                            "description": "Allows the configuration of the system including notifications, repositories, and email settings",
+                            "name": "SYSTEM_CONFIGURATION"
+                          },
+                          {
+                            "description": "Allows the modification and deletion of tags",
+                            "name": "TAG_MANAGEMENT"
+                          },
+                          {
+                            "description": "Provides the ability to view policy violations",
+                            "name": "VIEW_POLICY_VIOLATION"
+                          },
+                          {
+                            "description": "Provides the ability to view the portfolio of projects, components, and licenses",
+                            "name": "VIEW_PORTFOLIO"
+                          },
+                          {
+                            "description": "Provides the ability to view the vulnerabilities projects are affected by",
+                            "name": "VIEW_VULNERABILITY"
+                          },
+                          {
+                            "description": "Provides the ability to make analysis decisions on vulnerabilities",
+                            "name": "VULNERABILITY_ANALYSIS"
+                          },
+                          {
+                            "description": "Allows management of internally-defined vulnerabilities",
+                            "name": "VULNERABILITY_MANAGEMENT"
+                          }
+                        ]
+                        """);
     }
 
     @Test

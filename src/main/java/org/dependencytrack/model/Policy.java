@@ -120,7 +120,7 @@ public class Policy implements Serializable {
     /**
      * A list of zero-to-n tags
      */
-    @Persistent(table = "POLICY_TAGS", defaultFetchGroup = "true")
+    @Persistent(table = "POLICY_TAGS", defaultFetchGroup = "true", mappedBy = "policies")
     @Join(column = "POLICY_ID")
     @Element(column = "TAG_ID")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))

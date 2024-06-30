@@ -98,7 +98,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         Tag commonTag = qm.createTag("Tag 1");
-        policy.setTags(List.of(commonTag));
+        qm.bind(policy, List.of(commonTag));
         Project project = qm.createProject("My Project", null, "1", List.of(commonTag), null, null, true, false);
         Component component = new Component();
         component.setName("Test Component");
@@ -121,7 +121,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
     public void noTagMatchPolicyLimitedToTag() {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
-        policy.setTags(List.of(qm.createTag("Tag 1")));
+        qm.bind(policy, List.of(qm.createTag("Tag 1")));
         Project project = qm.createProject("My Project", null, "1", List.of(qm.createTag("Tag 2")), null, null, true, false);
         Component component = new Component();
         component.setName("Test Component");

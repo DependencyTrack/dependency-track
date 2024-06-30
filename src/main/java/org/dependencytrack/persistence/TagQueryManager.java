@@ -29,10 +29,12 @@ import org.dependencytrack.model.Tag;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
 public class TagQueryManager extends QueryManager implements IQueryManager {
@@ -189,6 +191,63 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
         } finally {
             query.closeAll();
         }
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public void tagProjects(final String tagName, final Collection<String> projectUuids) {
+        runInTransaction(() -> {
+            final Tag tag = getTagByName(tagName);
+            if (tag == null) {
+                throw new NoSuchElementException("A tag with name %s does not exist".formatted(tagName));
+            }
+
+            final Query<Project> projectsQuery = pm.newQuery(Project.class);
+            final var params = new HashMap<String, Object>(Map.of("uuids", projectUuids));
+            preprocessACLs(projectsQuery, ":uuids.contains(uuid)", params, /* bypass */ false);
+            projectsQuery.setNamedParameters(params);
+            final List<Project> projects = executeAndCloseList(projectsQuery);
+
+            for (final Project project : projects) {
+                if (project.getTags() == null || project.getTags().isEmpty()) {
+                    project.setTags(List.of(tag));
+                    continue;
+                }
+
+                if (!project.getTags().contains(tag)) {
+                    project.getTags().add(tag);
+                }
+            }
+        });
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public void untagProjects(final String tagName, final Collection<String> projectUuids) {
+        runInTransaction(() -> {
+            final Tag tag = getTagByName(tagName);
+            if (tag == null) {
+                throw new NoSuchElementException("A tag with name %s does not exist".formatted(tagName));
+            }
+
+            final Query<Project> projectsQuery = pm.newQuery(Project.class);
+            final var params = new HashMap<String, Object>(Map.of("uuids", projectUuids));
+            preprocessACLs(projectsQuery, ":uuids.contains(uuid)", params, /* bypass */ false);
+            projectsQuery.setNamedParameters(params);
+            final List<Project> projects = executeAndCloseList(projectsQuery);
+
+            for (final Project project : projects) {
+                if (project.getTags() == null || project.getTags().isEmpty()) {
+                    continue;
+                }
+
+                project.getTags().remove(tag);
+            }
+        });
     }
 
     /**

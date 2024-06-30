@@ -39,17 +39,24 @@ import org.dependencytrack.persistence.TagQueryManager.TagListRow;
 import org.dependencytrack.persistence.TagQueryManager.TaggedPolicyRow;
 import org.dependencytrack.persistence.TagQueryManager.TaggedProjectRow;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.TagListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedPolicyListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedProjectListResponseItem;
 
+import jakarta.validation.constraints.Size;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.UUID;
 
 @Path("/v1/tag")
@@ -124,6 +131,102 @@ public class TagResource extends AlpineResource {
                 .toList();
         final long totalCount = taggedProjectListRows.isEmpty() ? 0 : taggedProjectListRows.getFirst().totalCount();
         return Response.ok(tags).header(TOTAL_COUNT_HEADER, totalCount).build();
+    }
+
+    @POST
+    @Path("/{name}/project")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Tags one or more projects.",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Projects tagged successfully."
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "A tag with the provided name does not exist.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)
+            )
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response tagProjects(
+            @Parameter(description = "Name of the tag to assign", required = true)
+            @PathParam("name") final String tagName,
+            @Parameter(
+                    description = "UUIDs of projects to tag",
+                    required = true,
+                    array = @ArraySchema(schema = @Schema(type = "string", format = "uuid"))
+            )
+            @Size(min = 1, max = 100) final Set<@ValidUuid String> projectUuids
+    ) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            qm.tagProjects(tagName, projectUuids);
+        } catch (RuntimeException e) {
+            // TODO: Move this to an ExceptionMapper once https://github.com/stevespringett/Alpine/pull/588 is available.
+            if (e.getCause() instanceof final NoSuchElementException nseException) {
+                return Response
+                        .status(404)
+                        .header("Content-Type", ProblemDetails.MEDIA_TYPE_JSON)
+                        .entity(new ProblemDetails(404, "Resource does not exist", nseException.getMessage()))
+                        .build();
+            }
+
+            throw e;
+        }
+
+        return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("/{name}/project")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Untags one or more projects.",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Projects untagged successfully."
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "A tag with the provided name does not exist.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)
+            )
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response untagProjects(
+            @Parameter(description = "Name of the tag", required = true)
+            @PathParam("name") final String tagName,
+            @Parameter(
+                    description = "UUIDs of projects to untag",
+                    required = true,
+                    array = @ArraySchema(schema = @Schema(type = "string", format = "uuid"))
+            )
+            @Size(min = 1, max = 100) final Set<@ValidUuid String> projectUuids
+    ) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            qm.untagProjects(tagName, projectUuids);
+        } catch (RuntimeException e) {
+            // TODO: Move this to an ExceptionMapper once https://github.com/stevespringett/Alpine/pull/588 is available.
+            if (e.getCause() instanceof final NoSuchElementException nseException) {
+                return Response
+                        .status(404)
+                        .header("Content-Type", ProblemDetails.MEDIA_TYPE_JSON)
+                        .entity(new ProblemDetails(404, "Resource does not exist", nseException.getMessage()))
+                        .build();
+            }
+
+            throw e;
+        }
+
+        return Response.noContent().build();
     }
 
     @GET

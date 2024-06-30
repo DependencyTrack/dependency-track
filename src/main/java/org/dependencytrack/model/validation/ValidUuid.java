@@ -31,7 +31,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * @since 4.11.0
  */
-@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.TYPE_USE})
 @Constraint(validatedBy = {})
 @Retention(RUNTIME)
 @ReportAsSingleViolation

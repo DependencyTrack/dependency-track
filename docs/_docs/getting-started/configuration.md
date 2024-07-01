@@ -597,5 +597,11 @@ For containerized deployments, these settings can be overridden by either:
 
 The names of the environment variables are equivalent to their counterparts in `config.json`.
 
+#### Base path
+
+For containerized deployments the environment variable `BASE_PATH` is also available to set the base path of the frontend.
+This configures nginx to serve the frontend from a subdirectory. For example, if the frontend is served from `https://example.com/dependency-track`, you would set `BASE_PATH` to `/dependency-track`.
+
+
 > A mounted `config.json` takes precedence over environment variables. 
 > If both are provided, environment variables will be ignored.

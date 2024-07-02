@@ -44,6 +44,7 @@ import org.dependencytrack.persistence.QueryManager;
 
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import static org.dependencytrack.notification.publisher.Publisher.CONFIG_TEMPLATE_KEY;
 import static org.dependencytrack.notification.publisher.Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY;
 
@@ -59,6 +60,7 @@ public class SendScheduledNotificationTask implements Runnable {
     public void run() {
         try (var qm = new QueryManager()) {
             var rule = qm.getObjectByUuid(ScheduledNotificationRule.class, scheduledNotificationRuleUuid);
+            rule.setNotificationLevel(NotificationLevel.INFORMATIONAL); // not persistent, set manually to avoid null reference exception in PublishContext
             Boolean errorsDuringExecution = false;
             Boolean atLeastOneSuccessfulPublish = false;
 
@@ -72,7 +74,7 @@ public class SendScheduledNotificationTask implements Runnable {
                 final Notification notificationProxy = new Notification()
                         .scope(rule.getScope())
                         .group(group)
-                        .level(rule.getNotificationLevel());
+                        .level(NotificationLevel.INFORMATIONAL);
 
                 switch (group) {
                     case NEW_VULNERABILITY:

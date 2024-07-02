@@ -231,6 +231,10 @@ public class ScheduledNotificationRule implements Rule, Serializable {
         return notificationLevel;
     }
 
+    public void setNotificationLevel(NotificationLevel notificationLevel) {
+        this.notificationLevel = notificationLevel;
+    }
+
     public List<Project> getProjects() {
         return projects;
     }

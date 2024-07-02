@@ -100,6 +100,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         final ScheduledNotificationRule rule = new ScheduledNotificationRule();
         rule.setName(name);
         rule.setScope(scope);
+        rule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
         rule.setPublisher(publisher);
         rule.setEnabled(true);
         rule.setNotifyChildren(true);

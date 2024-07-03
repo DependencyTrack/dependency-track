@@ -315,7 +315,7 @@
               {{ violation.analysis.analysisState }}
             </td>
             <td>
-              {% if violation.analysis.isSuppressed %}✓{% else %}✗{% endif %}
+              {% if violation.analysis.isSuppressed %}Yes{% else %}No{% endif %}
             </td>
           </tr>
           {% endfor %}

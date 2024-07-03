@@ -567,7 +567,11 @@ public class ModelConverter {
         final LicenseChoice licenseChoice = new LicenseChoice();
         if (component.getResolvedLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
-            license.setId(component.getResolvedLicense().getLicenseId());
+            if(!component.getResolvedLicense().isCustomLicense()){
+                license.setId(component.getResolvedLicense().getLicenseId());
+            } else{
+                license.setName(component.getResolvedLicense().getName());
+            }
             license.setUrl(component.getLicenseUrl());
             licenseChoice.addLicense(license);
             cycloneComponent.setLicenseChoice(licenseChoice);

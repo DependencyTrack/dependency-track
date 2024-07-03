@@ -316,6 +316,81 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
+    public void exportProjectAsCycloneDxLicenseTest() {
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Component c = new Component();
+        c.setProject(project);
+        c.setName("sample-component");
+        c.setVersion("1.0");
+        org.dependencytrack.model.License license = new org.dependencytrack.model.License();
+        license.setId(1234);
+        license.setName("CustomName");
+        license.setCustomLicense(true);
+        c.setResolvedLicense(license);
+        c.setDirectDependencies("[]");
+        Component component = qm.createComponent(c, false);
+        qm.persist(project);
+        Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid()).request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatJson(jsonResponse)
+                .withMatcher("component", equalTo(component.getUuid().toString()))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo(json("""
+                {
+                    "bomFormat": "CycloneDX",
+                    "specVersion": "1.5",
+                    "serialNumber": "${json-unit.ignore}",
+                    "version": 1,
+                    "metadata": {
+                        "timestamp": "${json-unit.any-string}",
+                        "tools": [
+                            {
+                                "vendor": "OWASP",
+                                "name": "Dependency-Track",
+                                "version": "${json-unit.any-string}"
+                            }
+                        ],
+                        "component": {
+                            "type": "library",
+                            "bom-ref": "${json-unit.matches:projectUuid}",
+                            "name": "Acme Example",
+                            "version": "1.0"
+                        }
+                    },
+                    "components": [
+                        {
+                            "type": "library",
+                            "bom-ref": "${json-unit.matches:component}",
+                            "name": "sample-component",
+                            "version": "1.0",
+                            "licenses": [
+                                {
+                                    "license": {
+                                        "name": "CustomName"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "dependencies": [
+                        {
+                            "ref": "${json-unit.matches:projectUuid}",
+                            "dependsOn": []
+                        },
+                        {
+                            "ref": "${json-unit.matches:component}",
+                            "dependsOn": []
+                        }
+                    ]
+                }
+                """));
+    }
+
+    @Test
     public void exportProjectAsCycloneDxInventoryWithVulnerabilitiesTest() {
         var vulnerability = new Vulnerability();
         vulnerability.setVulnId("INT-001");

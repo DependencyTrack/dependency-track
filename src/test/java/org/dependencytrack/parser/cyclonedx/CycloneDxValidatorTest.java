@@ -278,4 +278,30 @@ public class CycloneDxValidatorTest {
         }
     }
 
+    @Test
+    public void testValidateJsonWithCustomLicense() {
+        assertThatExceptionOfType(InvalidBomException.class)
+                .isThrownBy(() -> validator.validate("""
+                        {
+                          "bomFormat": "CycloneDX",
+                          "specVersion": "1.5",
+                          "components": [
+                            {
+                              "type": "library",
+                              "name": "acme-library",
+                              "version": "1.0.0",
+                              "licenses" : [
+                                {
+                                  "license" : {
+                                    "id" : "CustomLicense"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                        """.getBytes()))
+                        .withMessage("Schema validation failed");
+    }
+
 }

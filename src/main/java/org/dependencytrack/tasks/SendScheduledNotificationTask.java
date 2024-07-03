@@ -88,7 +88,7 @@ public class SendScheduledNotificationTask implements Runnable {
                         notificationProxy
                                 .title(vulnSubject.getOverview().getNewVulnerabilitiesCount() + " new Vulnerabilitie(s) in " + vulnSubject.getOverview().getAffectedComponentsCount() + " component(s) in Scheduled Rule '" + rule.getName() + "'")
                                 .content("Find below a summary of new vulnerabilities since "
-                                        + lastExecutionTime.withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                                        + lastExecutionTime.withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                         + " in Scheduled Notification Rule '" + rule.getName() + "'.")
                                 .subject(vulnSubject);
                         break;
@@ -99,7 +99,7 @@ public class SendScheduledNotificationTask implements Runnable {
                     notificationProxy
                             .title(policySubject.getOverview().getNewViolationsCount() + " new Policy Violation(s) in " + policySubject.getOverview().getAffectedComponentsCount() + " component(s) in Scheduled Rule '" + rule.getName() + "'")
                             .content("Find below a summary of new policy violations since "
-                                    + lastExecutionTime.withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                                    + lastExecutionTime.withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                     + " in Scheduled Notification Rule '" + rule.getName() + "'.")
                             .subject(policySubject);
                         break;

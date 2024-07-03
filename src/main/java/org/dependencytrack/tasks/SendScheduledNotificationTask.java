@@ -20,6 +20,7 @@ package org.dependencytrack.tasks;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -87,7 +88,7 @@ public class SendScheduledNotificationTask implements Runnable {
                         notificationProxy
                                 .title(vulnSubject.getOverview().getNewVulnerabilitiesCount() + " new Vulnerabilitie(s) in " + vulnSubject.getOverview().getAffectedComponentsCount() + " component(s) in Scheduled Rule '" + rule.getName() + "'")
                                 .content("Find below a summary of new vulnerabilities since "
-                                        + lastExecutionTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                                        + lastExecutionTime.withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                                         + " in Scheduled Notification Rule '" + rule.getName() + "'.")
                                 .subject(vulnSubject);
                         break;
@@ -98,7 +99,7 @@ public class SendScheduledNotificationTask implements Runnable {
                     notificationProxy
                             .title(policySubject.getOverview().getNewViolationsCount() + " new Policy Violation(s) in " + policySubject.getOverview().getAffectedComponentsCount() + " component(s) in Scheduled Rule '" + rule.getName() + "'")
                             .content("Find below a summary of new policy violations since "
-                                    + lastExecutionTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                                    + lastExecutionTime.withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                                     + " in Scheduled Notification Rule '" + rule.getName() + "'.")
                             .subject(policySubject);
                         break;

@@ -67,6 +67,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -902,6 +903,34 @@ public class ModelConverter {
         }
 
         return cdxVulnerability;
+    }
+
+    public static List<org.cyclonedx.model.vulnerability.Vulnerability> generateVulnerabilities(final QueryManager qm, final CycloneDXExporter.Variant variant,
+                                                                                                final List<Finding> findings) {
+        if (findings == null) {
+            return Collections.emptyList();
+        }
+        final var vulnerabilitiesToAffectRefs = new HashMap<String, HashSet<String>>();
+        final var affectRefsToAffects = new HashMap<String, org.cyclonedx.model.vulnerability.Vulnerability.Affect>();
+        final List<org.cyclonedx.model.vulnerability.Vulnerability> cycloneVulnerabilities = findings.stream()
+                .map(finding -> convert(qm, variant, finding))
+                .filter(vulnerability -> {
+                    var affect = vulnerability.getAffects().getFirst();
+                    var vulnerabilitySeen = vulnerabilitiesToAffectRefs.containsKey(vulnerability.getId());
+                    if (vulnerabilitySeen){
+                        vulnerabilitiesToAffectRefs.get(vulnerability.getId()).add(affect.getRef());
+                    } else {
+                        vulnerabilitiesToAffectRefs.put(vulnerability.getId(), new HashSet<>(Arrays.asList(affect.getRef())));
+                    }
+
+                    affectRefsToAffects.put(affect.getRef(), affect);
+                    return vulnerabilitySeen;
+                })
+                .toList();
+        cycloneVulnerabilities
+                .forEach(vulnerability -> vulnerability.setAffects(vulnerabilitiesToAffectRefs.get(vulnerability.getId()).stream().map(affectRefsToAffects::get).toList()));
+
+        return cycloneVulnerabilities;
     }
 
     /**

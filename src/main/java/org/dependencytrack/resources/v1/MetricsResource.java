@@ -217,6 +217,7 @@ public class MetricsResource extends AlpineResource {
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+                    metrics.setProject(project);
                     return Response.ok(metrics).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
@@ -459,6 +460,7 @@ public class MetricsResource extends AlpineResource {
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     final List<ProjectMetrics> metrics = qm.getProjectMetricsSince(project, since);
+                    metrics.forEach(metric -> metric.setProject(project));
                     return Response.ok(metrics).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();

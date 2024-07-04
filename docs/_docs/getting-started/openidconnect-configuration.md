@@ -114,15 +114,15 @@ Set the redirect URI to `<dependency track host>/static/oidc-callback.html`
 
 #### OneLogin
 
-| API server                                                             | Frontend                                                 |
-| :--------------------------------------------------------------------- | :------------------------------------------------------- |
-| alpine.oidc.enabled=true                                               |                                                          |
-| alpine.oidc.client.id=a9eb980a-fake-45f9-96e0-0891ff63d00d             | OIDC_CLIENT_ID=a9eb980a-fake-45f9-96e0-0891ff63d00d      |
-| alpine.oidc.issuer=https://example.onelogin.com/oidc/2                 | OIDC_ISSUER=https://example.onelogin.com/oidc/2          |
-| alpine.oidc.username.claim=email                                       |                                                          |
-| alpine.oidc.user.provisioning=true                                     |                                                          |
-| alpine.oidc.teams.claim=groups                                         | OIDC_SCOPE=openid profile email groups                   |
-| alpine.oidc.team.synchronization=true                                  |                                                          |
+| API server                                                                                  | Frontend                                                                                   |
+| :------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------- |
+| alpine.oidc.enabled=true                                                                    |                                                                                            |
+| alpine.oidc.client.id=a9eb980a-fake-45f9-96e0-0891ff63d00d<span style="color:red">\*</span> | OIDC_CLIENT_ID=a9eb980a-fake-45f9-96e0-0891ff63d00d<span style="color:red">\*</span>       |
+| alpine.oidc.issuer=https://example.onelogin.com/oidc/2                                      | OIDC_ISSUER=https://example.onelogin.com/oidc/2                                            |
+| alpine.oidc.username.claim=email                                                            |                                                                                            |
+| alpine.oidc.user.provisioning=true                                                          |                                                                                            |
+| alpine.oidc.teams.claim=groups                                                              | OIDC_SCOPE=openid profile email groups                                                     |
+| alpine.oidc.team.synchronization=true                                                       |                                                                                            |
 
 <span style="color:red">\*</span> Requires additional configuration, see [Example setup with OneLogin](#example-setup-with-onelogin)
 

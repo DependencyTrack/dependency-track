@@ -136,6 +136,9 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
         }
     }
 
+    /**
+     * @since 4.12.0
+     */
     public record TagDeletionCandidateRow(
             String name,
             long projectCount,
@@ -155,6 +158,10 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
 
     }
 
+    /**
+     * @since 4.12.0
+     */
+    @Override
     public void deleteTags(final Collection<String> tagNames) {
         runInTransaction(() -> {
             final Map.Entry<String, Map<String, Object>> projectAclConditionAndParams = getProjectAclSqlCondition();
@@ -447,6 +454,54 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
         } finally {
             query.closeAll();
         }
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public void tagPolicies(final String tagName, final Collection<String> policyUuids) {
+        runInTransaction(() -> {
+            final Tag tag = getTagByName(tagName);
+            if (tag == null) {
+                throw new NoSuchElementException("A tag with name %s does not exist".formatted(tagName));
+            }
+
+            final Query<Policy> policiesQuery = pm.newQuery(Policy.class);
+            policiesQuery.setFilter(":uuids.contains(uuid)");
+            policiesQuery.setParameters(policyUuids);
+            final List<Policy> policies = executeAndCloseList(policiesQuery);
+
+            for (final Policy policy : policies) {
+                bind(policy, List.of(tag));
+            }
+        });
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public void untagPolicies(final String tagName, final Collection<String> policyUuids) {
+        runInTransaction(() -> {
+            final Tag tag = getTagByName(tagName);
+            if (tag == null) {
+                throw new NoSuchElementException("A tag with name %s does not exist".formatted(tagName));
+            }
+
+            final Query<Policy> policiesQuery = pm.newQuery(Policy.class);
+            policiesQuery.setFilter(":uuids.contains(uuid)");
+            policiesQuery.setParameters(policyUuids);
+            final List<Policy> policies = executeAndCloseList(policiesQuery);
+
+            for (final Policy policy : policies) {
+                if (policy.getTags() == null || policy.getTags().isEmpty()) {
+                    continue;
+                }
+
+                policy.getTags().remove(tag);
+            }
+        });
     }
 
     @Override

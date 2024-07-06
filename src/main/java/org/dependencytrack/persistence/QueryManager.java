@@ -1360,6 +1360,14 @@ public class QueryManager extends AlpineQueryManager {
         return getTagQueryManager().getTaggedPolicies(tagName);
     }
 
+    public void tagPolicies(final String tagName, final Collection<String> policyUuids) {
+        getTagQueryManager().tagPolicies(tagName, policyUuids);
+    }
+
+    public void untagPolicies(final String tagName, final Collection<String> policyUuids) {
+        getTagQueryManager().untagPolicies(tagName, policyUuids);
+    }
+
     public PaginatedResult getTagsForPolicy(String policyUuid) {
         return getTagQueryManager().getTagsForPolicy(policyUuid);
     }

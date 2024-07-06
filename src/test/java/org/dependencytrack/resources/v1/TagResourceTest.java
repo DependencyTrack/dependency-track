@@ -621,14 +621,14 @@ public class TagResourceTest extends ResourceTest {
     public void tagProjectsWithTagNotExistsTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
 
-        final var projectA = new Project();
-        projectA.setName("acme-app-a");
-        qm.persist(projectA);
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
 
         final Response response = jersey.target(V1_TAG + "/foo/project")
                 .request()
                 .header(X_API_KEY, apiKey)
-                .post(Entity.json(List.of(projectA.getUuid())));
+                .post(Entity.json(List.of(project.getUuid())));
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
         assertThatJson(getPlainTextBody(response)).isEqualTo("""
@@ -702,21 +702,21 @@ public class TagResourceTest extends ResourceTest {
     public void tagProjectsWhenAlreadyTaggedTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
 
-        final var projectA = new Project();
-        projectA.setName("acme-app-a");
-        qm.persist(projectA);
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
 
         final Tag tag = qm.createTag("foo");
-        qm.bind(projectA, List.of(tag));
+        qm.bind(project, List.of(tag));
 
         final Response response = jersey.target(V1_TAG + "/foo/project")
                 .request()
                 .header(X_API_KEY, apiKey)
-                .post(Entity.json(List.of(projectA.getUuid())));
+                .post(Entity.json(List.of(project.getUuid())));
         assertThat(response.getStatus()).isEqualTo(204);
 
         qm.getPersistenceManager().evictAll();
-        assertThat(projectA.getTags()).satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
+        assertThat(project.getTags()).satisfiesExactly(projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"));
     }
 
     @Test
@@ -789,15 +789,15 @@ public class TagResourceTest extends ResourceTest {
     public void untagProjectsWithTagNotExistsTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
 
-        final var projectA = new Project();
-        projectA.setName("acme-app-a");
-        qm.persist(projectA);
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
 
         final Response response = jersey.target(V1_TAG + "/foo/project")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
-                .method(HttpMethod.DELETE, Entity.json(List.of(projectA.getUuid())));
+                .method(HttpMethod.DELETE, Entity.json(List.of(project.getUuid())));
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
         assertThatJson(getPlainTextBody(response)).isEqualTo("""
@@ -866,9 +866,9 @@ public class TagResourceTest extends ResourceTest {
     public void untagProjectsWhenNotTaggedTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
 
-        final var projectA = new Project();
-        projectA.setName("acme-app-a");
-        qm.persist(projectA);
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
 
         qm.createTag("foo");
 
@@ -876,11 +876,11 @@ public class TagResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
-                .method(HttpMethod.DELETE, Entity.json(List.of(projectA.getUuid())));
+                .method(HttpMethod.DELETE, Entity.json(List.of(project.getUuid())));
         assertThat(response.getStatus()).isEqualTo(204);
 
         qm.getPersistenceManager().evictAll();
-        assertThat(projectA.getTags()).isEmpty();
+        assertThat(project.getTags()).isEmpty();
     }
 
     @Test
@@ -1010,6 +1010,217 @@ public class TagResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("0");
         assertThat(getPlainTextBody(response)).isEqualTo("[]");
+    }
+
+    @Test
+    public void tagPoliciesTest() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
+
+        final var policyA = new Policy();
+        policyA.setName("policy-a");
+        policyA.setOperator(Policy.Operator.ALL);
+        policyA.setViolationState(Policy.ViolationState.INFO);
+        qm.persist(policyA);
+
+        final var policyB = new Policy();
+        policyB.setName("policy-b");
+        policyB.setOperator(Policy.Operator.ALL);
+        policyB.setViolationState(Policy.ViolationState.INFO);
+        qm.persist(policyB);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/policy")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(List.of(policyA.getUuid(), policyB.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(policyA.getTags()).satisfiesExactly(policyTag -> assertThat(policyTag.getName()).isEqualTo("foo"));
+        assertThat(policyB.getTags()).satisfiesExactly(policyTag -> assertThat(policyTag.getName()).isEqualTo("foo"));
+    }
+
+    @Test
+    public void tagPoliciesWithTagNotExistsTest() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
+
+        final var policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ALL);
+        policy.setViolationState(Policy.ViolationState.INFO);
+        qm.persist(policy);
+
+        final Response response = jersey.target(V1_TAG + "/foo/policy")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(List.of(policy.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "A tag with name foo does not exist"
+                }
+                """);
+    }
+
+    @Test
+    public void tagPoliciesWithNoPolicyUuidsTest() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/policy")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(Collections.emptyList()));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "message": "size must be between 1 and 100",
+                    "messageTemplate": "{jakarta.validation.constraints.Size.message}",
+                    "path": "tagPolicies.arg1",
+                    "invalidValue": "[]"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void untagPoliciesTest() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
+
+        final var policyA = new Policy();
+        policyA.setName("policy-a");
+        policyA.setOperator(Policy.Operator.ALL);
+        policyA.setViolationState(Policy.ViolationState.INFO);
+        qm.persist(policyA);
+
+        final var policyB = new Policy();
+        policyB.setName("policy-b");
+        policyB.setOperator(Policy.Operator.ALL);
+        policyB.setViolationState(Policy.ViolationState.INFO);
+        qm.persist(policyB);
+
+        final Tag tag = qm.createTag("foo");
+        qm.bind(policyA, List.of(tag));
+        qm.bind(policyB, List.of(tag));
+
+        final Response response = jersey.target(V1_TAG + "/foo/policy")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(policyA.getUuid(), policyB.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(policyA.getTags()).isEmpty();
+        assertThat(policyB.getTags()).isEmpty();
+    }
+
+    @Test
+    public void untagPoliciesWithTagNotExistsTest() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
+
+        final var policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ALL);
+        policy.setViolationState(Policy.ViolationState.INFO);
+        qm.persist(policy);
+
+        final Response response = jersey.target(V1_TAG + "/foo/policy")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(policy.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "A tag with name foo does not exist"
+                }
+                """);
+    }
+
+    @Test
+    public void untagPoliciesWithNoProjectUuidsTest() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/policy")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(Collections.emptyList()));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "message": "size must be between 1 and 100",
+                    "messageTemplate": "{jakarta.validation.constraints.Size.message}",
+                    "path": "untagPolicies.arg1",
+                    "invalidValue": "[]"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void untagPoliciesWithTooManyPolicyUuidsTest() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
+
+        qm.createTag("foo");
+
+        final List<String> policyUuids = IntStream.range(0, 101)
+                .mapToObj(ignored -> UUID.randomUUID())
+                .map(UUID::toString)
+                .toList();
+
+        final Response response = jersey.target(V1_TAG + "/foo/policy")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(policyUuids));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "message": "size must be between 1 and 100",
+                    "messageTemplate": "{jakarta.validation.constraints.Size.message}",
+                    "path": "untagPolicies.arg1",
+                    "invalidValue": "${json-unit.any-string}"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void untagPoliciesWhenNotTaggedTest() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
+
+        final var policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ALL);
+        policy.setViolationState(Policy.ViolationState.INFO);
+        qm.persist(policy);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/policy")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(policy.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(policy.getTags()).isEmpty();
     }
 
     @Test

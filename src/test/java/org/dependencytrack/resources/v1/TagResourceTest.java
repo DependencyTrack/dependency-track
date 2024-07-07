@@ -6,9 +6,11 @@ import alpine.server.filters.AuthorizationFilter;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.resources.v1.exception.ConstraintViolationExceptionMapper;
 import org.dependencytrack.resources.v1.exception.NoSuchElementExceptionMapper;
 import org.dependencytrack.resources.v1.exception.TagOperationFailedExceptionMapper;
@@ -87,6 +89,19 @@ public class TagResourceTest extends ResourceTest {
 
         qm.bind(policy, List.of(tagBar));
 
+        final var notificationRuleA = new NotificationRule();
+        notificationRuleA.setName("rule-a");
+        notificationRuleA.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRuleA);
+
+        final var notificationRuleB = new NotificationRule();
+        notificationRuleB.setName("rule-b");
+        notificationRuleB.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRuleB);
+
+        qm.bind(notificationRuleA, List.of(tagFoo));
+        // NB: Not assigning notificationRuleB
+
         final Response response = jersey.target(V1_TAG)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -98,12 +113,14 @@ public class TagResourceTest extends ResourceTest {
                   {
                     "name": "bar",
                     "projectCount": 1,
-                    "policyCount": 1
+                    "policyCount": 1,
+                    "notificationRuleCount": 0
                   },
                   {
                     "name": "foo",
                     "projectCount": 2,
-                    "policyCount": 0
+                    "policyCount": 0,
+                    "notificationRuleCount": 1
                   }
                 ]
                 """);
@@ -130,17 +147,20 @@ public class TagResourceTest extends ResourceTest {
                   {
                     "name": "tag-1",
                     "projectCount": 0,
-                    "policyCount": 0
+                    "policyCount": 0,
+                    "notificationRuleCount": 0
                   },
                   {
                     "name": "tag-2",
                     "projectCount": 0,
-                    "policyCount": 0
+                    "policyCount": 0,
+                    "notificationRuleCount": 0
                   },
                   {
                     "name": "tag-3",
                     "projectCount": 0,
-                    "policyCount": 0
+                    "policyCount": 0,
+                    "notificationRuleCount": 0
                   }
                 ]
                 """);
@@ -158,12 +178,14 @@ public class TagResourceTest extends ResourceTest {
                   {
                     "name": "tag-4",
                     "projectCount": 0,
-                    "policyCount": 0
+                    "policyCount": 0,
+                    "notificationRuleCount": 0
                   },
                   {
                     "name": "tag-5",
                     "projectCount": 0,
-                    "policyCount": 0
+                    "policyCount": 0,
+                    "notificationRuleCount": 0
                   }
                 ]
                 """);
@@ -188,7 +210,8 @@ public class TagResourceTest extends ResourceTest {
                   {
                     "name": "foo",
                     "projectCount": 0,
-                    "policyCount": 0
+                    "policyCount": 0,
+                    "notificationRuleCount": 0
                   }
                 ]
                 """);
@@ -225,12 +248,14 @@ public class TagResourceTest extends ResourceTest {
                   {
                     "name": "foo",
                     "projectCount": 2,
-                    "policyCount": 0
+                    "policyCount": 0,
+                    "notificationRuleCount": 0
                   },
                   {
                     "name": "bar",
                     "projectCount": 1,
-                    "policyCount": 0
+                    "policyCount": 0,
+                    "notificationRuleCount": 0
                   }
                 ]
                 """);
@@ -452,6 +477,69 @@ public class TagResourceTest extends ResourceTest {
     }
 
     @Test
+    public void deleteTagsWhenAssignedToNotificationRuleTest() {
+        initializeWithPermissions(Permissions.TAG_MANAGEMENT, Permissions.SYSTEM_CONFIGURATION);
+
+        final Tag unusedTag = qm.createTag("foo");
+        final Tag usedTag = qm.createTag("bar");
+
+        final var notificationRule = new NotificationRule();
+        notificationRule.setName("rule");
+        notificationRule.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRule);
+
+        qm.bind(notificationRule, List.of(usedTag));
+
+        final Response response = jersey.target(V1_TAG)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(unusedTag.getName(), usedTag.getName())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getTagByName("foo")).isNull();
+        assertThat(qm.getTagByName("bar")).isNull();
+    }
+
+    @Test
+    public void deleteTagsWhenAssignedToNotificationRuleWithoutSystemConfigurationPermissionTest() {
+        initializeWithPermissions(Permissions.TAG_MANAGEMENT);
+
+        final Tag unusedTag = qm.createTag("foo");
+        final Tag usedTag = qm.createTag("bar");
+
+        final var notificationRule = new NotificationRule();
+        notificationRule.setName("rule");
+        notificationRule.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRule);
+
+        qm.bind(notificationRule, List.of(usedTag));
+
+        final Response response = jersey.target(V1_TAG)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(unusedTag.getName(), usedTag.getName())));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                {
+                  "status": 400,
+                  "title": "Tag operation failed",
+                  "detail": "The tag(s) bar could not be deleted",
+                  "errors": {
+                    "bar": "The tag is assigned to 1 notification rules, but the authenticated principal is missing the SYSTEM_CONFIGURATION permission."
+                  }
+                }
+                """);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getTagByName("foo")).isNotNull();
+        assertThat(qm.getTagByName("bar")).isNotNull();
+    }
+
+    @Test
     public void getTaggedProjectsTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
@@ -586,6 +674,8 @@ public class TagResourceTest extends ResourceTest {
     @Test
     public void getTaggedProjectsWithNonLowerCaseTagNameTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        qm.createTag("foo");
 
         final Response response = jersey.target(V1_TAG + "/Foo/project")
                 .request()
@@ -1007,6 +1097,8 @@ public class TagResourceTest extends ResourceTest {
     public void getTaggedPoliciesWithNonLowerCaseTagNameTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
+        qm.createTag("foo");
+
         final Response response = jersey.target(V1_TAG + "/Foo/policy")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1276,6 +1368,338 @@ public class TagResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals(3, json.size());
         Assert.assertEquals("tag 1", json.getJsonObject(0).getString("name"));
+    }
+
+    @Test
+    public void getTaggedNotificationRulesTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        final Tag tagFoo = qm.createTag("foo");
+        final Tag tagBar = qm.createTag("bar");
+
+        final var notificationRuleA = new NotificationRule();
+        notificationRuleA.setName("rule-a");
+        notificationRuleA.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRuleA);
+
+        final var notificationRuleB = new NotificationRule();
+        notificationRuleB.setName("rule-b");
+        notificationRuleB.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRuleB);
+
+        qm.bind(notificationRuleA, List.of(tagFoo));
+        qm.bind(notificationRuleB, List.of(tagBar));
+
+        final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("notificationRuleUuidA", equalTo(notificationRuleA.getUuid().toString()))
+                .isEqualTo("""
+                        [
+                          {
+                            "uuid": "${json-unit.matches:notificationRuleUuidA}",
+                            "name": "rule-a"
+                          }
+                        ]
+                        """);
+    }
+
+    @Test
+    public void getTaggedNotificationRulesWithPaginationTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        final Tag tag = qm.createTag("foo");
+
+        for (int i = 0; i < 5; i++) {
+            final var notificationRule = new NotificationRule();
+            notificationRule.setName("rule-" + (i+1));
+            notificationRule.setScope(NotificationScope.PORTFOLIO);
+            qm.persist(notificationRule);
+
+            qm.bind(notificationRule, List.of(tag));
+        }
+
+        Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .queryParam("pageNumber", "1")
+                .queryParam("pageSize", "3")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "uuid": "${json-unit.any-string}",
+                    "name": "rule-1"
+                  },
+                  {
+                    "uuid": "${json-unit.any-string}",
+                    "name": "rule-2"
+                  },
+                  {
+                    "uuid": "${json-unit.any-string}",
+                    "name": "rule-3"
+                  }
+                ]
+                """);
+
+        response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .queryParam("pageNumber", "2")
+                .queryParam("pageSize", "3")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "uuid": "${json-unit.any-string}",
+                    "name": "rule-4"
+                  },
+                  {
+                    "uuid": "${json-unit.any-string}",
+                    "name": "rule-5"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void getTaggedNotificationRulesWithTagNotExistsTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("0");
+        assertThat(getPlainTextBody(response)).isEqualTo("[]");
+    }
+
+    @Test
+    public void getTaggedNotificationRulesWithNonLowerCaseTagNameTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/Foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("0");
+        assertThat(getPlainTextBody(response)).isEqualTo("[]");
+    }
+
+    @Test
+    public void tagNotificationRulesTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        final var notificationRuleA = new NotificationRule();
+        notificationRuleA.setName("rule-a");
+        notificationRuleA.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRuleA);
+
+        final var notificationRuleB = new NotificationRule();
+        notificationRuleB.setName("rule-b");
+        notificationRuleB.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRuleB);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(List.of(notificationRuleA.getUuid(), notificationRuleB.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(notificationRuleA.getTags()).satisfiesExactly(ruleTag -> assertThat(ruleTag.getName()).isEqualTo("foo"));
+        assertThat(notificationRuleB.getTags()).satisfiesExactly(ruleTag -> assertThat(ruleTag.getName()).isEqualTo("foo"));
+    }
+
+    @Test
+    public void tagNotificationRulesWithTagNotExistsTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        final var notificationRule = new NotificationRule();
+        notificationRule.setName("rule");
+        notificationRule.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRule);
+
+        final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(List.of(notificationRule.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "A tag with name foo does not exist"
+                }
+                """);
+    }
+
+    @Test
+    public void tagNotificationRulesWithNoRuleUuidsTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(Collections.emptyList()));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "message": "size must be between 1 and 100",
+                    "messageTemplate": "{jakarta.validation.constraints.Size.message}",
+                    "path": "tagNotificationRules.arg1",
+                    "invalidValue": "[]"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void untagNotificationRulesTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        final var notificationRuleA = new NotificationRule();
+        notificationRuleA.setName("rule-a");
+        notificationRuleA.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRuleA);
+
+        final var notificationRuleB = new NotificationRule();
+        notificationRuleB.setName("rule-b");
+        notificationRuleB.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRuleB);
+
+        final Tag tag = qm.createTag("foo");
+        qm.bind(notificationRuleA, List.of(tag));
+        qm.bind(notificationRuleB, List.of(tag));
+
+        final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(notificationRuleA.getUuid(), notificationRuleB.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(notificationRuleA.getTags()).isEmpty();
+        assertThat(notificationRuleB.getTags()).isEmpty();
+    }
+
+    @Test
+    public void untagNotificationRulesWithTagNotExistsTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        final var notificationRule = new NotificationRule();
+        notificationRule.setName("rule");
+        notificationRule.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRule);
+
+        final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(notificationRule.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                {
+                  "status": 404,
+                  "title": "Resource does not exist",
+                  "detail": "A tag with name foo does not exist"
+                }
+                """);
+    }
+
+    @Test
+    public void untagNotificationRulesWithNoProjectUuidsTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(Collections.emptyList()));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "message": "size must be between 1 and 100",
+                    "messageTemplate": "{jakarta.validation.constraints.Size.message}",
+                    "path": "untagNotificationRules.arg1",
+                    "invalidValue": "[]"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void untagNotificationRulesWithTooManyRuleUuidsTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        qm.createTag("foo");
+
+        final List<String> policyUuids = IntStream.range(0, 101)
+                .mapToObj(ignored -> UUID.randomUUID())
+                .map(UUID::toString)
+                .toList();
+
+        final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(policyUuids));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                [
+                  {
+                    "message": "size must be between 1 and 100",
+                    "messageTemplate": "{jakarta.validation.constraints.Size.message}",
+                    "path": "untagNotificationRules.arg1",
+                    "invalidValue": "${json-unit.any-string}"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void untagNotificationRulesWhenNotTaggedTest() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        final var notificationRule = new NotificationRule();
+        notificationRule.setName("rule");
+        notificationRule.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRule);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG + "/foo/notificationRule")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.DELETE, Entity.json(List.of(notificationRule.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(notificationRule.getTags()).isEmpty();
     }
 
     @Test

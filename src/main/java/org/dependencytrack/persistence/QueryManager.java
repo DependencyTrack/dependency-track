@@ -33,7 +33,6 @@ import alpine.resources.AlpineRequest;
 import alpine.server.util.DbUtil;
 import com.github.packageurl.PackageURL;
 import com.google.common.collect.Lists;
-import jakarta.json.JsonObject;
 import org.apache.commons.lang3.ClassUtils;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOQuery;
@@ -85,6 +84,7 @@ import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
+import jakarta.json.JsonObject;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -466,11 +466,19 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public Tag getTagByName(final String name) {
-        return getProjectQueryManager().getTagByName(name);
+        return getTagQueryManager().getTagByName(name);
     }
 
     public Tag createTag(final String name) {
-        return getProjectQueryManager().createTag(name);
+        return getTagQueryManager().createTag(name);
+    }
+
+    public List<Tag> createTags(final List<String> names) {
+        return getTagQueryManager().createTags(names);
+    }
+
+    public List<Tag> resolveTags(final List<Tag> tags) {
+        return getTagQueryManager().resolveTags(tags);
     }
 
     public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, PackageURL purl, boolean active, boolean commitIndex) {
@@ -1299,6 +1307,10 @@ public class QueryManager extends AlpineQueryManager {
         getCacheQueryManager().clearComponentAnalysisCache(threshold);
     }
 
+    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
+        return getNotificationQueryManager().bind(notificationRule, tags);
+    }
+
     public void bind(Project project, List<Tag> tags) {
         getProjectQueryManager().bind(project, tags);
     }
@@ -1378,6 +1390,18 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getTagsForPolicy(String policyUuid) {
         return getTagQueryManager().getTagsForPolicy(policyUuid);
+    }
+
+    public List<TagQueryManager.TaggedNotificationRuleRow> getTaggedNotificationRules(final String tagName) {
+        return getTagQueryManager().getTaggedNotificationRules(tagName);
+    }
+
+    public void tagNotificationRules(final String tagName, final Collection<String> notificationRuleUuids) {
+        getTagQueryManager().tagNotificationRules(tagName, notificationRuleUuids);
+    }
+
+    public void untagNotificationRules(final String tagName, final Collection<String> notificationRuleUuids) {
+        getTagQueryManager().untagNotificationRules(tagName, notificationRuleUuids);
     }
 
     /**

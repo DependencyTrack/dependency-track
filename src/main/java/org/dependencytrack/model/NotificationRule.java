@@ -116,6 +116,12 @@ public class NotificationRule implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC, version ASC"))
     private List<Project> projects;
 
+    @Persistent(table = "NOTIFICATIONRULE_TAGS", defaultFetchGroup = "true", mappedBy = "notificationRules")
+    @Join(column = "NOTIFICATIONRULE_ID")
+    @Element(column = "TAG_ID")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
+    private List<Tag> tags;
+
     @Persistent(table = "NOTIFICATIONRULE_TEAMS", defaultFetchGroup = "true")
     @Join(column = "NOTIFICATIONRULE_ID")
     @Element(column = "TEAM_ID")
@@ -212,6 +218,14 @@ public class NotificationRule implements Serializable {
 
     public void setProjects(List<Project> projects) {
         this.projects = projects;
+    }
+
+    public List<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(final List<Tag> tags) {
+        this.tags = tags;
     }
 
     public List<Team> getTeams() {

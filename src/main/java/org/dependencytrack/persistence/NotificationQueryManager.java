@@ -25,12 +25,18 @@ import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
 public class NotificationQueryManager extends QueryManager implements IQueryManager {
 
@@ -61,15 +67,17 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @return a new NotificationRule
      */
     public NotificationRule createNotificationRule(String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
-        final NotificationRule rule = new NotificationRule();
-        rule.setName(name);
-        rule.setScope(scope);
-        rule.setNotificationLevel(level);
-        rule.setPublisher(publisher);
-        rule.setEnabled(true);
-        rule.setNotifyChildren(true);
-        rule.setLogSuccessfulPublish(false);
-        return persist(rule);
+        return callInTransaction(() -> {
+            final NotificationRule rule = new NotificationRule();
+            rule.setName(name);
+            rule.setScope(scope);
+            rule.setNotificationLevel(level);
+            rule.setPublisher(publisher);
+            rule.setEnabled(true);
+            rule.setNotifyChildren(true);
+            rule.setLogSuccessfulPublish(false);
+            return persist(rule);
+        });
     }
 
     /**
@@ -78,15 +86,18 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @return a NotificationRule
      */
     public NotificationRule updateNotificationRule(NotificationRule transientRule) {
-        final NotificationRule rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
-        rule.setName(transientRule.getName());
-        rule.setEnabled(transientRule.isEnabled());
-        rule.setNotifyChildren(transientRule.isNotifyChildren());
-        rule.setLogSuccessfulPublish(transientRule.isLogSuccessfulPublish());
-        rule.setNotificationLevel(transientRule.getNotificationLevel());
-        rule.setPublisherConfig(transientRule.getPublisherConfig());
-        rule.setNotifyOn(transientRule.getNotifyOn());
-        return persist(rule);
+        return callInTransaction(() -> {
+            final NotificationRule rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
+            rule.setName(transientRule.getName());
+            rule.setEnabled(transientRule.isEnabled());
+            rule.setNotifyChildren(transientRule.isNotifyChildren());
+            rule.setLogSuccessfulPublish(transientRule.isLogSuccessfulPublish());
+            rule.setNotificationLevel(transientRule.getNotificationLevel());
+            rule.setPublisherConfig(transientRule.getPublisherConfig());
+            rule.setNotifyOn(transientRule.getNotifyOn());
+            bind(rule, resolveTags(transientRule.getTags()));
+            return persist(rule);
+        });
     }
 
     /**
@@ -226,4 +237,42 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         query.deletePersistentAll(notificationPublisher.getUuid());
         delete(notificationPublisher);
     }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
+        assertPersistent(notificationRule, "notificationRule must be persistent");
+        assertPersistentAll(tags, "tags must be persistent");
+
+        return callInTransaction(() -> {
+            boolean modified = false;
+
+            for (final Tag existingTag : notificationRule.getTags()) {
+                if (!tags.contains(existingTag)) {
+                    notificationRule.getTags().remove(existingTag);
+                    existingTag.getNotificationRules().remove(notificationRule);
+                    modified = true;
+                }
+            }
+
+            for (final Tag tag : tags) {
+                if (!notificationRule.getTags().contains(tag)) {
+                    notificationRule.getTags().add(tag);
+
+                    if (tag.getNotificationRules() == null) {
+                        tag.setNotificationRules(new ArrayList<>(List.of(notificationRule)));
+                    } else if (!tag.getNotificationRules().contains(notificationRule)) {
+                        tag.getNotificationRules().add(notificationRule);
+                    }
+
+                    modified = true;
+                }
+            }
+
+            return modified;
+        });
+    }
+
 }

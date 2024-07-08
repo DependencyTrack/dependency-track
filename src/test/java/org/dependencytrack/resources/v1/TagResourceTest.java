@@ -10,6 +10,8 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.resources.v1.exception.ConstraintViolationExceptionMapper;
+import org.dependencytrack.resources.v1.exception.NoSuchElementExceptionMapper;
+import org.dependencytrack.resources.v1.exception.TagOperationFailedExceptionMapper;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
@@ -38,7 +40,9 @@ public class TagResourceTest extends ResourceTest {
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)
                     .register(AuthorizationFilter.class)
-                    .register(ConstraintViolationExceptionMapper.class));
+                    .register(ConstraintViolationExceptionMapper.class)
+                    .register(NoSuchElementExceptionMapper.class)
+                    .register(TagOperationFailedExceptionMapper.class));
 
     @Test
     public void getTagsTest() {

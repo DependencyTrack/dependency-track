@@ -32,7 +32,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.exception.TagOperationFailedException;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
@@ -58,7 +57,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 
@@ -136,18 +134,6 @@ public class TagResource extends AlpineResource {
     ) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.deleteTags(tagNames);
-        } catch (RuntimeException e) {
-            // TODO: Move this to an ExceptionMapper once https://github.com/stevespringett/Alpine/pull/588 is available.
-            if (e.getCause() instanceof final TagOperationFailedException tofException) {
-                final var problemDetails = new TagOperationProblemDetails(tofException);
-                return Response
-                        .status(problemDetails.getStatus())
-                        .header("Content-Type", ProblemDetails.MEDIA_TYPE_JSON)
-                        .entity(problemDetails)
-                        .build();
-            }
-
-            throw e;
         }
 
         return Response.noContent().build();
@@ -222,17 +208,6 @@ public class TagResource extends AlpineResource {
     ) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.tagProjects(tagName, projectUuids);
-        } catch (RuntimeException e) {
-            // TODO: Move this to an ExceptionMapper once https://github.com/stevespringett/Alpine/pull/588 is available.
-            if (e.getCause() instanceof final NoSuchElementException nseException) {
-                return Response
-                        .status(404)
-                        .header("Content-Type", ProblemDetails.MEDIA_TYPE_JSON)
-                        .entity(new ProblemDetails(404, "Resource does not exist", nseException.getMessage()))
-                        .build();
-            }
-
-            throw e;
         }
 
         return Response.noContent().build();
@@ -270,17 +245,6 @@ public class TagResource extends AlpineResource {
     ) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.untagProjects(tagName, projectUuids);
-        } catch (RuntimeException e) {
-            // TODO: Move this to an ExceptionMapper once https://github.com/stevespringett/Alpine/pull/588 is available.
-            if (e.getCause() instanceof final NoSuchElementException nseException) {
-                return Response
-                        .status(404)
-                        .header("Content-Type", ProblemDetails.MEDIA_TYPE_JSON)
-                        .entity(new ProblemDetails(404, "Resource does not exist", nseException.getMessage()))
-                        .build();
-            }
-
-            throw e;
         }
 
         return Response.noContent().build();
@@ -355,17 +319,6 @@ public class TagResource extends AlpineResource {
     ) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.tagPolicies(tagName, policyUuids);
-        } catch (RuntimeException e) {
-            // TODO: Move this to an ExceptionMapper once https://github.com/stevespringett/Alpine/pull/588 is available.
-            if (e.getCause() instanceof final NoSuchElementException nseException) {
-                return Response
-                        .status(404)
-                        .header("Content-Type", ProblemDetails.MEDIA_TYPE_JSON)
-                        .entity(new ProblemDetails(404, "Resource does not exist", nseException.getMessage()))
-                        .build();
-            }
-
-            throw e;
         }
 
         return Response.noContent().build();
@@ -403,17 +356,6 @@ public class TagResource extends AlpineResource {
     ) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.untagPolicies(tagName, policyUuids);
-        } catch (RuntimeException e) {
-            // TODO: Move this to an ExceptionMapper once https://github.com/stevespringett/Alpine/pull/588 is available.
-            if (e.getCause() instanceof final NoSuchElementException nseException) {
-                return Response
-                        .status(404)
-                        .header("Content-Type", ProblemDetails.MEDIA_TYPE_JSON)
-                        .entity(new ProblemDetails(404, "Resource does not exist", nseException.getMessage()))
-                        .build();
-            }
-
-            throw e;
         }
 
         return Response.noContent().build();

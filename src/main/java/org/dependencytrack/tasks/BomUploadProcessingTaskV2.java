@@ -785,7 +785,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
 
     private static void dispatchBomConsumedNotification(final Context ctx) {
         Notification.dispatch(new Notification()
-                .scope(NotificationScope.SYSTEM)
+                .scope(NotificationScope.PORTFOLIO)
                 .group(NotificationGroup.BOM_CONSUMED)
                 .level(NotificationLevel.INFORMATIONAL)
                 .title(NotificationConstants.Title.BOM_CONSUMED)
@@ -795,7 +795,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
 
     private static void dispatchBomProcessedNotification(final Context ctx) {
         Notification.dispatch(new Notification()
-                .scope(NotificationScope.SYSTEM)
+                .scope(NotificationScope.PORTFOLIO)
                 .group(NotificationGroup.BOM_PROCESSED)
                 .level(NotificationLevel.INFORMATIONAL)
                 .title(NotificationConstants.Title.BOM_CONSUMED)

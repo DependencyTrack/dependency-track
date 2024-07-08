@@ -86,8 +86,8 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("Scheduled Email", DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
         Assert.assertEquals("Sends summarized notifications to an email address in a defined schedule", DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherDescription());
         Assert.assertEquals(SendMailPublisher.class, DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherClass());
-        Assert.assertEquals("/templates/notification/publisher/scheduled_email.peb", DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherTemplateFile());
-        Assert.assertEquals(MediaType.TEXT_PLAIN, DefaultNotificationPublishers.SCHEDULED_EMAIL.getTemplateMimeType());
+        Assert.assertEquals("/templates/notification/publisher/scheduled_email_summary.peb", DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherTemplateFile());
+        Assert.assertEquals(MediaType.TEXT_HTML, DefaultNotificationPublishers.SCHEDULED_EMAIL.getTemplateMimeType());
         Assert.assertTrue(DefaultNotificationPublishers.SCHEDULED_EMAIL.isDefaultPublisher());
         Assert.assertTrue(DefaultNotificationPublishers.SCHEDULED_EMAIL.isPublishScheduled());
     }

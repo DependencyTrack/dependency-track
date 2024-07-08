@@ -136,7 +136,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
         Assert.assertEquals(404, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The UUID of the notification publisher could not be found.", body);
+        Assert.assertEquals("The UUID of the notification rule could not be found.", body);
     }
 
     @Test

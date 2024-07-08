@@ -69,6 +69,7 @@ body:
     - 4.11.2
     - 4.11.3
     - 4.11.4
+    - 4.11.5
     - 4.12.0-SNAPSHOT
   validations:
     required: true

@@ -16,26 +16,24 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.resources.v1.problems;
+package org.dependencytrack.resources.v1.exception;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.resources.v1.problems.ProblemDetails;
 
-import java.util.Map;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
+import java.util.NoSuchElementException;
 
 /**
  * @since 4.12.0
  */
-public class TagOperationProblemDetails extends ProblemDetails {
+@Provider
+public class NoSuchElementExceptionMapper implements ExceptionMapper<NoSuchElementException> {
 
-    @Schema(description = "Errors encountered during the operation, grouped by tag name")
-    private Map<String, String> errors;
-
-    public Map<String, String> getErrors() {
-        return errors;
-    }
-
-    public void setErrors(final Map<String, String> errors) {
-        this.errors = errors;
+    @Override
+    public Response toResponse(final NoSuchElementException exception) {
+        return new ProblemDetails(404, "Resource does not exist", exception.getMessage()).toResponse();
     }
 
 }

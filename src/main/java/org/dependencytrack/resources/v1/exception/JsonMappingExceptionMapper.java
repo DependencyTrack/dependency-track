@@ -43,12 +43,7 @@ public class JsonMappingExceptionMapper implements ExceptionMapper<JsonMappingEx
         problemDetails.setStatus(400);
         problemDetails.setTitle("The provided JSON payload could not be mapped");
         problemDetails.setDetail(createDetail(exception));
-
-        return Response
-                .status(Response.Status.BAD_REQUEST)
-                .type(ProblemDetails.MEDIA_TYPE_JSON)
-                .entity(problemDetails)
-                .build();
+        return problemDetails.toResponse();
     }
 
     private static String createDetail(final JsonMappingException exception) {

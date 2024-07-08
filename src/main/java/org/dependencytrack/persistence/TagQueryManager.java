@@ -21,6 +21,7 @@ package org.dependencytrack.persistence;
 import alpine.common.logging.Logger;
 import alpine.model.ApiKey;
 import alpine.model.UserPrincipal;
+import alpine.persistence.NotSortableException;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
@@ -121,19 +122,14 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            // TODO: Throw NotSortableException once Alpine opens up its constructor.
-            throw new IllegalArgumentException("Cannot sort by " + orderBy);
+            throw new NotSortableException("Tag", orderBy, "Field does not exist or is not sortable");
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
 
         final Query<?> query = pm.newQuery(Query.SQL, sqlQuery);
         query.setNamedParameters(params);
-        try {
-            return new ArrayList<>(query.executeResultList(TagListRow.class));
-        } finally {
-            query.closeAll();
-        }
+        return executeAndCloseResultList(query, TagListRow.class);
     }
 
     /**
@@ -200,12 +196,8 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
                      WHERE %s
                     """.formatted(projectAclCondition, String.join(" OR ", tagNameFilters)));
             candidateQuery.setNamedParameters(params);
-            final List<TagDeletionCandidateRow> candidateRows;
-            try {
-                candidateRows = List.copyOf(candidateQuery.executeResultList(TagDeletionCandidateRow.class));
-            } finally {
-                candidateQuery.closeAll();
-            }
+            final List<TagDeletionCandidateRow> candidateRows =
+                    executeAndCloseResultList(candidateQuery, TagDeletionCandidateRow.class);
 
             final var errorByTagName = new HashMap<String, String>();
 
@@ -325,19 +317,14 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            // TODO: Throw NotSortableException once Alpine opens up its constructor.
-            throw new IllegalArgumentException("Cannot sort by " + orderBy);
+            throw new NotSortableException("TaggedProject", orderBy, "Field does not exist or is not sortable");
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
 
         final Query<?> query = pm.newQuery(Query.SQL, sqlQuery);
         query.setNamedParameters(params);
-        try {
-            return new ArrayList<>(query.executeResultList(TaggedProjectRow.class));
-        } finally {
-            query.closeAll();
-        }
+        return executeAndCloseResultList(query, TaggedProjectRow.class);
     }
 
     /**
@@ -441,19 +428,14 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            // TODO: Throw NotSortableException once Alpine opens up its constructor.
-            throw new IllegalArgumentException("Cannot sort by " + orderBy);
+            throw new NotSortableException("TaggedPolicy", orderBy, "Field does not exist or is not sortable");
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
 
         final Query<?> query = pm.newQuery(Query.SQL, sqlQuery);
         query.setNamedParameters(params);
-        try {
-            return new ArrayList<>(query.executeResultList(TaggedPolicyRow.class));
-        } finally {
-            query.closeAll();
-        }
+        return executeAndCloseResultList(query, TaggedPolicyRow.class);
     }
 
     /**

@@ -663,8 +663,7 @@ public class BomUploadProcessingTask implements Subscriber {
         // by priority, and simply take the first resolvable candidate.
         for (final org.cyclonedx.model.License licenseCandidate : component.getLicenseCandidates()) {
             if (isNotBlank(licenseCandidate.getId())) {
-                final License resolvedLicense = licenseCache.computeIfAbsent(licenseCandidate.getId(),
-                        licenseId -> resolveLicense(qm, licenseId));
+                final License resolvedLicense = licenseCache.computeIfAbsent(licenseCandidate.getId(), qm::getLicenseByIdOrName);
                 if (resolvedLicense != License.UNRESOLVED) {
                     component.setResolvedLicense(resolvedLicense);
                     component.setLicenseUrl(trimToNull(licenseCandidate.getUrl()));
@@ -673,16 +672,14 @@ public class BomUploadProcessingTask implements Subscriber {
             }
 
             if (isNotBlank(licenseCandidate.getName())) {
-                final License resolvedLicense = licenseCache.computeIfAbsent(licenseCandidate.getName(),
-                        licenseName -> resolveLicense(qm, licenseName));
+                final License resolvedLicense = licenseCache.computeIfAbsent(licenseCandidate.getName(), qm::getLicenseByIdOrName);
                 if (resolvedLicense != License.UNRESOLVED) {
                     component.setResolvedLicense(resolvedLicense);
                     component.setLicenseUrl(trimToNull(licenseCandidate.getUrl()));
                     break;
                 }
 
-                final License resolvedCustomLicense = customLicenseCache.computeIfAbsent(licenseCandidate.getName(),
-                        licenseName -> resolveCustomLicense(qm, licenseName));
+                final License resolvedCustomLicense = customLicenseCache.computeIfAbsent(licenseCandidate.getName(), qm::getCustomLicenseByName);
                 if (resolvedCustomLicense != License.UNRESOLVED) {
                     component.setResolvedLicense(resolvedCustomLicense);
                     component.setLicenseUrl(trimToNull(licenseCandidate.getUrl()));
@@ -701,18 +698,6 @@ public class BomUploadProcessingTask implements Subscriber {
                         component.setLicense(trim(license.getName()));
                         component.setLicenseUrl(trimToNull(license.getUrl()));
                     });
-        }
-    }
-
-    private static License resolveLicense(final QueryManager qm, final String licenseIdOrName) {
-        final Query<License> query = qm.getPersistenceManager().newQuery(License.class);
-        query.setFilter("licenseId == :licenseIdOrName || name == :licenseIdOrName");
-        query.setNamedParameters(Map.of("licenseIdOrName", licenseIdOrName));
-        try {
-            final License license = query.executeUnique();
-            return license != null ? license : License.UNRESOLVED;
-        } finally {
-            query.closeAll();
         }
     }
 

@@ -44,6 +44,9 @@ import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.resources.v1.exception.JsonMappingExceptionMapper;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.HttpUrlConnectorProvider;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
@@ -51,9 +54,11 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -63,6 +68,7 @@ import java.util.stream.Stream;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
+import static org.apache.commons.io.IOUtils.resourceToString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_ENABLED;
@@ -869,6 +875,39 @@ public class BomResourceTest extends ResourceTest {
         assertThat(project.getTags())
           .extracting(Tag::getName)
           .containsExactlyInAnyOrder("tag1", "tag2");
+    }
+
+    @Test
+    public void uploadBomAutoCreateWithTagsMultipartTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final var multiPart = new FormDataMultiPart()
+                .field("bom", resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8), MediaType.APPLICATION_XML_TYPE)
+                .field("projectName", "Acme Example")
+                .field("projectVersion", "1.0")
+                .field("projectTags", "tag1,tag2")
+                .field("autoCreate", "true");
+
+        // NB: The GrizzlyConnectorProvider doesn't work with MultiPart requests.
+        // https://github.com/eclipse-ee4j/jersey/issues/5094
+        final var client = ClientBuilder.newClient(new ClientConfig()
+                .connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client.target(jersey.target(V1_BOM).getUri()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+                {
+                  "token": "${json-unit.any-string}"
+                }
+                """);
+
+        final Project project = qm.getProject("Acme Example", "1.0");
+        assertThat(project).isNotNull();
+        assertThat(project.getTags())
+                .extracting(Tag::getName)
+                .containsExactlyInAnyOrder("tag1", "tag2");
     }
 
     @Test

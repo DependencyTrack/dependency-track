@@ -73,6 +73,13 @@ public class Tag implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     private List<Project> projects;
 
+    public Tag() {
+    }
+
+    public Tag(final String name) {
+        this.name = name;
+    }
+
     public long getId() {
         return id;
     }

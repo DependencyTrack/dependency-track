@@ -456,6 +456,7 @@ public class ProjectResource extends AlpineResource {
                     return Response.status(Response.Status.CONFLICT).entity("A project with the specified name and version already exists.").build();
                 }
                 modified |= setIfDifferent(jsonProject, project, Project::getAuthor, Project::setAuthor);
+                modified |= setIfDifferent(jsonProject, project, Project::getAuthors, Project::setAuthors);
                 modified |= setIfDifferent(jsonProject, project, Project::getPublisher, Project::setPublisher);
                 modified |= setIfDifferent(jsonProject, project, Project::getGroup, Project::setGroup);
                 modified |= setIfDifferent(jsonProject, project, Project::getDescription, Project::setDescription);

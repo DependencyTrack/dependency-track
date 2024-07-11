@@ -117,6 +117,7 @@ public class ModelConverter {
         final var project = new Project();
         project.setBomRef(useOrGenerateRandomBomRef(cdxComponent.getBomRef()));
         project.setAuthor(trimToNull(cdxComponent.getAuthor()));
+        project.setAuthors(convertCdxContacts(cdxComponent.getAuthors()));
         project.setPublisher(trimToNull(cdxComponent.getPublisher()));
         project.setSupplier(convert(cdxComponent.getSupplier()));
         project.setClassifier(convertClassifier(cdxComponent.getType()).orElse(Classifier.APPLICATION));
@@ -154,6 +155,7 @@ public class ModelConverter {
         final var component = new Component();
         component.setBomRef(useOrGenerateRandomBomRef(cdxComponent.getBomRef()));
         component.setAuthor(trimToNull(cdxComponent.getAuthor()));
+        component.setAuthors(convertCdxContacts(cdxComponent.getAuthors()));
         component.setPublisher(trimToNull(cdxComponent.getPublisher()));
         component.setSupplier(convert(cdxComponent.getSupplier()));
         component.setClassifier(convertClassifier(cdxComponent.getType()).orElse(Classifier.LIBRARY));
@@ -526,6 +528,7 @@ public class ModelConverter {
         cycloneComponent.setCopyright(StringUtils.trimToNull(component.getCopyright()));
         cycloneComponent.setCpe(StringUtils.trimToNull(component.getCpe()));
         cycloneComponent.setAuthor(StringUtils.trimToNull(component.getAuthor()));
+        cycloneComponent.setAuthors(convertContacts(component.getAuthors()));
         cycloneComponent.setSupplier(convert(component.getSupplier()));
         cycloneComponent.setProperties(convert(component.getProperties()));
 
@@ -667,6 +670,7 @@ public class ModelConverter {
             final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
             cycloneComponent.setBomRef(project.getUuid().toString());
             cycloneComponent.setAuthor(StringUtils.trimToNull(project.getAuthor()));
+            cycloneComponent.setAuthors(convertContacts(project.getAuthors()));
             cycloneComponent.setPublisher(StringUtils.trimToNull(project.getPublisher()));
             cycloneComponent.setGroup(StringUtils.trimToNull(project.getGroup()));
             cycloneComponent.setName(StringUtils.trimToNull(project.getName()));
@@ -704,6 +708,7 @@ public class ModelConverter {
                 cycloneComponent.setExternalReferences(references);
             }
             cycloneComponent.setSupplier(convert(project.getSupplier()));
+            cycloneComponent.setAuthors(convertContacts(project.getAuthors()));
 
             // NB: Project properties are currently used to configure integrations
             // such as Defect Dojo. They can also contain encrypted values that most

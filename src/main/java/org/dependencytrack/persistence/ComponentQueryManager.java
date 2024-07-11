@@ -378,6 +378,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setLicenseUrl(sourceComponent.getLicenseUrl());
         component.setResolvedLicense(sourceComponent.getResolvedLicense());
         component.setAuthor(sourceComponent.getAuthor());
+        component.setAuthors(sourceComponent.getAuthors());
         component.setSupplier(sourceComponent.getSupplier());
         // TODO Add support for parent component and children components
         component.setProject(destinationProject);
@@ -413,6 +414,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setPurl(transientComponent.getPurl());
         component.setInternal(transientComponent.isInternal());
         component.setAuthor(transientComponent.getAuthor());
+        component.setAuthors(transientComponent.getAuthors());
         component.setSupplier(transientComponent.getSupplier());
         component.setExternalReferences(transientComponent.getExternalReferences());
         final Component result = persist(component);

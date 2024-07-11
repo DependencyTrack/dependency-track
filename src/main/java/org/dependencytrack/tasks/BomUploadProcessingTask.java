@@ -329,6 +329,7 @@ public class BomUploadProcessingTask implements Subscriber {
         if (project != null) {
             persistentProject.setBomRef(project.getBomRef()); // Transient
             hasChanged |= applyIfChanged(persistentProject, project, Project::getAuthor, persistentProject::setAuthor);
+            hasChanged |= applyIfChanged(persistentProject, project, Project::getAuthors, persistentProject::setAuthors);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getPublisher, persistentProject::setPublisher);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getManufacturer, persistentProject::setManufacturer);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getSupplier, persistentProject::setSupplier);
@@ -410,6 +411,7 @@ public class BomUploadProcessingTask implements Subscriber {
             } else {
                 persistentComponent.setBomRef(component.getBomRef()); // Transient
                 applyIfChanged(persistentComponent, component, Component::getAuthor, persistentComponent::setAuthor);
+                applyIfChanged(persistentComponent, component, Component::getAuthors, persistentComponent::setAuthors);
                 applyIfChanged(persistentComponent, component, Component::getPublisher, persistentComponent::setPublisher);
                 applyIfChanged(persistentComponent, component, Component::getSupplier, persistentComponent::setSupplier);
                 applyIfChanged(persistentComponent, component, Component::getClassifier, persistentComponent::setClassifier);

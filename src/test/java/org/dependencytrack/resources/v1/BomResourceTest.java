@@ -1008,7 +1008,6 @@ public class BomResourceTest extends ResourceTest {
 
     @Test
     public void uploadBomAuthorsTest() {
-        //CycloneDxValidator.getInstance().validate()
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(

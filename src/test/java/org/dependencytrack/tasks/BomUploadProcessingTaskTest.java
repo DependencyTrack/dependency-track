@@ -1216,6 +1216,83 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         });
     }
 
+    @Test
+    public void informIssue3981Test() {
+        final var project = new Project();
+        project.setName("acme-license-app");
+        project.setVersion("1.2.3");
+        qm.persist(project);
+
+        byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b80",
+                  "version": 1,
+                  "metadata": {
+                    "authors": [
+                      {
+                        "name": "foo",
+                        "email": "foo@example.com"
+                      }
+                    ]
+                  },
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib-x"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes);
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+        NOTIFICATIONS.clear();
+
+        final Project clonedProject = qm.clone(project.getUuid(), "3.2.1", true, true, true, true, true, true, true);
+
+        bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b80",
+                  "version": 1,
+                  "metadata": {
+                    "authors": [
+                      {
+                        "name": "bar",
+                        "email": "bar@example.com"
+                      }
+                    ]
+                  },
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib-x"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, clonedProject.getId()), bomBytes);
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+
+        qm.getPersistenceManager().evictAll();
+
+        assertThat(project.getMetadata().getAuthors()).satisfiesExactly(author -> {
+            assertThat(author.getName()).isEqualTo("foo");
+            assertThat(author.getEmail()).isEqualTo("foo@example.com");
+        });
+
+        assertThat(clonedProject.getMetadata().getAuthors()).satisfiesExactly(author -> {
+            assertThat(author.getName()).isEqualTo("bar");
+            assertThat(author.getEmail()).isEqualTo("bar@example.com");
+        });
+    }
+
     private void awaitBomProcessedNotification(final BomUploadEvent bomUploadEvent) {
         try {
             await("BOM Processed Notification")

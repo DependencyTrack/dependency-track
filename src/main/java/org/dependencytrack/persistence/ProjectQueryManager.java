@@ -579,152 +579,161 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     @Override
-    public Project clone(UUID from, String newVersion, boolean includeTags, boolean includeProperties,
-                         boolean includeComponents, boolean includeServices, boolean includeAuditHistory,
-                         boolean includeACL, boolean includePolicyViolations) {
-        final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
-        if (source == null) {
-            LOGGER.warn("Project with UUID %s was supposed to be cloned, but it does not exist anymore".formatted(from));
-            return null;
-        }
-        if (doesProjectExist(source.getName(), newVersion)) {
-            // Project cloning is an asynchronous process. When receiving the clone request, we already perform
-            // this check. It is possible though that a project with the new version is created synchronously
-            // between the clone event being dispatched, and it being processed.
-            LOGGER.warn("Project %s was supposed to be cloned to version %s, but that version already exists"
-                    .formatted(source, newVersion));
-            return null;
-        }
-        Project project = new Project();
-        project.setAuthor(source.getAuthor());
-        project.setAuthors(source.getAuthors());
-        project.setManufacturer(source.getManufacturer());
-        project.setSupplier(source.getSupplier());
-        project.setPublisher(source.getPublisher());
-        project.setGroup(source.getGroup());
-        project.setName(source.getName());
-        project.setDescription(source.getDescription());
-        project.setVersion(newVersion);
-        project.setClassifier(source.getClassifier());
-        project.setActive(source.isActive());
-        project.setCpe(source.getCpe());
-        project.setPurl(source.getPurl());
-        project.setSwidTagId(source.getSwidTagId());
-        if (includeComponents && includeServices) {
-            project.setDirectDependencies(source.getDirectDependencies());
-        }
-        project.setParent(source.getParent());
-        project = persist(project);
-
-        if (source.getMetadata() != null) {
-            final var metadata = new ProjectMetadata();
-            metadata.setProject(project);
-            metadata.setAuthors(source.getMetadata().getAuthors());
-            metadata.setSupplier(source.getMetadata().getSupplier());
-            persist(metadata);
-        }
-
-        if (includeTags) {
-            for (final Tag tag: source.getTags()) {
-                tag.getProjects().add(project);
-                persist(tag);
+    public Project clone(
+            final UUID from,
+            final String newVersion,
+            final boolean includeTags,
+            final boolean includeProperties,
+            final boolean includeComponents,
+            final boolean includeServices,
+            final boolean includeAuditHistory,
+            final boolean includeACL,
+            final boolean includePolicyViolations
+    ) {
+        final Project clonedProject = callInTransaction(() -> {
+            final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
+            if (source == null) {
+                LOGGER.warn("Project was supposed to be cloned, but it does not exist anymore");
+                return null;
             }
-        }
-
-        if (includeProperties && source.getProperties() != null) {
-            for (final ProjectProperty sourceProperty: source.getProperties()) {
-                final ProjectProperty property = new ProjectProperty();
-                property.setProject(project);
-                property.setPropertyType(sourceProperty.getPropertyType());
-                property.setGroupName(sourceProperty.getGroupName());
-                property.setPropertyName(sourceProperty.getPropertyName());
-                property.setPropertyValue(sourceProperty.getPropertyValue());
-                property.setDescription(sourceProperty.getDescription());
-                persist(property);
+            if (doesProjectExist(source.getName(), newVersion)) {
+                // Project cloning is an asynchronous process. When receiving the clone request, we already perform
+                // this check. It is possible though that a project with the new version is created synchronously
+                // between the clone event being dispatched, and it being processed.
+                LOGGER.warn("Project was supposed to be cloned to version %s, but that version already exists".formatted(newVersion));
+                return null;
             }
-        }
+            Project project = new Project();
+            project.setAuthor(source.getAuthor());
+            project.setAuthors(source.getAuthors());
+            project.setManufacturer(source.getManufacturer());
+            project.setSupplier(source.getSupplier());
+            project.setPublisher(source.getPublisher());
+            project.setGroup(source.getGroup());
+            project.setName(source.getName());
+            project.setDescription(source.getDescription());
+            project.setVersion(newVersion);
+            project.setClassifier(source.getClassifier());
+            project.setActive(source.isActive());
+            project.setCpe(source.getCpe());
+            project.setPurl(source.getPurl());
+            project.setSwidTagId(source.getSwidTagId());
+            if (includeComponents && includeServices) {
+                project.setDirectDependencies(source.getDirectDependencies());
+            }
+            project.setParent(source.getParent());
+            project = persist(project);
 
-        final Map<Long, Component> clonedComponents = new HashMap<>();
-        if (includeComponents) {
-            final List<Component> sourceComponents = getAllComponents(source);
-            if (sourceComponents != null) {
-                for (final Component sourceComponent: sourceComponents) {
-                    final Component clonedComponent = cloneComponent(sourceComponent, project, false);
-                    // Add vulnerabilties and finding attribution from the source component to the cloned component
-                    for (Vulnerability vuln: sourceComponent.getVulnerabilities()) {
-                        final FindingAttribution sourceAttribution = this.getFindingAttribution(vuln, sourceComponent);
-                        this.addVulnerability(vuln, clonedComponent, sourceAttribution.getAnalyzerIdentity(), sourceAttribution.getAlternateIdentifier(), sourceAttribution.getReferenceUrl(), sourceAttribution.getAttributedOn());
-                    }
-                    clonedComponents.put(sourceComponent.getId(), clonedComponent);
+            if (source.getMetadata() != null) {
+                final var metadata = new ProjectMetadata();
+                metadata.setProject(project);
+                metadata.setAuthors(source.getMetadata().getAuthors());
+                metadata.setSupplier(source.getMetadata().getSupplier());
+                persist(metadata);
+            }
+
+            if (includeTags) {
+                for (final Tag tag : source.getTags()) {
+                    tag.getProjects().add(project);
+                    persist(tag);
                 }
             }
-        }
 
-        if (includeServices) {
-            final List<ServiceComponent> sourceServices = getAllServiceComponents(source);
-            if (sourceServices != null) {
-                for (final ServiceComponent sourceService : sourceServices) {
-                    cloneServiceComponent(sourceService, project, false);
+            if (includeProperties && source.getProperties() != null) {
+                for (final ProjectProperty sourceProperty : source.getProperties()) {
+                    final ProjectProperty property = new ProjectProperty();
+                    property.setProject(project);
+                    property.setPropertyType(sourceProperty.getPropertyType());
+                    property.setGroupName(sourceProperty.getGroupName());
+                    property.setPropertyName(sourceProperty.getPropertyName());
+                    property.setPropertyValue(sourceProperty.getPropertyValue());
+                    property.setDescription(sourceProperty.getDescription());
+                    persist(property);
                 }
             }
-        }
 
-        if (includeAuditHistory && includeComponents) {
-            final List<Analysis> analyses = super.getAnalyses(source);
-            if (analyses != null) {
-                for (final Analysis sourceAnalysis: analyses) {
-                    Analysis analysis = new Analysis();
-                    analysis.setAnalysisState(sourceAnalysis.getAnalysisState());
-                    final Component clonedComponent = clonedComponents.get(sourceAnalysis.getComponent().getId());
-                    if (clonedComponent == null) {
-                        break;
+            final Map<Long, Component> clonedComponents = new HashMap<>();
+            if (includeComponents) {
+                final List<Component> sourceComponents = getAllComponents(source);
+                if (sourceComponents != null) {
+                    for (final Component sourceComponent : sourceComponents) {
+                        final Component clonedComponent = cloneComponent(sourceComponent, project, false);
+                        // Add vulnerabilties and finding attribution from the source component to the cloned component
+                        for (Vulnerability vuln : sourceComponent.getVulnerabilities()) {
+                            final FindingAttribution sourceAttribution = this.getFindingAttribution(vuln, sourceComponent);
+                            this.addVulnerability(vuln, clonedComponent, sourceAttribution.getAnalyzerIdentity(), sourceAttribution.getAlternateIdentifier(), sourceAttribution.getReferenceUrl(), sourceAttribution.getAttributedOn());
+                        }
+                        clonedComponents.put(sourceComponent.getId(), clonedComponent);
                     }
-                    analysis.setComponent(clonedComponent);
-                    analysis.setVulnerability(sourceAnalysis.getVulnerability());
-                    analysis.setSuppressed(sourceAnalysis.isSuppressed());
-                    analysis.setAnalysisResponse(sourceAnalysis.getAnalysisResponse());
-                    analysis.setAnalysisJustification(sourceAnalysis.getAnalysisJustification());
-                    analysis.setAnalysisState(sourceAnalysis.getAnalysisState());
-                    analysis.setAnalysisDetails(sourceAnalysis.getAnalysisDetails());
-                    analysis = persist(analysis);
-                    if (sourceAnalysis.getAnalysisComments() != null) {
-                        for (final AnalysisComment sourceComment: sourceAnalysis.getAnalysisComments()) {
-                            final AnalysisComment analysisComment = new AnalysisComment();
-                            analysisComment.setAnalysis(analysis);
-                            analysisComment.setTimestamp(sourceComment.getTimestamp());
-                            analysisComment.setComment(sourceComment.getComment());
-                            analysisComment.setCommenter(sourceComment.getCommenter());
-                            persist(analysisComment);
+                }
+            }
+
+            if (includeServices) {
+                final List<ServiceComponent> sourceServices = getAllServiceComponents(source);
+                if (sourceServices != null) {
+                    for (final ServiceComponent sourceService : sourceServices) {
+                        cloneServiceComponent(sourceService, project, false);
+                    }
+                }
+            }
+
+            if (includeAuditHistory && includeComponents) {
+                final List<Analysis> analyses = super.getAnalyses(source);
+                if (analyses != null) {
+                    for (final Analysis sourceAnalysis : analyses) {
+                        Analysis analysis = new Analysis();
+                        analysis.setAnalysisState(sourceAnalysis.getAnalysisState());
+                        final Component clonedComponent = clonedComponents.get(sourceAnalysis.getComponent().getId());
+                        if (clonedComponent == null) {
+                            break;
+                        }
+                        analysis.setComponent(clonedComponent);
+                        analysis.setVulnerability(sourceAnalysis.getVulnerability());
+                        analysis.setSuppressed(sourceAnalysis.isSuppressed());
+                        analysis.setAnalysisResponse(sourceAnalysis.getAnalysisResponse());
+                        analysis.setAnalysisJustification(sourceAnalysis.getAnalysisJustification());
+                        analysis.setAnalysisState(sourceAnalysis.getAnalysisState());
+                        analysis.setAnalysisDetails(sourceAnalysis.getAnalysisDetails());
+                        analysis = persist(analysis);
+                        if (sourceAnalysis.getAnalysisComments() != null) {
+                            for (final AnalysisComment sourceComment : sourceAnalysis.getAnalysisComments()) {
+                                final AnalysisComment analysisComment = new AnalysisComment();
+                                analysisComment.setAnalysis(analysis);
+                                analysisComment.setTimestamp(sourceComment.getTimestamp());
+                                analysisComment.setComment(sourceComment.getComment());
+                                analysisComment.setCommenter(sourceComment.getCommenter());
+                                persist(analysisComment);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if (includeACL) {
-            List<Team> accessTeams = source.getAccessTeams();
-            if (!CollectionUtils.isEmpty(accessTeams)) {
-                project.setAccessTeams(new ArrayList<>(accessTeams));
+            if (includeACL) {
+                List<Team> accessTeams = source.getAccessTeams();
+                if (!CollectionUtils.isEmpty(accessTeams)) {
+                    project.setAccessTeams(new ArrayList<>(accessTeams));
+                }
             }
-        }
 
-     
-       if(includeComponents && includePolicyViolations){
-            final List<PolicyViolation> sourcePolicyViolations = getAllPolicyViolations(source);
-            if(sourcePolicyViolations != null){
-                for(final PolicyViolation policyViolation: sourcePolicyViolations){
-                final Component destinationComponent = clonedComponents.get(policyViolation.getComponent().getId());
-                final PolicyViolation clonedPolicyViolation = clonePolicyViolation(policyViolation, destinationComponent);
-                persist(clonedPolicyViolation);
-                }   
+
+            if (includeComponents && includePolicyViolations) {
+                final List<PolicyViolation> sourcePolicyViolations = getAllPolicyViolations(source);
+                if (sourcePolicyViolations != null) {
+                    for (final PolicyViolation policyViolation : sourcePolicyViolations) {
+                        final Component destinationComponent = clonedComponents.get(policyViolation.getComponent().getId());
+                        final PolicyViolation clonedPolicyViolation = clonePolicyViolation(policyViolation, destinationComponent);
+                        persist(clonedPolicyViolation);
+                    }
+                }
             }
-       }
-        
 
-        project = getObjectById(Project.class, project.getId());
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, project));
+            return project;
+        });
+
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, clonedProject));
         commitSearchIndex(true, Project.class);
-        return project;
+        return clonedProject;
     }
 
     /**

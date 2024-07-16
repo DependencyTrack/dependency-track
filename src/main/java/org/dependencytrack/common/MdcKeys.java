@@ -30,6 +30,7 @@ public final class MdcKeys {
     public static final String MDC_BOM_SPEC_VERSION = "bomSpecVersion";
     public static final String MDC_BOM_UPLOAD_TOKEN = "bomUploadToken";
     public static final String MDC_BOM_VERSION = "bomVersion";
+    public static final String MDC_EVENT_TOKEN = "eventToken";
     public static final String MDC_PROJECT_NAME = "projectName";
     public static final String MDC_PROJECT_UUID = "projectUuid";
     public static final String MDC_PROJECT_VERSION = "projectVersion";

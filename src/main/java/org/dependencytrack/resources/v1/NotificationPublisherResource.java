@@ -34,6 +34,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import org.apache.commons.text.WordUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
@@ -41,9 +43,16 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.publisher.ConsolePublisher;
+import org.dependencytrack.notification.publisher.CsWebexPublisher;
+import org.dependencytrack.notification.publisher.JiraPublisher;
+import org.dependencytrack.notification.publisher.MattermostPublisher;
+import org.dependencytrack.notification.publisher.MsTeamsPublisher;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
+import org.dependencytrack.notification.publisher.SlackPublisher;
+import org.dependencytrack.notification.publisher.WebhookPublisher;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
@@ -286,7 +295,7 @@ public class NotificationPublisherResource extends AlpineResource {
     }
 
     @POST
-    @Path("/test/smtp")
+    @Path("/test/{publisher}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -298,28 +307,56 @@ public class NotificationPublisherResource extends AlpineResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
-    public Response testSmtpPublisherConfig(@FormParam("destination") String destination) {
-        try(QueryManager qm = new QueryManager()) {
-            Class<? extends Publisher> defaultEmailPublisherClass = SendMailPublisher.class;
-            NotificationPublisher emailNotificationPublisher = qm.getDefaultNotificationPublisher(defaultEmailPublisherClass);
-            final Publisher emailPublisher = defaultEmailPublisherClass.getDeclaredConstructor().newInstance();
+    public Response testSlackPublisherConfig(@FormParam("destination") String destination, @PathParam("publisher") String publisherType) {
+        try(QueryManager qm = new QueryManager()){
+            Class<? extends Publisher> defaultPublisherClass;
+            switch (publisherType) {
+                case "email":
+                    defaultPublisherClass = SendMailPublisher.class;
+                    break;
+                case "cisco_webex":
+                    defaultPublisherClass = CsWebexPublisher.class;
+                    break;
+                case "slack":
+                    defaultPublisherClass = SlackPublisher.class;
+                    break;
+                case "microsoft_teams":
+                    defaultPublisherClass = MsTeamsPublisher.class;
+                    break;
+                case "jira":
+                    defaultPublisherClass = JiraPublisher.class;
+                    break;
+                case "mattermost":
+                    defaultPublisherClass = MattermostPublisher.class;
+                    break;
+                case "outbound_webhook":
+                    defaultPublisherClass = WebhookPublisher.class;
+                    break;
+                case "console":
+                    defaultPublisherClass = ConsolePublisher.class;
+                    break;
+                default:
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Invalid publisher was provided.").build();
+            }
+            NotificationPublisher notificationPublisher = qm.getDefaultNotificationPublisher(defaultPublisherClass);
+            final Publisher publisher = defaultPublisherClass.getDeclaredConstructor().newInstance();
             final JsonObject config = Json.createObjectBuilder()
                     .add(Publisher.CONFIG_DESTINATION, destination)
-                    .add(Publisher.CONFIG_TEMPLATE_KEY, emailNotificationPublisher.getTemplate())
-                    .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, emailNotificationPublisher.getTemplateMimeType())
+                    .add(Publisher.CONFIG_TEMPLATE_KEY, notificationPublisher.getTemplate())
+                    .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, notificationPublisher.getTemplateMimeType())
                     .build();
             final Notification notification = new Notification()
                     .scope(NotificationScope.SYSTEM)
                     .group(NotificationGroup.CONFIGURATION)
                     .title(NotificationConstants.Title.NOTIFICATION_TEST)
-                    .content("SMTP configuration test")
+                    .content(WordUtils.capitalize(publisherType.replaceAll("_", " ")) + " Configuration test")
                     .level(NotificationLevel.INFORMATIONAL);
-            // Bypass Notification.dispatch() and go directly to the publisher itself
-            emailPublisher.inform(PublishContext.from(notification), notification, config);
+                publisher.inform(PublishContext.from(notification), notification, config);
             return Response.ok().build();
-        } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+        }
+        catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
             LOGGER.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending test mail notification.").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending " + publisherType + " test notification.").build();
         }
     }
 }

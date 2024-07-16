@@ -44,6 +44,9 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Form;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 public class NotificationPublisherResourceTest extends ResourceTest {
@@ -330,13 +333,16 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     }
 
     @Test
-    public void testSmtpPublisherConfigTest() {
-        Form form = new Form();
-        form.param("destination", "test@example.com");
-        Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/smtp").request()
-                .header(X_API_KEY, apiKey)
-                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(200, response.getStatus(), 0);
+    public void testPublishersConfigTest() {
+        List<String> publishers = Arrays.asList("slack", "email", "cisco_webex", "microsoft_teams", "jira", "mattermost", "outbound_webhook", "console");
+        for(String publisher : publishers){
+                Form form = new Form();
+                form.param("destination", "http://example.com");
+                Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + publisher).request()
+                        .header(X_API_KEY, apiKey)
+                        .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                Assert.assertEquals(200, response.getStatus(), 0);
+        }
     }
 
     @Test
@@ -361,4 +367,6 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         slackPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherClass());
         Assert.assertEquals(DefaultNotificationPublishers.SLACK.getPublisherName(), slackPublisher.getName());
     }
+
+
 }

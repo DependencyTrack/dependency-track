@@ -353,8 +353,7 @@ public class NotificationPublisherResource extends AlpineResource {
                     .level(NotificationLevel.INFORMATIONAL);
                 publisher.inform(PublishContext.from(notification), notification, config);
             return Response.ok().build();
-        }
-        catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+        } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
             LOGGER.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending " + publisherType + " test notification.").build();
         }

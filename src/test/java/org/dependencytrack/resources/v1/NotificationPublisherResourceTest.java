@@ -367,6 +367,4 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         slackPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherClass());
         Assert.assertEquals(DefaultNotificationPublishers.SLACK.getPublisherName(), slackPublisher.getName());
     }
-
-
 }

@@ -910,26 +910,26 @@ public class ModelConverter {
         if (findings == null) {
             return Collections.emptyList();
         }
-        final var vulnerabilitiesToAffectRefs = new HashMap<String, HashSet<String>>();
-        final var affectRefsToAffects = new HashMap<String, org.cyclonedx.model.vulnerability.Vulnerability.Affect>();
+        final var vulnerabilitiesToAffects = new HashMap<org.cyclonedx.model.vulnerability.Vulnerability, HashSet<org.cyclonedx.model.vulnerability.Vulnerability.Affect>>();
         final List<org.cyclonedx.model.vulnerability.Vulnerability> cycloneVulnerabilities = findings.stream()
                 .map(finding -> convert(qm, variant, finding))
                 .filter(vulnerability -> {
                     var affect = vulnerability.getAffects().getFirst();
-                    var vulnerabilitySeen = vulnerabilitiesToAffectRefs.containsKey(vulnerability.getId());
+                    vulnerability.setAffects(new ArrayList<>());
+                    var vulnerabilitySeen = vulnerabilitiesToAffects.containsKey(vulnerability);
                     if (vulnerabilitySeen){
-                        vulnerabilitiesToAffectRefs.get(vulnerability.getId()).add(affect.getRef());
+                        vulnerabilitiesToAffects.get(vulnerability).add(affect);
                     } else {
-                        vulnerabilitiesToAffectRefs.put(vulnerability.getId(), new HashSet<>(Arrays.asList(affect.getRef())));
+                        vulnerabilitiesToAffects.put(vulnerability, new HashSet<>(Arrays.asList(affect)));
                     }
 
-                    affectRefsToAffects.put(affect.getRef(), affect);
-                    return vulnerabilitySeen;
+                    return !vulnerabilitySeen;
                 })
                 .toList();
         cycloneVulnerabilities
-                .forEach(vulnerability -> vulnerability.setAffects(vulnerabilitiesToAffectRefs.get(vulnerability.getId()).stream().map(affectRefsToAffects::get).toList()));
-
+                .forEach(vulnerability -> {
+                    vulnerability.setAffects(new ArrayList<>(vulnerabilitiesToAffects.get(vulnerability)));
+                });
         return cycloneVulnerabilities;
     }
 

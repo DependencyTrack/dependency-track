@@ -910,27 +910,11 @@ public class ModelConverter {
         if (findings == null) {
             return Collections.emptyList();
         }
-        final var vulnerabilitiesToAffects = new HashMap<org.cyclonedx.model.vulnerability.Vulnerability, HashSet<org.cyclonedx.model.vulnerability.Vulnerability.Affect>>();
-        final List<org.cyclonedx.model.vulnerability.Vulnerability> cycloneVulnerabilities = findings.stream()
+        final var vulnerabilitiesSeen = new HashSet<org.cyclonedx.model.vulnerability.Vulnerability>();
+        return findings.stream()
                 .map(finding -> convert(qm, variant, finding))
-                .filter(vulnerability -> {
-                    var affect = vulnerability.getAffects().getFirst();
-                    vulnerability.setAffects(new ArrayList<>());
-                    var vulnerabilitySeen = vulnerabilitiesToAffects.containsKey(vulnerability);
-                    if (vulnerabilitySeen){
-                        vulnerabilitiesToAffects.get(vulnerability).add(affect);
-                    } else {
-                        vulnerabilitiesToAffects.put(vulnerability, new HashSet<>(Arrays.asList(affect)));
-                    }
-
-                    return !vulnerabilitySeen;
-                })
+                .filter(vulnerabilitiesSeen::add)
                 .toList();
-        cycloneVulnerabilities
-                .forEach(vulnerability -> {
-                    vulnerability.setAffects(new ArrayList<>(vulnerabilitiesToAffects.get(vulnerability)));
-                });
-        return cycloneVulnerabilities;
     }
 
     /**

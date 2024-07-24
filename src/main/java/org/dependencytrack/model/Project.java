@@ -76,7 +76,6 @@ import java.util.UUID;
 @FetchGroups({
         @FetchGroup(name = "ALL", members = {
                 @Persistent(name = "name"),
-                @Persistent(name = "author"),
                 @Persistent(name = "authors"),
                 @Persistent(name = "publisher"),
                 @Persistent(name = "supplier"),
@@ -127,13 +126,6 @@ public class Project implements Serializable {
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
-
-    @Persistent
-    @Column(name = "AUTHOR", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
-    private String author;
 
     @Persistent(defaultFetchGroup = "true")
     @Convert(OrganizationalContactsJsonConverter.class)
@@ -303,14 +295,6 @@ public class Project implements Serializable {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
     }
 
     public List<OrganizationalContact> getAuthors() {

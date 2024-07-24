@@ -110,11 +110,6 @@ public class Component implements Serializable {
     @JsonIgnore
     private long id;
 
-    @Persistent
-    @Column(name = "AUTHOR", jdbcType = "CLOB")
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
-    private String author;
-
     @Persistent(defaultFetchGroup = "true")
     @Convert(OrganizationalContactsJsonConverter.class)
     @Column(name = "AUTHORS", jdbcType = "CLOB", allowsNull = "true")
@@ -390,14 +385,6 @@ public class Component implements Serializable {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
     }
 
     public List<OrganizationalContact> getAuthors() {

@@ -690,7 +690,6 @@ public class ModelConverter {
         }
         return stringBuilder.toString();
     }
-    
 
     public static org.cyclonedx.model.Metadata createMetadata(final Project project) {
         final org.cyclonedx.model.Metadata metadata = new org.cyclonedx.model.Metadata();

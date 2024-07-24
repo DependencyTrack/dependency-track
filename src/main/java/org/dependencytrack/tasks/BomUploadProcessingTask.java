@@ -85,7 +85,6 @@ import static org.apache.commons.lang3.StringUtils.trimToNull;
 import static org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS;
 import static org.datanucleus.PropertyNames.PROPERTY_FLUSH_MODE;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
-import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
 import static org.dependencytrack.common.MdcKeys.MDC_BOM_FORMAT;
 import static org.dependencytrack.common.MdcKeys.MDC_BOM_SERIAL_NUMBER;
 import static org.dependencytrack.common.MdcKeys.MDC_BOM_SPEC_VERSION;
@@ -259,14 +258,6 @@ public class BomUploadProcessingTask implements Subscriber {
             // BomUploadProcessingTaskTest#informWithBloatedBomTest can be used to profile the impact on large BOMs.
             qm.getPersistenceManager().setProperty(PROPERTY_FLUSH_MODE, FlushMode.MANUAL.name());
 
-            // Prevent object fields from being unloaded upon commit.
-            //
-            // DataNucleus transitions objects into the "hollow" state after the transaction is committed.
-            // In hollow state, all fields except the ID are unloaded. Accessing fields afterward triggers
-            // one or more database queries to load them again.
-            // See https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#lifecycle
-            qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
-
             qm.getPersistenceManager().addInstanceLifecycleListener(new IndexingInstanceLifecycleListener(eventsToDispatch::add),
                     Component.class, Project.class, ProjectMetadata.class, ServiceComponent.class);
             qm.getPersistenceManager().addInstanceLifecycleListener(new L2CacheEvictingInstanceLifecycleListener(qm),
@@ -310,8 +301,12 @@ public class BomUploadProcessingTask implements Subscriber {
         dispatchBomProcessedNotification(ctx);
     }
 
-    private Project processProject(final Context ctx, final QueryManager qm,
-                                   final Project project, final ProjectMetadata projectMetadata) {
+    private Project processProject(
+            final Context ctx,
+            final QueryManager qm,
+            final Project project,
+            final ProjectMetadata projectMetadata
+    ) {
         final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
         query.setFilter("uuid == :uuid");
         query.setParameters(ctx.project.getUuid());
@@ -348,7 +343,7 @@ public class BomUploadProcessingTask implements Subscriber {
         if (projectMetadata != null) {
             if (persistentProject.getMetadata() == null) {
                 projectMetadata.setProject(persistentProject);
-                qm.getPersistenceManager().makePersistent(projectMetadata);
+                qm.persist(projectMetadata);
                 hasChanged = true;
             } else {
                 hasChanged |= applyIfChanged(persistentProject.getMetadata(), projectMetadata, ProjectMetadata::getAuthors, persistentProject.getMetadata()::setAuthors);
@@ -363,11 +358,13 @@ public class BomUploadProcessingTask implements Subscriber {
         return persistentProject;
     }
 
-    private Map<ComponentIdentity, Component> processComponents(final QueryManager qm,
-                                                                final Project project,
-                                                                final List<Component> components,
-                                                                final Map<String, ComponentIdentity> identitiesByBomRef,
-                                                                final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity) {
+    private Map<ComponentIdentity, Component> processComponents(
+            final QueryManager qm,
+            final Project project,
+            final List<Component> components,
+            final Map<String, ComponentIdentity> identitiesByBomRef,
+            final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
+    ) {
         assertPersistent(project, "Project mut be persistent");
 
         // Fetch IDs of all components that exist in the project already.
@@ -406,7 +403,7 @@ public class BomUploadProcessingTask implements Subscriber {
             }
             if (persistentComponent == null) {
                 component.setProject(project);
-                persistentComponent = qm.getPersistenceManager().makePersistent(component);
+                persistentComponent = qm.persist(component);
                 component.setNew(true); // Transient
             } else {
                 persistentComponent.setBomRef(component.getBomRef()); // Transient
@@ -466,11 +463,13 @@ public class BomUploadProcessingTask implements Subscriber {
         return persistentComponents;
     }
 
-    private Map<ComponentIdentity, ServiceComponent> processServices(final QueryManager qm,
-                                                                     final Project project,
-                                                                     final List<ServiceComponent> services,
-                                                                     final Map<String, ComponentIdentity> identitiesByBomRef,
-                                                                     final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity) {
+    private Map<ComponentIdentity, ServiceComponent> processServices(
+            final QueryManager qm,
+            final Project project,
+            final List<ServiceComponent> services,
+            final Map<String, ComponentIdentity> identitiesByBomRef,
+            final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
+    ) {
         assertPersistent(project, "Project must be persistent");
 
         final PersistenceManager pm = qm.getPersistenceManager();
@@ -486,7 +485,7 @@ public class BomUploadProcessingTask implements Subscriber {
             ServiceComponent persistentService = qm.matchServiceIdentity(project, componentIdentity);
             if (persistentService == null) {
                 service.setProject(project);
-                persistentService = pm.makePersistent(service);
+                persistentService = qm.persist(service);
             } else {
                 persistentService.setBomRef(service.getBomRef()); // Transient
                 applyIfChanged(persistentService, service, ServiceComponent::getGroup, persistentService::setGroup);
@@ -536,22 +535,30 @@ public class BomUploadProcessingTask implements Subscriber {
         bom.setSerialNumber(ctx.bomSerialNumber);
         bom.setBomVersion(ctx.bomVersion);
         bom.setImported(bomImportDate);
-        qm.getPersistenceManager().makePersistent(bom);
+        qm.persist(bom);
 
         project.setLastBomImport(bomImportDate);
         project.setLastBomImportFormat("%s %s".formatted(ctx.bomFormat.getFormatShortName(), ctx.bomSpecVersion));
         qm.getPersistenceManager().flush();
     }
 
-    private void processDependencyGraph(final QueryManager qm,
-                                        final Project project,
-                                        final MultiValuedMap<String, String> dependencyGraph,
-                                        final Map<ComponentIdentity, Component> componentsByIdentity,
-                                        final Map<String, ComponentIdentity> identitiesByBomRef) {
+    private void processDependencyGraph(
+            final QueryManager qm,
+            final Project project,
+            final MultiValuedMap<String, String> dependencyGraph,
+            final Map<ComponentIdentity, Component> componentsByIdentity,
+            final Map<String, ComponentIdentity> identitiesByBomRef
+    ) {
         assertPersistent(project, "Project must be persistent");
 
         if (project.getBomRef() != null) {
             final Collection<String> directDependencyBomRefs = dependencyGraph.get(project.getBomRef());
+            if (directDependencyBomRefs == null || directDependencyBomRefs.isEmpty()) {
+                LOGGER.warn("""
+                        The dependency graph has %d entries, but the project (metadata.component node of the BOM) \
+                        is not one of them; Graph will be incomplete because it is not possible to determine its root\
+                        """.formatted(dependencyGraph.size()));
+            }
             final String directDependenciesJson = resolveDirectDependenciesJson(project.getBomRef(), directDependencyBomRefs, identitiesByBomRef);
             if (!Objects.equals(directDependenciesJson, project.getDirectDependencies())) {
                 project.setDirectDependencies(directDependenciesJson);
@@ -590,8 +597,10 @@ public class BomUploadProcessingTask implements Subscriber {
         qm.getPersistenceManager().flush();
     }
 
-    private static Predicate<Component> distinctComponentsByIdentity(final Map<String, ComponentIdentity> identitiesByBomRef,
-                                                                     final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity) {
+    private static Predicate<Component> distinctComponentsByIdentity(
+            final Map<String, ComponentIdentity> identitiesByBomRef,
+            final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
+    ) {
         final var identitiesSeen = new HashSet<ComponentIdentity>();
         return component -> {
             final var componentIdentity = new ComponentIdentity(component);
@@ -616,8 +625,10 @@ public class BomUploadProcessingTask implements Subscriber {
         };
     }
 
-    private static Predicate<ServiceComponent> distinctServicesByIdentity(final Map<String, ComponentIdentity> identitiesByBomRef,
-                                                                          final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity) {
+    private static Predicate<ServiceComponent> distinctServicesByIdentity(
+            final Map<String, ComponentIdentity> identitiesByBomRef,
+            final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
+    ) {
         final var identitiesSeen = new HashSet<ComponentIdentity>();
         return service -> {
             final var componentIdentity = new ComponentIdentity(service);
@@ -633,9 +644,11 @@ public class BomUploadProcessingTask implements Subscriber {
         };
     }
 
-    private String resolveDirectDependenciesJson(final String dependencyBomRef,
-                                                 final Collection<String> directDependencyBomRefs,
-                                                 final Map<String, ComponentIdentity> identitiesByBomRef) {
+    private String resolveDirectDependenciesJson(
+            final String dependencyBomRef,
+            final Collection<String> directDependencyBomRefs,
+            final Map<String, ComponentIdentity> identitiesByBomRef
+    ) {
         if (directDependencyBomRefs == null || directDependencyBomRefs.isEmpty()) {
             return null;
         }
@@ -656,10 +669,12 @@ public class BomUploadProcessingTask implements Subscriber {
         return jsonDependencies.isEmpty() ? null : jsonDependencies.toString();
     }
 
-    private static void resolveAndApplyLicense(final QueryManager qm,
-                                               final Component component,
-                                               final Map<String, License> licenseCache,
-                                               final Map<String, License> customLicenseCache) {
+    private static void resolveAndApplyLicense(
+            final QueryManager qm,
+            final Component component,
+            final Map<String, License> licenseCache,
+            final Map<String, License> customLicenseCache
+    ) {
         // CycloneDX components can declare multiple licenses, but we currently
         // only support one. We assume that the licenseCandidates list is ordered
         // by priority, and simply take the first resolvable candidate.
@@ -700,18 +715,6 @@ public class BomUploadProcessingTask implements Subscriber {
                         component.setLicense(trim(license.getName()));
                         component.setLicenseUrl(trimToNull(license.getUrl()));
                     });
-        }
-    }
-
-    private static License resolveCustomLicense(final QueryManager qm, final String licenseName) {
-        final Query<License> query = qm.getPersistenceManager().newQuery(License.class);
-        query.setFilter("name == :name && customLicense == true");
-        query.setParameters(licenseName);
-        try {
-            final License license = query.executeUnique();
-            return license != null ? license : License.UNRESOLVED;
-        } finally {
-            query.closeAll();
         }
     }
 

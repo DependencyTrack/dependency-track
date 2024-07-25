@@ -33,6 +33,7 @@ import org.dependencytrack.model.validation.ValidSpdxExpression;
 import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
+import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 
 import jakarta.json.JsonObject;
 import jakarta.validation.constraints.NotBlank;
@@ -397,6 +398,22 @@ public class Component implements Serializable {
 
     public String getPublisher() {
         return publisher;
+    }
+
+    @Deprecated
+    @JsonIgnore
+    public String getAuthor(){
+        return ModelConverter.convertContactsToString(this.authors);
+    }
+
+    @Deprecated
+    public void setAuthor(String author){
+        if(this.authors==null){
+            this.authors = new ArrayList<>();
+        }
+        this.authors.add(new OrganizationalContact() {{
+            setName(author);
+        }});
     }
 
     public void setPublisher(String publisher) {

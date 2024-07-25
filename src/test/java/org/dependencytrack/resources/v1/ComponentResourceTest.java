@@ -506,6 +506,7 @@ public class ComponentResourceTest extends ResourceTest {
         component.setProject(project);
         component.setName("My Component");
         component.setVersion("1.0");
+        component.setAuthor("SampleAuthor");
         Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(component, MediaType.APPLICATION_JSON));
@@ -513,6 +514,7 @@ public class ComponentResourceTest extends ResourceTest {
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
         Assert.assertEquals("My Component", json.getString("name"));
+        Assert.assertEquals("SampleAuthor" ,json.getJsonArray("authors").getJsonObject(0).getString("name"));
         Assert.assertEquals("1.0", json.getString("version"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
     }

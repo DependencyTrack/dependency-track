@@ -96,7 +96,7 @@
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.26.2</lib.commons-compress.version>
         <lib.commons-text.version>1.12.0</lib.commons-text.version>
-        <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
+        <lib.cvss-calculator.version>1.4.3</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>9.0.4</lib.cyclonedx-java.version>
         <lib.greenmail.version>2.0.1</lib.greenmail.version>

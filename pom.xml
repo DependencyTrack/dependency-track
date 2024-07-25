@@ -92,7 +92,7 @@
         <lib.checkstyle.version>10.16.0</lib.checkstyle.version>
         <lib.cloud-sql-connector-jdbc-sqlserver.version>1.19.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
         <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.18.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
-        <lib.cloud-sql-postgres-socket-factory.version>1.18.0</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.19.1</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.26.2</lib.commons-compress.version>
         <lib.commons-text.version>1.12.0</lib.commons-text.version>
@@ -115,7 +115,7 @@
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.testcontainers.version>1.20.0</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
-        <lib.woodstox.version>6.6.2</lib.woodstox.version>
+        <lib.woodstox.version>7.0.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>

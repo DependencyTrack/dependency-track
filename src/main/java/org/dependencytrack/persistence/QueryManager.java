@@ -33,6 +33,7 @@ import alpine.resources.AlpineRequest;
 import alpine.server.util.DbUtil;
 import com.github.packageurl.PackageURL;
 import com.google.common.collect.Lists;
+import jakarta.json.JsonObject;
 import org.apache.commons.lang3.ClassUtils;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOQuery;
@@ -84,7 +85,6 @@ import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
-import jakarta.json.JsonObject;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -629,8 +629,16 @@ public class QueryManager extends AlpineQueryManager {
         return getLicenseQueryManager().getLicense(licenseId);
     }
 
+    public License getLicenseByIdOrName(final String licenseIdOrName) {
+        return getLicenseQueryManager().getLicenseByIdOrName(licenseIdOrName);
+    }
+
     public License getCustomLicense(String licenseName) {
         return getLicenseQueryManager().getCustomLicense(licenseName);
+    }
+
+    public License getCustomLicenseByName(final String licenseName) {
+        return getLicenseQueryManager().getCustomLicenseByName(licenseName);
     }
 
     public License synchronizeLicense(License license, boolean commitIndex) {
@@ -1358,6 +1366,14 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<TagQueryManager.TaggedPolicyRow> getTaggedPolicies(final String tagName) {
         return getTagQueryManager().getTaggedPolicies(tagName);
+    }
+
+    public void tagPolicies(final String tagName, final Collection<String> policyUuids) {
+        getTagQueryManager().tagPolicies(tagName, policyUuids);
+    }
+
+    public void untagPolicies(final String tagName, final Collection<String> policyUuids) {
+        getTagQueryManager().untagPolicies(tagName, policyUuids);
     }
 
     public PaginatedResult getTagsForPolicy(String policyUuid) {

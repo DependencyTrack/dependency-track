@@ -112,6 +112,20 @@ Set the redirect URI to `<dependency track host>/static/oidc-callback.html`
 
 <span style="color:red">\*</span> Requires additional configuration, see [Example setup with Keycloak](#example-setup-with-keycloak)
 
+#### OneLogin
+
+| API server                                                                                  | Frontend                                                                                   |
+| :------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------- |
+| alpine.oidc.enabled=true                                                                    |                                                                                            |
+| alpine.oidc.client.id=a9eb980a-fake-45f9-96e0-0891ff63d00d<span style="color:red">\*</span> | OIDC_CLIENT_ID=a9eb980a-fake-45f9-96e0-0891ff63d00d<span style="color:red">\*</span>       |
+| alpine.oidc.issuer=https://example.onelogin.com/oidc/2                                      | OIDC_ISSUER=https://example.onelogin.com/oidc/2                                            |
+| alpine.oidc.username.claim=email                                                            |                                                                                            |
+| alpine.oidc.user.provisioning=true                                                          |                                                                                            |
+| alpine.oidc.teams.claim=groups                                                              | OIDC_SCOPE=openid profile email groups                                                     |
+| alpine.oidc.team.synchronization=true                                                       |                                                                                            |
+
+<span style="color:red">\*</span> Requires additional configuration, see [Example setup with OneLogin](#example-setup-with-onelogin)
+
 ### Default Groups
 
 In cases where team synchronization is not possible, auto-provisioned users can be assigned one or more default teams.
@@ -227,6 +241,43 @@ $ curl https://auth.example.com/auth/realms/example/protocol/openid-connect/user
 
 > Dependency-Track associates every OpenID Connect user with their subject identifier (`sub` claim of the access token) upon first login.
 > If a user with the same name but a different subject identifier attempts to log in via OIDC, Dependency-Track will refuse to authenticate that user. This is done to prevent account takeovers, as some identity providers allow users to change their usernames. Also, uniqueness of usernames is not always guaranteed, while the uniqueness of subject identifiers is.
+
+### Example setup with OneLogin
+
+The following steps demonstrate how to setup OpenID Connect with OneLogin.
+
+> This guide assumes that:
+>
+> - the Dependency-Track frontend has been deployed to `https://dependency-track.example.com`
+> - a OneLogin instance is available at `https://example.onelogin.com`
+
+1.  Log in to OneLogin and navigate to _Administration -> Applications -> Add App_
+  - Search for _OpenID Connect (OIDC)_
+
+  ![OneLogin OIDC Application](/images/screenshots/onelogin-oidc.png)
+
+2.  In the _Configuration_ section, set the following values:
+  - Login Url: `http://dependency-track.example.com/api/v1/user/login`
+  - Redirect URI's: `https://dependency-track.example.com/static/oidc-callback.html`
+
+  ![OneLogin OIDC Application Configuration](/images/screenshots/onelogin-oidc-configuration.png)
+
+3.  In the _Parameters_ section, click on the `Groups` _OpenId Connect (OIDC) Field_ and set the following values:
+  - Default: `Department (Custom)` (for team synchronization, this must be the field that you use for the user's groups, e.g. Department, Team, Role, etc.)
+  - Transform: `Semicolon Delimited Input (Multi-value output)`
+
+  ![OneLogin OIDC Application Parameters](/images/screenshots/onelogin-oidc-parameters.png)
+  ![OneLogin OIDC Application Parameters Field Groups](/images/screenshots/onelogin-oidc-parameters-field-groups.png)
+
+4.  In the _SSO_ section, copy the `Client ID` and use it to set the `alpine.oidc.client.id` and `OIDC_CLIENT_ID` configuration values in the API server and frontend respectively
+
+  ![OneLogin OIDC Application SSO](</images/screenshots/onelogin-oidc-sso.png>)
+
+5.  Login to Dependency-Track as an admin and navigate to _Administration -> Access Management -> OpenID Connect Groups_
+  - Create groups with names equivalent to those in OneLogin (these must match exactly, including case, with the values of the `Groups` field set in the _Parameters_ section)
+  - Add teams that the groups should be mapped to
+
+6.  Use the _OpenID_ button on the login page to sign in with a OneLogin user that is member of at least one of the configured groups. Navigating to _Administration -> Access Management -> OpenID Connect Users_ should now reveal that the user has been automatically provisioned and team memberships have been synchronized
 
 ### Azure Active Directory app registration
 

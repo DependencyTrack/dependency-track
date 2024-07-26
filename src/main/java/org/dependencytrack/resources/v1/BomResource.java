@@ -32,7 +32,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -45,6 +44,7 @@ import org.dependencytrack.model.Bom.Format;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants.Title;
 import org.dependencytrack.notification.NotificationGroup;
@@ -80,10 +80,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+
+import static java.util.function.Predicate.not;
 
 /**
  * JAX-RS resources for processing bill-of-material (bom) documents.
@@ -92,7 +95,7 @@ import java.util.UUID;
  * @since 3.0.0
  */
 @Path("/v1/bom")
-@Tag(name = "bom")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "bom")
 @SecurityRequirements({
         @SecurityRequirement(name = "ApiKeyAuth"),
         @SecurityRequirement(name = "BearerAuth")
@@ -367,14 +370,17 @@ public class BomResource extends AlpineResource {
             @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
-    public Response uploadBom(@FormDataParam("project") String projectUuid,
-                               @DefaultValue("false") @FormDataParam("autoCreate") boolean autoCreate,
-                               @FormDataParam("projectName") String projectName,
-                               @FormDataParam("projectVersion") String projectVersion,
-                               @FormDataParam("parentName") String parentName,
-                               @FormDataParam("parentVersion") String parentVersion,
-                               @FormDataParam("parentUUID") String parentUUID,
-                               @Parameter(schema = @Schema(type = "string")) @FormDataParam("bom") final List<FormDataBodyPart> artifactParts) {
+    public Response uploadBom(
+            @FormDataParam("project") String projectUuid,
+            @DefaultValue("false") @FormDataParam("autoCreate") boolean autoCreate,
+            @FormDataParam("projectName") String projectName,
+            @FormDataParam("projectVersion") String projectVersion,
+            @FormDataParam("projectTags") String projectTags,
+            @FormDataParam("parentName") String parentName,
+            @FormDataParam("parentVersion") String parentVersion,
+            @FormDataParam("parentUUID") String parentUUID,
+            @Parameter(schema = @Schema(type = "string")) @FormDataParam("bom") final List<FormDataBodyPart> artifactParts
+    ) {
         if (projectUuid != null) { // behavior in v3.0.0
             try (QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, projectUuid);
@@ -404,7 +410,10 @@ public class BomResource extends AlpineResource {
                                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified parent project is forbidden").build();
                             }
                         }
-                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, null, parent, null, true, true);
+                        final List<org.dependencytrack.model.Tag> tags = (projectTags != null && !projectTags.isBlank())
+                                ? Arrays.stream(projectTags.split(",")).map(String::trim).filter(not(String::isEmpty)).map(Tag::new).toList()
+                                : null;
+                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, tags, parent, null, true, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
                     } else {
@@ -532,16 +541,11 @@ public class BomResource extends AlpineResource {
                 problemDetails.setErrors(e.getValidationErrors());
             }
 
-            final Response response = Response.status(Response.Status.BAD_REQUEST)
-                    .header("Content-Type", ProblemDetails.MEDIA_TYPE_JSON)
-                    .entity(problemDetails)
-                    .build();
-
             final var bomEncoded = Base64.getEncoder()
                 .encodeToString(bomBytes);
             dispatchBomValidationFailedNotification(project, bomEncoded, problemDetails.getErrors(), Format.CYCLONEDX);
 
-            throw new WebApplicationException(response);
+            throw new WebApplicationException(problemDetails.toResponse());
         } catch (RuntimeException e) {
             LOGGER.error("Failed to validate BOM", e);
             final Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();

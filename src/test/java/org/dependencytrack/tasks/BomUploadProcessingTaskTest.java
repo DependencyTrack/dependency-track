@@ -1167,6 +1167,132 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         }
     }
 
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/3957
+    public void informIssue3957Test() {
+        final var licenseA = new License();
+        licenseA.setLicenseId("GPL-1.0");
+        licenseA.setName("GNU General Public License v1.0 only");
+        qm.persist(licenseA);
+
+        final var licenseB = new License();
+        licenseB.setLicenseId("GPL-1.0-only");
+        licenseB.setName("GNU General Public License v1.0 only");
+        qm.persist(licenseB);
+
+        final var project = new Project();
+        project.setName("acme-license-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b80",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib-x",
+                      "licenses": [
+                        {
+                          "license": {
+                            "name": "GNU General Public License v1.0 only"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes);
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getResolvedLicense()).isNotNull();
+            assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("GPL-1.0");
+        });
+    }
+
+    @Test
+    public void informIssue3981Test() {
+        final var project = new Project();
+        project.setName("acme-license-app");
+        project.setVersion("1.2.3");
+        qm.persist(project);
+
+        byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b80",
+                  "version": 1,
+                  "metadata": {
+                    "authors": [
+                      {
+                        "name": "foo",
+                        "email": "foo@example.com"
+                      }
+                    ]
+                  },
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib-x"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes);
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+        NOTIFICATIONS.clear();
+
+        final Project clonedProject = qm.clone(project.getUuid(), "3.2.1", true, true, true, true, true, true, true);
+
+        bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b80",
+                  "version": 1,
+                  "metadata": {
+                    "authors": [
+                      {
+                        "name": "bar",
+                        "email": "bar@example.com"
+                      }
+                    ]
+                  },
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib-x"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, clonedProject.getId()), bomBytes);
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+
+        qm.getPersistenceManager().evictAll();
+
+        assertThat(project.getMetadata().getAuthors()).satisfiesExactly(author -> {
+            assertThat(author.getName()).isEqualTo("foo");
+            assertThat(author.getEmail()).isEqualTo("foo@example.com");
+        });
+
+        assertThat(clonedProject.getMetadata().getAuthors()).satisfiesExactly(author -> {
+            assertThat(author.getName()).isEqualTo("bar");
+            assertThat(author.getEmail()).isEqualTo("bar@example.com");
+        });
+    }
+
     private void awaitBomProcessedNotification(final BomUploadEvent bomUploadEvent) {
         try {
             await("BOM Processed Notification")

@@ -85,14 +85,14 @@
         <maven.compiler.target>21</maven.compiler.target>
 
         <!-- Dependency Versions -->
-        <frontend.version>4.11.4</frontend.version>
+        <frontend.version>4.11.5</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.2.1</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
         <lib.checkstyle.version>10.16.0</lib.checkstyle.version>
-        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.19.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
+        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.19.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
         <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.18.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
-        <lib.cloud-sql-postgres-socket-factory.version>1.18.0</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.19.1</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.26.2</lib.commons-compress.version>
         <lib.commons-text.version>1.12.0</lib.commons-text.version>
@@ -103,19 +103,19 @@
         <lib.jackson.version>2.17.1</lib.jackson.version>
         <lib.jackson-databind.version>2.17.1</lib.jackson-databind.version>
         <lib.json-java.version>20240303</lib.json-java.version>
-        <lib.json-unit.version>3.4.0</lib.json-unit.version>
+        <lib.json-unit.version>3.4.1</lib.json-unit.version>
         <lib.lucene.version>8.11.3</lib.lucene.version>
         <lib.maven-artifact.version>3.9.8</lib.maven-artifact.version>
         <lib.mockserver-netty.version>5.15.0</lib.mockserver-netty.version>
-        <lib.open-vulnerability-clients.version>6.1.1</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>6.1.7</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>3.2.2</lib.pebble.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
         <lib.swagger-parser.version>2.1.22</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
-        <lib.testcontainers.version>1.19.8</lib.testcontainers.version>
+        <lib.testcontainers.version>1.20.0</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
-        <lib.woodstox.version>6.6.2</lib.woodstox.version>
+        <lib.woodstox.version>7.0.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>

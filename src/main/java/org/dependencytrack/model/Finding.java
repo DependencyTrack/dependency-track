@@ -147,6 +147,7 @@ public class Finding implements Serializable {
                AND "VULNERABILITY"."ID" = "ANALYSIS"."VULNERABILITY_ID"
                AND "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
              WHERE "COMPONENT"."PROJECT_ID" = ?
+               AND (:includeSuppressed = :true OR "ANALYSIS"."SUPPRESSED" IS NULL OR "ANALYSIS"."SUPPRESSED" = :false)
                AND "FINDINGATTRIBUTION"."ATTRIBUTED_ON" BETWEEN ? AND ?
             """;
 

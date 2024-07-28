@@ -39,7 +39,6 @@ import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
-import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.junit.Test;
 

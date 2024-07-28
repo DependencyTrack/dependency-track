@@ -35,6 +35,7 @@ import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
 import alpine.model.Team;
+import alpine.notification.NotificationLevel;
 
 public class ScheduledNotificationRuleTest {
     @Test
@@ -63,6 +64,13 @@ public class ScheduledNotificationRuleTest {
         ScheduledNotificationRule rule = new ScheduledNotificationRule();
         rule.setScope(NotificationScope.PORTFOLIO);
         Assert.assertEquals(NotificationScope.PORTFOLIO, rule.getScope());
+    }
+
+    @Test
+    public void testNotificationLevel() {
+        ScheduledNotificationRule rule = new ScheduledNotificationRule();
+        rule.setNotificationLevel(NotificationLevel.WARNING);
+        Assert.assertEquals(NotificationLevel.WARNING, rule.getNotificationLevel());
     }
 
     @Test
@@ -176,10 +184,17 @@ public class ScheduledNotificationRuleTest {
     }
 
     @Test
-    public void testCronExpression() {
+    public void testCronConfig() {
         ScheduledNotificationRule rule = new ScheduledNotificationRule();
         rule.setCronConfig("0 0 12 * *");
         Assert.assertEquals("0 0 12 * *", rule.getCronConfig());
+    }
+
+    @Test
+    public void testCronConfigNull() {
+        ScheduledNotificationRule rule = new ScheduledNotificationRule();
+        rule.setCronConfig(null);
+        Assert.assertEquals(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_EXPRESSION, rule.getCronConfig());
     }
 
     @Test

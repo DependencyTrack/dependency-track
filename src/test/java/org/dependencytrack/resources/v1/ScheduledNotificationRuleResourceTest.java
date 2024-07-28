@@ -135,6 +135,32 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     }
 
     @Test
+    public void createScheduledNotificationRuleDisabledRuleTest() {
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
+        ScheduledNotificationRule rule = new ScheduledNotificationRule();
+        rule.setName("Example Rule");
+        rule.setScope(NotificationScope.SYSTEM);
+        rule.setPublisher(publisher);
+        rule.setEnabled(false);
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(rule, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Example Rule", json.getString("name"));
+        Assert.assertFalse(json.getBoolean("enabled"));
+        Assert.assertTrue(json.getBoolean("notifyChildren"));
+        Assert.assertFalse(json.getBoolean("logSuccessfulPublish"));
+        Assert.assertEquals("SYSTEM", json.getString("scope"));
+        Assert.assertEquals(0, json.getJsonArray("notifyOn").size());
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        Assert.assertEquals("Slack", json.getJsonObject("publisher").getString("name"));
+        Assert.assertEquals(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_EXPRESSION.getDefaultPropertyValue(), json.getString("cronConfig"));
+        Assert.assertFalse(json.getBoolean("publishOnlyWithUpdates"));
+    }
+
+    @Test
     public void createScheduledNotificationRuleInvalidPublisherTest() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setUuid(UUID.randomUUID());
@@ -157,6 +183,22 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     }
 
     @Test
+    public void createScheduledNotificationRuleWithInvalidCronConfigTest() {
+        NotificationPublisher publisher = new NotificationPublisher();
+        publisher.setUuid(UUID.randomUUID());
+        ScheduledNotificationRule rule = new ScheduledNotificationRule();
+        rule.setCronConfig("A B C D E");
+        rule.setLastExecutionTime(ZonedDateTime.now());
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(rule, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("Invalid cron expression", body);
+    }
+
+    @Test
     public void updateScheduledNotificationRuleTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
@@ -174,6 +216,37 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Assert.assertEquals("NEW_VULNERABILITY", json.getJsonArray("notifyOn").getString(0));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
         Assert.assertEquals("Slack", json.getJsonObject("publisher").getString("name"));
+    }
+
+    @Test
+    public void updateScheduledNotificationRuleSetDisabledTest() {
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
+        rule.setName("Example Rule");
+        rule.setEnabled(false);
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Example Rule", json.getString("name"));
+        Assert.assertFalse(json.getBoolean("enabled"));
+    }
+
+    @Test
+    public void updateScheduledNotificationRuleWithInvalidCronConfigTest() {
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
+        rule.setName("Example Rule");
+        rule.setCronConfig("A B C D E");
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("Invalid cron expression", body);
     }
 
     @Test
@@ -202,6 +275,23 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
                 .method("DELETE", Entity.entity(rule, MediaType.APPLICATION_JSON)); // HACK
         // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
         Assert.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    public void deleteScheduledNotificationRuleNotExistingTest() {
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
+        rule = qm.detach(ScheduledNotificationRule.class, rule.getId());
+        rule.setUuid(UUID.randomUUID());
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
+                .method("DELETE", Entity.entity(rule, MediaType.APPLICATION_JSON)); // HACK
+        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+        Assert.assertEquals(404, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("The UUID of the scheduled notification rule could not be found.", body);
     }
 
     @Test
@@ -543,6 +633,36 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals("Example Rule", json.getString("name"));
         Assert.assertEquals(rule.getUuid().toString(), json.getString("uuid"));
+    }
+
+    @Test
+    public void executeScheduledNotificationRuleNowRuleDisabledTest(){
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
+        rule.setEnabled(false);
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/execute").request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Example Rule", json.getString("name"));
+        Assert.assertEquals(rule.getUuid().toString(), json.getString("uuid"));
+        Assert.assertFalse(json.getBoolean("enabled"));
+    }
+
+    @Test
+    public void executeScheduledNotificationRuleNowWithInvalidCronConfigTest(){
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
+        ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
+        rule.setCronConfig("A B C D E");
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/execute").request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("Invalid cron expression", body);
     }
 
     @Test

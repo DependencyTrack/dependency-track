@@ -18,27 +18,13 @@
  */
 package org.dependencytrack.model.scheduled.policyviolations;
 
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 
 /* 
  * Part of the ScheduledPolicyViolationsIdentified Template Models.
  * Contains packed summarized informations about the identified policy violations, grouped by the affected projects.
  */
-public final class PolicyViolationSummary {
-    private final Map<Project, PolicyViolationSummaryInfo> affectedProjectSummaries = new LinkedHashMap<>();
-    
-    public PolicyViolationSummary(Map<Project, List<PolicyViolation>> affectedProjectViolations) {
-        for (var entry : affectedProjectViolations.entrySet()) {
-            affectedProjectSummaries.put(entry.getKey(), new PolicyViolationSummaryInfo(entry.getValue()));
-        }
-    }
-
-    public Map<Project, PolicyViolationSummaryInfo> getAffectedProjectSummaries() {
-        return affectedProjectSummaries;
-    }
+public record PolicyViolationSummary(Map<Project, PolicyViolationSummaryInfo> affectedProjectSummaries) {
 }

@@ -18,51 +18,17 @@
  */
 package org.dependencytrack.notification.vo;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.Project;
 import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityDetails;
 import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityOverview;
 import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilitySummary;
-import org.dependencytrack.persistence.QueryManager;
 
 /**
  * Main part of the ScheduledNewVulnerabilitiesIdentified Template Models.
- * Contains the separate parts used in the template to display the new vulnerabilities identified since the last notification.
+ * Contains the separate parts used in the template to display the new
+ * vulnerabilities identified since the last notification.
  */
-public class ScheduledNewVulnerabilitiesIdentified {
-    private final VulnerabilityOverview overview;
-    private final VulnerabilitySummary summary;
-    private final VulnerabilityDetails details;
-
-    public ScheduledNewVulnerabilitiesIdentified(final List<Project> affectedProjects, ZonedDateTime lastExecution) {
-        try (var qm = new QueryManager()) {
-            Map<Project, List<Finding>> affectedProjectFindings = new LinkedHashMap<>();
-            for (Project project : affectedProjects) {
-                var findings = qm.getFindingsSince(project, true, lastExecution.withZoneSameInstant(ZoneOffset.UTC));
-                affectedProjectFindings.put(project, findings);
-            }
-            this.overview = new VulnerabilityOverview(affectedProjectFindings);
-            this.summary = new VulnerabilitySummary(affectedProjectFindings);
-            this.details = new VulnerabilityDetails(affectedProjectFindings);
-        }
-
-    }
-
-    public VulnerabilityOverview getOverview() {
-        return overview;
-    }
-
-    public VulnerabilitySummary getSummary() {
-        return summary;
-    }
-
-    public VulnerabilityDetails getDetails() {
-        return details;
-    }
+public record ScheduledNewVulnerabilitiesIdentified(
+        VulnerabilityOverview overview,
+        VulnerabilitySummary summary,
+        VulnerabilityDetails details) {
 }

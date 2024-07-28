@@ -45,6 +45,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class FindingsQueryManager extends QueryManager implements IQueryManager {
@@ -316,6 +317,84 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
                 findings.add(finding);
             }
         }
+        return findings;
+    }
+
+    /**
+     * Returns a List of Finding objects that occured since a given time.
+     * @param includeSuppressed determines if suppressed vulnerabilities should be included or not
+     * @param sinceAttributedOn determines the time since when the findings should be included by their attributedOn field
+     * @return a List of Finding objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Finding> getFindings(boolean includeSuppressed, ZonedDateTime sinceAttributedOn) {
+        final Query<Object[]> query;
+        query = pm.newQuery(Query.SQL, Finding.QUERY_ALL_FINDINGS_SINCE);
+        query.setNamedParameters(Map.ofEntries(
+                Map.entry("includeSuppressed", includeSuppressed),
+                Map.entry("fromDateTime", sinceAttributedOn.withZoneSameInstant(ZoneOffset.UTC)),
+                Map.entry("toDateTime", ZonedDateTime.now(ZoneOffset.UTC)),
+                // NB: These are required for MSSQL, apparently it doesn't have
+                // a native boolean type, or DataNucleus maps booleans to a type
+                // that doesn't have boolean semantics. Fun!
+                Map.entry("false", false),
+                Map.entry("true", true)));
+
+        final List<Object[]> queryResultRows = executeAndCloseList(query);
+
+        final List<Finding> findings = queryResultRows.stream()
+                .filter(row -> row[29] != null && row[29] instanceof String) // Filter out findings without a project UUID
+                .map(row -> new Finding(UUID.fromString((String) row[29]), row))
+                .toList();
+
+        final Map<VulnIdAndSource, List<Finding>> findingsByVulnIdAndSource = findings.stream()
+                .collect(Collectors.groupingBy(
+                        finding -> new VulnIdAndSource(
+                                (String) finding.getVulnerability().get("vulnId"),
+                                (String) finding.getVulnerability().get("source")
+                        )
+                ));
+        final Map<VulnIdAndSource, List<VulnerabilityAlias>> aliasesByVulnIdAndSource =
+                getVulnerabilityAliases(findingsByVulnIdAndSource.keySet());
+        for (final VulnIdAndSource vulnIdAndSource : findingsByVulnIdAndSource.keySet()) {
+            final List<Finding> affectedFindings = findingsByVulnIdAndSource.get(vulnIdAndSource);
+            final List<VulnerabilityAlias> aliases = aliasesByVulnIdAndSource.getOrDefault(vulnIdAndSource, Collections.emptyList());
+
+            for (final Finding finding : affectedFindings) {
+                finding.addVulnerabilityAliases(aliases);
+            }
+        }
+
+        final Map<RepositoryMetaComponentSearch, List<Finding>> findingsByMetaComponentSearch = findings.stream()
+                .filter(finding -> finding.getComponent().get("purl") != null)
+                .map(finding -> {
+                    final PackageURL purl = PurlUtil.silentPurl((String) finding.getComponent().get("purl"));
+                    if (purl == null) {
+                        return null;
+                    }
+
+                    final var repositoryType = RepositoryType.resolve(purl);
+                    if (repositoryType == RepositoryType.UNSUPPORTED) {
+                        return null;
+                    }
+
+                    final var search = new RepositoryMetaComponentSearch(repositoryType, purl.getNamespace(), purl.getName());
+                    return Map.entry(search, finding);
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(
+                        Map.Entry::getKey,
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toList())
+                ));
+        getRepositoryMetaComponents(List.copyOf(findingsByMetaComponentSearch.keySet()))
+                .forEach(metaComponent -> {
+                    final var search = new RepositoryMetaComponentSearch(metaComponent.getRepositoryType(), metaComponent.getNamespace(), metaComponent.getName());
+                    final List<Finding> affectedFindings = findingsByMetaComponentSearch.get(search);
+                    for (final Finding finding : affectedFindings) {
+                        finding.getComponent().put("latestVersion", metaComponent.getLatestVersion());
+                    }
+                });
+
         return findings;
     }
 }

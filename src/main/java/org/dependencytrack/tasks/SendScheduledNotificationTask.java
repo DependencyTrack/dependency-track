@@ -23,18 +23,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.UUID;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
-import java.util.stream.Collectors;
-
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.NotificationPublisher;
-import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ScheduledNotificationRule;
 import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.ScheduledNotificationFactory;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
@@ -72,9 +69,6 @@ public class SendScheduledNotificationTask implements Runnable {
             final ZonedDateTime lastExecutionTime = rule.getLastExecutionTime();
             
             for (NotificationGroup group : rule.getNotifyOn()) {
-                List<Project> affectedProjects = List.of();
-                affectedProjects = evaluateAffectedProjects(qm, rule);
-
                 final Notification notificationProxy = new Notification()
                         .scope(rule.getScope())
                         .group(group)
@@ -82,22 +76,22 @@ public class SendScheduledNotificationTask implements Runnable {
 
                 switch (group) {
                     case NEW_VULNERABILITY:
-                        ScheduledNewVulnerabilitiesIdentified vulnSubject = new ScheduledNewVulnerabilitiesIdentified(affectedProjects, lastExecutionTime);
-                        if(vulnSubject.getOverview().getNewVulnerabilitiesCount() == 0 && rule.getPublishOnlyWithUpdates())
+                        ScheduledNewVulnerabilitiesIdentified vulnSubject = ScheduledNotificationFactory.CreateScheduledVulnerabilitySubject(rule, lastExecutionTime);
+                        if(vulnSubject.overview().newVulnerabilitiesCount() == 0 && rule.getPublishOnlyWithUpdates())
                             continue;
                         notificationProxy
-                                .title(vulnSubject.getOverview().getNewVulnerabilitiesCount() + " new Vulnerabilitie(s) in " + vulnSubject.getOverview().getAffectedComponentsCount() + " component(s) in Scheduled Rule '" + rule.getName() + "'")
+                                .title(vulnSubject.overview().newVulnerabilitiesCount() + " new Vulnerabilitie(s) in " + vulnSubject.overview().affectedComponentsCount() + " component(s) in Scheduled Rule '" + rule.getName() + "'")
                                 .content("Find below a summary of new vulnerabilities since "
                                         + lastExecutionTime.withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                         + " in Scheduled Notification Rule '" + rule.getName() + "'.")
                                 .subject(vulnSubject);
                         break;
                     case POLICY_VIOLATION:
-                    ScheduledPolicyViolationsIdentified policySubject = new ScheduledPolicyViolationsIdentified(affectedProjects, lastExecutionTime);
-                    if(policySubject.getOverview().getNewViolationsCount() == 0 && rule.getPublishOnlyWithUpdates())
+                    ScheduledPolicyViolationsIdentified policySubject = ScheduledNotificationFactory.CreateScheduledPolicyViolationSubject(rule, lastExecutionTime);
+                    if(policySubject.overview().newViolationsCount() == 0 && rule.getPublishOnlyWithUpdates())
                         continue;
                     notificationProxy
-                            .title(policySubject.getOverview().getNewViolationsCount() + " new Policy Violation(s) in " + policySubject.getOverview().getAffectedComponentsCount() + " component(s) in Scheduled Rule '" + rule.getName() + "'")
+                            .title(policySubject.overview().newViolationsCount() + " new Policy Violation(s) in " + policySubject.overview().affectedComponentsCount() + " component(s) in Scheduled Rule '" + rule.getName() + "'")
                             .content("Find below a summary of new policy violations since "
                                     + lastExecutionTime.withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                     + " in Scheduled Notification Rule '" + rule.getName() + "'.")
@@ -167,57 +161,6 @@ public class SendScheduledNotificationTask implements Runnable {
         }
         catch (Exception e) {
             LOGGER.error("An error occurred while processing scheduled notification rule " + scheduledNotificationRuleUuid, e);
-        }
-    }
-
-    private List<Project> evaluateAffectedProjects(QueryManager qm, ScheduledNotificationRule rule) {
-        List<Project> affectedProjects;
-        /* 
-         * TODO:
-         * To workaround the inconsitent parent-child relationship in projects delivered
-         * by QueryManager.getAllProjects() (and some other multi-project methods), we
-         * need to retrieve them one by one by their UUIDs. This way it was empirically
-         * proven that the parent-child relationship is (more) consistent.
-         */
-        if(rule.getProjects().isEmpty()){
-            // if rule does not limit to specific projects, get all projects and their children, if configured
-            affectedProjects = qm.detach(qm.getAllProjects())
-                    .stream()
-                    .filter(p -> rule.isNotifyChildren() ? true : p.getParent() == null)
-                    .collect(Collectors.toList());
-        } else {
-            // use projects defined in rule and with children if rule is set to notify children
-            affectedProjects = qm.detach(rule.getProjects())
-                    .stream()
-                    .collect(Collectors.toList());
-            if (rule.isNotifyChildren()) {
-                extendProjectListWithChildren(affectedProjects);
-            }
-        }
-        return affectedProjects;
-    }
-
-    private void extendProjectListWithChildren(final List<Project> affectedProjects) {
-        var allProjects = List.copyOf(affectedProjects);
-        try (var qm = new QueryManager()) {
-            for (Project project : allProjects) {
-                if (project == null || project.getChildren() == null || project.getChildren().isEmpty()) {
-                    continue;
-                }
-                var parentIndex = affectedProjects.indexOf(project);
-                var childCounter = 0;
-                for (Project child : project.getChildren()) {
-                    if (affectedProjects
-                            .stream()
-                            .filter(p -> p.getUuid().equals(child.getUuid()))
-                            .findAny()
-                            .isPresent()) {
-                        continue;
-                    }
-                    childCounter++;
-                    affectedProjects.add(parentIndex + childCounter, child);
-                }
-            }
         }
     }
 }

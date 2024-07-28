@@ -18,49 +18,17 @@
  */
 package org.dependencytrack.notification.vo;
 
-import java.time.ZonedDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.dependencytrack.model.PolicyViolation;
-import org.dependencytrack.model.Project;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationDetails;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationOverview;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummary;
-import org.dependencytrack.persistence.QueryManager;
 
 /**
  * Main part of the ScheduledPolicyViolationsIdentified Template Models.
- * Contains the separate parts used in the template to display the new policy violations identified since the last notification.
+ * Contains the separate parts used in the template to display the new policy
+ * violations identified since the last notification.
  */
-public class ScheduledPolicyViolationsIdentified {
-    private final PolicyViolationOverview overview;
-    private final PolicyViolationSummary summary;
-    private final PolicyViolationDetails details;
-
-    public ScheduledPolicyViolationsIdentified(final List<Project> affectedProjects, ZonedDateTime lastExecution) {
-        try (var qm = new QueryManager()){
-            Map<Project, List<PolicyViolation>> affectedProjectViolations = new LinkedHashMap<>();
-            for (Project project : affectedProjects) {
-                var violations = qm.getPolicyViolationsSince(project, true, lastExecution).getList(PolicyViolation.class);
-                affectedProjectViolations.put(project, violations);
-            }
-            this.overview = new PolicyViolationOverview(affectedProjectViolations);
-            this.summary = new PolicyViolationSummary(affectedProjectViolations);
-            this.details = new PolicyViolationDetails(affectedProjectViolations);
-        }
-    }
-
-    public PolicyViolationOverview getOverview() {
-        return overview;
-    }
-
-    public PolicyViolationSummary getSummary() {
-        return summary;
-    }
-
-    public PolicyViolationDetails getDetails() {
-        return details;
-    }
+public record ScheduledPolicyViolationsIdentified(
+        PolicyViolationOverview overview,
+        PolicyViolationSummary summary,
+        PolicyViolationDetails details) {
 }

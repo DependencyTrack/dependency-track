@@ -152,6 +152,58 @@ public class Finding implements Serializable {
             """;
 
     // language=SQL
+    public static final String QUERY_ALL_FINDINGS_SINCE = """
+            SELECT "COMPONENT"."UUID"
+                 , "COMPONENT"."NAME"
+                 , "COMPONENT"."GROUP"
+                 , "COMPONENT"."VERSION"
+                 , "COMPONENT"."PURL"
+                 , "COMPONENT"."CPE"
+                 , "VULNERABILITY"."UUID"
+                 , "VULNERABILITY"."SOURCE"
+                 , "VULNERABILITY"."VULNID"
+                 , "VULNERABILITY"."TITLE"
+                 , "VULNERABILITY"."SUBTITLE"
+                 , "VULNERABILITY"."DESCRIPTION"
+                 , "VULNERABILITY"."RECOMMENDATION"
+                 , "VULNERABILITY"."SEVERITY"
+                 , "VULNERABILITY"."CVSSV2BASESCORE"
+                 , "VULNERABILITY"."CVSSV3BASESCORE"
+                 , "VULNERABILITY"."OWASPRRLIKELIHOODSCORE"
+                 , "VULNERABILITY"."OWASPRRTECHNICALIMPACTSCORE"
+                 , "VULNERABILITY"."OWASPRRBUSINESSIMPACTSCORE"
+                 , "VULNERABILITY"."EPSSSCORE"
+                 , "VULNERABILITY"."EPSSPERCENTILE"
+                 , "VULNERABILITY"."CWES"
+                 , "FINDINGATTRIBUTION"."ANALYZERIDENTITY"
+                 , "FINDINGATTRIBUTION"."ATTRIBUTED_ON"
+                 , "FINDINGATTRIBUTION"."ALT_ID"
+                 , "FINDINGATTRIBUTION"."REFERENCE_URL"
+                 , "ANALYSIS"."STATE"
+                 , "ANALYSIS"."SUPPRESSED"
+                 , "VULNERABILITY"."PUBLISHED"
+                 , "PROJECT"."UUID"
+                 , "PROJECT"."NAME"
+                 , "PROJECT"."VERSION"
+              FROM "COMPONENT"
+             INNER JOIN "COMPONENTS_VULNERABILITIES"
+                ON "COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
+             INNER JOIN "VULNERABILITY"
+                ON "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID" = "VULNERABILITY"."ID"
+             INNER JOIN "FINDINGATTRIBUTION"
+                ON "COMPONENT"."ID" = "FINDINGATTRIBUTION"."COMPONENT_ID"
+               AND "VULNERABILITY"."ID" = "FINDINGATTRIBUTION"."VULNERABILITY_ID"
+              LEFT JOIN "ANALYSIS"
+                ON "COMPONENT"."ID" = "ANALYSIS"."COMPONENT_ID"
+               AND "VULNERABILITY"."ID" = "ANALYSIS"."VULNERABILITY_ID"
+               AND "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
+             INNER JOIN "PROJECT"
+                ON "COMPONENT"."PROJECT_ID" = "PROJECT"."ID"
+             WHERE "FINDINGATTRIBUTION"."ATTRIBUTED_ON" BETWEEN :fromDateTime AND :toDateTime
+                AND (:includeSuppressed = :true OR "ANALYSIS"."SUPPRESSED" IS NULL OR "ANALYSIS"."SUPPRESSED" = :false)
+            """;
+
+    // language=SQL
     public static final String QUERY_ALL_FINDINGS = """
             SELECT "COMPONENT"."UUID"
                  , "COMPONENT"."NAME"
@@ -201,7 +253,7 @@ public class Finding implements Serializable {
                 ON "COMPONENT"."PROJECT_ID" = "PROJECT"."ID"
             """;
 
-    private final UUID project;
+    private final UUID projectUuid;
     private final Map<String, Object> component = new LinkedHashMap<>();
     private final Map<String, Object> vulnerability = new LinkedHashMap<>();
     private final Map<String, Object> analysis = new LinkedHashMap<>();
@@ -214,7 +266,7 @@ public class Finding implements Serializable {
      * @param o An array of values specific to an individual row returned from {@link #QUERY} or {@link #QUERY_ALL_FINDINGS}
      */
     public Finding(UUID project, Object... o) {
-        this.project = project;
+        this.projectUuid = project;
         optValue(component, "uuid", o[0]);
         optValue(component, "name", o[1]);
         optValue(component, "group", o[2]);
@@ -267,6 +319,10 @@ public class Finding implements Serializable {
             optValue(component, "projectName", o[30]);
             optValue(component, "projectVersion", o[31]);
         }
+    }
+
+    public UUID getProjectUuid() {
+        return projectUuid;
     }
 
     public Map<String, Object> getComponent() {
@@ -323,7 +379,7 @@ public class Finding implements Serializable {
     }
 
     public String getMatrix() {
-        return project.toString() + ":" + component.get("uuid") + ":" + vulnerability.get("uuid");
+        return projectUuid.toString() + ":" + component.get("uuid") + ":" + vulnerability.get("uuid");
     }
 
     public void addVulnerabilityAliases(List<VulnerabilityAlias> aliases) {

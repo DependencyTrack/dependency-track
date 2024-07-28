@@ -457,6 +457,26 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * Returns a List of all Policy violations since a specified time.
+     * @param includeSuppressed Whether to include suppressed violations or not
+     * @param since the date to retrieve violations since
+     * @return a List of all Policy violations
+     */
+    public List<PolicyViolation> getAllPolicyViolations(boolean includeSuppressed, ZonedDateTime since) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if(includeSuppressed){
+            query.setFilter("timestamp >= :since");
+        } else {
+            query.setFilter("(analysis.suppressed == false || analysis.suppressed == null) && timestamp >= :since");
+        }
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc, project.name, project.version, component.name, component.version");
+        }
+        query.setParameters(Date.from(since.withZoneSameInstant(ZoneOffset.UTC).toInstant()));
+        return query.executeList();
+    }
+
+    /**
      * Returns a List of all Policy violations for a specific component.
      * @param component the component to retrieve violations for
      * @return a List of all Policy violations

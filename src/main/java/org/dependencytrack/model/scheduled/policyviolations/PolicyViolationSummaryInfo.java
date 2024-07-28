@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.model.scheduled.policyviolations;
 
-import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 
 import org.dependencytrack.model.PolicyViolation;
@@ -28,32 +26,8 @@ import org.dependencytrack.model.PolicyViolation;
  * Part of the ScheduledPolicyViolationsIdentified Template Models.
  * Contains detailed information about the amount of the identified policy violations grouped by their type.
  */
-public final class PolicyViolationSummaryInfo {
-    private final Map<PolicyViolation.Type, Integer> newViolationsByRiskType = new EnumMap<>(PolicyViolation.Type.class);
-    private final Map<PolicyViolation.Type, Integer> totalProjectViolationsByRiskType = new EnumMap<>(PolicyViolation.Type.class);
-    private final Map<PolicyViolation.Type, Integer> suppressedNewViolationsByRiskType = new EnumMap<>(PolicyViolation.Type.class);
-
-    public PolicyViolationSummaryInfo(List<PolicyViolation> violations) {
-        for (PolicyViolation violation : violations) {
-            var analysis = violation.getAnalysis();
-            if (analysis != null && analysis.isSuppressed()) {
-                suppressedNewViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
-            } else {
-                newViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
-            }
-            totalProjectViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
-        }
-    }
-
-    public Map<PolicyViolation.Type, Integer> getNewViolationsByRiskType() {
-        return newViolationsByRiskType;
-    }
-
-    public Map<PolicyViolation.Type, Integer> getTotalProjectViolationsByRiskType() {
-        return totalProjectViolationsByRiskType;
-    }
-
-    public Map<PolicyViolation.Type, Integer> getSuppressedNewViolationsByRiskType() {
-        return suppressedNewViolationsByRiskType;
-    }
+public record PolicyViolationSummaryInfo(
+        Map<PolicyViolation.Type, Integer> newViolationsByRiskType,
+        Map<PolicyViolation.Type, Integer> totalProjectViolationsByRiskType,
+        Map<PolicyViolation.Type, Integer> suppressedNewViolationsByRiskType) {
 }

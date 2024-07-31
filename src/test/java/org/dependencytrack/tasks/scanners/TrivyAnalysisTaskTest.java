@@ -410,6 +410,10 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
                              "${json-unit.regex}(^sha256:[a-f0-9]{64}$)"
                            ],
                            "options": {
+                             "pkg_types": [
+                               "os",
+                               "library"
+                             ],
                              "vuln_type": [
                                "os",
                                "library"

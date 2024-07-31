@@ -195,6 +195,10 @@ public class CycloneDxValidator {
                         case NS_BOM_16 -> VERSION_16;
                         default -> null;
                     };
+
+                    if (schemaVersion != null) {
+                        break;
+                    }
                 }
 
                 if (schemaVersion == null) {

@@ -22,18 +22,15 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ScheduledNotificationRule;
 import org.dependencytrack.model.Severity;
-import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationDetails;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationOverview;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummary;
@@ -138,43 +135,36 @@ public class ScheduledNotificationFactory {
 
     private static VulnerabilityOverview createVulnerabilityOverview(Map<Project, List<Finding>> affectedProjectFindings) {
         Integer affectedProjectsCount;
-        Integer newVulnerabilitiesCount;
+        Integer newVulnerabilitiesCount = 0;
         Map<Severity, Integer> newVulnerabilitiesBySeverity = new EnumMap<>(Severity.class);
-        Integer affectedComponentsCount;
-        Integer suppressedNewVulnerabilitiesCount;
-        var componentCache = new HashSet<Component>();
-        var vulnerabilityCache = new HashSet<Vulnerability>();
-        var suppressedVulnerabilityCache = new HashSet<Vulnerability>();
+        Integer affectedComponentsCount = 0;
+        Integer suppressedNewVulnerabilitiesCount = 0;
+
+        for (Severity severity : Severity.values()) {
+            newVulnerabilitiesBySeverity.put(severity, 0);
+        }
 
         try (var qm = new QueryManager()) {
             for (var findings : affectedProjectFindings.values()) {
                 for (Finding finding : findings) {
-                    Component component = qm.getObjectByUuid(Component.class, (String) finding.getComponent().get("uuid"));
-                    componentCache.add(component);
+                    if(finding.getComponent() != null)
+                        affectedComponentsCount++;
 
-                    Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, (String) finding.getVulnerability().get("uuid"));
                     if (finding.getAnalysis().get("isSuppressed") instanceof Boolean suppressed) {
                         if (suppressed) {
-                            suppressedVulnerabilityCache.add(vulnerability);
+                            suppressedNewVulnerabilitiesCount++;
                         } else {
-                            vulnerabilityCache.add(vulnerability);
+                            newVulnerabilitiesCount++;
+                            newVulnerabilitiesBySeverity.merge(
+                                    Enum.valueOf(Severity.class, finding.getVulnerability().get("severity").toString()),
+                                    1, Integer::sum);
                         }
                     }
                 }
             }
         }
 
-        for (Severity severity : Severity.values()) {
-            newVulnerabilitiesBySeverity.put(severity, 0);
-        }
-        for (Vulnerability vulnerability : vulnerabilityCache) {
-            newVulnerabilitiesBySeverity.merge(vulnerability.getSeverity(), 1, Integer::sum);
-        }
-
         affectedProjectsCount = affectedProjectFindings.size();
-        newVulnerabilitiesCount = vulnerabilityCache.size();
-        affectedComponentsCount = componentCache.size();
-        suppressedNewVulnerabilitiesCount = suppressedVulnerabilityCache.size();
 
         return new VulnerabilityOverview(affectedProjectsCount, newVulnerabilitiesCount, newVulnerabilitiesBySeverity, affectedComponentsCount, suppressedNewVulnerabilitiesCount);
     }
@@ -198,18 +188,18 @@ public class ScheduledNotificationFactory {
 
         try (var qm = new QueryManager()) {
             for (Finding finding : newFindings) {
-                Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, (String) finding.getVulnerability().get("uuid"));
                 if (finding.getAnalysis().get("isSuppressed") instanceof Boolean suppressed) {
+                    var severity = Enum.valueOf(Severity.class, finding.getVulnerability().get("severity").toString());
                     if (suppressed) {
-                        suppressedNewVulnerabilitiesBySeverity.merge(vulnerability.getSeverity(), 1, Integer::sum);
+                        suppressedNewVulnerabilitiesBySeverity.merge(severity, 1, Integer::sum);
                     } else {
-                        newVulnerabilitiesBySeverity.merge(vulnerability.getSeverity(), 1, Integer::sum);
+                        newVulnerabilitiesBySeverity.merge(severity, 1, Integer::sum);
                     }
                 }
             }
             for (Finding finding : totalProjectFindings) {
-                Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, (String) finding.getVulnerability().get("uuid"));
-                totalProjectVulnerabilitiesBySeverity.merge(vulnerability.getSeverity(), 1, Integer::sum);
+                var severity = Enum.valueOf(Severity.class, finding.getVulnerability().get("severity").toString());
+                totalProjectVulnerabilitiesBySeverity.merge(severity, 1, Integer::sum);
             }
         }
         return new VulnerabilitySummaryInfo(newVulnerabilitiesBySeverity, totalProjectVulnerabilitiesBySeverity, suppressedNewVulnerabilitiesBySeverity);
@@ -228,39 +218,33 @@ public class ScheduledNotificationFactory {
     }
 
     private static PolicyViolationOverview createPolicyOverview(Map<Project, List<PolicyViolation>> affectedProjectViolations) {
-        var componentCache = new HashSet<Component>();
-        var violationCache = new HashSet<PolicyViolation>();
-        var suppressedViolationCache = new HashSet<PolicyViolation>();
-
-        try (var qm = new QueryManager()) {
-            for (var violations : affectedProjectViolations.values()) {
-                for (PolicyViolation violation : violations) {
-                    Component component = qm.getObjectByUuid(Component.class, violation.getComponent().getUuid().toString());
-                    componentCache.add(component);
-
-                    var analysis = violation.getAnalysis();
-                    if (analysis != null && analysis.isSuppressed()) {
-                        suppressedViolationCache.add(violation);
-                    } else {
-                        violationCache.add(violation);
-                    }
-                }
-            }
-        }
-
+        var affectedComponentsCount = 0;
+        var affectedProjectsCount = 0;
+        var newViolationsCount = 0;
+        var suppressedNewViolationsCount = 0;
         Map<PolicyViolation.Type, Integer> newViolationsByRiskType = new EnumMap<>(PolicyViolation.Type.class);
 
         for (PolicyViolation.Type riskType : PolicyViolation.Type.values()) {
             newViolationsByRiskType.put(riskType, 0);
         }
-        for (PolicyViolation violation : violationCache) {
-            newViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
-        }
 
-        var affectedProjectsCount = affectedProjectViolations.size();
-        var newViolationsCount = violationCache.size();
-        var affectedComponentsCount = componentCache.size();
-        var suppressedNewViolationsCount = suppressedViolationCache.size();
+        try (var qm = new QueryManager()) {
+            for (var violations : affectedProjectViolations.values()) {
+                affectedProjectsCount++;
+                for (PolicyViolation violation : violations) {
+                    if(violation.getComponent() != null)
+                        affectedComponentsCount++;
+
+                    var analysis = violation.getAnalysis();
+                    if (analysis != null && analysis.isSuppressed()) {
+                        suppressedNewViolationsCount++;
+                    } else {
+                        newViolationsCount++;
+                        newViolationsByRiskType.merge(violation.getType(), 1, Integer::sum);
+                    }
+                }
+            }
+        }
 
         return new PolicyViolationOverview(affectedProjectsCount, newViolationsCount, newViolationsByRiskType, affectedComponentsCount, suppressedNewViolationsCount);
     }

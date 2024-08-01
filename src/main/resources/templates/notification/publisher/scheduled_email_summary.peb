@@ -1,0 +1,331 @@
+<html>
+  <head>
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border: 1px solid #2174c7;
+        padding: 5px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #2174c7;
+        color: white;
+      }
+
+      tr:nth-child(even) {
+        background-color: #afafaf;
+      }
+
+      tr:hover {
+        background-color: #afafaf;
+      }
+    </style>
+  </head>
+  <body>
+    <p>{{ notification.title }}</p>
+    <p>-------------</p>
+    <p>{{ notification.content }}</p>
+
+    {% if notification.group == "NEW_VULNERABILITY" %}
+    <h2>Overview</h2>
+    <div style="overflow-x: auto">
+      <table style="width: 50%;">
+        <tbody>
+          <tr>
+            <td>Projects included in this rule</td>
+            <td>{{ subject.overview.affectedProjectsCount }}</td>
+          </tr>
+          <tr>
+            <td>Total new vulnerabilities</td>
+            <td>{{ subject.overview.newVulnerabilitiesCount }}</td>
+          </tr>
+          {% if subject.overview.newVulnerabilitiesBySeverity|length > 0 %}{%
+          for entry in subject.overview.newVulnerabilitiesBySeverity %}{% if entry.value > 0 %}
+          <tr>
+            <td>New vulnerabilities ({{ entry.key }})</td>
+            <td>{{ entry.value }}</td>
+          </tr>
+          {% endif %}{% endfor %}{% endif %}
+          <tr>
+            <td>Components affected by new vulnerabilities</td>
+            <td>{{ subject.overview.affectedComponentsCount }}</td>
+          </tr>
+          <tr>
+            <td>Suppressed new vulnerabilities (not included above)</td>
+            <td>{{ subject.overview.suppressedNewVulnerabilitiesCount }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <h2>Summary per project in this rule</h2>
+    <div style="overflow-x: auto">
+      <table style="width: 70%;">
+        <thead>
+          <tr>
+            <th>Project Name</th>
+            <th>Version</th>
+            <th>New Vulnerabilities</th>
+            <th>All Vulnerabilities</th>
+            <th>Suppressed New Vulnerabilities</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in subject.summary.affectedProjectSummaries %}
+          <tr>
+            <td>
+              <a href="{{ baseUrl }}/projects/{{ entry.key.uuid }}">
+                {{ entry.key.name }}
+              </a>
+            </td>
+            <td>{{ entry.key.version }}</td>
+            <td>
+              {% for newVulnEntry in entry.value.newVulnerabilitiesBySeverity %}
+              {{ newVulnEntry.key }}: {{ newVulnEntry.value }}<br />
+              {% endfor %}
+            </td>
+            <td>
+              {% for projVulnEntry in
+              entry.value.totalProjectVulnerabilitiesBySeverity %}
+              {{ projVulnEntry.key }}: {{ projVulnEntry.value }}<br />
+              {% endfor %}
+            </td>
+            <td>
+              {% for supprVulnEntry in
+              entry.value.suppressedNewVulnerabilitiesBySeverity %}
+              {{ supprVulnEntry.key }}: {{ supprVulnEntry.value }}<br />
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>{% if subject.overview.newVulnerabilitiesCount > 0 %}
+
+    <h2>New vulnerabilities per project</h2>
+
+    {% if subject.details.affectedProjectFindings|length > 0 %}{% for
+    affProjEntry in subject.details.affectedProjectFindings %}{% if affProjEntry.value|length > 0 %}
+    <h3>
+      Project "{{ affProjEntry.key.name }}"{% if affProjEntry.key.version %} [Version:
+      {{ affProjEntry.key.version }}]{% endif %}
+    </h3>
+    <div style="overflow-x: auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Version</th>
+            <th>Group</th>
+            <th>Vulnerability</th>
+            <th>Severity</th>
+            <th>Analyzer</th>
+            <th>Attributed On</th>
+            <th>Analysis</th>
+            <th>Suppressed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for vulnerableComponent in affProjEntry.value %}
+          <tr>
+            <td>
+              {% if vulnerableComponent.componentUuid is empty %}
+                {{ vulnerableComponent.componentName }}
+              {% else %}
+                <a href="{{ baseUrl }}/components/{{ vulnerableComponent.componentUuid }}">
+                  {{ vulnerableComponent.componentName }}
+                </a>
+              {% endif %}
+            </td>
+            <td>
+              {{ vulnerableComponent.componentVersion }}
+            </td>
+            <td>
+              {{ vulnerableComponent.componentGroup }}
+            </td>
+            <td>
+              {% if vulnerableComponent.vulnerabilityId is empty %}
+                {{ vulnerableComponent.vulnerabilityId }}
+              {% else %}
+                <a href="{{ baseUrl }}/vulnerabilities/{{ vulnerableComponent.vulnerabilitySource }}/{{ vulnerableComponent.vulnerabilityId }}">
+                  {{ vulnerableComponent.vulnerabilityId }}
+                </a>
+              {% endif %}
+            </td>
+            <td>
+              {{ vulnerableComponent.vulnerabilitySeverity }}
+            </td>
+            <td>
+              {% if vulnerableComponent.attributionReferenceUrl is empty %}
+              {{ vulnerableComponent.analyzer }}
+              {% else %}
+              <a href="{{ vulnerableComponent.attributionReferenceUrl }}">
+                {{ vulnerableComponent.analyzer }}
+              </a>
+              {% endif %}
+            </td>
+            <td>
+              {{ vulnerableComponent.attributedOn }}
+            </td>
+            <td>
+              {{ vulnerableComponent.analysisState }}
+            </td>
+            <td>
+              {% if vulnerableComponent.isSuppressed %}Yes{% else %}No{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}{% endfor %}{% endif %}{% endif %}
+
+    {% elseif notification.group == "POLICY_VIOLATION" %}
+    <h2>Overview</h2>
+    <div style="overflow-x: auto">
+      <table style="width: 50%;">
+        <tbody>
+          <tr>
+            <td>Projects included in this rule</td>
+            <td>{{ subject.overview.affectedProjectsCount }}</td>
+          </tr>
+          <tr>
+            <td>Total new policy violations</td>
+            <td>{{ subject.overview.newViolationsCount }}</td>
+          </tr>
+          {% if subject.overview.newViolationsByRiskType|length > 0 %}{%
+          for entry in subject.overview.newViolationsByRiskType %}{% if entry.value > 0 %}
+          <tr>
+            <td>New policy violations ({{ entry.key }})</td>
+            <td>{{ entry.value }}</td>
+          </tr>
+          {% endif %}{% endfor %}{% endif %}
+          <tr>
+            <td>Components affected by new policy violations</td>
+            <td>{{ subject.overview.affectedComponentsCount }}</td>
+          </tr>
+          <tr>
+            <td>Suppressed new policy violations (not included above)</td>
+            <td>{{ subject.overview.suppressedNewViolationsCount }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <h2>Summary per project in this rule</h2>
+    <div style="overflow-x: auto">
+      <table style="width: 70%;">
+        <thead>
+          <tr>
+            <th>Project Name</th>
+            <th>Version</th>
+            <th>New Policy Violation</th>
+            <th>All Policy Violations</th>
+            <th>Suppressed Policy Violations</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in subject.summary.affectedProjectSummaries %}
+          <tr>
+            <td>
+              <a href="{{ baseUrl }}/projects/{{ entry.key.uuid }}">
+                {{ entry.key.name }}
+              </a>
+            </td>
+            <td>{{ entry.key.version }}</td>
+            <td>
+              {% for newVulnEntry in entry.value.newViolationsByRiskType %}
+              {{ newVulnEntry.key }}: {{ newVulnEntry.value }}<br />
+              {% endfor %}
+            </td>
+            <td>
+              {% for projVulnEntry in
+              entry.value.totalProjectViolationsByRiskType %}
+              {{ projVulnEntry.key }}: {{ projVulnEntry.value }}<br />
+              {% endfor %}
+            </td>
+            <td>
+              {% for supprVulnEntry in
+              entry.value.suppressedNewViolationsByRiskType %}
+              {{ supprVulnEntry.key }}: {{ supprVulnEntry.value }}<br />
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>{% if subject.overview.newViolationsCount > 0 %}
+
+    <h2>New policy violations per project</h2>
+
+    {% if subject.details.affectedProjectViolations|length > 0 %}{% for
+    affProjEntry in subject.details.affectedProjectViolations %}{% if affProjEntry.value|length > 0 %}
+    <h3>
+      Project "{{ affProjEntry.key.name }}"{% if affProjEntry.key.version %} [Version:
+      {{ affProjEntry.key.version }}]{% endif %}
+    </h3>
+    <div style="overflow-x: auto">
+      <table>
+        <thead>
+          <tr>
+            <th>State</th>
+            <th>Risk Type</th>
+            <th>Policy Name</th>
+            <th>Component</th>
+            <th>Component Version</th>
+            <th>Occurred on</th>
+            <th>Analysis</th>
+            <th>Suppressed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for violation in affProjEntry.value %}
+          <tr>
+            <td>
+              {{ violation.policyCondition.policy.violationState }}
+            </td>
+            <td>
+              {{ violation.type }}
+            </td>
+            <td>
+              {{ violation.policyCondition.policy.name }}
+            </td>
+            <td>
+              {% if violation.component.uuid is empty %}
+                {{ violation.component.name }}
+              {% else %}
+                <a href="{{ baseUrl }}/components/{{ violation.component.uuid }}">
+                  {{ violation.component.name }}
+                </a>
+              {% endif %}
+            </td>
+            <td>
+              {{ violation.component.version }}
+            </td>
+            <td>
+              {{ violation.timestamp }}
+            </td>
+            <td>
+              {{ violation.analysis.analysisState }}
+            </td>
+            <td>
+              {% if violation.analysis.isSuppressed %}Yes{% else %}No{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}{% endfor %}{% endif %}{% endif %}
+    {% endif %}
+  </body>
+  <footer>
+    <p>Executed: {{ timestamp }}</p>
+  </footer>
+</html>

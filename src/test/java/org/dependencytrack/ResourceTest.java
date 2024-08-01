@@ -29,6 +29,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
@@ -54,7 +57,10 @@ public abstract class ResourceTest {
     protected final String V1_LICENSE = "/v1/license";
     protected final String V1_METRICS = "/v1/metrics";
     protected final String V1_NOTIFICATION_PUBLISHER = "/v1/notification/publisher";
+    protected final String V1_NOTIFICATION_PUBLISHER_EVENT = "/v1/notification/publisher/event";
+    protected final String V1_NOTIFICATION_PUBLISHER_SCHEDULED = "/v1/notification/publisher/scheduled";
     protected final String V1_NOTIFICATION_RULE = "/v1/notification/rule";
+    protected final String V1_SCHEDULED_NOTIFICATION_RULE = "/v1/schedulednotification/rule";
     protected final String V1_OIDC = "/v1/oidc";
     protected final String V1_PERMISSION = "/v1/permission";
     protected final String V1_OSV_ECOSYSTEM = "/v1/integration/osv/ecosystem";
@@ -86,6 +92,14 @@ public abstract class ResourceTest {
     protected QueryManager qm;
     protected Team team;
     protected String apiKey;
+    protected JsonMapper jsonMapper;
+
+    public ResourceTest() {
+        // needed to deserialize Java time objects in tests
+        jsonMapper = JsonMapper.builder()
+            .addModule(new JavaTimeModule())
+            .build();
+    }
 
     @BeforeClass
     public static void init() {

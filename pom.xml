@@ -102,6 +102,7 @@
         <lib.greenmail.version>2.0.1</lib.greenmail.version>
         <lib.jackson.version>2.17.1</lib.jackson.version>
         <lib.jackson-databind.version>2.17.1</lib.jackson-databind.version>
+        <lib.javax.validation>2.0.1.Final</lib.javax.validation>
         <lib.json-java.version>20240303</lib.json-java.version>
         <lib.json-unit.version>3.4.0</lib.json-unit.version>
         <lib.lucene.version>8.11.3</lib.lucene.version>
@@ -116,12 +117,14 @@
         <lib.testcontainers.version>1.19.8</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
         <lib.woodstox.version>6.6.2</lib.woodstox.version>
+        <lib.junit.version>4.13.2</lib.junit.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.httpclient5.version>5.3.1</lib.httpclient5.version>
         <lib.log4j-over-slf4j.version>2.0.13</lib.log4j-over-slf4j.version>
         <lib.org-kohsuke-github-api.version>1.321</lib.org-kohsuke-github-api.version>
+        <lib.com-asahaf-javacron.version>1.4.0</lib.com-asahaf-javacron.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.6.1.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
@@ -150,6 +153,18 @@
     </repositories>
 
     <dependencies>
+        <!--
+            Workaround for:
+            "The type javax.validation.Payload cannot be resolved. It is indirectly referenced
+            from required type com.github.packageurl.validator.PackageURLJava"
+            in Component.java & Project.java at least.
+         -->
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>${lib.javax.validation}</version>
+        </dependency>
+
         <!-- Alpine -->
         <dependency>
             <groupId>us.springett</groupId>
@@ -388,6 +403,12 @@
             <groupId>org.kohsuke</groupId>
             <artifactId>github-api</artifactId>
             <version>${lib.org-kohsuke-github-api.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.asahaf.javacron</groupId>
+            <artifactId>javacron</artifactId>
+            <version>${lib.com-asahaf-javacron.version}</version>
         </dependency>
 
         <!-- Test Dependencies -->

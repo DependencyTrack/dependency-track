@@ -1079,4 +1079,10 @@ public class BomResourceTest extends ResourceTest {
                 """);
     }
 
+    @Test
+    public void validateCycloneDxBomWithMultipleNamespacesTest() throws Exception {
+        byte[] bom = resourceToByteArray("/unit/bom-issue4008.xml");
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(bom));
+    }
+
 }

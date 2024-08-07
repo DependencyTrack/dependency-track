@@ -21,13 +21,32 @@ package org.dependencytrack.parser.trivy.model;
 import com.google.gson.annotations.SerializedName;
 
 public class Options {
+
+    /**
+     * NB: GSON doesn't support serialization of getters, it can only deal with fields.
+     * Need to have libraries as redundant field to packages, with Jackson we could just
+     * use a computed getter with {@link com.fasterxml.jackson.annotation.JsonGetter}.
+     * Migrate this to Jackson eventually.
+     *
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/3737">GitHub issue</a>
+     * @deprecated Kept for compatibility with Trivy < 0.54.0
+     */
+    @Deprecated(forRemoval = true)
     @SerializedName("vuln_type")
     private String[] vulnType;
+
+    @SerializedName("pkg_types")
+    private String[] pkgTypes;
+
     private String[] scanners;
 
-    public String[] getVulnType() { return vulnType; }
-    public void setVulnType(String[] value) { this.vulnType = value; }
+    public void setPkgTypes(String[] value) {
+        this.pkgTypes = value;
+        this.vulnType = value;
+    }
 
-    public String[] getScanners() { return scanners; }
-    public void setScanners(String[] value) { this.scanners = value; }
+    public void setScanners(String[] value) {
+        this.scanners = value;
+    }
+
 }

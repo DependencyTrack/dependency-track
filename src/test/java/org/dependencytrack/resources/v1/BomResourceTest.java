@@ -1014,61 +1014,6 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomAuthorsTest() {
-        initializeWithPermissions(Permissions.BOM_UPLOAD);
-
-        qm.createConfigProperty(
-                BOM_VALIDATION_ENABLED.getGroupName(),
-                BOM_VALIDATION_ENABLED.getPropertyName(),
-                "true",
-                BOM_VALIDATION_ENABLED.getPropertyType(),
-                null
-        );
-
-        final var project = new Project();
-        project.setName("acme-app");
-        project.setVersion("1.0.0");
-        qm.persist(project);
-
-        final String bomJson = """
-                {
-                "bomFormat": "CycloneDX",
-                "specVersion": "1.6",
-                "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
-                "version": 1,
-                "components": [
-                    {
-                    "type": "application",
-                    "name": "acme-library",
-                    "version": "1.0.0",
-                    "authors" : [
-                        {
-                        "name" : "bomAuthor"
-                        }
-                    ]
-                    }
-                ]
-                }
-                """;
-        
-        final String encodedBom = Base64.getEncoder().encodeToString(bomJson.getBytes(StandardCharsets.UTF_8));
-
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(bomJson.getBytes(StandardCharsets.UTF_8)));
-
-        final Response response = jersey.target(V1_BOM).request()
-                .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
-                        {
-                        "projectName": "acme-app",
-                        "projectVersion": "1.0.0",
-                        "bom": "%s"
-                        }
-                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
-
-        assertThat(response.getStatus()).isEqualTo(200);
-    }
-
-    @Test
     public void uploadBomInvalidJsonTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 

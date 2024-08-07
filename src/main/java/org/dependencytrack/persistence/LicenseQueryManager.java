@@ -98,6 +98,8 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
         final Query<License> query = pm.newQuery(License.class);
         query.setFilter("licenseId == :licenseIdOrName || name == :licenseIdOrName");
         query.setNamedParameters(Map.of("licenseIdOrName", licenseIdOrName));
+        query.setOrdering("licenseId asc"); // Ensure result is consistent.
+        query.setRange(0, 1); // Multiple licenses can have the same name; Pick the first one.
         try {
             final License license = query.executeUnique();
             return license != null ? license : License.UNRESOLVED;
@@ -116,6 +118,21 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
         query.getFetchPlan().addGroup(License.FetchGroup.ALL.name());
         query.setRange(0, 1);
         return singleResult(query.execute(licenseName));
+    }
+
+    @Override
+    public License getCustomLicenseByName(final String licenseName) {
+        final Query<License> query = pm.newQuery(License.class);
+        query.setFilter("name == :name && customLicense == true");
+        query.setParameters(licenseName);
+        query.setOrdering("licenseId asc"); // Ensure result is consistent.
+        query.setRange(0, 1); // Multiple licenses can have the same name; Pick the first one.
+        try {
+            final License license = query.executeUnique();
+            return license != null ? license : License.UNRESOLVED;
+        } finally {
+            query.closeAll();
+        }
     }
 
     /**

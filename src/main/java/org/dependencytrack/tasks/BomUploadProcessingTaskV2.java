@@ -689,8 +689,7 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
                     break;
                 }
 
-                final License resolvedCustomLicense = customLicenseCache.computeIfAbsent(licenseCandidate.getName(),
-                        licenseName -> resolveCustomLicense(qm, licenseName));
+                final License resolvedCustomLicense = customLicenseCache.computeIfAbsent(licenseCandidate.getName(), qm::getCustomLicenseByName);
                 if (resolvedCustomLicense != License.UNRESOLVED) {
                     component.setResolvedLicense(resolvedCustomLicense);
                     component.setLicenseUrl(trimToNull(licenseCandidate.getUrl()));
@@ -709,18 +708,6 @@ public class BomUploadProcessingTaskV2 implements Subscriber {
                         component.setLicense(trim(license.getName()));
                         component.setLicenseUrl(trimToNull(license.getUrl()));
                     });
-        }
-    }
-
-    private static License resolveCustomLicense(final QueryManager qm, final String licenseName) {
-        final Query<License> query = qm.getPersistenceManager().newQuery(License.class);
-        query.setFilter("name == :name && customLicense == true");
-        query.setParameters(licenseName);
-        try {
-            final License license = query.executeUnique();
-            return license != null ? license : License.UNRESOLVED;
-        } finally {
-            query.closeAll();
         }
     }
 

@@ -575,8 +575,8 @@ public class ModelConverter {
                         if (license != License.UNRESOLVED) {
                             component.setResolvedLicense(license);
                         } else {
-                            final License customLicense = qm.getCustomLicense(StringUtils.trimToNull(cycloneLicense.getName()));
-                            if (customLicense != null) {
+                            final License customLicense = qm.getCustomLicenseByName(StringUtils.trimToNull(cycloneLicense.getName()));
+                            if (customLicense != License.UNRESOLVED) {
                                 component.setResolvedLicense(customLicense);
                             }
                         }

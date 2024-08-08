@@ -1299,6 +1299,10 @@ public class QueryManager extends AlpineQueryManager {
         getCacheQueryManager().clearComponentAnalysisCache(threshold);
     }
 
+    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
+        return getNotificationQueryManager().bind(notificationRule, tags);
+    }
+
     public void bind(Project project, List<Tag> tags) {
         getProjectQueryManager().bind(project, tags);
     }
@@ -1378,6 +1382,18 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getTagsForPolicy(String policyUuid) {
         return getTagQueryManager().getTagsForPolicy(policyUuid);
+    }
+
+    public List<TagQueryManager.TaggedNotificationRuleRow> getTaggedNotificationRules(final String tagName) {
+        return getTagQueryManager().getTaggedNotificationRules(tagName);
+    }
+
+    public void tagNotificationRules(final String tagName, final Collection<String> notificationRuleUuids) {
+        getTagQueryManager().tagNotificationRules(tagName, notificationRuleUuids);
+    }
+
+    public void untagNotificationRules(final String tagName, final Collection<String> notificationRuleUuids) {
+        getTagQueryManager().untagNotificationRules(tagName, notificationRuleUuids);
     }
 
     /**

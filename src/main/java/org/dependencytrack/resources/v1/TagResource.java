@@ -36,12 +36,14 @@ import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.TagQueryManager.TagListRow;
+import org.dependencytrack.persistence.TagQueryManager.TaggedNotificationRuleRow;
 import org.dependencytrack.persistence.TagQueryManager.TaggedPolicyRow;
 import org.dependencytrack.persistence.TagQueryManager.TaggedProjectRow;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.problems.TagOperationProblemDetails;
 import org.dependencytrack.resources.v1.vo.TagListResponseItem;
+import org.dependencytrack.resources.v1.vo.TaggedNotificationRuleListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedPolicyListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedProjectListResponseItem;
 
@@ -91,7 +93,12 @@ public class TagResource extends AlpineResource {
         }
 
         final List<TagListResponseItem> tags = tagListRows.stream()
-                .map(row -> new TagListResponseItem(row.name(), row.projectCount(), row.policyCount()))
+                .map(row -> new TagListResponseItem(
+                        row.name(),
+                        row.projectCount(),
+                        row.policyCount(),
+                        row.notificationRuleCount()
+                ))
                 .toList();
         final long totalCount = tagListRows.isEmpty() ? 0 : tagListRows.getFirst().totalCount();
         return Response.ok(tags).header(TOTAL_COUNT_HEADER, totalCount).build();
@@ -416,6 +423,117 @@ public class TagResource extends AlpineResource {
             @PathParam("policyUuid") final UUID policyUuid
     ) {
         return getTagsForPolicy(String.valueOf(policyUuid));
+    }
+
+    @GET
+    @Path("/{name}/notificationRule")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns a list of all notification rules assigned to the given tag.",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all notification rules assigned to the given tag",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of notification rules", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = TaggedPolicyListResponseItem.class)))
+            )
+    })
+    @PaginatedApi
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response getTaggedNotificationRules(
+            @Parameter(description = "Name of the tag to get notification rules for", required = true)
+            @PathParam("name") final String tagName
+    ) {
+        // TODO: Should enforce lowercase for tagName once we are sure that
+        //   users don't have any mixed-case tags in their system anymore.
+        //   Will likely need a migration to cleanup existing tags for this.
+
+        final List<TaggedNotificationRuleRow> taggedNotificationRuleRows;
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            taggedNotificationRuleRows = qm.getTaggedNotificationRules(tagName);
+        }
+
+        final List<TaggedNotificationRuleListResponseItem> tags = taggedNotificationRuleRows.stream()
+                .map(row -> new TaggedNotificationRuleListResponseItem(UUID.fromString(row.uuid()), row.name()))
+                .toList();
+        final long totalCount = taggedNotificationRuleRows.isEmpty() ? 0 : taggedNotificationRuleRows.getFirst().totalCount();
+        return Response.ok(tags).header(TOTAL_COUNT_HEADER, totalCount).build();
+    }
+
+    @POST
+    @Path("/{name}/notificationRule")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Tags one or more notification rules.",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Notification rules tagged successfully."
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "A tag with the provided name does not exist.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)
+            )
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response tagNotificationRules(
+            @Parameter(description = "Name of the tag to assign", required = true)
+            @PathParam("name") final String tagName,
+            @Parameter(
+                    description = "UUIDs of notification rules to tag",
+                    required = true,
+                    array = @ArraySchema(schema = @Schema(type = "string", format = "uuid"))
+            )
+            @Size(min = 1, max = 100) final Set<@ValidUuid String> notificationRuleUuids
+    ) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            qm.tagNotificationRules(tagName, notificationRuleUuids);
+        }
+
+        return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("/{name}/notificationRule")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Untags one or more notification rules.",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Notification rules untagged successfully."
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "A tag with the provided name does not exist.",
+                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)
+            )
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response untagNotificationRules(
+            @Parameter(description = "Name of the tag", required = true)
+            @PathParam("name") final String tagName,
+            @Parameter(
+                    description = "UUIDs of notification rules to untag",
+                    required = true,
+                    array = @ArraySchema(schema = @Schema(type = "string", format = "uuid"))
+            )
+            @Size(min = 1, max = 100) final Set<@ValidUuid String> policyUuids
+    ) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            qm.untagNotificationRules(tagName, policyUuids);
+        }
+
+        return Response.noContent().build();
     }
 
 }

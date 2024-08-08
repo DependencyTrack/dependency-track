@@ -25,12 +25,18 @@ import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
 public class NotificationQueryManager extends QueryManager implements IQueryManager {
 
@@ -226,4 +232,34 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         query.deletePersistentAll(notificationPublisher.getUuid());
         delete(notificationPublisher);
     }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
+        assertPersistent(notificationRule, "notificationRule must be persistent");
+        assertPersistentAll(tags, "tags must be persistent");
+
+        return callInTransaction(() -> {
+            boolean modified = false;
+
+            for (final Tag tag : tags) {
+                if (!notificationRule.getTags().contains(tag)) {
+                    notificationRule.getTags().add(tag);
+
+                    if (tag.getNotificationRules() == null) {
+                        tag.setNotificationRules(new ArrayList<>(List.of(notificationRule)));
+                    } else if (!tag.getNotificationRules().contains(notificationRule)) {
+                        tag.getNotificationRules().add(notificationRule);
+                    }
+
+                    modified = true;
+                }
+            }
+
+            return modified;
+        });
+    }
+
 }

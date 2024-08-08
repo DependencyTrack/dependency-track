@@ -217,7 +217,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     @Override
     public Project getProject(final String uuid) {
-        final Project project = getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
+        final Project project = getObjectByUuid(Project.class, UUID.fromString(uuid), List.of(Project.FetchGroup.ALL.name()));
         if (project != null) {
             // set Metrics to minimize the number of round trips a client needs to make
             project.setMetrics(getMostRecentProjectMetrics(project));

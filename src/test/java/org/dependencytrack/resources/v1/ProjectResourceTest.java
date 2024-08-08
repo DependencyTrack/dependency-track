@@ -55,13 +55,16 @@ import org.junit.Test;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1076,6 +1079,78 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertNotNull(json.getString("token"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/4048
+    public void issue4048RegressionTest() {
+        final int projectsPerLevel = 10;
+        final int maxDepth = 5;
+
+        final Map<Integer, List<UUID>> projectUuidsByLevel = new HashMap<>();
+
+        // Create multiple parent-child hierarchies of projects.
+        for (int i = 0; i < maxDepth; i++) {
+            final List<UUID> parentUuids = projectUuidsByLevel.get(i - 1);
+
+            for (int j = 0; j < projectsPerLevel; j++) {
+                final UUID parentUuid = i > 0 ? parentUuids.get(j) : null;
+
+                final JsonObjectBuilder requestBodyBuilder = Json.createObjectBuilder()
+                        .add("name", "project-%d-%d".formatted(i, j))
+                        .add("version", "%d.%d".formatted(i, j));
+                if (parentUuid != null) {
+                    requestBodyBuilder.add("parent", Json.createObjectBuilder()
+                            .add("uuid", parentUuid.toString()));
+                }
+
+                final Response response = jersey.target(V1_PROJECT)
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .put(Entity.json(requestBodyBuilder.build().toString()));
+                assertThat(response.getStatus()).isEqualTo(201);
+                final JsonObject jsonResponse = parseJsonObject(response);
+
+                projectUuidsByLevel.compute(i, (ignored, uuids) -> {
+                    final UUID uuid = UUID.fromString(jsonResponse.getString("uuid"));
+                    if (uuids == null) {
+                        return new ArrayList<>(List.of(uuid));
+                    }
+
+                    uuids.add(uuid);
+                    return uuids;
+                });
+            }
+        }
+
+        // Pick out the UUIDs of projects that should have a parent (i.e. level 1 or above).
+        final List<UUID> childUuids = projectUuidsByLevel.entrySet().stream()
+                .filter(entry -> entry.getKey() > 0)
+                .map(Map.Entry::getValue)
+                .flatMap(List::stream)
+                .toList();
+
+        // Create a [uuid -> level] mapping for better assertion failure reporting.
+        final Map<UUID, Integer> levelByChildUuid = projectUuidsByLevel.entrySet().stream()
+                .filter(entry -> entry.getKey() > 0)
+                .flatMap(entry -> {
+                    final Integer level = entry.getKey();
+                    return entry.getValue().stream().map(uuid -> Map.entry(uuid, level));
+                })
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // Request all child projects individually.
+        // Ensure that the parent field is populated for all of them.
+        for (final UUID uuid : childUuids) {
+            final Response response = jersey.target(V1_PROJECT + "/" + uuid)
+                    .request()
+                    .header(X_API_KEY, apiKey)
+                    .get();
+            assertThat(response.getStatus()).isEqualTo(200);
+            final JsonObject json = parseJsonObject(response);
+            assertThat(json.getJsonObject("parent"))
+                    .withFailMessage("Parent missing on level: " + levelByChildUuid.get(uuid))
+                    .isNotEmpty();
+        }
     }
 
 }

@@ -1353,15 +1353,17 @@ public class QueryManager extends AlpineQueryManager {
      * @param fetchGroups Fetch groups to use for this operation
      * @return The object if found, otherwise {@code null}
      * @param <T> Type of the object
-     * @throws Exception When closing the query failed
      * @since 4.6.0
      */
-    public <T> T getObjectByUuid(final Class<T> clazz, final UUID uuid, final List<String> fetchGroups) throws Exception {
-        try (final Query<T> query = pm.newQuery(clazz)) {
-            query.setFilter("uuid == :uuid");
-            query.setParameters(uuid);
-            query.getFetchPlan().setGroups(fetchGroups);
+    public <T> T getObjectByUuid(final Class<T> clazz, final UUID uuid, final List<String> fetchGroups) {
+        final Query<T> query = pm.newQuery(clazz);
+        query.setFilter("uuid == :uuid");
+        query.setParameters(uuid);
+        query.getFetchPlan().setGroups(fetchGroups);
+        try {
             return query.executeUnique();
+        } finally {
+            query.closeAll();
         }
     }
 

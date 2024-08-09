@@ -128,9 +128,15 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                     counters.components += metrics.getComponents();
                     counters.vulnerableComponents += metrics.getVulnerableComponents();
 
-                    counters.policyViolationsFail += metrics.getPolicyViolationsFail();
-                    counters.policyViolationsWarn += metrics.getPolicyViolationsWarn();
-                    counters.policyViolationsInfo += metrics.getPolicyViolationsInfo();
+                    counters.policyViolationsFailTotal += metrics.getPolicyViolationsFailTotal();
+                    counters.policyViolationsFailAudited += metrics.getPolicyViolationsFailAudited();
+                    counters.policyViolationsFailUnaudited += metrics.getPolicyViolationsFailUnaudited();
+                    counters.policyViolationsWarnTotal += metrics.getPolicyViolationsWarnTotal();
+                    counters.policyViolationsWarnAudited += metrics.getPolicyViolationsWarnAudited();
+                    counters.policyViolationsWarnUnaudited += metrics.getPolicyViolationsWarnUnaudited();
+                    counters.policyViolationsInfoTotal += metrics.getPolicyViolationsInfoTotal();
+                    counters.policyViolationsInfoAudited += metrics.getPolicyViolationsInfoAudited();
+                    counters.policyViolationsInfoUnaudited += metrics.getPolicyViolationsInfoUnaudited();
                     counters.policyViolationsTotal += metrics.getPolicyViolationsTotal();
                     counters.policyViolationsAudited += metrics.getPolicyViolationsAudited();
                     counters.policyViolationsUnaudited += metrics.getPolicyViolationsUnaudited();

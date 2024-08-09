@@ -153,7 +153,7 @@ public class CycloneDxValidatorTest {
                 .extracting(InvalidBomException::getValidationErrors).asList()
                 .containsExactly("""
                         $.components[0].type: does not have a value in the enumeration \
-                        [application, framework, library, container, operating-system, device, firmware, file]\
+                        ["application", "framework", "library", "container", "operating-system", "device", "firmware", "file"]\
                         """);
     }
 

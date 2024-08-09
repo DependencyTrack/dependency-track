@@ -483,7 +483,7 @@ public class VexResourceTest extends ResourceTest {
                   "title": "The uploaded BOM is invalid",
                   "detail": "Schema validation failed",
                   "errors": [
-                    "$.components[0].type: does not have a value in the enumeration [application, framework, library, container, operating-system, device, firmware, file]"
+                    "$.components[0].type: does not have a value in the enumeration [\\"application\\", \\"framework\\", \\"library\\", \\"container\\", \\"operating-system\\", \\"device\\", \\"firmware\\", \\"file\\"]"
                   ]
                 }
                 """);

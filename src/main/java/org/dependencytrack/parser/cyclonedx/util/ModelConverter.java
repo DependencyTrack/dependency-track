@@ -904,6 +904,18 @@ public class ModelConverter {
         return cdxVulnerability;
     }
 
+    public static List<org.cyclonedx.model.vulnerability.Vulnerability> generateVulnerabilities(final QueryManager qm, final CycloneDXExporter.Variant variant,
+                                                                                                final List<Finding> findings) {
+        if (findings == null) {
+            return Collections.emptyList();
+        }
+        final var vulnerabilitiesSeen = new HashSet<org.cyclonedx.model.vulnerability.Vulnerability>();
+        return findings.stream()
+                .map(finding -> convert(qm, variant, finding))
+                .filter(vulnerabilitiesSeen::add)
+                .toList();
+    }
+
     /**
      * Converts {@link Project#getDirectDependencies()} and {@link Component#getDirectDependencies()}
      * references to a CycloneDX dependency graph.

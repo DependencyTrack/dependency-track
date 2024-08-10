@@ -93,7 +93,7 @@
         <lib.commons-compress.version>1.26.1</lib.commons-compress.version>
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.cyclonedx-java.version>9.0.4</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>9.0.5</lib.cyclonedx-java.version>
         <lib.greenmail.version>1.6.15</lib.greenmail.version>
         <lib.jackson.version>2.17.1</lib.jackson.version>
         <lib.jackson-databind.version>2.17.1</lib.jackson-databind.version>

@@ -85,7 +85,7 @@
         <maven.compiler.target>21</maven.compiler.target>
 
         <!-- Dependency Versions -->
-        <frontend.version>4.11.5</frontend.version>
+        <frontend.version>4.11.6</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.2.1</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
@@ -94,11 +94,11 @@
         <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.18.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
         <lib.cloud-sql-postgres-socket-factory.version>1.19.1</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
-        <lib.commons-compress.version>1.26.2</lib.commons-compress.version>
+        <lib.commons-compress.version>1.27.0</lib.commons-compress.version>
         <lib.commons-text.version>1.12.0</lib.commons-text.version>
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.cyclonedx-java.version>9.0.4</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>9.0.5</lib.cyclonedx-java.version>
         <lib.greenmail.version>2.0.1</lib.greenmail.version>
         <lib.jackson.version>2.17.1</lib.jackson.version>
         <lib.jackson-databind.version>2.17.1</lib.jackson-databind.version>
@@ -121,7 +121,7 @@
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.httpclient5.version>5.3.1</lib.httpclient5.version>
-        <lib.log4j-over-slf4j.version>2.0.14</lib.log4j-over-slf4j.version>
+        <lib.log4j-over-slf4j.version>2.0.16</lib.log4j-over-slf4j.version>
         <lib.org-kohsuke-github-api.version>1.323</lib.org-kohsuke-github-api.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.8.0.jre11</lib.jdbc-driver.mssql.version>

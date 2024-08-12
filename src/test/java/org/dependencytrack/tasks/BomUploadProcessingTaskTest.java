@@ -71,7 +71,6 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_ENABLED;
-import static org.junit.Assert.assertEquals;
 
 public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 

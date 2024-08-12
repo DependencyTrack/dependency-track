@@ -80,14 +80,13 @@ public class CycloneDXExporter {
         }
         final List<org.cyclonedx.model.Component> cycloneComponents = (Variant.VEX != variant && components != null) ? components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList()) : null;
         final List<org.cyclonedx.model.Service> cycloneServices = (Variant.VEX != variant && services != null) ? services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList()) : null;
-        final List<org.cyclonedx.model.vulnerability.Vulnerability> cycloneVulnerabilities = (findings != null) ? findings.stream().map(finding -> ModelConverter.convert(qm, variant, finding)).collect(Collectors.toList()) : null;
         final Bom bom = new Bom();
         bom.setSerialNumber("urn:uuid:" + UUID.randomUUID());
         bom.setVersion(1);
         bom.setMetadata(ModelConverter.createMetadata(project));
         bom.setComponents(cycloneComponents);
         bom.setServices(cycloneServices);
-        bom.setVulnerabilities(cycloneVulnerabilities);
+        bom.setVulnerabilities(ModelConverter.generateVulnerabilities(qm, variant, findings));
         if (cycloneComponents != null) {
             bom.setDependencies(ModelConverter.generateDependencies(project, components));
         }

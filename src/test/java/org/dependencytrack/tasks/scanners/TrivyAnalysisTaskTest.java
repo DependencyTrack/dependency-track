@@ -27,6 +27,7 @@ import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import jakarta.json.Json;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.common.ManagedHttpClientFactory;
@@ -44,7 +45,6 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import jakarta.json.Json;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -410,6 +410,10 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
                              "${json-unit.regex}(^sha256:[a-f0-9]{64}$)"
                            ],
                            "options": {
+                             "pkg_types": [
+                               "os",
+                               "library"
+                             ],
                              "vuln_type": [
                                "os",
                                "library"

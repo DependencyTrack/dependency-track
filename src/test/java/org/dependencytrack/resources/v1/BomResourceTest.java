@@ -1056,7 +1056,7 @@ public class BomResourceTest extends ResourceTest {
                   "title": "The uploaded BOM is invalid",
                   "detail": "Schema validation failed",
                   "errors": [
-                    "$.components[0].type: does not have a value in the enumeration [application, framework, library, container, operating-system, device, firmware, file]"
+                    "$.components[0].type: does not have a value in the enumeration [\\"application\\", \\"framework\\", \\"library\\", \\"container\\", \\"operating-system\\", \\"device\\", \\"firmware\\", \\"file\\"]"
                   ]
                 }
                 """);
@@ -1144,6 +1144,12 @@ public class BomResourceTest extends ResourceTest {
                   "detail": "The BOM is too large to be transmitted safely via Base64 encoded JSON value. Please use the \\"POST /api/v1/bom\\" endpoint with Content-Type \\"multipart/form-data\\" instead. Original cause: String value length (20000001) exceeds the maximum allowed (20000000, from `StreamReadConstraints.getMaxStringLength()`) (through reference chain: org.dependencytrack.resources.v1.vo.BomSubmitRequest[\\"bom\\"])"
                 }
                 """);
+    }
+
+    @Test
+    public void validateCycloneDxBomWithMultipleNamespacesTest() throws Exception {
+        byte[] bom = resourceToByteArray("/unit/bom-issue4008.xml");
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(bom));
     }
 
 }

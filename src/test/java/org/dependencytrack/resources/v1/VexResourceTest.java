@@ -213,6 +213,227 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
+    public void exportVexWithSameVulnAnalysisValidJsonTest() {
+        var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setClassifier(Classifier.APPLICATION);
+        qm.persist(project);
+
+        var componentAWithVuln = new Component();
+        componentAWithVuln.setProject(project);
+        componentAWithVuln.setName("acme-lib-a");
+        componentAWithVuln.setVersion("1.0.0");
+        componentAWithVuln = qm.createComponent(componentAWithVuln, false);
+
+        var componentBWithVuln = new Component();
+        componentBWithVuln.setProject(project);
+        componentBWithVuln.setName("acme-lib-b");
+        componentBWithVuln.setVersion("1.0.0");
+        componentBWithVuln = qm.createComponent(componentBWithVuln, false);
+
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln = qm.createVulnerability(vuln, false);
+        qm.addVulnerability(vuln, componentAWithVuln, AnalyzerIdentity.NONE);
+        qm.makeAnalysis(componentAWithVuln, vuln, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+        qm.addVulnerability(vuln, componentBWithVuln, AnalyzerIdentity.NONE);
+        qm.makeAnalysis(componentBWithVuln, vuln, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+
+        qm.persist(project);
+
+        final Response response = jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatJson(jsonResponse)
+                .withMatcher("vulnUuid", equalTo(vuln.getUuid().toString()))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo("""
+                        {
+                          "bomFormat": "CycloneDX",
+                          "specVersion": "1.5",
+                          "serialNumber": "${json-unit.any-string}",
+                          "version": 1,
+                          "metadata": {
+                            "timestamp": "${json-unit.any-string}",
+                            "component": {
+                              "type": "application",
+                              "bom-ref": "${json-unit.matches:projectUuid}",
+                              "name": "acme-app",
+                              "version": "1.0.0"
+                            },
+                            "tools": [
+                              {
+                                "vendor": "OWASP",
+                                "name": "Dependency-Track",
+                                "version": "${json-unit.any-string}"
+                              }
+                            ]
+                          },
+                          "vulnerabilities": [
+                            {
+                              "bom-ref": "${json-unit.matches:vulnUuid}",
+                              "id": "INT-001",
+                              "source": {
+                                "name": "INTERNAL"
+                              },
+                              "ratings": [
+                                {
+                                  "source": {
+                                    "name": "INTERNAL"
+                                  },
+                                  "severity": "high",
+                                  "method": "other"
+                                }
+                              ],
+                              "analysis":{
+                                "state": "resolved",
+                                "response": [
+                                  "update"
+                                ]
+                              },
+                              "affects": [
+                                {
+                                  "ref": "${json-unit.matches:projectUuid}"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
+    public void exportVexWithDifferentVulnAnalysisValidJsonTest() {
+        var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setClassifier(Classifier.APPLICATION);
+        qm.persist(project);
+
+        var componentAWithVuln = new Component();
+        componentAWithVuln.setProject(project);
+        componentAWithVuln.setName("acme-lib-a");
+        componentAWithVuln.setVersion("1.0.0");
+        componentAWithVuln = qm.createComponent(componentAWithVuln, false);
+
+        var componentBWithVuln = new Component();
+        componentBWithVuln.setProject(project);
+        componentBWithVuln.setName("acme-lib-b");
+        componentBWithVuln.setVersion("1.0.0");
+        componentBWithVuln = qm.createComponent(componentBWithVuln, false);
+
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln = qm.createVulnerability(vuln, false);
+        qm.addVulnerability(vuln, componentAWithVuln, AnalyzerIdentity.NONE);
+        qm.makeAnalysis(componentAWithVuln, vuln, AnalysisState.IN_TRIAGE, null, AnalysisResponse.UPDATE, null, true);
+        qm.addVulnerability(vuln, componentBWithVuln, AnalyzerIdentity.NONE);
+        qm.makeAnalysis(componentBWithVuln, vuln, AnalysisState.EXPLOITABLE, null, AnalysisResponse.UPDATE, null, true);
+
+        qm.persist(project);
+
+        final Response response = jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatJson(jsonResponse)
+                .withMatcher("vulnUuid", equalTo(vuln.getUuid().toString()))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo("""
+                        {
+                          "bomFormat": "CycloneDX",
+                          "specVersion": "1.5",
+                          "serialNumber": "${json-unit.any-string}",
+                          "version": 1,
+                          "metadata": {
+                            "timestamp": "${json-unit.any-string}",
+                            "component": {
+                              "type": "application",
+                              "bom-ref": "${json-unit.matches:projectUuid}",
+                              "name": "acme-app",
+                              "version": "1.0.0"
+                            },
+                            "tools": [
+                              {
+                                "vendor": "OWASP",
+                                "name": "Dependency-Track",
+                                "version": "${json-unit.any-string}"
+                              }
+                            ]
+                          },
+                          "vulnerabilities": [
+                            {
+                              "bom-ref": "${json-unit.matches:vulnUuid}",
+                              "id": "INT-001",
+                              "source": {
+                                "name": "INTERNAL"
+                              },
+                              "ratings": [
+                                {
+                                  "source": {
+                                    "name": "INTERNAL"
+                                  },
+                                  "severity": "high",
+                                  "method": "other"
+                                }
+                              ],
+                              "analysis":{
+                                "state": "in_triage",
+                                "response": [
+                                  "update"
+                                ]
+                              },
+                              "affects": [
+                                {
+                                  "ref": "${json-unit.matches:projectUuid}"
+                                }
+                              ]
+                            },
+                            {
+                              "bom-ref": "${json-unit.matches:vulnUuid}",
+                              "id": "INT-001",
+                              "source": {
+                                "name": "INTERNAL"
+                              },
+                              "ratings": [
+                                {
+                                  "source": {
+                                    "name": "INTERNAL"
+                                  },
+                                  "severity": "high",
+                                  "method": "other"
+                                }
+                              ],
+                              "analysis":{
+                                "state": "exploitable",
+                                "response": [
+                                  "update"
+                                ]
+                              },
+                              "affects": [
+                                {
+                                  "ref": "${json-unit.matches:projectUuid}"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
     public void uploadVexInvalidJsonTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
@@ -262,7 +483,7 @@ public class VexResourceTest extends ResourceTest {
                   "title": "The uploaded BOM is invalid",
                   "detail": "Schema validation failed",
                   "errors": [
-                    "$.components[0].type: does not have a value in the enumeration [application, framework, library, container, operating-system, device, firmware, file]"
+                    "$.components[0].type: does not have a value in the enumeration [\\"application\\", \\"framework\\", \\"library\\", \\"container\\", \\"operating-system\\", \\"device\\", \\"firmware\\", \\"file\\"]"
                   ]
                 }
                 """);

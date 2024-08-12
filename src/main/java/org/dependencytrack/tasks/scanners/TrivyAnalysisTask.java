@@ -414,7 +414,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         scan.setBlobIDS(new String[]{input.getDiffID()});
 
         final var opts = new Options();
-        opts.setVulnType(new String[]{"os", "library"});
+        opts.setPkgTypes(new String[]{"os", "library"});
         opts.setScanners(new String[]{"vuln"});
 
         scan.setOptions(opts);

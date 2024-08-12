@@ -194,7 +194,7 @@ public class ScheduledNotificationRuleTest {
     public void testCronConfigNull() {
         ScheduledNotificationRule rule = new ScheduledNotificationRule();
         rule.setCronConfig(null);
-        Assert.assertEquals(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_EXPRESSION, rule.getCronConfig());
+        Assert.assertEquals(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_EXPRESSION.getDefaultPropertyValue(), rule.getCronConfig());
     }
 
     @Test

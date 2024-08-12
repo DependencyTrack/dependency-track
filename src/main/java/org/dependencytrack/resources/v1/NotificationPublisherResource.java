@@ -35,29 +35,23 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import org.apache.commons.text.WordUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.publisher.ConsolePublisher;
-import org.dependencytrack.notification.publisher.CsWebexPublisher;
-import org.dependencytrack.notification.publisher.JiraPublisher;
-import org.dependencytrack.notification.publisher.MattermostPublisher;
-import org.dependencytrack.notification.publisher.MsTeamsPublisher;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
-import org.dependencytrack.notification.publisher.SlackPublisher;
-import org.dependencytrack.notification.publisher.WebhookPublisher;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -71,6 +65,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
@@ -295,7 +290,7 @@ public class NotificationPublisherResource extends AlpineResource {
     }
 
     @POST
-    @Path("/test/{publisher}")
+    @Path("/test/smtp")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -307,55 +302,75 @@ public class NotificationPublisherResource extends AlpineResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
-    public Response testSlackPublisherConfig(@FormParam("destination") String destination, @PathParam("publisher") String publisherType) {
-        try(QueryManager qm = new QueryManager()){
-            Class<? extends Publisher> defaultPublisherClass;
-            switch (publisherType) {
-                case "email":
-                    defaultPublisherClass = SendMailPublisher.class;
-                    break;
-                case "cisco_webex":
-                    defaultPublisherClass = CsWebexPublisher.class;
-                    break;
-                case "slack":
-                    defaultPublisherClass = SlackPublisher.class;
-                    break;
-                case "microsoft_teams":
-                    defaultPublisherClass = MsTeamsPublisher.class;
-                    break;
-                case "jira":
-                    defaultPublisherClass = JiraPublisher.class;
-                    break;
-                case "mattermost":
-                    defaultPublisherClass = MattermostPublisher.class;
-                    break;
-                case "outbound_webhook":
-                    defaultPublisherClass = WebhookPublisher.class;
-                    break;
-                case "console":
-                    defaultPublisherClass = ConsolePublisher.class;
-                    break;
-                default:
-                    return Response.status(Response.Status.BAD_REQUEST).entity("Invalid publisher was provided.").build();
-            }
-            NotificationPublisher notificationPublisher = qm.getDefaultNotificationPublisher(defaultPublisherClass);
-            final Publisher publisher = defaultPublisherClass.getDeclaredConstructor().newInstance();
+    public Response testSmtpPublisherConfig(@FormParam("destination") String destination) {
+        try(QueryManager qm = new QueryManager()) {
+            Class<? extends Publisher> defaultEmailPublisherClass = SendMailPublisher.class;
+            NotificationPublisher emailNotificationPublisher = qm.getDefaultNotificationPublisher(defaultEmailPublisherClass);
+            final Publisher emailPublisher = defaultEmailPublisherClass.getDeclaredConstructor().newInstance();
             final JsonObject config = Json.createObjectBuilder()
                     .add(Publisher.CONFIG_DESTINATION, destination)
-                    .add(Publisher.CONFIG_TEMPLATE_KEY, notificationPublisher.getTemplate())
-                    .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, notificationPublisher.getTemplateMimeType())
+                    .add(Publisher.CONFIG_TEMPLATE_KEY, emailNotificationPublisher.getTemplate())
+                    .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, emailNotificationPublisher.getTemplateMimeType())
                     .build();
             final Notification notification = new Notification()
                     .scope(NotificationScope.SYSTEM)
                     .group(NotificationGroup.CONFIGURATION)
                     .title(NotificationConstants.Title.NOTIFICATION_TEST)
-                    .content(WordUtils.capitalize(publisherType.replaceAll("_", " ")) + " Configuration test")
+                    .content("SMTP configuration test")
                     .level(NotificationLevel.INFORMATIONAL);
-                publisher.inform(PublishContext.from(notification), notification, config);
+            // Bypass Notification.dispatch() and go directly to the publisher itself
+            emailPublisher.inform(PublishContext.from(notification), notification, config);
             return Response.ok().build();
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
             LOGGER.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending " + publisherType + " test notification.").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending test mail notification.").build();
+        }
+    }
+
+    @POST
+    @Path("/test/{uuid}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Dispatches a rule notification test",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Test notification dispatched successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response testSlackPublisherConfig(
+            @Parameter(description = "The UUID of the rule to test", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("uuid") @ValidUuid String ruleUuid) throws Exception {
+        try(QueryManager qm = new QueryManager()){
+            NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            NotificationPublisher notificationPublisher = rule.getPublisher();
+            final Class<?> publisherClass = Class.forName(notificationPublisher.getPublisherClass());
+            Publisher publisher = (Publisher) publisherClass.getDeclaredConstructor().newInstance();
+            String publisherConfig = rule.getPublisherConfig();
+            JsonReader jsonReader = Json.createReader(new StringReader(publisherConfig));
+            JsonObject configObject = jsonReader.readObject();
+            jsonReader.close();
+            final JsonObject config = Json.createObjectBuilder()
+                    .add(Publisher.CONFIG_DESTINATION, configObject.getString("destination"))
+                    .add(Publisher.CONFIG_TEMPLATE_KEY, rule.getPublisher().getTemplate())
+                    .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, rule.getPublisher().getTemplateMimeType())
+                    .build();
+            
+            for(NotificationGroup group : rule.getNotifyOn()){
+                final Notification notification = new Notification()
+                    .scope(rule.getScope())
+                    .group(group.toString()+"_TEST")
+                    .title(group)
+                    .content("Rule configuration test")
+                    .level(rule.getNotificationLevel());
+                publisher.inform(PublishContext.from(notification), notification, config);
+            }
+            return Response.ok().build();
+        } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+            LOGGER.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending the notification.").build();
         }
     }
 }

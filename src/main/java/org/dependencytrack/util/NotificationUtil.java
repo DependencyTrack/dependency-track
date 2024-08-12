@@ -53,7 +53,7 @@ import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
-import org.dependencytrack.notification.vo.VulnerabilityUpdate;
+import org.dependencytrack.notification.vo.ProjectVulnerabilityUpdate;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -70,6 +70,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 
@@ -111,25 +112,29 @@ public final class NotificationUtil {
     }
 
     public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, VulnerabilityUpdateDiff vulnerabilityUpdateDiff) {
-        final Map<Long,Project> affectedProjects = new HashMap<>();
-        List<Component> components = vulnerability.getComponents();
-        if (components != null) {
+        // Vulnerabilities are not guaranteed to include component relationships depending on where the event was generated
+        final Vulnerability completeVulnerability = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
+        final List<Component> components = completeVulnerability.getComponents();
+        if (components != null && !components.isEmpty()) {
+            List<Component> detachedComponents = new ArrayList<>();
             for (final Component c : components) {
-                if (!affectedProjects.containsKey(c.getProject().getId())) {
-                    affectedProjects.put(c.getProject().getId(), qm.detach(Project.class, c.getProject().getId()));
-                }
+                detachedComponents.add(qm.detach(Component.class, c.getId()));
             }
+            // To reduce noise we only emit a single notification for each updated vulnerability if it affects one
+            // of our components. The component details are still useful for event consumers, so we pick the first one.
+            final Component detachedComponent = detachedComponents.getFirst();
 
-            for (final Component c : components) {
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.PORTFOLIO)
-                        .group(NotificationGroup.VULNERABILITY_UPDATED)
-                        .title(generateNotificationTitle(NotificationConstants.Title.VULNERABILITY_UPDATED, qm.detach(Project.class, c.getProject().getId())))
-                        .level(NotificationLevel.INFORMATIONAL)
-                        .content(generateNotificationContent(vulnerability, vulnerabilityUpdateDiff, c))
-                        .subject(new VulnerabilityUpdate(vulnerability, vulnerabilityUpdateDiff, c, new HashSet<>(affectedProjects.values())))
-                );
-            }
+            final Vulnerability detachedVuln = qm.detach(Vulnerability.class, completeVulnerability.getId());
+            detachedVuln.setAliases(qm.detach(qm.getVulnerabilityAliases(completeVulnerability))); // Aliases are lost during detach above
+
+            Notification.dispatch(new Notification()
+                    .scope(NotificationScope.PORTFOLIO)
+                    .group(NotificationGroup.PROJECT_VULNERABILITY_UPDATED)
+                    .title(generateNotificationTitle(NotificationConstants.Title.VULNERABILITY_UPDATED,null))
+                    .level(NotificationLevel.INFORMATIONAL)
+                    .content(generateNotificationContent(detachedVuln, vulnerabilityUpdateDiff, detachedComponent))
+                    .subject(new ProjectVulnerabilityUpdate(detachedVuln, vulnerabilityUpdateDiff, detachedComponent))
+            );
         }
     }
 
@@ -423,33 +428,39 @@ public final class NotificationUtil {
         return builder.build();
     }
 
-    public static JsonObject toJson(final VulnerabilityUpdate vo) {
+    public static JsonObject toJson(final ProjectVulnerabilityUpdate vo) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
-        if (vo.getVulnerability().getUuid() != null) {
-            Map<String, Object> vulnerabilityMap = new HashMap<>();
-            vulnerabilityMap.put("uuid", vo.getVulnerability().getUuid().toString());
+        final Vulnerability vulnerability = vo.getVulnerability();
+        if (vulnerability.getUuid() != null) {
+            final JsonObjectBuilder vulnerabilityBuilder = Json.createObjectBuilder();
+            vulnerabilityBuilder.add("uuid", vulnerability.getUuid().toString());
+            JsonUtil.add(vulnerabilityBuilder, "vulnId", vulnerability.getVulnId());
+            JsonUtil.add(vulnerabilityBuilder, "source", vulnerability.getSource());
+            final JsonArrayBuilder aliasesBuilder = Json.createArrayBuilder();
+            if (vulnerability.getAliases() != null) {
+                for (final Map.Entry<Vulnerability.Source, String> vulnIdBySource : VulnerabilityUtil.getUniqueAliases(vulnerability)) {
+                    aliasesBuilder.add(Json.createObjectBuilder()
+                            .add("source", vulnIdBySource.getKey().name())
+                            .add("vulnId", vulnIdBySource.getValue())
+                            .build());
+                }
+            }
+            vulnerabilityBuilder.add("aliases", aliasesBuilder.build());
 
-            if (vo.getVulnerabilityUpdateDiff() != null) {
-                Map<String, Object> oldVulnerabilityMap = new HashMap<>();
-                oldVulnerabilityMap.put("severity", vo.getVulnerabilityUpdateDiff().getOldSeverity().toString());
-                vulnerabilityMap.put("old", oldVulnerabilityMap);
+            final VulnerabilityUpdateDiff vulnerabilityUpdateDiff = vo.getVulnerabilityUpdateDiff();
+            if (vulnerabilityUpdateDiff != null) {
+                final JsonObjectBuilder oldBuilder = Json.createObjectBuilder();
+                oldBuilder.add("severity", vulnerabilityUpdateDiff.getOldSeverity().toString());
+                vulnerabilityBuilder.add("old", oldBuilder.build());
 
-                Map<String, Object> newVulnerabilityMap = new HashMap<>();
-                newVulnerabilityMap.put("severity", vo.getVulnerabilityUpdateDiff().getNewSeverity().toString());
-                vulnerabilityMap.put("new", newVulnerabilityMap);
+                final JsonObjectBuilder newBuilder = Json.createObjectBuilder();
+                newBuilder.add("severity", vulnerabilityUpdateDiff.getNewSeverity().toString());
+                vulnerabilityBuilder.add("new", newBuilder.build());
             }
 
-            JsonObject vulnerabilityJson = Json.createObjectBuilder(vulnerabilityMap).build();
-            builder.add("vulnerability", vulnerabilityJson);
+            builder.add("vulnerability", vulnerabilityBuilder.build());
         }
 
-        if (vo.getAffectedProjects() != null && vo.getAffectedProjects().size() > 0) {
-            final JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
-            for (final Project project: vo.getAffectedProjects()) {
-                projectsBuilder.add(toJson(project));
-            }
-            builder.add("affectedProjects", projectsBuilder.build());
-        }
         if (vo.getComponent() != null) {
             builder.add("component", toJson(vo.getComponent()));
         }

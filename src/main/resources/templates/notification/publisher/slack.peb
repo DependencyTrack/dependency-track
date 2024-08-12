@@ -87,7 +87,7 @@
 	{% endif %}
   ]
 }
-{% elseif notification.group == "VULNERABILITY_UPDATED" %}
+{% elseif notification.group == "PROJECT_VULNERABILITY_UPDATED" %}
 {
   "blocks": [
     {

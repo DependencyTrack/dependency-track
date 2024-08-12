@@ -19,10 +19,14 @@
 package org.dependencytrack.tasks;
 
 import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
 import alpine.persistence.Transaction;
+import org.dependencytrack.event.ProjectVulnerabilityUpdateEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.VulnerabilityUpdateDiff;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.PersistenceUtil;
 
@@ -55,6 +59,15 @@ abstract class AbstractNistMirrorTask {
                 final Map<String, PersistenceUtil.Diff> diffs = updateVulnerability(persistentVuln, vuln);
                 if (!diffs.isEmpty()) {
                     logger.debug("%s has changed: %s".formatted(vuln.getVulnId(), diffs));
+
+                    // Check if we need to emit a vulnerability changed event
+                    if (diffs.containsKey("severity") && diffs.get("severity") != null) {
+                        final PersistenceUtil.Diff severityDiff = diffs.get("severity");
+                        if (severityDiff.before() instanceof final Severity oldSeverity && severityDiff.after() instanceof final Severity newSeverity) {
+                            Event.dispatch(new ProjectVulnerabilityUpdateEvent(persistentVuln, new VulnerabilityUpdateDiff(oldSeverity, newSeverity)));
+                        }
+                    }
+
                     return persistentVuln;
                 }
 

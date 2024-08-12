@@ -20,7 +20,7 @@ Other affected projects:
 Project:           [{{ affectedProject.name }} : {{ affectedProject.version }}]
 Project URL:       {{ baseUrl }}/projects/{{ affectedProject.uuid }}
 {% endif %}{% endfor %}{% endif %}
-{% elseif notification.group == "VULNERABILITY_UPDATED" %}
+{% elseif notification.group == "PROJECT_VULNERABILITY_UPDATED" %}
 Vulnerability ID:  {{ subject.vulnerability.vulnId }}
 Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
 Old Severity:      {{ subject.vulnerabilityUpdateDiff.oldSeverity }}
@@ -28,18 +28,6 @@ New Severity:      {{ subject.vulnerabilityUpdateDiff.newSeverity  }}
 Source:            {{ subject.vulnerability.source }}
 Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
-Project:           {{ subject.component.project.name }}
-Version:           {{ subject.component.project.version }}
-Description:       {{ subject.component.project.description }}
-Project URL:       {{ baseUrl }}/projects/{{ subject.component.project.uuid }}
-{% if  notification.subject.affectedProjects|length > 1%}
---------------------------------------------------------------------------------
-
-Other affected projects:
-{% for affectedProject in notification.subject.affectedProjects %}{% if not (affectedProject.uuid == subject.component.project.uuid) %}
-Project:           [{{ affectedProject.name }} : {{ affectedProject.version }}]
-Project URL:       {{ baseUrl }}/projects/{{ affectedProject.uuid }}
-{% endif %}{% endfor %}{% endif %}
 {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
 Project:           {{ subject.component.project.toString }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.component.project.uuid }}

@@ -21,11 +21,13 @@ package org.dependencytrack.notification.publisher;
 import alpine.notification.Notification;
 import com.google.common.base.MoreObjects;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.notification.vo.ProjectVulnerabilityUpdate;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
@@ -60,6 +62,7 @@ public record PublishContext(String notificationGroup, String notificationLevel,
     private static final String SUBJECT_PROJECTS = "projects";
     private static final String SUBJECT_VULNERABILITY = "vulnerability";
     private static final String SUBJECT_VULNERABILITIES = "vulnerabilities";
+    private static final String SUBJECT_VULNERABILITY_UPDATE = "vulnerabilityUpdate";
 
     public static PublishContext from(final Notification notification) {
         if (notification == null) {
@@ -79,6 +82,13 @@ public record PublishContext(String notificationGroup, String notificationLevel,
                 notificationSubjects.put(SUBJECT_PROJECTS, null);
             }
             notificationSubjects.put(SUBJECT_VULNERABILITY, Vulnerability.convert(subject.getVulnerability()));
+        } else if (notification.getSubject() instanceof final ProjectVulnerabilityUpdate subject) {
+            notificationSubjects.put(SUBJECT_VULNERABILITY_UPDATE, VulnerabilityUpdateDiff.convert(subject.getVulnerability(), subject.getVulnerabilityUpdateDiff()));
+            if (subject.getComponent() != null) {
+                notificationSubjects.put(SUBJECT_COMPONENT, Component.convert(subject.getComponent()));
+            } else {
+                notificationSubjects.put(SUBJECT_COMPONENT, null);
+            }
         } else if (notification.getSubject() instanceof final NewVulnerableDependency subject) {
             notificationSubjects.put(SUBJECT_COMPONENT, Component.convert(subject.getComponent()));
             notificationSubjects.put(SUBJECT_PROJECT, Project.convert(subject.getComponent().getProject()));
@@ -176,6 +186,23 @@ public record PublishContext(String notificationGroup, String notificationLevel,
                 return null;
             }
             return new Vulnerability(notificationVuln.getVulnId(), notificationVuln.getSource());
+        }
+
+    }
+
+    public record VulnerabilityUpdateDiff(String id, String source, Severity oldSeverity, Severity newSeverity) {
+
+        private static VulnerabilityUpdateDiff convert(final org.dependencytrack.model.Vulnerability notificationVuln,
+                                                       final org.dependencytrack.model.VulnerabilityUpdateDiff notificationVulnUpdateDiff) {
+            if (notificationVuln == null || notificationVulnUpdateDiff == null) {
+                return null;
+            }
+            return new VulnerabilityUpdateDiff(
+                    notificationVuln.getVulnId(),
+                    notificationVuln.getSource(),
+                    notificationVulnUpdateDiff.getOldSeverity(),
+                    notificationVulnUpdateDiff.getNewSeverity()
+            );
         }
 
     }

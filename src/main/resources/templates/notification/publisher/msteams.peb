@@ -27,7 +27,7 @@
           "value": "{{ subject.component.toString | escape(strategy="json") }}"
         }
       ],
-      {% elseif notification.group == "VULNERABILITY_UPDATED" %}
+      {% elseif notification.group == "PROJECT_VULNERABILITY_UPDATED" %}
       "facts": [
         {
           "name": "VulnID",

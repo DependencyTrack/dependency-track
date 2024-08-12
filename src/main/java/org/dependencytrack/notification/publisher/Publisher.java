@@ -36,7 +36,7 @@ import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
-import org.dependencytrack.notification.vo.VulnerabilityUpdate;
+import org.dependencytrack.notification.vo.ProjectVulnerabilityUpdate;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
@@ -107,7 +107,7 @@ public interface Publisher {
                 if (notification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
-                } else if (notification.getSubject() instanceof final VulnerabilityUpdate subject) {
+                } else if (notification.getSubject() instanceof final ProjectVulnerabilityUpdate subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final NewVulnerableDependency subject) {

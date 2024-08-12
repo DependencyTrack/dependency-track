@@ -46,7 +46,7 @@ import org.dependencytrack.tasks.TaskScheduler;
 import org.dependencytrack.tasks.VexUploadProcessingTask;
 import org.dependencytrack.tasks.VulnDbSyncTask;
 import org.dependencytrack.tasks.VulnerabilityAnalysisTask;
-import org.dependencytrack.tasks.VulnerabilityUpdateTask;
+import org.dependencytrack.tasks.ProjectVulnerabilityUpdateTask;
 import org.dependencytrack.tasks.metrics.ComponentMetricsUpdateTask;
 import org.dependencytrack.tasks.metrics.PortfolioMetricsUpdateTask;
 import org.dependencytrack.tasks.metrics.ProjectMetricsUpdateTask;
@@ -119,7 +119,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(ClearComponentAnalysisCacheEvent.class, ClearComponentAnalysisCacheTask.class);
         EVENT_SERVICE.subscribe(CallbackEvent.class, CallbackTask.class);
         EVENT_SERVICE.subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
-        EVENT_SERVICE.subscribe(VulnerabilityUpdateEvent.class, VulnerabilityUpdateTask.class);
+        EVENT_SERVICE.subscribe(ProjectVulnerabilityUpdateEvent.class, ProjectVulnerabilityUpdateTask.class);
         EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
         EVENT_SERVICE.subscribe(NistApiMirrorEvent.class, NistApiMirrorTask.class);
         EVENT_SERVICE.subscribe(EpssMirrorEvent.class, EpssMirrorTask.class);
@@ -162,6 +162,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(InternalComponentIdentificationTask.class);
         EVENT_SERVICE.unsubscribe(CallbackTask.class);
         EVENT_SERVICE.unsubscribe(NewVulnerableDependencyAnalysisTask.class);
+        EVENT_SERVICE.unsubscribe(ProjectVulnerabilityUpdateTask.class);
         EVENT_SERVICE.unsubscribe(NistMirrorTask.class);
         EVENT_SERVICE.unsubscribe(NistApiMirrorTask.class);
         EVENT_SERVICE.unsubscribe(EpssMirrorTask.class);

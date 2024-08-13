@@ -18,11 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 import org.dependencytrack.JerseyTestRule;
@@ -31,16 +26,10 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.publisher.ConsolePublisher;
-import org.dependencytrack.notification.publisher.CsWebexPublisher;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
-import org.dependencytrack.notification.publisher.JiraPublisher;
-import org.dependencytrack.notification.publisher.MattermostPublisher;
-import org.dependencytrack.notification.publisher.MsTeamsPublisher;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.publisher.SlackPublisher;
-import org.dependencytrack.notification.publisher.WebhookPublisher;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;

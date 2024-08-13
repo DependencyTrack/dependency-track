@@ -30,6 +30,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityUpdateDiff;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -39,7 +40,7 @@ import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
-import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
+import org.dependencytrack.notification.vo.ProjectVulnerabilityUpdate;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.junit.Test;
 
@@ -194,6 +195,28 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
     }
 
     @Test
+    public void testInformWithVulnerabilityUpdateNotification() {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var vuln = createVulnerability();
+        final var vulnUpdateDiff = createVulnerabilityUpdateDiff(vuln);
+
+        final var subject = new ProjectVulnerabilityUpdate(vuln, vulnUpdateDiff, component);
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.PROJECT_VULNERABILITY_UPDATED)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.VULNERABILITY_UPDATED)
+                .content("")
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+    }
+
+    @Test
     public void testInformWithProjectAuditChangeNotification() {
         final var project = createProject();
         final var component = createComponent(project);
@@ -262,6 +285,10 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         vuln.setSeverity(Severity.MEDIUM);
         vuln.setCwes(List.of(666, 777));
         return vuln;
+    }
+
+    private static VulnerabilityUpdateDiff createVulnerabilityUpdateDiff(final Vulnerability vulnerability) {
+        return new org.dependencytrack.model.VulnerabilityUpdateDiff(Severity.UNASSIGNED, vulnerability.getSeverity());
     }
 
     private static Analysis createAnalysis(final Component component, final Vulnerability vuln) {

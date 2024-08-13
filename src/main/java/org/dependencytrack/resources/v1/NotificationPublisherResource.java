@@ -361,10 +361,11 @@ public class NotificationPublisherResource extends AlpineResource {
             for(NotificationGroup group : rule.getNotifyOn()){
                 final Notification notification = new Notification()
                     .scope(rule.getScope())
-                    .group(group.toString()+"_TEST")
+                    .group(group.toString())
                     .title(group)
                     .content("Rule configuration test")
-                    .level(rule.getNotificationLevel());
+                    .level(rule.getNotificationLevel())
+                    .subject(NotificationUtil.generateSubject(group.toString()));
                 publisher.inform(PublishContext.from(notification), notification, config);
             }
             return Response.ok().build();

@@ -289,6 +289,7 @@ public class ProjectResource extends AlpineResource {
     public Response createProject(Project jsonProject) {
         final Validator validator = super.getValidator();
         failOnValidationError(
+                validator.validateProperty(jsonProject, "author"),
                 validator.validateProperty(jsonProject, "authors"),
                 validator.validateProperty(jsonProject, "publisher"),
                 validator.validateProperty(jsonProject, "group"),
@@ -429,6 +430,7 @@ public class ProjectResource extends AlpineResource {
             Project jsonProject) {
         final Validator validator = getValidator();
         failOnValidationError(
+                validator.validateProperty(jsonProject, "author"),
                 validator.validateProperty(jsonProject, "authors"),
                 validator.validateProperty(jsonProject, "publisher"),
                 validator.validateProperty(jsonProject, "group"),

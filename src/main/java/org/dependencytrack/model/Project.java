@@ -307,7 +307,7 @@ public class Project implements Serializable {
     }
 
     @Deprecated
-    @JsonIgnore
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getAuthor(){
         return ModelConverter.convertContactsToString(this.authors);
     }
@@ -316,6 +316,8 @@ public class Project implements Serializable {
     public void setAuthor(String author){
         if(this.authors==null){
             this.authors = new ArrayList<>();
+        } else{
+            this.authors.clear();
         }
         this.authors.add(new OrganizationalContact() {{
             setName(author);

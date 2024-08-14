@@ -285,6 +285,7 @@ public class ComponentResource extends AlpineResource {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonComponent, "authors"),
+                validator.validateProperty(jsonComponent, "author"),
                 validator.validateProperty(jsonComponent, "publisher"),
                 validator.validateProperty(jsonComponent, "name"),
                 validator.validateProperty(jsonComponent, "version"),

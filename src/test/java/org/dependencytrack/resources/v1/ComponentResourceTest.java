@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ComponentResourceTest extends ResourceTest {
@@ -515,6 +516,7 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals("My Component", json.getString("name"));
         Assert.assertEquals("SampleAuthor" ,json.getJsonArray("authors").getJsonObject(0).getString("name"));
+        Assert.assertEquals("SampleAuthor", json.getString("author"));
         Assert.assertEquals("1.0", json.getString("version"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
     }

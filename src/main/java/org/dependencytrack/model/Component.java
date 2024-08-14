@@ -401,15 +401,17 @@ public class Component implements Serializable {
     }
 
     @Deprecated
-    @JsonIgnore
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getAuthor(){
         return ModelConverter.convertContactsToString(this.authors);
     }
 
     @Deprecated
     public void setAuthor(String author){
-        if(this.authors==null){
+        if (this.authors == null) {
             this.authors = new ArrayList<>();
+        } else {
+            this.authors.clear();
         }
         this.authors.add(new OrganizationalContact() {{
             setName(author);

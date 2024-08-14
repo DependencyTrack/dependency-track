@@ -408,7 +408,7 @@ public class Component implements Serializable {
 
     @Deprecated
     public void setAuthor(String author){
-        if (this.authors == null) {
+        if(this.authors==null){
             this.authors = new ArrayList<>();
         } else {
             this.authors.clear();

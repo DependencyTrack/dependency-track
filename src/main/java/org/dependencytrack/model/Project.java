@@ -73,9 +73,9 @@ import java.util.UUID;
 @PersistenceCapable
 @FetchGroups({
         @FetchGroup(name = "ALL", members = {
-                @Persistent(name = "name"),
                 @Persistent(name = "author"),
                 @Persistent(name = "publisher"),
+                @Persistent(name = "manufacturer"),
                 @Persistent(name = "supplier"),
                 @Persistent(name = "group"),
                 @Persistent(name = "name"),
@@ -85,12 +85,18 @@ import java.util.UUID;
                 @Persistent(name = "cpe"),
                 @Persistent(name = "purl"),
                 @Persistent(name = "swidTagId"),
+                @Persistent(name = "directDependencies"),
                 @Persistent(name = "uuid"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
                 @Persistent(name = "properties"),
                 @Persistent(name = "tags"),
+                @Persistent(name = "lastBomImport"),
+                @Persistent(name = "lastBomImportFormat"),
+                @Persistent(name = "lastInheritedRiskScore"),
+                @Persistent(name = "active"),
                 @Persistent(name = "accessTeams"),
+                @Persistent(name = "externalReferences"),
                 @Persistent(name = "metadata")
         }),
         @FetchGroup(name = "METADATA", members = {

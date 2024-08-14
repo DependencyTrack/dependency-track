@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.resources.v1;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import org.dependencytrack.JerseyTestRule;
@@ -25,6 +27,7 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.Publisher;
@@ -347,7 +350,15 @@ public class NotificationPublisherResourceTest extends ResourceTest {
                 "Example Publisher", "Publisher description",
                 SlackPublisher.class, "template", "text/html",
                 false);
+        
         NotificationRule rule = qm.createNotificationRule("Example Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+
+        Set<NotificationGroup> groups = new HashSet<>(Set.of(NotificationGroup.BOM_CONSUMED, NotificationGroup.BOM_PROCESSED, NotificationGroup.BOM_PROCESSING_FAILED,
+                                NotificationGroup.BOM_VALIDATION_FAILED, NotificationGroup.NEW_VULNERABILITY, NotificationGroup.NEW_VULNERABLE_DEPENDENCY, 
+                                NotificationGroup.POLICY_VIOLATION, NotificationGroup.PROJECT_CREATED, NotificationGroup.PROJECT_AUDIT_CHANGE, 
+                                NotificationGroup.VEX_CONSUMED, NotificationGroup.VEX_PROCESSED));
+        rule.setNotifyOn(groups);
+
         rule.setPublisherConfig("{\"destination\":\"https://example.com/webhook\"}");
         
         Response sendMailResponse = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + rule.getUuid()).request()

@@ -34,9 +34,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -49,6 +51,7 @@ import org.dependencytrack.util.NotificationUtil;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -62,6 +65,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
@@ -320,6 +324,54 @@ public class NotificationPublisherResource extends AlpineResource {
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
             LOGGER.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending test mail notification.").build();
+        }
+    }
+
+    @POST
+    @Path("/test/{uuid}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Dispatches a rule notification test",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Test notification dispatched successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response testSlackPublisherConfig(
+            @Parameter(description = "The UUID of the rule to test", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("uuid") @ValidUuid String ruleUuid) throws Exception {
+        try(QueryManager qm = new QueryManager()){
+            NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            NotificationPublisher notificationPublisher = rule.getPublisher();
+            final Class<?> publisherClass = Class.forName(notificationPublisher.getPublisherClass());
+            Publisher publisher = (Publisher) publisherClass.getDeclaredConstructor().newInstance();
+            String publisherConfig = rule.getPublisherConfig();
+            JsonReader jsonReader = Json.createReader(new StringReader(publisherConfig));
+            JsonObject configObject = jsonReader.readObject();
+            jsonReader.close();
+            final JsonObject config = Json.createObjectBuilder()
+                    .add(Publisher.CONFIG_DESTINATION, configObject.getString("destination"))
+                    .add(Publisher.CONFIG_TEMPLATE_KEY, rule.getPublisher().getTemplate())
+                    .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, rule.getPublisher().getTemplateMimeType())
+                    .build();
+            
+            for(NotificationGroup group : rule.getNotifyOn()){
+                final Notification notification = new Notification()
+                    .scope(rule.getScope())
+                    .group(group.toString())
+                    .title(group)
+                    .content("Rule configuration test")
+                    .level(rule.getNotificationLevel())
+                    .subject(NotificationUtil.generateSubject(group.toString()));
+                publisher.inform(PublishContext.from(notification), notification, config);
+            }
+            return Response.ok().build();
+        } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+            LOGGER.error(e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending the notification.").build();
         }
     }
 }

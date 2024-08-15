@@ -25,6 +25,8 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.notification.NotificationService;
 import alpine.notification.Subscription;
+import java.util.Arrays;
+
 import org.awaitility.core.ConditionTimeoutException;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
@@ -55,6 +57,7 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -211,7 +214,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(component.getSupplier().getContacts().get(0).getEmail()).isEqualTo("foojr@bar.com");
         assertThat(component.getSupplier().getContacts().get(0).getPhone()).isEqualTo("123-456-7890");
 
-        assertThat(component.getAuthor()).isEqualTo("Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
+        assertThat(component.getAuthors().get(0).getName()).isEqualTo("Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
         assertThat(component.getPublisher()).isEqualTo("Example Incorporated");
         assertThat(component.getGroup()).isEqualTo("com.example");
         assertThat(component.getName()).isEqualTo("xmlutil");
@@ -1291,6 +1294,25 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
             assertThat(author.getName()).isEqualTo("bar");
             assertThat(author.getEmail()).isEqualTo("bar@example.com");
         });
+    }
+
+    @Test
+    public void informIssue3936Test() throws Exception{
+        
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        List<String> boms = new ArrayList<>(Arrays.asList("/unit/bom-issue3936-authors.json", "/unit/bom-issue3936-author.json", "/unit/bom-issue3936-both.json"));
+        for(String bom : boms){
+          final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
+                  resourceToByteArray(bom));
+          new BomUploadProcessingTask().inform(bomUploadEvent);
+          awaitBomProcessedNotification(bomUploadEvent);
+
+          assertThat(qm.getAllComponents(project)).isNotEmpty();
+          Component component = qm.getAllComponents().getFirst();
+          assertThat(component.getAuthor()).isEqualTo("Joane Doe et al.");
+          assertThat(component.getAuthors().get(0).getName()).isEqualTo("Joane Doe et al.");
+          assertThat(component.getAuthors().size()).isEqualTo(1);
+        }
     }
 
     private void awaitBomProcessedNotification(final BomUploadEvent bomUploadEvent) {

@@ -284,6 +284,7 @@ public class ComponentResource extends AlpineResource {
                                     @PathParam("uuid") @ValidUuid String uuid, Component jsonComponent) {
         final Validator validator = super.getValidator();
         failOnValidationError(
+                validator.validateProperty(jsonComponent, "authors"),
                 validator.validateProperty(jsonComponent, "author"),
                 validator.validateProperty(jsonComponent, "publisher"),
                 validator.validateProperty(jsonComponent, "name"),
@@ -323,7 +324,7 @@ public class ComponentResource extends AlpineResource {
             final License resolvedLicense = qm.getLicense(jsonComponent.getLicense());
             Component component = new Component();
             component.setProject(project);
-            component.setAuthor(StringUtils.trimToNull(jsonComponent.getAuthor()));
+            component.setAuthors(jsonComponent.getAuthors());
             component.setPublisher(StringUtils.trimToNull(jsonComponent.getPublisher()));
             component.setName(StringUtils.trimToNull(jsonComponent.getName()));
             component.setVersion(StringUtils.trimToNull(jsonComponent.getVersion()));
@@ -426,7 +427,7 @@ public class ComponentResource extends AlpineResource {
                 if (name != null) {
                     component.setName(name);
                 }
-                component.setAuthor(StringUtils.trimToNull(jsonComponent.getAuthor()));
+                component.setAuthors(jsonComponent.getAuthors());
                 component.setPublisher(StringUtils.trimToNull(jsonComponent.getPublisher()));
                 component.setVersion(StringUtils.trimToNull(jsonComponent.getVersion()));
                 component.setGroup(StringUtils.trimToNull(jsonComponent.getGroup()));

@@ -81,6 +81,9 @@ public class BadgeResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
+                if (!qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
                 final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
                 final Badger badger = new Badger();
                 return Response.ok(badger.generateVulnerabilities(metrics)).build();
@@ -115,6 +118,9 @@ public class BadgeResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getProject(name, version);
             if (project != null) {
+                if (!qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
                 final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
                 final Badger badger = new Badger();
                 return Response.ok(badger.generateVulnerabilities(metrics)).build();
@@ -147,6 +153,9 @@ public class BadgeResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
+                if (!qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
                 final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
                 final Badger badger = new Badger();
                 return Response.ok(badger.generateViolations(metrics)).build();
@@ -181,6 +190,9 @@ public class BadgeResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getProject(name, version);
             if (project != null) {
+                if (!qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
                 final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
                 final Badger badger = new Badger();
                 return Response.ok(badger.generateViolations(metrics)).build();

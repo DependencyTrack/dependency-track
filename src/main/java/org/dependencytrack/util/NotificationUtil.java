@@ -70,7 +70,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 
@@ -116,13 +115,9 @@ public final class NotificationUtil {
         final Vulnerability completeVulnerability = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
         final List<Component> components = completeVulnerability.getComponents();
         if (components != null && !components.isEmpty()) {
-            List<Component> detachedComponents = new ArrayList<>();
-            for (final Component c : components) {
-                detachedComponents.add(qm.detach(Component.class, c.getId()));
-            }
             // To reduce noise we only emit a single notification for each updated vulnerability if it affects one
             // of our components. The component details are still useful for event consumers, so we pick the first one.
-            final Component detachedComponent = detachedComponents.getFirst();
+            final Component detachedComponent = qm.detach(Component.class, components.get(0).getId());
 
             final Vulnerability detachedVuln = qm.detach(Vulnerability.class, completeVulnerability.getId());
             detachedVuln.setAliases(qm.detach(qm.getVulnerabilityAliases(completeVulnerability))); // Aliases are lost during detach above

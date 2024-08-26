@@ -41,10 +41,12 @@ import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
+import org.dependencytrack.notification.vo.ProjectVulnerabilityUpdate;
 import org.junit.Assert;
 import org.junit.Test;
 
 import jakarta.json.JsonObject;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -345,6 +347,118 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(new NewVulnerabilityIdentified(null, componentA, Set.of(), null));
         assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testVulnerabilityUpdateLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA.setPurl("pkg:npm/foo@1.0.0");
+        componentA = qm.createComponent(componentA, false);
+        var vulnerabilityA = new Vulnerability();
+        vulnerabilityA.setSource("INTERNAL");
+        vulnerabilityA.setVulnId("INTERNAL-A");
+        vulnerabilityA.setComponents(List.of(componentA));
+        vulnerabilityA = qm.createVulnerability(vulnerabilityA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB.setPurl("pkg:npm/bar@2.0.0");
+        componentB = qm.createComponent(componentB, false);
+        var vulnerabilityB = new Vulnerability();
+        vulnerabilityB.setSource("INTERNAL");
+        vulnerabilityB.setVulnId("INTERNAL-B");
+        vulnerabilityB.setComponents(List.of(componentB));
+        vulnerabilityB = qm.createVulnerability(vulnerabilityB, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.PROJECT_VULNERABILITY_UPDATED));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.PROJECT_VULNERABILITY_UPDATED.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new ProjectVulnerabilityUpdate(vulnerabilityB, null, componentB));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
+
+        notification.setSubject(new ProjectVulnerabilityUpdate(vulnerabilityA, null, componentA));
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testVulnerabilityUpdateComponentMatchesAcrossProjects() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA.setPurl("pkg:npm/foo@1.0.0");
+        componentA = qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB.setPurl("pkg:npm/foo@1.0.0"); // same purl
+        componentB = qm.createComponent(componentB, false);
+
+        final ArrayList<Component> components = new ArrayList<>();
+        components.add(componentA);
+        components.add(componentB);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setSource("INTERNAL");
+        vulnerability.setVulnId("INTERNAL-A");
+        vulnerability.setComponents(components);
+        vulnerability = qm.createVulnerability(vulnerability, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.PROJECT_VULNERABILITY_UPDATED));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.PROJECT_VULNERABILITY_UPDATED.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new ProjectVulnerabilityUpdate(vulnerability, null, componentA));
+
+        // Both component identifiers match, so it shouldn't matter which one we pass to the notification router even
+        // though only one of them is associated with a project in scope for the rule.
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+
+        notification.setSubject(new ProjectVulnerabilityUpdate(vulnerability, null, componentB));
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testVulnerabilityUpdateWithNoComponents() {
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.PROJECT_VULNERABILITY_UPDATED));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.PROJECT_VULNERABILITY_UPDATED.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new ProjectVulnerabilityUpdate(null, null, null));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
     }
 
     @Test

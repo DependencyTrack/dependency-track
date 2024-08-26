@@ -38,6 +38,7 @@ public class NotificationConstantsTest {
         Assert.assertEquals("Repository Error", NotificationConstants.Title.REPO_ERROR);
         Assert.assertEquals("Integration Error", NotificationConstants.Title.INTEGRATION_ERROR);
         Assert.assertEquals("New Vulnerability Identified", NotificationConstants.Title.NEW_VULNERABILITY);
+        Assert.assertEquals("Vulnerability Updated", NotificationConstants.Title.VULNERABILITY_UPDATED);
         Assert.assertEquals("Vulnerable Dependency Introduced", NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY);
         Assert.assertEquals("Analysis Decision: Exploitable", NotificationConstants.Title.ANALYSIS_DECISION_EXPLOITABLE);
         Assert.assertEquals("Analysis Decision: In Triage", NotificationConstants.Title.ANALYSIS_DECISION_IN_TRIAGE);

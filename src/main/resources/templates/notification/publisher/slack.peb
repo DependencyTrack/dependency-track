@@ -87,6 +87,101 @@
 	{% endif %}
   ]
 }
+{% elseif notification.group == "PROJECT_VULNERABILITY_UPDATED" %}
+{
+  "blocks": [
+    {
+	  "type": "header",
+	  "text": {
+	    "type": "plain_text",
+		"text": "Vulnerability Updated"
+	  }
+	},
+	{
+	  "type": "context",
+	  "elements": [
+	    {
+		  "text": "*{{ notification.level | escape(strategy="json") }}*  |  *{{ notification.scope | escape(strategy="json") }}*",
+		  "type": "mrkdwn"
+		}
+	  ]
+	},
+	{
+	  "type": "divider"
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ notification.title | escape(strategy="json") }}",
+		"type": "mrkdwn"
+	  },
+	  "fields": [
+	    {
+		  "type": "mrkdwn",
+		  "text": "*VulnID*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+		},
+	    {
+		  "type": "mrkdwn",
+		  "text": "*Old Severity*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.vulnerabilityUpdateDiff.oldSeverity | escape(strategy="json") }}"
+		},{
+		  "type": "mrkdwn",
+		  "text": "*New Severity*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.vulnerabilityUpdateDiff.newSeverity | escape(strategy="json") }}"
+		},
+	    {
+		  "type": "mrkdwn",
+		  "text": "*Source*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.vulnerability.source | escape(strategy="json") }}"
+		},
+	    {
+		  "type": "mrkdwn",
+		  "text": "*Component*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.component.toString | escape(strategy="json") }}"
+		}
+	  ]
+	},
+	{
+	  "type": "actions",
+	  "elements": [
+	    {
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Vulnerability"
+		  },
+		  "action_id": "actionId-1",
+		  "url": "{{ baseUrl }}/vulnerabilities/{{ subject.vulnerability.source | escape(strategy="json") }}/{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+		},
+		{
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Component"
+		  },
+		  "action_id": "actionId-2",
+		  "url": "{{ baseUrl }}/components/{{ subject.component.uuid | escape(strategy="json") }}"
+		}
+	  ]
+	}
+  ]
+}
 {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
 {
   "blocks": [

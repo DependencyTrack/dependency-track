@@ -26,6 +26,8 @@ import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
@@ -38,6 +40,7 @@ import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
+import org.dependencytrack.notification.vo.ProjectVulnerabilityUpdate;
 import org.dependencytrack.persistence.QueryManager;
 
 import jakarta.json.Json;
@@ -175,6 +178,33 @@ public class NotificationRouter implements Subscriber {
                             }
                         } else {
                             rules.add(rule);
+                        }
+                    }
+                }
+            } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
+                    && notification.getSubject() instanceof final ProjectVulnerabilityUpdate subject) {
+                for (final NotificationRule rule: result) {
+                    // As above, reduce the execution of the notification down to those projects that the rule matches.
+                    // As we only emit a single notification per vulnerability, we need to check if any affected component
+                    // matches the rule projects, not just the component included in the notification subject.
+                    if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
+                        if (subject.getComponent() != null) {
+                            final List<Component> components = qm.matchIdentity(new ComponentIdentity(subject.getComponent()));
+                            if (components != null && !components.isEmpty()) {
+                                if (rule.getProjects() != null && !rule.getProjects().isEmpty()) {
+                                    for (final Component component : components) {
+                                        if (component.getProject() != null) {
+                                            for (final Project project : rule.getProjects()) {
+                                                if (component.getProject().getUuid().equals(project.getUuid()) || (Boolean.TRUE.equals(rule.isNotifyChildren() && checkIfChildrenAreAffected(project, component.getProject().getUuid())))) {
+                                                    rules.add(rule);
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    rules.add(rule);
+                                }
+                            }
                         }
                     }
                 }

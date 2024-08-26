@@ -37,24 +37,25 @@ Notification levels behave identical to logging levels:
 Each scope contains a set of notification groups that can be subscribed to. Some groups contain notifications of
 multiple levels, while others can only ever have a single level.
 
-| Scope     | Group                     | Level(s)      | Description                                                                                                                       |
-|-----------|---------------------------|---------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| SYSTEM    | ANALYZER                  | (Any)         | Notifications generated as a result of interacting with an external source of vulnerability intelligence                          |
-| SYSTEM    | DATASOURCE_MIRRORING      | (Any)         | Notifications generated when performing mirroring of one of the supported datasources such as the NVD                             |
-| SYSTEM    | INDEXING_SERVICE          | (Any)         | Notifications generated as a result of performing maintenance on Dependency-Tracks internal index used for global searching       |
-| SYSTEM    | FILE_SYSTEM               | (Any)         | Notifications generated as a result of a file system operation. These are typically only generated on error conditions            |
-| SYSTEM    | REPOSITORY                | (Any)         | Notifications generated as a result of interacting with one of the supported repositories such as Maven Central, RubyGems, or NPM |
-| SYSTEM    | USER_CREATED                | INFORMATIONAL         | Notifications generated as a result of a user creation |
-| SYSTEM    | USER_DELETED                | INFORMATIONAL         | Notifications generated as a result of a user deletion |
-| PORTFOLIO | NEW_VULNERABILITY         | INFORMATIONAL | Notifications generated whenever a new vulnerability is identified                                                                |
-| PORTFOLIO | NEW_VULNERABLE_DEPENDENCY | INFORMATIONAL | Notifications generated as a result of a vulnerable component becoming a dependency of a project                                  |
-| PORTFOLIO | GLOBAL_AUDIT_CHANGE       | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global)              |
-| PORTFOLIO | PROJECT_AUDIT_CHANGE      | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                         |
-| PORTFOLIO | BOM_CONSUMED              | INFORMATIONAL | Notifications generated whenever a supported BOM is ingested and identified                                                       |
-| PORTFOLIO | BOM_PROCESSED             | INFORMATIONAL | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
-| PORTFOLIO | BOM_PROCESSING_FAILED     | ERROR         | Notifications generated whenever a BOM upload process fails                                                                       |
-| PORTFOLIO | BOM_VALIDATION_FAILED     | ERROR         | Notifications generated whenever an invalid BOM is uploaded                                                                       |
-| PORTFOLIO | POLICY_VIOLATION          | INFORMATIONAL | Notifications generated whenever a policy violation is identified                                                                 |
+| Scope     | Group                         | Level(s)        | Description                                                                                                                                  |
+|-----------|-------------------------------|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| SYSTEM    | ANALYZER                      | (Any)           | Notifications generated as a result of interacting with an external source of vulnerability intelligence                                     |
+| SYSTEM    | DATASOURCE_MIRRORING          | (Any)           | Notifications generated when performing mirroring of one of the supported datasources such as the NVD                                        |
+| SYSTEM    | INDEXING_SERVICE              | (Any)           | Notifications generated as a result of performing maintenance on Dependency-Tracks internal index used for global searching                  |
+| SYSTEM    | FILE_SYSTEM                   | (Any)           | Notifications generated as a result of a file system operation. These are typically only generated on error conditions                       |
+| SYSTEM    | REPOSITORY                    | (Any)           | Notifications generated as a result of interacting with one of the supported repositories such as Maven Central, RubyGems, or NPM            |
+| SYSTEM    | USER_CREATED                  | INFORMATIONAL   | Notifications generated as a result of a user creation                                                                                       |
+| SYSTEM    | USER_DELETED                  | INFORMATIONAL   | Notifications generated as a result of a user deletion                                                                                       |
+| PORTFOLIO | NEW_VULNERABILITY             | INFORMATIONAL   | Notifications generated whenever a new vulnerability is identified                                                                           |
+| PORTFOLIO | NEW_VULNERABLE_DEPENDENCY     | INFORMATIONAL   | Notifications generated as a result of a vulnerable component becoming a dependency of a project                                             |
+| PORTFOLIO | PROJECT_VULNERABILITY_UPDATED | INFORMATIONAL   | Notifications generated if a vulnerability associated with a project is updated after creation. Currently only triggers on severity updates. |
+| PORTFOLIO | GLOBAL_AUDIT_CHANGE           | INFORMATIONAL   | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global)                         |
+| PORTFOLIO | PROJECT_AUDIT_CHANGE          | INFORMATIONAL   | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                                    |
+| PORTFOLIO | BOM_CONSUMED                  | INFORMATIONAL   | Notifications generated whenever a supported BOM is ingested and identified                                                                  |
+| PORTFOLIO | BOM_PROCESSED                 | INFORMATIONAL   | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                            |
+| PORTFOLIO | BOM_PROCESSING_FAILED         | ERROR           | Notifications generated whenever a BOM upload process fails                                                                                  |
+| PORTFOLIO | BOM_VALIDATION_FAILED         | ERROR           | Notifications generated whenever an invalid BOM is uploaded                                                                                  |
+| PORTFOLIO | POLICY_VIOLATION              | INFORMATIONAL   | Notifications generated whenever a policy violation is identified                                                                            |
 
 ## Configuring Publishers
 
@@ -232,6 +233,55 @@ This type of notification will always contain:
 ```
 
 > The `cwe` field is deprecated and will be removed in a later version. Please use `cwes` instead.
+
+#### PROJECT_VULNERABILITY_UPDATED
+This type of notification will always contain:
+* 1 vulnerability update
+* 1 component
+
+To minimise noise, a notification will only be published if the vulnerability already affects an existing project. This can be scoped down further by limiting notifications to specific projects when configuring an alert rule.
+
+```json
+{
+  "notification": {
+    "level": "INFORMATIONAL",
+    "scope": "PORTFOLIO",
+    "group": "PROJECT_VULNERABILITY_UPDATED",
+    "timestamp": "2018-08-27T23:26:22.961",
+    "title": "Vulnerability Update",
+    "content": "The vulnerability CVE-2012-5784 on component axis has changed severity from LOW to MEDIUM",
+    "subject": {
+      "vulnerability": {
+        "uuid": "941a93f5-e06b-4304-84de-4d788eeb4969",
+        "vulnId": "CVE-2012-5784",
+        "source": "NVD",
+        "aliases": [
+          {
+            "vulnId": "GHSA-55w9-c3g2-4rrh",
+            "source": "GITHUB"
+          }
+        ],
+        "old": {
+          "severity": "LOW"
+        },
+        "new": {
+          "severity": "MEDIUM"
+        }
+      },
+      "component": {
+        "uuid": "4d5cd8df-cff7-4212-a038-91ae4ab79396",
+        "group": "apache",
+        "name": "axis",
+        "version": "1.4",
+        "md5": "03dcfdd88502505cc5a805a128bfdd8d",
+        "sha1": "94a9ce681a42d0352b3ad22659f67835e560d107",
+        "sha256": "05aebb421d0615875b4bf03497e041fe861bf0556c3045d8dda47e29241ffdd3",
+        "purl": "pkg:maven/apache/axis@1.4"
+      }
+    }
+  }
+}
+```
 
 #### PROJECT_AUDIT_CHANGE and GLOBAL_AUDIT_CHANGE
 This type of notification will always contain:

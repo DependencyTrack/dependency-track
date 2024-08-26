@@ -43,6 +43,7 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.model.VulnerabilityUpdateDiff;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -56,6 +57,7 @@ import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
+import org.dependencytrack.notification.vo.ProjectVulnerabilityUpdate;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -111,6 +113,29 @@ public final class NotificationUtil {
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(detachedVuln))
                     .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values()), vulnerabilityAnalysisLevel))
+            );
+        }
+    }
+
+    public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, VulnerabilityUpdateDiff vulnerabilityUpdateDiff) {
+        // Vulnerabilities are not guaranteed to include component relationships depending on where the event was generated
+        final Vulnerability completeVulnerability = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
+        final List<Component> components = completeVulnerability.getComponents();
+        if (components != null && !components.isEmpty()) {
+            // To reduce noise we only emit a single notification for each updated vulnerability if it affects one
+            // of our components. The component details are still useful for event consumers, so we pick the first one.
+            final Component detachedComponent = qm.detach(Component.class, components.get(0).getId());
+
+            final Vulnerability detachedVuln = qm.detach(Vulnerability.class, completeVulnerability.getId());
+            detachedVuln.setAliases(qm.detach(qm.getVulnerabilityAliases(completeVulnerability))); // Aliases are lost during detach above
+
+            Notification.dispatch(new Notification()
+                    .scope(NotificationScope.PORTFOLIO)
+                    .group(NotificationGroup.PROJECT_VULNERABILITY_UPDATED)
+                    .title(generateNotificationTitle(NotificationConstants.Title.VULNERABILITY_UPDATED,null))
+                    .level(NotificationLevel.INFORMATIONAL)
+                    .content(generateNotificationContent(detachedVuln, vulnerabilityUpdateDiff, detachedComponent))
+                    .subject(new ProjectVulnerabilityUpdate(detachedVuln, vulnerabilityUpdateDiff, detachedComponent))
             );
         }
     }
@@ -405,6 +430,45 @@ public final class NotificationUtil {
         return builder.build();
     }
 
+    public static JsonObject toJson(final ProjectVulnerabilityUpdate vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        final Vulnerability vulnerability = vo.getVulnerability();
+        if (vulnerability.getUuid() != null) {
+            final JsonObjectBuilder vulnerabilityBuilder = Json.createObjectBuilder();
+            vulnerabilityBuilder.add("uuid", vulnerability.getUuid().toString());
+            JsonUtil.add(vulnerabilityBuilder, "vulnId", vulnerability.getVulnId());
+            JsonUtil.add(vulnerabilityBuilder, "source", vulnerability.getSource());
+            final JsonArrayBuilder aliasesBuilder = Json.createArrayBuilder();
+            if (vulnerability.getAliases() != null) {
+                for (final Map.Entry<Vulnerability.Source, String> vulnIdBySource : VulnerabilityUtil.getUniqueAliases(vulnerability)) {
+                    aliasesBuilder.add(Json.createObjectBuilder()
+                            .add("source", vulnIdBySource.getKey().name())
+                            .add("vulnId", vulnIdBySource.getValue())
+                            .build());
+                }
+            }
+            vulnerabilityBuilder.add("aliases", aliasesBuilder.build());
+
+            final VulnerabilityUpdateDiff vulnerabilityUpdateDiff = vo.getVulnerabilityUpdateDiff();
+            if (vulnerabilityUpdateDiff != null) {
+                final JsonObjectBuilder oldBuilder = Json.createObjectBuilder();
+                oldBuilder.add("severity", vulnerabilityUpdateDiff.getOldSeverity().toString());
+                vulnerabilityBuilder.add("old", oldBuilder.build());
+
+                final JsonObjectBuilder newBuilder = Json.createObjectBuilder();
+                newBuilder.add("severity", vulnerabilityUpdateDiff.getNewSeverity().toString());
+                vulnerabilityBuilder.add("new", newBuilder.build());
+            }
+
+            builder.add("vulnerability", vulnerabilityBuilder.build());
+        }
+
+        if (vo.getComponent() != null) {
+            builder.add("component", toJson(vo.getComponent()));
+        }
+        return builder.build();
+    }
+
     public static JsonObject toJson(final NewVulnerableDependency vo) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent().getProject() != null) {
@@ -605,6 +669,10 @@ public final class NotificationUtil {
             content = (vulnerability.getTitle() != null) ? vulnerability.getVulnId() + ": " +vulnerability.getTitle() : vulnerability.getVulnId();
         }
         return content;
+    }
+
+    private static String generateNotificationContent(final Vulnerability vulnerability, final VulnerabilityUpdateDiff vulnerabilityUpdateDiff, final Component component){
+        return "The vulnerability " + vulnerability.getVulnId() + " on component " + component.getName() + " has changed severity from " + vulnerabilityUpdateDiff.getOldSeverity() + " to " + vulnerabilityUpdateDiff.getNewSeverity();
     }
 
     private static String generateNotificationContent(final PolicyViolation policyViolation) {

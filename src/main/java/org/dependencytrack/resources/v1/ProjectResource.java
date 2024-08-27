@@ -326,22 +326,19 @@ public class ProjectResource extends AlpineResource {
             boolean required = qm.isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED);
             boolean isAdmin = qm.hasAccessManagementPermission(principal);
             if (required && choosenTeams.size() == 0) {
-                return Response.status(422).build();
+                return Response.status(422)
+                        .entity("You need to specify at least one team to which the project should belong").build();
             }
             List<Team> visibleTeams = isAdmin ? qm.getTeams() : userTeams;
-            boolean hasTeam;
+            jsonProject.setAccessTeams(new ArrayList<Team>());
             for (Team choosenTeam : choosenTeams) {
-                hasTeam = false;
-                LOGGER.info(Boolean.toString(visibleTeams.contains(choosenTeam)) + choosenTeam.getName());
-                for (Team team : visibleTeams) {
-                    if (team.getUuid().equals(choosenTeam.getUuid())) {
-                        hasTeam = true;
-                        break;
-                    }
+                Team ormTeam = qm.getObjectByUuid(Team.class, choosenTeam.getUuid());
+                if (!visibleTeams.contains(ormTeam)) {
+                    return isAdmin ? Response.status(404).entity("This team does not exist!").build()
+                            : Response.status(403)
+                                    .entity("You don't have the permission to assign this team to a project.").build();
                 }
-                if (!hasTeam) {
-                    return Response.status(403).build();
-                }
+                jsonProject.addAccessTeam(ormTeam);
             }
             if (!qm.doesProjectExist(StringUtils.trimToNull(jsonProject.getName()), StringUtils.trimToNull(jsonProject.getVersion()))) {
                 final Project project;

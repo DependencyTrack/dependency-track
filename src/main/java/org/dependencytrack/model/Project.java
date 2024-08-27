@@ -273,7 +273,6 @@ public class Project implements Serializable {
     @Join(column = "PROJECT_ID")
     @Element(column = "TEAM_ID")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
-    //@JsonIgnore
     private List<Team> accessTeams;
 
     @Persistent(defaultFetchGroup = "true")

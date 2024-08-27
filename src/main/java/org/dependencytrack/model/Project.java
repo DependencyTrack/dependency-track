@@ -190,8 +190,7 @@ public class Project implements Serializable {
     @Index(name = "PROJECT_CPE_IDX")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    // Patterns obtained from
-    // https://csrc.nist.gov/schema/cpe/2.3/cpe-naming_2.3.xsd
+    //Patterns obtained from https://csrc.nist.gov/schema/cpe/2.3/cpe-naming_2.3.xsd
     @Pattern(regexp = "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})", message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
     private String cpe;
 
@@ -224,7 +223,7 @@ public class Project implements Serializable {
 
     @Persistent
     @Column(name = "PARENT_PROJECT_ID")
-    @JsonIncludeProperties(value = { "name", "version", "uuid" })
+    @JsonIncludeProperties(value = {"name", "version", "uuid"})
     private Project parent;
 
     @Persistent(mappedBy = "parent")
@@ -241,8 +240,7 @@ public class Project implements Serializable {
     private List<Tag> tags;
 
     /**
-     * Convenience field which will contain the date of the last entry in the
-     * {@link Bom} table
+     * Convenience field which will contain the date of the last entry in the {@link Bom} table
      */
     @Persistent
     @Index(name = "PROJECT_LASTBOMIMPORT_IDX")
@@ -251,8 +249,7 @@ public class Project implements Serializable {
     private Date lastBomImport;
 
     /**
-     * Convenience field which will contain the format of the last entry in the
-     * {@link Bom} table
+     * Convenience field which will contain the format of the last entry in the {@link Bom} table
      */
     @Persistent
     @Index(name = "PROJECT_LASTBOMIMPORT_FORMAT_IDX")
@@ -260,8 +257,7 @@ public class Project implements Serializable {
     private String lastBomImportFormat;
 
     /**
-     * Convenience field which stores the Inherited Risk Score (IRS) of the last
-     * metric in the {@link ProjectMetrics} table
+     * Convenience field which stores the Inherited Risk Score (IRS) of the last metric in the {@link ProjectMetrics} table
      */
     @Persistent
     @Index(name = "PROJECT_LAST_RISKSCORE_IDX")
@@ -277,7 +273,7 @@ public class Project implements Serializable {
     @Join(column = "PROJECT_ID")
     @Element(column = "TEAM_ID")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
-    @JsonIgnore
+    //@JsonIgnore
     private List<Team> accessTeams;
 
     @Persistent(defaultFetchGroup = "true")
@@ -293,7 +289,6 @@ public class Project implements Serializable {
     private transient ProjectMetrics metrics;
     private transient List<ProjectVersion> versions;
     private transient List<Component> dependencyGraph;
-    private UUID initialTeam;
 
     public long getId() {
         return id;
@@ -313,22 +308,20 @@ public class Project implements Serializable {
 
     @Deprecated
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public String getAuthor() {
+    public String getAuthor(){
         return ModelConverter.convertContactsToString(this.authors);
     }
 
     @Deprecated
-    public void setAuthor(String author) {
-        if (this.authors == null) {
+    public void setAuthor(String author){
+        if(this.authors==null){
             this.authors = new ArrayList<>();
-        } else {
+        } else{
             this.authors.clear();
         }
-        this.authors.add(new OrganizationalContact() {
-            {
-                setName(author);
-            }
-        });
+        this.authors.add(new OrganizationalContact() {{
+            setName(author);
+        }});
     }
 
     public String getPublisher() {
@@ -565,14 +558,6 @@ public class Project implements Serializable {
 
     public void setMetadata(final ProjectMetadata metadata) {
         this.metadata = metadata;
-    }
-
-    public UUID getInitialTeam() {
-        return this.initialTeam;
-    }
-
-    public void setInitialTeam(UUID initialTeam) {
-        this.initialTeam = initialTeam;
     }
 
     @JsonIgnore

@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.event.framework.EventService;
 import alpine.model.IConfigProperty.PropertyType;
+import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import jakarta.json.Json;
@@ -284,6 +285,7 @@ public class ProjectResourceTest extends ResourceTest {
                 .withMatcher("childUuid", equalTo(childProject.getUuid().toString()))
                 .isEqualTo("""
                         {
+                          "accessTeams": [],
                           "name": "acme-app",
                           "version": "1.0.0",
                           "uuid": "${json-unit.matches:projectUuid}",
@@ -413,6 +415,7 @@ public class ProjectResourceTest extends ResourceTest {
     @Test
     public void createProjectTest(){
         Project project = new Project();
+        project.setAccessTeams(new ArrayList<Team>());
         project.setName("Acme Example");
         project.setVersion("1.0");
         project.setDescription("Test project");
@@ -433,6 +436,7 @@ public class ProjectResourceTest extends ResourceTest {
     @Test
     public void createProjectDuplicateTest() {
         Project project = new Project();
+        project.setAccessTeams(new ArrayList<Team>());
         project.setName("Acme Example");
         project.setVersion("1.0");
         Response response = jersey.target(V1_PROJECT)
@@ -452,6 +456,7 @@ public class ProjectResourceTest extends ResourceTest {
     @Test
     public void createProjectWithoutVersionDuplicateTest() {
         Project project = new Project();
+        project.setAccessTeams(new ArrayList<Team>());
         project.setName("Acme Example");
         Response response = jersey.target(V1_PROJECT)
                 .request()
@@ -708,6 +713,7 @@ public class ProjectResourceTest extends ResourceTest {
                 .withMatcher("projectUuid", equalTo(p1.getUuid().toString()))
                 .isEqualTo("""
                         {
+                          "accessTeams": [],
                           "publisher": "new publisher",
                           "manufacturer": {
                             "name": "manufacturerName",
@@ -804,6 +810,7 @@ public class ProjectResourceTest extends ResourceTest {
                 .withMatcher("parentProjectUuid", CoreMatchers.equalTo(newParent.getUuid().toString()))
                 .isEqualTo("""
                         {
+                          "accessTeams": [],
                           "name": "DEF",
                           "version": "2.0",
                           "uuid": "${json-unit.matches:projectUuid}",
@@ -1162,6 +1169,7 @@ public class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json("""
                         {
+                          "accessTeams": [],
                           "name": "acme-app-parent",
                           "version": "1.0.0"
                         }
@@ -1174,6 +1182,7 @@ public class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json("""
                         {
+                          "accessTeams": [],
                           "name": "acme-app",
                           "version": "1.0.0",
                           "parent": {
@@ -1191,6 +1200,7 @@ public class ProjectResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response)).isEqualTo("""
                 {
+                  "accessTeams": [],
                   "name": "acme-app-parent",
                   "version": "1.0.0",
                   "classifier": "APPLICATION",
@@ -1224,6 +1234,7 @@ public class ProjectResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response)).isEqualTo("""
                 {
+                  "accessTeams": [],
                   "name": "acme-app",
                   "version": "1.0.0",
                   "classifier": "APPLICATION",
@@ -1264,7 +1275,8 @@ public class ProjectResourceTest extends ResourceTest {
 
                 final JsonObjectBuilder requestBodyBuilder = Json.createObjectBuilder()
                         .add("name", "project-%d-%d".formatted(i, j))
-                        .add("version", "%d.%d".formatted(i, j));
+                        .add("version", "%d.%d".formatted(i, j))
+                        .add("accessTeams", "[]");
                 if (parentUuid != null) {
                     requestBodyBuilder.add("parent", Json.createObjectBuilder()
                             .add("uuid", parentUuid.toString()));

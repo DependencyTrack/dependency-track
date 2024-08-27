@@ -315,7 +315,6 @@ public class ProjectResource extends AlpineResource {
                     jsonProject.setParent(parent);
             }
             final List<Team> choosenTeams = jsonProject.getAccessTeams();
-            LOGGER.info(choosenTeams.toString());
             Principal principal = getPrincipal();
             List<Team> userTeams = new ArrayList<Team>();
             if (principal instanceof final UserPrincipal userPrincipal) {

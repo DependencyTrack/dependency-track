@@ -1276,7 +1276,7 @@ public class ProjectResourceTest extends ResourceTest {
                 final JsonObjectBuilder requestBodyBuilder = Json.createObjectBuilder()
                         .add("name", "project-%d-%d".formatted(i, j))
                         .add("version", "%d.%d".formatted(i, j))
-                        .add("accessTeams", "[]");
+                        .add("accessTeams",Json.createArrayBuilder().build());
                 if (parentUuid != null) {
                     requestBodyBuilder.add("parent", Json.createObjectBuilder()
                             .add("uuid", parentUuid.toString()));

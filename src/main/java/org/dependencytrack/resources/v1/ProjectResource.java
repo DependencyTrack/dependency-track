@@ -69,6 +69,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -324,19 +325,20 @@ public class ProjectResource extends AlpineResource {
             }
             boolean required = qm.isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED);
             boolean isAdmin = qm.hasAccessManagementPermission(principal);
-            if (required && choosenTeams.size() == 0) {
+            if (required && choosenTeams.isEmpty()) {
                 return Response.status(422)
                         .entity("You need to specify at least one team to which the project should belong").build();
             }
             List<Team> visibleTeams = isAdmin ? qm.getTeams() : userTeams;
+            List<UUID> visibleUuids = visibleTeams.isEmpty() ? new ArrayList<UUID>(): visibleTeams.stream().map(Team::getUuid).toList();
             jsonProject.setAccessTeams(new ArrayList<Team>());
             for (Team choosenTeam : choosenTeams) {
-                Team ormTeam = qm.getObjectByUuid(Team.class, choosenTeam.getUuid());
-                if (!visibleTeams.contains(ormTeam)) {
+                if (!visibleUuids.contains(choosenTeam.getUuid())) {
                     return isAdmin ? Response.status(404).entity("This team does not exist!").build()
                             : Response.status(403)
                                     .entity("You don't have the permission to assign this team to a project.").build();
                 }
+                Team ormTeam = qm.getObjectByUuid(Team.class, choosenTeam.getUuid());
                 jsonProject.addAccessTeam(ormTeam);
             }
             if (!qm.doesProjectExist(StringUtils.trimToNull(jsonProject.getName()), StringUtils.trimToNull(jsonProject.getVersion()))) {

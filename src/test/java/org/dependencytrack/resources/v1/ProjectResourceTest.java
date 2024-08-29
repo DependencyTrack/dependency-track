@@ -20,8 +20,12 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
 import alpine.event.framework.EventService;
+import alpine.model.IConfigProperty;
+import alpine.model.ManagedUser;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.model.Team;
+import alpine.model.Permission;
+import alpine.server.auth.JsonWebToken;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import jakarta.json.Json;
@@ -51,6 +55,7 @@ import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.dependencytrack.tasks.CloneProjectTask;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
@@ -76,6 +81,8 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 
 public class ProjectResourceTest extends ResourceTest {
+    private ManagedUser testUser;
+    private String jwt;
 
     @ClassRule
     public static JerseyTestRule jersey = new JerseyTestRule(
@@ -88,6 +95,23 @@ public class ProjectResourceTest extends ResourceTest {
     public void after() throws Exception {
         EventService.getInstance().unsubscribe(CloneProjectTask.class);
         super.after();
+    }
+
+    public void getUserToken(boolean isAdmin) {
+        testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        jwt = new JsonWebToken().createToken(testUser);
+        qm.addUserToTeam(testUser, team);
+        final var generator = new DefaultObjectGenerator();
+        generator.loadDefaultPermissions();
+        List<Permission> permissionsList = new ArrayList<Permission>();
+        final Permission permission = qm.getPermission("PORTFOLIO_MANAGEMENT");
+        permissionsList.add(permission);
+        testUser.setPermissions(permissionsList);
+        if (isAdmin) {
+            final Permission adminPermission = qm.getPermission("ACCESS_MANAGEMENT");
+            permissionsList.add(adminPermission);
+            testUser.setPermissions(permissionsList);
+        }
     }
 
     @Test
@@ -481,6 +505,102 @@ public class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(project, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
+    }
+
+    @Test
+    public void createProjectWithExistingTeamRequiredTest() {
+        getUserToken(false);
+        Team AllowedTeam = qm.createTeam("AllowedTeam", false);
+        Project project = new Project();
+        project.setName("ProjectWithExistingTeamRequired");
+        qm.addUserToTeam(testUser, AllowedTeam);
+        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
+        final JsonObject jsonTeam = Json.createObjectBuilder().add("uuid", AllowedTeam.getUuid().toString()).build();
+        final JsonObjectBuilder requestBodyBuilder = Json.createObjectBuilder()
+                .add("name", project.getName()).add("classifier", "CONTAINER").addNull("parent").add("active", true)
+                .add("accessTeams", Json.createArrayBuilder().add(jsonTeam).build());
+        Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header("Authorization", "Bearer " + jwt)
+                .put(Entity.json(requestBodyBuilder.build().toString()));
+        Assert.assertEquals(201, response.getStatus(), 0);
+    }
+
+    @Test
+    public void createProjectWithoutExistingTeamRequiredTest() {
+        getUserToken(false);
+        Project project = new Project();
+        project.setName("ProjectWithoutExistingTeamRequired");
+        project.setAccessTeams(new ArrayList<Team>());
+        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
+        Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header("Authorization", "Bearer " + jwt)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(422, response.getStatus(), 0);
+    }
+
+    @Test
+    public void createProjectWithNotAllowedExistingTeamTest() {
+        getUserToken(false);
+        Team notAllowedTeam = qm.createTeam("NotAllowedTeam", false);
+        Project project = new Project();
+        project.setName("ProjectWithNotAllowedExistingTeam");
+        project.addAccessTeam(notAllowedTeam);
+        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
+        Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header("Authorization", "Bearer " + jwt)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(403, response.getStatus(), 0);
+    }
+
+    @Test
+    public void createProjectWithNotAllowedExistingTeamAdminTest() {
+        getUserToken(true);
+        Team notAllowedTeam = qm.createTeam("NotAllowedTeam", false);
+        Project project = new Project();
+        project.setName("ProjectWithNotAllowedExistingTeam");
+        project.addAccessTeam(notAllowedTeam);
+        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
+        Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header("Authorization", "Bearer " + jwt)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus(), 0);
+    }
+
+    @Test
+    public void createProjectWithNotExistingTeamNoAdminTest() {
+        getUserToken(false);
+        Team notAllowedTeam = new Team();
+        notAllowedTeam.setUuid(new UUID(1, 1));
+        notAllowedTeam.setName("NotAllowedTeam");
+        Project project = new Project();
+        project.addAccessTeam(notAllowedTeam);
+        project.setName("ProjectWithNotAllowedExistingTeam");
+        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
+        Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header("Authorization", "Bearer " + jwt)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(403, response.getStatus(), 0);
+    }
+
+    @Test
+    public void createProjectWithNotExistingTeamTest() {
+        getUserToken(true);
+        Team notAllowedTeam = new Team();
+        notAllowedTeam.setUuid(new UUID(1, 1));
+        notAllowedTeam.setName("NotAllowedTeam");
+        Project project = new Project();
+        project.addAccessTeam(notAllowedTeam);
+        project.setName("ProjectWithNotExistingTeam");
+        Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header("Authorization", "Bearer " + jwt)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test

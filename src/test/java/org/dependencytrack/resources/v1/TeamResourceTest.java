@@ -21,7 +21,9 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
+import alpine.model.IConfigProperty;
 import alpine.model.ManagedUser;
+import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.server.auth.JsonWebToken;
 import alpine.server.filters.ApiFilter;
@@ -31,6 +33,7 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
@@ -42,6 +45,9 @@ import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -49,12 +55,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 public class TeamResourceTest extends ResourceTest {
+    private ManagedUser testUser;
+    private String jwt;
+    private Team userNotPartof;
 
     @ClassRule
     public static JerseyTestRule jersey = new JerseyTestRule(
             new ResourceConfig(TeamResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
+
+    public void getUserToken(boolean isAdmin) {
+        testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        jwt = new JsonWebToken().createToken(testUser);
+        qm.addUserToTeam(testUser, team);
+        userNotPartof = qm.createTeam("UserNotPartof", false);
+        if (isAdmin) {
+            final var generator = new DefaultObjectGenerator();
+            generator.loadDefaultPermissions();
+            List<Permission> permissionsList = new ArrayList<Permission>();
+            final Permission adminPermission = qm.getPermission("ACCESS_MANAGEMENT");
+            permissionsList.add(adminPermission);
+            testUser.setPermissions(permissionsList);
+        }
+    }
 
     @Test
     public void getTeamsTest() {
@@ -204,6 +228,70 @@ public class TeamResourceTest extends ResourceTest {
                 .method("DELETE", Entity.entity(team, MediaType.APPLICATION_JSON)); // HACK
         // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
         Assert.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    public void getVisibleAdminRequiredTeams() {
+        getUserToken(true);
+        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
+        Response response = jersey.target(V1_TEAM + "/visible")
+                .request()
+                .header("Authorization", "Bearer " + jwt)
+                .get();
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject body = parseJsonObject(response);
+        Assert.assertTrue(body.getBoolean("required"));
+        JsonArray teams = body.getJsonArray("teams");
+        Assert.assertEquals(teams.size(), 2);
+        Assert.assertEquals(teams.getFirst().asJsonObject().getString("uuid"), this.team.getUuid().toString());
+        Assert.assertEquals(teams.get(1).asJsonObject().getString("uuid"), userNotPartof.getUuid().toString());
+    }
+
+    @Test
+    public void getVisibleAdminNotRequiredTeams() {
+        getUserToken(true);
+        Response response = jersey.target(V1_TEAM + "/visible")
+                .request()
+                .header("Authorization", "Bearer " + jwt)
+                .get();
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject body = parseJsonObject(response);
+        Assert.assertFalse(body.getBoolean("required"));
+        JsonArray teams = body.getJsonArray("teams");
+        Assert.assertEquals(teams.size(), 2);
+        Assert.assertEquals(teams.getFirst().asJsonObject().getString("uuid"), this.team.getUuid().toString());
+        Assert.assertEquals(teams.get(1).asJsonObject().getString("uuid"), userNotPartof.getUuid().toString());
+    }
+
+    @Test
+    public void getVisibleNotAdminRequiredTeams() {
+        getUserToken(false);
+        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
+        Response response = jersey.target(V1_TEAM + "/visible")
+                .request()
+                .header("Authorization", "Bearer " + jwt)
+                .get();
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject body = parseJsonObject(response);
+        Assert.assertTrue(body.getBoolean("required"));
+        JsonArray teams = body.getJsonArray("teams");
+        Assert.assertEquals(teams.size(), 1);
+        Assert.assertEquals(teams.getFirst().asJsonObject().getString("uuid"), this.team.getUuid().toString());
+    }
+
+    @Test
+    public void getVisibleNotAdminNotRequiredTeams() {
+        getUserToken(false);
+        Response response = jersey.target(V1_TEAM + "/visible")
+                .request()
+                .header("Authorization", "Bearer " + jwt)
+                .get();
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject body = parseJsonObject(response);
+        Assert.assertFalse(body.getBoolean("required"));
+        JsonArray teams = body.getJsonArray("teams");
+        Assert.assertEquals(teams.size(), 1);
+        Assert.assertEquals(teams.getFirst().asJsonObject().getString("uuid"), this.team.getUuid().toString());
     }
 
     @Test

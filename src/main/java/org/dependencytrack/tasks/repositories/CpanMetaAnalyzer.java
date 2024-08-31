@@ -66,9 +66,9 @@ public class CpanMetaAnalyzer extends AbstractMetaAnalyzer {
 
             final String packageName;
             if (component.getPurl().getNamespace() != null) {
-                packageName = component.getPurl().getNamespace() + "%2F" + component.getPurl().getName();
+                packageName = urlEncode(component.getPurl().getNamespace() + "/" + component.getPurl().getName());
             } else {
-                packageName = component.getPurl().getName();
+                packageName = urlEncode(component.getPurl().getName());
             }
 
             final String url = String.format(baseUrl + API_URL, packageName);

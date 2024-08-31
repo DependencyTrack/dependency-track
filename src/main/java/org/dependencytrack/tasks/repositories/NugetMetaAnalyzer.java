@@ -105,7 +105,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private boolean performVersionCheck(final MetaModel meta, final Component component) {
-        final String url = String.format(versionQueryUrl, component.getPurl().getName().toLowerCase());
+        final String url = String.format(versionQueryUrl, urlEncode(component.getPurl().getName().toLowerCase()));
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {
@@ -145,7 +145,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private boolean performLastPublishedCheck(final MetaModel meta, final Component component) {
-        final String url = String.format(registrationUrl, component.getPurl().getName().toLowerCase(), meta.getLatestVersion());
+        final String url = String.format(registrationUrl, urlEncode(component.getPurl().getName().toLowerCase()), urlEncode(meta.getLatestVersion()));
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {

@@ -64,7 +64,7 @@ public class GoModulesMetaAnalyzer extends AbstractMetaAnalyzer {
         if (component.getPurl() == null || component.getPurl().getNamespace() == null) {
             return meta;
         }
-        final String url = String.format(baseUrl + API_URL, caseEncode(component.getPurl().getNamespace()), caseEncode(component.getPurl().getName()));
+        final String url = String.format(baseUrl + API_URL, urlEncode(caseEncode(component.getPurl().getNamespace())), urlEncode(caseEncode(component.getPurl().getName())));
 
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {

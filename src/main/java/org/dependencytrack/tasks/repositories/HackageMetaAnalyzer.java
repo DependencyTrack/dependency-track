@@ -59,7 +59,7 @@ public class HackageMetaAnalyzer extends AbstractMetaAnalyzer {
         final var meta = new MetaModel(component);
         final var purl = component.getPurl();
         if (purl != null) {
-            final var url = baseUrl + "/package/" + purl.getName() + "/preferred";
+            final var url = baseUrl + "/package/" + urlEncode(purl.getName()) + "/preferred";
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                     final var entity = response.getEntity();

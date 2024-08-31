@@ -25,8 +25,10 @@ import alpine.persistence.NotSortableException;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.exception.TagOperationFailedException;
+import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
@@ -71,13 +73,104 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * Returns a list of Tag objects by name.
+     * @param name the name of the Tag
+     * @return a Tag object
+     */
+    @Override
+    public Tag getTagByName(final String name) {
+        final String loweredTrimmedTag = StringUtils.lowerCase(StringUtils.trimToNull(name));
+        final Query<Tag> query = pm.newQuery(Tag.class, "name == :name");
+        query.setRange(0, 1);
+        return singleResult(query.execute(loweredTrimmedTag));
+    }
+
+    /**
+     * Creates a new Tag object with the specified name.
+     * @param name the name of the Tag to create
+     * @return the created Tag object
+     */
+    @Override
+    public Tag createTag(final String name) {
+        final String loweredTrimmedTag = StringUtils.lowerCase(StringUtils.trimToNull(name));
+        final Tag resolvedTag = getTagByName(loweredTrimmedTag);
+        if (resolvedTag != null) {
+            return resolvedTag;
+        }
+        final Tag tag = new Tag();
+        tag.setName(loweredTrimmedTag);
+        return persist(tag);
+    }
+
+    /**
+     * Creates one or more Tag objects from the specified name(s).
+     * @param names the name(s) of the Tag(s) to create
+     * @return the created Tag object(s)
+     */
+    @Override
+    public List<Tag> createTags(final List<String> names) {
+        final List<Tag> newTags = new ArrayList<>();
+        for (final String name: names) {
+            final String loweredTrimmedTag = StringUtils.lowerCase(StringUtils.trimToNull(name));
+            if (getTagByName(loweredTrimmedTag) == null) {
+                final Tag tag = new Tag();
+                tag.setName(loweredTrimmedTag);
+                newTags.add(tag);
+            }
+        }
+        return new ArrayList<>(persist(newTags));
+    }
+
+    /**
+     * Returns a list of Tag objects what have been resolved. It resolved
+     * tags by querying the database to retrieve the tag. If the tag does
+     * not exist, the tag will be created and returned with other resolved
+     * tags.
+     * @param tags a List of Tags to resolve
+     * @return List of resolved Tags
+     */
+    @Override
+    public synchronized List<Tag> resolveTags(final List<Tag> tags) {
+        if (tags == null) {
+            return new ArrayList<>();
+        }
+        final List<Tag> resolvedTags = new ArrayList<>();
+        final List<String> unresolvedTags = new ArrayList<>();
+        for (final Tag tag: tags) {
+            final String trimmedTag = StringUtils.trimToNull(tag.getName());
+            if (trimmedTag != null) {
+                final Tag resolvedTag = getTagByName(trimmedTag);
+                if (resolvedTag != null) {
+                    resolvedTags.add(resolvedTag);
+                } else {
+                    unresolvedTags.add(trimmedTag);
+                }
+            }
+        }
+        resolvedTags.addAll(createTags(unresolvedTags));
+        return resolvedTags;
+    }
+
+    /**
      * @since 4.12.0
      */
-    public record TagListRow(String name, long projectCount, long policyCount, long totalCount) {
+    public record TagListRow(
+            String name,
+            long projectCount,
+            long policyCount,
+            long notificationRuleCount,
+            long totalCount
+    ) {
 
         @SuppressWarnings("unused") // DataNucleus will use this for MSSQL.
-        public TagListRow(String name, int projectCount, int policyCount, int totalCount) {
-            this(name, (long) projectCount, (long) policyCount, (long) totalCount);
+        public TagListRow(
+                final String name,
+                final int projectCount,
+                final int policyCount,
+                final int notificationRuleCount,
+                final int totalCount
+        ) {
+            this(name, (long) projectCount, (long) policyCount, (long) notificationRuleCount, (long) totalCount);
         }
 
     }
@@ -99,12 +192,13 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
                          INNER JOIN "PROJECT"
                             ON "PROJECT"."ID" = "PROJECTS_TAGS"."PROJECT_ID"
                          WHERE "PROJECTS_TAGS"."TAG_ID" = "TAG"."ID"
-                           AND %s
-                       ) AS "projectCount"
+                           AND %s) AS "projectCount"
                      , (SELECT COUNT(*)
                           FROM "POLICY_TAGS"
-                         WHERE "POLICY_TAGS"."TAG_ID" = "TAG"."ID"
-                       ) AS "policyCount"
+                         WHERE "POLICY_TAGS"."TAG_ID" = "TAG"."ID") AS "policyCount"
+                     , (SELECT COUNT(*)
+                          FROM "NOTIFICATIONRULE_TAGS"
+                         WHERE "NOTIFICATIONRULE_TAGS"."TAG_ID" = "TAG"."ID") AS "notificationRuleCount"
                      , COUNT(*) OVER() AS "totalCount"
                   FROM "TAG"
                 """.formatted(projectAclCondition);
@@ -118,7 +212,10 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
 
         if (orderBy == null) {
             sqlQuery += " ORDER BY \"name\" ASC";
-        } else if ("name".equals(orderBy) || "projectCount".equals(orderBy) || "policyCount".equals(orderBy)) {
+        } else if ("name".equals(orderBy)
+                || "projectCount".equals(orderBy)
+                || "policyCount".equals(orderBy)
+                || "notificationRuleCount".equals(orderBy)) {
             sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
@@ -139,7 +236,8 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             String name,
             long projectCount,
             long accessibleProjectCount,
-            long policyCount
+            long policyCount,
+            long notificationRuleCount
     ) {
 
         @SuppressWarnings("unused") // DataNucleus will use this for MSSQL.
@@ -147,9 +245,10 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
                 final String name,
                 final int projectCount,
                 final int accessibleProjectCount,
-                final int policyCount
+                final int policyCount,
+                final int notificationRuleCount
         ) {
-            this(name, (long) projectCount, (long) accessibleProjectCount, (long) policyCount);
+            this(name, (long) projectCount, (long) accessibleProjectCount, (long) policyCount, (long) notificationRuleCount);
         }
 
     }
@@ -192,6 +291,11 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
                              INNER JOIN "POLICY"
                                 ON "POLICY"."ID" = "POLICY_TAGS"."POLICY_ID"
                              WHERE "POLICY_TAGS"."TAG_ID" = "TAG"."ID") AS "policyCount"
+                         , (SELECT COUNT(*)
+                              FROM "NOTIFICATIONRULE_TAGS"
+                             INNER JOIN "NOTIFICATIONRULE"
+                                ON "NOTIFICATIONRULE"."ID" = "NOTIFICATIONRULE_TAGS"."NOTIFICATIONRULE_ID"
+                             WHERE "NOTIFICATIONRULE_TAGS"."TAG_ID" = "TAG"."ID") AS "notificationRuleCount"
                       FROM "TAG"
                      WHERE %s
                     """.formatted(projectAclCondition, String.join(" OR ", tagNameFilters)));
@@ -216,16 +320,20 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
 
             boolean hasPortfolioManagementPermission = false;
             boolean hasPolicyManagementPermission = false;
+            boolean hasSystemConfigurationPermission = false;
             if (principal == null) {
                 hasPortfolioManagementPermission = true;
                 hasPolicyManagementPermission = true;
+                hasSystemConfigurationPermission = true;
             } else {
                 if (principal instanceof final ApiKey apiKey) {
                     hasPortfolioManagementPermission = hasPermission(apiKey, Permissions.Constants.PORTFOLIO_MANAGEMENT);
                     hasPolicyManagementPermission = hasPermission(apiKey, Permissions.Constants.POLICY_MANAGEMENT);
+                    hasSystemConfigurationPermission = hasPermission(apiKey, Permissions.Constants.SYSTEM_CONFIGURATION);
                 } else if (principal instanceof final UserPrincipal user) {
                     hasPortfolioManagementPermission = hasPermission(user, Permissions.Constants.PORTFOLIO_MANAGEMENT, /* includeTeams */ true);
                     hasPolicyManagementPermission = hasPermission(user, Permissions.Constants.POLICY_MANAGEMENT, /* includeTeams */ true);
+                    hasSystemConfigurationPermission = hasPermission(user, Permissions.Constants.SYSTEM_CONFIGURATION, /* includeTeams */ true);
                 }
             }
 
@@ -250,6 +358,12 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
                     errorByTagName.put(row.name(), """
                             The tag is assigned to %d policies, but the authenticated principal \
                             is missing the %s permission.""".formatted(row.policyCount(), Permissions.POLICY_MANAGEMENT));
+                }
+
+                if (row.notificationRuleCount() > 0 && !hasSystemConfigurationPermission) {
+                    errorByTagName.put(row.name(), """
+                            The tag is assigned to %d notification rules, but the authenticated principal \
+                            is missing the %s permission.""".formatted(row.notificationRuleCount(), Permissions.SYSTEM_CONFIGURATION));
                 }
             }
 
@@ -507,6 +621,108 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
         List<Tag> tagsToShow = tags.sorted(TAG_COMPARATOR).toList();
 
         return (new PaginatedResult()).objects(tagsToShow).total(tagsToShow.size());
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    public record TaggedNotificationRuleRow(String uuid, String name, long totalCount) {
+
+        @SuppressWarnings("unused") // DataNucleus will use this for MSSQL.
+        public TaggedNotificationRuleRow(final String uuid, final String name, final int totalCount) {
+            this(uuid, name, (long) totalCount);
+        }
+
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public List<TaggedNotificationRuleRow> getTaggedNotificationRules(final String tagName) {
+        // language=SQL
+        var sqlQuery = """
+                SELECT "NOTIFICATIONRULE"."UUID" AS "uuid"
+                     , "NOTIFICATIONRULE"."NAME" AS "name"
+                     , COUNT(*) OVER() AS "totalCount"
+                  FROM "NOTIFICATIONRULE"
+                 INNER JOIN "NOTIFICATIONRULE_TAGS"
+                    ON "NOTIFICATIONRULE_TAGS"."NOTIFICATIONRULE_ID" = "NOTIFICATIONRULE"."ID"
+                 INNER JOIN "TAG"
+                    ON "TAG"."ID" = "NOTIFICATIONRULE_TAGS"."TAG_ID"
+                 WHERE "TAG"."NAME" = :tag
+                """;
+
+        final var params = new HashMap<String, Object>();
+        params.put("tag", tagName);
+
+        if (filter != null) {
+            sqlQuery += " AND \"NOTIFICATIONRULE\".\"NAME\" LIKE :nameFilter";
+            params.put("nameFilter", "%" + filter + "%");
+        }
+
+        if (orderBy == null) {
+            sqlQuery += " ORDER BY \"name\" ASC";
+        } else if ("name".equals(orderBy)) {
+            sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
+                    orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
+        } else {
+            throw new NotSortableException("TaggedNotificationRule", orderBy, "Field does not exist or is not sortable");
+        }
+
+        sqlQuery += " " + getOffsetLimitSqlClause();
+
+        final Query<?> query = pm.newQuery(Query.SQL, sqlQuery);
+        query.setNamedParameters(params);
+        return executeAndCloseResultList(query, TaggedNotificationRuleRow.class);
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public void tagNotificationRules(final String tagName, final Collection<String> notificationRuleUuids) {
+        runInTransaction(() -> {
+            final Tag tag = getTagByName(tagName);
+            if (tag == null) {
+                throw new NoSuchElementException("A tag with name %s does not exist".formatted(tagName));
+            }
+
+            final Query<NotificationRule> notificationRulesQuery = pm.newQuery(NotificationRule.class);
+            notificationRulesQuery.setFilter(":uuids.contains(uuid)");
+            notificationRulesQuery.setParameters(notificationRuleUuids);
+            final List<NotificationRule> notificationRules = executeAndCloseList(notificationRulesQuery);
+
+            for (final NotificationRule notificationRule : notificationRules) {
+                bind(notificationRule, List.of(tag));
+            }
+        });
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public void untagNotificationRules(final String tagName, final Collection<String> notificationRuleUuids) {
+        runInTransaction(() -> {
+            final Tag tag = getTagByName(tagName);
+            if (tag == null) {
+                throw new NoSuchElementException("A tag with name %s does not exist".formatted(tagName));
+            }
+
+            final Query<NotificationRule> notificationRulesQuery = pm.newQuery(NotificationRule.class);
+            notificationRulesQuery.setFilter(":uuids.contains(uuid)");
+            notificationRulesQuery.setParameters(notificationRuleUuids);
+            final List<NotificationRule> notificationRules = executeAndCloseList(notificationRulesQuery);
+
+            for (final NotificationRule notificationRule : notificationRules) {
+                if (notificationRule.getTags() == null || notificationRule.getTags().isEmpty()) {
+                    continue;
+                }
+
+                notificationRule.getTags().remove(tag);
+            }
+        });
     }
 
 }

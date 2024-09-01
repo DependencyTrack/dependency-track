@@ -37,6 +37,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.Arrays;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class ConfigPropertyResourceTest extends ResourceTest {
 
     @ClassRule
@@ -250,4 +253,134 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         Assert.assertEquals(ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(), json.getString("propertyName"));
         Assert.assertEquals("maven;npm", json.getString("propertyValue"));
     }
+
+    @Test
+    public void updateConfigPropertyBomValidationModeTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.BOM_VALIDATION_MODE.getGroupName(),
+                ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyName(),
+                ConfigPropertyConstants.BOM_VALIDATION_MODE.getDefaultPropertyValue(),
+                ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyType(),
+                ConfigPropertyConstants.BOM_VALIDATION_MODE.getDescription()
+        );
+
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(/* language=JSON */ """
+                        {
+                          "groupName": "artifact",
+                          "propertyName": "bom.validation.mode",
+                          "propertyValue": "ENABLED_FOR_TAGS"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "groupName": "artifact",
+                  "propertyName": "bom.validation.mode",
+                  "propertyValue": "ENABLED_FOR_TAGS",
+                  "propertyType": "STRING",
+                  "description": "${json-unit.any-string}"
+                }
+                """);
+
+        response = jersey.target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(/* language=JSON */ """
+                        {
+                          "groupName": "artifact",
+                          "propertyName": "bom.validation.mode",
+                          "propertyValue": "foo"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("Value must be any of: ENABLED, DISABLED, ENABLED_FOR_TAGS, DISABLED_FOR_TAGS");
+    }
+
+    @Test
+    public void updateConfigPropertyBomValidationTagsExclusiveTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getGroupName(),
+                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyName(),
+                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getDefaultPropertyValue(),
+                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
+                ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription()
+        );
+
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(/* language=JSON */ """
+                        {
+                          "groupName": "artifact",
+                          "propertyName": "bom.validation.tags.exclusive",
+                          "propertyValue": "[\\"foo\\"]"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "groupName": "artifact",
+                  "propertyName": "bom.validation.tags.exclusive",
+                  "propertyValue": "[\\"foo\\"]",
+                  "propertyType": "STRING",
+                  "description": "${json-unit.any-string}"
+                }
+                """);
+
+        response = jersey.target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(/* language=JSON */ """
+                        {
+                          "groupName": "artifact",
+                          "propertyName": "bom.validation.tags.exclusive",
+                          "propertyValue": "foo"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("Value must be a valid JSON array of strings");
+    }
+
+    @Test
+    public void updateConfigPropertyBomValidationTagsInclusiveTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
+                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
+                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getDefaultPropertyValue(),
+                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
+                ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getDescription()
+        );
+
+        Response response = jersey.target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(/* language=JSON */ """
+                        {
+                          "groupName": "artifact",
+                          "propertyName": "bom.validation.tags.inclusive",
+                          "propertyValue": "[\\"foo\\"]"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "groupName": "artifact",
+                  "propertyName": "bom.validation.tags.inclusive",
+                  "propertyValue": "[\\"foo\\"]",
+                  "propertyType": "STRING",
+                  "description": "${json-unit.any-string}"
+                }
+                """);
+
+        response = jersey.target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(/* language=JSON */ """
+                        {
+                          "groupName": "artifact",
+                          "propertyName": "bom.validation.tags.inclusive",
+                          "propertyValue": "foo"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("Value must be a valid JSON array of strings");
+    }
+
 }

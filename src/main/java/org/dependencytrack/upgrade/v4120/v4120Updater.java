@@ -21,10 +21,14 @@ package org.dependencytrack.upgrade.v4120;
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
+import org.dependencytrack.model.BomValidationMode;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
 
 public class v4120Updater extends AbstractUpgradeItem {
 
@@ -38,6 +42,7 @@ public class v4120Updater extends AbstractUpgradeItem {
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
         removeExperimentalBomUploadProcessingV2ConfigProperty(connection);
+        migrateBomValidationConfigProperty(connection);
     }
 
     private static void removeExperimentalBomUploadProcessingV2ConfigProperty(final Connection connection) throws SQLException {
@@ -55,6 +60,86 @@ public class v4120Updater extends AbstractUpgradeItem {
             ps.setString(1, propertyGroup);
             ps.setString(2, propertyName);
             ps.executeUpdate();
+        }
+    }
+
+    private static void migrateBomValidationConfigProperty(final Connection connection) throws SQLException {
+        final boolean shouldReEnableAutoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        boolean committed = false;
+
+        final String bomValidationEnabledGroupName = "artifact";
+        final String bomValidationEnabledPropertyName = "bom.validation.enabled";
+
+        LOGGER.info("Migrating ConfigProperty %s:%s to %s:%s"
+                .formatted(bomValidationEnabledGroupName, bomValidationEnabledPropertyName,
+                        BOM_VALIDATION_MODE.getGroupName(), BOM_VALIDATION_MODE.getPropertyName()));
+
+        try {
+            LOGGER.debug("Determining current value of ConfigProperty %s:%s"
+                    .formatted(bomValidationEnabledGroupName, bomValidationEnabledPropertyName));
+            final String validationEnabledValue;
+            try (final PreparedStatement ps = connection.prepareStatement("""
+                    SELECT "PROPERTYVALUE"
+                      FROM "CONFIGPROPERTY"
+                     WHERE "GROUPNAME" = ?
+                       AND "PROPERTYNAME" = ?
+                    """)) {
+                ps.setString(1, bomValidationEnabledGroupName);
+                ps.setString(2, bomValidationEnabledPropertyName);
+                final ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    validationEnabledValue = rs.getString(1);
+                } else {
+                    validationEnabledValue = "true";
+                }
+            }
+
+            final BomValidationMode validationModeValue = "false".equals(validationEnabledValue)
+                    ? BomValidationMode.DISABLED
+                    : BomValidationMode.ENABLED;
+
+            LOGGER.debug("Creating ConfigProperty %s:%s with value %s"
+                    .formatted(BOM_VALIDATION_MODE.getGroupName(), BOM_VALIDATION_MODE.getPropertyName(), validationModeValue));
+            try (final PreparedStatement ps = connection.prepareStatement("""
+                    INSERT INTO "CONFIGPROPERTY" (
+                      "DESCRIPTION"
+                    , "GROUPNAME"
+                    , "PROPERTYNAME"
+                    , "PROPERTYTYPE"
+                    , "PROPERTYVALUE"
+                    ) VALUES (?, ?, ?, ?, ?)
+                    """)) {
+                ps.setString(1, BOM_VALIDATION_MODE.getDescription());
+                ps.setString(2, BOM_VALIDATION_MODE.getGroupName());
+                ps.setString(3, BOM_VALIDATION_MODE.getPropertyName());
+                ps.setString(4, BOM_VALIDATION_MODE.getPropertyType().name());
+                ps.setString(5, validationModeValue.name());
+                ps.executeUpdate();
+            }
+
+            LOGGER.debug("Removing ConfigProperty %s:%s".formatted(bomValidationEnabledGroupName, bomValidationEnabledPropertyName));
+            try (final PreparedStatement ps = connection.prepareStatement("""
+                    DELETE
+                      FROM "CONFIGPROPERTY"
+                     WHERE "GROUPNAME" = ?
+                       AND "PROPERTYNAME" = ?
+                    """)) {
+                ps.setString(1, bomValidationEnabledGroupName);
+                ps.setString(2, bomValidationEnabledPropertyName);
+                ps.executeUpdate();
+            }
+
+            connection.commit();
+            committed = true;
+        } finally {
+            if (!committed) {
+                connection.rollback();
+            }
+
+            if (shouldReEnableAutoCommit) {
+                connection.setAutoCommit(true);
+            }
         }
     }
 

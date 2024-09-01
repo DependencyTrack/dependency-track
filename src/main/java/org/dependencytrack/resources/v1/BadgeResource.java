@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.server.auth.AllowApiKeyInQueryParameter;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,7 +53,8 @@ import jakarta.ws.rs.core.Response;
 @Tag(name = "badge")
 @SecurityRequirements({
         @SecurityRequirement(name = "ApiKeyAuth"),
-        @SecurityRequirement(name = "BearerAuth")
+        @SecurityRequirement(name = "BearerAuth"),
+        @SecurityRequirement(name = "ApiKeyQueryAuth")
 })
 public class BadgeResource extends AlpineResource {
 
@@ -75,6 +77,7 @@ public class BadgeResource extends AlpineResource {
             @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_BADGES)
+    @AllowApiKeyInQueryParameter
     public Response getProjectVulnerabilitiesBadge(
             @Parameter(description = "The UUID of the project to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
@@ -110,6 +113,7 @@ public class BadgeResource extends AlpineResource {
             @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_BADGES)
+    @AllowApiKeyInQueryParameter
     public Response getProjectVulnerabilitiesBadge(
             @Parameter(description = "The name of the project to query on", required = true)
             @PathParam("name") String name,
@@ -147,6 +151,7 @@ public class BadgeResource extends AlpineResource {
             @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_BADGES)
+    @AllowApiKeyInQueryParameter
     public Response getProjectPolicyViolationsBadge(
             @Parameter(description = "The UUID of the project to retrieve a badge for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
@@ -182,6 +187,7 @@ public class BadgeResource extends AlpineResource {
             @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_BADGES)
+    @AllowApiKeyInQueryParameter
     public Response getProjectPolicyViolationsBadge(
             @Parameter(description = "The name of the project to query on", required = true)
             @PathParam("name") String name,

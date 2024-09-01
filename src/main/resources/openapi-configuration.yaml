@@ -23,6 +23,10 @@ openAPI:
       BearerAuth:
         type: http
         scheme: Bearer
+      ApiKeyQueryAuth:
+        name: apiKey
+        type: apiKey
+        in: query
 prettyPrint: true
 resourcePackages:
 - alpine.server.resources

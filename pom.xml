@@ -135,8 +135,6 @@
         <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.7.3</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
-        <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
-        <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
         <plugin.jetty.version>12.0.12</plugin.jetty.version>
         <!-- SonarCloud properties -->
@@ -587,6 +585,61 @@
                     <excludes>
                         <exclude>org/dependencytrack/upgrade/**/*</exclude>
                     </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>cyclonedx-aggregate</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>makeAggregateBom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <projectType>application</projectType>
+                    <schemaVersion>1.5</schemaVersion>
+                    <includeCompileScope>true</includeCompileScope>
+                    <includeProvidedScope>true</includeProvidedScope>
+                    <includeRuntimeScope>true</includeRuntimeScope>
+                    <includeSystemScope>true</includeSystemScope>
+                    <includeTestScope>false</includeTestScope>
+                    <includeLicenseText>false</includeLicenseText>
+                    <outputReactorProjects>true</outputReactorProjects>
+                    <outputFormat>json</outputFormat>
+                    <externalReferences>
+                        <externalReference>
+                            <type>advisories</type>
+                            <url>https://github.com/DependencyTrack/dependency-track/security/advisories</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>chat</type>
+                            <url>https://dependencytrack.org/slack</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>documentation</type>
+                            <url>https://docs.dependencytrack.org/</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>release-notes</type>
+                            <url>https://docs.dependencytrack.org/changelog/</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>security-contact</type>
+                            <url>mailto:security@dependencytrack.org</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>social</type>
+                            <url>https://www.linkedin.com/company/owasp-dependency-track</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>social</type>
+                            <url>https://x.com/dependencytrack</url>
+                        </externalReference>
+                    </externalReferences>
                 </configuration>
             </plugin>
             <plugin>

@@ -118,6 +118,7 @@
         <lib.open-vulnerability-clients.version>6.2.0</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>3.2.2</lib.pebble.version>
+        <lib.protobuf-java.version>4.28.0</lib.protobuf-java.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
         <lib.swagger-parser.version>2.1.22</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
@@ -139,8 +140,11 @@
         <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
         <plugin.jetty.version>12.0.12</plugin.jetty.version>
+        <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
+        <!-- Tool Versions -->
+        <tool.protoc.version>com.google.protobuf:protoc:${lib.protobuf-java.version}</tool.protoc.version>
         <!-- CycloneDX CLI -->
         <cyclonedx-cli.path>cyclonedx</cyclonedx-cli.path>
         <services.bom.merge.skip>true</services.bom.merge.skip>
@@ -203,6 +207,7 @@
             <artifactId>cyclonedx-core-java</artifactId>
             <version>${lib.cyclonedx-java.version}</version>
         </dependency>
+
         <!-- org.json
         This was previously transitively included with Unirest. However, Unirest v3.x removed reliance on org.json
         in favor of their own API compatible replacement. Therefore, it was necessary to directly include org.json.
@@ -261,6 +266,17 @@
             <groupId>io.pebbletemplates</groupId>
             <artifactId>pebble</artifactId>
             <version>${lib.pebble.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${lib.protobuf-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
+            <version>${lib.protobuf-java.version}</version>
         </dependency>
 
         <dependency>
@@ -562,6 +578,30 @@
                 </dependencies>
             </plugin>
             <plugin>
+                <groupId>com.github.os72</groupId>
+                <artifactId>protoc-jar-maven-plugin</artifactId>
+                <version>${plugin.protoc-jar.version}</version>
+                <executions>
+                    <execution>
+                        <id>protobuf</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <includeMavenTypes>direct</includeMavenTypes>
+                            <inputDirectories>
+                                <inputDirectory>src/main/proto</inputDirectory>
+                            </inputDirectories>
+                            <includeDirectories>
+                                <includeDirectory>src/main/proto</includeDirectory>
+                            </includeDirectories>
+                            <protocArtifact>${tool.protoc.version}</protocArtifact>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
@@ -586,6 +626,7 @@
                 <configuration>
                     <excludes>
                         <exclude>org/dependencytrack/upgrade/**/*</exclude>
+                        <exclude>trivy/proto/**/*</exclude>
                     </excludes>
                 </configuration>
             </plugin>

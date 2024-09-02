@@ -32,6 +32,7 @@ public enum ConfigKey implements Config.Key {
     SNYK_RETRY_BACKOFF_MULTIPLIER("snyk.retry.backoff.multiplier", 2),
     SNYK_RETRY_BACKOFF_INITIAL_DURATION_MS("snyk.retry.backoff.initial.duration.ms", 1000),
     SNYK_RETRY_BACKOFF_MAX_DURATION_MS("snyk.retry.backoff.max.duration.ms", 60_000),
+    TRIVY_THREAD_POOL_SIZE("trivy.thread.pool.size", 10),
     TRIVY_RETRY_MAX_ATTEMPTS("trivy.retry.max.attempts", 10),
     TRIVY_RETRY_BACKOFF_MULTIPLIER("trivy.retry.backoff.multiplier", 2),
     TRIVY_RETRY_BACKOFF_INITIAL_DURATION_MS("trivy.retry.backoff.initial.duration.ms", 1000),

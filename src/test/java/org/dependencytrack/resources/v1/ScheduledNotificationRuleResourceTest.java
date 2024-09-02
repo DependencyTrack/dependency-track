@@ -187,6 +187,9 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setUuid(UUID.randomUUID());
         ScheduledNotificationRule rule = new ScheduledNotificationRule();
+        rule.setName("Example Rule");
+        rule.setScope(NotificationScope.PORTFOLIO);
+        rule.setEnabled(true);
         rule.setCronConfig("A B C D E");
         rule.setLastExecutionTime(ZonedDateTime.now());
         Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()

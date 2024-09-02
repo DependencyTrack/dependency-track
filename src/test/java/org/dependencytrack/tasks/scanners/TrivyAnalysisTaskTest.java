@@ -27,7 +27,7 @@ import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import jakarta.json.Json;
+import com.google.protobuf.util.Timestamps;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.common.ManagedHttpClientFactory;
@@ -44,7 +44,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import trivy.proto.common.CVSS;
+import trivy.proto.common.DataSource;
+import trivy.proto.common.PkgIdentifier;
+import trivy.proto.scanner.v1.Result;
+import trivy.proto.scanner.v1.ScanResponse;
 
+import jakarta.json.Json;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +61,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
@@ -161,14 +167,11 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyzeWithRetry() {
+    public void testAnalyzeWithRetry() throws ParseException {
         wireMock.stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("""
-                                {}
-                                """)));
+                        .withHeader("Content-Type", "application/protobuf")));
 
         wireMock.stubFor(post(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan"))
                 .inScenario("scanRequestWithGatewayTimeout")
@@ -188,114 +191,79 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
                 .whenScenarioStateIs("thirdAttempt")
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("""
-                                {
-                                  "os": {
-                                    "family": "",
-                                    "name": "",
-                                    "eosl": false,
-                                    "extended": false
-                                  },
-                                  "results": [
-                                    {
-                                      "target": "Java",
-                                      "vulnerabilities": [
-                                        {
-                                          "vulnerability_id": "CVE-2022-40152",
-                                          "pkg_name": "com.fasterxml.woodstox:woodstox-core",
-                                          "installed_version": "5.0.0",
-                                          "fixed_version": "6.4.0, 5.4.0",
-                                          "title": "woodstox-core: woodstox to serialise XML data was vulnerable to Denial of Service attacks",
-                                          "description": "Those using Woodstox to parse XML data may be vulnerable to Denial of Service attacks (DOS) if DTD support is enabled. If the parser is running on user supplied input, an attacker may supply content that causes the parser to crash by stackoverflow. This effect may support a denial of service attack.",
-                                          "severity": "MEDIUM",
-                                          "references": [
-                                            "https://access.redhat.com/security/cve/CVE-2022-40152",
-                                            "https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=47434",
-                                            "https://github.com/FasterXML/woodstox",
-                                            "https://github.com/FasterXML/woodstox/issues/157",
-                                            "https://github.com/FasterXML/woodstox/issues/160",
-                                            "https://github.com/FasterXML/woodstox/pull/159",
-                                            "https://github.com/advisories/GHSA-3f7h-mf4q-vrm4",
-                                            "https://github.com/x-stream/xstream/issues/304",
-                                            "https://nvd.nist.gov/vuln/detail/CVE-2022-40152",
-                                            "https://www.cve.org/CVERecord?id=CVE-2022-40152"
-                                          ],
-                                          "pkg_identifier": {
-                                            "purl": "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0",
-                                            "bom_ref": ""
-                                          },
-                                          "layer": {
-                                            "digest": "",
-                                            "diff_id": "",
-                                            "created_by": ""
-                                          },
-                                          "severity_source": "ghsa",
-                                          "cvss": {
-                                            "ghsa": {
-                                              "v2_vector": "",
-                                              "v3_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
-                                              "v2_score": 0,
-                                              "v3_score": 6.5
-                                            },
-                                            "nvd": {
-                                              "v2_vector": "",
-                                              "v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
-                                              "v2_score": 0,
-                                              "v3_score": 7.5
-                                            },
-                                            "redhat": {
-                                              "v2_vector": "",
-                                              "v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
-                                              "v2_score": 0,
-                                              "v3_score": 7.5
-                                            }
-                                          },
-                                          "cwe_ids": [
-                                            "CWE-787",
-                                            "CWE-121"
-                                          ],
-                                          "primary_url": "https://avd.aquasec.com/nvd/cve-2022-40152",
-                                          "published_date": "2022-09-16T10:15:09.877Z",
-                                          "last_modified_date": "2023-02-09T01:36:03.637Z",
-                                          "custom_advisory_data": null,
-                                          "custom_vuln_data": null,
-                                          "vendor_ids": [],
-                                          "data_source": {
-                                            "id": "ghsa",
-                                            "name": "GitHub Security Advisory Maven",
-                                            "url": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
-                                          },
-                                          "vendor_severity": {
-                                            "amazon": "MEDIUM",
-                                            "ghsa": "MEDIUM",
-                                            "nvd": "HIGH",
-                                            "redhat": "MEDIUM"
-                                          },
-                                          "pkg_path": "",
-                                          "pkg_id": "",
-                                          "status": 3
-                                        }
-                                      ],
-                                      "misconfigurations": [],
-                                      "class": "lang-pkgs",
-                                      "type": "jar",
-                                      "packages": [],
-                                      "custom_resources": [],
-                                      "secrets": [],
-                                      "licenses": []
-                                    }
-                                  ]
-                                }
-                                """)));
+                        .withHeader("Content-Type", "application/protobuf")
+                        .withBody(ScanResponse.newBuilder()
+                                .addResults(Result.newBuilder()
+                                        .setClass_("lang-pkgs")
+                                        .setTarget("java")
+                                        .setType("jar")
+                                        .addVulnerabilities(trivy.proto.common.Vulnerability.newBuilder()
+                                                .setStatus(3)
+                                                .setVulnerabilityId("CVE-2022-40152")
+                                                .setPkgName("com.fasterxml.woodstox:woodstox-core")
+                                                .setPkgIdentifier(PkgIdentifier.newBuilder()
+                                                        .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0")
+                                                        .build())
+                                                .setInstalledVersion("5.0.0")
+                                                .setFixedVersion("6.4.0, 5.4.0")
+                                                .setTitle("woodstox-core: woodstox to serialise XML data was vulnerable to Denial of Service attacks")
+                                                .setDescription("""
+                                                        Those using Woodstox to parse XML data may be vulnerable to \
+                                                        Denial of Service attacks (DOS) if DTD support is enabled. \
+                                                        If the parser is running on user supplied input, an attacker \
+                                                        may supply content that causes the parser to crash by stackoverflow. \
+                                                        This effect may support a denial of service attack.""")
+                                                .setPublishedDate(Timestamps.parse("2022-09-16T10:15:09.877Z"))
+                                                .setLastModifiedDate(Timestamps.parse("2023-02-09T01:36:03.637Z"))
+                                                .setSeverity(trivy.proto.common.Severity.MEDIUM)
+                                                .setSeveritySource("ghsa")
+                                                .putAllVendorSeverity(Map.ofEntries(
+                                                        Map.entry("amazon", trivy.proto.common.Severity.MEDIUM),
+                                                        Map.entry("ghsa", trivy.proto.common.Severity.MEDIUM),
+                                                        Map.entry("nvd", trivy.proto.common.Severity.HIGH),
+                                                        Map.entry("redhat", trivy.proto.common.Severity.MEDIUM)
+                                                ))
+                                                .putAllCvss(Map.ofEntries(
+                                                        Map.entry("ghsa", CVSS.newBuilder()
+                                                                .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H")
+                                                                .setV3Score(6.5)
+                                                                .build()),
+                                                        Map.entry("nvd", CVSS.newBuilder()
+                                                                .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H")
+                                                                .setV3Score(7.5)
+                                                                .build()),
+                                                        Map.entry("redhat", CVSS.newBuilder()
+                                                                .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H")
+                                                                .setV3Score(7.5)
+                                                                .build())
+                                                ))
+                                                .addAllCweIds(List.of("CWE-787", "CWE-121"))
+                                                .addAllReferences(List.of(
+                                                        "https://access.redhat.com/security/cve/CVE-2022-40152",
+                                                        "https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=47434",
+                                                        "https://github.com/FasterXML/woodstox",
+                                                        "https://github.com/FasterXML/woodstox/issues/157",
+                                                        "https://github.com/FasterXML/woodstox/issues/160",
+                                                        "https://github.com/FasterXML/woodstox/pull/159",
+                                                        "https://github.com/advisories/GHSA-3f7h-mf4q-vrm4",
+                                                        "https://github.com/x-stream/xstream/issues/304",
+                                                        "https://nvd.nist.gov/vuln/detail/CVE-2022-40152",
+                                                        "https://www.cve.org/CVERecord?id=CVE-2022-40152"
+                                                ))
+                                                .setDataSource(DataSource.newBuilder()
+                                                        .setId("ghsa")
+                                                        .setName("GitHub Security Advisory Maven")
+                                                        .setUrl("https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven")
+                                                        .build())
+                                                .build())
+                                        .build())
+                                .build()
+                                .toByteArray())));
 
         wireMock.stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("""
-                                {}
-                                """)));
+                        .withHeader("Content-Type", "application/protobuf")));
 
         var project = new Project();
         project.setName("acme-app");
@@ -352,90 +320,21 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
 
         wireMock.verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob"))
                 .withHeader("Trivy-Token", equalTo("token"))
-                .withHeader("Content-Type", equalTo("application/json"))
-                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
-                .withRequestBody(equalToJson("""
-                        {
-                          "diff_id": "${json-unit.regex}(^sha256:[a-f0-9]{64}$)",
-                          "blob_info": {
-                            "schema_version": 2,
-                            "os": {
-                              "eosl": false,
-                              "extended": false
-                            },
-                            "applications": [
-                              {
-                                "type": "jar",
-                                "packages": [
-                                  {
-                                    "name": "com.fasterxml.woodstox:woodstox-core",
-                                    "version": "5.0.0",
-                                    "src_name": "com.fasterxml.woodstox:woodstox-core",
-                                    "src_version": "5.0.0",
-                                    "licenses": [],
-                                    "layer": {
-                                      "eosl": false,
-                                      "extended": false
-                                    }
-                                  }
-                                ],
-                                "libraries": [
-                                  {
-                                    "name": "com.fasterxml.woodstox:woodstox-core",
-                                    "version": "5.0.0",
-                                    "src_name": "com.fasterxml.woodstox:woodstox-core",
-                                    "src_version": "5.0.0",
-                                    "licenses": [],
-                                    "layer": {
-                                      "eosl": false,
-                                      "extended": false
-                                    }
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        }
-                        """)));
+                .withHeader("Accept", equalTo("application/protobuf"))
+                .withHeader("Content-Type", equalTo("application/protobuf"))
+                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent())));
 
         wireMock.verify(exactly(3), postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan"))
                 .withHeader("Trivy-Token", equalTo("token"))
-                .withHeader("Content-Type", equalTo("application/json"))
-                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
-                .withRequestBody(equalToJson("""
-                        {
-                           "target": "${json-unit.regex}(^sha256:[a-f0-9]{64}$)",
-                           "artifact_id": "${json-unit.regex}(^sha256:[a-f0-9]{64}$)",
-                           "blob_ids": [
-                             "${json-unit.regex}(^sha256:[a-f0-9]{64}$)"
-                           ],
-                           "options": {
-                             "pkg_types": [
-                               "os",
-                               "library"
-                             ],
-                             "vuln_type": [
-                               "os",
-                               "library"
-                             ],
-                             "scanners": [
-                               "vuln"
-                             ]
-                           }
-                         }
-                        """)));
+                .withHeader("Accept", equalTo("application/protobuf"))
+                .withHeader("Content-Type", equalTo("application/protobuf"))
+                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent())));
 
         wireMock.verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs"))
                 .withHeader("Trivy-Token", equalTo("token"))
-                .withHeader("Content-Type", equalTo("application/json"))
-                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
-                .withRequestBody(equalToJson("""
-                        {
-                          "blob_ids": [
-                            "${json-unit.regex}(^sha256:[a-f0-9]{64}$)"
-                          ]
-                        }
-                        """)));
+                .withHeader("Accept", equalTo("application/protobuf"))
+                .withHeader("Content-Type", equalTo("application/protobuf"))
+                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent())));
     }
 
     @Test
@@ -443,46 +342,25 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
         wireMock.stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("""
-                                {}
-                                """)));
+                        .withHeader("Content-Type", "application/protobuf")));
 
         wireMock.stubFor(post(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("""
-                                {
-                                  "os": {
-                                    "family": "",
-                                    "name": "",
-                                    "eosl": false,
-                                    "extended": false
-                                  },
-                                  "results": [
-                                    {
-                                      "target": "Java",
-                                      "vulnerabilities": [],
-                                      "misconfigurations": [],
-                                      "class": "lang-pkgs",
-                                      "type": "jar",
-                                      "packages": [],
-                                      "custom_resources": [],
-                                      "secrets": [],
-                                      "licenses": []
-                                    }
-                                  ]
-                                }
-                                """)));
+                        .withHeader("Content-Type", "application/protobuf")
+                        .withBody(ScanResponse.newBuilder()
+                                .addResults(Result.newBuilder()
+                                        .setClass_("lang-pkgs")
+                                        .setTarget("java")
+                                        .setType("jar")
+                                        .build())
+                                .build()
+                                .toByteArray())));
 
         wireMock.stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("""
-                                {}
-                                """)));
+                        .withHeader("Content-Type", "application/json")));
 
         var project = new Project();
         project.setName("acme-app");

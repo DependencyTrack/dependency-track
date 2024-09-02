@@ -20,6 +20,7 @@ package org.dependencytrack.persistence;
 
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
@@ -31,9 +32,11 @@ import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
-
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -299,9 +302,9 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     /**
      * Returns a List of all Policy violations for a specific project.
      * @param project the project to retrieve violations for
+     * @param includeSuppressed Whether to include suppressed violations or not
      * @return a List of all Policy violations
      */
-    @SuppressWarnings("unchecked")
     public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
         PaginatedResult result;
         final String queryFilter = includeSuppressed ? "project.id == :pid" : "project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null)";
@@ -326,11 +329,62 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * Returns a List of all Policy violations for a specific project.
+     * @param project the project to retrieve violations for
+     * @param includeSuppressed Whether to include suppressed violations or not
+     * @param since the date to retrieve violations since
+     * @return a List of all Policy violations
+     */
+    public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed, ZonedDateTime since) {
+        PaginatedResult result;
+        final String queryFilter = includeSuppressed
+                ? "project.id == :pid && timestamp >= :since"
+                : "project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null) && timestamp >= :since";
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc, component.name, component.version");
+        }
+        if (filter != null) {
+            query.setFilter(queryFilter + " && (policyCondition.policy.name.toLowerCase().matches(:filter) || component.name.toLowerCase().matches(:filter))");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            result = execute(query, project.getId(), Date.from(since.withZoneSameInstant(ZoneOffset.UTC).toInstant()), filterString);
+        } else {
+            query.setFilter(queryFilter);
+            result = execute(query, project.getId(), Date.from(since.withZoneSameInstant(ZoneOffset.UTC).toInstant()));
+        }
+        for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
+            violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
+            violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
+        }
+        return result;
+    }
+
+    /**
+     * Returns a List of all Policy violations since a specified time.
+     * @param includeSuppressed Whether to include suppressed violations or not
+     * @param since the date to retrieve violations since
+     * @return a List of all Policy violations
+     */
+    public List<PolicyViolation> getAllPolicyViolations(boolean includeSuppressed, ZonedDateTime since) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if(includeSuppressed){
+            query.setFilter("timestamp >= :since");
+        } else {
+            query.setFilter("(analysis.suppressed == false || analysis.suppressed == null) && timestamp >= :since");
+        }
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc, project.name, project.version, component.name, component.version");
+        }
+        query.setParameters(Date.from(since.withZoneSameInstant(ZoneOffset.UTC).toInstant()));
+        return query.executeList();
+    }
+
+    /**
      * Returns a List of all Policy violations for a specific component.
      * @param component the component to retrieve violations for
      * @return a List of all Policy violations
      */
-    @SuppressWarnings("unchecked")
     public PaginatedResult getPolicyViolations(final Component component, boolean includeSuppressed) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
         if (includeSuppressed) {
@@ -354,7 +408,6 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
      * Returns a List of all Policy violations for the entire portfolio.
      * @return a List of all Policy violations
      */
-    @SuppressWarnings("unchecked")
     public PaginatedResult getPolicyViolations(boolean includeSuppressed) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
         if (!includeSuppressed) {

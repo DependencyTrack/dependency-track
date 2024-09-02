@@ -37,13 +37,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.PublishTrigger;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
-import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
@@ -103,6 +104,47 @@ public class NotificationPublisherResource extends AlpineResource {
         }
     }
 
+    @GET
+    @Path("/event")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns a list of all event-driven notification publishers",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response getAllEventNotificationPublishers() {
+        try (QueryManager qm = new QueryManager()) {
+            final List<NotificationPublisher> publishers = qm.getAllNotificationPublishersOfType(PublishTrigger.EVENT);
+            return Response.ok(publishers).build();
+        }
+    }
+
+    @GET
+    @Path("/scheduled")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns a list of all scheduled notification publishers",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all notification publishers",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationPublisher.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response getAllScheduledNotificationPublishers() {
+        try (QueryManager qm = new QueryManager()) {
+            final List<NotificationPublisher> publishers = qm.getAllNotificationPublishersOfType(PublishTrigger.SCHEDULE);
+            return Response.ok(publishers).build();
+        }
+    }
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -148,7 +190,7 @@ public class NotificationPublisherResource extends AlpineResource {
                     publisherClass,
                     jsonNotificationPublisher.getTemplate(),
                     jsonNotificationPublisher.getTemplateMimeType(),
-                    jsonNotificationPublisher.isDefaultPublisher()
+                    jsonNotificationPublisher.isDefaultPublisher(), jsonNotificationPublisher.isPublishScheduled()
             );
             return Response.status(Response.Status.CREATED).entity(notificationPublisherCreated).build();
         } catch (ClassCastException e) {
@@ -300,9 +342,9 @@ public class NotificationPublisherResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response testSmtpPublisherConfig(@FormParam("destination") String destination) {
         try(QueryManager qm = new QueryManager()) {
-            Class<? extends Publisher> defaultEmailPublisherClass = SendMailPublisher.class;
-            NotificationPublisher emailNotificationPublisher = qm.getDefaultNotificationPublisher(defaultEmailPublisherClass);
-            final Publisher emailPublisher = defaultEmailPublisherClass.getDeclaredConstructor().newInstance();
+            DefaultNotificationPublishers defaultEmailPublisher = DefaultNotificationPublishers.EMAIL;
+            NotificationPublisher emailNotificationPublisher = qm.getDefaultNotificationPublisher(defaultEmailPublisher);
+            final Publisher emailPublisher = (Publisher) defaultEmailPublisher.getPublisherClass().getDeclaredConstructor().newInstance();
             final JsonObject config = Json.createObjectBuilder()
                     .add(Publisher.CONFIG_DESTINATION, destination)
                     .add(Publisher.CONFIG_TEMPLATE_KEY, emailNotificationPublisher.getTemplate())

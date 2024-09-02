@@ -18,34 +18,9 @@
  */
 package org.dependencytrack.model;
 
-import alpine.common.validation.RegexSequence;
-import alpine.model.Team;
-import alpine.notification.NotificationLevel;
-import alpine.server.json.TrimmedStringDeserializer;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.apache.commons.collections4.CollectionUtils;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import javax.jdo.annotations.Column;
-import javax.jdo.annotations.Element;
-import javax.jdo.annotations.Extension;
-import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.Join;
-import javax.jdo.annotations.Order;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
-import javax.jdo.annotations.Unique;
 import java.io.Serializable;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,18 +28,46 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 
+import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Element;
+import javax.jdo.annotations.Extension;
+import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Join;
+import javax.jdo.annotations.NotPersistent;
+import javax.jdo.annotations.Order;
+import javax.jdo.annotations.PersistenceCapable;
+import javax.jdo.annotations.Persistent;
+import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Unique;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.resources.v1.serializers.Iso8601ZonedDateTimeSerializer;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import alpine.common.validation.RegexSequence;
+import alpine.model.Team;
+import alpine.notification.NotificationLevel;
+import alpine.server.json.TrimmedStringDeserializer;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 /**
- * Defines a Model class for notification configurations.
- *
- * @author Steve Springett
- * @since 3.2.0
+ * Defines a Model class for scheduled notification configurations.
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NotificationRule implements Rule, Serializable {
-
-    private static final long serialVersionUID = 2534439091019367263L;
+public class ScheduledNotificationRule implements Rule, Serializable {
+    private static final long serialVersionUID = 3390485832822256096L;
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
@@ -107,18 +110,28 @@ public class NotificationRule implements Rule, Serializable {
     @NotNull
     private NotificationScope scope;
 
-    @Persistent(defaultFetchGroup = "true")
-    @Column(name = "NOTIFICATION_LEVEL", jdbcType = "VARCHAR")
+    /*
+     * For standard notifications, this property is used to determine all
+     * notification rules with a level equal to or greater than the specified
+     * notification level.
+     * Only notification rules with the correct rule level with then be published.
+     * 
+     * For scheduled notifications, this property is unnecessary because they're
+     * published on-demand or by cron triggers instead through the internal
+     * notification service, so no notification level will be provided for filtering.
+     */
+    @JsonIgnore
+    @NotPersistent
     private NotificationLevel notificationLevel;
 
-    @Persistent(table = "NOTIFICATIONRULE_PROJECTS", defaultFetchGroup = "true")
-    @Join(column = "NOTIFICATIONRULE_ID")
+    @Persistent(table = "SCHEDULED_NOTIFICATIONRULE_PROJECTS", defaultFetchGroup = "true")
+    @Join(column = "SCHEDULED_NOTIFICATIONRULE_ID")
     @Element(column = "PROJECT_ID")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC, version ASC"))
     private List<Project> projects;
 
-    @Persistent(table = "NOTIFICATIONRULE_TEAMS", defaultFetchGroup = "true")
-    @Join(column = "NOTIFICATIONRULE_ID")
+    @Persistent(table = "SCHEDULED_NOTIFICATIONRULE_TEAMS", defaultFetchGroup = "true")
+    @Join(column = "SCHEDULED_NOTIFICATIONRULE_ID")
     @Element(column = "TEAM_ID")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     private List<Team> teams;
@@ -144,10 +157,25 @@ public class NotificationRule implements Rule, Serializable {
     private String publisherConfig;
 
     @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
-    @Unique(name = "NOTIFICATIONRULE_UUID_IDX")
+    @Unique(name = "SCHEDULED_NOTIFICATIONRULE_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     private UUID uuid;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "CRON_CONFIG")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    private String cronConfig;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "LAST_EXECUTION_TIME")
+    @JsonSerialize(using = Iso8601ZonedDateTimeSerializer.class)
+    private ZonedDateTime lastExecutionTime;
+
+    @Persistent
+    @Column(name = "PUBLISH_ONLY_WITH_UPDATES")
+    private boolean publishOnlyWithUpdates;
+
 
     public long getId() {
         return id;
@@ -282,5 +310,40 @@ public class NotificationRule implements Rule, Serializable {
 
     public void setUuid(@NotNull UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public String getCronConfig() {
+        var cronConfig = ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_EXPRESSION.getDefaultPropertyValue();
+        if (this.cronConfig != null) {
+            cronConfig = this.cronConfig;
+        }
+        return cronConfig;
+    }
+
+    public void setCronConfig(String cronConfig) {
+        if (cronConfig == null) {
+            this.cronConfig = ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_EXPRESSION.getDefaultPropertyValue();
+            return;
+        }
+        this.cronConfig = cronConfig;
+    }
+
+    public ZonedDateTime getLastExecutionTime() {
+        if (lastExecutionTime == null) {
+            return ZonedDateTime.now(ZoneOffset.UTC);
+        }
+        return lastExecutionTime.withZoneSameInstant(ZoneOffset.UTC);
+    }
+
+    public void setLastExecutionTime(ZonedDateTime lastExecutionTime) {
+        this.lastExecutionTime = lastExecutionTime;
+    }
+
+    public boolean getPublishOnlyWithUpdates() {
+        return publishOnlyWithUpdates;
+    }
+
+    public void setPublishOnlyWithUpdates(boolean publishOnlyWithUpdates) {
+        this.publishOnlyWithUpdates = publishOnlyWithUpdates;
     }
 }

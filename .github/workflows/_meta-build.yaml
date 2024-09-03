@@ -41,8 +41,8 @@ jobs:
         run: |
           mkdir -p "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          wget -O "$HOME/.local/bin/cyclonedx" https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.24.2/cyclonedx-linux-x64
-          echo "ef0d3b31d176e02bc594f83e19cfcea053c6bc5b197351f71696e189390f851d $HOME/.local/bin/cyclonedx" | sha256sum -c
+          wget -O "$HOME/.local/bin/cyclonedx" https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.26.0/cyclonedx-linux-x64
+          echo "207c82fbbaed96642a033a4da1c20eb4c6d4b53acccf37619c8d4183803ccbf4 $HOME/.local/bin/cyclonedx" | sha256sum -c
           chmod +x "$HOME/.local/bin/cyclonedx"
 
       - name: Build with Maven

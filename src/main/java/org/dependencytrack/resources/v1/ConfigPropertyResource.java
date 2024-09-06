@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.model.ConfigProperty;
+import alpine.server.auth.AuthenticationNotRequired;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -156,5 +157,25 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
         return Response.ok(returnList).build();
     }
 
+    @GET
+    @Path("/welcomeMessage")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Returns if a welcome Message is given, and wich should be showed", description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "A list of isMessageWelcome and messageWelcome", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ConfigProperty.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @AuthenticationNotRequired
+    public Response getGreetingMessage() {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            ConfigProperty greetingMessage = qm.getConfigProperty("Message", "welcomeMessage");
+            ConfigProperty isGreetingMessage = qm.getConfigProperty("Message", "isWelcomeMessage");
+            qm.close();
+            List<ConfigProperty> combined = new ArrayList<ConfigProperty>();
+            combined.add(greetingMessage);
+            combined.add(isGreetingMessage);
+            return Response.ok(combined).build();
+        }
+    }
 
 }

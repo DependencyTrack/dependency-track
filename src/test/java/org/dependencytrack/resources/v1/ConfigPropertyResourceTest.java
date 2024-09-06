@@ -39,6 +39,7 @@ import java.util.Arrays;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 public class ConfigPropertyResourceTest extends ResourceTest {
 
@@ -381,6 +382,56 @@ public class ConfigPropertyResourceTest extends ResourceTest {
                         """, MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(getPlainTextBody(response)).isEqualTo("Value must be a valid JSON array of strings");
+    }
+
+    @Test
+    public void getGreetingMessageTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.WELCOME_MESSAGE.getGroupName(),
+                ConfigPropertyConstants.WELCOME_MESSAGE.getPropertyName(),
+                ConfigPropertyConstants.WELCOME_MESSAGE.getDefaultPropertyValue(),
+                ConfigPropertyConstants.WELCOME_MESSAGE.getPropertyType(),
+                ConfigPropertyConstants.WELCOME_MESSAGE.getDescription());
+
+        qm.createConfigProperty(
+                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getGroupName(),
+                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getPropertyName(),
+                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getDefaultPropertyValue(),
+                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getPropertyType(),
+                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getDescription());
+
+        Response response = jersey.target(V1_CONFIG_PROPERTY + "/greetingMessage").request()
+                .header(X_API_KEY, apiKey).get();
+        JsonArray json = parseJsonArray(response);
+        assertEquals(json.size(), 2);
+        assertEquals(ConfigPropertyConstants.WELCOME_MESSAGE.getDefaultPropertyValue(),
+                json.getFirst().asJsonObject().getString("propertyValue"));
+        assertEquals("false", json.get(1).asJsonObject().getString("propertyValue"));
+    }
+
+    @Test
+    public void getGreetingMessageEnabledTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.WELCOME_MESSAGE.getGroupName(),
+                ConfigPropertyConstants.WELCOME_MESSAGE.getPropertyName(),
+                ConfigPropertyConstants.WELCOME_MESSAGE.getDefaultPropertyValue(),
+                ConfigPropertyConstants.WELCOME_MESSAGE.getPropertyType(),
+                ConfigPropertyConstants.WELCOME_MESSAGE.getDescription());
+
+        qm.createConfigProperty(
+                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getGroupName(),
+                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getPropertyType(),
+                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getDescription());
+
+        Response response = jersey.target(V1_CONFIG_PROPERTY + "/greetingMessage").request()
+                .header(X_API_KEY, apiKey).get();
+        JsonArray json = parseJsonArray(response);
+        assertEquals(json.size(), 2);
+        assertEquals(ConfigPropertyConstants.WELCOME_MESSAGE.getDefaultPropertyValue(),
+                json.getJsonObject(0).getString("propertyValue"));
+        assertEquals("true", json.getJsonObject(1).getString("propertyValue"));
     }
 
 }

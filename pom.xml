@@ -734,7 +734,9 @@
                 <version>${plugin.jetty.version}</version>
                 <configuration>
                     <webApp>
-                        <contextPath>/</contextPath>
+                        <!-- Disable classpath scanning. -->
+                        <containerIncludeJarPattern>^$</containerIncludeJarPattern>
+                        <webInfIncludeJarPattern>^$</webInfIncludeJarPattern>
                     </webApp>
                 </configuration>
             </plugin>
@@ -794,7 +796,9 @@
                         <version>${plugin.jetty.version}</version>
                         <configuration>
                             <webApp>
-                                <contextPath>/</contextPath>
+                                <!-- Disable classpath scanning. -->
+                                <containerIncludeJarPattern>^$</containerIncludeJarPattern>
+                                <webInfIncludeJarPattern>^$</webInfIncludeJarPattern>
                                 <overrideDescriptor>src/test/webapp/WEB-INF/h2-console-web.xml</overrideDescriptor>
                             </webApp>
                         </configuration>

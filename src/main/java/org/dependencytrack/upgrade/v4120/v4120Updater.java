@@ -21,12 +21,14 @@ package org.dependencytrack.upgrade.v4120;
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
+import alpine.server.util.DbUtil;
 import org.dependencytrack.model.BomValidationMode;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
 
@@ -43,6 +45,7 @@ public class v4120Updater extends AbstractUpgradeItem {
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
         removeExperimentalBomUploadProcessingV2ConfigProperty(connection);
         migrateBomValidationConfigProperty(connection);
+        extendTeamNameColumnMaxLength(connection);
     }
 
     private static void removeExperimentalBomUploadProcessingV2ConfigProperty(final Connection connection) throws SQLException {
@@ -139,6 +142,26 @@ public class v4120Updater extends AbstractUpgradeItem {
 
             if (shouldReEnableAutoCommit) {
                 connection.setAutoCommit(true);
+            }
+        }
+    }
+
+    private void extendTeamNameColumnMaxLength(final Connection connection) throws SQLException {
+        LOGGER.info("Extending max length of column TEAM.NAME to 255");
+
+        try (final Statement stmt = connection.createStatement()) {
+            if (DbUtil.isMssql()) {
+                stmt.executeUpdate("""
+                        ALTER TABLE "TEAM" ALTER COLUMN "NAME" VARChAR(255) NOT NULL
+                        """);
+            } else if (DbUtil.isMysql()) {
+                stmt.executeUpdate("""
+                    ALTER TABLE "TEAM" MODIFY "NAME" VARCHAR(255) NOT NULL
+                    """);
+            } else {
+                stmt.executeUpdate("""
+                    ALTER TABLE "TEAM" ALTER COLUMN "NAME" TYPE VARCHAR(255)
+                    """);
             }
         }
     }

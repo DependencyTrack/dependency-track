@@ -228,11 +228,10 @@ public class TeamResource extends AlpineResource {
     @GET
     @Path("/visible")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Returns a list of Teams what are visible", description = "Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>")
+    @Operation(summary = "Returns a list of Teams that are visible", description = "<p></p>")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "The Visible Teams", content = @Content(schema = @Schema(implementation = VisibleTeams.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "Teams could not be found")
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response availableTeams() {
         try (QueryManager qm = new QueryManager()) {

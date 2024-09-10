@@ -39,6 +39,7 @@ import java.util.Arrays;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 public class ConfigPropertyResourceTest extends ResourceTest {
 
@@ -383,4 +384,23 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         assertThat(getPlainTextBody(response)).isEqualTo("Value must be a valid JSON array of strings");
     }
 
+    @Test
+    public void getPublicAllPropertiesTest() {
+        for (ConfigPropertyConstants configProperty : ConfigPropertyConstants.values()) {
+            String groupName = configProperty.getGroupName();
+            String propertyName = configProperty.getPropertyName();
+            qm.createConfigProperty(
+                    groupName,
+                    propertyName,
+                    configProperty.getDefaultPropertyValue(),
+                    configProperty.getPropertyType(),
+                    configProperty.getDescription());
+
+            Response response = jersey.target(V1_CONFIG_PROPERTY + "/public/" + groupName + "/" + propertyName)
+                    .request()
+                    .header(X_API_KEY, apiKey).get();
+            int status = configProperty.getIsPublic() ? 200 : 403;
+            assertEquals(status, response.getStatus());
+        }
+    }
 }

@@ -242,9 +242,9 @@ public class TeamResourceTest extends ResourceTest {
         JsonObject body = parseJsonObject(response);
         Assert.assertTrue(body.getBoolean("required"));
         JsonArray teams = body.getJsonArray("teams");
-        Assert.assertEquals(teams.size(), 2);
-        Assert.assertEquals(teams.getFirst().asJsonObject().getString("uuid"), this.team.getUuid().toString());
-        Assert.assertEquals(teams.get(1).asJsonObject().getString("uuid"), userNotPartof.getUuid().toString());
+        Assert.assertEquals(2, teams.size());
+        Assert.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        Assert.assertEquals(userNotPartof.getUuid().toString(), teams.get(1).asJsonObject().getString("uuid"));
     }
 
     @Test
@@ -258,9 +258,9 @@ public class TeamResourceTest extends ResourceTest {
         JsonObject body = parseJsonObject(response);
         Assert.assertFalse(body.getBoolean("required"));
         JsonArray teams = body.getJsonArray("teams");
-        Assert.assertEquals(teams.size(), 2);
-        Assert.assertEquals(teams.getFirst().asJsonObject().getString("uuid"), this.team.getUuid().toString());
-        Assert.assertEquals(teams.get(1).asJsonObject().getString("uuid"), userNotPartof.getUuid().toString());
+        Assert.assertEquals(2, teams.size());
+        Assert.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        Assert.assertEquals(userNotPartof.getUuid().toString(), teams.get(1).asJsonObject().getString("uuid"));
     }
 
     @Test
@@ -275,8 +275,8 @@ public class TeamResourceTest extends ResourceTest {
         JsonObject body = parseJsonObject(response);
         Assert.assertTrue(body.getBoolean("required"));
         JsonArray teams = body.getJsonArray("teams");
-        Assert.assertEquals(teams.size(), 1);
-        Assert.assertEquals(teams.getFirst().asJsonObject().getString("uuid"), this.team.getUuid().toString());
+        Assert.assertEquals(1, teams.size());
+        Assert.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test
@@ -290,8 +290,8 @@ public class TeamResourceTest extends ResourceTest {
         JsonObject body = parseJsonObject(response);
         Assert.assertFalse(body.getBoolean("required"));
         JsonArray teams = body.getJsonArray("teams");
-        Assert.assertEquals(teams.size(), 1);
-        Assert.assertEquals(teams.getFirst().asJsonObject().getString("uuid"), this.team.getUuid().toString());
+        Assert.assertEquals(1, teams.size());
+        Assert.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test

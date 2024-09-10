@@ -22,6 +22,7 @@ import alpine.model.ConfigProperty;
 import alpine.server.auth.AuthenticationNotRequired;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,6 +32,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 
 import jakarta.validation.Validator;
@@ -38,6 +40,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -158,24 +161,25 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
     }
 
     @GET
-    @Path("/welcomeMessage")
+    @Path("/public/{groupName}/{propertyName}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Returns if a welcome Message is given, and wich should be showed", description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>")
+    @Operation(summary = "Returns a public ConfigProperty", description = "<p></p>")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "A list of isMessageWelcome and messageWelcome", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ConfigProperty.class)))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
+            @ApiResponse(responseCode = "200", description = "Public ConfigProperty returned", content = @Content(schema = @Schema(implementation = ConfigProperty.class))),
+            @ApiResponse(responseCode = "403", description = "This is not a public visible ConfigProperty")
     })
     @AuthenticationNotRequired
-    public Response getGreetingMessage() {
+    public Response getGreetingMessage(
+            @Parameter(description = "The group name of the value to retrieve", required = true) @PathParam("groupName") String groupName,
+            @Parameter(description = "The property name of the value to retrieve", required = true) @PathParam("propertyName") String propertyName) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            ConfigProperty greetingMessage = qm.getConfigProperty("Message", "welcomeMessage");
-            ConfigProperty isGreetingMessage = qm.getConfigProperty("Message", "isWelcomeMessage");
+            ConfigProperty property = qm.getConfigProperty(groupName, propertyName);
             qm.close();
-            List<ConfigProperty> combined = new ArrayList<ConfigProperty>();
-            combined.add(greetingMessage);
-            combined.add(isGreetingMessage);
-            return Response.ok(combined).build();
+            ConfigPropertyConstants publicConfigProperty = ConfigPropertyConstants.ofProperty(property);
+            if (!publicConfigProperty.getIsPublic()) {
+                return Response.status(Response.Status.FORBIDDEN).entity("This is not a public visible ConfigProperty").build();
+            }
+            return Response.ok(property).build();
         }
     }
-
 }

@@ -18,8 +18,11 @@
  */
 package org.dependencytrack.model;
 
+import alpine.model.IConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
 import org.apache.commons.lang3.SystemUtils;
+
+import java.util.Arrays;
 
 public enum ConfigPropertyConstants {
 
@@ -112,21 +115,40 @@ public enum ConfigPropertyConstants {
     BOM_VALIDATION_MODE("artifact", "bom.validation.mode", BomValidationMode.ENABLED.name(), PropertyType.STRING, "Flag to control the BOM validation mode"),
     BOM_VALIDATION_TAGS_INCLUSIVE("artifact", "bom.validation.tags.inclusive", "[]", PropertyType.STRING, "JSON array of tags for which BOM validation shall be performed"),
     BOM_VALIDATION_TAGS_EXCLUSIVE("artifact", "bom.validation.tags.exclusive", "[]", PropertyType.STRING, "JSON array of tags for which BOM validation shall NOT be performed"),
-    WELCOME_MESSAGE("Message", "welcomeMessage", "%20%3Chtml%3E%3Ch1%3EYour%20Welcome%20Message%3C%2Fh1%3E%3C%2Fhtml%3E", PropertyType.STRING, "Custom HTML Code that is displayed before login"),
-    IS_WELCOME_MESSAGE("Message", "isWelcomeMessage", "false", PropertyType.BOOLEAN, "Bool that says wheter to show the welcome message or not");
+    WELCOME_MESSAGE("general", "welcome.message.html", "%20%3Chtml%3E%3Ch1%3EYour%20Welcome%20Message%3C%2Fh1%3E%3C%2Fhtml%3E", PropertyType.STRING, "Custom HTML Code that is displayed before login", true),
+    IS_WELCOME_MESSAGE("general", "welcome.message.enabled", "false", PropertyType.BOOLEAN, "Bool that says wheter to show the welcome message or not", true);
 
     private final String groupName;
     private final String propertyName;
     private final String defaultPropertyValue;
     private final PropertyType propertyType;
     private final String description;
+    private final Boolean isPublic;
 
-    ConfigPropertyConstants(String groupName, String propertyName, String defaultPropertyValue, PropertyType propertyType, String description) {
+
+	ConfigPropertyConstants(String groupName, String propertyName, String defaultPropertyValue, PropertyType propertyType, String description) {
         this.groupName = groupName;
         this.propertyName = propertyName;
         this.defaultPropertyValue = defaultPropertyValue;
         this.propertyType = propertyType;
         this.description = description;
+        this.isPublic = false;
+    }
+    
+    ConfigPropertyConstants(String groupName, String propertyName, String defaultPropertyValue, PropertyType propertyType, String description, Boolean isPublic) {
+        this.groupName = groupName;
+        this.propertyName = propertyName;
+        this.defaultPropertyValue = defaultPropertyValue;
+        this.propertyType = propertyType;
+        this.description = description;
+        this.isPublic = isPublic;
+    }
+
+    public static ConfigPropertyConstants ofProperty(final IConfigProperty property) {
+        return Arrays.stream(values())
+                .filter(value -> value.groupName.equals(property.getGroupName()) && value.propertyName.equals(property.getPropertyName()))
+                .findFirst()
+                .orElse(null);
     }
 
     public String getGroupName() {
@@ -149,4 +171,7 @@ public enum ConfigPropertyConstants {
         return description;
     }
 
+    public Boolean getIsPublic() {
+		    return isPublic;
+	  }
 }

@@ -385,7 +385,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getGreetingMessageTest() {
+    public void getPublicForbiddenTest() {
         qm.createConfigProperty(
                 ConfigPropertyConstants.WELCOME_MESSAGE.getGroupName(),
                 ConfigPropertyConstants.WELCOME_MESSAGE.getPropertyName(),
@@ -393,45 +393,8 @@ public class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.WELCOME_MESSAGE.getPropertyType(),
                 ConfigPropertyConstants.WELCOME_MESSAGE.getDescription());
 
-        qm.createConfigProperty(
-                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getGroupName(),
-                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getPropertyName(),
-                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getDefaultPropertyValue(),
-                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getPropertyType(),
-                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getDescription());
-
-        Response response = jersey.target(V1_CONFIG_PROPERTY + "/welcomeMessage").request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY + "/public/generel/welcome.message.html").request()
                 .header(X_API_KEY, apiKey).get();
-        JsonArray json = parseJsonArray(response);
-        assertEquals(json.size(), 2);
-        assertEquals(ConfigPropertyConstants.WELCOME_MESSAGE.getDefaultPropertyValue(),
-                json.getFirst().asJsonObject().getString("propertyValue"));
-        assertEquals("false", json.get(1).asJsonObject().getString("propertyValue"));
+        assertEquals(403, response.getStatus());
     }
-
-    @Test
-    public void getGreetingMessageEnabledTest() {
-        qm.createConfigProperty(
-                ConfigPropertyConstants.WELCOME_MESSAGE.getGroupName(),
-                ConfigPropertyConstants.WELCOME_MESSAGE.getPropertyName(),
-                ConfigPropertyConstants.WELCOME_MESSAGE.getDefaultPropertyValue(),
-                ConfigPropertyConstants.WELCOME_MESSAGE.getPropertyType(),
-                ConfigPropertyConstants.WELCOME_MESSAGE.getDescription());
-
-        qm.createConfigProperty(
-                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getGroupName(),
-                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getPropertyName(),
-                "true",
-                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getPropertyType(),
-                ConfigPropertyConstants.IS_WELCOME_MESSAGE.getDescription());
-
-        Response response = jersey.target(V1_CONFIG_PROPERTY + "/welcomeMessage").request()
-                .header(X_API_KEY, apiKey).get();
-        JsonArray json = parseJsonArray(response);
-        assertEquals(json.size(), 2);
-        assertEquals(ConfigPropertyConstants.WELCOME_MESSAGE.getDefaultPropertyValue(),
-                json.getJsonObject(0).getString("propertyValue"));
-        assertEquals("true", json.getJsonObject(1).getString("propertyValue"));
-    }
-
 }

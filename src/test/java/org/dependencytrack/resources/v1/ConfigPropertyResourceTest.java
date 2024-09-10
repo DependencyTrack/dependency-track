@@ -400,7 +400,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.IS_WELCOME_MESSAGE.getPropertyType(),
                 ConfigPropertyConstants.IS_WELCOME_MESSAGE.getDescription());
 
-        Response response = jersey.target(V1_CONFIG_PROPERTY + "/greetingMessage").request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY + "/welcomeMessage").request()
                 .header(X_API_KEY, apiKey).get();
         JsonArray json = parseJsonArray(response);
         assertEquals(json.size(), 2);
@@ -425,7 +425,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
                 ConfigPropertyConstants.IS_WELCOME_MESSAGE.getPropertyType(),
                 ConfigPropertyConstants.IS_WELCOME_MESSAGE.getDescription());
 
-        Response response = jersey.target(V1_CONFIG_PROPERTY + "/greetingMessage").request()
+        Response response = jersey.target(V1_CONFIG_PROPERTY + "/welcomeMessage").request()
                 .header(X_API_KEY, apiKey).get();
         JsonArray json = parseJsonArray(response);
         assertEquals(json.size(), 2);

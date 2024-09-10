@@ -169,16 +169,18 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             @ApiResponse(responseCode = "403", description = "This is not a public visible ConfigProperty")
     })
     @AuthenticationNotRequired
-    public Response getGreetingMessage(
+    public Response getPublicConfigProperty(
             @Parameter(description = "The group name of the value to retrieve", required = true) @PathParam("groupName") String groupName,
             @Parameter(description = "The property name of the value to retrieve", required = true) @PathParam("propertyName") String propertyName) {
+        ConfigProperty sampleProperty = new ConfigProperty();
+        sampleProperty.setGroupName(groupName);
+        sampleProperty.setPropertyName(propertyName);
+        ConfigPropertyConstants publicConfigProperty = ConfigPropertyConstants.ofProperty(sampleProperty);
+        if (!publicConfigProperty.getIsPublic()) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             ConfigProperty property = qm.getConfigProperty(groupName, propertyName);
-            qm.close();
-            ConfigPropertyConstants publicConfigProperty = ConfigPropertyConstants.ofProperty(property);
-            if (!publicConfigProperty.getIsPublic()) {
-                return Response.status(Response.Status.FORBIDDEN).entity("This is not a public visible ConfigProperty").build();
-            }
             return Response.ok(property).build();
         }
     }

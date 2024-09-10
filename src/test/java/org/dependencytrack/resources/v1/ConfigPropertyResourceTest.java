@@ -385,16 +385,22 @@ public class ConfigPropertyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getPublicForbiddenTest() {
-        qm.createConfigProperty(
-                ConfigPropertyConstants.WELCOME_MESSAGE.getGroupName(),
-                ConfigPropertyConstants.WELCOME_MESSAGE.getPropertyName(),
-                ConfigPropertyConstants.WELCOME_MESSAGE.getDefaultPropertyValue(),
-                ConfigPropertyConstants.WELCOME_MESSAGE.getPropertyType(),
-                ConfigPropertyConstants.WELCOME_MESSAGE.getDescription());
+    public void getPublicAllPropertiesTest() {
+        for (ConfigPropertyConstants configProperty : ConfigPropertyConstants.values()) {
+            String groupName = configProperty.getGroupName();
+            String propertyName = configProperty.getPropertyName();
+            qm.createConfigProperty(
+                    groupName,
+                    propertyName,
+                    configProperty.getDefaultPropertyValue(),
+                    configProperty.getPropertyType(),
+                    configProperty.getDescription());
 
-        Response response = jersey.target(V1_CONFIG_PROPERTY + "/public/generel/welcome.message.html").request()
-                .header(X_API_KEY, apiKey).get();
-        assertEquals(403, response.getStatus());
+            Response response = jersey.target(V1_CONFIG_PROPERTY + "/public/" + groupName + "/" + propertyName)
+                    .request()
+                    .header(X_API_KEY, apiKey).get();
+            int status = configProperty.getIsPublic() ? 200 : 403;
+            assertEquals(status, response.getStatus());
+        }
     }
 }

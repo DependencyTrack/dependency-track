@@ -708,7 +708,7 @@ public class ModelConverter {
             cycloneComponent.setGroup(StringUtils.trimToNull(project.getGroup()));
             cycloneComponent.setName(StringUtils.trimToNull(project.getName()));
             if (StringUtils.trimToNull(project.getVersion()) == null) {
-                cycloneComponent.setVersion("SNAPSHOT"); // Version is required per CycloneDX spec
+                cycloneComponent.setVersion(""); // Version is required per CycloneDX spec
             } else {
                 cycloneComponent.setVersion(StringUtils.trimToNull(project.getVersion()));
             }

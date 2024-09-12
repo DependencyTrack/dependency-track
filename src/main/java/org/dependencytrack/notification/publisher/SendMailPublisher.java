@@ -28,6 +28,8 @@ import alpine.server.mail.SendMail;
 import alpine.server.mail.SendMailException;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
+
+import org.apache.commons.text.StringEscapeUtils;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DebugDataEncryption;
 
@@ -141,7 +143,7 @@ public class SendMailPublisher implements Publisher {
                     .from(smtpFrom)
                     .to(destinations)
                     .subject(emailSubjectPrefix + " " + notification.getTitle())
-                    .body(content)
+                    .body(StringEscapeUtils.unescapeHtml4(content))
                     .bodyMimeType(mimeType)
                     .host(smtpHostname)
                     .port(smtpPort)

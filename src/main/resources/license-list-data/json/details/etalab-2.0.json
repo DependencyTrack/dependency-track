@@ -8,21 +8,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://raw.githubusercontent.com/DISIC/politique-de-contribution-open-source/master/LICENSE",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-05-22T17:32:48Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://github.com/DISIC/politique-de-contribution-open-source/blob/master/LICENSE.pdf",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-05-22T17:32:48Z",
+      "timestamp": "2024-08-19T17:35:53Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://raw.githubusercontent.com/DISIC/politique-de-contribution-open-source/master/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:35:53Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

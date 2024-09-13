@@ -6,22 +6,22 @@
   "licenseId": "OSET-PL-2.1",
   "crossRef": [
     {
-      "match": "false",
-      "url": "http://www.osetfoundation.org/public-license",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-05-22T17:28:32Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/OPL-2.1",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2024-05-22T17:28:33Z",
+      "timestamp": "2024-08-19T17:38:44Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://www.osetfoundation.org/public-license",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:38:45Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

@@ -6,22 +6,22 @@
   "licenseId": "3D-Slicer-1.0",
   "crossRef": [
     {
-      "match": "false",
-      "url": "https://slicer.org/LICENSE",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-05-22T17:20:08Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "true",
       "url": "https://github.com/Slicer/Slicer/blob/main/License.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-05-22T17:20:09Z",
+      "timestamp": "2024-08-19T17:43:03Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://slicer.org/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:43:04Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

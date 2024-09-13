@@ -10,45 +10,45 @@
       "url": "https://github.com/ncbi/datasets/blob/master/LICENSE.md",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-05-22T17:23:44Z",
+      "timestamp": "2024-08-19T17:48:07Z",
       "isWayBackLink": false,
       "order": 4
-    },
-    {
-      "match": "false",
-      "url": "https://github.com/ncbi/datasets/blob/0ea4cd16b61e5b799d9cc55aecfa016d6c9bd2bf/LICENSE.md",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-05-22T17:23:45Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
-      "url": "https://github.com/ncbi/sra-tools/blob/e8e5b6af4edc460156ad9ce5902d0779cffbf685/LICENSE",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-05-22T17:23:45Z",
-      "isWayBackLink": false,
-      "order": 0
     },
     {
       "match": "false",
       "url": "https://github.com/ncbi/egapx/blob/08930b9dec0c69b2d1a05e5153c7b95ef0a3eb0f/LICENSE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-05-22T17:23:45Z",
+      "timestamp": "2024-08-19T17:48:07Z",
       "isWayBackLink": false,
       "order": 3
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/ncbi/sra-tools/blob/e8e5b6af4edc460156ad9ce5902d0779cffbf685/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:48:08Z",
+      "isWayBackLink": false,
+      "order": 0
     },
     {
       "match": "false",
       "url": "https://github.com/ncbi/gprobe/blob/de64d30fee8b4c4013094d7d3139ea89b5dd1ace/LICENSE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-05-22T17:23:45Z",
+      "timestamp": "2024-08-19T17:48:08Z",
       "isWayBackLink": false,
       "order": 2
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/ncbi/datasets/blob/0ea4cd16b61e5b799d9cc55aecfa016d6c9bd2bf/LICENSE.md",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:48:08Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

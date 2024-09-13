@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://enterprise.dejacode.com/licenses/public/naist-2003/#license-text",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-05-22T17:18:58Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://github.com/nodejs/node/blob/4a19cc8947b1bba2b2d27816ec3d0edf9b28e503/LICENSE#L343",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-05-22T17:18:59Z",
+      "timestamp": "2024-08-19T17:35:46Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://enterprise.dejacode.com/licenses/public/naist-2003/#license-text",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:35:47Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

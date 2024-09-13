@@ -7,19 +7,10 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://www.unicode.org/license.txt",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-05-22T17:19:07Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "http://www.unicode.org/copyright.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-05-22T17:19:07Z",
+      "timestamp": "2024-08-19T17:43:24Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -28,9 +19,18 @@
       "url": "http://web.archive.org/web/20160823201924/http://www.unicode.org/copyright.html#License",
       "isValid": false,
       "isLive": false,
-      "timestamp": "2024-05-22T17:19:07Z",
+      "timestamp": "2024-08-19T17:43:24Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://www.unicode.org/license.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:43:24Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

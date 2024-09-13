@@ -33,7 +33,7 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "DTrack1234#"
     healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -b -o /dev/null
+      test: /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -b -o /dev/null
       interval: 15s
       timeout: 3s
       retries: 10
@@ -51,7 +51,8 @@ services:
       mssql:
         condition: service_healthy
     command:
-    - /opt/mssql-tools/bin/sqlcmd
+    - /opt/mssql-tools18/bin/sqlcmd
+    - -C
     - -S
     - mssql
     - -U

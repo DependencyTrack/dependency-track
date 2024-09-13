@@ -18,89 +18,64 @@
  */
 package org.dependencytrack.parser.trivy;
 
-import alpine.common.logging.Logger;
+import com.google.protobuf.util.Timestamps;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.parser.trivy.model.CVSS;
+import trivy.proto.common.CVSS;
 
 import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
+import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.trimToNull;
 
 public class TrivyParser {
 
-    private static final Logger LOGGER = Logger.getLogger(TrivyParser.class);
-
-    public Vulnerability parse(org.dependencytrack.parser.trivy.model.Vulnerability data) {
+    public Vulnerability parse(trivy.proto.common.Vulnerability data) {
         var vulnerability = new Vulnerability();
-        vulnerability.setSource(Vulnerability.Source.resolve(data.getVulnerabilityID()));
+        vulnerability.setSource(Vulnerability.Source.resolve(data.getVulnerabilityId()));
         vulnerability.setPatchedVersions(data.getFixedVersion());
 
         // get the id of the data record (vulnerability)
-        vulnerability.setVulnId(data.getVulnerabilityID());
+        vulnerability.setVulnId(data.getVulnerabilityId());
         vulnerability.setTitle(data.getTitle());
         vulnerability.setDescription(data.getDescription());
         vulnerability.setSeverity(parseSeverity(data.getSeverity()));
 
-        try {
-            vulnerability.setPublished(parseDate(data.getPublishedDate()));
+        if (data.hasPublishedDate()) {
+            vulnerability.setPublished(new Date(Timestamps.toMillis(data.getPublishedDate())));
             vulnerability.setCreated(vulnerability.getPublished());
-        } catch (ParseException ex) {
-            LOGGER.warn("Unable to parse published date %s".formatted(data.getPublishedDate()), ex);
         }
 
-        try {
-            vulnerability.setUpdated(parseDate(data.getLastModifiedDate()));
-        } catch (ParseException ex) {
-            LOGGER.warn("Unable to parse last modified date %s".formatted(data.getLastModifiedDate()), ex);
+        if (data.hasLastModifiedDate()) {
+            vulnerability.setUpdated(new Date(Timestamps.toMillis(data.getLastModifiedDate())));
         }
 
-        vulnerability.setReferences(addReferences(data.getReferences()));
+        vulnerability.setReferences(addReferences(data.getReferencesList()));
 
         // CWE
-        for (String id : data.getCweIDS()) {
+        for (String id : data.getCweIdsList()) {
             final Cwe cwe = CweResolver.getInstance().lookup(id);
             if (cwe != null) {
                 vulnerability.addCwe(cwe);
             }
         }
 
-        vulnerability = setCvssScore(data.getCvss().get(data.getSeveritySource()), vulnerability);
+        vulnerability = setCvssScore(data.getCvssMap().get(data.getSeveritySource()), vulnerability);
 
         return vulnerability;
     }
 
-    public Date parseDate(String input) throws ParseException {
-        if (input != null) {
-            String format = input.length() == 20 ? "yyyy-MM-dd'T'HH:mm:ss'Z'" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-            SimpleDateFormat formatter = new SimpleDateFormat(format, Locale.ENGLISH);
-            return formatter.parse(input);
-        }
-        return null;
-    }
-
-    public Severity parseSeverity(String severity) {
-
-        if (severity != null) {
-            if (severity.equalsIgnoreCase("CRITICAL")) {
-                return Severity.CRITICAL;
-            } else if (severity.equalsIgnoreCase("HIGH")) {
-                return Severity.HIGH;
-            } else if (severity.equalsIgnoreCase("MEDIUM")) {
-                return Severity.MEDIUM;
-            } else if (severity.equalsIgnoreCase("LOW")) {
-                return Severity.LOW;
-            } else {
-                return Severity.UNASSIGNED;
-            }
-        }
-        return Severity.UNASSIGNED;
+    public Severity parseSeverity(trivy.proto.common.Severity severity) {
+        return switch (severity) {
+            case CRITICAL -> Severity.CRITICAL;
+            case HIGH -> Severity.HIGH;
+            case MEDIUM -> Severity.MEDIUM;
+            case LOW -> Severity.LOW;
+            default -> Severity.UNASSIGNED;
+        };
     }
 
     public Vulnerability setCvssScore(CVSS cvss, Vulnerability vulnerability) {
@@ -118,7 +93,7 @@ public class TrivyParser {
         return vulnerability;
     }
 
-    public String addReferences(String[] references) {
+    public String addReferences(List<String> references) {
         final StringBuilder sb = new StringBuilder();
         for (String reference : references) {
             if (reference != null) {

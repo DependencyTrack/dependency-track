@@ -16,19 +16,19 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.parser.trivy.model;
+package org.dependencytrack.model;
 
-public class DataSource {
-    private String id;
-    private String name;
-    private String url;
+/**
+ * @since 4.12.0
+ */
+public enum BomValidationMode {
 
-    public String getID() { return id; }
-    public void setID(String value) { this.id = value; }
+    ENABLED,
 
-    public String getName() { return name; }
-    public void setName(String value) { this.name = value; }
+    DISABLED,
 
-    public String getURL() { return url; }
-    public void setURL(String value) { this.url = value; }
+    ENABLED_FOR_TAGS,
+
+    DISABLED_FOR_TAGS
+
 }

@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 public record TagListResponseItem(
         @Parameter(description = "Name of the tag", required = true) String name,
         @Parameter(description = "Number of projects assigned to this tag") long projectCount,
-        @Parameter(description = "Number of policies assigned to this tag") long policyCount
+        @Parameter(description = "Number of policies assigned to this tag") long policyCount,
+        @Parameter(description = "Number of notification rules assigned to this tag") long notificationRuleCount
 ) {
 }

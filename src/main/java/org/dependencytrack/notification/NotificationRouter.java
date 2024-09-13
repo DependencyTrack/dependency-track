@@ -26,6 +26,7 @@ import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
@@ -51,8 +52,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.notification.publisher.Publisher.CONFIG_TEMPLATE_KEY;
 import static org.dependencytrack.notification.publisher.Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY;
 
@@ -103,30 +106,75 @@ public class NotificationRouter implements Subscriber {
         }
     }
 
-    public Notification restrictNotificationToRuleProjects(final Notification initialNotification, final NotificationRule rule) {
-        Notification restrictedNotification = initialNotification;
-        if (canRestrictNotificationToRuleProjects(initialNotification, rule)) {
-            Set<String> ruleProjectsUuids = rule.getProjects().stream().map(Project::getUuid).map(UUID::toString).collect(Collectors.toSet());
-            restrictedNotification = new Notification();
-            restrictedNotification.setGroup(initialNotification.getGroup());
-            restrictedNotification.setLevel(initialNotification.getLevel());
-            restrictedNotification.scope(initialNotification.getScope());
-            restrictedNotification.setContent(initialNotification.getContent());
-            restrictedNotification.setTitle(initialNotification.getTitle());
-            restrictedNotification.setTimestamp(initialNotification.getTimestamp());
-            if (initialNotification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
-                Set<Project> restrictedProjects = subject.getAffectedProjects().stream().filter(project -> ruleProjectsUuids.contains(project.getUuid().toString())).collect(Collectors.toSet());
-                NewVulnerabilityIdentified restrictedSubject = new NewVulnerabilityIdentified(subject.getVulnerability(), subject.getComponent(), restrictedProjects, null);
-                restrictedNotification.setSubject(restrictedSubject);
-            }
+    private Notification restrictNotificationToRuleProjects(final Notification notification, final NotificationRule rule) {
+        if (!(notification.getSubject() instanceof final NewVulnerabilityIdentified subject)
+                || subject.getAffectedProjects() == null || subject.getAffectedProjects().isEmpty()) {
+            return notification;
         }
-        return restrictedNotification;
+
+        final boolean shouldFilterOnRuleProjects = rule.getProjects() != null && !rule.getProjects().isEmpty();
+        final boolean shouldFilterOnRuleTags = rule.getTags() != null && !rule.getTags().isEmpty();
+        if (!shouldFilterOnRuleProjects && !shouldFilterOnRuleTags) {
+            return notification;
+        }
+
+        final Predicate<Project> projectFilterPredicate;
+        if (shouldFilterOnRuleProjects && shouldFilterOnRuleTags) {
+            projectFilterPredicate = matchesAnyProjectOfRule(rule).or(hasAnyTagOfRule(rule));
+        } else if (shouldFilterOnRuleProjects) {
+            projectFilterPredicate = matchesAnyProjectOfRule(rule);
+        } else {
+            projectFilterPredicate = hasAnyTagOfRule(rule);
+        }
+
+        final Set<Project> filteredAffectedProjects = subject.getAffectedProjects().stream()
+                .filter(projectFilterPredicate)
+                .collect(Collectors.toSet());
+        if (filteredAffectedProjects.size() == subject.getAffectedProjects().size()) {
+            return notification;
+        }
+
+        final var filteredSubject = new NewVulnerabilityIdentified(
+                subject.getVulnerability(),
+                subject.getComponent(),
+                filteredAffectedProjects,
+                subject.getVulnerabilityAnalysisLevel()
+        );
+
+        return new Notification()
+                .group(notification.getGroup())
+                .scope(notification.getScope())
+                .level(notification.getLevel())
+                .title(notification.getTitle())
+                .content(notification.getContent())
+                .timestamp(notification.getTimestamp())
+                .subject(filteredSubject);
     }
 
-    private boolean canRestrictNotificationToRuleProjects(final Notification initialNotification, final NotificationRule rule) {
-        return initialNotification.getSubject() instanceof NewVulnerabilityIdentified
-                && rule.getProjects() != null
-                && !rule.getProjects().isEmpty();
+    private Predicate<Project> matchesAnyProjectOfRule(final NotificationRule rule) {
+        requireNonNull(rule.getProjects());
+
+        return project -> rule.getProjects().stream()
+                .map(Project::getUuid)
+                .anyMatch(project.getUuid()::equals);
+    }
+
+    private Predicate<Project> hasAnyTagOfRule(final NotificationRule rule) {
+        requireNonNull(rule.getTags());
+
+        return project -> {
+            if (project.getTags() == null || project.getTags().isEmpty()) {
+                return false;
+            }
+
+            final Set<String> projectTagNames = project.getTags().stream()
+                    .map(Tag::getName)
+                    .collect(Collectors.toSet());
+
+            return rule.getTags().stream()
+                    .map(Tag::getName)
+                    .anyMatch(projectTagNames::contains);
+        };
     }
 
     List<NotificationRule> resolveRules(final PublishContext ctx, final Notification notification) {
@@ -160,24 +208,7 @@ public class NotificationRouter implements Subscriber {
 
             if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
-                // If the rule specified one or more projects as targets, reduce the execution
-                // of the notification down to those projects that the rule matches and which
-                // also match project the component is included in.
-                // NOTE: This logic is slightly different from what is implemented in limitToProject()
-                for (final NotificationRule rule : result) {
-                    if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
-                        if (rule.getProjects() != null && !rule.getProjects().isEmpty()
-                                && subject.getComponent() != null && subject.getComponent().getProject() != null) {
-                            for (final Project project : rule.getProjects()) {
-                                if (subject.getComponent().getProject().getUuid().equals(project.getUuid()) || (Boolean.TRUE.equals(rule.isNotifyChildren() && checkIfChildrenAreAffected(project, subject.getComponent().getProject().getUuid())))) {
-                                    rules.add(rule);
-                                }
-                            }
-                        } else {
-                            rules.add(rule);
-                        }
-                    }
-                }
+                limitToProject(ctx, rules, result, notification, subject.getComponent().getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final NewVulnerableDependency subject) {
                 limitToProject(ctx, rules, result, notification, subject.getComponent().getProject());
@@ -218,44 +249,92 @@ public class NotificationRouter implements Subscriber {
      * of the notification down to those projects that the rule matches and which
      * also match projects affected by the vulnerability.
      */
-    private void limitToProject(final PublishContext ctx, final List<NotificationRule> applicableRules,
-                                final List<NotificationRule> rules, final Notification notification,
-                                final Project limitToProject) {
+    private void limitToProject(
+            final PublishContext ctx,
+            final List<NotificationRule> applicableRules,
+            final List<NotificationRule> rules,
+            final Notification notification,
+            final Project limitToProject
+    ) {
+        requireNonNull(limitToProject, "limitToProject must not be null");
+
         for (final NotificationRule rule : rules) {
             final PublishContext ruleCtx = ctx.withRule(rule);
-            if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
-                if (rule.getProjects() != null && !rule.getProjects().isEmpty()) {
-                    for (final Project project : rule.getProjects()) {
-                        if (project.getUuid().equals(limitToProject.getUuid())) {
-                            LOGGER.debug("Project %s is part of the \"limit to\" list of the rule; Rule is applicable (%s)"
-                                    .formatted(limitToProject.getUuid(), ruleCtx));
-                            applicableRules.add(rule);
-                        } else if (rule.isNotifyChildren()) {
-                            final boolean isChildOfLimitToProject = checkIfChildrenAreAffected(project, limitToProject.getUuid());
-                            if (isChildOfLimitToProject) {
-                                LOGGER.debug("Project %s is child of \"limit to\" project %s; Rule is applicable (%s)"
-                                        .formatted(limitToProject.getUuid(), project.getUuid(), ruleCtx));
-                                applicableRules.add(rule);
-                            } else {
-                                LOGGER.debug("Project %s is not a child of \"limit to\" project %s; Rule is not applicable (%s)"
-                                        .formatted(limitToProject.getUuid(), project.getUuid(), ruleCtx));
-                            }
+
+            if (!rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
+                continue;
+            }
+
+            final boolean isLimitedToProjects = rule.getProjects() != null && !rule.getProjects().isEmpty();
+            final boolean isLimitedToTags = rule.getTags() != null && !rule.getTags().isEmpty();
+            if (!isLimitedToProjects && !isLimitedToTags) {
+                LOGGER.debug("Rule is not limited to projects or tags; Rule is applicable (%s)".formatted(ruleCtx));
+                applicableRules.add(rule);
+                continue;
+            }
+
+            if (isLimitedToTags) {
+                final Predicate<Project> tagMatchPredicate = project -> (project.isActive() == null || project.isActive())
+                        && project.getTags() != null
+                        && project.getTags().stream().anyMatch(rule.getTags()::contains);
+
+                if (tagMatchPredicate.test(limitToProject)) {
+                    LOGGER.debug("""
+                            Project %s is tagged with any of the "limit to" tags; \
+                            Rule is applicable (%s)""".formatted(limitToProject.getUuid(), ruleCtx));
+                    applicableRules.add(rule);
+                    continue;
+                } else if (rule.isNotifyChildren() && isChildOfProjectMatching(limitToProject, tagMatchPredicate)) {
+                    LOGGER.debug("""
+                            Project %s is child of a project tagged with any of the "limit to" tags; \
+                            Rule is applicable (%s)""".formatted(limitToProject.getUuid(), ruleCtx));
+                    applicableRules.add(rule);
+                    continue;
+                }
+            } else {
+                LOGGER.debug("Rule is not limited to tags (%s)".formatted(ruleCtx));
+            }
+
+            if (isLimitedToProjects) {
+                var matched = false;
+                for (final Project project : rule.getProjects()) {
+                    if (project.getUuid().equals(limitToProject.getUuid())) {
+                        LOGGER.debug("Project %s is part of the \"limit to\" list of the rule; Rule is applicable (%s)"
+                                .formatted(limitToProject.getUuid(), ruleCtx));
+                        matched = true;
+                        break;
+                    } else if (rule.isNotifyChildren()) {
+                        final boolean isChildOfLimitToProject = checkIfChildrenAreAffected(project, limitToProject.getUuid());
+                        if (isChildOfLimitToProject) {
+                            LOGGER.debug("Project %s is child of \"limit to\" project %s; Rule is applicable (%s)"
+                                    .formatted(limitToProject.getUuid(), project.getUuid(), ruleCtx));
+                            matched = true;
+                            break;
                         } else {
-                            LOGGER.debug("Project %s is not part of the \"limit to\" list of the rule; Rule is not applicable (%s)"
-                                    .formatted(limitToProject.getUuid(), ruleCtx));
+                            LOGGER.debug("Project %s is not a child of \"limit to\" project %s (%s)"
+                                    .formatted(limitToProject.getUuid(), project.getUuid(), ruleCtx));
                         }
                     }
-                } else {
-                    LOGGER.debug("Rule is not limited to projects; Rule is applicable (%s)".formatted(ruleCtx));
-                    applicableRules.add(rule);
                 }
+
+                if (matched) {
+                    applicableRules.add(rule);
+                } else {
+                    LOGGER.debug("Project %s is not part of the \"limit to\" list of the rule; Rule is not applicable (%s)"
+                            .formatted(limitToProject.getUuid(), ruleCtx));
+                }
+            } else {
+                LOGGER.debug("Rule is not limited to projects (%s)".formatted(ruleCtx));
             }
         }
+
         LOGGER.debug("Applicable rules: %s (%s)"
                 .formatted(applicableRules.stream().map(NotificationRule::getName).collect(Collectors.joining(", ")), ctx));
     }
 
     private boolean checkIfChildrenAreAffected(Project parent, UUID uuid) {
+        // TODO: Making this a recursive SQL query would be a lot more efficient.
+
         boolean isChild = false;
         if (parent.getChildren() == null || parent.getChildren().isEmpty()) {
             return false;
@@ -269,4 +348,20 @@ public class NotificationRouter implements Subscriber {
         }
         return isChild;
     }
+
+    private boolean isChildOfProjectMatching(final Project childProject, final Predicate<Project> matchFunction) {
+        // TODO: Making this a recursive SQL query would be a lot more efficient.
+
+        Project parent = childProject.getParent();
+        while (parent != null) {
+            if (matchFunction.test(parent)) {
+                return true;
+            }
+
+            parent = parent.getParent();
+        }
+
+        return false;
+    }
+
 }

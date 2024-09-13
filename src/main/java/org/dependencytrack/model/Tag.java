@@ -66,6 +66,11 @@ public class Tag implements Serializable {
     @Persistent
     @JsonIgnore
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
+    private List<NotificationRule> notificationRules;
+
+    @Persistent
+    @JsonIgnore
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     private List<Policy> policies;
 
     @Persistent
@@ -94,6 +99,14 @@ public class Tag implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public List<NotificationRule> getNotificationRules() {
+        return notificationRules;
+    }
+
+    public void setNotificationRules(final List<NotificationRule> notificationRules) {
+        this.notificationRules = notificationRules;
     }
 
     public List<Policy> getPolicies() {

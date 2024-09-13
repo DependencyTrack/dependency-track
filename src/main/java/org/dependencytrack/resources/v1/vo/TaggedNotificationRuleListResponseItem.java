@@ -16,21 +16,17 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.parser.trivy.model;
+package org.dependencytrack.resources.v1.vo;
 
-import java.util.ArrayList;
+import io.swagger.v3.oas.annotations.Parameter;
 
-public class PackageInfo {
-    private ArrayList<Package> packages;
+import java.util.UUID;
 
-    public PackageInfo() {
-        this.packages = new ArrayList<Package>();
-    }
-
-    public ArrayList<Package> getPackages() { return packages; }
-    public void setPackages(ArrayList<Package> value) { this.packages = value; }
-    public void addPackage(Package value) { this.packages.add(value); }
+/**
+ * @since 4.12.0
+ */
+public record TaggedNotificationRuleListResponseItem(
+        @Parameter(description = "UUID of the notification rule", required = true) UUID uuid,
+        @Parameter(description = "Name of the notification rule", required = true) String name
+) {
 }
-
-
-

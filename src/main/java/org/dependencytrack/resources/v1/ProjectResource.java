@@ -290,6 +290,7 @@ public class ProjectResource extends AlpineResource {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonProject, "author"),
+                validator.validateProperty(jsonProject, "authors"),
                 validator.validateProperty(jsonProject, "publisher"),
                 validator.validateProperty(jsonProject, "group"),
                 validator.validateProperty(jsonProject, "name"),
@@ -353,7 +354,7 @@ public class ProjectResource extends AlpineResource {
     public Response updateProject(Project jsonProject) {
         final Validator validator = super.getValidator();
         failOnValidationError(
-                validator.validateProperty(jsonProject, "author"),
+                validator.validateProperty(jsonProject, "authors"),
                 validator.validateProperty(jsonProject, "publisher"),
                 validator.validateProperty(jsonProject, "group"),
                 validator.validateProperty(jsonProject, "name"),
@@ -430,6 +431,7 @@ public class ProjectResource extends AlpineResource {
         final Validator validator = getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonProject, "author"),
+                validator.validateProperty(jsonProject, "authors"),
                 validator.validateProperty(jsonProject, "publisher"),
                 validator.validateProperty(jsonProject, "group"),
                 jsonProject.getName() != null ? validator.validateProperty(jsonProject, "name") : Set.of(),
@@ -455,7 +457,7 @@ public class ProjectResource extends AlpineResource {
                 if (modified && qm.doesProjectExist(project.getName(), project.getVersion())) {
                     return Response.status(Response.Status.CONFLICT).entity("A project with the specified name and version already exists.").build();
                 }
-                modified |= setIfDifferent(jsonProject, project, Project::getAuthor, Project::setAuthor);
+                modified |= setIfDifferent(jsonProject, project, Project::getAuthors, Project::setAuthors);
                 modified |= setIfDifferent(jsonProject, project, Project::getPublisher, Project::setPublisher);
                 modified |= setIfDifferent(jsonProject, project, Project::getGroup, Project::setGroup);
                 modified |= setIfDifferent(jsonProject, project, Project::getDescription, Project::setDescription);

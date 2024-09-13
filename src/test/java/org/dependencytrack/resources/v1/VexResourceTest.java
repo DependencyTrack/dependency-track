@@ -26,6 +26,7 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.BomValidationMode;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
@@ -43,11 +44,15 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE;
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 public class VexResourceTest extends ResourceTest {
@@ -438,11 +443,11 @@ public class VexResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
-          BOM_VALIDATION_ENABLED.getGroupName(),
-          BOM_VALIDATION_ENABLED.getPropertyName(),
-          "true",
-          BOM_VALIDATION_ENABLED.getPropertyType(),
-          null
+                BOM_VALIDATION_MODE.getGroupName(),
+                BOM_VALIDATION_MODE.getPropertyName(),
+                BomValidationMode.ENABLED.name(),
+                BOM_VALIDATION_MODE.getPropertyType(),
+                BOM_VALIDATION_MODE.getDescription()
         );
 
         final var project = new Project();
@@ -494,11 +499,11 @@ public class VexResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
-          BOM_VALIDATION_ENABLED.getGroupName(),
-          BOM_VALIDATION_ENABLED.getPropertyName(),
-          "true",
-          BOM_VALIDATION_ENABLED.getPropertyType(),
-          null
+                BOM_VALIDATION_MODE.getGroupName(),
+                BOM_VALIDATION_MODE.getPropertyName(),
+                BomValidationMode.ENABLED.name(),
+                BOM_VALIDATION_MODE.getPropertyType(),
+                BOM_VALIDATION_MODE.getDescription()
         );
 
         final var project = new Project();
@@ -540,6 +545,185 @@ public class VexResourceTest extends ResourceTest {
                   ]
                 }
                 """);
+    }
+
+    @Test
+    public void uploadVexWithValidationModeDisabledTest() {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        qm.createConfigProperty(
+                BOM_VALIDATION_MODE.getGroupName(),
+                BOM_VALIDATION_MODE.getPropertyName(),
+                BomValidationMode.DISABLED.name(),
+                BOM_VALIDATION_MODE.getPropertyType(),
+                BOM_VALIDATION_MODE.getDescription()
+        );
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final String encodedBom = Base64.getEncoder().encodeToString("""
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.2",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "foo",
+                      "name": "acme-library",
+                      "version": "1.0.0"
+                    }
+                  ]
+                }
+                """.getBytes());
+
+        final Response response = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    public void uploadVexWithValidationModeEnabledForTagsTest() {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        qm.createConfigProperty(
+                BOM_VALIDATION_MODE.getGroupName(),
+                BOM_VALIDATION_MODE.getPropertyName(),
+                BomValidationMode.ENABLED_FOR_TAGS.name(),
+                BOM_VALIDATION_MODE.getPropertyType(),
+                BOM_VALIDATION_MODE.getDescription()
+        );
+        qm.createConfigProperty(
+                BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
+                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
+                "[\"foo\"]",
+                BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
+                BOM_VALIDATION_TAGS_INCLUSIVE.getDescription()
+        );
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        qm.bind(project, List.of(qm.createTag("foo")));
+
+        final String encodedBom = Base64.getEncoder().encodeToString("""
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.2",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "foo",
+                      "name": "acme-library",
+                      "version": "1.0.0"
+                    }
+                  ]
+                }
+                """.getBytes());
+
+        Response response = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(400);
+
+        qm.bind(project, Collections.emptyList());
+
+        response = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    public void uploadVexWithValidationModeDisabledForTagsTest() {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        qm.createConfigProperty(
+                BOM_VALIDATION_MODE.getGroupName(),
+                BOM_VALIDATION_MODE.getPropertyName(),
+                BomValidationMode.DISABLED_FOR_TAGS.name(),
+                BOM_VALIDATION_MODE.getPropertyType(),
+                BOM_VALIDATION_MODE.getDescription()
+        );
+        qm.createConfigProperty(
+                BOM_VALIDATION_TAGS_EXCLUSIVE.getGroupName(),
+                BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyName(),
+                "[\"foo\"]",
+                BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
+                BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription()
+        );
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        qm.bind(project, List.of(qm.createTag("foo")));
+
+        final String encodedBom = Base64.getEncoder().encodeToString("""
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.2",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "foo",
+                      "name": "acme-library",
+                      "version": "1.0.0"
+                    }
+                  ]
+                }
+                """.getBytes());
+
+        Response response = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.bind(project, Collections.emptyList());
+
+        response = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedBom), MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(400);
     }
 
     @Test

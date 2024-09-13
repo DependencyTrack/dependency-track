@@ -55,6 +55,8 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -67,7 +69,6 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
-import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_ENABLED;
 
 public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
@@ -211,7 +212,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(component.getSupplier().getContacts().get(0).getEmail()).isEqualTo("foojr@bar.com");
         assertThat(component.getSupplier().getContacts().get(0).getPhone()).isEqualTo("123-456-7890");
 
-        assertThat(component.getAuthor()).isEqualTo("Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
+        assertThat(component.getAuthors().get(0).getName()).isEqualTo("Sometimes this field is long because it is composed of a list of authors......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................");
         assertThat(component.getPublisher()).isEqualTo("Example Incorporated");
         assertThat(component.getGroup()).isEqualTo("com.example");
         assertThat(component.getName()).isEqualTo("xmlutil");
@@ -290,14 +291,6 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @Test
     public void informWithInvalidCycloneDxBomTest() throws Exception {
-        qm.createConfigProperty(
-                BOM_VALIDATION_ENABLED.getGroupName(),
-                BOM_VALIDATION_ENABLED.getPropertyName(),
-                "true",
-                BOM_VALIDATION_ENABLED.getPropertyType(),
-                null
-        );
-
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         final byte[] bomBytes = """
@@ -1029,6 +1022,49 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         });
     }
 
+    @Test
+    public void informWithLicenseResolutionByIdOrNameTest() {
+        final var license = new License();
+        license.setLicenseId("MIT");
+        license.setName("MIT License");
+        qm.persist(license);
+
+        final var project = new Project();
+        project.setName("acme-license-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b80",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib-x",
+                      "licenses": [
+                        {
+                          "license": {
+                            "name": "MIT"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes);
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getResolvedLicense()).isNotNull();
+            assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("MIT");
+        });
+    }
+
     @Test // https://github.com/DependencyTrack/dependency-track/issues/1905
     public void informIssue1905Test() throws Exception {
         final var project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -1291,6 +1327,25 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
             assertThat(author.getName()).isEqualTo("bar");
             assertThat(author.getEmail()).isEqualTo("bar@example.com");
         });
+    }
+
+    @Test
+    public void informIssue3936Test() throws Exception{
+        
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        List<String> boms = new ArrayList<>(Arrays.asList("/unit/bom-issue3936-authors.json", "/unit/bom-issue3936-author.json", "/unit/bom-issue3936-both.json"));
+        for(String bom : boms){
+          final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
+                  resourceToByteArray(bom));
+          new BomUploadProcessingTask().inform(bomUploadEvent);
+          awaitBomProcessedNotification(bomUploadEvent);
+
+          assertThat(qm.getAllComponents(project)).isNotEmpty();
+          Component component = qm.getAllComponents().getFirst();
+          assertThat(component.getAuthor()).isEqualTo("Joane Doe et al.");
+          assertThat(component.getAuthors().get(0).getName()).isEqualTo("Joane Doe et al.");
+          assertThat(component.getAuthors().size()).isEqualTo(1);
+        }
     }
 
     private void awaitBomProcessedNotification(final BomUploadEvent bomUploadEvent) {

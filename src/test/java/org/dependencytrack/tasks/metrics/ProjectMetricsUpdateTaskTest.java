@@ -298,45 +298,6 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
         assertThat(metrics.getInheritedRiskScore()).isEqualTo(25.0);
     }
 
-    @Test
-    public void testCollectionProjectMetricsSemVerChild() {
-        Tag tag = qm.createTag("prod");
-        var project = new Project();
-        project.setActive(true);
-        project.setName("testCollectionProjectMetricsSemVerChild");
-        project.setCollectionLogic(ProjectCollectionLogic.HIGHEST_SEMVER_CHILD);
-        project = qm.createProject(project, List.of(), false);
-        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
-
-        // add vulnerable projects as children
-        this.prepareProjectWithVulns("test8_", project, "1.2.3");
-        Project child2 = this.prepareProjectWithVulns("test9_", project, "1.5.0");
-        this.prepareProjectWithVulns("test10_", project, "1.2.4");
-
-        // add another vulnerability to second child
-        Vulnerability vuln2 = this.prepareVulnerability("test11_");
-        this.prepareVulnerableComponent("test11_vulnComponent", vuln2, child2);
-        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(child2.getUuid()));
-
-
-        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
-
-        final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
-        assertThat(metrics.getComponents()).isEqualTo(4);
-        assertThat(metrics.getVulnerableComponents()).isEqualTo(3); // Finding for 1 components is suppressed
-        assertThat(metrics.getCritical()).isZero();
-        assertThat(metrics.getHigh()).isEqualTo(3); // 1 are suppressed
-        assertThat(metrics.getMedium()).isZero();
-        assertThat(metrics.getLow()).isZero();
-        assertThat(metrics.getUnassigned()).isZero();
-        assertThat(metrics.getVulnerabilities()).isEqualTo(3); // 1 are suppressed
-        assertThat(metrics.getSuppressed()).isEqualTo(1);
-        assertThat(metrics.getFindingsTotal()).isEqualTo(3); // 1 are suppressed
-        assertThat(metrics.getFindingsAudited()).isEqualTo(1);
-        assertThat(metrics.getFindingsUnaudited()).isEqualTo(2);
-        assertThat(metrics.getInheritedRiskScore()).isEqualTo(15.0);
-    }
-
     private Project prepareProjectWithVulns(String prefix, Project parent, String version) {
         var project = new Project();
         project.setActive(true);

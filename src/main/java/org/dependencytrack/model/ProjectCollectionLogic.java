@@ -42,8 +42,7 @@ public enum ProjectCollectionLogic {
      */
     AGGREGATE_DIRECT_CHILDREN_WITH_TAG,
     /**
-     * Find the child with the highest SemVer version and show only that child's data.
-     * Ignores children not using SemVer versions.
+     * Aggregate all direct children marked with isLatest flag.
      */
-    HIGHEST_SEMVER_CHILD
+    LATEST_VERSION_CHILDREN
 }

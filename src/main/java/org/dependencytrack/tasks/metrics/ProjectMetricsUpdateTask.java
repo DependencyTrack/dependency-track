@@ -22,7 +22,6 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.ProjectMetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
 import org.dependencytrack.model.Component;
@@ -37,13 +36,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.Comparator;
 import java.util.Map;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 /**
  * A {@link Subscriber} task that updates {@link Project} metrics.
@@ -53,15 +47,6 @@ import java.util.stream.IntStream;
 public class ProjectMetricsUpdateTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(ProjectMetricsUpdateTask.class);
-
-    /**
-     * captures simplified Semver Versions with optional epoch, ignoring build number or other addons
-     * format like: [1:]1[.2[.3]][-alpha123+34234] --> consideres only 1:1.2.3
-     */
-    protected static final Pattern VERSION_PATTERN = Pattern.compile(
-            "^(?:(.*):)?v?(\\d+[a-z]*)?(?:\\.(\\d+[a-z]*))?(?:\\.(\\d+[a-z]*))?.*$",
-            Pattern.CASE_INSENSITIVE
-    );
 
     @Override
     public void inform(final Event e) {
@@ -92,7 +77,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                 case NONE -> this.updateRegularProjectMetrics(project, pm, counters);
                 case AGGREGATE_DIRECT_CHILDREN -> this.updateAggregateDirectChildrenCollectionMetrics(project, pm, counters);
                 case AGGREGATE_DIRECT_CHILDREN_WITH_TAG -> this.updateAggregateDirectChildrenWithTagCollectionMetrics(project, pm, counters);
-                case HIGHEST_SEMVER_CHILD -> this.updateHighestSemVerChildCollectionMetrics(project, pm, counters);
+                case LATEST_VERSION_CHILDREN -> this.updateLatestVersionChildrenCollectionMetrics(project, pm, counters);
             }
 
             AtomicBoolean metricsChanged = new AtomicBoolean(false);
@@ -193,7 +178,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
         LOGGER.debug("Fetching metrics of children of collection project " + project.getUuid() +
                 " using collection logic " + project.getCollectionLogic());
 
-        Query subQuery = pm.newQuery(ProjectMetrics.class);
+        Query<ProjectMetrics> subQuery = pm.newQuery(ProjectMetrics.class);
         subQuery.setFilter("project == :project");
         subQuery.setResult("max(lastOccurrence)");
 
@@ -223,7 +208,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                 " of project " + project.getUuid() + " using collection logic " +
                 project.getCollectionLogic());
 
-        Query subQuery = pm.newQuery(ProjectMetrics.class);
+        Query<ProjectMetrics> subQuery = pm.newQuery(ProjectMetrics.class);
         subQuery.setFilter("project == :project");
         subQuery.setResult("max(lastOccurrence)");
 
@@ -244,43 +229,32 @@ public class ProjectMetricsUpdateTask implements Subscriber {
         }
     }
 
-    private void updateHighestSemVerChildCollectionMetrics(final Project project, final PersistenceManager pm, final Counters counters) {
-        // Optimized query to quickly get project IDs and versions only, we don't need other project data
-        final String jdoql = "SELECT id, version FROM org.dependencytrack.model.Project WHERE parent.id == :parentId && " +
-                "(active == true || active == null) && version != null && version.length() != 0";
-        final Query<Object[]> query = pm.newQuery(JDOQuery.JDOQL_QUERY_LANGUAGE, jdoql);
-        query.setResult("id, version");
+    private void updateLatestVersionChildrenCollectionMetrics(final Project project, final PersistenceManager pm, final Counters counters) {
+        LOGGER.warn("Collection logic LATEST_VERSION_CHILDREN not yet implemented. Waiting for https://github.com/DependencyTrack/dependency-track/issues/4148");
+        /*
+        TODO: Enable and test once #4148 is implemented
+        TODO: Create Test case in ProjectMetricsUpdateTaskTest after implementation
+        LOGGER.debug("Fetching metrics of children of collection project " + project.getUuid() +
+                " using collection logic " + project.getCollectionLogic());
 
-        final List<Object[]> projectVersions = (List<Object[]>)query.execute(project.getId());
-        if(projectVersions.isEmpty()) {
-            return;
-        }
-        // Find the highest version. this supports a simplified SemVer versioning with optional epoch,
-        // ignoring any extra buildnumber or similar.
-        // Any other version text is sorted lowest and only shows up if no numeric or SemVer version is available.
-        // Examples: "123123", "1.1.2", "1.0.0", "1:0.0.1", "4.4.2-alpha.2", "1.244.43+asd2"
-        Comparator<Object[]> versionComparator = Comparator.comparing(
-                p -> VERSION_PATTERN.matcher((String)p[1]).results()
-                        .flatMap(
-                                mr -> IntStream.rangeClosed(1, mr.groupCount())
-                                        .mapToObj(mr::group)
-                        )
-                        .mapToInt(val -> val == null ? 0 : Integer.parseInt(val))
-                        .toArray(),
-                Arrays::compare);
-        Object[] highestProject = Collections.max(projectVersions, versionComparator);
+        Query subQuery = pm.newQuery(ProjectMetrics.class);
+        subQuery.setFilter("project == :project");
+        subQuery.setResult("max(lastOccurrence)");
 
-        // get metrics of highest version
-        LOGGER.debug("Fetching metrics of highest version child " + highestProject[1] +
-                " of project " + project.getUuid() + " using collection logic " +
-                project.getCollectionLogic());
-        final Query<ProjectMetrics> metricsQuery = pm.newQuery(ProjectMetrics.class);
-        metricsQuery.setFilter("project.id == :projectId");
-        metricsQuery.setParameters(highestProject[0]);
-        metricsQuery.setOrdering("lastOccurrence desc");
-        metricsQuery.setRange(0, 1);
-        final ProjectMetrics metrics = metricsQuery.executeUnique();
-        this.addToCounters(counters, metrics);
+        final Query<ProjectMetrics> query = pm.newQuery(ProjectMetrics.class);
+        query.setFilter("project.parent == :parentProject && " +
+                "(project.active == true || project.active == null) " +
+                "&& project.isLatest == true" +
+                "&& lastOccurrence == maxLastOccurrence");
+        query.declareVariables("java.util.Date maxLastOccurrence");
+        query.addSubquery(subQuery, "java.util.Date maxLastOccurrence", null, "this.project");
+
+        query.setParameters(project);
+        final List<ProjectMetrics> childrenMetrics = query.executeList();
+        // Hint: There could be multiple children with isLatest==true from different project parts, so we aggregate those.
+        for (ProjectMetrics metrics : childrenMetrics) {
+            this.addToCounters(counters, metrics);
+        }*/
     }
 
     private List<Component> fetchNextComponentsPage(final PersistenceManager pm, final Project project, final Long lastId) throws Exception {

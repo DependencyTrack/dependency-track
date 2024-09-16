@@ -252,7 +252,7 @@ public class BomResourceTest extends ResourceTest {
                               "name": "projectSupplier"
                             },
                             "name": "acme-app",
-                            "version": "SNAPSHOT"
+                            "version": ""
                         },
                         "manufacture": {
                           "name": "projectManufacturer"
@@ -492,7 +492,7 @@ public class BomResourceTest extends ResourceTest {
                             "type": "application",
                             "bom-ref": "${json-unit.matches:projectUuid}",
                             "name": "acme-app",
-                            "version": "SNAPSHOT"
+                            "version": ""
                         },
                         "tools": [
                             {
@@ -686,7 +686,7 @@ public class BomResourceTest extends ResourceTest {
                             "type": "application",
                             "bom-ref": "${json-unit.matches:projectUuid}",
                             "name": "acme-app",
-                            "version": "SNAPSHOT"
+                            "version": ""
                         },
                         "tools": [
                             {

@@ -7,22 +7,22 @@
   "licenseId": "NCSA",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/NCSA",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-05-22T17:29:51Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "http://otm.illinois.edu/uiuc_openSource",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-05-22T17:29:51Z",
+      "timestamp": "2024-08-19T17:50:14Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/NCSA",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:50:14Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

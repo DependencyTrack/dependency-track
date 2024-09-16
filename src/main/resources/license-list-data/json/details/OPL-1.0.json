@@ -7,22 +7,22 @@
   "licenseId": "OPL-1.0",
   "crossRef": [
     {
-      "match": "false",
-      "url": "https://fedoraproject.org/wiki/Licensing/Open_Public_License",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-05-22T17:18:47Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "N/A",
       "url": "http://old.koalateam.com/jackaroo/OPL_1_0.TXT",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2024-05-22T17:18:47Z",
+      "timestamp": "2024-08-19T17:35:28Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/Open_Public_License",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:35:29Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

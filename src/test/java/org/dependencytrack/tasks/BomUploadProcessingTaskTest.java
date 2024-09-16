@@ -53,6 +53,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.jdo.JDOObjectNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
@@ -980,6 +982,72 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void informWithExistingDuplicateComponentPropertiesAndBomWithDuplicateComponentProperties() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setClassifier(Classifier.LIBRARY);
+        qm.persist(component);
+
+        final var componentPropertyA = new ComponentProperty();
+        componentPropertyA.setComponent(component);
+        componentPropertyA.setPropertyName("foo");
+        componentPropertyA.setPropertyValue("bar");
+        componentPropertyA.setPropertyType(PropertyType.STRING);
+        qm.persist(componentPropertyA);
+
+        final var componentPropertyB = new ComponentProperty();
+        componentPropertyB.setComponent(component);
+        componentPropertyB.setPropertyName("foo");
+        componentPropertyB.setPropertyValue("bar");
+        componentPropertyB.setPropertyType(PropertyType.STRING);
+        qm.persist(componentPropertyB);
+
+        final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()), """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib",
+                      "properties": [
+                        {
+                          "name": "foo",
+                          "value": "bar"
+                        },
+                        {
+                          "name": "foo",
+                          "value": "bar"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes());
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+
+        qm.getPersistenceManager().evictAll();
+        assertThatNoException()
+                .isThrownBy(() -> qm.getPersistenceManager().refresh(componentPropertyA));
+        assertThatExceptionOfType(JDOObjectNotFoundException.class)
+                .isThrownBy(() -> qm.getPersistenceManager().refresh(componentPropertyB));
+        assertThat(component.getProperties()).satisfiesExactly(property -> {
+            assertThat(property.getGroupName()).isNull();
+            assertThat(property.getPropertyName()).isEqualTo("foo");
+            assertThat(property.getPropertyValue()).isEqualTo("bar");
+            assertThat(property.getUuid()).isEqualTo(componentPropertyA.getUuid());
+        });
+    }
+
+    @Test
     public void informWithLicenseResolutionByNameTest() {
         final var license = new License();
         license.setLicenseId("MIT");
@@ -1062,6 +1130,45 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
             assertThat(component.getResolvedLicense()).isNotNull();
             assertThat(component.getResolvedLicense().getLicenseId()).isEqualTo("MIT");
+        });
+    }
+
+    @Test
+    public void informWithEmptyComponentAndServiceNameTest() {
+        final var project = new Project();
+        project.setName("acme-license-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b80",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": ""
+                    }
+                  ],
+                  "services": [
+                    {
+                      "name": ""
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes);
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getName()).isEqualTo("-");
+        });
+        assertThat(qm.getAllServiceComponents(project)).satisfiesExactly(service -> {
+            assertThat(service.getName()).isEqualTo("-");
         });
     }
 
@@ -1331,7 +1438,6 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @Test
     public void informIssue3936Test() throws Exception{
-        
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         List<String> boms = new ArrayList<>(Arrays.asList("/unit/bom-issue3936-authors.json", "/unit/bom-issue3936-author.json", "/unit/bom-issue3936-both.json"));
         for(String bom : boms){

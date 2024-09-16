@@ -75,6 +75,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.util.Objects.requireNonNullElse;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
@@ -167,7 +168,7 @@ public class ModelConverter {
         component.setSupplier(convert(cdxComponent.getSupplier()));
         component.setClassifier(convertClassifier(cdxComponent.getType()).orElse(Classifier.LIBRARY));
         component.setGroup(trimToNull(cdxComponent.getGroup()));
-        component.setName(trimToNull(cdxComponent.getName()));
+        component.setName(requireNonNullElse(trimToNull(cdxComponent.getName()), "-"));
         component.setVersion(trimToNull(cdxComponent.getVersion()));
         component.setDescription(trimToNull(cdxComponent.getDescription()));
         component.setCopyright(trimToNull(cdxComponent.getCopyright()));
@@ -325,7 +326,7 @@ public class ModelConverter {
         final var service = new ServiceComponent();
         service.setBomRef(useOrGenerateRandomBomRef(cdxService.getBomRef()));
         service.setGroup(trimToNull(cdxService.getGroup()));
-        service.setName(trimToNull(cdxService.getName()));
+        service.setName(requireNonNullElse(trimToNull(cdxService.getName()), "-"));
         service.setVersion(trimToNull(cdxService.getVersion()));
         service.setDescription(trimToNull(cdxService.getDescription()));
         service.setAuthenticated(cdxService.getAuthenticated());
@@ -708,7 +709,7 @@ public class ModelConverter {
             cycloneComponent.setGroup(StringUtils.trimToNull(project.getGroup()));
             cycloneComponent.setName(StringUtils.trimToNull(project.getName()));
             if (StringUtils.trimToNull(project.getVersion()) == null) {
-                cycloneComponent.setVersion("SNAPSHOT"); // Version is required per CycloneDX spec
+                cycloneComponent.setVersion(""); // Version is required per CycloneDX spec
             } else {
                 cycloneComponent.setVersion(StringUtils.trimToNull(project.getVersion()));
             }

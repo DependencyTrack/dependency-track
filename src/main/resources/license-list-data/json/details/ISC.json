@@ -9,19 +9,10 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://www.isc.org/downloads/software-support-policy/isc-license/",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-05-22T17:27:22Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://www.isc.org/licenses/",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-05-22T17:27:22Z",
+      "timestamp": "2024-08-19T17:35:54Z",
       "isWayBackLink": false,
       "order": 0
     },
@@ -30,9 +21,18 @@
       "url": "https://opensource.org/licenses/ISC",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-05-22T17:27:22Z",
+      "timestamp": "2024-08-19T17:35:54Z",
       "isWayBackLink": false,
       "order": 2
+    },
+    {
+      "match": "false",
+      "url": "https://www.isc.org/downloads/software-support-policy/isc-license/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:35:54Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

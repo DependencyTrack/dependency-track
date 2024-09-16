@@ -90,7 +90,8 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
                     LOGGER.debug("Metrics of project " + uuid + " changed");
-                    final boolean collectionLogicChanged = latestMetrics != null && latestMetrics.getCollectionLogic() != project.getCollectionLogic();
+                    final boolean collectionLogicChanged = latestMetrics != null &&
+                            latestMetrics.getCollectionLogic() != project.getCollectionLogic();
                     final ProjectMetrics metrics = counters.createProjectMetrics(project, collectionLogicChanged);
                     pm.makePersistent(metrics);
                 }

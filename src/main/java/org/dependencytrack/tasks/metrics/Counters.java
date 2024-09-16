@@ -223,7 +223,7 @@ final class Counters {
                 || comparedTo.getPolicyViolationsOperationalUnaudited() != this.policyViolationsOperationalUnaudited
                 || comparedTo.getComponents() != this.components
                 || comparedTo.getVulnerableComponents() != this.vulnerableComponents
-                || comparedTo.getCollectionLogic() !=  this.projectCollectionLogic;
+                || comparedTo.getCollectionLogic() != this.projectCollectionLogic;
     }
 
     boolean hasChanged(final PortfolioMetrics comparedTo) {

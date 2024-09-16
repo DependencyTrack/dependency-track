@@ -436,7 +436,8 @@ public class ProjectMetrics implements Serializable {
     public ProjectCollectionLogic getCollectionLogic() { return collectionLogic; }
 
     public void setCollectionLogic(ProjectCollectionLogic collectionLogic) {
-        this.collectionLogic = collectionLogic;
+        // convert old NULL values from DB to NONE
+        this.collectionLogic = collectionLogic != null ? collectionLogic : ProjectCollectionLogic.NONE;
     }
 
     public Boolean isCollectionLogicChanged() { return collectionLogicChanged; }

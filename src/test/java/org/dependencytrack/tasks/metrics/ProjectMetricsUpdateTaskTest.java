@@ -67,6 +67,8 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
         assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
         assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
         assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+        assertThat(metrics.getCollectionLogic()).isEqualTo(ProjectCollectionLogic.NONE);
+        assertThat(metrics.isCollectionLogicChanged()).isFalse();
 
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getLastInheritedRiskScore()).isZero();
@@ -217,6 +219,33 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
         assertThat(componentUnaudited.getLastInheritedRiskScore()).isZero();
         assertThat(componentAudited.getLastInheritedRiskScore()).isZero();
         assertThat(componentSuppressed.getLastInheritedRiskScore()).isZero();
+    }
+
+    @Test
+    public void testCollectionLogicChanged() {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, List.of(), false);
+
+        // Record initial project metrics
+        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
+        final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+        assertThat(metrics.getLastOccurrence()).isEqualTo(metrics.getFirstOccurrence());
+        assertThat(metrics.getCollectionLogic()).isEqualTo(project.getCollectionLogic());
+        assertThat(metrics.isCollectionLogicChanged()).isFalse();
+
+        // change collection logic in project
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+
+        // Run the task a second time
+        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
+
+        // Ensure that metrics changed
+        final ProjectMetrics newMetrics = qm.getMostRecentProjectMetrics(project);
+
+        assertThat(metrics.getFirstOccurrence()).isNotEqualTo(newMetrics.getFirstOccurrence());
+        assertThat(newMetrics.getCollectionLogic()).isEqualTo(project.getCollectionLogic());
+        assertThat(newMetrics.isCollectionLogicChanged()).isTrue();
     }
 
     @Test

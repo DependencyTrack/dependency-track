@@ -172,6 +172,14 @@ public class ProjectMetrics implements Serializable {
     private Integer policyViolationsOperationalUnaudited;
 
     @Persistent
+    @Column(name = "COLLECTION_LOGIC", allowsNull = "true") // New column, must allow nulls on existing data bases
+    private ProjectCollectionLogic collectionLogic;
+
+    @Persistent
+    @Column(name = "COLLECTION_LOGIC_CHANGED", allowsNull = "true") // New column, must allow nulls on existing data bases
+    private Boolean collectionLogicChanged = false;
+
+    @Persistent
     @Column(name = "FIRST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "PROJECTMETRICS_FIRST_OCCURRENCE_IDX")
@@ -423,6 +431,18 @@ public class ProjectMetrics implements Serializable {
 
     public void setPolicyViolationsOperationalUnaudited(int policyViolationsOperationalUnaudited) {
         this.policyViolationsOperationalUnaudited = policyViolationsOperationalUnaudited;
+    }
+
+    public ProjectCollectionLogic getCollectionLogic() { return collectionLogic; }
+
+    public void setCollectionLogic(ProjectCollectionLogic collectionLogic) {
+        this.collectionLogic = collectionLogic;
+    }
+
+    public Boolean isCollectionLogicChanged() { return collectionLogicChanged; }
+
+    public void setCollectionLogicChanged(Boolean collectionLogicChanged) {
+        this.collectionLogicChanged = collectionLogicChanged;
     }
 
     public Date getFirstOccurrence() {

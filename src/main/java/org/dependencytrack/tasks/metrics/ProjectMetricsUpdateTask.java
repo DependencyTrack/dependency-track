@@ -72,6 +72,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                 throw new NoSuchElementException("Project " + uuid + " does not exist");
             }
 
+            counters.projectCollectionLogic = project.getCollectionLogic();
             // if the project is a collection, different logic has to be applied depending on project configuration
             switch (project.getCollectionLogic()) {
                 case NONE -> this.updateRegularProjectMetrics(project, pm, counters);
@@ -89,7 +90,8 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
                     LOGGER.debug("Metrics of project " + uuid + " changed");
-                    final ProjectMetrics metrics = counters.createProjectMetrics(project);
+                    final boolean collectionLogicChanged = latestMetrics != null && latestMetrics.getCollectionLogic() != project.getCollectionLogic();
+                    final ProjectMetrics metrics = counters.createProjectMetrics(project, collectionLogicChanged);
                     pm.makePersistent(metrics);
                 }
             });

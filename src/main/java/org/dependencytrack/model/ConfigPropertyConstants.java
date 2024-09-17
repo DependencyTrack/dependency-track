@@ -117,7 +117,7 @@ public enum ConfigPropertyConstants {
     BOM_VALIDATION_TAGS_EXCLUSIVE("artifact", "bom.validation.tags.exclusive", "[]", PropertyType.STRING, "JSON array of tags for which BOM validation shall NOT be performed"),
     WELCOME_MESSAGE("general", "welcome.message.html", "%20%3Chtml%3E%3Ch1%3EYour%20Welcome%20Message%3C%2Fh1%3E%3C%2Fhtml%3E", PropertyType.STRING, "Custom HTML Code that is displayed before login", true),
     IS_WELCOME_MESSAGE("general", "welcome.message.enabled", "false", PropertyType.BOOLEAN, "Bool that says wheter to show the welcome message or not", true),
-    DEFAULT_LANGUAGE("general", "default.language", "%20", PropertyType.STRING, "Determine the default Language to use", true);
+    DEFAULT_LANGUAGE("general", "default.locale", "%20", PropertyType.STRING, "Determine the default Language to use", true);
 
     private final String groupName;
     private final String propertyName;

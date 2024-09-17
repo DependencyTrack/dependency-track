@@ -1,6 +1,8 @@
 package org.dependencytrack.tasks.scanners;
 
+import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
+import com.github.tomakehurst.wiremock.client.BasicCredentials;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
@@ -14,7 +16,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import javax.json.Json;
+import jakarta.json.Json;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,8 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_ENABLED;
 
 public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
@@ -176,6 +180,106 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
         wireMock.verify(exactly(3), postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
+                .withRequestBody(equalToJson("""
+                        {
+                          "coordinates": [
+                            "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1"
+                          ]
+                        }
+                        """)));
+    }
+
+    @Test
+    public void testAnalyzeWithAuthentication() throws Exception {
+        qm.createConfigProperty(
+                SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
+                SCANNER_OSSINDEX_API_USERNAME.getPropertyName(),
+                "foo",
+                SCANNER_OSSINDEX_API_USERNAME.getPropertyType(),
+                SCANNER_OSSINDEX_API_USERNAME.getDescription()
+        );
+        qm.createConfigProperty(
+                SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
+                SCANNER_OSSINDEX_API_TOKEN.getPropertyName(),
+                DataEncryption.encryptAsString("apiToken"),
+                SCANNER_OSSINDEX_API_TOKEN.getPropertyType(),
+                SCANNER_OSSINDEX_API_TOKEN.getDescription()
+        );
+
+        wireMock.stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.ossindex.component-report.v1+json")
+                        .withBody("[]")));
+
+        var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.fasterxml.jackson.core");
+        component.setName("jackson-databind");
+        component.setVersion("2.13.1");
+        component.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1");
+        qm.persist(component);
+
+        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(component)));
+
+        wireMock.verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
+                .withBasicAuth(new BasicCredentials("foo", "apiToken"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "coordinates": [
+                            "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1"
+                          ]
+                        }
+                        """)));
+    }
+
+    @Test
+    public void testAnalyzeWithApiTokenDecryptionError() {
+        qm.createConfigProperty(
+                SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
+                SCANNER_OSSINDEX_API_USERNAME.getPropertyName(),
+                "foo",
+                SCANNER_OSSINDEX_API_USERNAME.getPropertyType(),
+                SCANNER_OSSINDEX_API_USERNAME.getDescription()
+        );
+        qm.createConfigProperty(
+                SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
+                SCANNER_OSSINDEX_API_TOKEN.getPropertyName(),
+                "notAnEncryptedValue",
+                SCANNER_OSSINDEX_API_TOKEN.getPropertyType(),
+                SCANNER_OSSINDEX_API_TOKEN.getDescription()
+        );
+
+        wireMock.stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.ossindex.component-report.v1+json")
+                        .withBody("[]")));
+
+        var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.fasterxml.jackson.core");
+        component.setName("jackson-databind");
+        component.setVersion("2.13.1");
+        component.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1");
+        qm.persist(component);
+
+        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(component)));
+
+        wireMock.verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
+                .withoutHeader("Authorization")
                 .withRequestBody(equalToJson("""
                         {
                           "coordinates": [

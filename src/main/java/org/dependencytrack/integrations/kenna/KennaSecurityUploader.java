@@ -14,13 +14,12 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.integrations.kenna;
 
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -37,6 +36,7 @@ import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.PortfolioFindingUploader;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.util.DebugDataEncryption;
 import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
@@ -98,7 +98,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
         LOGGER.debug("Uploading payload to KennaSecurity");
         final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
         try {
-            final String token = DataEncryption.decryptAsString(tokenProperty.getPropertyValue());
+            final String token = DebugDataEncryption.decryptAsString(tokenProperty.getPropertyValue());
             HttpPost request = new HttpPost(String.format(CONNECTOR_UPLOAD_URL, connectorId));
             request.addHeader("X-Risk-Token", token);
             request.addHeader("accept", "application/json");

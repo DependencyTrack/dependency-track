@@ -7,19 +7,10 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://github.com/Distrotech/transfig/blob/master/transfig/transfig.c",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:31:22Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://sourceforge.net/p/mcj/xfig/ci/master/tree/src/Makefile.am",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:31:22Z",
+      "timestamp": "2024-08-19T17:35:24Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -28,9 +19,18 @@
       "url": "https://fedoraproject.org/wiki/Licensing:MIT#Xfig_Variant",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:31:23Z",
+      "timestamp": "2024-08-19T17:35:24Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/Distrotech/transfig/blob/master/transfig/transfig.c",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:35:25Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

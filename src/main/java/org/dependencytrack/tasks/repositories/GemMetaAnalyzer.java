@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.repositories;
 
@@ -66,7 +66,7 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
     public MetaModel analyze(final Component component) {
         final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
-            final String url = String.format(baseUrl + API_URL, component.getPurl().getName());
+            final String url = String.format(baseUrl + API_URL, urlEncode(component.getPurl().getName()));
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
                     if(response.getEntity()!=null){

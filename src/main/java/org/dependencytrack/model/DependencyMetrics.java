@@ -14,20 +14,21 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -61,18 +62,22 @@ public class DependencyMetrics implements Serializable {
 
     @Persistent
     @Column(name = "CRITICAL")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int critical;
 
     @Persistent
     @Column(name = "HIGH")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int high;
 
     @Persistent
     @Column(name = "MEDIUM")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int medium;
 
     @Persistent
     @Column(name = "LOW")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int low;
 
     @Persistent
@@ -167,12 +172,14 @@ public class DependencyMetrics implements Serializable {
     @Column(name = "FIRST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "DEPENDENCYMETRICS_FIRST_OCCURRENCE_IDX")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date firstOccurrence;
 
     @Persistent
     @Column(name = "LAST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "DEPENDENCYMETRICS_LAST_OCCURRENCE_IDX")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date lastOccurrence;
 
     public long getId() {

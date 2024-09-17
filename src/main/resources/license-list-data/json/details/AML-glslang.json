@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://github.com/KhronosGroup/glslang/blob/main/LICENSE.txt#L949",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:35:07Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://docs.omniverse.nvidia.com/install-guide/latest/common/licenses.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:35:07Z",
+      "timestamp": "2024-08-19T17:46:55Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/KhronosGroup/glslang/blob/main/LICENSE.txt#L949",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:46:55Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

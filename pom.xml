@@ -15,7 +15,7 @@
   ~ limitations under the License.
   ~
   ~ SPDX-License-Identifier: Apache-2.0
-  ~ Copyright (c) Steve Springett. All Rights Reserved.
+  ~ Copyright (c) OWASP Foundation. All Rights Reserved.
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -24,14 +24,14 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>2.2.5</version>
+        <version>3.1.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>4.11.0-SNAPSHOT</version>
+    <version>4.12.0-SNAPSHOT</version>
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>
@@ -80,48 +80,69 @@
     </ciManagement>
 
     <properties>
+        <!-- Java Version -->
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+
         <!-- Dependency Versions -->
-        <frontend.version>4.10.0</frontend.version>
+        <frontend.version>4.11.6</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
-        <lib.awaitility.version>4.2.0</lib.awaitility.version>
-        <lib.checkstyle.version>10.12.5</lib.checkstyle.version>
-        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.16.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
-        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.16.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
-        <lib.cloud-sql-postgres-socket-factory.version>1.16.0</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.awaitility.version>4.2.1</lib.awaitility.version>
+        <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
+        <lib.checkstyle.version>10.17.0</lib.checkstyle.version>
+        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.20.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
+        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.18.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.19.1</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
-        <lib.commons-compress.version>1.26.1</lib.commons-compress.version>
+        <lib.commons-compress.version>1.27.1</lib.commons-compress.version>
+        <lib.commons-text.version>1.12.0</lib.commons-text.version>
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.cyclonedx-java.version>8.0.3</lib.cyclonedx-java.version>
-        <lib.greenmail.version>1.6.15</lib.greenmail.version>
-        <lib.jaxb.runtime.version>2.3.9</lib.jaxb.runtime.version>
-        <lib.json-unit.version>3.2.7</lib.json-unit.version>
+        <lib.cyclonedx-java.version>9.0.5</lib.cyclonedx-java.version>
+        <!--
+            Temporarily overwriting DataNucleus version to resolve https://github.com/DependencyTrack/dependency-track/issues/2061.
+            TODO: Remove these when upgrading to Alpine > 3.0.1.
+        -->
+        <lib.datanucleus-api-jdo.version>6.0.3</lib.datanucleus-api-jdo.version>
+        <lib.datanucleus.version>6.0.8</lib.datanucleus.version>
+        <lib.datanucleus-rdbms.version>6.0.8</lib.datanucleus-rdbms.version>
+        <lib.greenmail.version>2.0.1</lib.greenmail.version>
+        <lib.jackson.version>2.17.1</lib.jackson.version>
+        <lib.jackson-databind.version>2.17.1</lib.jackson-databind.version>
+        <lib.json-java.version>20240303</lib.json-java.version>
+        <lib.json-unit.version>3.4.1</lib.json-unit.version>
+        <lib.junit.version>4.13.2</lib.junit.version>
         <lib.lucene.version>8.11.3</lib.lucene.version>
+        <lib.maven-artifact.version>3.9.9</lib.maven-artifact.version>
         <lib.mockserver-netty.version>5.15.0</lib.mockserver-netty.version>
-        <lib.open-vulnerability-clients.version>6.0.0</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>6.2.0</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>3.2.2</lib.pebble.version>
+        <lib.protobuf-java.version>4.28.1</lib.protobuf-java.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
-        <lib.testcontainers.version>1.19.7</lib.testcontainers.version>
-        <lib.woodstox.version>6.6.0</lib.woodstox.version>
+        <lib.swagger-parser.version>2.1.22</lib.swagger-parser.version>
+        <lib.system-rules.version>1.19.0</lib.system-rules.version>
+        <lib.testcontainers.version>1.20.1</lib.testcontainers.version>
+        <lib.wiremock.version>2.35.2</lib.wiremock.version>
+        <lib.woodstox.version>7.0.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.httpclient5.version>5.3.1</lib.httpclient5.version>
-        <lib.log4j-over-slf4j.version>2.0.12</lib.log4j-over-slf4j.version>
-        <lib.org-kohsuke-github-api.version>1.318</lib.org-kohsuke-github-api.version>
+        <lib.log4j-over-slf4j.version>2.0.16</lib.log4j-over-slf4j.version>
+        <lib.org-kohsuke-github-api.version>1.323</lib.org-kohsuke-github-api.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>12.6.1.jre11</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>12.8.1.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.0.33</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.7.2</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.postgresql.version>42.7.3</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
-        <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
-        <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <!-- Keep Jetty at 10.0.x until migration plan is planned/resolved per Steve in https://github.com/DependencyTrack/dependency-track/pull/2725#issuecomment-1532417022! -->
-        <plugin.jetty.version>10.0.20</plugin.jetty.version>
+        <plugin.jetty.version>12.0.13</plugin.jetty.version>
+        <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
+        <!-- Tool Versions -->
+        <tool.protoc.version>com.google.protobuf:protoc:${lib.protobuf-java.version}</tool.protoc.version>
         <!-- CycloneDX CLI -->
         <cyclonedx-cli.path>cyclonedx</cyclonedx-cli.path>
         <services.bom.merge.skip>true</services.bom.merge.skip>
@@ -184,16 +205,7 @@
             <artifactId>cyclonedx-core-java</artifactId>
             <version>${lib.cyclonedx-java.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.glassfish.jaxb</groupId>
-            <artifactId>jaxb-runtime</artifactId>
-            <version>${lib.jaxb.runtime.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.activation</groupId>
-            <artifactId>javax.activation-api</artifactId>
-            <version>1.2.0</version>
-        </dependency>
+
         <!-- org.json
         This was previously transitively included with Unirest. However, Unirest v3.x removed reliance on org.json
         in favor of their own API compatible replacement. Therefore, it was necessary to directly include org.json.
@@ -201,7 +213,13 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20240303</version>
+            <version>${lib.json-java.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -249,6 +267,29 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${lib.protobuf-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
+            <version>${lib.protobuf-java.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2-jakarta</artifactId>
+            <version>${lib.swagger.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.parser.v3</groupId>
+            <artifactId>swagger-parser</artifactId>
+            <version>${lib.swagger-parser.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>${lib.httpclient.version}</version>
@@ -264,7 +305,12 @@
             <groupId>oauth.signpost</groupId>
             <artifactId>signpost-core</artifactId>
             <version>${lib.signpost-core.version}</version>
-            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.brotli</groupId>
+            <artifactId>dec</artifactId>
+            <version>${lib.brotli-decoder.version}</version>
         </dependency>
 
         <dependency>
@@ -282,7 +328,7 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
-            <version>3.9.6</version>
+            <version>${lib.maven-artifact.version}</version>
         </dependency>
 
         <dependency>
@@ -291,8 +337,8 @@
             <version>${lib.jdbc-driver.mssql.version}</version>
         </dependency>
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <version>${lib.jdbc-driver.mysql.version}</version>
             <exclusions>
                 <!--
@@ -326,23 +372,16 @@
             <version>${lib.cloud-sql-connector-jdbc-sqlserver.version}</version>
         </dependency>
 
-        <!-- Xerces -->
-        <dependency>
-            <groupId>xerces</groupId>
-            <artifactId>xercesImpl</artifactId>
-            <version>2.12.2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xml-apis</groupId>
-                    <artifactId>xml-apis</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>${lib.commons-compress.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>${lib.commons-text.version}</version>
         </dependency>
 
         <dependency>
@@ -384,6 +423,7 @@
             <groupId>pl.pragmatists</groupId>
             <artifactId>JUnitParams</artifactId>
             <version>${lib.junit-params.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>
@@ -407,14 +447,13 @@
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-jre8</artifactId>
-            <version>2.35.2</version>
+            <version>${lib.wiremock.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.github.stefanbirkner</groupId>
             <artifactId>system-rules</artifactId>
-            <version>1.19.0</version>
+            <version>${lib.system-rules.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -467,6 +506,7 @@
                 <filtering>true</filtering>
                 <includes>
                     <include>application.version</include>
+                    <include>openapi-configuration.yaml</include>
                 </includes>
             </resource>
         </resources>
@@ -476,11 +516,44 @@
                 <filtering>false</filtering>
             </testResource>
         </testResources>
+        <pluginManagement>
+            <plugins>
+                <!--
+                    Plugin invocation is inherited from alpine-parent.
+                    Because this is an application, there's no point in attaching sources.
+                 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!--
+                    Plugin invocation is inherited from alpine-parent.
+                    Because this is an application, there's no point in attaching javadocs.
+                 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.5.0</version>
                 <configuration>
                     <configLocation>${project.basedir}/.checkstyle.xml</configLocation>
                     <includeResources>false</includeResources>
@@ -503,8 +576,40 @@
                 </dependencies>
             </plugin>
             <plugin>
+                <groupId>com.github.os72</groupId>
+                <artifactId>protoc-jar-maven-plugin</artifactId>
+                <version>${plugin.protoc-jar.version}</version>
+                <executions>
+                    <execution>
+                        <id>protobuf</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <includeMavenTypes>direct</includeMavenTypes>
+                            <inputDirectories>
+                                <inputDirectory>src/main/proto</inputDirectory>
+                            </inputDirectories>
+                            <includeDirectories>
+                                <includeDirectory>src/main/proto</includeDirectory>
+                            </includeDirectories>
+                            <protocArtifact>${tool.protoc.version}</protocArtifact>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemProperties>
+                        <property>
+                            <name>java.util.logging.config.file</name>
+                            <value>src/test/resources/logging.properties</value>
+                        </property>
+                    </systemProperties>
+                </configuration>
                 <dependencies>
                     <dependency>
                         <groupId>org.apache.maven.surefire</groupId>
@@ -514,8 +619,74 @@
                 </dependencies>
             </plugin>
             <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>org/dependencytrack/upgrade/**/*</exclude>
+                        <exclude>trivy/proto/**/*</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>cyclonedx-aggregate</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>makeAggregateBom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <projectType>application</projectType>
+                    <schemaVersion>1.5</schemaVersion>
+                    <includeCompileScope>true</includeCompileScope>
+                    <includeProvidedScope>true</includeProvidedScope>
+                    <includeRuntimeScope>true</includeRuntimeScope>
+                    <includeSystemScope>true</includeSystemScope>
+                    <includeTestScope>false</includeTestScope>
+                    <includeLicenseText>false</includeLicenseText>
+                    <outputReactorProjects>true</outputReactorProjects>
+                    <outputFormat>json</outputFormat>
+                    <externalReferences>
+                        <externalReference>
+                            <type>advisories</type>
+                            <url>https://github.com/DependencyTrack/dependency-track/security/advisories</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>chat</type>
+                            <url>https://dependencytrack.org/slack</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>documentation</type>
+                            <url>https://docs.dependencytrack.org/</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>release-notes</type>
+                            <url>https://docs.dependencytrack.org/changelog/</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>security-contact</type>
+                            <url>mailto:security@dependencytrack.org</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>social</type>
+                            <url>https://www.linkedin.com/company/owasp-dependency-track</url>
+                        </externalReference>
+                        <externalReference>
+                            <type>social</type>
+                            <url>https://x.com/dependencytrack</url>
+                        </externalReference>
+                    </externalReferences>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
+                <version>3.4.1</version>
                 <executions>
                     <execution>
                         <id>merge-services-bom</id>
@@ -558,12 +729,14 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-maven-plugin</artifactId>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-maven-plugin</artifactId>
                 <version>${plugin.jetty.version}</version>
                 <configuration>
                     <webApp>
-                        <contextPath>/</contextPath>
+                        <!-- Disable classpath scanning. -->
+                        <containerIncludeJarPattern>^$</containerIncludeJarPattern>
+                        <webInfIncludeJarPattern>^$</webInfIncludeJarPattern>
                     </webApp>
                 </configuration>
             </plugin>
@@ -576,27 +749,27 @@
             <build>
                 <pluginManagement>
                     <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-clean-plugin</artifactId>
-                        <version>3.3.2</version>
-                        <configuration>
-                            <excludeDefaultDirectories>true</excludeDefaultDirectories>
-                            <filesets>
-                                <fileset>
-                                    <directory>target</directory>
-                                    <followSymlinks>false</followSymlinks>
-                                    <useDefaultExcludes>false</useDefaultExcludes>
-                                    <includes>
-                                        <include>*/</include>
-                                    </includes>
-                                    <excludes>
-                                        <exclude>dependency-track*.jar</exclude>
-                                    </excludes>
-                                </fileset>
-                            </filesets>
-                        </configuration>
-                    </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-clean-plugin</artifactId>
+                            <version>3.4.0</version>
+                            <configuration>
+                                <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                                <filesets>
+                                    <fileset>
+                                        <directory>target</directory>
+                                        <followSymlinks>false</followSymlinks>
+                                        <useDefaultExcludes>false</useDefaultExcludes>
+                                        <includes>
+                                            <include>*/</include>
+                                        </includes>
+                                        <excludes>
+                                            <exclude>dependency-track*.jar</exclude>
+                                        </excludes>
+                                    </fileset>
+                                </filesets>
+                            </configuration>
+                        </plugin>
                     </plugins>
                 </pluginManagement>
             </build>
@@ -618,14 +791,16 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.eclipse.jetty</groupId>
-                        <artifactId>jetty-maven-plugin</artifactId>
+                        <groupId>org.eclipse.jetty.ee10</groupId>
+                        <artifactId>jetty-ee10-maven-plugin</artifactId>
                         <version>${plugin.jetty.version}</version>
                         <configuration>
                             <webApp>
-                                <contextPath>/</contextPath>
+                                <!-- Disable classpath scanning. -->
+                                <containerIncludeJarPattern>^$</containerIncludeJarPattern>
+                                <webInfIncludeJarPattern>^$</webInfIncludeJarPattern>
+                                <overrideDescriptor>src/test/webapp/WEB-INF/h2-console-web.xml</overrideDescriptor>
                             </webApp>
-                            <contextXml>src/test/webapp/WEB-INF/h2-console-activation.xml</contextXml>
                         </configuration>
                     </plugin>
                 </plugins>

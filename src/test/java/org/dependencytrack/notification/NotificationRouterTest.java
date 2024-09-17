@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification;
 
@@ -27,6 +27,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vex;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
@@ -35,6 +36,7 @@ import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
+import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -43,7 +45,7 @@ import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -51,7 +53,6 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SuppressWarnings("unchecked")
 public class NotificationRouterTest extends PersistenceCapableTest {
 
     @Test
@@ -95,7 +96,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         // Notification should not be limited to any projects - so set projects to null
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), null, null);
+        Project affectedProject = qm.createProject("Test Project", null, "1.0", null, null, null, true, false);
+        Component affectedComponent = new Component();
+        affectedComponent.setProject(affectedProject);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, null, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -124,7 +128,9 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
         Set<Project> affectedProjects = new HashSet<>();
         affectedProjects.add(project);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects, null);
+        Component affectedComponent = new Component();
+        affectedComponent.setProject(project);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -154,12 +160,14 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         Set<Project> affectedProjects = new HashSet<>();
         Project affectedProject = qm.createProject("Affected Project", null, "1.0", null, null, null, true, false);
         affectedProjects.add(affectedProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects, null);
+        Component affectedComponent = new Component();
+        affectedComponent.setProject(affectedProject);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertEquals(1, rules.size());
+        Assert.assertEquals(0, rules.size());
     }
 
     @Test
@@ -177,7 +185,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         // Notification should not be limited to any projects - so set projects to null
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), null, null);
+        Project affectedProject = qm.createProject("Test Project", null, "1.0", null, null, null, true, false);
+        Component affectedComponent = new Component();
+        affectedComponent.setProject(affectedProject);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, null, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -212,7 +223,9 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         Set<Project> affectedProjects = new HashSet<>();
         affectedProjects.add(firstProject);
         affectedProjects.add(secondProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects, null);
+        Component affectedComponent = new Component();
+        affectedComponent.setProject(firstProject);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -241,7 +254,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         // Notification should not be limited to any projects - so set projects to null
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), null, null);
+        Project affectedProject = qm.createProject("Test Project 1", null, "1.0", null, null, null, true, false);
+        Component affectedComponent = new Component();
+        affectedComponent.setProject(affectedProject);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, null, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -426,6 +442,31 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
         notification.setSubject(new BomProcessingFailed(projectA, "", null, Bom.Format.CYCLONEDX, ""));
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testBomValidationFailedLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.BOM_VALIDATION_FAILED));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.BOM_VALIDATION_FAILED.name());
+        notification.setLevel(NotificationLevel.ERROR);
+        notification.setSubject(new BomValidationFailed(projectB, "", null, Bom.Format.CYCLONEDX));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
+
+        notification.setSubject(new BomValidationFailed(projectA, "", null, Bom.Format.CYCLONEDX));
         assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
@@ -692,6 +733,110 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         Assert.assertTrue(rule.isNotifyChildren());
         Assert.assertEquals(1, rules.size());
+    }
+
+    @Test
+    public void testValidMatchingTagLimitingRule() {
+        NotificationPublisher publisher = createSlackPublisher();
+        // Creates a new rule and defines when the rule should be triggered (notifyOn)
+        NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Set<NotificationGroup> notifyOn = new HashSet<>();
+        notifyOn.add(NotificationGroup.NEW_VULNERABILITY);
+        rule.setNotifyOn(notifyOn);
+        // Creates a tag which will later be matched on
+        Tag tag = qm.createTag("test");
+        List<Tag> tags = List.of(tag);
+        Project project = qm.createProject("Test Project", null, "1.0", tags, null, null, true, false);
+        qm.bind(rule, tags);
+        // Creates a new notification
+        Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
+        Set<Project> affectedProjects = new HashSet<>();
+        affectedProjects.add(project);
+        Component affectedComponent = new Component();
+        affectedComponent.setProject(project);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
+        notification.setSubject(subject);
+        // Ok, let's test this
+        NotificationRouter router = new NotificationRouter();
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
+        Assert.assertEquals(1, rules.size());
+    }
+
+    @Test
+    public void testValidNonMatchingTagLimitingRule() {
+        NotificationPublisher publisher = createSlackPublisher();
+        // Creates a new rule and defines when the rule should be triggered (notifyOn)
+        NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Set<NotificationGroup> notifyOn = new HashSet<>();
+        notifyOn.add(NotificationGroup.NEW_VULNERABILITY);
+        rule.setNotifyOn(notifyOn);
+        // Creates a tag to limit the notifications
+        Tag tag = qm.createTag("test");
+        List<Tag> tags = List.of(tag);
+        qm.createProject("Test Project", null, "1.0", tags, null, null, true, false);
+        // Rule should apply only for specific tag
+        qm.bind(rule, tags);
+        // Creates a new notification
+        Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        // Set the projects which are affected by the notification event
+        Set<Project> affectedProjects = new HashSet<>();
+        Project affectedProject = qm.createProject("Affected Project", null, "1.0", null, null, null, true, false);
+        affectedProjects.add(affectedProject);
+        Component affectedComponent = new Component();
+        affectedComponent.setProject(affectedProject);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
+        notification.setSubject(subject);
+        // Ok, let's test this
+        NotificationRouter router = new NotificationRouter();
+        List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
+        // Affected project is not tagged, rule should be empty
+        Assert.assertEquals(0, rules.size());
+    }
+
+    @Test
+    public void testValidMatchingProjectAndTagLimitingRule() {
+        NotificationPublisher publisher = createMockPublisher();
+        // Creates a new rule and defines when the rule should be triggered (notifyOn)
+        NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Set<NotificationGroup> notifyOn = new HashSet<>();
+        notifyOn.add(NotificationGroup.NEW_VULNERABILITY);
+        rule.setNotifyOn(notifyOn);
+        // Creates a tag to limit the notifications
+        Tag tag = qm.createTag("test");
+        List<Tag> tags = List.of(tag);
+        Project taggedProject = qm.createProject("Test Project", null, "1.0", tags, null, null, true, false);
+        // Rule should apply for specific tag
+        qm.bind(rule, tags);
+        // Rule should also apply for specific project
+        Project otherAffectedProject = qm.createProject("Affected Project", null, "1.0", null, null, null, true, false);
+        rule.setProjects(List.of(otherAffectedProject));
+        // Creates a new notification
+        Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        // Set the projects which are affected by the notification event
+        Set<Project> affectedProjects = new HashSet<>();
+        affectedProjects.add(taggedProject);
+        affectedProjects.add(otherAffectedProject);
+        Component affectedComponent = new Component();
+        affectedComponent.setProject(taggedProject);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
+        notification.setSubject(subject);
+        // Ok, let's test this
+        NotificationRouter router = new NotificationRouter();
+        router.inform(notification);
+        // Affected project is not tagged, rules should be empty
+        Notification providedNotification = MockPublisher.getNotification();
+        NewVulnerabilityIdentified providedSubject = (NewVulnerabilityIdentified) providedNotification.getSubject();
+        Assert.assertEquals(2, providedSubject.getAffectedProjects().size());
     }
 
     private NotificationPublisher createSlackPublisher() {

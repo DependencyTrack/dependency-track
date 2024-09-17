@@ -14,14 +14,16 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
+import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
@@ -29,7 +31,6 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
@@ -55,6 +56,7 @@ public class FindingAttribution implements Serializable {
     @Persistent
     @Column(name = "ATTRIBUTED_ON", allowsNull = "false")
     @NotNull
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date attributedOn;
 
     @Persistent
@@ -100,7 +102,7 @@ public class FindingAttribution implements Serializable {
         this.analyzerIdentity = analyzerIdentity;
         this.attributedOn = new Date();
         this.alternateIdentifier = alternateIdentifier;
-        this.referenceUrl = referenceUrl;
+        this.referenceUrl = maybeTrimUrl(referenceUrl);
     }
 
     public long getId() {
@@ -157,7 +159,7 @@ public class FindingAttribution implements Serializable {
     }
 
     public void setReferenceUrl(String referenceUrl) {
-        this.referenceUrl = referenceUrl;
+        this.referenceUrl = maybeTrimUrl(referenceUrl);
     }
 
     public UUID getUuid() {
@@ -167,4 +169,18 @@ public class FindingAttribution implements Serializable {
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
+
+    private static String maybeTrimUrl(final String url) {
+        if (url == null || url.length() <= 255) {
+            return url;
+        }
+
+        final String[] parts = url.split("\\?", 2);
+        if (parts.length == 2 && parts[0].length() <= 255) {
+            return parts[0];
+        }
+
+        return parts[0].substring(0, 255);
+    }
+
 }

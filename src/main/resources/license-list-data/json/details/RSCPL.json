@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "N/A",
-      "url": "https://opensource.org/licenses/RSCPL",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:41:38Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "N/A",
       "url": "http://wayback.archive.org/web/20060715140826/http://www.risource.org/RPL/RPL-1.0A.shtml",
       "isValid": false,
       "isLive": false,
-      "timestamp": "2024-02-08T16:41:38Z",
+      "timestamp": "2024-08-19T17:41:18Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/RSCPL",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:41:18Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

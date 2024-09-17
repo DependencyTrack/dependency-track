@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -23,6 +23,7 @@ import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
 
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
@@ -34,14 +35,12 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.core.Response;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
@@ -50,15 +49,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class PolicyViolationResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                        new ResourceConfig(PolicyViolationResource.class)
-                                .register(ApiFilter.class)
-                                .register(AuthenticationFilter.class)
-                                .register(AuthorizationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(PolicyViolationResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class)
+                    .register(AuthorizationFilter.class));
 
     @Test
     public void getViolationsTest() {
@@ -82,7 +78,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violation.setTimestamp(new Date());
         violation = qm.persist(violation);
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -104,7 +100,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
 
     @Test
     public void getViolationsUnauthorizedTest() {
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -153,7 +149,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
             }
         }
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .queryParam("searchText", "0")
                 .path("/project/" + project.getUuid())
                 .request()
@@ -212,7 +208,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         qm.persist(violation);
 
         // Requesting violations for projectB must not yield violations for projectA.
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/project/" + projectB.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -226,7 +222,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
 
     @Test
     public void getViolationsByProjectUnauthorizedTest() {
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/project/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -239,7 +235,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     public void getViolationsByProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/project/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -271,7 +267,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violation.setTimestamp(new Date());
         violation = qm.persist(violation);
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/component/" + component.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -293,7 +289,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
 
     @Test
     public void getViolationsByComponentUnauthorizedTest() {
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/component/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -306,7 +302,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     public void getViolationsByComponentNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/component/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)

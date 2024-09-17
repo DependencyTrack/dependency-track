@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -26,28 +26,33 @@ import alpine.server.auth.AuthenticationNotRequired;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import alpine.server.util.OidcUtil;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.MappedOidcGroupRequest;
 import org.owasp.security.logging.SecurityMarkers;
 
-import javax.validation.Validator;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,7 +62,11 @@ import java.util.stream.Collectors;
  * @since 4.0.0
  */
 @Path("/v1/oidc")
-@Api(value = "oidc", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "oidc")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class OidcResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(OidcResource.class);
@@ -65,9 +74,11 @@ public class OidcResource extends AlpineResource {
     @GET
     @Path("/available")
     @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation(
-            value = "Indicates if OpenID Connect is available for this application",
-            response = Boolean.class
+    @Operation(summary = "Indicates if OpenID Connect is available for this application")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Whether OpenID Connect is available",
+            content = @Content(schema = @Schema(type = "boolean"))
     )
     @AuthenticationNotRequired
     public Response isAvailable() {
@@ -77,13 +88,17 @@ public class OidcResource extends AlpineResource {
     @GET
     @Path("/group")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all groups",
-            response = OidcGroup.class,
-            responseContainer = "List"
+    @Operation(
+            summary = "Returns a list of all groups",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all groups",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = OidcGroup.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response retrieveGroups() {
@@ -97,13 +112,17 @@ public class OidcResource extends AlpineResource {
     @Path("/group")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Creates group",
-            response = OidcGroup.class,
-            code = 201
+    @Operation(
+            summary = "Creates group",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created group",
+                    content = @Content(schema = @Schema(implementation = OidcGroup.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response createGroup(final OidcGroup jsonGroup) {
@@ -127,12 +146,17 @@ public class OidcResource extends AlpineResource {
     @Path("/group")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Updates group",
-            response = OidcGroup.class
+    @Operation(
+            summary = "Updates group",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated group",
+                    content = @Content(schema = @Schema(implementation = OidcGroup.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response updateGroup(final OidcGroup jsonGroup) {
@@ -158,17 +182,18 @@ public class OidcResource extends AlpineResource {
     @DELETE
     @Path("/group/{uuid}")
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a group",
-            code = 204
+    @Operation(
+            summary = "Deletes a group",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The group could not be found")
+            @ApiResponse(responseCode = "204", description = "Group removed successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The group could not be found")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    public Response deleteGroup(@ApiParam(value = "The UUID of the group to delete", required = true)
-                                @PathParam("uuid") final String uuid) {
+    public Response deleteGroup(@Parameter(description = "The UUID of the group to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
+                                @PathParam("uuid") @ValidUuid final String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final OidcGroup group = qm.getObjectByUuid(OidcGroup.class, uuid);
             if (group != null) {
@@ -185,18 +210,22 @@ public class OidcResource extends AlpineResource {
     @GET
     @Path("/group/{uuid}/team")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of teams associated with the specified group",
-            response = Team.class,
-            responseContainer = "List"
+    @Operation(
+            summary = "Returns a list of teams associated with the specified group",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the mapping could not be found"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of teams associated with the specified group",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Team.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the mapping could not be found"),
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    public Response retrieveTeamsMappedToGroup(@ApiParam(value = "The UUID of the mapping to retrieve the team for", required = true)
-                                               @PathParam("uuid") final String uuid) {
+    public Response retrieveTeamsMappedToGroup(@Parameter(description = "The UUID of the mapping to retrieve the team for", schema = @Schema(type = "string", format = "uuid"), required = true)
+                                               @PathParam("uuid") @ValidUuid final String uuid) {
         try (final QueryManager qm = new QueryManager()) {
             final OidcGroup oidcGroup = qm.getObjectByUuid(OidcGroup.class, uuid);
             if (oidcGroup != null) {
@@ -214,14 +243,19 @@ public class OidcResource extends AlpineResource {
     @PUT
     @Path("/mapping")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Adds a mapping",
-            response = MappedOidcGroup.class
+    @Operation(
+            summary = "Adds a mapping",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the team or group could not be found"),
-            @ApiResponse(code = 409, message = "A mapping with the same team and group name already exists")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The created mapping",
+                    content = @Content(schema = @Schema(implementation = MappedOidcGroup.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the team or group could not be found"),
+            @ApiResponse(responseCode = "409", description = "A mapping with the same team and group name already exists")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response addMapping(final MappedOidcGroupRequest request) {
@@ -255,17 +289,18 @@ public class OidcResource extends AlpineResource {
     @DELETE
     @Path("/mapping/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a mapping",
-            code = 204
+    @Operation(
+            summary = "Deletes a mapping",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the mapping could not be found"),
+            @ApiResponse(responseCode = "204", description = "Mapping removed successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the mapping could not be found"),
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    public Response deleteMappingByUuid(@ApiParam(value = "The UUID of the mapping to delete", required = true)
-                                        @PathParam("uuid") final String uuid) {
+    public Response deleteMappingByUuid(@Parameter(description = "The UUID of the mapping to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
+                                        @PathParam("uuid") @ValidUuid final String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final MappedOidcGroup mapping = qm.getObjectByUuid(MappedOidcGroup.class, uuid);
             if (mapping != null) {
@@ -281,19 +316,20 @@ public class OidcResource extends AlpineResource {
     @DELETE
     @Path("/group/{groupUuid}/team/{teamUuid}/mapping")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a mapping",
-            code = 204
+    @Operation(
+            summary = "Deletes a mapping",
+            description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the mapping could not be found"),
+            @ApiResponse(responseCode = "204", description = "Mapping removed successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the mapping could not be found"),
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    public Response deleteMapping(@ApiParam(value = "The UUID of the group to delete a mapping for", required = true)
-                                  @PathParam("groupUuid") final String groupUuid,
-                                  @ApiParam(value = "The UUID of the team to delete a mapping for", required = true)
-                                  @PathParam("teamUuid") final String teamUuid) {
+    public Response deleteMapping(@Parameter(description = "The UUID of the group to delete a mapping for", schema = @Schema(type = "string", format = "uuid"), required = true)
+                                  @PathParam("groupUuid") @ValidUuid final String groupUuid,
+                                  @Parameter(description = "The UUID of the team to delete a mapping for", schema = @Schema(type = "string", format = "uuid"), required = true)
+                                  @PathParam("teamUuid") @ValidUuid final String teamUuid) {
         try (QueryManager qm = new QueryManager()) {
             final Team team = qm.getObjectByUuid(Team.class, teamUuid);
             if (team == null) {

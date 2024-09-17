@@ -8,10 +8,19 @@
   "crossRef": [
     {
       "match": "false",
+      "url": "https://ptolemy.berkeley.edu/copyright.htm",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:35:34Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing:MIT#Modern_Variants",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:30:16Z",
+      "timestamp": "2024-08-19T17:35:34Z",
       "isWayBackLink": false,
       "order": 0
     },
@@ -20,18 +29,9 @@
       "url": "https://pirlwww.lpl.arizona.edu/resources/guide/software/PerlTk/Tixlic.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:30:17Z",
+      "timestamp": "2024-08-19T17:35:35Z",
       "isWayBackLink": false,
       "order": 2
-    },
-    {
-      "match": "false",
-      "url": "https://ptolemy.berkeley.edu/copyright.htm",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:30:17Z",
-      "isWayBackLink": false,
-      "order": 1
     }
   ],
   "seeAlso": [

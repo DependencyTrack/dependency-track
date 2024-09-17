@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
@@ -95,6 +95,41 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
                                 "specVersion" : "1.5"
                               },
                               "cause" : "cause"
+                            }
+                          }
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithBomValidationFailedNotification() {
+        super.testInformWithBomValidationFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "notification" : {
+                            "level" : "ERROR",
+                            "scope" : "PORTFOLIO",
+                            "group" : "BOM_VALIDATION_FAILED",
+                            "timestamp" : "1970-01-01T00:20:34.000000888",
+                            "title" : "Bill of Materials Validation Failed",
+                            "content" : "An error occurred during BOM Validation",
+                            "subject" : {
+                              "project" : {
+                                "uuid" : "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                "name" : "projectName",
+                                "version" : "projectVersion",
+                                "description" : "projectDescription",
+                                "purl" : "pkg:maven/org.acme/projectName@projectVersion",
+                                "tags" : "tag1,tag2"
+                              },
+                              "bom" : {
+                                "content" : "bomContent",
+                                "format" : "CycloneDX"
+                              },
+                              "errors" : "$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference"
                             }
                           }
                         }
@@ -223,6 +258,78 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
                                   "description": "projectDescription",
                                   "purl": "pkg:maven/org.acme/projectName@projectVersion",
                                   "tags": "tag1,tag2"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithNewVulnerableDependencyNotification() {
+        super.testInformWithNewVulnerableDependencyNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "notification": {
+                            "level": "INFORMATIONAL",
+                            "scope": "PORTFOLIO",
+                            "group": "NEW_VULNERABLE_DEPENDENCY",
+                            "timestamp": "1970-01-01T18:31:06.000000666",
+                            "title": "Vulnerable Dependency Introduced",
+                            "content": "",
+                            "subject": {
+                              "project": {
+                                "uuid": "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+                                "name": "projectName",
+                                "version": "projectVersion",
+                                "description": "projectDescription",
+                                "purl": "pkg:maven/org.acme/projectName@projectVersion",
+                                "tags": "tag1,tag2"
+                              },
+                              "component": {
+                                "uuid": "94f87321-a5d1-4c2f-b2fe-95165debebc6",
+                                "name": "componentName",
+                                "version": "componentVersion"
+                              },
+                              "vulnerabilities": [
+                                {
+                                  "uuid": "bccec5d5-ec21-4958-b3e8-22a7a866a05a",
+                                  "vulnId": "INT-001",
+                                  "source": "INTERNAL",
+                                  "aliases": [
+                                    {
+                                      "source": "OSV",
+                                      "vulnId": "OSV-001"
+                                    }
+                                  ],
+                                  "title": "vulnerabilityTitle",
+                                  "subtitle": "vulnerabilitySubTitle",
+                                  "description": "vulnerabilityDescription",
+                                  "recommendation": "vulnerabilityRecommendation",
+                                  "cvssv2": 5.5,
+                                  "cvssv3": 6.6,
+                                  "owaspRRLikelihood": 1.1,
+                                  "owaspRRTechnicalImpact": 2.2,
+                                  "owaspRRBusinessImpact": 3.3,
+                                  "severity": "MEDIUM",
+                                  "cwe": {
+                                    "cweId": 666,
+                                    "name": "Operation on Resource in Wrong Phase of Lifetime"
+                                  },
+                                  "cwes": [
+                                    {
+                                      "cweId": 666,
+                                      "name": "Operation on Resource in Wrong Phase of Lifetime"
+                                    },
+                                    {
+                                      "cweId": 777,
+                                      "name": "Regular Expression without Anchors"
+                                    }
+                                  ]
                                 }
                               ]
                             }

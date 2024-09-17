@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.upgrade;
 
@@ -34,10 +34,10 @@ import org.datanucleus.store.schema.SchemaAwareStoreManager;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.persistence.QueryManager;
 
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;

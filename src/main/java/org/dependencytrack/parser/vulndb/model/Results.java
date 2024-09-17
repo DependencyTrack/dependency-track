@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.vulndb.model;
 
@@ -30,7 +30,7 @@ import java.util.List;
 public class Results<T> {
     private int page;
     private int total;
-    private List<T> results = new ArrayList();
+    private List<T> results = new ArrayList<>();
     private String rawResults;
     private String errorCondition;
 
@@ -57,6 +57,7 @@ public class Results<T> {
         return this.results;
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public void setResults(List objects) {
         this.results = objects;
     }

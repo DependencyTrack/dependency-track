@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.repositories;
 
@@ -126,7 +126,7 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
                     github = GitHub.connectAnonymously();
                 }
 
-                GHRepository repository = github.getRepository(String.format("%s/%s", component.getPurl().getNamespace(), component.getPurl().getName()));
+                GHRepository repository = github.getRepository(String.format("%s/%s", urlEncode(component.getPurl().getNamespace()), urlEncode(component.getPurl().getName())));
                 LOGGER.debug(String.format("Repos is at %s", repository.getUrl()));
 
                 final VersionType version_type = get_version_type(component, repository);

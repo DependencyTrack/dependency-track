@@ -14,26 +14,19 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.search;
 
 import alpine.common.logging.Logger;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.notification.NotificationConstants;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.document.ProjectDocument;
 
 import javax.jdo.Query;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,7 +43,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
     private static final Logger LOGGER = Logger.getLogger(ProjectIndexer.class);
     private static final ProjectIndexer INSTANCE = new ProjectIndexer();
 
-    protected static ProjectIndexer getInstance() {
+    static ProjectIndexer getInstance() {
         return INSTANCE;
     }
 
@@ -72,39 +65,15 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      * @param project A persisted Project object.
      */
     public void add(final ProjectDocument project) {
-        final Document doc = new Document();
-        addField(doc, IndexConstants.PROJECT_UUID, project.uuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.PROJECT_NAME, project.name(), Field.Store.YES, true);
-        addField(doc, IndexConstants.PROJECT_VERSION, project.version(), Field.Store.YES, false);
-        addField(doc, IndexConstants.PROJECT_DESCRIPTION, project.description(), Field.Store.YES, true);
+        final Document doc = convertToDocument(project);
+        addDocument(doc);
+    }
 
-        /*
-        // There's going to potentially be confidential information in the project properties. Do not index.
-
-        final StringBuilder sb = new StringBuilder();
-        if (project.getProperties() != null) {
-            for (ProjectProperty property : project.getProperties()) {
-                sb.append(property.getPropertyValue()).append(" ");
-            }
-        }
-
-        addField(doc, IndexConstants.PROJECT_PROPERTIES, sb.toString().trim(), Field.Store.YES, true);
-        */
-
-        try {
-            getIndexWriter().addDocument(doc);
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while adding a project to the index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.PROJECT_INDEXER)
-                    .content("An error occurred while adding a project to the index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+    @Override
+    public void update(final ProjectDocument project) {
+        final Term term = convertToTerm(project);
+        final Document doc = convertToDocument(project);
+        updateDocument(term, doc);
     }
 
     /**
@@ -113,20 +82,8 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      * @param project A persisted Project object.
      */
     public void remove(final ProjectDocument project) {
-        try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.uuid().toString()));
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while removing a project from the index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.PROJECT_INDEXER)
-                    .content("An error occurred while removing a project from the index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+        final Term term = convertToTerm(project);
+        deleteDocuments(term);
     }
 
     /**
@@ -172,6 +129,33 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
         } finally {
             query.closeAll();
         }
+    }
+
+    private Document convertToDocument(final ProjectDocument project) {
+        final var doc = new Document();
+        addField(doc, IndexConstants.PROJECT_UUID, project.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.PROJECT_NAME, project.name(), Field.Store.YES, true);
+        addField(doc, IndexConstants.PROJECT_VERSION, project.version(), Field.Store.YES, false);
+        addField(doc, IndexConstants.PROJECT_DESCRIPTION, project.description(), Field.Store.YES, true);
+
+        /*
+        // There's going to potentially be confidential information in the project properties. Do not index.
+
+        final StringBuilder sb = new StringBuilder();
+        if (project.getProperties() != null) {
+            for (ProjectProperty property : project.getProperties()) {
+                sb.append(property.getPropertyValue()).append(" ");
+            }
+        }
+
+        addField(doc, IndexConstants.PROJECT_PROPERTIES, sb.toString().trim(), Field.Store.YES, true);
+        */
+
+        return doc;
+    }
+
+    private static Term convertToTerm(final ProjectDocument project) {
+        return new Term(IndexConstants.PROJECT_UUID, project.uuid().toString());
     }
 
 }

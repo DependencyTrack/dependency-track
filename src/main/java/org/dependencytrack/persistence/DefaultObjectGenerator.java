@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
@@ -33,8 +33,8 @@ import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
 import org.dependencytrack.util.NotificationUtil;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +79,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     /**
      * Loads the default licenses into the database if no license data exists.
      */
-    private void loadDefaultLicenses() {
+    public void loadDefaultLicenses() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing SPDX license definitions to datastore");
 
@@ -120,7 +120,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     /**
      * Loads the default permissions
      */
-    private void loadDefaultPermissions() {
+    public void loadDefaultPermissions() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing permissions to datastore");
             for (final Permissions permission : Permissions.values()) {
@@ -197,17 +197,19 @@ public class DefaultObjectGenerator implements ServletContextListener {
     /**
      * Loads the default repositories
      */
-    private void loadDefaultRepositories() {
+    public void loadDefaultRepositories() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing default repositories to datastore");
             qm.createRepository(RepositoryType.CPAN, "cpan-public-registry", "https://fastapi.metacpan.org/v1/", true, false, false, null, null);
             qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true, false, false, null, null);
             qm.createRepository(RepositoryType.HEX, "hex.pm", "https://hex.pm/", true, false, false, null, null);
+            qm.createRepository(RepositoryType.HACKAGE, "hackage.haskell.org", "https://hackage.haskell.org/", true, false, false, null, null);
             qm.createRepository(RepositoryType.MAVEN, "central", "https://repo1.maven.org/maven2/", true, false, false, null, null);
             qm.createRepository(RepositoryType.MAVEN, "atlassian-public", "https://packages.atlassian.com/content/repositories/atlassian-public/", true, false, false, null, null);
             qm.createRepository(RepositoryType.MAVEN, "jboss-releases", "https://repository.jboss.org/nexus/content/repositories/releases/", true, false, false, null, null);
             qm.createRepository(RepositoryType.MAVEN, "clojars", "https://repo.clojars.org/", true, false, false, null, null);
             qm.createRepository(RepositoryType.MAVEN, "google-android", "https://maven.google.com/", true, false, false, null, null);
+            qm.createRepository(RepositoryType.NIXPKGS, "nixpkgs-unstable", "https://channels.nixos.org/nixpkgs-unstable/packages.json.br", true, false, false, null, null);
             qm.createRepository(RepositoryType.NPM, "npm-public-registry", "https://registry.npmjs.org/", true, false, false, null, null);
             qm.createRepository(RepositoryType.PYPI, "pypi.org", "https://pypi.org/", true, false, false, null, null);
             qm.createRepository(RepositoryType.NUGET, "nuget-gallery", "https://api.nuget.org/", true, false, false, null, null);
@@ -236,7 +238,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     /**
      * Loads the default notification publishers
      */
-    private void loadDefaultNotificationPublishers() {
+    public void loadDefaultNotificationPublishers() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing notification publishers to datastore");
             for (final DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {

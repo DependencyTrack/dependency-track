@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks;
 
@@ -41,13 +41,19 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.EpssMirrorEvent;
+import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.NistApiMirrorEvent;
 import org.dependencytrack.event.NistMirrorEvent;
+import org.dependencytrack.model.AffectedVersionAttribution;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.listener.IndexingInstanceLifecycleListener;
+import org.dependencytrack.persistence.listener.L2CacheEvictingInstanceLifecycleListener;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -58,15 +64,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
+import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
+import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_DOWNLOAD_FEEDS;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
@@ -78,7 +89,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NistMirrorTask implements LoggableSubscriber {
+public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSubscriber {
 
     private enum ResourceType {
         CVE_YEAR_DATA,
@@ -89,7 +100,7 @@ public class NistMirrorTask implements LoggableSubscriber {
         NONE // DO NOT PARSE THIS TYPE
     }
 
-    public static final String NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
+    public static final Path DEFAULT_NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().toPath().resolve("nist").toAbsolutePath();
     private static final String CVE_JSON_11_MODIFIED_URL = "/json/cve/1.1/nvdcve-1.1-modified.json.gz";
     private static final String CVE_JSON_11_BASE_URL = "/json/cve/1.1/nvdcve-1.1-%d.json.gz";
     private static final String CVE_JSON_11_MODIFIED_META = "/json/cve/1.1/nvdcve-1.1-modified.meta";
@@ -133,9 +144,16 @@ public class NistMirrorTask implements LoggableSubscriber {
                 .bindTo(Metrics.getRegistry());
     }
 
+    private final Path mirrorDirPath;
     private boolean mirroredWithoutErrors = true;
 
     public NistMirrorTask() {
+        this(DEFAULT_NVD_MIRROR_DIR);
+    }
+
+    NistMirrorTask(final Path mirrorDirPath) {
+        this.mirrorDirPath = mirrorDirPath;
+
         try (final QueryManager qm = new QueryManager()) {
             this.isEnabled = qm.isEnabled(VULNERABILITY_SOURCE_NVD_ENABLED);
             this.isApiEnabled = qm.isEnabled(VULNERABILITY_SOURCE_NVD_API_ENABLED);
@@ -147,7 +165,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             if (this.nvdFeedsUrl.endsWith("/")) {
                 this.nvdFeedsUrl = this.nvdFeedsUrl.substring(0, this.nvdFeedsUrl.length()-1);
             }
-         }
+        }
     }
 
     /**
@@ -174,7 +192,7 @@ public class NistMirrorTask implements LoggableSubscriber {
 
             final long start = System.currentTimeMillis();
             LOGGER.info("Starting NIST mirroring task");
-            final File mirrorPath = new File(NVD_MIRROR_DIR);
+            final File mirrorPath = mirrorDirPath.toFile();
             setOutputDir(mirrorPath.getAbsolutePath());
             getAllFiles();
             final long end = System.currentTimeMillis();
@@ -255,7 +273,7 @@ public class NistMirrorTask implements LoggableSubscriber {
     private void doDownload(final String urlString, final ResourceType resourceType) {
         File file;
         try {
-            final URL url = new URL(urlString);
+            final URL url = URI.create(urlString).toURL();
             String filename = url.getFile();
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();
@@ -363,8 +381,10 @@ public class NistMirrorTask implements LoggableSubscriber {
         final long start = System.currentTimeMillis();
         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
             if (!isApiEnabled) {
-                final NvdParser parser = new NvdParser();
+                final NvdParser parser = new NvdParser(this::processVulnerability);
                 parser.parse(uncompressedFile);
+                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, VulnerableSoftware.class));
             } else {
                 LOGGER.debug("""
                         %s was successfully downloaded and uncompressed, but will not be parsed because \
@@ -376,6 +396,22 @@ public class NistMirrorTask implements LoggableSubscriber {
         }
         final long end = System.currentTimeMillis();
         metricParseTime += end - start;
+    }
+
+    private void processVulnerability(final Vulnerability vuln, final List<VulnerableSoftware> vsList) {
+        try (final var qm = new QueryManager().withL2CacheDisabled()) {
+            qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+            qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
+            qm.getPersistenceManager().addInstanceLifecycleListener(new IndexingInstanceLifecycleListener(Event::dispatch),
+                    Vulnerability.class, VulnerableSoftware.class);
+            qm.getPersistenceManager().addInstanceLifecycleListener(new L2CacheEvictingInstanceLifecycleListener(qm),
+                    AffectedVersionAttribution.class, Vulnerability.class, VulnerableSoftware.class);
+
+            final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
+            synchronizeVulnerableSoftware(qm, persistentVuln, vsList);
+        } catch (RuntimeException e) {
+            LOGGER.error("An unexpected error occurred while processing %s".formatted(vuln.getVulnId()), e);
+        }
     }
 
     /**

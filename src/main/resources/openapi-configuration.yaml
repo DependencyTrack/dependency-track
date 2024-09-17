@@ -1,0 +1,29 @@
+openAPI:
+  info:
+    version: "${project.version}"
+    title: OWASP Dependency-Track
+    description: REST API of OWASP Dependency-Track
+    contact:
+      name: The Dependency-Track Authors
+      url: https://github.com/DependencyTrack/dependency-track
+    license:
+      name: Apache-2.0
+      url: https://www.apache.org/licenses/LICENSE-2.0.html
+    externalDocs:
+      description: Project Documentation
+      url: https://docs.dependencytrack.org/
+  servers:
+  - url: /api
+  components:
+    securitySchemes:
+      ApiKeyAuth:
+        name: X-Api-Key
+        type: apiKey
+        in: header
+      BearerAuth:
+        type: http
+        scheme: Bearer
+prettyPrint: true
+resourcePackages:
+- alpine.server.resources
+- org.dependencytrack.resources

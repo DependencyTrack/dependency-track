@@ -11,21 +11,21 @@
   "crossRef": [
     {
       "match": "N/A",
+      "url": "http://opensource.linux-mirror.org/licenses/afl-1.1.txt",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2024-08-19T17:35:11Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "N/A",
       "url": "http://wayback.archive.org/web/20021004124254/http://www.opensource.org/licenses/academic.php",
       "isValid": false,
       "isLive": false,
-      "timestamp": "2024-02-08T16:30:28Z",
+      "timestamp": "2024-08-19T17:35:11Z",
       "isWayBackLink": false,
       "order": 1
-    },
-    {
-      "match": "false",
-      "url": "http://opensource.linux-mirror.org/licenses/afl-1.1.txt",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:30:38Z",
-      "isWayBackLink": false,
-      "order": 0
     }
   ],
   "seeAlso": [

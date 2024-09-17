@@ -8,22 +8,22 @@
   "licenseId": "EPL-1.0",
   "crossRef": [
     {
-      "match": "true",
-      "url": "http://www.eclipse.org/legal/epl-v10.html",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:32:17Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/EPL-1.0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:32:17Z",
+      "timestamp": "2024-08-19T17:35:44Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "true",
+      "url": "http://www.eclipse.org/legal/epl-v10.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:35:44Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

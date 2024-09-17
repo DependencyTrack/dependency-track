@@ -9,21 +9,21 @@
   "crossRef": [
     {
       "match": "true",
-      "url": "https://www.eclipse.org/legal/epl-2.0",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:30:59Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "true",
       "url": "https://www.opensource.org/licenses/EPL-2.0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:31:01Z",
+      "timestamp": "2024-08-19T17:38:11Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://www.eclipse.org/legal/epl-2.0",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:38:12Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

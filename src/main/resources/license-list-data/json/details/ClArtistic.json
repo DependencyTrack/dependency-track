@@ -8,21 +8,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "http://gianluca.dellavedova.org/2011/01/03/clarified-artistic-license/",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:36:58Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "http://www.ncftp.com/ncftp/doc/LICENSE.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:36:59Z",
+      "timestamp": "2024-08-19T17:37:13Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://gianluca.dellavedova.org/2011/01/03/clarified-artistic-license/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:37:13Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

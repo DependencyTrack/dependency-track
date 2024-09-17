@@ -8,22 +8,22 @@
   "licenseId": "OFL-1.1",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/OFL-1.1",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:31:14Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "http://scripts.sil.org/cms/scripts/page.php?item_id\u003dOFL_web",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:31:14Z",
+      "timestamp": "2024-08-19T17:35:08Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/OFL-1.1",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:35:09Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

@@ -14,12 +14,15 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
+import alpine.model.IConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
 import org.apache.commons.lang3.SystemUtils;
+
+import java.util.Arrays;
 
 public enum ConfigPropertyConstants {
 
@@ -61,7 +64,7 @@ public enum ConfigPropertyConstants {
     SCANNER_SNYK_BASE_URL("scanner", "snyk.base.url", "https://api.snyk.io", PropertyType.URL, "Base Url pointing to the hostname and path for Snyk analysis"),
     SCANNER_TRIVY_ENABLED("scanner", "trivy.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Trivy Vulnerability Analysis"),
     SCANNER_TRIVY_API_TOKEN("scanner", "trivy.api.token", null, PropertyType.ENCRYPTEDSTRING, "The API token used for Trivy API authentication"),
-    SCANNER_TRIVY_BASE_URL("scanner", "trivy.base.url", "http://localhost:8081", PropertyType.URL, "Base Url pointing to the hostname and path for Trivy analysis"),
+    SCANNER_TRIVY_BASE_URL("scanner", "trivy.base.url", null, PropertyType.URL, "Base Url pointing to the hostname and path for Trivy analysis"),
     SCANNER_TRIVY_IGNORE_UNFIXED("scanner", "trivy.ignore.unfixed", "false", PropertyType.BOOLEAN, "Flag to ignore unfixed vulnerabilities"),
     VULNERABILITY_SOURCE_NVD_ENABLED("vuln-source", "nvd.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable National Vulnerability Database"),
     VULNERABILITY_SOURCE_NVD_FEEDS_URL("vuln-source", "nvd.feeds.url", "https://nvd.nist.gov/feeds", PropertyType.URL, "A base URL pointing to the hostname and path of the NVD feeds"),
@@ -108,20 +111,44 @@ public enum ConfigPropertyConstants {
     TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE("task-scheduler", "component.analysis.cache.clear.cadence", "24", PropertyType.INTEGER, "Cleanup cadence (in hours) for component analysis cache"),
     SEARCH_INDEXES_CONSISTENCY_CHECK_ENABLED("search-indexes", "consistency.check.enabled", "true", PropertyType.BOOLEAN, "Flag to enable lucene indexes periodic consistency check"),
     SEARCH_INDEXES_CONSISTENCY_CHECK_CADENCE("search-indexes", "consistency.check.cadence", "4320", PropertyType.INTEGER, "Lucene indexes consistency check cadence (in minutes)"),
-    SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD("search-indexes", "consistency.check.delta.threshold", "20", PropertyType.INTEGER, "Threshold used to trigger an index rebuild when comparing database table and corresponding lucene index (in percentage). It must be an integer between 1 and 100");
+    SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD("search-indexes", "consistency.check.delta.threshold", "20", PropertyType.INTEGER, "Threshold used to trigger an index rebuild when comparing database table and corresponding lucene index (in percentage). It must be an integer between 1 and 100"),
+    BOM_VALIDATION_MODE("artifact", "bom.validation.mode", BomValidationMode.ENABLED.name(), PropertyType.STRING, "Flag to control the BOM validation mode"),
+    BOM_VALIDATION_TAGS_INCLUSIVE("artifact", "bom.validation.tags.inclusive", "[]", PropertyType.STRING, "JSON array of tags for which BOM validation shall be performed"),
+    BOM_VALIDATION_TAGS_EXCLUSIVE("artifact", "bom.validation.tags.exclusive", "[]", PropertyType.STRING, "JSON array of tags for which BOM validation shall NOT be performed"),
+    WELCOME_MESSAGE("general", "welcome.message.html", "%20%3Chtml%3E%3Ch1%3EYour%20Welcome%20Message%3C%2Fh1%3E%3C%2Fhtml%3E", PropertyType.STRING, "Custom HTML Code that is displayed before login", true),
+    IS_WELCOME_MESSAGE("general", "welcome.message.enabled", "false", PropertyType.BOOLEAN, "Bool that says wheter to show the welcome message or not", true);
 
-    private String groupName;
-    private String propertyName;
-    private String defaultPropertyValue;
-    private PropertyType propertyType;
-    private String description;
+    private final String groupName;
+    private final String propertyName;
+    private final String defaultPropertyValue;
+    private final PropertyType propertyType;
+    private final String description;
+    private final Boolean isPublic;
 
-    ConfigPropertyConstants(String groupName, String propertyName, String defaultPropertyValue, PropertyType propertyType, String description) {
+
+	ConfigPropertyConstants(String groupName, String propertyName, String defaultPropertyValue, PropertyType propertyType, String description) {
         this.groupName = groupName;
         this.propertyName = propertyName;
         this.defaultPropertyValue = defaultPropertyValue;
         this.propertyType = propertyType;
         this.description = description;
+        this.isPublic = false;
+    }
+    
+    ConfigPropertyConstants(String groupName, String propertyName, String defaultPropertyValue, PropertyType propertyType, String description, Boolean isPublic) {
+        this.groupName = groupName;
+        this.propertyName = propertyName;
+        this.defaultPropertyValue = defaultPropertyValue;
+        this.propertyType = propertyType;
+        this.description = description;
+        this.isPublic = isPublic;
+    }
+
+    public static ConfigPropertyConstants ofProperty(final IConfigProperty property) {
+        return Arrays.stream(values())
+                .filter(value -> value.groupName.equals(property.getGroupName()) && value.propertyName.equals(property.getPropertyName()))
+                .findFirst()
+                .orElse(null);
     }
 
     public String getGroupName() {
@@ -144,4 +171,7 @@ public enum ConfigPropertyConstants {
         return description;
     }
 
+    public Boolean getIsPublic() {
+		    return isPublic;
+	  }
 }

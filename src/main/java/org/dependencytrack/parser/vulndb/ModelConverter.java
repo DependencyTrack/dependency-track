@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.vulndb;
 
@@ -22,19 +22,23 @@ import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.vulndb.model.Author;
 import org.dependencytrack.parser.vulndb.model.CvssV2Metric;
 import org.dependencytrack.parser.vulndb.model.CvssV3Metric;
 import org.dependencytrack.parser.vulndb.model.ExternalReference;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.VulnerabilityUtil;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
 import us.springett.cvss.Score;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Utility class that converts various VulnDB to Dependency-Track models.
@@ -135,6 +139,7 @@ public final class ModelConverter {
         }
 
         CvssV2 cvssV2;
+        String cveId = "";
         for (final CvssV2Metric metric : vulnDbVuln.cvssV2Metrics()) {
             cvssV2 = toNormalizedMetric(metric);
             final Score score = cvssV2.calculateScore();
@@ -143,6 +148,7 @@ public final class ModelConverter {
             vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
             vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
             if (metric.cveId() != null) {
+                cveId = metric.cveId();
                 break; // Always prefer use of the NVD scoring, if available
             }
         }
@@ -156,18 +162,31 @@ public final class ModelConverter {
             vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
             vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
             if (metric.cveId() != null) {
+                cveId = metric.cveId();
                 break; // Always prefer use of the NVD scoring, if available
             }
         }
+        vuln.setSeverity(VulnerabilityUtil.getSeverity(
+                vuln.getCvssV2BaseScore(),
+                vuln.getCvssV3BaseScore(),
+                vuln.getOwaspRRLikelihoodScore(),
+                vuln.getOwaspRRTechnicalImpactScore(),
+                vuln.getOwaspRRBusinessImpactScore()
+        ));
 
         if (vulnDbVuln.nvdAdditionalInfo() != null) {
             final String cweString = vulnDbVuln.nvdAdditionalInfo().cweId();
+            final String cveString = vulnDbVuln.nvdAdditionalInfo().cveId();
             if (cweString != null && cweString.startsWith("CWE-")) {
                 final Cwe cwe = CweResolver.getInstance().lookup(cweString);
                 if (cwe != null) {
                     vuln.addCwe(cwe);
                 }
             }
+            cveId = cveString;
+        }
+        if (!cveId.isEmpty()) {
+            setAliasIfValid(vuln, qm, cveId);
         }
         return vuln;
     }
@@ -246,5 +265,39 @@ public final class ModelConverter {
         cvss.integrity(CvssV3.CIA.valueOf(metric.integrityImpact()));
         cvss.availability(CvssV3.CIA.valueOf(metric.availabilityImpact()));
         return cvss;
+    }
+    /**
+     * Set corresponding Alias to vulnDbVuln
+     * If the input `cveString` represents a valid CVE ID, this function sets
+     * the corresponding aliases for the `vuln` object by calling `computeAliases`.
+     *
+     * @param vuln the `Vulnerability` object for which to set the aliases
+     * @param qm the `QueryManager` object used for synchronization
+     * @param cveString the string that may represent a valid CVE ID
+     */
+    private static void setAliasIfValid(Vulnerability vuln,QueryManager qm, String cveString) {
+        final String cveId = VulnerabilityUtil.getValidCveId(cveString);
+        final List<VulnerabilityAlias> aliases = new ArrayList<>();
+        if (cveId != null) {
+            aliases.add(computeAlias(vuln,qm,cveId));
+            vuln.setAliases(aliases);
+        }
+    }
+    /**
+     * Computes a list of `VulnerabilityAlias` objects for the given `vulnerability` and valid `cveId`.
+     * The aliases are computed by creating a new `VulnerabilityAlias` object with the `vulnDbId`
+     * and the `cveId`. The `VulnerabilityAlias` object is then synchronized using the `qm` object.
+     *
+     * @param vulnerability the `Vulnerability` object for which to compute the aliases
+     * @param qm the `QueryManager` object used for synchronization
+     * @param cveId the valid CVE ID string
+     * @return a `VulnerabilityAlias` object
+     */
+    private static VulnerabilityAlias computeAlias(Vulnerability vulnerability, QueryManager qm, String cveId) {
+        final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+        vulnerabilityAlias.setVulnDbId(vulnerability.getVulnId());
+        vulnerabilityAlias.setCveId(cveId);
+        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+        return vulnerabilityAlias;
     }
 }

@@ -10,22 +10,22 @@
   "standardLicenseHeader": "Copyright (C) \u003cyear\u003e \u003cname of author\u003e\n\nThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, see \u003chttps://www.gnu.org/licenses/\u003e.\n\n",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/GPL-3.0",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-02-08T16:34:17Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "https://www.gnu.org/licenses/gpl-3.0-standalone.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:34:17Z",
+      "timestamp": "2024-08-19T17:35:19Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/GPL-3.0",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2024-08-19T17:35:19Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

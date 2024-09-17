@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
@@ -31,6 +31,7 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
@@ -39,11 +40,15 @@ import org.dependencytrack.util.DateUtil;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
 final class PolicyQueryManager extends QueryManager implements IQueryManager {
 
@@ -734,6 +739,43 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         } else {
             query.setFilter(inputFilter);
         }
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public boolean bind(final Policy policy, final Collection<Tag> tags) {
+        assertPersistent(policy, "policy must be persistent");
+        assertPersistentAll(tags, "tags must be persistent");
+
+        return callInTransaction(() -> {
+            boolean modified = false;
+
+            for (final Tag existingTag : policy.getTags()) {
+                if (!tags.contains(existingTag)) {
+                    policy.getTags().remove(existingTag);
+                    existingTag.getPolicies().remove(policy);
+                    modified = true;
+                }
+            }
+
+            for (final Tag tag : tags) {
+                if (!policy.getTags().contains(tag)) {
+                    policy.getTags().add(tag);
+
+                    if (tag.getPolicies() == null) {
+                        tag.setPolicies(new ArrayList<>(List.of(policy)));
+                    } else if (!tag.getPolicies().contains(policy)) {
+                        tag.getPolicies().add(policy);
+                    }
+
+                    modified = true;
+                }
+            }
+
+            return modified;
+        });
     }
 
 }

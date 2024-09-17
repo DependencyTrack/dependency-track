@@ -3,7 +3,7 @@
   "licenseText": "Copyright \u003cyear\u003e \u003ccopyright holder\u003e\n\nPermission to use, copy, modify, and distribute this documentation for\nany purpose and without fee is hereby granted, provided that the above\ncopyright notice and this permission notice appear in all copies.\n\u003ccopyright holder\u003e makes no representations about the suitability for\nany purpose of the information in this document.  This documentation is\nprovided ``as is\u0027\u0027 without express or implied warranty.\n",
   "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright \u003cyear\u003e \u003ccopyright holder\u003e  \";match\u003d\".{0,5000}\"\u003e\u003e\n\nPermission to use, copy, modify, and distribute this documentation for any purpose and without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies. \u003c\u003cvar;name\u003d\"copyrightHolder1\";original\u003d\"\u003ccopyright holder\u003e\";match\u003d\".*\"\u003e\u003e makes no representations about the suitability for any purpose of the information in this document. This documentation is provided \"as is\" without express or implied warranty.\n\n",
   "name": "Historical Permission Notice and Disclaimer - documentation variant",
-  "licenseComments": "This is very simlar to HPND but is for documentation and alters the notice obligation.",
+  "licenseComments": "This is very similar to HPND but is for documentation and alters the notice obligation.",
   "licenseId": "HPND-doc",
   "crossRef": [
     {
@@ -11,7 +11,7 @@
       "url": "https://gitlab.freedesktop.org/xorg/lib/libxext/-/blob/master/COPYING?ref_type\u003dheads#L185-197",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:30:14Z",
+      "timestamp": "2024-08-19T17:40:35Z",
       "isWayBackLink": false,
       "order": 0
     },
@@ -20,7 +20,7 @@
       "url": "https://gitlab.freedesktop.org/xorg/lib/libxtst/-/blob/master/COPYING?ref_type\u003dheads#L70-77",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:30:16Z",
+      "timestamp": "2024-08-19T17:40:36Z",
       "isWayBackLink": false,
       "order": 1
     }

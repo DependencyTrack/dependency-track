@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://www.mcs.anl.gov/research/projects/openpbs/PBS_License.txt",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:38:19Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://github.com/adaptivecomputing/torque/blob/master/PBS_License.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:38:20Z",
+      "timestamp": "2024-08-19T17:36:12Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://www.mcs.anl.gov/research/projects/openpbs/PBS_License.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:36:13Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

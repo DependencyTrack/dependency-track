@@ -53,6 +53,7 @@ multiple levels, while others can only ever have a single level.
 | PORTFOLIO | BOM_CONSUMED              | INFORMATIONAL | Notifications generated whenever a supported BOM is ingested and identified                                                       |
 | PORTFOLIO | BOM_PROCESSED             | INFORMATIONAL | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
 | PORTFOLIO | BOM_PROCESSING_FAILED     | ERROR         | Notifications generated whenever a BOM upload process fails                                                                       |
+| PORTFOLIO | BOM_VALIDATION_FAILED     | ERROR         | Notifications generated whenever an invalid BOM is uploaded                                                                       |
 | PORTFOLIO | POLICY_VIOLATION          | INFORMATIONAL | Notifications generated whenever a policy violation is identified                                                                 |
 
 ## Configuring Publishers
@@ -474,6 +475,18 @@ to notify on. Then specify the destination:
 
 By default, portfolio notifications are published regardless of which project is affected. This behavior can be altered
 by optionally limiting the projects. Expand the 'Limit To' button to reveal and configure the list of projects.
+
+Since v4.12, it is also possible to limit notifications to projects with a specific tag.
+Multiple tags can be configured. Projects must have *at least one* of the configured tags
+in order for the notification to be sent.
+
+If both *Limit to Projects* and *Limit to Tags* are configured, projects must match *any*
+of the two conditions. They are disjunctive.
+
+When making use of parent-child relationships of projects, it can be desirable to configure notifications
+only for a parent project, and have its children inherit the notification configuration. This can be achieved
+by enabling the *Include active children of projects* option in the *Limit To* section.
+Both *Limit to projects* and *Limit to tags* are inherited.
 
 ## Outbound Webhooks
 With outbound webhooks, notifications and all of their relevant details can be delivered via HTTP to an endpoint

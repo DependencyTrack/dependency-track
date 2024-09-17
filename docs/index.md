@@ -57,7 +57,7 @@ CI/CD environments.
   * Maven (Java)
   * NPM (Javascript)
   * NuGet (.NET)
-  * Pypi (Python)
+  * PyPI (Python)
   * More coming soon.
 * Identifies APIs and external service components including:
   * Service provider

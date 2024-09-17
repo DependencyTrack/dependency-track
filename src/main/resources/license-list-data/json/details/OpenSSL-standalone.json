@@ -8,21 +8,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://library.netapp.com/ecm/ecm_download_file/ECMP1196395",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:42:24Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://hstechdocs.helpsystems.com/manuals/globalscape/archive/cuteftp6/open_ssl_license_agreement.htm",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:42:24Z",
+      "timestamp": "2024-08-19T17:49:37Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://library.netapp.com/ecm/ecm_download_file/ECMP1196395",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:49:38Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

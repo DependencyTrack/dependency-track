@@ -8,21 +8,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "http://ec.europa.eu/idabc/servlets/Doc027f.pdf?id\u003d31096",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:35:34Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "http://ec.europa.eu/idabc/en/document/7330.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:35:37Z",
+      "timestamp": "2024-08-19T17:40:35Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "http://ec.europa.eu/idabc/servlets/Doc027f.pdf?id\u003d31096",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:40:38Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

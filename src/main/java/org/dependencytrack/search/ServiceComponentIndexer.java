@@ -14,26 +14,19 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.search;
 
 import alpine.common.logging.Logger;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.ServiceComponent;
-import org.dependencytrack.notification.NotificationConstants;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.document.ServiceComponentDocument;
 
 import javax.jdo.Query;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 
@@ -48,7 +41,7 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
     private static final Logger LOGGER = Logger.getLogger(ServiceComponentIndexer.class);
     private static final ServiceComponentIndexer INSTANCE = new ServiceComponentIndexer();
 
-    protected static ServiceComponentIndexer getInstance() {
+    static ServiceComponentIndexer getInstance() {
         return INSTANCE;
     }
 
@@ -70,28 +63,15 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
      * @param service A persisted ServiceComponent object.
      */
     public void add(final ServiceComponentDocument service) {
-        final Document doc = new Document();
-        addField(doc, IndexConstants.SERVICECOMPONENT_UUID, service.uuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.SERVICECOMPONENT_NAME, service.name(), Field.Store.YES, true);
-        addField(doc, IndexConstants.SERVICECOMPONENT_GROUP, service.group(), Field.Store.YES, true);
-        addField(doc, IndexConstants.SERVICECOMPONENT_VERSION, service.version(), Field.Store.YES, false);
-        // TODO: addField(doc, IndexConstants.SERVICECOMPONENT_URL, service.getUrl(), Field.Store.YES, true);
-        addField(doc, IndexConstants.SERVICECOMPONENT_DESCRIPTION, service.description(), Field.Store.YES, true);
+        final Document doc = convertToDocument(service);
+        addDocument(doc);
+    }
 
-        try {
-            getIndexWriter().addDocument(doc);
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while adding service to index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.SERVICECOMPONENT_INDEXER)
-                    .content("An error occurred while adding service to index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+    @Override
+    public void update(final ServiceComponentDocument service) {
+        final Term term = convertToTerm(service);
+        final Document doc = convertToDocument(service);
+        updateDocument(term, doc);
     }
 
     /**
@@ -100,20 +80,8 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
      * @param service A persisted ServiceComponent object.
      */
     public void remove(final ServiceComponentDocument service) {
-        try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.SERVICECOMPONENT_UUID, service.uuid().toString()));
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while removing a service from the index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.SERVICECOMPONENT_INDEXER)
-                    .content("An error occurred while removing a service from the index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+        final Term term = convertToTerm(service);
+        deleteDocuments(term);
     }
 
     /**
@@ -154,6 +122,21 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
         } finally {
             query.closeAll();
         }
+    }
+
+    private Document convertToDocument(final ServiceComponentDocument service) {
+        final var doc = new Document();
+        addField(doc, IndexConstants.SERVICECOMPONENT_UUID, service.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.SERVICECOMPONENT_NAME, service.name(), Field.Store.YES, true);
+        addField(doc, IndexConstants.SERVICECOMPONENT_GROUP, service.group(), Field.Store.YES, true);
+        addField(doc, IndexConstants.SERVICECOMPONENT_VERSION, service.version(), Field.Store.YES, false);
+        // TODO: addField(doc, IndexConstants.SERVICECOMPONENT_URL, service.getUrl(), Field.Store.YES, true);
+        addField(doc, IndexConstants.SERVICECOMPONENT_DESCRIPTION, service.description(), Field.Store.YES, true);
+        return doc;
+    }
+
+    private static Term convertToTerm(final ServiceComponentDocument service) {
+        return new Term(IndexConstants.SERVICECOMPONENT_UUID, service.uuid().toString());
     }
 
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.common;
 
@@ -57,6 +57,7 @@ import org.apache.http.ssl.SSLContextBuilder;
 import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.security.KeyManagementException;
@@ -302,7 +303,7 @@ public final class ManagedHttpClientFactory {
         }
 
         if (proxy != null) {
-            final URL proxyUrl = new URL(proxy);
+            final URL proxyUrl = URI.create(proxy).toURL();
             proxyInfo = new ProxyInfo();
             proxyInfo.host = proxyUrl.getHost();
             proxyInfo.port = proxyUrl.getPort();

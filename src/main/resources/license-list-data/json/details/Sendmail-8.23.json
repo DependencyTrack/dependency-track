@@ -6,22 +6,22 @@
   "licenseId": "Sendmail-8.23",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://web.archive.org/web/20181003101040/https://www.proofpoint.com/sites/default/files/sendmail-license.pdf",
-      "isValid": false,
-      "isLive": false,
-      "timestamp": "2024-02-08T16:30:14Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "https://www.proofpoint.com/sites/default/files/sendmail-license.pdf",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:30:15Z",
+      "timestamp": "2024-08-19T17:37:07Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://web.archive.org/web/20181003101040/https://www.proofpoint.com/sites/default/files/sendmail-license.pdf",
+      "isValid": false,
+      "isLive": false,
+      "timestamp": "2024-08-19T17:37:07Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

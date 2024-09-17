@@ -7,19 +7,10 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://github.com/AdaCore/xmlada/blob/master/docs/index.rst",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:30:37Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://github.com/AdaCore/gnatcoll-db/blob/master/docs/index.rst",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:30:38Z",
+      "timestamp": "2024-08-19T17:39:54Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -28,9 +19,18 @@
       "url": "https://github.com/AdaCore/gnatcoll-core/blob/master/docs/index.rst",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:30:38Z",
+      "timestamp": "2024-08-19T17:39:55Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/AdaCore/xmlada/blob/master/docs/index.rst",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:39:55Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

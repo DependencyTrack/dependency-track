@@ -14,25 +14,30 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.util.VulnerabilityUtil;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.sql.Clob;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.Set;
-import java.util.List;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 
 /**
@@ -95,13 +100,13 @@ public class Finding implements Serializable {
                 ON "COMPONENT"."ID" = "ANALYSIS"."COMPONENT_ID"
                AND "VULNERABILITY"."ID" = "ANALYSIS"."VULNERABILITY_ID"
                AND "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
-             WHERE "COMPONENT"."PROJECT_ID" = ?
+             WHERE "COMPONENT"."PROJECT_ID" = :projectId
+               AND (:includeSuppressed = :true OR "ANALYSIS"."SUPPRESSED" IS NULL OR "ANALYSIS"."SUPPRESSED" = :false)
             """;
 
     // language=SQL
     public static final String QUERY_ALL_FINDINGS = """
-            SELECT DISTINCT
-                   "COMPONENT"."UUID"
+            SELECT "COMPONENT"."UUID"
                  , "COMPONENT"."NAME"
                  , "COMPONENT"."GROUP"
                  , "COMPONENT"."VERSION"
@@ -147,8 +152,6 @@ public class Finding implements Serializable {
                AND "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
              INNER JOIN "PROJECT"
                 ON "COMPONENT"."PROJECT_ID" = "PROJECT"."ID"
-              LEFT JOIN "PROJECT_ACCESS_TEAMS"
-                ON "PROJECT"."ID" = "PROJECT_ACCESS_TEAMS"."PROJECT_ID"
             """;
 
     private final UUID project;
@@ -178,8 +181,16 @@ public class Finding implements Serializable {
         optValue(vulnerability, "vulnId", o[8]);
         optValue(vulnerability, "title", o[9]);
         optValue(vulnerability, "subtitle", o[10]);
-        //optValue(vulnerability, "description", o[11]); // CLOB - handle this in QueryManager
-        //optValue(vulnerability, "recommendation", o[12]); // CLOB - handle this in QueryManager
+        if (o[11] instanceof final Clob clob) {
+            optValue(vulnerability, "description", toString(clob));
+        } else {
+            optValue(vulnerability, "description", o[11]);
+        }
+        if (o[12] instanceof final Clob clob) {
+            optValue(vulnerability, "recommendation", toString(clob));
+        } else {
+            optValue(vulnerability, "recommendation", o[12]);
+        }
         final Severity severity = VulnerabilityUtil.getSeverity(o[13], (BigDecimal) o[14], (BigDecimal) o[15], (BigDecimal) o[16], (BigDecimal) o[17], (BigDecimal) o[18]);
         optValue(vulnerability, "cvssV2BaseScore", o[14]);
         optValue(vulnerability, "cvssV3BaseScore", o[15]);
@@ -294,4 +305,17 @@ public class Finding implements Serializable {
         }
         vulnerability.put("aliases",uniqueAliases);
     }
+
+    private static String toString(final Clob clob) {
+        if (clob == null) {
+            return null;
+        }
+
+        try (final var reader = new BufferedReader(clob.getCharacterStream())) {
+            return IOUtils.toString(reader);
+        } catch (IOException | SQLException e) {
+            throw new RuntimeException("Failed to read CLOB value", e);
+        }
+    }
+
 }

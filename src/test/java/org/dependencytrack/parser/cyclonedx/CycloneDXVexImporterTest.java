@@ -1,8 +1,8 @@
 package org.dependencytrack.parser.cyclonedx;
 
 import org.assertj.core.api.Assertions;
-import org.cyclonedx.BomParserFactory;
 import org.cyclonedx.exception.ParseException;
+import org.cyclonedx.parsers.BomParserFactory;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
@@ -106,7 +106,8 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
 
         // Assert
         final Query<Analysis> query = qm.getPersistenceManager().newQuery(Analysis.class, "project == :project");
-        var analyses =  (List<Analysis>) query.execute(project);
+        query.setParameters(project);
+        final List<Analysis> analyses = query.executeList();
         // CVE-2020-256[49|50|51] are not audited otherwise analyses.size would have been equal to sources.size()+3
         Assert.assertEquals(sources.size(), analyses.size());
         Assertions.assertThat(analyses).allSatisfy(analysis -> {

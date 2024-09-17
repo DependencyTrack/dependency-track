@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.scanners;
 
@@ -49,8 +49,8 @@ import org.mockserver.integration.ClientAndServer;
 import org.mockserver.matchers.Times;
 import org.mockserver.verify.VerificationTimes;
 
+import jakarta.json.Json;
 import javax.jdo.Query;
-import javax.json.Json;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.ArrayList;

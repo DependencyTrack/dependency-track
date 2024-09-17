@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -39,10 +39,13 @@ public enum RepositoryType {
     CARGO,
     GO_MODULES,
     GITHUB,
+    HACKAGE,
+    NIXPKGS,
     UNSUPPORTED;
 
     /**
      * Returns a RepositoryType for the specified PackageURL.
+     *
      * @param packageURL a package URL
      * @return a RepositoryType
      */
@@ -70,6 +73,10 @@ public enum RepositoryType {
             return GO_MODULES;
         } else if (PackageURL.StandardTypes.GITHUB.equals(type)) {
             return GITHUB;
+        } else if ("hackage".equals(type)) {
+            return HACKAGE;
+        } else if ("nixpkgs".equals(type)) {
+            return NIXPKGS;
         }
         return UNSUPPORTED;
     }

@@ -14,26 +14,19 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.search;
 
 import alpine.common.logging.Logger;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.notification.NotificationConstants;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.document.ComponentDocument;
 
 import javax.jdo.Query;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,7 +43,7 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
     private static final Logger LOGGER = Logger.getLogger(ComponentIndexer.class);
     private static final ComponentIndexer INSTANCE = new ComponentIndexer();
 
-    protected static ComponentIndexer getInstance() {
+    static ComponentIndexer getInstance() {
         return INSTANCE;
     }
 
@@ -72,28 +65,15 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      * @param component A persisted Component object.
      */
     public void add(final ComponentDocument component) {
-        final Document doc = new Document();
-        addField(doc, IndexConstants.COMPONENT_UUID, component.uuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.COMPONENT_NAME, component.name(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_GROUP, component.group(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_VERSION, component.version(), Field.Store.YES, false);
-        addField(doc, IndexConstants.COMPONENT_SHA1, component.sha1(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_DESCRIPTION, component.description(), Field.Store.YES, true);
+        final Document doc = convertToDocument(component);
+        addDocument(doc);
+    }
 
-        try {
-            getIndexWriter().addDocument(doc);
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while adding component to index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.COMPONENT_INDEXER)
-                    .content("An error occurred while adding component to index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+    @Override
+    public void update(ComponentDocument component) {
+        final Term term = convertToTerm(component);
+        final Document doc = convertToDocument(component);
+        updateDocument(term, doc);
     }
 
     /**
@@ -102,20 +82,8 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      * @param component A persisted Component object.
      */
     public void remove(final ComponentDocument component) {
-        try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.uuid().toString()));
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while removing a component from the index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.COMPONENT_INDEXER)
-                    .content("An error occurred while removing a component from the index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+        final Term term = convertToTerm(component);
+        deleteDocuments(term);
     }
 
     /**
@@ -161,6 +129,21 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
         } finally {
             query.closeAll();
         }
+    }
+
+    private Document convertToDocument(final ComponentDocument component) {
+        final var doc = new Document();
+        addField(doc, IndexConstants.COMPONENT_UUID, component.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.COMPONENT_NAME, component.name(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_GROUP, component.group(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_VERSION, component.version(), Field.Store.YES, false);
+        addField(doc, IndexConstants.COMPONENT_SHA1, component.sha1(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_DESCRIPTION, component.description(), Field.Store.YES, true);
+        return doc;
+    }
+
+    private static Term convertToTerm(final ComponentDocument component) {
+        return new Term(IndexConstants.COMPONENT_UUID, component.uuid().toString());
     }
 
 }

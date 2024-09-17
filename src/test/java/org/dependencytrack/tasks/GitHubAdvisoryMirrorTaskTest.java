@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks;
 
@@ -188,6 +188,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
         final var task = new GitHubAdvisoryMirrorTask();
         task.updateDatasource(List.of(ghAdvisory));
 
+        qm.getPersistenceManager().evictAll();
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.GITHUB, "GHSA-57j2-w4cx-62h2");
         assertThat(vuln).isNotNull();
 

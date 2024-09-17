@@ -14,13 +14,10 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
-import alpine.model.ApiKey;
-import alpine.model.Team;
-import alpine.model.UserPrincipal;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
@@ -28,7 +25,6 @@ import alpine.server.util.DbUtil;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.GroupedFinding;
 import org.dependencytrack.model.RepositoryMetaComponent;
@@ -39,7 +35,6 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,7 +102,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
     public PaginatedResult getAllFindings(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
         StringBuilder queryFilter = new StringBuilder();
         Map<String, Object> params = new HashMap<>();
-        if (showInactive) {
+        if (!showInactive) {
             queryFilter.append(" WHERE (\"PROJECT\".\"ACTIVE\" = :active OR \"PROJECT\".\"ACTIVE\" IS NULL)");
             params.put("active", true);
         }
@@ -165,7 +160,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
     public PaginatedResult getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showInactive) {
         StringBuilder queryFilter = new StringBuilder();
         Map<String, Object> params = new HashMap<>();
-        if (showInactive) {
+        if (!showInactive) {
             queryFilter.append(" WHERE (\"PROJECT\".\"ACTIVE\" = :active OR \"PROJECT\".\"ACTIVE\" IS NULL)");
             params.put("active", true);
         }
@@ -347,44 +342,14 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
     }
 
     private void preprocessACLs(StringBuilder queryFilter, final Map<String, Object> params) {
-        if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)) {
-            final List<Team> teams;
-            if (super.principal instanceof UserPrincipal userPrincipal) {
-                teams = userPrincipal.getTeams();
-                if (super.hasAccessManagementPermission(userPrincipal)) {
-                    return;
-                }
-            } else if (super.principal instanceof final ApiKey apiKey) {
-                teams = apiKey.getTeams();
-                if (super.hasAccessManagementPermission(apiKey)) {
-                    return;
-                }
-            } else {
-                teams = Collections.emptyList();
-            }
-            if (teams != null && !teams.isEmpty()) {
-                final StringBuilder sb = new StringBuilder();
-                for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
-                    final Team team = super.getObjectById(Team.class, teams.get(i).getId());
-                    sb.append(" \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = :team").append(i);
-                    params.put("team" + i, team.getId());
-                    if (i < teamsSize - 1) {
-                        sb.append(" OR ");
-                    }
-                }
-                if (queryFilter != null && !queryFilter.isEmpty()) {
-                    queryFilter.append(" AND (").append(sb).append(")");
-                } else if (queryFilter != null) {
-                    queryFilter.append("WHERE (").append(sb).append(")");
-                }
-            } else {
-                params.put("false", false);
-                if (queryFilter != null && !queryFilter.isEmpty()) {
-                    queryFilter.append(" AND :false");
-                } else if (queryFilter != null) {
-                    queryFilter.append("WHERE :false");
-                }
-            }
+        if (queryFilter.isEmpty()) {
+            queryFilter.append(" WHERE ");
+        } else {
+            queryFilter.append(" AND ");
         }
+
+        final Map.Entry<String, Map<String, Object>> projectAclConditionAndParams = getProjectAclSqlCondition();
+        queryFilter.append(projectAclConditionAndParams.getKey()).append(" ");
+        params.putAll(projectAclConditionAndParams.getValue());
     }
 }

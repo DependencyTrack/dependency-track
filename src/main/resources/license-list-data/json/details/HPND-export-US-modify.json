@@ -8,21 +8,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://github.com/krb5/krb5/blob/krb5-1.21.2-final/NOTICE#L1157-L1182",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:32:51Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://github.com/pythongssapi/k5test/blob/v0.10.3/K5TEST-LICENSE.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:32:51Z",
+      "timestamp": "2024-08-19T17:35:47Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/krb5/krb5/blob/krb5-1.21.2-final/NOTICE#L1157-L1182",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:35:48Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

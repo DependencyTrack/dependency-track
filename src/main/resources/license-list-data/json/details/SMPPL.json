@@ -6,11 +6,11 @@
   "licenseId": "SMPPL",
   "crossRef": [
     {
-      "match": "false",
+      "match": "true",
       "url": "https://github.com/dcblake/SMP/blob/master/Documentation/License.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:31:40Z",
+      "timestamp": "2024-08-19T17:38:59Z",
       "isWayBackLink": false,
       "order": 0
     }

@@ -11,16 +11,16 @@
       "url": "https://javaee.github.io/glassfish/LICENSE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:39:36Z",
+      "timestamp": "2024-08-19T17:43:15Z",
       "isWayBackLink": false,
       "order": 1
     },
     {
-      "match": "false",
+      "match": "N/A",
       "url": "http://glassfish.java.net/public/CDDL+GPL_1_1.html",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:39:37Z",
+      "isLive": false,
+      "timestamp": "2024-08-19T17:43:24Z",
       "isWayBackLink": false,
       "order": 0
     }

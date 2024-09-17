@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -24,13 +24,17 @@ import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
@@ -43,20 +47,23 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
-import javax.validation.Validator;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+
+import jakarta.validation.Validator;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -68,30 +75,39 @@ import java.util.Map;
  * @since 3.0.0
  */
 @Path("/v1/component")
-@Api(value = "component", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "component")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class ComponentResource extends AlpineResource {
 
     @GET
     @Path("/project/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all components for a given project",
-            response = Component.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of components")
+    @Operation(
+            summary = "Returns a list of all components for a given project",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
+    @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all components for a given project",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of components", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Component.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getAllComponents(
-            @ApiParam(value = "The UUID of the project to retrieve components for", required = true)
-            @PathParam("uuid") String uuid,
-            @ApiParam(value = "Optionally exclude recent components so only outdated components are returned", required = false)
+            @Parameter(description = "The UUID of the project to retrieve components for", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
+            @Parameter(description = "Optionally exclude recent components so only outdated components are returned", required = false)
             @QueryParam("onlyOutdated") boolean onlyOutdated,
-            @ApiParam(value = "Optionally exclude transitive dependencies so only direct dependencies are returned", required = false)
+            @Parameter(description = "Optionally exclude transitive dependencies so only direct dependencies are returned", required = false)
             @QueryParam("onlyDirect") boolean onlyDirect)  {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -111,20 +127,25 @@ public class ComponentResource extends AlpineResource {
     @GET
     @Path("/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a specific component",
-            response = Component.class
+    @Operation(
+            summary = "Returns a specific component",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
-            @ApiResponse(code = 404, message = "The component could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A component",
+                    content = @Content(schema = @Schema(implementation = Component.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The component could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByUuid(
-            @ApiParam(value = "The UUID of the component to retrieve", required = true)
-            @PathParam("uuid") String uuid,
-            @ApiParam(value = "Optionally includes third-party metadata about the component from external repositories", required = false)
+            @Parameter(description = "The UUID of the component to retrieve", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
+            @Parameter(description = "Optionally includes third-party metadata about the component from external repositories", required = false)
             @QueryParam("includeRepositoryMetaData") boolean includeRepositoryMetaData) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
@@ -152,29 +173,35 @@ public class ComponentResource extends AlpineResource {
     @GET
     @Path("/identity")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of components that have the specified component identity. This resource accepts coordinates (group, name, version) or purl, cpe, or swidTagId",
-            responseContainer = "List",
-            response = Component.class
+    @Operation(
+            summary = "Returns a list of components that have the specified component identity. This resource accepts coordinates (group, name, version) or purl, cpe, or swidTagId",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
+    @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of components that have the specified component identity",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of components", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Component.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getComponentByIdentity(@ApiParam(value = "The group of the component")
+    public Response getComponentByIdentity(@Parameter(description = "The group of the component")
                                            @QueryParam("group") String group,
-                                           @ApiParam(value = "The name of the component")
+                                           @Parameter(description = "The name of the component")
                                            @QueryParam("name") String name,
-                                           @ApiParam(value = "The version of the component")
+                                           @Parameter(description = "The version of the component")
                                            @QueryParam("version") String version,
-                                           @ApiParam(value = "The purl of the component")
+                                           @Parameter(description = "The purl of the component")
                                            @QueryParam("purl") String purl,
-                                           @ApiParam(value = "The cpe of the component")
+                                           @Parameter(description = "The cpe of the component")
                                            @QueryParam("cpe") String cpe,
-                                           @ApiParam(value = "The swidTagId of the component")
+                                           @Parameter(description = "The swidTagId of the component")
                                            @QueryParam("swidTagId") String swidTagId,
-                                           @ApiParam(value = "The project the component belongs to")
-                                           @QueryParam("project") String projectUuid) {
+                                           @Parameter(description = "The project the component belongs to", schema = @Schema(type = "string", format = "uuid"))
+                                           @QueryParam("project") @ValidUuid String projectUuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Project project = null;
             if (projectUuid != null) {
@@ -210,17 +237,23 @@ public class ComponentResource extends AlpineResource {
     @GET
     @Path("/hash/{hash}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of components that have the specified hash value",
-            responseContainer = "List",
-            response = Component.class
+    @Operation(
+            summary = "Returns a list of components that have the specified hash value",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
     )
+    @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of components that have the specified hash value",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of components", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Component.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByHash(
-            @ApiParam(value = "The MD5, SHA-1, SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-384, SHA3-512, BLAKE2b-256, BLAKE2b-384, BLAKE2b-512, or BLAKE3 hash of the component to retrieve", required = true)
+            @Parameter(description = "The MD5, SHA-1, SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-384, SHA3-512, BLAKE2b-256, BLAKE2b-384, BLAKE2b-512, or BLAKE3 hash of the component to retrieve", required = true)
             @PathParam("hash") String hash) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getComponentByHash(hash);
@@ -232,20 +265,26 @@ public class ComponentResource extends AlpineResource {
     @Path("/project/{uuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Creates a new component",
-            response = Component.class,
-            code = 201
+    @Operation(
+            summary = "Creates a new component",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created component",
+                    content = @Content(schema = @Schema(implementation = Component.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
-    public Response createComponent(@PathParam("uuid") String uuid, Component jsonComponent) {
+    public Response createComponent(@Parameter(description = "The UUID of the project to create a component for", schema = @Schema(type = "string", format = "uuid"), required = true)
+                                    @PathParam("uuid") @ValidUuid String uuid, Component jsonComponent) {
         final Validator validator = super.getValidator();
         failOnValidationError(
+                validator.validateProperty(jsonComponent, "authors"),
                 validator.validateProperty(jsonComponent, "author"),
                 validator.validateProperty(jsonComponent, "publisher"),
                 validator.validateProperty(jsonComponent, "name"),
@@ -285,7 +324,7 @@ public class ComponentResource extends AlpineResource {
             final License resolvedLicense = qm.getLicense(jsonComponent.getLicense());
             Component component = new Component();
             component.setProject(project);
-            component.setAuthor(StringUtils.trimToNull(jsonComponent.getAuthor()));
+            component.setAuthors(jsonComponent.getAuthors());
             component.setPublisher(StringUtils.trimToNull(jsonComponent.getPublisher()));
             component.setName(StringUtils.trimToNull(jsonComponent.getName()));
             component.setVersion(StringUtils.trimToNull(jsonComponent.getVersion()));
@@ -340,14 +379,19 @@ public class ComponentResource extends AlpineResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Updates a component",
-            response = Component.class
+    @Operation(
+            summary = "Updates a component",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
-            @ApiResponse(code = 404, message = "The UUID of the component could not be found"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated component",
+                    content = @Content(schema = @Schema(implementation = Component.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the component could not be found"),
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response updateComponent(Component jsonComponent) {
@@ -383,7 +427,7 @@ public class ComponentResource extends AlpineResource {
                 if (name != null) {
                     component.setName(name);
                 }
-                component.setAuthor(StringUtils.trimToNull(jsonComponent.getAuthor()));
+                component.setAuthors(jsonComponent.getAuthors());
                 component.setPublisher(StringUtils.trimToNull(jsonComponent.getPublisher()));
                 component.setVersion(StringUtils.trimToNull(jsonComponent.getVersion()));
                 component.setGroup(StringUtils.trimToNull(jsonComponent.getGroup()));
@@ -403,6 +447,7 @@ public class ComponentResource extends AlpineResource {
                 component.setSha3_256(StringUtils.trimToNull(jsonComponent.getSha3_256()));
                 component.setSha3_384(StringUtils.trimToNull(jsonComponent.getSha3_384()));
                 component.setSha3_512(StringUtils.trimToNull(jsonComponent.getSha3_512()));
+                component.setExternalReferences(jsonComponent.getExternalReferences());
 
                 final License resolvedLicense = qm.getLicense(jsonComponent.getLicense());
                 if (resolvedLicense != null) {
@@ -447,19 +492,20 @@ public class ComponentResource extends AlpineResource {
     @Path("/{uuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a component",
-            code = 204
+    @Operation(
+            summary = "Deletes a component",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
-            @ApiResponse(code = 404, message = "The UUID of the component could not be found")
+            @ApiResponse(responseCode = "204", description = "Component removed successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the component could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response deleteComponent(
-            @ApiParam(value = "The UUID of the component to delete", required = true)
-            @PathParam("uuid") String uuid) {
+            @Parameter(description = "The UUID of the component to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid, Component.FetchGroup.ALL.name());
             if (component != null) {
@@ -478,9 +524,13 @@ public class ComponentResource extends AlpineResource {
     @GET
     @Path("/internal/identify")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Requests the identification of internal components in the portfolio", code = 204)
+    @Operation(
+            summary = "Requests the identification of internal components in the portfolio",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(responseCode = "204", description = "Identification requested successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response identifyInternalComponents() {
@@ -491,20 +541,25 @@ public class ComponentResource extends AlpineResource {
     @GET
     @Path("/project/{projectUuid}/dependencyGraph/{componentUuids}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns the expanded dependency graph to every occurrence of a component",
-            response = Component.class,
-            responseContainer = "Map")
+    @Operation(
+            summary = "Returns the expanded dependency graph to every occurrence of a component",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "- The UUID of the project could not be found\n- The UUID of the component could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The expanded dependency graph to every occurrence of a component",
+                    content = @Content(schema = @Schema(type = "object"))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "- The UUID of the project could not be found\n- The UUID of the component could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getDependencyGraphForComponent(
-            @ApiParam(value = "The UUID of the project to get the expanded dependency graph for", required = true)
-            @PathParam("projectUuid") String projectUuid,
-            @ApiParam(value = "List of UUIDs of the components (separated by |) to get the expanded dependency graph for", required = true)
+            @Parameter(description = "The UUID of the project to get the expanded dependency graph for", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("projectUuid") @ValidUuid String projectUuid,
+            @Parameter(description = "List of UUIDs of the components (separated by |) to get the expanded dependency graph for", required = true)
             @PathParam("componentUuids") String componentUuids) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);

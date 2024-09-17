@@ -2,7 +2,7 @@
 title: Initial Startup
 category: Getting Started
 chapter: 1
-order: 4
+order: 5
 ---
 
 Upon starting Dependency-Track for the first time, multiple tasks occur including:

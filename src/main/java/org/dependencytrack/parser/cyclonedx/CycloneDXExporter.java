@@ -14,13 +14,13 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.cyclonedx;
 
-import org.cyclonedx.BomGeneratorFactory;
-import org.cyclonedx.CycloneDxSchema;
+import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
+import org.cyclonedx.generators.BomGeneratorFactory;
 import org.cyclonedx.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
@@ -80,14 +80,13 @@ public class CycloneDXExporter {
         }
         final List<org.cyclonedx.model.Component> cycloneComponents = (Variant.VEX != variant && components != null) ? components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList()) : null;
         final List<org.cyclonedx.model.Service> cycloneServices = (Variant.VEX != variant && services != null) ? services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList()) : null;
-        final List<org.cyclonedx.model.vulnerability.Vulnerability> cycloneVulnerabilities = (findings != null) ? findings.stream().map(finding -> ModelConverter.convert(qm, variant, finding)).collect(Collectors.toList()) : null;
         final Bom bom = new Bom();
         bom.setSerialNumber("urn:uuid:" + UUID.randomUUID());
         bom.setVersion(1);
         bom.setMetadata(ModelConverter.createMetadata(project));
         bom.setComponents(cycloneComponents);
         bom.setServices(cycloneServices);
-        bom.setVulnerabilities(cycloneVulnerabilities);
+        bom.setVulnerabilities(ModelConverter.generateVulnerabilities(qm, variant, findings));
         if (cycloneComponents != null) {
             bom.setDependencies(ModelConverter.generateDependencies(project, components));
         }
@@ -95,10 +94,12 @@ public class CycloneDXExporter {
     }
 
     public String export(final Bom bom, final Format format) throws GeneratorException {
+        // TODO: The output version should be user-controllable.
+
         if (Format.JSON == format) {
-            return BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom).toJsonString();
+            return BomGeneratorFactory.createJson(Version.VERSION_15, bom).toJsonString();
         } else {
-            return BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom).toXmlString();
+            return BomGeneratorFactory.createXml(Version.VERSION_15, bom).toXmlString();
         }
     }
 

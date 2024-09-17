@@ -14,18 +14,23 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.util;
 
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.datanucleus.enhancement.Persistable;
 import org.dependencytrack.persistence.QueryManager;
+import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
+import org.postgresql.util.PSQLState;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -183,6 +188,22 @@ public final class PersistenceUtil {
     }
 
     /**
+     * Utility method to ensure that a given {@link Collection} is in a persistent state.
+     *
+     * @param objects The {@link Collection} to check the state of
+     * @param message Message to use for the exception, if object is not persistent
+     * @see #assertPersistent(Object, String)
+     * @since 4.12.0
+     */
+    public static void assertPersistentAll(final Collection<?> objects, final String message) {
+        if (objects == null || objects.isEmpty()) {
+            return;
+        }
+
+        objects.forEach(object -> assertPersistent(object, message));
+    }
+
+    /**
      * Utility method to ensure that a given object is <strong>not</strong> in a persistent state.
      *
      * @param object  The object to check the state of
@@ -194,6 +215,22 @@ public final class PersistenceUtil {
         if (isPersistent(object)) {
             throw new IllegalStateException(message != null ? message : "Object must not be persistent");
         }
+    }
+
+    /**
+     * Utility method to ensure that a given {@link Collection} is <strong>not</strong> in a persistent state.
+     *
+     * @param objects The {@link Collection} to check the state of
+     * @param message Message to use for the exception, if object is persistent
+     * @see #assertNonPersistent(Object, String)
+     * @since 4.11.0
+     */
+    public static void assertNonPersistentAll(final Collection<?> objects, final String message) {
+        if (objects == null || objects.isEmpty()) {
+            return;
+        }
+
+        objects.forEach(object -> assertNonPersistent(object, message));
     }
 
     private static boolean isPersistent(final Object object) {
@@ -258,6 +295,27 @@ public final class PersistenceUtil {
         }
 
         return objectId;
+    }
+
+    public static boolean isUniqueConstraintViolation(final Throwable throwable) {
+        // NB: DataNucleus doesn't map constraint violation exceptions,
+        //   so we have to depend on underlying JDBC driver's exception to
+        //   tell us what happened. Leaky abstraction FTW.
+        final Throwable rootCause = ExceptionUtils.getRootCause(throwable);
+
+        // H2 has a dedicated exception for this.
+        if (rootCause instanceof JdbcSQLIntegrityConstraintViolationException) {
+            return true;
+        }
+
+        // Other RDBMSes use the SQL state to communicate errors.
+        if (rootCause instanceof final SQLException se) {
+            return MysqlErrorNumbers.SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION.equals(se.getSQLState()) // MySQL
+                    || PSQLState.UNIQUE_VIOLATION.getState().equals(se.getSQLState()) // PostgreSQL
+                    || "23000".equals(se.getSQLState()); // SQL Server
+        }
+
+        return false;
     }
 
 }

@@ -377,7 +377,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violationD.setTimestamp(new Date());
         violationD = qm.persist(violationD);
 
-        final Response responseA = target(V1_POLICY_VIOLATION)
+        final Response responseA = jersey.target(V1_POLICY_VIOLATION)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -393,7 +393,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
             qm.persist(aclToggle);
         }
 
-        final Response responseB = target(V1_POLICY_VIOLATION)
+        final Response responseB = jersey.target(V1_POLICY_VIOLATION)
                 .request()
                 .header(X_API_KEY, team.getApiKeys().get(0).getKey())
                 .get();
@@ -474,7 +474,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violationD.setTimestamp(new Date());
         violationD = qm.persist(violationD);
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -482,7 +482,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
         assertThat(parseJsonArray(response)).hasSize(4);
 
-        final Response responseA = target(V1_POLICY_VIOLATION).queryParam("violationState", "FAIL")
+        final Response responseA = jersey.target(V1_POLICY_VIOLATION).queryParam("violationState", "FAIL")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -493,7 +493,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonArrayA.getJsonObject(0).getString("uuid")).isEqualTo(violationA.getUuid().toString());
 
 
-        final Response responseB = target(V1_POLICY_VIOLATION).queryParam("riskType", "LICENSE")
+        final Response responseB = jersey.target(V1_POLICY_VIOLATION).queryParam("riskType", "LICENSE")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -504,7 +504,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
         assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
 
-        final Response responseC = target(V1_POLICY_VIOLATION).queryParam("analysisState", "REJECTED")
+        final Response responseC = jersey.target(V1_POLICY_VIOLATION).queryParam("analysisState", "REJECTED")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -515,7 +515,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
         assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
 
-        final Response responseD = target(V1_POLICY_VIOLATION).queryParam("policy", policyD.getUuid().toString())
+        final Response responseD = jersey.target(V1_POLICY_VIOLATION).queryParam("policy", policyD.getUuid().toString())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -600,7 +600,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violationD.setTimestamp(new Date());
         violationD = qm.persist(violationD);
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -608,7 +608,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
         assertThat(parseJsonArray(response)).hasSize(4);
 
-        final Response responseA = target(V1_POLICY_VIOLATION)
+        final Response responseA = jersey.target(V1_POLICY_VIOLATION)
                 .queryParam("textSearchField", "policy_name")
                 .queryParam("textSearchInput", "Policy A")
                 .request()
@@ -620,7 +620,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonArrayA).hasSize(1);
         assertThat(jsonArrayA.getJsonObject(0).getString("uuid")).isEqualTo(violationA.getUuid().toString());
 
-        final Response responseB = target(V1_POLICY_VIOLATION)
+        final Response responseB = jersey.target(V1_POLICY_VIOLATION)
                 .queryParam("textSearchField", "component")
                 .queryParam("textSearchInput", "Component B")
                 .request()
@@ -632,7 +632,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonArrayB).hasSize(1);
         assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
 
-        final Response responseC = target(V1_POLICY_VIOLATION)
+        final Response responseC = jersey.target(V1_POLICY_VIOLATION)
                 .queryParam("textSearchField", "license")
                 .queryParam("textSearchInput", "License C")
                 .request()
@@ -644,7 +644,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonArrayC).hasSize(1);
         assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
 
-        final Response responseD = target(V1_POLICY_VIOLATION)
+        final Response responseD = jersey.target(V1_POLICY_VIOLATION)
                 .queryParam("textSearchField", "project_name")
                 .queryParam("textSearchInput", "Project D")
                 .request()

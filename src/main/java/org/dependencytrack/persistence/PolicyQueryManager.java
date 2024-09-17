@@ -702,7 +702,8 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         }
     }
 
-    private void preprocessACLs(final Query<PolicyViolation> query, final String inputFilter, final Map<String, Object> params, final boolean bypass) {
+    @Override
+    void preprocessACLs(final Query<?> query, final String inputFilter, final Map<String, Object> params, final boolean bypass) {
         if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
             final List<Team> teams;
             if (super.principal instanceof UserPrincipal) {

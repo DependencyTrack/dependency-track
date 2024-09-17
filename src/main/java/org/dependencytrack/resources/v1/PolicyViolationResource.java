@@ -86,23 +86,23 @@ public class PolicyViolationResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
     public Response getViolations(@Parameter(description = "Optionally includes suppressed violations")
                                   @QueryParam("suppressed") boolean suppressed,
-                                  @ApiParam(value = "Optionally includes inactive projects")
+                                  @PathParam(value = "Optionally includes inactive projects")
                                   @QueryParam("showInactive") boolean showInactive,
-                                  @ApiParam(value = "Filter by violation state")
+                                  @PathParam(value = "Filter by violation state")
                                   @QueryParam("violationState") String violationState,
-                                  @ApiParam(value = "Filter by risk type")
+                                  @PathParam(value = "Filter by risk type")
                                   @QueryParam("riskType") String riskType,
-                                  @ApiParam(value = "Filter by policy")
+                                  @PathParam(value = "Filter by policy")
                                   @QueryParam("policy") String policy,
-                                  @ApiParam(value = "Filter by analysis state")
+                                  @PathParam(value = "Filter by analysis state")
                                   @QueryParam("analysisState") String analysisState,
-                                  @ApiParam(value = "Filter occurred on from")
+                                  @PathParam(value = "Filter occurred on from")
                                   @QueryParam("occurredOnDateFrom") String occurredOnDateFrom,
-                                  @ApiParam(value = "Filter occurred on to")
+                                  @PathParam(value = "Filter occurred on to")
                                   @QueryParam("occurredOnDateTo") String occurredOnDateTo,
-                                  @ApiParam(value = "Filter the text input in these fields")
+                                  @PathParam(value = "Filter the text input in these fields")
                                   @QueryParam("textSearchField") String textSearchField,
-                                  @ApiParam(value = "Filter by this text input")
+                                  @PathParam(value = "Filter by this text input")
                                   @QueryParam("textSearchInput") String textSearchInput) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Map<String, String> filters = new HashMap<>();

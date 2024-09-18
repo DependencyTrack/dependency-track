@@ -20,9 +20,8 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.validation.RegexSequence;
 import alpine.common.validation.ValidationTask;
-import alpine.model.LdapUser;
-import alpine.model.ManagedUser;
-import alpine.model.OidcUser;
+import alpine.model.ApiKey;
+import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
@@ -35,6 +34,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Analysis;
@@ -166,8 +169,13 @@ public class AnalysisResource extends AlpineResource {
             }
 
             String commenter = null;
-            if (getPrincipal() instanceof LdapUser || getPrincipal() instanceof ManagedUser || getPrincipal() instanceof OidcUser) {
-                commenter = ((UserPrincipal) getPrincipal()).getUsername();
+            if (getPrincipal() instanceof UserPrincipal principal) {
+                commenter = principal.getUsername();
+            } else if (getPrincipal() instanceof ApiKey apiKey) {
+                List<Team> teams = apiKey.getTeams();
+                List<String> teamNames = new ArrayList<String>();
+                teams.forEach(team -> teamNames.add(team.getName()));
+                commenter = String.join(", ", teamNames);
             }
 
             boolean analysisStateChange = false;

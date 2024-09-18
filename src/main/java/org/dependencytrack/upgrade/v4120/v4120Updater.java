@@ -24,6 +24,7 @@ import alpine.server.upgrade.AbstractUpgradeItem;
 import alpine.server.util.DbUtil;
 import org.dependencytrack.model.BomValidationMode;
 
+import jakarta.json.Json;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,6 +47,8 @@ public class v4120Updater extends AbstractUpgradeItem {
         removeExperimentalBomUploadProcessingV2ConfigProperty(connection);
         migrateBomValidationConfigProperty(connection);
         extendTeamNameColumnMaxLength(connection);
+        migrateAuthorToAuthors(connection);
+        dropAuthorColumns(connection);
     }
 
     private static void removeExperimentalBomUploadProcessingV2ConfigProperty(final Connection connection) throws SQLException {
@@ -156,13 +159,130 @@ public class v4120Updater extends AbstractUpgradeItem {
                         """);
             } else if (DbUtil.isMysql()) {
                 stmt.executeUpdate("""
-                    ALTER TABLE "TEAM" MODIFY "NAME" VARCHAR(255) NOT NULL
-                    """);
+                        ALTER TABLE "TEAM" MODIFY "NAME" VARCHAR(255) NOT NULL
+                        """);
             } else {
                 stmt.executeUpdate("""
-                    ALTER TABLE "TEAM" ALTER COLUMN "NAME" TYPE VARCHAR(255)
-                    """);
+                        ALTER TABLE "TEAM" ALTER COLUMN "NAME" TYPE VARCHAR(255)
+                        """);
             }
+        }
+    }
+
+    private void migrateAuthorToAuthors(final Connection connection) throws SQLException {
+        LOGGER.info("Migrating PROJECT.AUTHOR and COMPONENT.AUTHOR to PROJECT.AUTHORS and COMPONENT.AUTHORS");
+
+        // MSSQL did not have native JSON functions until version 2022.
+        // Since we have to support versions earlier than that, the migration
+        // requires a more procedural approach.
+        if (DbUtil.isMssql()) {
+            migrateAuthorToAuthorsMssql(connection);
+            return;
+        }
+
+        try (final Statement stmt = connection.createStatement()) {
+            if (DbUtil.isH2()) {
+                stmt.executeUpdate("""
+                        UPDATE "PROJECT"
+                           SET "AUTHORS" = JSON_ARRAY(JSON_OBJECT('name': "AUTHOR"))
+                         WHERE "AUTHOR" IS NOT NULL
+                        """);
+                stmt.executeUpdate("""
+                        UPDATE "COMPONENT"
+                           SET "AUTHORS" = JSON_ARRAY(JSON_OBJECT('name': "AUTHOR"))
+                         WHERE "AUTHOR" IS NOT NULL
+                        """);
+            } else if (DbUtil.isMysql()) {
+                stmt.executeUpdate("""
+                        UPDATE "PROJECT"
+                           SET "AUTHORS" = JSON_ARRAY(JSON_OBJECT('name', "AUTHOR"))
+                         WHERE "AUTHOR" IS NOT NULL
+                        """);
+                stmt.executeUpdate("""
+                        UPDATE "COMPONENT"
+                           SET "AUTHORS" = JSON_ARRAY(JSON_OBJECT('name', "AUTHOR"))
+                         WHERE "AUTHOR" IS NOT NULL
+                        """);
+            } else if (DbUtil.isPostgreSQL()) {
+                stmt.executeUpdate("""
+                        UPDATE "PROJECT"
+                           SET "AUTHORS" = JSON_BUILD_ARRAY(JSON_BUILD_OBJECT('name', "AUTHOR"))::TEXT
+                         WHERE "AUTHOR" IS NOT NULL
+                        """);
+                stmt.executeUpdate("""
+                        UPDATE "COMPONENT"
+                           SET "AUTHORS" = JSON_BUILD_ARRAY(JSON_BUILD_OBJECT('name', "AUTHOR"))::TEXT
+                         WHERE "AUTHOR" IS NOT NULL
+                        """);
+            } else {
+                throw new IllegalStateException("Unrecognized database type");
+            }
+        }
+    }
+
+    private void migrateAuthorToAuthorsMssql(final Connection connection) throws SQLException {
+        migrateAuthorToAuthorsMssqlForTable(connection, "PROJECT");
+        migrateAuthorToAuthorsMssqlForTable(connection, "COMPONENT");
+    }
+
+    private void migrateAuthorToAuthorsMssqlForTable(
+            final Connection connection,
+            final String tableName) throws SQLException {
+        try (final PreparedStatement selectStatement = connection.prepareStatement("""
+                SELECT "ID"
+                     , "AUTHOR"
+                  FROM "%s"
+                 WHERE "AUTHOR" IS NOT NULL
+                   AND "AUTHORS" IS NULL
+                """.formatted(tableName));
+             final PreparedStatement updateStatement = connection.prepareStatement("""
+                     UPDATE "%s"
+                        SET "AUTHORS" = ?
+                      WHERE "ID" = ?
+                     """.formatted(tableName))) {
+            int batchSize = 0, numBatches = 0, numUpdates = 0;
+            final ResultSet rs = selectStatement.executeQuery();
+            while (rs.next()) {
+                final long id = rs.getLong(1);
+                final String author = rs.getString(2);
+                final String authors = Json.createArrayBuilder()
+                        .add(Json.createObjectBuilder()
+                                .add("name", author))
+                        .build()
+                        .toString();
+
+                updateStatement.setString(1, authors);
+                updateStatement.setLong(2, id);
+                updateStatement.addBatch();
+                if (++batchSize == 500) {
+                    updateStatement.executeBatch();
+                    numUpdates += batchSize;
+                    numBatches++;
+                    batchSize = 0;
+                }
+            }
+
+            if (batchSize > 0) {
+                updateStatement.executeBatch();
+                numUpdates += batchSize;
+                numBatches++;
+            }
+
+            LOGGER.info("Updated %d %s records in %d batches"
+                    .formatted(numUpdates, tableName, numBatches));
+        }
+    }
+
+    private void dropAuthorColumns(final Connection connection) throws SQLException {
+        LOGGER.info("Dropping PROJECT.AUTHOR and COMPONENT.AUTHOR columns");
+
+        try (final Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate("""
+                    ALTER TABLE "PROJECT" DROP COLUMN "AUTHOR"
+                    """);
+            stmt.executeUpdate("""
+                    ALTER TABLE "COMPONENT" DROP COLUMN "AUTHOR"
+                    """);
         }
     }
 

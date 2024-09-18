@@ -863,10 +863,31 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
 
         // Group properties by group, name, and value. Because CycloneDX supports duplicate
         // property names, uniqueness can only be determined by also considering the value.
+        final var existingPropertyIdentitiesSeen = new HashSet<ComponentProperty.Identity>();
+        final var existingDuplicateProperties = new HashSet<ComponentProperty>();
         final var existingPropertiesByIdentity = component.getProperties().stream()
+                // The legacy BOM processing in <= 4.11.x allowed duplicates to be persisted.
+                // Collectors#toMap fails upon encounter of duplicate keys.
+                // Prevent existing duplicates from breaking this.
+                // https://github.com/DependencyTrack/dependency-track/issues/4027
+                .filter(property -> {
+                    final var identity = new ComponentProperty.Identity(property);
+                    final boolean isUnique = existingPropertyIdentitiesSeen.add(identity);
+                    if (!isUnique) {
+                        existingDuplicateProperties.add(property);
+                    }
+
+                    return isUnique;
+                })
                 .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
+        final var incomingPropertyIdentitiesSeen = new HashSet<ComponentProperty.Identity>();
         final var incomingPropertiesByIdentity = properties.stream()
+                .filter(property -> incomingPropertyIdentitiesSeen.add(new ComponentProperty.Identity(property)))
                 .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
+
+        if (!existingDuplicateProperties.isEmpty()) {
+            pm.deletePersistentAll(existingDuplicateProperties);
+        }
 
         final var propertyIdentities = new HashSet<ComponentProperty.Identity>();
         propertyIdentities.addAll(existingPropertiesByIdentity.keySet());

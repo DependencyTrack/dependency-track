@@ -20,9 +20,8 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
 import alpine.event.framework.EventService;
-import alpine.model.IConfigProperty;
-import alpine.model.ManagedUser;
 import alpine.model.IConfigProperty.PropertyType;
+import alpine.model.ManagedUser;
 import alpine.model.Team;
 import alpine.model.Permission;
 import alpine.server.auth.JsonWebToken;
@@ -97,7 +96,7 @@ public class ProjectResourceTest extends ResourceTest {
         super.after();
     }
 
-    public void getUserToken(boolean isAdmin) {
+    public void setUpUser(boolean isAdmin, boolean isRequired) {
         testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
         jwt = new JsonWebToken().createToken(testUser);
         qm.addUserToTeam(testUser, team);
@@ -111,6 +110,14 @@ public class ProjectResourceTest extends ResourceTest {
             final Permission adminPermission = qm.getPermission("ACCESS_MANAGEMENT");
             permissionsList.add(adminPermission);
             testUser.setPermissions(permissionsList);
+        }
+        if (isRequired) {
+            qm.createConfigProperty(
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                    "true",
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                    null);
         }
     }
 
@@ -309,7 +316,6 @@ public class ProjectResourceTest extends ResourceTest {
                 .withMatcher("childUuid", equalTo(childProject.getUuid().toString()))
                 .isEqualTo("""
                         {
-                          "accessTeams": [],
                           "name": "acme-app",
                           "version": "1.0.0",
                           "uuid": "${json-unit.matches:projectUuid}",
@@ -439,7 +445,6 @@ public class ProjectResourceTest extends ResourceTest {
     @Test
     public void createProjectTest(){
         Project project = new Project();
-        project.setAccessTeams(new ArrayList<Team>());
         project.setName("Acme Example");
         project.setVersion("1.0");
         project.setDescription("Test project");
@@ -460,7 +465,6 @@ public class ProjectResourceTest extends ResourceTest {
     @Test
     public void createProjectDuplicateTest() {
         Project project = new Project();
-        project.setAccessTeams(new ArrayList<Team>());
         project.setName("Acme Example");
         project.setVersion("1.0");
         Response response = jersey.target(V1_PROJECT)
@@ -480,7 +484,6 @@ public class ProjectResourceTest extends ResourceTest {
     @Test
     public void createProjectWithoutVersionDuplicateTest() {
         Project project = new Project();
-        project.setAccessTeams(new ArrayList<Team>());
         project.setName("Acme Example");
         Response response = jersey.target(V1_PROJECT)
                 .request()
@@ -509,30 +512,31 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void createProjectWithExistingTeamRequiredTest() {
-        getUserToken(false);
+        setUpUser(false, true);
         Team AllowedTeam = qm.createTeam("AllowedTeam", false);
         Project project = new Project();
         project.setName("ProjectWithExistingTeamRequired");
         qm.addUserToTeam(testUser, AllowedTeam);
-        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
         final JsonObject jsonTeam = Json.createObjectBuilder().add("uuid", AllowedTeam.getUuid().toString()).build();
         final JsonObjectBuilder requestBodyBuilder = Json.createObjectBuilder()
-                .add("name", project.getName()).add("classifier", "CONTAINER").addNull("parent").add("active", true)
+                .add("name", project.getName()).add("classifier", "CONTAINER").addNull("parent").add("active", true).add("tags", Json.createArrayBuilder())
                 .add("accessTeams", Json.createArrayBuilder().add(jsonTeam).build());
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.json(requestBodyBuilder.build().toString()));
-        Assert.assertEquals(201, response.getStatus(), 0);
+        Assert.assertEquals(201, response.getStatus());
+        JsonObject returnedProject = parseJsonObject(response);
+        JsonArray teams = returnedProject.getJsonArray("accessTeams");
+        Assert.assertEquals(teams.size(), 1);
+        Assert.assertEquals(AllowedTeam.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test
     public void createProjectWithoutExistingTeamRequiredTest() {
-        getUserToken(false);
+        setUpUser(false, true);
         Project project = new Project();
         project.setName("ProjectWithoutExistingTeamRequired");
-        project.setAccessTeams(new ArrayList<Team>());
-        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
@@ -542,54 +546,55 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void createProjectWithNotAllowedExistingTeamTest() {
-        getUserToken(false);
+        setUpUser(false, true);
         Team notAllowedTeam = qm.createTeam("NotAllowedTeam", false);
         Project project = new Project();
         project.setName("ProjectWithNotAllowedExistingTeam");
         project.addAccessTeam(notAllowedTeam);
-        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(project, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assert.assertEquals(403, response.getStatus());
     }
 
     @Test
     public void createProjectWithNotAllowedExistingTeamAdminTest() {
-        getUserToken(true);
+        setUpUser(true, true);
         Team notAllowedTeam = qm.createTeam("NotAllowedTeam", false);
         Project project = new Project();
         project.setName("ProjectWithNotAllowedExistingTeam");
         project.addAccessTeam(notAllowedTeam);
-        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(project, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(201, response.getStatus(), 0);
+        Assert.assertEquals(201, response.getStatus());
+        JsonObject returnedProject = parseJsonObject(response);
+        JsonArray teams = returnedProject.getJsonArray("accessTeams");
+        Assert.assertEquals(teams.size(), 1);
+        Assert.assertEquals(notAllowedTeam.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test
     public void createProjectWithNotExistingTeamNoAdminTest() {
-        getUserToken(false);
+        setUpUser(false, true);
         Team notAllowedTeam = new Team();
         notAllowedTeam.setUuid(new UUID(1, 1));
         notAllowedTeam.setName("NotAllowedTeam");
         Project project = new Project();
         project.addAccessTeam(notAllowedTeam);
         project.setName("ProjectWithNotAllowedExistingTeam");
-        qm.createConfigProperty("access-management", "acl.enabled", "true", IConfigProperty.PropertyType.BOOLEAN, "");
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(project, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assert.assertEquals(403, response.getStatus());
     }
 
     @Test
     public void createProjectWithNotExistingTeamTest() {
-        getUserToken(true);
+        setUpUser(true, false);
         Team notAllowedTeam = new Team();
         notAllowedTeam.setUuid(new UUID(1, 1));
         notAllowedTeam.setName("NotAllowedTeam");
@@ -600,7 +605,26 @@ public class ProjectResourceTest extends ResourceTest {
                 .request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(project, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assert.assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void createProjectWithApiKeyTest() {
+        Project project = new Project();
+        project.setName("ProjectWithNotExistingTeam");
+        final JsonObject jsonTeam = Json.createObjectBuilder().add("uuid", team.getUuid().toString()).build();
+        final JsonObjectBuilder requestBodyBuilder = Json.createObjectBuilder()
+                .add("name", project.getName()).add("classifier", "CONTAINER").addNull("parent").add("active", true).add("tags", Json.createArrayBuilder())
+                .add("accessTeams", Json.createArrayBuilder().add(jsonTeam).build());
+        Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(requestBodyBuilder.build().toString()));
+        Assert.assertEquals(201, response.getStatus());
+        JsonObject returnedProject = parseJsonObject(response);
+        JsonArray teams = returnedProject.getJsonArray("accessTeams");
+        Assert.assertEquals(teams.size(), 1);
+        Assert.assertEquals(team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test
@@ -833,7 +857,6 @@ public class ProjectResourceTest extends ResourceTest {
                 .withMatcher("projectUuid", equalTo(p1.getUuid().toString()))
                 .isEqualTo("""
                         {
-                          "accessTeams": [],
                           "publisher": "new publisher",
                           "manufacturer": {
                             "name": "manufacturerName",
@@ -930,7 +953,6 @@ public class ProjectResourceTest extends ResourceTest {
                 .withMatcher("parentProjectUuid", CoreMatchers.equalTo(newParent.getUuid().toString()))
                 .isEqualTo("""
                         {
-                          "accessTeams": [],
                           "name": "DEF",
                           "version": "2.0",
                           "uuid": "${json-unit.matches:projectUuid}",
@@ -1289,7 +1311,6 @@ public class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json("""
                         {
-                          "accessTeams": [],
                           "name": "acme-app-parent",
                           "version": "1.0.0"
                         }
@@ -1302,7 +1323,6 @@ public class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json("""
                         {
-                          "accessTeams": [],
                           "name": "acme-app",
                           "version": "1.0.0",
                           "parent": {
@@ -1320,7 +1340,6 @@ public class ProjectResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response)).isEqualTo("""
                 {
-                  "accessTeams": [],
                   "name": "acme-app-parent",
                   "version": "1.0.0",
                   "classifier": "APPLICATION",
@@ -1354,7 +1373,6 @@ public class ProjectResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response)).isEqualTo("""
                 {
-                  "accessTeams": [],
                   "name": "acme-app",
                   "version": "1.0.0",
                   "classifier": "APPLICATION",
@@ -1395,8 +1413,7 @@ public class ProjectResourceTest extends ResourceTest {
 
                 final JsonObjectBuilder requestBodyBuilder = Json.createObjectBuilder()
                         .add("name", "project-%d-%d".formatted(i, j))
-                        .add("version", "%d.%d".formatted(i, j))
-                        .add("accessTeams",Json.createArrayBuilder().build());
+                        .add("version", "%d.%d".formatted(i, j));
                 if (parentUuid != null) {
                     requestBodyBuilder.add("parent", Json.createObjectBuilder()
                             .add("uuid", parentUuid.toString()));

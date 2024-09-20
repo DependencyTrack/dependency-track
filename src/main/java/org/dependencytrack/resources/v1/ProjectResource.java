@@ -284,11 +284,13 @@ public class ProjectResource extends AlpineResource {
                     content = @Content(schema = @Schema(implementation = Project.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "You don't have the permission to assign this team to a project."),
             @ApiResponse(responseCode = "409", description = """
                     <ul>
                       <li>An inactive Parent cannot be selected as parent, or</li>
                       <li>A project with the specified name already exists</li>
                     </ul>"""),
+            @ApiResponse(responseCode = "422", description = "You need to specify at least one team to which the project should belong"),
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response createProject(Project jsonProject) {
@@ -315,33 +317,40 @@ public class ProjectResource extends AlpineResource {
                 Project parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
                     jsonProject.setParent(parent);
             }
-            final List<Team> choosenTeams = jsonProject.getAccessTeams();
-            Principal principal = getPrincipal();
-            List<Team> userTeams = new ArrayList<Team>();
-            if (principal instanceof final UserPrincipal userPrincipal) {
-                userTeams = userPrincipal.getTeams();
-            } else if (principal instanceof final ApiKey apiKey) {
-                userTeams = apiKey.getTeams();
-            }
-            boolean required = qm.isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED);
-            boolean isAdmin = qm.hasAccessManagementPermission(principal);
-            if (required && choosenTeams.isEmpty()) {
-                return Response.status(422)
-                        .entity("You need to specify at least one team to which the project should belong").build();
-            }
-            List<Team> visibleTeams = isAdmin ? qm.getTeams() : userTeams;
-            List<UUID> visibleUuids = visibleTeams.isEmpty() ? new ArrayList<UUID>(): visibleTeams.stream().map(Team::getUuid).toList();
-            jsonProject.setAccessTeams(new ArrayList<Team>());
-            for (Team choosenTeam : choosenTeams) {
-                if (!visibleUuids.contains(choosenTeam.getUuid())) {
-                    return isAdmin ? Response.status(404).entity("This team does not exist!").build()
-                            : Response.status(403)
-                                    .entity("You don't have the permission to assign this team to a project.").build();
+            if (!qm.doesProjectExist(StringUtils.trimToNull(jsonProject.getName()),
+                    StringUtils.trimToNull(jsonProject.getVersion()))) {
+                final List<Team> chosenTeams = jsonProject.getAccessTeams() == null ? new ArrayList<Team>()
+                        : jsonProject.getAccessTeams();
+                boolean required = qm.isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED);
+                if (required && chosenTeams.isEmpty()) {
+                    return Response.status(422)
+                            .entity("You need to specify at least one team to which the project should belong").build();
                 }
-                Team ormTeam = qm.getObjectByUuid(Team.class, choosenTeam.getUuid());
-                jsonProject.addAccessTeam(ormTeam);
-            }
-            if (!qm.doesProjectExist(StringUtils.trimToNull(jsonProject.getName()), StringUtils.trimToNull(jsonProject.getVersion()))) {
+                Principal principal = getPrincipal();
+                if (!chosenTeams.isEmpty()) {
+                    List<Team> userTeams = new ArrayList<Team>();
+                    if (principal instanceof final UserPrincipal userPrincipal) {
+                        userTeams = userPrincipal.getTeams();
+                    } else if (principal instanceof final ApiKey apiKey) {
+                        userTeams = apiKey.getTeams();
+                    }
+                    boolean isAdmin = qm.hasAccessManagementPermission(principal);
+                    List<Team> visibleTeams = isAdmin ? qm.getTeams() : userTeams;
+                    List<UUID> visibleUuids = visibleTeams.isEmpty() ? new ArrayList<UUID>()
+                            : visibleTeams.stream().map(Team::getUuid).toList();
+                    jsonProject.setAccessTeams(new ArrayList<Team>());
+                    for (Team choosenTeam : chosenTeams) {
+                        if (!visibleUuids.contains(choosenTeam.getUuid())) {
+                            return isAdmin ? Response.status(404).entity("This team does not exist!").build()
+                                    : Response.status(403)
+                                            .entity("You don't have the permission to assign this team to a project.")
+                                            .build();
+                        }
+                        Team ormTeam = qm.getObjectByUuid(Team.class, choosenTeam.getUuid());
+                        jsonProject.addAccessTeam(ormTeam);
+                    }
+                }
+
                 final Project project;
                 try {
                     project = qm.createProject(jsonProject, jsonProject.getTags(), true);

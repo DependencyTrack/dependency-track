@@ -37,11 +37,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.TeamSelfResponse;
-import org.dependencytrack.resources.v1.vo.VisibleTeams;
 import org.owasp.security.logging.SecurityMarkers;
 
 import jakarta.validation.Validator;
@@ -230,24 +228,25 @@ public class TeamResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns a list of Teams that are visible", description = "<p></p>")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "The Visible Teams", content = @Content(schema = @Schema(implementation = VisibleTeams.class))),
+            @ApiResponse(responseCode = "200", description = "The Visible Teams", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Team.class)))),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response availableTeams() {
         try (QueryManager qm = new QueryManager()) {
             Principal user = getPrincipal();
-            List<Team> userTeams = new ArrayList<Team>();
-            if (user instanceof final UserPrincipal userPrincipal) {
-                userTeams = userPrincipal.getTeams();
-            } else if (user instanceof final ApiKey apiKey) {
-                userTeams = apiKey.getTeams();
-            }
-            boolean required = qm.isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED);
             boolean isAllTeams = qm.hasAccessManagementPermission(user);
-            List<Team> teams = isAllTeams ? qm.getTeams() : userTeams;
-            VisibleTeams response = new VisibleTeams(required, teams);
+            List<Team> teams = new ArrayList<Team>();
+            if (isAllTeams) {
+                teams = qm.getTeams();
+            } else {
+                if (user instanceof final UserPrincipal userPrincipal) {
+                    teams = userPrincipal.getTeams();
+                } else if (user instanceof final ApiKey apiKey) {
+                    teams = apiKey.getTeams();
+                }
+            }
 
-            return Response.ok(response).build();
+            return Response.ok(teams).build();
         }
     }
 

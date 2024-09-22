@@ -93,6 +93,11 @@ public class PolicyConditionResource extends AlpineResource {
             if (policy != null) {
                 final PolicyCondition pc = qm.createPolicyCondition(policy, jsonPolicyCondition.getSubject(),
                         jsonPolicyCondition.getOperator(), StringUtils.trimToNull(jsonPolicyCondition.getValue()));
+
+                // Prevent infinite recursion during JSON serialization.
+                qm.makeTransient(pc);
+                pc.setPolicy(null);
+
                 return Response.status(Response.Status.CREATED).entity(pc).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the policy could not be found.").build();
@@ -127,7 +132,12 @@ public class PolicyConditionResource extends AlpineResource {
             PolicyCondition pc = qm.getObjectByUuid(PolicyCondition.class, jsonPolicyCondition.getUuid());
             if (pc != null) {
                 pc = qm.updatePolicyCondition(jsonPolicyCondition);
-                return Response.status(Response.Status.CREATED).entity(pc).build();
+
+                // Prevent infinite recursion during JSON serialization.
+                qm.makeTransient(pc);
+                pc.setPolicy(null);
+
+                return Response.status(Response.Status.OK).entity(pc).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the policy condition could not be found.").build();
             }

@@ -11,6 +11,9 @@ basis via permission.
 To enable badges for a team, activate the permission `VIEW_BADGES`. To deactivate badges, remove the permission. To 
 retrieve a badge, use a team's API key either in the badge API header `X-API-Key` or in the URI parameter `apiKey`.
 
+Dependency-Track ships with a default team "_Badge Viewers_" dedicated to badges that already has the necessary
+permission and an API key.
+
 > As badges are typically embedded in places that more people have access to than to Dependency-Track, the API key used
 > for the badge request should have minimal scope to prevent unintended access beyond that badge. Ideally, the API
 > key belongs to a single-purpose team, having just the `VIEW_BADGES` permission, with only one API key and access to 

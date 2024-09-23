@@ -215,6 +215,20 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
+    @Test
+    public void testInformWithEscapedData() {
+        final var notification = new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.ANALYZER)
+                .title(NotificationConstants.Title.NOTIFICATION_TEST)
+                .content("! \" § $ % & / ( ) = ? \\ ' * Ö Ü Ä ®️")
+                .level(NotificationLevel.ERROR)
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC));
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+    }
+
     private static Component createComponent(final Project project) {
         final var component = new Component();
         component.setProject(project);

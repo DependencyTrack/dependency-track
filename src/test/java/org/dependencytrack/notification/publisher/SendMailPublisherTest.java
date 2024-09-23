@@ -396,6 +396,37 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Override
+    public void testInformWithEscapedData() {
+        super.testInformWithEscapedData();
+
+        assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Notification Test");
+            assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
+            final MimeMultipart content = (MimeMultipart) message.getContent();
+            assertThat(content.getCount()).isEqualTo(1);
+            assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
+            assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
+                    Notification Test
+                                        
+                    --------------------------------------------------------------------------------
+                                        
+                    Level:     ERROR
+                    Scope:     SYSTEM
+                    Group:     ANALYZER
+                                        
+                    --------------------------------------------------------------------------------
+                                        
+                    ! " § $ % & / ( ) = ? \\ ' * Ö Ü Ä ®️
+                                        
+                    --------------------------------------------------------------------------------
+                                        
+                    1970-01-01T18:31:06.000000666
+                    """);
+        });
+        
+    }
+
+    @Override
     JsonObjectBuilder extraConfig() {
         return super.extraConfig()
                 .add(Publisher.CONFIG_DESTINATION, "username@example.com");

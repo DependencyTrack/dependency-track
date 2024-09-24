@@ -28,11 +28,15 @@ import alpine.server.mail.SendMail;
 import alpine.server.mail.SendMailException;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
+
+import org.apache.commons.text.StringEscapeUtils;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DebugDataEncryption;
 
 import jakarta.json.JsonObject;
 import jakarta.json.JsonString;
+
+import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -135,13 +139,14 @@ public class SendMailPublisher implements Publisher {
             LOGGER.error("Failed to decrypt SMTP password (%s)".formatted(ctx), e);
             return;
         }
+        String unescapedContent = StringEscapeUtils.unescapeHtml4(content);
 
         try {
             final SendMail sendMail = new SendMail()
                     .from(smtpFrom)
                     .to(destinations)
                     .subject(emailSubjectPrefix + " " + notification.getTitle())
-                    .body(content)
+                    .body(mimeType == MediaType.TEXT_HTML ? StringEscapeUtils.escapeHtml4(unescapedContent): unescapedContent)
                     .bodyMimeType(mimeType)
                     .host(smtpHostname)
                     .port(smtpPort)

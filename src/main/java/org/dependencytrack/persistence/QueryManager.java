@@ -731,8 +731,8 @@ public class QueryManager extends AlpineQueryManager {
         return getPolicyQueryManager().getPolicyViolations(component, includeSuppressed);
     }
 
-    public PaginatedResult getPolicyViolations(boolean includeSuppressed) {
-        return getPolicyQueryManager().getPolicyViolations(includeSuppressed);
+    public PaginatedResult getPolicyViolations(boolean includeSuppressed, boolean showInactive, Map<String, String> filters) {
+        return getPolicyQueryManager().getPolicyViolations(includeSuppressed, showInactive, filters);
     }
 
     public ViolationAnalysis getViolationAnalysis(Component component, PolicyViolation policyViolation) {

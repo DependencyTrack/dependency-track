@@ -28,6 +28,9 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -58,12 +61,15 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.metadata.MemberMetadata;
 import javax.jdo.metadata.TypeMetadata;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 final class ProjectQueryManager extends QueryManager implements IQueryManager {
@@ -512,6 +518,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             final boolean includeACL,
             final boolean includePolicyViolations
     ) {
+        final var jsonMapper = new JsonMapper();
+
         final Project clonedProject = callInTransaction(() -> {
             final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
             if (source == null) {
@@ -539,7 +547,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setCpe(source.getCpe());
             project.setPurl(source.getPurl());
             project.setSwidTagId(source.getSwidTagId());
-            if (includeComponents && includeServices) {
+            if (source.getDirectDependencies() != null && includeComponents && includeServices) {
                 project.setDirectDependencies(source.getDirectDependencies());
             }
             project.setParent(source.getParent());
@@ -573,7 +581,17 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 }
             }
 
-            final Map<Long, Component> clonedComponents = new HashMap<>();
+            final var projectDirectDepsSourceComponentUuids = new HashSet<UUID>();
+            if (project.getDirectDependencies() != null) {
+                projectDirectDepsSourceComponentUuids.addAll(
+                        parseDirectDependenciesUuids(jsonMapper, project.getDirectDependencies()));
+            }
+
+            final var clonedComponentById = new HashMap<Long, Component>();
+            final var clonedComponentBySourceComponentId = new HashMap<Long, Component>();
+            final var directDepsSourceComponentUuidsByClonedComponentId = new HashMap<Long, Set<UUID>>();
+            final var clonedComponentUuidBySourceComponentUuid = new HashMap<UUID, UUID>();
+
             if (includeComponents) {
                 final List<Component> sourceComponents = getAllComponents(source);
                 if (sourceComponents != null) {
@@ -584,9 +602,42 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                             final FindingAttribution sourceAttribution = this.getFindingAttribution(vuln, sourceComponent);
                             this.addVulnerability(vuln, clonedComponent, sourceAttribution.getAnalyzerIdentity(), sourceAttribution.getAlternateIdentifier(), sourceAttribution.getReferenceUrl(), sourceAttribution.getAttributedOn());
                         }
-                        clonedComponents.put(sourceComponent.getId(), clonedComponent);
+
+                        clonedComponentById.put(clonedComponent.getId(), clonedComponent);
+                        clonedComponentBySourceComponentId.put(sourceComponent.getId(), clonedComponent);
+                        clonedComponentUuidBySourceComponentUuid.put(sourceComponent.getUuid(), clonedComponent.getUuid());
+
+                        if (clonedComponent.getDirectDependencies() != null) {
+                            final Set<UUID> directDepsUuids = parseDirectDependenciesUuids(jsonMapper, clonedComponent.getDirectDependencies());
+                            if (!directDepsUuids.isEmpty()) {
+                                directDepsSourceComponentUuidsByClonedComponentId.put(clonedComponent.getId(), directDepsUuids);
+                            }
+                        }
                     }
                 }
+            }
+
+            if (!projectDirectDepsSourceComponentUuids.isEmpty()) {
+                String directDependencies = project.getDirectDependencies();
+                for (final UUID sourceComponentUuid : projectDirectDepsSourceComponentUuids) {
+                    final UUID clonedComponentUuid = clonedComponentUuidBySourceComponentUuid.get(sourceComponentUuid);
+                    directDependencies = directDependencies.replace(sourceComponentUuid.toString(), clonedComponentUuid.toString());
+                }
+
+                project.setDirectDependencies(directDependencies);
+            }
+
+            for (final long componentId : directDepsSourceComponentUuidsByClonedComponentId.keySet()) {
+                final Component component = clonedComponentById.get(componentId);
+                final Set<UUID> sourceComponentUuids = directDepsSourceComponentUuidsByClonedComponentId.get(componentId);
+
+                String directDependencies = component.getDirectDependencies();
+                for (final UUID sourceComponentUuid : sourceComponentUuids) {
+                    final UUID clonedComponentUuid = clonedComponentUuidBySourceComponentUuid.get(sourceComponentUuid);
+                    directDependencies = directDependencies.replace(sourceComponentUuid.toString(), clonedComponentUuid.toString());
+                }
+
+                component.setDirectDependencies(directDependencies);
             }
 
             if (includeServices) {
@@ -604,7 +655,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     for (final Analysis sourceAnalysis : analyses) {
                         Analysis analysis = new Analysis();
                         analysis.setAnalysisState(sourceAnalysis.getAnalysisState());
-                        final Component clonedComponent = clonedComponents.get(sourceAnalysis.getComponent().getId());
+                        final Component clonedComponent = clonedComponentBySourceComponentId.get(sourceAnalysis.getComponent().getId());
                         if (clonedComponent == null) {
                             break;
                         }
@@ -642,7 +693,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 final List<PolicyViolation> sourcePolicyViolations = getAllPolicyViolations(source);
                 if (sourcePolicyViolations != null) {
                     for (final PolicyViolation policyViolation : sourcePolicyViolations) {
-                        final Component destinationComponent = clonedComponents.get(policyViolation.getComponent().getId());
+                        final Component destinationComponent = clonedComponentBySourceComponentId.get(policyViolation.getComponent().getId());
                         final PolicyViolation clonedPolicyViolation = clonePolicyViolation(policyViolation, destinationComponent);
                         persist(clonedPolicyViolation);
                     }
@@ -655,6 +706,30 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, clonedProject));
         commitSearchIndex(true, Project.class);
         return clonedProject;
+    }
+
+    private static Set<UUID> parseDirectDependenciesUuids(
+            final JsonMapper jsonMapper,
+            final String directDependencies) throws IOException {
+        final var uuids = new HashSet<UUID>();
+        try (final JsonParser jsonParser = jsonMapper.createParser(directDependencies)) {
+            JsonToken currentToken = jsonParser.nextToken();
+            if (currentToken != JsonToken.START_ARRAY) {
+                throw new IllegalArgumentException("""
+                        Expected directDependencies to be a JSON array, \
+                        but encountered token: %s""".formatted(currentToken));
+            }
+
+            while (jsonParser.nextToken() != null) {
+                if (jsonParser.currentToken() == JsonToken.FIELD_NAME
+                    && "uuid".equals(jsonParser.currentName())
+                    && jsonParser.nextToken() == JsonToken.VALUE_STRING) {
+                    uuids.add(UUID.fromString(jsonParser.getValueAsString()));
+                }
+            }
+        }
+
+        return uuids;
     }
 
     /**

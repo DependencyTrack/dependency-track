@@ -22,19 +22,11 @@ import alpine.common.util.UuidUtil;
 import alpine.event.framework.EventService;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.model.ManagedUser;
-import alpine.model.Team;
 import alpine.model.Permission;
+import alpine.model.Team;
 import alpine.server.auth.JsonWebToken;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.ws.rs.HttpMethod;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.cyclonedx.model.ExternalReference.Type;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
@@ -44,6 +36,7 @@ import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.OrganizationalContact;
@@ -60,11 +53,20 @@ import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.hamcrest.CoreMatchers;
+import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,6 +80,7 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 
 public class ProjectResourceTest extends ResourceTest {
     private ManagedUser testUser;
@@ -1107,12 +1110,18 @@ public class ProjectResourceTest extends ResourceTest {
         final var componentSupplier = new OrganizationalEntity();
         componentSupplier.setName("componentSupplier");
 
-        final var component = new Component();
-        component.setProject(project);
-        component.setName("acme-lib");
-        component.setVersion("2.0.0");
-        component.setSupplier(componentSupplier);
-        qm.persist(component);
+        final var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("acme-lib-a");
+        componentA.setVersion("2.0.0");
+        componentA.setSupplier(componentSupplier);
+        qm.persist(componentA);
+
+        final var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("acme-lib-b");
+        componentB.setVersion("2.1.0");
+        qm.persist(componentB);
 
         final var service = new ServiceComponent();
         service.setProject(project);
@@ -1120,19 +1129,22 @@ public class ProjectResourceTest extends ResourceTest {
         service.setVersion("3.0.0");
         qm.persist(service);
 
+        project.setDirectDependencies(new JSONArray().put(new ComponentIdentity(componentA).toJSON()).toString());
+        componentA.setDirectDependencies(new JSONArray().put(new ComponentIdentity(componentB).toJSON()).toString());
+
         final var vuln = new Vulnerability();
         vuln.setVulnId("INT-123");
         vuln.setSource(Vulnerability.Source.INTERNAL);
         qm.persist(vuln);
 
-        qm.addVulnerability(vuln, component, AnalyzerIdentity.INTERNAL_ANALYZER);
-        final Analysis analysis = qm.makeAnalysis(component, vuln, AnalysisState.NOT_AFFECTED,
+        qm.addVulnerability(vuln, componentA, AnalyzerIdentity.INTERNAL_ANALYZER);
+        final Analysis analysis = qm.makeAnalysis(componentA, vuln, AnalysisState.NOT_AFFECTED,
                 AnalysisJustification.REQUIRES_ENVIRONMENT, AnalysisResponse.WILL_NOT_FIX, "details", false);
         qm.makeAnalysisComment(analysis, "comment", "commenter");
 
         final Response response = jersey.target("%s/clone".formatted(V1_PROJECT)).request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.json("""
+                .put(Entity.json(/* language=JSON */ """
                         {
                           "project": "%s",
                           "version": "1.1.0",
@@ -1163,6 +1175,18 @@ public class ProjectResourceTest extends ResourceTest {
                     assertThat(clonedProject.getManufacturer()).isNotNull();
                     assertThat(clonedProject.getManufacturer().getName()).isEqualTo("projectManufacturer");
                     assertThat(clonedProject.getAccessTeams()).containsOnly(team);
+                    assertThatJson(clonedProject.getDirectDependencies())
+                            .withMatcher("notSourceComponentUuid", not(equalTo(componentA.getUuid().toString())))
+                            .isEqualTo(/* language=JSON */ """
+                                    [
+                                      {
+                                        "objectType": "COMPONENT",
+                                        "uuid": "${json-unit.matches:notSourceComponentUuid}",
+                                        "name": "acme-lib-a",
+                                        "version": "2.0.0"
+                                      }
+                                    ]
+                                    """);
 
                     final List<ProjectProperty> clonedProperties = qm.getProjectProperties(clonedProject);
                     assertThat(clonedProperties).satisfiesExactly(clonedProperty -> {
@@ -1184,24 +1208,42 @@ public class ProjectResourceTest extends ResourceTest {
                     assertThat(clonedMetadata.getSupplier())
                             .satisfies(entity -> assertThat(entity.getName()).isEqualTo("metadataSupplier"));
 
-                    assertThat(qm.getAllComponents(clonedProject)).satisfiesExactly(clonedComponent -> {
-                        assertThat(clonedComponent.getUuid()).isNotEqualTo(component.getUuid());
-                        assertThat(clonedComponent.getName()).isEqualTo("acme-lib");
-                        assertThat(clonedComponent.getVersion()).isEqualTo("2.0.0");
-                        assertThat(clonedComponent.getSupplier()).isNotNull();
-                        assertThat(clonedComponent.getSupplier().getName()).isEqualTo("componentSupplier");
+                    assertThat(qm.getAllComponents(clonedProject)).satisfiesExactlyInAnyOrder(
+                            clonedComponent -> {
+                                assertThat(clonedComponent.getUuid()).isNotEqualTo(componentA.getUuid());
+                                assertThat(clonedComponent.getName()).isEqualTo("acme-lib-a");
+                                assertThat(clonedComponent.getVersion()).isEqualTo("2.0.0");
+                                assertThat(clonedComponent.getSupplier()).isNotNull();
+                                assertThat(clonedComponent.getSupplier().getName()).isEqualTo("componentSupplier");
+                                assertThatJson(clonedComponent.getDirectDependencies())
+                                        .withMatcher("notSourceComponentUuid", not(equalTo(componentB.getUuid().toString())))
+                                        .isEqualTo(/* language=JSON */ """
+                                                [
+                                                  {
+                                                    "objectType": "COMPONENT",
+                                                    "uuid": "${json-unit.matches:notSourceComponentUuid}",
+                                                    "name": "acme-lib-b",
+                                                    "version": "2.1.0"
+                                                  }
+                                                ]
+                                                """);
 
-                        assertThat(qm.getAllVulnerabilities(clonedComponent)).containsOnly(vuln);
+                                assertThat(qm.getAllVulnerabilities(clonedComponent)).containsOnly(vuln);
 
-                        assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
-                            assertThat(clonedAnalysis.getId()).isNotEqualTo(analysis.getId());
-                            assertThat(clonedAnalysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_AFFECTED);
-                            assertThat(clonedAnalysis.getAnalysisJustification()).isEqualTo(AnalysisJustification.REQUIRES_ENVIRONMENT);
-                            assertThat(clonedAnalysis.getAnalysisResponse()).isEqualTo(AnalysisResponse.WILL_NOT_FIX);
-                            assertThat(clonedAnalysis.getAnalysisDetails()).isEqualTo("details");
-                            assertThat(clonedAnalysis.isSuppressed()).isFalse();
-                        });
-                    });
+                                assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
+                                    assertThat(clonedAnalysis.getId()).isNotEqualTo(analysis.getId());
+                                    assertThat(clonedAnalysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_AFFECTED);
+                                    assertThat(clonedAnalysis.getAnalysisJustification()).isEqualTo(AnalysisJustification.REQUIRES_ENVIRONMENT);
+                                    assertThat(clonedAnalysis.getAnalysisResponse()).isEqualTo(AnalysisResponse.WILL_NOT_FIX);
+                                    assertThat(clonedAnalysis.getAnalysisDetails()).isEqualTo("details");
+                                    assertThat(clonedAnalysis.isSuppressed()).isFalse();
+                                });
+                            },
+                            clonedComponent -> {
+                                assertThat(clonedComponent.getUuid()).isNotEqualTo(componentA.getUuid());
+                                assertThat(clonedComponent.getName()).isEqualTo("acme-lib-b");
+                                assertThat(clonedComponent.getVersion()).isEqualTo("2.1.0");
+                            });
 
                     assertThat(qm.getAllServiceComponents(clonedProject)).satisfiesExactly(clonedService -> {
                         assertThat(clonedService.getUuid()).isNotEqualTo(service.getUuid());

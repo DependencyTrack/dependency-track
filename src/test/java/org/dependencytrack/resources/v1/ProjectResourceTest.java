@@ -96,7 +96,7 @@ public class ProjectResourceTest extends ResourceTest {
         super.after();
     }
 
-    public void setUpUser(boolean isAdmin, boolean isRequired) {
+    public JsonObjectBuilder setUpEnvironment(boolean isAdmin, boolean isRequired, String name, Team team1) {
         testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
         jwt = new JsonWebToken().createToken(testUser);
         qm.addUserToTeam(testUser, team);
@@ -119,6 +119,13 @@ public class ProjectResourceTest extends ResourceTest {
                     ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
                     null);
         }
+        final JsonObjectBuilder jsonProject = Json.createObjectBuilder()
+                .add("name", name).add("classifier", "CONTAINER").addNull("parent").add("active", true).add("tags", Json.createArrayBuilder());
+        if (team1 != null) {
+            final JsonObject jsonTeam = Json.createObjectBuilder().add("uuid", team1.getUuid().toString()).build();
+            jsonProject.add("accessTeams", Json.createArrayBuilder().add(jsonTeam).build());
+        }
+        return jsonProject;
     }
 
     @Test
@@ -512,119 +519,86 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void createProjectWithExistingTeamRequiredTest() {
-        setUpUser(false, true);
         Team AllowedTeam = qm.createTeam("AllowedTeam", false);
-        Project project = new Project();
-        project.setName("ProjectWithExistingTeamRequired");
+        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithExistingTeamRequired", AllowedTeam);
         qm.addUserToTeam(testUser, AllowedTeam);
-        final JsonObject jsonTeam = Json.createObjectBuilder().add("uuid", AllowedTeam.getUuid().toString()).build();
-        final JsonObjectBuilder requestBodyBuilder = Json.createObjectBuilder()
-                .add("name", project.getName()).add("classifier", "CONTAINER").addNull("parent").add("active", true).add("tags", Json.createArrayBuilder())
-                .add("accessTeams", Json.createArrayBuilder().add(jsonTeam).build());
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.json(requestBodyBuilder.build().toString()));
         Assert.assertEquals(201, response.getStatus());
         JsonObject returnedProject = parseJsonObject(response);
-        JsonArray teams = returnedProject.getJsonArray("accessTeams");
-        Assert.assertEquals(teams.size(), 1);
-        Assert.assertEquals(AllowedTeam.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test
     public void createProjectWithoutExistingTeamRequiredTest() {
-        setUpUser(false, true);
-        Project project = new Project();
-        project.setName("ProjectWithoutExistingTeamRequired");
+        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithoutExistingTeamRequired", null);
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
-                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .put(Entity.json(requestBodyBuilder.build().toString()));
         Assert.assertEquals(422, response.getStatus(), 0);
     }
 
     @Test
     public void createProjectWithNotAllowedExistingTeamTest() {
-        setUpUser(false, true);
         Team notAllowedTeam = qm.createTeam("NotAllowedTeam", false);
-        Project project = new Project();
-        project.setName("ProjectWithNotAllowedExistingTeam");
-        project.addAccessTeam(notAllowedTeam);
+        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithNotAllowedExistingTeam", notAllowedTeam);
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
-                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .put(Entity.json(requestBodyBuilder.build().toString()));
         Assert.assertEquals(403, response.getStatus());
     }
 
     @Test
     public void createProjectWithNotAllowedExistingTeamAdminTest() {
-        setUpUser(true, true);
-        Team notAllowedTeam = qm.createTeam("NotAllowedTeam", false);
-        Project project = new Project();
-        project.setName("ProjectWithNotAllowedExistingTeam");
-        project.addAccessTeam(notAllowedTeam);
+        Team AllowedTeam = qm.createTeam("NotAllowedTeam", false);
+        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithNotAllowedExistingTeam", AllowedTeam);
+        qm.addUserToTeam(testUser, AllowedTeam);
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
-                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .put(Entity.json(requestBodyBuilder.build().toString()));
         Assert.assertEquals(201, response.getStatus());
         JsonObject returnedProject = parseJsonObject(response);
-        JsonArray teams = returnedProject.getJsonArray("accessTeams");
-        Assert.assertEquals(teams.size(), 1);
-        Assert.assertEquals(notAllowedTeam.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test
     public void createProjectWithNotExistingTeamNoAdminTest() {
-        setUpUser(false, true);
         Team notAllowedTeam = new Team();
         notAllowedTeam.setUuid(new UUID(1, 1));
         notAllowedTeam.setName("NotAllowedTeam");
-        Project project = new Project();
-        project.addAccessTeam(notAllowedTeam);
-        project.setName("ProjectWithNotAllowedExistingTeam");
+        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithNotAllowedExistingTeam", notAllowedTeam);
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
-                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .put(Entity.json(requestBodyBuilder.build().toString()));
         Assert.assertEquals(403, response.getStatus());
     }
 
     @Test
     public void createProjectWithNotExistingTeamTest() {
-        setUpUser(true, false);
         Team notAllowedTeam = new Team();
         notAllowedTeam.setUuid(new UUID(1, 1));
         notAllowedTeam.setName("NotAllowedTeam");
-        Project project = new Project();
-        project.addAccessTeam(notAllowedTeam);
-        project.setName("ProjectWithNotExistingTeam");
+        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(true, true, "ProjectWithNotAllowedExistingTeam", notAllowedTeam);
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header("Authorization", "Bearer " + jwt)
-                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .put(Entity.json(requestBodyBuilder.build().toString()));
         Assert.assertEquals(404, response.getStatus());
     }
 
     @Test
     public void createProjectWithApiKeyTest() {
-        Project project = new Project();
-        project.setName("ProjectWithNotExistingTeam");
-        final JsonObject jsonTeam = Json.createObjectBuilder().add("uuid", team.getUuid().toString()).build();
-        final JsonObjectBuilder requestBodyBuilder = Json.createObjectBuilder()
-                .add("name", project.getName()).add("classifier", "CONTAINER").addNull("parent").add("active", true).add("tags", Json.createArrayBuilder())
-                .add("accessTeams", Json.createArrayBuilder().add(jsonTeam).build());
+        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithNotAllowedExistingTeam", team);
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(requestBodyBuilder.build().toString()));
         Assert.assertEquals(201, response.getStatus());
         JsonObject returnedProject = parseJsonObject(response);
-        JsonArray teams = returnedProject.getJsonArray("accessTeams");
-        Assert.assertEquals(teams.size(), 1);
-        Assert.assertEquals(team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test

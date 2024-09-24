@@ -24,6 +24,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -273,7 +274,6 @@ public class Project implements Serializable {
     @Join(column = "PROJECT_ID")
     @Element(column = "TEAM_ID")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
-    @JsonIgnore
     private List<Team> accessTeams;
 
     @Persistent(defaultFetchGroup = "true")
@@ -537,10 +537,12 @@ public class Project implements Serializable {
         this.versions = versions;
     }
 
+    @JsonIgnore
     public List<Team> getAccessTeams() {
         return accessTeams;
     }
 
+    @JsonSetter
     public void setAccessTeams(List<Team> accessTeams) {
         this.accessTeams = accessTeams;
     }

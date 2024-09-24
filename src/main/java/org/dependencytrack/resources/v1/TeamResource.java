@@ -22,6 +22,7 @@ import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.model.ApiKey;
 import alpine.model.Team;
+import alpine.model.UserPrincipal;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,6 +53,8 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
@@ -217,6 +220,33 @@ public class TeamResource extends AlpineResource {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
             }
+        }
+    }
+
+    @GET
+    @Path("/visible")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Returns a list of Teams that are visible", description = "<p></p>")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The Visible Teams", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Team.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public Response availableTeams() {
+        try (QueryManager qm = new QueryManager()) {
+            Principal user = getPrincipal();
+            boolean isAllTeams = qm.hasAccessManagementPermission(user);
+            List<Team> teams = new ArrayList<Team>();
+            if (isAllTeams) {
+                teams = qm.getTeams();
+            } else {
+                if (user instanceof final UserPrincipal userPrincipal) {
+                    teams = userPrincipal.getTeams();
+                } else if (user instanceof final ApiKey apiKey) {
+                    teams = apiKey.getTeams();
+                }
+            }
+
+            return Response.ok(teams).build();
         }
     }
 

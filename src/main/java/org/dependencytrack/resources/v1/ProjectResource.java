@@ -20,7 +20,9 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.model.ApiKey;
 import alpine.model.Team;
+import alpine.model.UserPrincipal;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
@@ -39,6 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.CloneProjectEvent;
 import org.dependencytrack.model.Classifier;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
@@ -62,9 +65,11 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import javax.jdo.FetchGroup;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -279,11 +284,13 @@ public class ProjectResource extends AlpineResource {
                     content = @Content(schema = @Schema(implementation = Project.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "You don't have the permission to assign this team to a project."),
             @ApiResponse(responseCode = "409", description = """
                     <ul>
                       <li>An inactive Parent cannot be selected as parent, or</li>
                       <li>A project with the specified name already exists</li>
                     </ul>"""),
+            @ApiResponse(responseCode = "422", description = "You need to specify at least one team to which the project should belong"),
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response createProject(Project jsonProject) {
@@ -299,7 +306,8 @@ public class ProjectResource extends AlpineResource {
                 validator.validateProperty(jsonProject, "classifier"),
                 validator.validateProperty(jsonProject, "cpe"),
                 validator.validateProperty(jsonProject, "purl"),
-                validator.validateProperty(jsonProject, "swidTagId")
+                validator.validateProperty(jsonProject, "swidTagId"),
+                validator.validateProperty(jsonProject, "accessTeams")
         );
         if (jsonProject.getClassifier() == null) {
             jsonProject.setClassifier(Classifier.APPLICATION);
@@ -309,7 +317,40 @@ public class ProjectResource extends AlpineResource {
                 Project parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
                     jsonProject.setParent(parent);
             }
-            if (!qm.doesProjectExist(StringUtils.trimToNull(jsonProject.getName()), StringUtils.trimToNull(jsonProject.getVersion()))) {
+            if (!qm.doesProjectExist(StringUtils.trimToNull(jsonProject.getName()),
+                    StringUtils.trimToNull(jsonProject.getVersion()))) {
+                final List<Team> chosenTeams = jsonProject.getAccessTeams() == null ? new ArrayList<Team>()
+                        : jsonProject.getAccessTeams();
+                boolean required = qm.isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED);
+                if (required && chosenTeams.isEmpty()) {
+                    return Response.status(422)
+                            .entity("You need to specify at least one team to which the project should belong").build();
+                }
+                Principal principal = getPrincipal();
+                if (!chosenTeams.isEmpty()) {
+                    List<Team> userTeams = new ArrayList<Team>();
+                    if (principal instanceof final UserPrincipal userPrincipal) {
+                        userTeams = userPrincipal.getTeams();
+                    } else if (principal instanceof final ApiKey apiKey) {
+                        userTeams = apiKey.getTeams();
+                    }
+                    boolean isAdmin = qm.hasAccessManagementPermission(principal);
+                    List<Team> visibleTeams = isAdmin ? qm.getTeams() : userTeams;
+                    List<UUID> visibleUuids = visibleTeams.isEmpty() ? new ArrayList<UUID>()
+                            : visibleTeams.stream().map(Team::getUuid).toList();
+                    jsonProject.setAccessTeams(new ArrayList<Team>());
+                    for (Team choosenTeam : chosenTeams) {
+                        if (!visibleUuids.contains(choosenTeam.getUuid())) {
+                            return isAdmin ? Response.status(404).entity("This team does not exist!").build()
+                                    : Response.status(403)
+                                            .entity("You don't have the permission to assign this team to a project.")
+                                            .build();
+                        }
+                        Team ormTeam = qm.getObjectByUuid(Team.class, choosenTeam.getUuid());
+                        jsonProject.addAccessTeam(ormTeam);
+                    }
+                }
+
                 final Project project;
                 try {
                     project = qm.createProject(jsonProject, jsonProject.getTags(), true);
@@ -317,7 +358,6 @@ public class ProjectResource extends AlpineResource {
                     LOGGER.debug(e.getMessage());
                     return Response.status(Response.Status.CONFLICT).entity("An inactive Parent cannot be selected as parent").build();
                 }
-                Principal principal = getPrincipal();
                 qm.updateNewProjectACL(project, principal);
                 LOGGER.info("Project " + project.toString() + " created by " + super.getPrincipal().getName());
                 return Response.status(Response.Status.CREATED).entity(project).build();

@@ -167,6 +167,9 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
+        assertThat(project.getCpe()).isEqualTo("cpe:2.3:a:acme:example:1.0.0:*:*:*:*:*:*:*");
+        assertThat(project.getPurl()).asString().isEqualTo("pkg:maven/com.acme/example@1.0.0");
+        assertThat(project.getSwidTagId()).isEqualTo("swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1");
         assertThat(project.getLastBomImport()).isNotNull();
         assertThat(project.getExternalReferences()).isNotNull();
         assertThat(project.getExternalReferences()).hasSize(4);

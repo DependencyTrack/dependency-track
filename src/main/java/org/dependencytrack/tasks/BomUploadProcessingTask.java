@@ -335,6 +335,7 @@ public class BomUploadProcessingTask implements Subscriber {
             // changed |= applyIfChanged(project, metadataComponent, Project::getVersion, project::setVersion);
             // changed |= applyIfChanged(project, metadataComponent, Project::getDescription, project::setDescription);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getExternalReferences, persistentProject::setExternalReferences);
+            hasChanged |= applyIfChanged(persistentProject, project, Project::getCpe, persistentProject::setCpe);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getPurl, persistentProject::setPurl);
             hasChanged |= applyIfChanged(persistentProject, project, Project::getSwidTagId, persistentProject::setSwidTagId);
         }

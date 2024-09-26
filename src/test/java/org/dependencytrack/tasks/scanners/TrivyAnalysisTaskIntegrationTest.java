@@ -20,6 +20,9 @@ package org.dependencytrack.tasks.scanners;
 
 import alpine.model.IConfigProperty;
 import alpine.security.crypto.DataEncryption;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateVolumeResponse;
+import com.github.dockerjava.api.model.Bind;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.TrivyAnalysisEvent;
 import org.dependencytrack.model.Classifier;
@@ -27,10 +30,13 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.images.PullPolicy;
 import org.testcontainers.utility.DockerImageName;
@@ -57,11 +63,22 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         });
     }
 
+    private static String trivyCacheVolumeName;
     private final String trivyVersion;
     private GenericContainer<?> trivyContainer;
 
     public TrivyAnalysisTaskIntegrationTest(String trivyVersion) {
         this.trivyVersion = trivyVersion;
+    }
+
+    @BeforeClass
+    @SuppressWarnings("resource")
+    public static void beforeClass() {
+        final DockerClient dockerClient = DockerClientFactory.lazyClient();
+        final CreateVolumeResponse response = dockerClient.createVolumeCmd()
+                .withName("dtrack-test-trivy-cache")
+                .exec();
+        trivyCacheVolumeName = response.getName();
     }
 
     @Before
@@ -72,8 +89,10 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
 
         trivyContainer = new GenericContainer<>(DockerImageName.parse("aquasec/trivy:" + trivyVersion))
                 .withImagePullPolicy(PullPolicy.alwaysPull())
-                .withCommand("server --listen :8080 --token TrivyToken")
+                .withCommand("server --cache-dir /tmp/cache --listen :8080 --token TrivyToken")
                 .withExposedPorts(8080)
+                .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
+                        .withBinds(Bind.parse("%s:/tmp/cache".formatted(trivyCacheVolumeName))))
                 .waitingFor(forLogMessage(".*Listening :8080.*", 1));
         trivyContainer.start();
 
@@ -108,6 +127,15 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         }
 
         super.after();
+    }
+
+    @AfterClass
+    @SuppressWarnings("resource")
+    public static void afterClass() {
+        if (trivyCacheVolumeName != null) {
+            final DockerClient dockerClient = DockerClientFactory.lazyClient();
+            dockerClient.removeVolumeCmd(trivyCacheVolumeName).exec();
+        }
     }
 
     @Test

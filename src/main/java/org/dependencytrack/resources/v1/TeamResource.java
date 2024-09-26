@@ -40,6 +40,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.TeamSelfResponse;
+import org.dependencytrack.resources.v1.vo.VisibleTeams;
 import org.owasp.security.logging.SecurityMarkers;
 
 import jakarta.validation.Validator;
@@ -228,7 +229,7 @@ public class TeamResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns a list of Teams that are visible", description = "<p></p>")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "The Visible Teams", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Team.class)))),
+            @ApiResponse(responseCode = "200", description = "The Visible Teams", content = @Content(array = @ArraySchema(schema = @Schema(implementation = VisibleTeams.class)))),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response availableTeams() {
@@ -246,7 +247,11 @@ public class TeamResource extends AlpineResource {
                 }
             }
 
-            return Response.ok(teams).build();
+            List<VisibleTeams> response = new ArrayList<VisibleTeams>();
+            for (Team team : teams) {
+                response.add(new VisibleTeams(team.getName(), team.getUuid()));
+            }
+            return Response.ok(response).build();
         }
     }
 

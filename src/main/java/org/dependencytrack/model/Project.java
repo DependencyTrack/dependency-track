@@ -24,6 +24,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -95,7 +96,8 @@ import java.util.UUID;
                 @Persistent(name = "properties"),
                 @Persistent(name = "tags"),
                 @Persistent(name = "accessTeams"),
-                @Persistent(name = "metadata")
+                @Persistent(name = "metadata"),
+                @Persistent(name = "isLatest")
         }),
         @FetchGroup(name = "METADATA", members = {
                 @Persistent(name = "metadata")
@@ -109,6 +111,7 @@ import java.util.UUID;
                 @Persistent(name = "parent")
         })
 })
+@Index(name = "PROJECT_NAME_IS_LATEST_IDX", members = {"name", "isLatest"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Project implements Serializable {
 
@@ -269,6 +272,11 @@ public class Project implements Serializable {
     @Column(name = "ACTIVE")
     @JsonSerialize(nullsUsing = BooleanDefaultTrueSerializer.class)
     private Boolean active; // Added in v3.6. Existing records need to be nullable on upgrade.
+
+    @Persistent
+    @Index(name = "PROJECT_IS_LATEST_IDX")
+    @Column(name = "IS_LATEST", defaultValue = "false")
+    private Boolean isLatest; // Added in v4.12. Needs to be nullable therefore
 
     @Persistent(table = "PROJECT_ACCESS_TEAMS", defaultFetchGroup = "true")
     @Join(column = "PROJECT_ID")
@@ -511,6 +519,15 @@ public class Project implements Serializable {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    @JsonProperty("isLatest")
+    public Boolean isLatest() {
+        return isLatest != null ? isLatest : false;
+    }
+
+    public void setIsLatest(Boolean latest) {
+        isLatest = latest != null ? latest : false;
     }
 
     public String getBomRef() {

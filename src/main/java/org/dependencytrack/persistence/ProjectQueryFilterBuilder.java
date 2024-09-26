@@ -115,6 +115,11 @@ class ProjectQueryFilterBuilder {
         return this;
     }
 
+    public ProjectQueryFilterBuilder onlyLatestVersion() {
+        filterCriteria.add("(isLatest == true)");
+        return this;
+    }
+
     String buildFilter() {
         return String.join(" && ", this.filterCriteria);
     }

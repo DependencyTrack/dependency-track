@@ -48,7 +48,8 @@ public class v4120Updater extends AbstractUpgradeItem {
         migrateBomValidationConfigProperty(connection);
         extendTeamNameColumnMaxLength(connection);
         migrateAuthorToAuthors(connection);
-        dropAuthorColumns(connection);
+        dropAuthorColumns(connection);        
+        setInitialIsLatestFlags(connection);
     }
 
     private static void removeExperimentalBomUploadProcessingV2ConfigProperty(final Connection connection) throws SQLException {
@@ -282,6 +283,17 @@ public class v4120Updater extends AbstractUpgradeItem {
                     """);
             stmt.executeUpdate("""
                     ALTER TABLE "COMPONENT" DROP COLUMN "AUTHOR"
+                    """);
+        }
+    }
+
+
+
+    private void setInitialIsLatestFlags(Connection connection) throws SQLException {
+        LOGGER.info("Setting IS_LATEST flag to false for all Project entries");
+        try (final Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate("""
+                    UPDATE "PROJECT" SET "IS_LATEST" = false
                     """);
         }
     }

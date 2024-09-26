@@ -24,6 +24,7 @@ import alpine.model.Team;
 import alpine.server.auth.PasswordService;
 import alpine.server.persistence.PersistenceManagerFactory;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 import org.junit.After;
 import org.junit.Before;
@@ -121,6 +122,16 @@ public abstract class ResourceTest {
         }
         team.setPermissions(permissionList);
         qm.persist(team);
+    }
+
+    protected void enablePortfolioAccessControl() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                null
+        );
     }
 
     protected String getPlainTextBody(Response response) {

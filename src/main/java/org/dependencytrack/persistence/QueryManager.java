@@ -417,6 +417,10 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProject(name, version);
     }
 
+    public Project getLatestProjectVersion(final String name) {
+        return getProjectQueryManager().getLatestProjectVersion(name);
+    }
+
     public PaginatedResult getProjects(final Team team, final boolean excludeInactive, final boolean bypass, final boolean onlyRoot) {
         return getProjectQueryManager().getProjects(team, excludeInactive, bypass, onlyRoot);
     }
@@ -484,6 +488,10 @@ public class QueryManager extends AlpineQueryManager {
     public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, PackageURL purl, boolean active, boolean commitIndex) {
         return getProjectQueryManager().createProject(name, description, version, tags, parent, purl, active, commitIndex);
     }
+    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent,
+                                 PackageURL purl, boolean active, boolean isLatest, boolean commitIndex) {
+        return getProjectQueryManager().createProject(name, description, version, tags, parent, purl, active, isLatest, commitIndex);
+    }
 
     public Project createProject(final Project project, List<Tag> tags, boolean commitIndex) {
         return getProjectQueryManager().createProject(project, tags, commitIndex);
@@ -502,6 +510,13 @@ public class QueryManager extends AlpineQueryManager {
                          boolean includeACL, boolean includePolicyViolations) {
         return getProjectQueryManager().clone(from, newVersion, includeTags, includeProperties,
                 includeComponents, includeServices, includeAuditHistory, includeACL, includePolicyViolations);
+    }
+
+    public Project clone(UUID from, String newVersion, boolean includeTags, boolean includeProperties,
+                         boolean includeComponents, boolean includeServices, boolean includeAuditHistory,
+                         boolean includeACL, boolean includePolicyViolations, boolean makeCloneLatest) {
+        return getProjectQueryManager().clone(from, newVersion, includeTags, includeProperties,
+                includeComponents, includeServices, includeAuditHistory, includeACL, includePolicyViolations, makeCloneLatest);
     }
 
     public Project updateLastBomImport(Project p, Date date, String bomFormat) {

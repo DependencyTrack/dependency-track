@@ -267,6 +267,38 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         return project;
     }
 
+
+    /**
+     * Returns the latest version of a project by its name.
+     *
+     * @param name the name of the Project (required)
+     * @return a Project object representing the latest version, or null if not found
+     */
+    @Override
+    public Project getLatestProjectVersion(final String name) {
+        final Query<Project> query = pm.newQuery(Project.class);
+
+        final var filterBuilder = new ProjectQueryFilterBuilder()
+                .withName(name)
+                .onlyLatestVersion();
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
+        preprocessACLs(query, queryFilter, params, false);
+        query.setFilter(queryFilter);
+        query.setRange(0, 1);
+
+        final Project project = singleResult(query.executeWithMap(params));
+        if (project != null) {
+            // set Metrics to prevent extra round trip
+            project.setMetrics(getMostRecentProjectMetrics(project));
+            // set ProjectVersions to prevent extra round trip
+            project.setVersions(getProjectVersions(project));
+        }
+        return project;
+    }
+
     /**
      * Returns a list of projects that are accessible by the specified team.
      * @param team the team the has access to Projects
@@ -397,35 +429,35 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return the created Project
      */
     @Override
-    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, PackageURL purl, boolean active, boolean commitIndex) {
+    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent,
+                                 PackageURL purl, boolean active, boolean commitIndex) {
+        return createProject(name, description, version, tags, parent, purl, active, false, commitIndex);
+    }
+
+    /**
+     * Creates a new Project.
+     * @param name the name of the project to create
+     * @param description a description of the project
+     * @param version the project version
+     * @param tags a List of Tags - these will be resolved if necessary
+     * @param parent an optional parent Project
+     * @param purl an optional Package URL
+     * @param active specified if the project is active
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return the created Project
+     */
+    @Override
+    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent,
+                                 PackageURL purl, boolean active, boolean isLatest, boolean commitIndex) {
         final Project project = new Project();
         project.setName(name);
         project.setDescription(description);
         project.setVersion(version);
-        if (parent != null ) {
-            if (!Boolean.TRUE.equals(parent.isActive())){
-                throw new IllegalArgumentException("An inactive Parent cannot be selected as parent");
-            }
-            project.setParent(parent);
-        }
+        project.setParent(parent);
         project.setPurl(purl);
         project.setActive(active);
-        final Project result = persist(project);
-
-        final List<Tag> resolvedTags = resolveTags(tags);
-        bind(project, resolvedTags);
-
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
-        Notification.dispatch(new Notification()
-                .scope(NotificationScope.PORTFOLIO)
-                .group(NotificationGroup.PROJECT_CREATED)
-                .title(NotificationConstants.Title.PROJECT_CREATED)
-                .level(NotificationLevel.INFORMATIONAL)
-                .content(result.getName() + " was created")
-                .subject(NotificationUtil.toJson(pm.detachCopy(result)))
-        );
-        commitSearchIndex(commitIndex, Project.class);
-        return result;
+        project.setIsLatest(isLatest);
+        return createProject(project, tags, commitIndex);
     }
 
     /**
@@ -443,11 +475,36 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (project.isActive() == null) {
             project.setActive(Boolean.TRUE);
         }
-        final Project result = persist(project);
-        final List<Tag> resolvedTags = resolveTags(tags);
-        bind(project, resolvedTags);
+        if (project.isLatest() == null) {
+            project.setIsLatest(Boolean.FALSE);
+        }
+        final Project oldLatestProject = project.isLatest() ? getLatestProjectVersion(project.getName()) : null;
+        final Project result = callInTransaction(() -> {
+            // Remove isLatest flag from current latest project version, if the new project will be the latest
+            if(oldLatestProject != null) {
+                oldLatestProject.setIsLatest(false);
+                persist(oldLatestProject);
+            }
 
+            final Project newProject = persist(project);
+            final List<Tag> resolvedTags = resolveTags(tags);
+            bind(project, resolvedTags);
+            return newProject;
+        });
+
+        if(oldLatestProject != null) {
+            // if we removed isLatest flag from old version, dispatch update event for the old version
+            Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, oldLatestProject));
+        }
         Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.PROJECT_CREATED)
+                .title(NotificationConstants.Title.PROJECT_CREATED)
+                .level(NotificationLevel.INFORMATIONAL)
+                .content(result.getName() + " was created")
+                .subject(NotificationUtil.toJson(pm.detachCopy(result)))
+        );
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -480,6 +537,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         project.setActive(transientProject.isActive());
 
+        final Project oldLatestProject;
+        if(Boolean.TRUE.equals(transientProject.isLatest()) && Boolean.FALSE.equals(project.isLatest())) {
+            oldLatestProject = getLatestProjectVersion(project.getName());
+        } else {
+            oldLatestProject = null;
+        }
+        project.setIsLatest(transientProject.isLatest());
+
         if (transientProject.getParent() != null && transientProject.getParent().getUuid() != null) {
             if (project.getUuid().equals(transientProject.getParent().getUuid())){
                 throw new IllegalArgumentException("A project cannot select itself as a parent");
@@ -497,10 +562,23 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setParent(null);
         }
 
-        final List<Tag> resolvedTags = resolveTags(transientProject.getTags());
-        bind(project, resolvedTags);
+        final Project result = callInTransaction(() -> {
+            // Remove isLatest flag from current latest project version, if this project will be the latest now
+            if(oldLatestProject != null) {
+                oldLatestProject.setIsLatest(false);
+                persist(oldLatestProject);
+            }
 
-        final Project result = persist(project);
+            final List<Tag> resolvedTags = resolveTags(transientProject.getTags());
+            bind(project, resolvedTags);
+
+            return persist(project);
+        });
+
+        if(oldLatestProject != null) {
+            // if we removed isLatest flag from old version, dispatch update event for the old version
+            Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, oldLatestProject));
+        }
         Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, Project.class);
         return result;
@@ -518,21 +596,45 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             final boolean includeACL,
             final boolean includePolicyViolations
     ) {
-        final var jsonMapper = new JsonMapper();
+        return clone(from, newVersion, includeTags, includeProperties, includeComponents, includeServices, includeAuditHistory,
+                includeACL, includePolicyViolations, false);
+    }
 
+    @Override
+    public Project clone(
+            final UUID from,
+            final String newVersion,
+            final boolean includeTags,
+            final boolean includeProperties,
+            final boolean includeComponents,
+            final boolean includeServices,
+            final boolean includeAuditHistory,
+            final boolean includeACL,
+            final boolean includePolicyViolations,
+            final boolean makeCloneLatest
+    ) {
+        final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
+        if (source == null) {
+            LOGGER.warn("Project was supposed to be cloned, but it does not exist anymore");
+            return null;
+        }
+        if (doesProjectExist(source.getName(), newVersion)) {
+            // Project cloning is an asynchronous process. When receiving the clone request, we already perform
+            // this check. It is possible though that a project with the new version is created synchronously
+            // between the clone event being dispatched, and it being processed.
+            LOGGER.warn("Project was supposed to be cloned to version %s, but that version already exists".formatted(newVersion));
+            return null;
+        }
+
+        final Project oldLatestProject;
+        if(makeCloneLatest) {
+            oldLatestProject = source.isLatest() ? source : getLatestProjectVersion(source.getName());
+        } else {
+            oldLatestProject = null;
+        }
+
+        final var jsonMapper = new JsonMapper();
         final Project clonedProject = callInTransaction(() -> {
-            final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
-            if (source == null) {
-                LOGGER.warn("Project was supposed to be cloned, but it does not exist anymore");
-                return null;
-            }
-            if (doesProjectExist(source.getName(), newVersion)) {
-                // Project cloning is an asynchronous process. When receiving the clone request, we already perform
-                // this check. It is possible though that a project with the new version is created synchronously
-                // between the clone event being dispatched, and it being processed.
-                LOGGER.warn("Project was supposed to be cloned to version %s, but that version already exists".formatted(newVersion));
-                return null;
-            }
             Project project = new Project();
             project.setAuthors(source.getAuthors());
             project.setManufacturer(source.getManufacturer());
@@ -544,6 +646,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setVersion(newVersion);
             project.setClassifier(source.getClassifier());
             project.setActive(source.isActive());
+            project.setIsLatest(makeCloneLatest);
             project.setCpe(source.getCpe());
             project.setPurl(source.getPurl());
             project.setSwidTagId(source.getSwidTagId());
@@ -551,6 +654,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 project.setDirectDependencies(source.getDirectDependencies());
             }
             project.setParent(source.getParent());
+
+            // Remove isLatest flag from current latest project version, if this project will be the latest now
+            if(oldLatestProject != null) {
+                oldLatestProject.setIsLatest(false);
+                persist(oldLatestProject);
+            }
+
             project = persist(project);
 
             if (source.getMetadata() != null) {
@@ -703,6 +813,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             return project;
         });
 
+        if(oldLatestProject != null) {
+            // if we removed isLatest flag from old version, dispatch update event for the old version
+            Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, oldLatestProject));
+        }
         Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, clonedProject));
         commitSearchIndex(true, Project.class);
         return clonedProject;

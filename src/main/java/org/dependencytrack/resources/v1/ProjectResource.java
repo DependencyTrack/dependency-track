@@ -203,6 +203,42 @@ public class ProjectResource extends AlpineResource {
         }
     }
 
+
+    @GET
+    @Path("/latest/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns the latest version of a project by its name",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The latest version of the specified project",
+                    content = @Content(schema = @Schema(implementation = Project.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getLatestProjectByName(
+            @Parameter(description = "The name of the project to retrieve the latest version of", required = true)
+            @PathParam("name") String name) {
+        try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getLatestProjectVersion(name);
+            if (project != null) {
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.ok(project).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+        }
+    }
+
     @GET
     @Path("/tag/{tag}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -294,6 +330,7 @@ public class ProjectResource extends AlpineResource {
             ),
             @ApiResponse(responseCode = "400", description = "Bad Request"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "The project version cannot be created as latest version because access to current latest version is forbidden."),
             @ApiResponse(responseCode = "409", description = """
                     <ul>
                       <li>An inactive Parent cannot be selected as parent, or</li>
@@ -327,6 +364,16 @@ public class ProjectResource extends AlpineResource {
                         .status(Response.Status.CONFLICT)
                         .entity("A project with the specified name already exists.")
                         .build();
+            }
+
+            if(jsonProject.isLatest()) {
+                final Project oldLatest = qm.getLatestProjectVersion(jsonProject.getName());
+                if(oldLatest != null && !qm.hasAccess(super.getPrincipal(), oldLatest)) {
+                    return Response.status(Response.Status.FORBIDDEN)
+                            .entity("Cannot create latest version for project with this name. Access to current latest " +
+                                    "version is forbidden!")
+                            .build();
+                }
             }
 
             if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
@@ -428,6 +475,8 @@ public class ProjectResource extends AlpineResource {
                     content = @Content(schema = @Schema(implementation = Project.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "The project version cannot be set as latest version " +
+                    "because access to current latest version is forbidden."),
             @ApiResponse(responseCode = "404", description = "The UUID of the project could not be found"),
             @ApiResponse(responseCode = "409", description = """
                     <ul>
@@ -461,14 +510,27 @@ public class ProjectResource extends AlpineResource {
                 if (!qm.hasAccess(super.getPrincipal(), project)) {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
                 }
-                final String name = StringUtils.trimToNull(jsonProject.getName());
+                String name = StringUtils.trimToNull(jsonProject.getName());
+                // Name cannot be empty or null - prevent it
+                if (name == null) {
+                    name = project.getName();
+                    jsonProject.setName(name);
+                }
+
+                // if project is newly set to latest, ensure user has access to current latest version to modify it
+                if(jsonProject.isLatest() && !project.isLatest()) {
+                    final Project oldLatest = qm.getLatestProjectVersion(name);
+                    if(oldLatest != null && !qm.hasAccess(super.getPrincipal(), oldLatest)) {
+                        return Response.status(Response.Status.FORBIDDEN)
+                                .entity("Cannot set this project version to latest. Access to current latest " +
+                                        "version is forbidden!")
+                                .build();
+                    }
+                }
+
                 final String version = StringUtils.trimToNull(jsonProject.getVersion());
                 final Project tmpProject = qm.getProject(name, version);
                 if (tmpProject == null || (tmpProject.getUuid().equals(project.getUuid()))) {
-                    // Name cannot be empty or null - prevent it
-                    if (name == null) {
-                        jsonProject.setName(project.getName());
-                    }
                     try {
                         project = qm.updateProject(jsonProject, true);
                     } catch (IllegalArgumentException e){
@@ -536,6 +598,19 @@ public class ProjectResource extends AlpineResource {
                 if (!qm.hasAccess(super.getPrincipal(), project)) {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
                 }
+
+                // if project is newly set to latest, ensure user has access to current latest version to modify it
+                if(jsonProject.isLatest() && !project.isLatest()) {
+                    final var oldName = jsonProject.getName() != null ? jsonProject.getName() : project.getName();
+                    final Project oldLatest = qm.getLatestProjectVersion(oldName);
+                    if(oldLatest != null && !qm.hasAccess(super.getPrincipal(), oldLatest)) {
+                        return Response.status(Response.Status.FORBIDDEN)
+                                .entity("Cannot set this project version to latest. Access to current latest " +
+                                        "version is forbidden!")
+                                .build();
+                    }
+                }
+
                 var modified = false;
                 project = qm.detachWithGroups(project, List.of(FetchGroup.DEFAULT, Project.FetchGroup.PARENT.name()));
                 modified |= setIfDifferent(jsonProject, project, Project::getName, Project::setName);
@@ -555,6 +630,7 @@ public class ProjectResource extends AlpineResource {
                 modified |= setIfDifferent(jsonProject, project, Project::isActive, Project::setActive);
                 modified |= setIfDifferent(jsonProject, project, Project::getManufacturer, Project::setManufacturer);
                 modified |= setIfDifferent(jsonProject, project, Project::getSupplier, Project::setSupplier);
+                modified |= setIfDifferent(jsonProject, project, Project::isLatest, Project::setIsLatest);
                 if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
                     final Project parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
                     if (parent == null) {
@@ -673,6 +749,9 @@ public class ProjectResource extends AlpineResource {
                     content = @Content(schema = @Schema(implementation = BomUploadResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
+
+            @ApiResponse(responseCode = "403", description = "The project clone cannot be set to latest version " +
+                    "because access to current latest version is forbidden."),
             @ApiResponse(responseCode = "404", description = "The UUID of the project could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
@@ -690,6 +769,17 @@ public class ProjectResource extends AlpineResource {
                 }
                 if (qm.doesProjectExist(sourceProject.getName(), StringUtils.trimToNull(jsonRequest.getVersion()))) {
                     return Response.status(Response.Status.CONFLICT).entity("A project with the specified name and version already exists.").build();
+                }
+
+                // if project is newly set to latest, ensure user has access to current latest version to modify it
+                if(jsonRequest.makeCloneLatest() && !sourceProject.isLatest()) {
+                    final Project oldLatest = qm.getLatestProjectVersion(sourceProject.getName());
+                    if(oldLatest != null && !qm.hasAccess(super.getPrincipal(), oldLatest)) {
+                        return Response.status(Response.Status.FORBIDDEN)
+                                .entity("Cannot set cloned project version to latest. Access to current latest " +
+                                        "version is forbidden!")
+                                .build();
+                    }
                 }
 
                 LOGGER.info("Project " + sourceProject + " is being cloned by " + super.getPrincipal().getName());

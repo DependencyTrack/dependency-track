@@ -295,6 +295,9 @@ public class v4120Updater extends AbstractUpgradeItem {
             stmt.executeUpdate("""
                     UPDATE "PROJECT" SET "IS_LATEST" = false
                     """);
+            stmt.executeUpdate("""
+                    UPDATE "POLICY" SET "ONLY_FOR_LATEST_PROJECT_VERSION" = false
+                    """);
         }
     }
 

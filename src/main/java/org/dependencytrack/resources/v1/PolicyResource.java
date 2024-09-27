@@ -157,7 +157,7 @@ public class PolicyResource extends AlpineResource {
                 }
                 policy = qm.createPolicy(
                         StringUtils.trimToNull(jsonPolicy.getName()),
-                        operator, violationState);
+                        operator, violationState, jsonPolicy.isOnlyForLatestProjectVersion());
                 return Response.status(Response.Status.CREATED).entity(policy).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A policy with the specified name already exists.").build();
@@ -194,6 +194,7 @@ public class PolicyResource extends AlpineResource {
                 policy.setOperator(jsonPolicy.getOperator());
                 policy.setViolationState(jsonPolicy.getViolationState());
                 policy.setIncludeChildren(jsonPolicy.isIncludeChildren());
+                policy.setOnlyForLatestProjectVersion(jsonPolicy.isOnlyForLatestProjectVersion());
                 policy = qm.persist(policy);
                 return Response.ok(policy).build();
             } else {

@@ -142,6 +142,10 @@ public class Policy implements Serializable {
     @Column(name = "INCLUDE_CHILDREN", allowsNull = "true") // New column, must allow nulls on existing data bases)
     private boolean includeChildren;
 
+    @Persistent
+    @Column(name = "ONLY_FOR_LATEST_PROJECT_VERSION", allowsNull = "true") // New column, must allow nulls for existing data bases
+    private boolean onlyForLatestProjectVersion;
+
     public long getId() {
         return id;
     }
@@ -223,5 +227,13 @@ public class Policy implements Serializable {
 
     public void setIncludeChildren(boolean includeChildren) {
         this.includeChildren = includeChildren;
+    }
+
+    public boolean isOnlyForLatestProjectVersion() {
+        return onlyForLatestProjectVersion;
+    }
+
+    public void setOnlyForLatestProjectVersion(boolean onlyForLatestProjectVersion) {
+        this.onlyForLatestProjectVersion = onlyForLatestProjectVersion;
     }
 }

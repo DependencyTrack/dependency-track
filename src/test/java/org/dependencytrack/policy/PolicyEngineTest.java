@@ -388,13 +388,17 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         // Evaluate policies and ensure that a notification has been sent.
         final var policyEngine = new PolicyEngine();
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(1);
-        assertThat(NOTIFICATIONS).hasSize(1);
+        assertThat(NOTIFICATIONS).hasSize(2);
 
         // Create an additional policy condition that matches on the exact version of the component,
         // and re-evaluate policies. Ensure that only one notification per newly violated condition was sent.
         final var policyConditionB = qm.createPolicyCondition(policy, Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.2.3");
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(2);
         assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification -> {
+                    assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+                    assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name());
+                },
                 notification -> {
                     assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
                     assertThat(notification.getGroup()).isEqualTo(NotificationGroup.POLICY_VIOLATION.name());
@@ -420,7 +424,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         // Delete a policy condition and re-evaluate policies again. No new notifications should be sent.
         qm.deletePolicyCondition(policyConditionA);
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(1);
-        assertThat(NOTIFICATIONS).hasSize(2);
+        assertThat(NOTIFICATIONS).hasSize(3);
     }
 
     @Test

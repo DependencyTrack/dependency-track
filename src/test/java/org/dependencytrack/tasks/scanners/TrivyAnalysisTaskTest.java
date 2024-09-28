@@ -316,8 +316,12 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
 
         assertThat(qm.getCount(ComponentAnalysisCache.class)).isOne();
 
-        assertThat(NOTIFICATIONS).satisfiesExactly(notification ->
-                assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name()));
+        assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification ->
+                        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name()),
+                notification ->
+                        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name())
+        );
 
         wireMock.verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob"))
                 .withHeader("Trivy-Token", equalTo("token"))
@@ -382,7 +386,10 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
 
         assertThat(qm.getCount(ComponentAnalysisCache.class)).isZero();
 
-        assertThat(NOTIFICATIONS).isEmpty();
+        assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification ->
+                        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name())
+                );
 
         wireMock.verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
         wireMock.verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));

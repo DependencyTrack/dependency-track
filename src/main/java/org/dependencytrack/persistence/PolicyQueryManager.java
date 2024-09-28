@@ -118,12 +118,12 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
      * @return the created Policy
      */
     public Policy createPolicy(String name, Policy.Operator operator, Policy.ViolationState violationState,
-                               boolean onlyForLatestProjectVersion) {
+                               boolean onlyLatestProjectVersion) {
         final Policy policy = new Policy();
         policy.setName(name);
         policy.setOperator(operator);
         policy.setViolationState(violationState);
-        policy.setOnlyForLatestProjectVersion(onlyForLatestProjectVersion);
+        policy.setOnlyLatestProjectVersion(onlyLatestProjectVersion);
         return persist(policy);
     }
 

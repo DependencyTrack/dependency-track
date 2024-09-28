@@ -111,7 +111,6 @@ import java.util.UUID;
                 @Persistent(name = "parent")
         })
 })
-@Index(name = "PROJECT_NAME_IS_LATEST_IDX", members = {"name", "isLatest"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Project implements Serializable {
 
@@ -276,7 +275,7 @@ public class Project implements Serializable {
     @Persistent
     @Index(name = "PROJECT_IS_LATEST_IDX")
     @Column(name = "IS_LATEST", defaultValue = "false")
-    private Boolean isLatest; // Added in v4.12. Needs to be nullable therefore
+    private boolean isLatest = false; // Added in v4.12.
 
     @Persistent(table = "PROJECT_ACCESS_TEAMS", defaultFetchGroup = "true")
     @Join(column = "PROJECT_ID")
@@ -522,8 +521,8 @@ public class Project implements Serializable {
     }
 
     @JsonProperty("isLatest")
-    public Boolean isLatest() {
-        return isLatest != null ? isLatest : false;
+    public boolean isLatest() {
+        return isLatest;
     }
 
     public void setIsLatest(Boolean latest) {

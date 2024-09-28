@@ -71,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
@@ -475,9 +476,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (project.isActive() == null) {
             project.setActive(Boolean.TRUE);
         }
-        if (project.isLatest() == null) {
-            project.setIsLatest(Boolean.FALSE);
-        }
         final Project oldLatestProject = project.isLatest() ? getLatestProjectVersion(project.getName()) : null;
         final Project result = callInTransaction(() -> {
             // Remove isLatest flag from current latest project version, if the new project will be the latest
@@ -613,28 +611,26 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             final boolean includePolicyViolations,
             final boolean makeCloneLatest
     ) {
-        final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
-        if (source == null) {
-            LOGGER.warn("Project was supposed to be cloned, but it does not exist anymore");
-            return null;
-        }
-        if (doesProjectExist(source.getName(), newVersion)) {
-            // Project cloning is an asynchronous process. When receiving the clone request, we already perform
-            // this check. It is possible though that a project with the new version is created synchronously
-            // between the clone event being dispatched, and it being processed.
-            LOGGER.warn("Project was supposed to be cloned to version %s, but that version already exists".formatted(newVersion));
-            return null;
-        }
-
-        final Project oldLatestProject;
-        if(makeCloneLatest) {
-            oldLatestProject = source.isLatest() ? source : getLatestProjectVersion(source.getName());
-        } else {
-            oldLatestProject = null;
-        }
-
+        final AtomicReference<Project> oldLatestProject = new AtomicReference<>();
         final var jsonMapper = new JsonMapper();
         final Project clonedProject = callInTransaction(() -> {
+            final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
+            if (source == null) {
+                LOGGER.warn("Project was supposed to be cloned, but it does not exist anymore");
+                return null;
+            }
+            if (doesProjectExist(source.getName(), newVersion)) {
+                // Project cloning is an asynchronous process. When receiving the clone request, we already perform
+                // this check. It is possible though that a project with the new version is created synchronously
+                // between the clone event being dispatched, and it being processed.
+                LOGGER.warn("Project was supposed to be cloned to version %s, but that version already exists".formatted(newVersion));
+                return null;
+            }
+            if(makeCloneLatest) {
+                oldLatestProject.set(source.isLatest() ? source : getLatestProjectVersion(source.getName()));
+            } else {
+                oldLatestProject.set(null);
+            }
             Project project = new Project();
             project.setAuthors(source.getAuthors());
             project.setManufacturer(source.getManufacturer());
@@ -656,9 +652,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setParent(source.getParent());
 
             // Remove isLatest flag from current latest project version, if this project will be the latest now
-            if(oldLatestProject != null) {
-                oldLatestProject.setIsLatest(false);
-                persist(oldLatestProject);
+            if(oldLatestProject.get() != null) {
+                oldLatestProject.get().setIsLatest(false);
+                persist(oldLatestProject.get());
             }
 
             project = persist(project);
@@ -813,9 +809,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             return project;
         });
 
-        if(oldLatestProject != null) {
+        if(oldLatestProject.get() != null) {
             // if we removed isLatest flag from old version, dispatch update event for the old version
-            Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, oldLatestProject));
+            Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, oldLatestProject.get()));
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, clonedProject));
         commitSearchIndex(true, Project.class);

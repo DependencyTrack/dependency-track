@@ -80,7 +80,7 @@ public class PolicyEngine {
         final List<PolicyViolation> policyViolations = new ArrayList<>();
         final List<PolicyViolation> existingPolicyViolations = qm.detach(qm.getAllPolicyViolations(component));
         for (final Policy policy : policies) {
-            if(policy.isOnlyForLatestProjectVersion() && Boolean.FALSE.equals(component.getProject().isLatest())) {
+            if(policy.isOnlyLatestProjectVersion() && Boolean.FALSE.equals(component.getProject().isLatest())) {
                 continue;
             }
             if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())

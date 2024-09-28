@@ -692,8 +692,8 @@ public class QueryManager extends AlpineQueryManager {
     public Policy createPolicy(String name, Policy.Operator operator, Policy.ViolationState violationState) {
         return this.createPolicy(name, operator, violationState, false);
     }
-    public Policy createPolicy(String name, Policy.Operator operator, Policy.ViolationState violationState, boolean onlyForLatestProjectVersion) {
-        return getPolicyQueryManager().createPolicy(name, operator, violationState, onlyForLatestProjectVersion);
+    public Policy createPolicy(String name, Policy.Operator operator, Policy.ViolationState violationState, boolean onlyLatestProjectVersion) {
+        return getPolicyQueryManager().createPolicy(name, operator, violationState, onlyLatestProjectVersion);
     }
 
     public void removeProjectFromPolicies(final Project project) {

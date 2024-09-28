@@ -22,7 +22,6 @@ import alpine.common.util.UuidUtil;
 import alpine.event.framework.EventService;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.model.ManagedUser;
-import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.server.auth.JsonWebToken;
 import alpine.server.filters.ApiFilter;
@@ -30,6 +29,7 @@ import alpine.server.filters.AuthenticationFilter;
 import org.cyclonedx.model.ExternalReference.Type;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.CloneProjectEvent;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
@@ -47,7 +47,6 @@ import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.dependencytrack.tasks.CloneProjectTask;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
@@ -83,8 +82,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 
 public class ProjectResourceTest extends ResourceTest {
-    private ManagedUser testUser;
-    private String jwt;
 
     @ClassRule
     public static JerseyTestRule jersey = new JerseyTestRule(
@@ -97,38 +94,6 @@ public class ProjectResourceTest extends ResourceTest {
     public void after() throws Exception {
         EventService.getInstance().unsubscribe(CloneProjectTask.class);
         super.after();
-    }
-
-    public JsonObjectBuilder setUpEnvironment(boolean isAdmin, boolean isRequired, String name, Team team1) {
-        testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
-        jwt = new JsonWebToken().createToken(testUser);
-        qm.addUserToTeam(testUser, team);
-        final var generator = new DefaultObjectGenerator();
-        generator.loadDefaultPermissions();
-        List<Permission> permissionsList = new ArrayList<Permission>();
-        final Permission permission = qm.getPermission("PORTFOLIO_MANAGEMENT");
-        permissionsList.add(permission);
-        testUser.setPermissions(permissionsList);
-        if (isAdmin) {
-            final Permission adminPermission = qm.getPermission("ACCESS_MANAGEMENT");
-            permissionsList.add(adminPermission);
-            testUser.setPermissions(permissionsList);
-        }
-        if (isRequired) {
-            qm.createConfigProperty(
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                    "true",
-                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                    null);
-        }
-        final JsonObjectBuilder jsonProject = Json.createObjectBuilder()
-                .add("name", name).add("classifier", "CONTAINER").addNull("parent").add("active", true).add("tags", Json.createArrayBuilder());
-        if (team1 != null) {
-            final JsonObject jsonTeam = Json.createObjectBuilder().add("uuid", team1.getUuid().toString()).build();
-            jsonProject.add("accessTeams", Json.createArrayBuilder().add(jsonTeam).build());
-        }
-        return jsonProject;
     }
 
     @Test
@@ -521,87 +486,323 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createProjectWithExistingTeamRequiredTest() {
-        Team AllowedTeam = qm.createTeam("AllowedTeam", false);
-        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithExistingTeamRequired", AllowedTeam);
-        qm.addUserToTeam(testUser, AllowedTeam);
-        Response response = jersey.target(V1_PROJECT)
+    public void createProjectAsUserWithAclEnabledAndExistingTeamByUuidTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        qm.addUserToTeam(testUser, team);
+
+        final String userJwt = new JsonWebToken().createToken(testUser);
+
+        final Response response = jersey.target(V1_PROJECT)
                 .request()
-                .header("Authorization", "Bearer " + jwt)
-                .put(Entity.json(requestBodyBuilder.build().toString()));
-        Assert.assertEquals(201, response.getStatus());
-        JsonObject returnedProject = parseJsonObject(response);
+                .header("Authorization", "Bearer " + userJwt)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "accessTeams": [
+                            {
+                              "uuid": "%s"
+                            }
+                          ]
+                        }
+                        """.formatted(team.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(201);
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "uuid": "${json-unit.any-string}",
+                          "name": "acme-app",
+                          "classifier": "APPLICATION",
+                          "children": [],
+                          "properties": [],
+                          "tags": [],
+                          "active": true
+                        }
+                        """);
+
+        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+                assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
     }
 
     @Test
-    public void createProjectWithoutExistingTeamRequiredTest() {
-        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithoutExistingTeamRequired", null);
-        Response response = jersey.target(V1_PROJECT)
+    public void createProjectAsUserWithAclEnabledAndExistingTeamByNameTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        qm.addUserToTeam(testUser, team);
+
+        final String userJwt = new JsonWebToken().createToken(testUser);
+
+        final Response response = jersey.target(V1_PROJECT)
                 .request()
-                .header("Authorization", "Bearer " + jwt)
-                .put(Entity.json(requestBodyBuilder.build().toString()));
-        Assert.assertEquals(422, response.getStatus(), 0);
+                .header("Authorization", "Bearer " + userJwt)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "accessTeams": [
+                            {
+                              "name": "%s"
+                            }
+                          ]
+                        }
+                        """.formatted(team.getName())));
+        assertThat(response.getStatus()).isEqualTo(201);
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "uuid": "${json-unit.any-string}",
+                          "name": "acme-app",
+                          "classifier": "APPLICATION",
+                          "children": [],
+                          "properties": [],
+                          "tags": [],
+                          "active": true
+                        }
+                        """);
+
+        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+                assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
     }
 
     @Test
-    public void createProjectWithNotAllowedExistingTeamTest() {
-        Team notAllowedTeam = qm.createTeam("NotAllowedTeam", false);
-        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithNotAllowedExistingTeam", notAllowedTeam);
-        Response response = jersey.target(V1_PROJECT)
+    public void createProjectAsUserWithAclEnabledAndWithoutTeamTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        qm.addUserToTeam(testUser, team);
+
+        final String userJwt = new JsonWebToken().createToken(testUser);
+
+        final Response response = jersey.target(V1_PROJECT)
                 .request()
-                .header("Authorization", "Bearer " + jwt)
-                .put(Entity.json(requestBodyBuilder.build().toString()));
-        Assert.assertEquals(403, response.getStatus());
+                .header("Authorization", "Bearer " + userJwt)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(201);
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "uuid": "${json-unit.any-string}",
+                          "name": "acme-app",
+                          "classifier": "APPLICATION",
+                          "children": [],
+                          "properties": [],
+                          "tags": [],
+                          "active": true
+                        }
+                        """);
+
+        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+                assertThat(project.getAccessTeams()).isEmpty());
     }
 
     @Test
-    public void createProjectWithNotAllowedExistingTeamAdminTest() {
-        Team AllowedTeam = qm.createTeam("NotAllowedTeam", false);
-        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithNotAllowedExistingTeam", AllowedTeam);
-        qm.addUserToTeam(testUser, AllowedTeam);
-        Response response = jersey.target(V1_PROJECT)
+    public void createProjectAsUserWithNotAllowedExistingTeamTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+
+        final String userJwt = new JsonWebToken().createToken(testUser);
+
+        final Response response = jersey.target(V1_PROJECT)
                 .request()
-                .header("Authorization", "Bearer " + jwt)
-                .put(Entity.json(requestBodyBuilder.build().toString()));
-        Assert.assertEquals(201, response.getStatus());
-        JsonObject returnedProject = parseJsonObject(response);
+                .header("Authorization", "Bearer " + userJwt)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "accessTeams": [
+                            {
+                              "uuid": "%s"
+                            }
+                          ]
+                        }
+                        """.formatted(team.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("""
+                The team with UUID %s can not be assigned because it does not exist, \
+                or is not accessible to the authenticated principal.""", team.getUuid());
     }
 
     @Test
-    public void createProjectWithNotExistingTeamNoAdminTest() {
-        Team notAllowedTeam = new Team();
-        notAllowedTeam.setUuid(new UUID(1, 1));
-        notAllowedTeam.setName("NotAllowedTeam");
-        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithNotAllowedExistingTeam", notAllowedTeam);
-        Response response = jersey.target(V1_PROJECT)
+    public void createProjectAsUserWithAclEnabledAndNotMemberOfTeamAdminTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT);
+
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        qm.addUserToTeam(testUser, team);
+
+        final String userJwt = new JsonWebToken().createToken(testUser);
+
+        final Team otherTeam = qm.createTeam("otherTeam", false);
+
+        final Response response = jersey.target(V1_PROJECT)
                 .request()
-                .header("Authorization", "Bearer " + jwt)
-                .put(Entity.json(requestBodyBuilder.build().toString()));
-        Assert.assertEquals(403, response.getStatus());
+                .header("Authorization", "Bearer " + userJwt)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "accessTeams": [
+                            {
+                              "uuid": "%s"
+                            }
+                          ]
+                        }
+                        """.formatted(otherTeam.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(201);
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "uuid": "${json-unit.any-string}",
+                          "name": "acme-app",
+                          "classifier": "APPLICATION",
+                          "children": [],
+                          "properties": [],
+                          "tags": [],
+                          "active": true
+                        }
+                        """);
+
+        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+                assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly("otherTeam"));
     }
 
     @Test
-    public void createProjectWithNotExistingTeamTest() {
-        Team notAllowedTeam = new Team();
-        notAllowedTeam.setUuid(new UUID(1, 1));
-        notAllowedTeam.setName("NotAllowedTeam");
-        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(true, true, "ProjectWithNotAllowedExistingTeam", notAllowedTeam);
-        Response response = jersey.target(V1_PROJECT)
+    public void createProjectAsUserWithAclEnabledAndTeamNotExistingNoAdminTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+
+        final String userJwt = new JsonWebToken().createToken(testUser);
+
+        final Response response = jersey.target(V1_PROJECT)
                 .request()
-                .header("Authorization", "Bearer " + jwt)
-                .put(Entity.json(requestBodyBuilder.build().toString()));
-        Assert.assertEquals(404, response.getStatus());
+                .header("Authorization", "Bearer " + userJwt)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "accessTeams": [
+                            {
+                              "uuid": "419c32eb-5a30-47d5-8a9a-fc0cda651314"
+                            }
+                          ]
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("""
+                The team with UUID 419c32eb-5a30-47d5-8a9a-fc0cda651314 \
+                can not be assigned because it does not exist, or is not \
+                accessible to the authenticated principal.""");
     }
 
     @Test
-    public void createProjectWithApiKeyTest() {
-        final JsonObjectBuilder requestBodyBuilder = setUpEnvironment(false, true, "ProjectWithNotAllowedExistingTeam", team);
-        Response response = jersey.target(V1_PROJECT)
+    public void createProjectAsUserWithAclEnabledAndTeamNotExistingAdminTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT);
+
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        qm.addUserToTeam(testUser, team);
+
+        final String userJwt = new JsonWebToken().createToken(testUser);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header("Authorization", "Bearer " + userJwt)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "accessTeams": [
+                            {
+                              "uuid": "419c32eb-5a30-47d5-8a9a-fc0cda651314"
+                            }
+                          ]
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("""
+                The team with UUID 419c32eb-5a30-47d5-8a9a-fc0cda651314 \
+                can not be assigned because it does not exist, or is not \
+                accessible to the authenticated principal.""");
+    }
+
+    @Test
+    public void createProjectAsApiKeyWithAclEnabledAndWithExistentTeamTest() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+
+        final Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.json(requestBodyBuilder.build().toString()));
-        Assert.assertEquals(201, response.getStatus());
-        JsonObject returnedProject = parseJsonObject(response);
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "accessTeams": [
+                            {
+                              "uuid": "%s"
+                            }
+                          ]
+                        }
+                        """.formatted(team.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(201);
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "uuid": "${json-unit.any-string}",
+                          "name": "acme-app",
+                          "classifier": "APPLICATION",
+                          "children": [],
+                          "properties": [],
+                          "tags": [],
+                          "active": true
+                        }
+                        """);
+
+        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+                assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
     }
 
     @Test

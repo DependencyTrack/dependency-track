@@ -233,7 +233,7 @@ public final class PersistenceUtil {
         objects.forEach(object -> assertNonPersistent(object, message));
     }
 
-    private static boolean isPersistent(final Object object) {
+    public static boolean isPersistent(final Object object) {
         final ObjectState objectState = JDOHelper.getObjectState(object);
         return objectState == PERSISTENT_CLEAN
                 || objectState == PERSISTENT_DIRTY

@@ -1961,4 +1961,60 @@ public class ProjectResourceTest extends ResourceTest {
                     .isNotEmpty();
         }
     }
+
+    @Test
+    public void getLatestProjectTest() {
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
+        qm.createProject("Acme Example", null, "1.0.2", null, null, null, true, true, false);
+        qm.createProject("Different project", null, "1.0.3", null, null, null, true, true, false);
+
+        Response response = jersey.target(V1_PROJECT_LATEST + "Acme Example")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Acme Example", json.getString("name"));
+        Assert.assertEquals("1.0.2", json.getString("version"));
+    }
+
+    @Test
+    public void getLatestProjectWithAclEnabledTest() {
+        enablePortfolioAccessControl();
+
+        // Create project and give access to current principal's team.
+        Project accessProject = qm.createProject("acme-app-a", null, "1.0.0", null, null, null, true, false, false);
+        accessProject.setAccessTeams(List.of(team));
+        qm.persist(accessProject);
+
+        accessProject = qm.createProject("acme-app-a", null, "1.0.2", null, null, null, true, true, false);
+        accessProject.setAccessTeams(List.of(team));
+        qm.persist(accessProject);
+
+        final Response response = jersey.target(V1_PROJECT_LATEST + "acme-app-a")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("acme-app-a", json.getString("name"));
+        Assert.assertEquals("1.0.2", json.getString("version"));
+    }
+
+    @Test
+    public void getLatestProjectWithAclEnabledNoAccessTest() {
+        enablePortfolioAccessControl();
+
+        // Create projects and give NO access
+        Project accessProject = qm.createProject("acme-app-a", null, "1.0.0", null, null, null, true, false, false);
+        accessProject = qm.createProject("acme-app-a", null, "1.0.2", null, null, null, true, true, false);
+
+        final Response response = jersey.target(V1_PROJECT_LATEST + "acme-app-a")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(403, response.getStatus(), 0);
+    }
 }

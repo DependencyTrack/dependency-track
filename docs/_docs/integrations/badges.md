@@ -11,7 +11,7 @@ basis via permission or globally for unauthenticated access.
 > **Deprecation Notice**
 > 
 > Unauthenticated access to badges as a global configuration is deprecated and slated for removal in Dependency-Track
-> v4.12.
+> v4.13.
 
 To enable badges for a team, activate the permission `VIEW_BADGES`. To deactivate badges, remove the permission. To 
 retrieve a badge, use a team's API key either in the badge API header `X-API-Key` or in the URI parameter `apiKey`.

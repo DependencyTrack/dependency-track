@@ -55,7 +55,8 @@ public class CloneProjectTask implements Subscriber {
                         request.includeServices(),
                         request.includeAuditHistory(),
                         request.includeACL(),
-                        request.includePolicyViolations()
+                        request.includePolicyViolations(),
+                        request.makeCloneLatest()
                 );
                 LOGGER.info("Cloned project for version %s into project %s".formatted(project.getVersion(), project.getUuid()));
             } catch (RuntimeException ex) {

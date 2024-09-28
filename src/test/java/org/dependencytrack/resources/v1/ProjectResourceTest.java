@@ -1794,6 +1794,45 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
     }
 
+    @Test
+    public void cloneProjectAsLatestTest() {
+        EventService.getInstance().subscribe(CloneProjectEvent.class, CloneProjectTask.class);
+
+        final var project = new Project();
+        project.setName("acme-app-a");
+        project.setVersion("1.0.0");
+        project.setIsLatest(true);
+        qm.persist(project);
+
+        final Response response = jersey.target("%s/clone".formatted(V1_PROJECT)).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json("""
+                        {
+                          "project": "%s",
+                          "version": "1.1.0",
+                          "makeCloneLatest": true
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertNotNull(json.getString("token"));
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+
+        await("Cloning completion")
+                .atMost(Duration.ofSeconds(15))
+                .pollInterval(Duration.ofMillis(50))
+                .untilAsserted(() -> {
+                    final Project clonedProject = qm.getProject("acme-app-a", "1.1.0");
+                    assertThat(clonedProject).isNotNull();
+                    assertThat(clonedProject.isLatest()).isTrue();
+
+                    // ensure source is no longer latest
+                    qm.getPersistenceManager().refresh(project);
+                    assertThat(project.isLatest()).isFalse();
+                });
+    }
+
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3883
     public void issue3883RegressionTest() {
         Response response = jersey.target(V1_PROJECT)
@@ -2008,8 +2047,8 @@ public class ProjectResourceTest extends ResourceTest {
         enablePortfolioAccessControl();
 
         // Create projects and give NO access
-        Project accessProject = qm.createProject("acme-app-a", null, "1.0.0", null, null, null, true, false, false);
-        accessProject = qm.createProject("acme-app-a", null, "1.0.2", null, null, null, true, true, false);
+        qm.createProject("acme-app-a", null, "1.0.0", null, null, null, true, false, false);
+        qm.createProject("acme-app-a", null, "1.0.2", null, null, null, true, true, false);
 
         final Response response = jersey.target(V1_PROJECT_LATEST + "acme-app-a")
                 .request()

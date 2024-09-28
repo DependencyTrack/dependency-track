@@ -592,22 +592,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             final boolean includeServices,
             final boolean includeAuditHistory,
             final boolean includeACL,
-            final boolean includePolicyViolations
-    ) {
-        return clone(from, newVersion, includeTags, includeProperties, includeComponents, includeServices, includeAuditHistory,
-                includeACL, includePolicyViolations, false);
-    }
-
-    @Override
-    public Project clone(
-            final UUID from,
-            final String newVersion,
-            final boolean includeTags,
-            final boolean includeProperties,
-            final boolean includeComponents,
-            final boolean includeServices,
-            final boolean includeAuditHistory,
-            final boolean includeACL,
             final boolean includePolicyViolations,
             final boolean makeCloneLatest
     ) {

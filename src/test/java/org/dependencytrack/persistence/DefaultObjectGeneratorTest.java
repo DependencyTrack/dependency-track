@@ -93,7 +93,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultPersonas");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(3, qm.getTeams().size());
+        Assert.assertEquals(4, qm.getTeams().size());
     }
 
     @Test

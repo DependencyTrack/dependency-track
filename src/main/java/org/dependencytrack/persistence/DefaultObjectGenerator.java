@@ -151,6 +151,8 @@ public class DefaultObjectGenerator implements ServletContextListener {
             final Team managers = qm.createTeam("Portfolio Managers", false);
             LOGGER.debug("Creating team: Automation");
             final Team automation = qm.createTeam("Automation", true);
+            LOGGER.debug("Creating team: Badge Viewers");
+            final Team badges = qm.createTeam("Badge Viewers", true);
 
             final List<Permission> fullList = qm.getPermissions();
 
@@ -158,10 +160,12 @@ public class DefaultObjectGenerator implements ServletContextListener {
             sysadmins.setPermissions(fullList);
             managers.setPermissions(getPortfolioManagersPermissions(fullList));
             automation.setPermissions(getAutomationPermissions(fullList));
+            badges.setPermissions(getBadgesPermissions(fullList));
 
             qm.persist(sysadmins);
             qm.persist(managers);
             qm.persist(automation);
+            qm.persist(badges);
 
             LOGGER.debug("Adding admin user to System Administrators");
             qm.addUserToTeam(admin, sysadmins);
@@ -188,6 +192,16 @@ public class DefaultObjectGenerator implements ServletContextListener {
         for (final Permission permission : fullList) {
             if (permission.getName().equals(Permissions.Constants.VIEW_PORTFOLIO) ||
                     permission.getName().equals(Permissions.Constants.BOM_UPLOAD)) {
+                permissions.add(permission);
+            }
+        }
+        return permissions;
+    }
+
+    private List<Permission> getBadgesPermissions(final List<Permission> fullList) {
+        final List<Permission> permissions = new ArrayList<>();
+        for (final Permission permission : fullList) {
+            if (permission.getName().equals(Permissions.Constants.VIEW_BADGES)) {
                 permissions.add(permission);
             }
         }

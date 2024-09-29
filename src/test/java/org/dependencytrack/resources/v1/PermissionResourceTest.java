@@ -101,6 +101,10 @@ public class PermissionResourceTest extends ResourceTest {
                             "name": "TAG_MANAGEMENT"
                           },
                           {
+                            "description": "Provides the ability to view badges",
+                            "name": "VIEW_BADGES"
+                          },
+                          {
                             "description": "Provides the ability to view policy violations",
                             "name": "VIEW_POLICY_VIOLATION"
                           },

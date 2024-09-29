@@ -80,6 +80,7 @@ public abstract class ResourceTest {
     protected final String SIZE = "size";
     protected final String TOTAL_COUNT_HEADER = "X-Total-Count";
     protected final String X_API_KEY = "X-Api-Key";
+    protected final String API_KEY = "apiKey";
     protected final String V1_TAG = "/v1/tag";
 
     // Hashing is expensive. Do it once and re-use across tests as much as possible.

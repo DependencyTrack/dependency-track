@@ -87,7 +87,7 @@
         <!-- Dependency Versions -->
         <frontend.version>4.11.6</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
-        <lib.awaitility.version>4.2.1</lib.awaitility.version>
+        <lib.awaitility.version>4.2.2</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
         <lib.checkstyle.version>10.17.0</lib.checkstyle.version>
         <lib.cloud-sql-connector-jdbc-sqlserver.version>1.20.1</lib.cloud-sql-connector-jdbc-sqlserver.version>

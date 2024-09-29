@@ -99,13 +99,6 @@
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>9.0.5</lib.cyclonedx-java.version>
-        <!--
-            Temporarily overwriting DataNucleus version to resolve https://github.com/DependencyTrack/dependency-track/issues/2061.
-            TODO: Remove these when upgrading to Alpine > 3.0.1.
-        -->
-        <lib.datanucleus-api-jdo.version>6.0.3</lib.datanucleus-api-jdo.version>
-        <lib.datanucleus.version>6.0.8</lib.datanucleus.version>
-        <lib.datanucleus-rdbms.version>6.0.8</lib.datanucleus-rdbms.version>
         <lib.greenmail.version>2.0.1</lib.greenmail.version>
         <lib.jackson.version>2.17.1</lib.jackson.version>
         <lib.jackson-databind.version>2.17.1</lib.jackson-databind.version>

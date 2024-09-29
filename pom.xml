@@ -100,8 +100,8 @@
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>9.0.5</lib.cyclonedx-java.version>
         <lib.greenmail.version>2.0.1</lib.greenmail.version>
-        <lib.jackson.version>2.17.1</lib.jackson.version>
-        <lib.jackson-databind.version>2.17.1</lib.jackson-databind.version>
+        <lib.jackson.version>2.17.2</lib.jackson.version>
+        <lib.jackson-databind.version>2.17.2</lib.jackson-databind.version>
         <lib.json-java.version>20240303</lib.json-java.version>
         <lib.json-unit.version>3.4.1</lib.json-unit.version>
         <lib.junit.version>4.13.2</lib.junit.version>

@@ -196,6 +196,52 @@ public class PolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void policyForLatestTriggersOnLatestVersion() {
+        Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO, true);
+        qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
+        Project project = qm.createProject("My Project", null, "1", null, null,
+                null, true, true, false);
+        Component component = new Component();
+        component.setName("Test Component");
+        component.setVersion("1.0");
+        component.setProject(project);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId("12345");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(project);
+        qm.persist(component);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        PolicyEngine policyEngine = new PolicyEngine();
+        List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
+        Assert.assertEquals(1, violations.size());
+    }
+
+    @Test
+    public void policyForLatestTriggersNotOnNotLatestVersion() {
+        Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO, true);
+        qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
+        Project project = qm.createProject("My Project", null, "1", null, null,
+                null, true, false, false);
+        Component component = new Component();
+        component.setName("Test Component");
+        component.setVersion("1.0");
+        component.setProject(project);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId("12345");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(project);
+        qm.persist(component);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        PolicyEngine policyEngine = new PolicyEngine();
+        List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
+        Assert.assertEquals(0, violations.size());
+    }
+
+    @Test
     public void determineViolationTypeTest() {
         PolicyCondition policyCondition = new PolicyCondition();
         policyCondition.setSubject(null);
@@ -342,13 +388,17 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         // Evaluate policies and ensure that a notification has been sent.
         final var policyEngine = new PolicyEngine();
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(1);
-        assertThat(NOTIFICATIONS).hasSize(1);
+        assertThat(NOTIFICATIONS).hasSize(2);
 
         // Create an additional policy condition that matches on the exact version of the component,
         // and re-evaluate policies. Ensure that only one notification per newly violated condition was sent.
         final var policyConditionB = qm.createPolicyCondition(policy, Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.2.3");
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(2);
         assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification -> {
+                    assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+                    assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name());
+                },
                 notification -> {
                     assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
                     assertThat(notification.getGroup()).isEqualTo(NotificationGroup.POLICY_VIOLATION.name());
@@ -374,7 +424,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         // Delete a policy condition and re-evaluate policies again. No new notifications should be sent.
         qm.deletePolicyCondition(policyConditionA);
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(1);
-        assertThat(NOTIFICATIONS).hasSize(2);
+        assertThat(NOTIFICATIONS).hasSize(3);
     }
 
     @Test

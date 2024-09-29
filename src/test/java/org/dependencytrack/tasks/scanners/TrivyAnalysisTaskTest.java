@@ -38,6 +38,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -315,8 +316,12 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
 
         assertThat(qm.getCount(ComponentAnalysisCache.class)).isOne();
 
-        assertThat(NOTIFICATIONS).satisfiesExactly(notification ->
-                assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name()));
+        assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification ->
+                        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name()),
+                notification ->
+                        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name())
+        );
 
         wireMock.verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob"))
                 .withHeader("Trivy-Token", equalTo("token"))
@@ -381,7 +386,10 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
 
         assertThat(qm.getCount(ComponentAnalysisCache.class)).isZero();
 
-        assertThat(NOTIFICATIONS).isEmpty();
+        assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification ->
+                        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name())
+                );
 
         wireMock.verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
         wireMock.verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));
@@ -413,13 +421,19 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
 
         assertThat(qm.getCount(ComponentAnalysisCache.class)).isZero();
 
-        assertThat(NOTIFICATIONS).satisfiesExactly(notification -> {
-            assertThat(notification.getGroup()).isEqualTo(NotificationGroup.ANALYZER.name());
-            assertThat(notification.getLevel()).isEqualTo(NotificationLevel.ERROR);
-            assertThat(notification.getContent()).isEqualTo("""
-                    An error occurred while communicating with a vulnerability intelligence source. \
-                    Check log for details. Connection reset""");
-        });
+        assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification -> {
+                    assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+                    assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name());
+                },
+                notification -> {
+                    assertThat(notification.getGroup()).isEqualTo(NotificationGroup.ANALYZER.name());
+                    assertThat(notification.getLevel()).isEqualTo(NotificationLevel.ERROR);
+                    assertThat(notification.getContent()).isEqualTo("""
+                            An error occurred while communicating with a vulnerability intelligence source. \
+                            Check log for details. Connection reset""");
+                }
+        );
 
         wireMock.verify(exactly(1), postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
         wireMock.verify(exactly(0), postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));

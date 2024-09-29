@@ -1397,7 +1397,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         awaitBomProcessedNotification(bomUploadEvent);
         NOTIFICATIONS.clear();
 
-        final Project clonedProject = qm.clone(project.getUuid(), "3.2.1", true, true, true, true, true, true, true);
+        final Project clonedProject = qm.clone(project.getUuid(), "3.2.1", true, true, true, true, true, true, true, false);
 
         bomBytes = """
                 {

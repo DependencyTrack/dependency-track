@@ -61,6 +61,8 @@ public class CloneProjectRequest {
 
     private final boolean includePolicyViolations;
 
+    private final boolean makeCloneLatest;
+
     @JsonCreator
     public CloneProjectRequest(@JsonProperty(value = "project", required = true) String project,
                                @JsonProperty(value = "version", required = true) String version,
@@ -71,8 +73,10 @@ public class CloneProjectRequest {
                                @JsonProperty(value = "includeServices") boolean includeServices,
                                @JsonProperty(value = "includeAuditHistory") boolean includeAuditHistory,
                                @JsonProperty(value = "includeACL") boolean includeACL,
-                               @JsonProperty(value = "includePolicyViolations") boolean includePolicyViolations) {
-                                    if (includeDependencies) { // For backward compatibility
+                               @JsonProperty(value = "includePolicyViolations") boolean includePolicyViolations,
+                               @JsonProperty(value = "makeCloneLatest", defaultValue = "false") boolean makeCloneLatest) {
+
+        if (includeDependencies) { // For backward compatibility
             includeComponents = true;
         }
         this.project = project;
@@ -85,6 +89,7 @@ public class CloneProjectRequest {
         this.includeAuditHistory = includeAuditHistory;
         this.includeACL = includeACL;
         this.includePolicyViolations = includePolicyViolations;
+        this.makeCloneLatest = makeCloneLatest;
     }
 
     public String getProject() {
@@ -127,4 +132,7 @@ public class CloneProjectRequest {
         return includePolicyViolations;
     }
 
+    public boolean makeCloneLatest() {
+        return makeCloneLatest;
+    }
 }

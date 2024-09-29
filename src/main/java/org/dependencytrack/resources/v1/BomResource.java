@@ -327,8 +327,20 @@ public class BomResource extends AlpineResource {
                                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified parent project is forbidden").build();
                             }
                         }
+                        final String trimmedProjectName = StringUtils.trimToNull(request.getProjectName());
+                        if(request.isLatestProjectVersion()) {
+                            final Project oldLatest = qm.getLatestProjectVersion(trimmedProjectName);
+                            if(oldLatest != null && !qm.hasAccess(super.getPrincipal(), oldLatest)) {
+                                return Response.status(Response.Status.FORBIDDEN)
+                                        .entity("Cannot create latest version for project with this name. Access to current latest " +
+                                                "version is forbidden!")
+                                        .build();
+                            }
+                        }
 
-                        project = qm.createProject(StringUtils.trimToNull(request.getProjectName()), null, StringUtils.trimToNull(request.getProjectVersion()), request.getProjectTags(), parent, null, true, true);
+                        project = qm.createProject(trimmedProjectName, null,
+                                StringUtils.trimToNull(request.getProjectVersion()), request.getProjectTags(), parent,
+                                null, true, request.isLatestProjectVersion(), true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
                     } else {
@@ -390,6 +402,7 @@ public class BomResource extends AlpineResource {
             @FormDataParam("parentName") String parentName,
             @FormDataParam("parentVersion") String parentVersion,
             @FormDataParam("parentUUID") String parentUUID,
+            @DefaultValue("false") @FormDataParam("isLatest") boolean isLatest,
             @Parameter(schema = @Schema(type = "string")) @FormDataParam("bom") final List<FormDataBodyPart> artifactParts
     ) {
         if (projectUuid != null) { // behavior in v3.0.0
@@ -421,10 +434,19 @@ public class BomResource extends AlpineResource {
                                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified parent project is forbidden").build();
                             }
                         }
+                        if(isLatest) {
+                            final Project oldLatest = qm.getLatestProjectVersion(trimmedProjectName);
+                            if(oldLatest != null && !qm.hasAccess(super.getPrincipal(), oldLatest)) {
+                                return Response.status(Response.Status.FORBIDDEN)
+                                        .entity("Cannot create latest version for project with this name. Access to current latest " +
+                                                "version is forbidden!")
+                                        .build();
+                            }
+                        }
                         final List<org.dependencytrack.model.Tag> tags = (projectTags != null && !projectTags.isBlank())
                                 ? Arrays.stream(projectTags.split(",")).map(String::trim).filter(not(String::isEmpty)).map(Tag::new).toList()
                                 : null;
-                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, tags, parent, null, true, true);
+                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, tags, parent, null, true, isLatest, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
                     } else {

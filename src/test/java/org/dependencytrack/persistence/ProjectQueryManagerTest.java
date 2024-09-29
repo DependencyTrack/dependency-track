@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.persistence.PaginatedResult;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.*;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
@@ -27,8 +26,6 @@ import org.junit.Test;
 
 import java.util.Date;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class ProjectQueryManagerTest extends PersistenceCapableTest {
 
@@ -48,7 +45,8 @@ public class ProjectQueryManagerTest extends PersistenceCapableTest {
         vuln.setSeverity(Severity.HIGH);
         qm.persist(vuln);
         qm.addVulnerability(vuln, comp, AnalyzerIdentity.INTERNAL_ANALYZER, "Vuln1", "http://vuln.com/vuln1", new Date(1708559165229L));
-        Project clonedProject = qm.clone(project.getUuid(), "1.1.0", false, false, true, false, false, false, false);
+        Project clonedProject = qm.clone(project.getUuid(), "1.1.0", false, false,
+                true, false, false, false, false, false);
         List<Finding> findings = qm.getFindings(clonedProject);
         Assert.assertEquals(1, findings.size());
         Finding finding = findings.get(0);

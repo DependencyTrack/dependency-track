@@ -18,9 +18,8 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
-import alpine.server.filters.AuthorizationFilter;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -40,14 +39,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BADGE_ENABLED;
+
 public class BadgeResourceTest extends ResourceTest {
 
     @ClassRule
     public static JerseyTestRule jersey = new JerseyTestRule(
             new ResourceConfig(BadgeResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthenticationFilter.class)
-                    .register(AuthorizationFilter.class));
+                    .register(ApiFilter.class));
+
+    @Override
+    public void before() throws Exception {
+        super.before();
+        qm.createConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName(), "false", IConfigProperty.PropertyType.BOOLEAN, "Unauthenticated access to badge enabled");
+    }
 
     @Test
     public void projectVulnerabilitiesByUuidTest() {
@@ -70,6 +75,19 @@ public class BadgeResourceTest extends ResourceTest {
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/vulns/project/" + project.getUuid()).request()
                 .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+    }
+
+    @Test
+    public void projectVulnerabilitiesByUuidMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
+        initializeWithPermissions(Permissions.VIEW_BADGES);
+        enableUnauthenticatedBadgeAccess();
+
+        Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
+        Response response = jersey.target(V1_BADGE + "/vulns/project/" + project.getUuid()).request()
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
@@ -201,10 +219,24 @@ public class BadgeResourceTest extends ResourceTest {
     @Test
     public void projectVulnerabilitiesByNameAndVersionWithHeaderAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
+        enableUnauthenticatedBadgeAccess();
 
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example/1.0.0").request()
-                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+    }
+
+    @Test
+    public void projectVulnerabilitiesByNameAndVersionMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
+        initializeWithPermissions(Permissions.VIEW_BADGES);
+
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
+        Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example/1.0.0")
+                .queryParam(API_KEY, apiKey)
+                .request()
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
@@ -359,6 +391,20 @@ public class BadgeResourceTest extends ResourceTest {
     }
 
     @Test
+    public void projectPolicyViolationsByUuidMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
+        initializeWithPermissions(Permissions.VIEW_BADGES);
+        enableUnauthenticatedBadgeAccess();
+
+        Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
+        Response response = jersey.target(V1_BADGE + "/violations/project/" + project.getUuid())
+                .request()
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+    }
+
+    @Test
     public void projectPolicyViolationsByUuidProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
@@ -494,6 +540,20 @@ public class BadgeResourceTest extends ResourceTest {
     }
 
     @Test
+    public void projectPolicyViolationsByNameAndVersionMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
+        initializeWithPermissions(Permissions.VIEW_BADGES);
+        enableUnauthenticatedBadgeAccess();
+
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
+        Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0")
+                .request()
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+    }
+
+    @Test
     public void projectPolicyViolationsByNameAndVersionProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
@@ -619,5 +679,10 @@ public class BadgeResourceTest extends ResourceTest {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private void enableUnauthenticatedBadgeAccess() {
+        qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName())
+                .setPropertyValue("true");
     }
 }

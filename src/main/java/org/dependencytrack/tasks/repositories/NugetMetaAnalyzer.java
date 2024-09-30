@@ -112,6 +112,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                     String responseString = EntityUtils.toString(response.getEntity());
                     var jsonObject = new JSONObject(responseString);
                     final JSONArray versions = jsonObject.getJSONArray("versions");
+
                     final String latest = findLatestVersion(versions); // get the last version in the array
                     meta.setLatestVersion(latest);
                 }
@@ -127,15 +128,17 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         return false;
     }
 
-    private String findLatestVersion(JSONArray versions) {
-        if (versions.length() < 1) {
+    private String findLatestVersion(JSONArray versions) { 
+        JSONArray filteredVersions = filterPreReleaseVersions(versions);
+
+        if (filteredVersions.length() < 1) {
             return null;
         }
 
-        ComparableVersion latestVersion = new ComparableVersion(versions.getString(0));
+        ComparableVersion latestVersion = new ComparableVersion(filteredVersions.getString(0));
 
-        for (int i = 1; i < versions.length(); i++) {
-            ComparableVersion version = new ComparableVersion(versions.getString(i));
+        for (int i = 1; i < filteredVersions.length(); i++) {
+            ComparableVersion version = new ComparableVersion(filteredVersions.getString(i));
             if (version.compareTo(latestVersion) > 0) {
                 latestVersion = version;
             }
@@ -143,6 +146,16 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
 
         return latestVersion.toString();
     }
+
+    private JSONArray filterPreReleaseVersions(JSONArray versions) {
+        JSONArray filteredVersions = new JSONArray();
+        for (int i = 0; i < versions.length(); i++) {
+            if (!versions.getString(i).contains("-")) {
+                filteredVersions.put(versions.getString(i));
+            }
+        }
+        return filteredVersions;
+    } 
 
     private boolean performLastPublishedCheck(final MetaModel meta, final Component component) {
         final String url = String.format(registrationUrl, urlEncode(component.getPurl().getName().toLowerCase()), urlEncode(meta.getLatestVersion()));

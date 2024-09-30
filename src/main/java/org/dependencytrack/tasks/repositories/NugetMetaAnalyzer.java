@@ -113,10 +113,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                     var jsonObject = new JSONObject(responseString);
                     final JSONArray versions = jsonObject.getJSONArray("versions");
 
-                     // if the version is a pre-release version, we should not exclude pre-release versions
-                    final boolean excludePreRelease = component.getPurl().getVersion() != null && !component.getPurl().getVersion().contains("-"); 
-
-                    final String latest = findLatestVersion(versions,excludePreRelease); // get the last version in the array
+                    final String latest = findLatestVersion(versions); // get the last version in the array
                     meta.setLatestVersion(latest);
                 }
                 return true;
@@ -131,8 +128,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         return false;
     }
 
-    private String findLatestVersion(JSONArray versions, boolean excludePreRelease) { 
-        JSONArray filteredVersions = excludePreRelease ? filterPreReleaseVersions(versions) : versions;
+    private String findLatestVersion(JSONArray versions) { 
+        JSONArray filteredVersions = filterPreReleaseVersions(versions);
 
         if (filteredVersions.length() < 1) {
             return null;

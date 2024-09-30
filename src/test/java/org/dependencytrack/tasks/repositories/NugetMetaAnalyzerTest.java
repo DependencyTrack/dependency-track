@@ -74,7 +74,7 @@ public class NugetMetaAnalyzerTest {
     // The test is transitent depending on the current version of the package 
     // retrieved from the repository at the time of running. 
     // When it was created, the latest release version was 9.0.0-preview.1.24080.9
-    //@Test
+    @Test
     public void testAnalyzerExcludingPreRelease() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:nuget/Microsoft.Extensions.DependencyInjection@8.0.0"));
@@ -94,7 +94,7 @@ public class NugetMetaAnalyzerTest {
     // The test is transitent depending on the current version of the package 
     // retrieved from the repository at the time of running. 
     // When it was created, the latest release version was 9.0.0-preview.1.24080.9
-    //@Test
+    @Test
     public void testAnalyzerIncludingPreRelease() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:nuget/Microsoft.Extensions.DependencyInjection@8.0.0-beta.21301.5"));
@@ -107,7 +107,7 @@ public class NugetMetaAnalyzerTest {
         Assert.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
         Assert.assertNotNull(metaModel.getLatestVersion());
 
-        Assert.assertTrue(metaModel.getLatestVersion().contains("-"));
+        Assert.assertFalse(metaModel.getLatestVersion().contains("-"));
     }
 
     @Test

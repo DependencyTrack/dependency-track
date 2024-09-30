@@ -53,11 +53,13 @@ public class DependencyMetrics implements Serializable {
     @Persistent
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
+    @JsonIgnore
     private Project project;
 
     @Persistent
     @Column(name = "COMPONENT_ID", allowsNull = "false")
     @NotNull
+    @JsonIgnore
     private Component component;
 
     @Persistent

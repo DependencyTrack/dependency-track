@@ -7,19 +7,10 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://github.com/krb5/krb5/blob/krb5-1.21.2-final/NOTICE#L66-L98",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:42:03Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing:MIT#OpenVision_Variant",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:42:03Z",
+      "timestamp": "2024-08-19T17:47:38Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -28,9 +19,18 @@
       "url": "https://web.mit.edu/kerberos/krb5-1.21/doc/mitK5license.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:42:04Z",
+      "timestamp": "2024-08-19T17:47:38Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/krb5/krb5/blob/krb5-1.21.2-final/NOTICE#L66-L98",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:47:39Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

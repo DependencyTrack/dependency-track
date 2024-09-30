@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
@@ -23,7 +23,7 @@ import alpine.security.crypto.DataEncryption;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.json.JsonObjectBuilder;
+import jakarta.json.JsonObjectBuilder;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
@@ -114,6 +114,29 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Override
+    public void testInformWithBomValidationFailedNotification() {
+        super.testInformWithBomValidationFailedNotification();
+
+        verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
+                .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "fields" : {
+                            "project" : {
+                              "key" : "PROJECT"
+                            },
+                            "issuetype" : {
+                              "name" : "Task"
+                            },
+                            "summary" : "[Dependency-Track] [BOM_VALIDATION_FAILED] Bill of Materials Validation Failed",
+                            "description" : "An error occurred during BOM Validation\\n\\\\\\\\\\n\\\\\\\\\\n*Level*\\nERROR\\n\\n"
+                          }
+                        }
+                        """)));
+    }
+
+    @Override
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
         super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 
@@ -177,6 +200,29 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
                             },
                             "summary" : "[Dependency-Track] [NEW_VULNERABILITY] [MEDIUM] New medium vulnerability identified: INT-001",
                             "description" : "A new vulnerability has been identified on your project(s).\\n\\\\\\\\\\n\\\\\\\\\\n*Vulnerability description*\\n{code:none|bgColor=white|borderStyle=none}vulnerabilityDescription{code}\\n\\n*VulnID*\\nINT-001\\n\\n*Severity*\\nMedium\\n\\n*Component*\\n[componentName : componentVersion|https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6]\\n\\n*Affected project(s)*\\n- [projectName (projectVersion)|https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95]\\n"
+                          }
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithNewVulnerableDependencyNotification() {
+        super.testInformWithNewVulnerableDependencyNotification();
+
+        verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
+                .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "fields": {
+                            "project": {
+                              "key": "PROJECT"
+                            },
+                            "issuetype": {
+                              "name": "Task"
+                            },
+                            "summary": "[Dependency-Track] [NEW_VULNERABLE_DEPENDENCY] Vulnerable dependency introduced on project projectName",
+                            "description": "A component which contains one or more vulnerabilities has been added to your project.\\n\\\\\\\\\\n\\\\\\\\\\n*Project*\\n[pkg:maven/org.acme/projectName@projectVersion|https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95]\\n\\n*Component*\\n[componentName : componentVersion|https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6]\\n\\n*Vulnerabilities*\\n- INT-001 (Medium)\\n"
                           }
                         }
                         """)));

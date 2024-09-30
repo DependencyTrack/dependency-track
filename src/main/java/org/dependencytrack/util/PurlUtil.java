@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.util;
 
@@ -48,6 +48,25 @@ public class PurlUtil {
                     .withVersion(original.getVersion())
                     .build();
         } catch (MalformedPackageURLException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Attempt to parse a given package URL.
+     *
+     * @param purl The package URL to parse
+     * @return The parsed {@link PackageURL}, or {@code null} when parsing failed
+     * @since 4.12.0
+     */
+    public static PackageURL silentPurl(final String purl) {
+        if (purl == null) {
+            return null;
+        }
+
+        try {
+            return new PackageURL(purl);
+        } catch (MalformedPackageURLException ignored) {
             return null;
         }
     }

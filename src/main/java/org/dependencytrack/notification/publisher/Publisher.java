@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
@@ -30,6 +30,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
+import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -38,7 +39,7 @@ import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -118,6 +119,9 @@ public interface Publisher {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final BomProcessingFailed subject) {
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                } else if (notification.getSubject() instanceof final BomValidationFailed subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final VexConsumedOrProcessed subject) {

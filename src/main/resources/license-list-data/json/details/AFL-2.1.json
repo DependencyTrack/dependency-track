@@ -9,11 +9,11 @@
   "standardLicenseHeader": "Licensed under the Academic Free License version 2.1\n\n",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "http://opensource.linux-mirror.org/licenses/afl-2.1.txt",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:31:57Z",
+      "isLive": false,
+      "timestamp": "2024-08-19T17:47:01Z",
       "isWayBackLink": false,
       "order": 0
     }

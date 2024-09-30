@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
@@ -97,9 +97,67 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 {
                                   "name": "Group",
                                   "value": "BOM_PROCESSING_FAILED"
+                                },
+                                {
+                                  "name": "Project",
+                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                },
+                                {
+                                  "name": "Project URL",
+                                  "value": "https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95"
                                 }
                               ],
                               "text": "An error occurred while processing a BOM"
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithBomValidationFailedNotification() {
+        super.testInformWithBomValidationFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "Bill of Materials Validation Failed",
+                          "title": "Bill of Materials Validation Failed",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T00:20:34.000000888",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Level",
+                                  "value": "ERROR"
+                                },
+                                {
+                                  "name": "Scope",
+                                  "value": "PORTFOLIO"
+                                },
+                                {
+                                  "name": "Group",
+                                  "value": "BOM_VALIDATION_FAILED"
+                                },
+                                {
+                                  "name": "Project",
+                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                },
+                                {
+                                  "name": "Project URL",
+                                  "value": "https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95"
+                                },
+                                {
+                                  "name": "Errors",
+                                  "value": "[$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference]"
+                                }
+                              ],
+                              "text": "An error occurred during BOM Validation"
                             }
                           ]
                         }
@@ -135,6 +193,14 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 {
                                   "name": "Group",
                                   "value": "BOM_PROCESSING_FAILED"
+                                },
+                                {
+                                  "name": "Project",
+                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                },
+                                {
+                                  "name": "Project URL",
+                                  "value": "https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95"
                                 }
                               ],
                               "text": "An error occurred while processing a BOM"
@@ -211,6 +277,40 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 {
                                   "name": "Source",
                                   "value": "INTERNAL"
+                                },
+                                {
+                                  "name": "Component",
+                                  "value": "componentName : componentVersion"
+                                }
+                              ],
+                              "text": ""
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testInformWithNewVulnerableDependencyNotification() {
+        super.testInformWithNewVulnerableDependencyNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "Vulnerable Dependency Introduced",
+                          "title": "Vulnerable Dependency Introduced",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Project",
+                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
                                 },
                                 {
                                   "name": "Component",

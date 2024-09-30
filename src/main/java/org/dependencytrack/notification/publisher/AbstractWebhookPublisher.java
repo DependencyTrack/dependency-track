@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
@@ -29,7 +29,7 @@ import org.dependencytrack.util.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 
 public abstract class AbstractWebhookPublisher implements Publisher {

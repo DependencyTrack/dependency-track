@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1.vo;
 
@@ -24,9 +24,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * Defines a custom request object used when cloning a project.
@@ -61,6 +61,8 @@ public class CloneProjectRequest {
 
     private final boolean includePolicyViolations;
 
+    private final boolean makeCloneLatest;
+
     @JsonCreator
     public CloneProjectRequest(@JsonProperty(value = "project", required = true) String project,
                                @JsonProperty(value = "version", required = true) String version,
@@ -71,8 +73,10 @@ public class CloneProjectRequest {
                                @JsonProperty(value = "includeServices") boolean includeServices,
                                @JsonProperty(value = "includeAuditHistory") boolean includeAuditHistory,
                                @JsonProperty(value = "includeACL") boolean includeACL,
-                               @JsonProperty(value = "includePolicyViolations") boolean includePolicyViolations) {
-                                    if (includeDependencies) { // For backward compatibility
+                               @JsonProperty(value = "includePolicyViolations") boolean includePolicyViolations,
+                               @JsonProperty(value = "makeCloneLatest", defaultValue = "false") boolean makeCloneLatest) {
+
+        if (includeDependencies) { // For backward compatibility
             includeComponents = true;
         }
         this.project = project;
@@ -85,6 +89,7 @@ public class CloneProjectRequest {
         this.includeAuditHistory = includeAuditHistory;
         this.includeACL = includeACL;
         this.includePolicyViolations = includePolicyViolations;
+        this.makeCloneLatest = makeCloneLatest;
     }
 
     public String getProject() {
@@ -127,4 +132,7 @@ public class CloneProjectRequest {
         return includePolicyViolations;
     }
 
+    public boolean makeCloneLatest() {
+        return makeCloneLatest;
+    }
 }

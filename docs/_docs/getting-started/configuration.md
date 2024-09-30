@@ -2,7 +2,7 @@
 title: Configuration
 category: Getting Started
 chapter: 1
-order: 5
+order: 6
 ---
 
 ### API server
@@ -57,6 +57,13 @@ alpine.worker.threads=0
 alpine.worker.thread.multiplier=4
 
 # Required
+# Defines the maximum duration for which Dependency-Track will wait for queued
+# events and notifications to be processed when shutting down.
+# During shutdown, newly dispatched events will not be accepted.
+# The duration must be specified in ISO 8601 notation (https://en.wikipedia.org/wiki/ISO_8601#Durations).
+alpine.worker.pool.drain.timeout.duration=PT5S
+
+# Required
 # Defines the path to the data directory. This directory will hold logs, keys,
 # and any database or index files along with application-specific files or 
 # directories.
@@ -107,6 +114,11 @@ alpine.database.username=sa
 # Optional
 # Specifies the password to use when authenticating to the database.
 # alpine.database.password=
+
+# Optional
+# Specifies a path to the file holding the database password.
+# To be used as alternative to alpine.database.password.
+# alpine.database.password.file=
 
 # Optional
 # Specifies if the database connection pool is enabled.
@@ -584,6 +596,12 @@ For containerized deployments, these settings can be overridden by either:
 * providing them as environment variables
 
 The names of the environment variables are equivalent to their counterparts in `config.json`.
+
+#### Base path
+
+For containerized deployments the environment variable `BASE_PATH` is also available to set the base path of the frontend.
+This configures nginx to serve the frontend from a subdirectory. For example, if the frontend is served from `https://example.com/dependency-track`, you would set `BASE_PATH` to `/dependency-track`.
+
 
 > A mounted `config.json` takes precedence over environment variables. 
 > If both are provided, environment variables will be ignored.

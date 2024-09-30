@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.nvd;
 
@@ -27,13 +27,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
-import org.datanucleus.PropertyNames;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.VulnerabilityUtil;
 import us.springett.cvss.Cvss;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
@@ -51,6 +49,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+
+import static org.dependencytrack.parser.nvd.api20.ModelConverter.distinctIgnoringDatastoreIdentity;
 
 /**
  * Parser and processor of NVD data feeds.
@@ -71,6 +73,11 @@ public final class NvdParser {
     // https://github.com/DependencyTrack/dependency-track/pull/2520
     // is merged.
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final BiConsumer<Vulnerability, List<VulnerableSoftware>> vulnerabilityConsumer;
+
+    public NvdParser(final BiConsumer<Vulnerability, List<VulnerableSoftware>> vulnerabilityConsumer) {
+        this.vulnerabilityConsumer = vulnerabilityConsumer;
+    }
 
     public void parse(final File file) {
         if (!file.getName().endsWith(".json")) {
@@ -89,7 +96,7 @@ public final class NvdParser {
             // keeping the overall memory footprint low.
             JsonToken currentToken;
             while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-                final String fieldName = jsonParser.getCurrentName();
+                final String fieldName = jsonParser.currentName();
                 currentToken = jsonParser.nextToken();
                 if ("CVE_Items".equals(fieldName)) {
                     if (currentToken == JsonToken.START_ARRAY) {
@@ -111,127 +118,118 @@ public final class NvdParser {
     }
 
     private void parseCveItem(final ObjectNode cveItem) {
-        try (QueryManager qm = new QueryManager().withL2CacheDisabled()) {
-            qm.getPersistenceManager().setProperty(PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+        final Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setSource(Vulnerability.Source.NVD);
 
-            final Vulnerability vulnerability = new Vulnerability();
-            vulnerability.setSource(Vulnerability.Source.NVD);
+        // CVE ID
+        final var cve = (ObjectNode) cveItem.get("cve");
+        final var meta0 = (ObjectNode) cve.get("CVE_data_meta");
+        vulnerability.setVulnId(meta0.get("ID").asText());
 
-            // CVE ID
-            final var cve = (ObjectNode) cveItem.get("cve");
-            final var meta0 = (ObjectNode) cve.get("CVE_data_meta");
-            vulnerability.setVulnId(meta0.get("ID").asText());
-
-            // CVE Published and Modified dates
-            final String publishedDateString = cveItem.get("publishedDate").asText();
-            final String lastModifiedDateString = cveItem.get("lastModifiedDate").asText();
-            try {
-                if (StringUtils.isNotBlank(publishedDateString)) {
-                    vulnerability.setPublished(Date.from(OffsetDateTime.parse(publishedDateString).toInstant()));
-                }
-                if (StringUtils.isNotBlank(lastModifiedDateString)) {
-                    vulnerability.setUpdated(Date.from(OffsetDateTime.parse(lastModifiedDateString).toInstant()));
-                }
-            } catch (DateTimeParseException | NullPointerException | IllegalArgumentException e) {
-                LOGGER.error("Unable to parse dates from NVD data feed", e);
+        // CVE Published and Modified dates
+        final String publishedDateString = cveItem.get("publishedDate").asText();
+        final String lastModifiedDateString = cveItem.get("lastModifiedDate").asText();
+        try {
+            if (StringUtils.isNotBlank(publishedDateString)) {
+                vulnerability.setPublished(Date.from(OffsetDateTime.parse(publishedDateString).toInstant()));
             }
+            if (StringUtils.isNotBlank(lastModifiedDateString)) {
+                vulnerability.setUpdated(Date.from(OffsetDateTime.parse(lastModifiedDateString).toInstant()));
+            }
+        } catch (DateTimeParseException | NullPointerException | IllegalArgumentException e) {
+            LOGGER.error("Unable to parse dates from NVD data feed", e);
+        }
 
-            // CVE Description
-            final var descO = (ObjectNode) cve.get("description");
-            final var desc1 = (ArrayNode) descO.get("description_data");
-            final StringBuilder descriptionBuilder = new StringBuilder();
-            for (int j = 0; j < desc1.size(); j++) {
-                final var desc2 = (ObjectNode) desc1.get(j);
-                if ("en".equals(desc2.get("lang").asText())) {
-                    descriptionBuilder.append(desc2.get("value").asText());
-                    if (j < desc1.size() - 1) {
-                        descriptionBuilder.append("\n\n");
-                    }
+        // CVE Description
+        final var descO = (ObjectNode) cve.get("description");
+        final var desc1 = (ArrayNode) descO.get("description_data");
+        final StringBuilder descriptionBuilder = new StringBuilder();
+        for (int j = 0; j < desc1.size(); j++) {
+            final var desc2 = (ObjectNode) desc1.get(j);
+            if ("en".equals(desc2.get("lang").asText())) {
+                descriptionBuilder.append(desc2.get("value").asText());
+                if (j < desc1.size() - 1) {
+                    descriptionBuilder.append("\n\n");
                 }
             }
-            vulnerability.setDescription(descriptionBuilder.toString());
+        }
+        vulnerability.setDescription(descriptionBuilder.toString());
 
-            // CVE Impact
-            parseCveImpact(cveItem, vulnerability);
+        // CVE Impact
+        parseCveImpact(cveItem, vulnerability);
 
-            // CWE
-            final var prob0 = (ObjectNode) cve.get("problemtype");
-            final var prob1 = (ArrayNode) prob0.get("problemtype_data");
-            for (int j = 0; j < prob1.size(); j++) {
-                final var prob2 = (ObjectNode) prob1.get(j);
-                final var prob3 = (ArrayNode) prob2.get("description");
-                for (int k = 0; k < prob3.size(); k++) {
-                    final var prob4 = (ObjectNode) prob3.get(k);
-                    if ("en".equals(prob4.get("lang").asText())) {
-                        final String cweString = prob4.get("value").asText();
-                        if (cweString != null && cweString.startsWith("CWE-")) {
-                            final Cwe cwe = CweResolver.getInstance().lookup(cweString);
-                            if (cwe != null) {
-                                vulnerability.addCwe(cwe);
-                            } else {
-                                LOGGER.warn("CWE " + cweString + " not found in Dependency-Track database. This could signify an issue with the NVD or with Dependency-Track not having advanced knowledge of this specific CWE identifier.");
-                            }
+        // CWE
+        final var prob0 = (ObjectNode) cve.get("problemtype");
+        final var prob1 = (ArrayNode) prob0.get("problemtype_data");
+        for (int j = 0; j < prob1.size(); j++) {
+            final var prob2 = (ObjectNode) prob1.get(j);
+            final var prob3 = (ArrayNode) prob2.get("description");
+            for (int k = 0; k < prob3.size(); k++) {
+                final var prob4 = (ObjectNode) prob3.get(k);
+                if ("en".equals(prob4.get("lang").asText())) {
+                    final String cweString = prob4.get("value").asText();
+                    if (cweString != null && cweString.startsWith("CWE-")) {
+                        final Cwe cwe = CweResolver.getInstance().lookup(cweString);
+                        if (cwe != null) {
+                            vulnerability.addCwe(cwe);
+                        } else {
+                            LOGGER.warn("CWE " + cweString + " not found in Dependency-Track database. This could signify an issue with the NVD or with Dependency-Track not having advanced knowledge of this specific CWE identifier.");
                         }
                     }
                 }
             }
+        }
 
-            // References
-            final var ref0 = (ObjectNode) cve.get("references");
-            final var ref1 = (ArrayNode) ref0.get("reference_data");
-            final StringBuilder sb = new StringBuilder();
-            for (int l = 0; l < ref1.size(); l++) {
-                final var ref2 = (ObjectNode) ref1.get(l);
-                final Iterator<String> fieldNameIter = ref2.fieldNames();
-                while (fieldNameIter.hasNext()) {
-                    final String s = fieldNameIter.next();
-                    if ("url".equals(s)) {
-                        // Convert reference to Markdown format
-                        final String url = ref2.get("url").asText();
-                        sb.append("* [").append(url).append("](").append(url).append(")\n");
-                    }
+        // References
+        final var ref0 = (ObjectNode) cve.get("references");
+        final var ref1 = (ArrayNode) ref0.get("reference_data");
+        final StringBuilder sb = new StringBuilder();
+        for (int l = 0; l < ref1.size(); l++) {
+            final var ref2 = (ObjectNode) ref1.get(l);
+            final Iterator<String> fieldNameIter = ref2.fieldNames();
+            while (fieldNameIter.hasNext()) {
+                final String s = fieldNameIter.next();
+                if ("url".equals(s)) {
+                    // Convert reference to Markdown format
+                    final String url = ref2.get("url").asText();
+                    sb.append("* [").append(url).append("](").append(url).append(")\n");
                 }
             }
-            final String references = sb.toString();
-            if (references.length() > 0) {
-                vulnerability.setReferences(references.substring(0, references.lastIndexOf("\n")));
-            }
+        }
+        final String references = sb.toString();
+        if (!references.isEmpty()) {
+            vulnerability.setReferences(references.substring(0, references.lastIndexOf("\n")));
+        }
 
-            // Update the vulnerability
-            LOGGER.debug("Synchronizing: " + vulnerability.getVulnId());
-            final Vulnerability synchronizeVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-            final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(synchronizeVulnerability.getSource(), synchronizeVulnerability.getVulnId()));
-
-            // CPE
-            List<VulnerableSoftware> vsList = new ArrayList<>();
-            final var configurations = (ObjectNode) cveItem.get("configurations");
-            final var nodes = (ArrayNode) configurations.get("nodes");
-            for (int j = 0; j < nodes.size(); j++) {
-                final var node = (ObjectNode) nodes.get(j);
-                final List<VulnerableSoftware> vulnerableSoftwareInNode = new ArrayList<>();
-                final Operator nodeOperator = Operator.valueOf(node.get("operator").asText(Operator.NONE.name()));
-                if (node.has("children")) {
-                    // https://github.com/DependencyTrack/dependency-track/issues/1033
-                    final var children = (ArrayNode) node.get("children");
-                    if (children.size() > 0) {
-                        for (int l = 0; l < children.size(); l++) {
-                            final var child = (ObjectNode) children.get(l);
-                            vulnerableSoftwareInNode.addAll(parseCpes(qm, child));
-                        }
-                    } else {
-                        vulnerableSoftwareInNode.addAll(parseCpes(qm, node));
+        // CPE
+        List<VulnerableSoftware> vsList = new ArrayList<>();
+        final var configurations = (ObjectNode) cveItem.get("configurations");
+        final var nodes = (ArrayNode) configurations.get("nodes");
+        for (int j = 0; j < nodes.size(); j++) {
+            final var node = (ObjectNode) nodes.get(j);
+            final List<VulnerableSoftware> vulnerableSoftwareInNode = new ArrayList<>();
+            final Operator nodeOperator = Operator.valueOf(node.get("operator").asText(Operator.NONE.name()));
+            if (node.has("children")) {
+                // https://github.com/DependencyTrack/dependency-track/issues/1033
+                final var children = (ArrayNode) node.get("children");
+                if (!children.isEmpty()) {
+                    for (int l = 0; l < children.size(); l++) {
+                        final var child = (ObjectNode) children.get(l);
+                        vulnerableSoftwareInNode.addAll(parseCpes(child));
                     }
                 } else {
-                    vulnerableSoftwareInNode.addAll(parseCpes(qm, node));
+                    vulnerableSoftwareInNode.addAll(parseCpes(node));
                 }
-                vsList.addAll(reconcile(vulnerableSoftwareInNode, nodeOperator));
+            } else {
+                vulnerableSoftwareInNode.addAll(parseCpes(node));
             }
-            qm.persist(vsList);
-            qm.updateAffectedVersionAttributions(synchronizeVulnerability, vsList, Vulnerability.Source.NVD);
-            vsList = qm.reconcileVulnerableSoftware(synchronizeVulnerability, vsListOld, vsList, Vulnerability.Source.NVD);
-            synchronizeVulnerability.setVulnerableSoftware(vsList);
-            qm.persist(synchronizeVulnerability);
+            vsList.addAll(reconcile(vulnerableSoftwareInNode, nodeOperator));
         }
+
+        final List<VulnerableSoftware> uniqueVsList = vsList.stream()
+                .filter(distinctIgnoringDatastoreIdentity())
+                .collect(Collectors.toList());
+        vulnerabilityConsumer.accept(vulnerability, uniqueVsList);
     }
 
     /**
@@ -302,14 +300,14 @@ public final class NvdParser {
         ));
     }
 
-    private List<VulnerableSoftware> parseCpes(final QueryManager qm, final ObjectNode node) {
+    private List<VulnerableSoftware> parseCpes(final ObjectNode node) {
         final List<VulnerableSoftware> vsList = new ArrayList<>();
         if (node.has("cpe_match")) {
             final var cpeMatches = (ArrayNode) node.get("cpe_match");
             for (int k = 0; k < cpeMatches.size(); k++) {
                 final var cpeMatch = (ObjectNode) cpeMatches.get(k);
                 if (cpeMatch.get("vulnerable").asBoolean(true)) { // only parse the CPEs marked as vulnerable
-                    final VulnerableSoftware vs = generateVulnerableSoftware(qm, cpeMatch);
+                    final VulnerableSoftware vs = generateVulnerableSoftware(cpeMatch);
                     if (vs != null) {
                         vsList.add(vs);
                     }
@@ -319,29 +317,26 @@ public final class NvdParser {
         return vsList;
     }
 
-    private VulnerableSoftware generateVulnerableSoftware(final QueryManager qm, final ObjectNode cpeMatch) {
+    private VulnerableSoftware generateVulnerableSoftware(final ObjectNode cpeMatch) {
         final String cpe23Uri = cpeMatch.get("cpe23Uri").asText();
         final String versionEndExcluding = Optional.ofNullable(cpeMatch.get("versionEndExcluding")).map(JsonNode::asText).orElse(null);
         final String versionEndIncluding = Optional.ofNullable(cpeMatch.get("versionEndIncluding")).map(JsonNode::asText).orElse(null);
         final String versionStartExcluding = Optional.ofNullable(cpeMatch.get("versionStartExcluding")).map(JsonNode::asText).orElse(null);
         final String versionStartIncluding = Optional.ofNullable(cpeMatch.get("versionStartIncluding")).map(JsonNode::asText).orElse(null);
-        VulnerableSoftware vs = qm.getVulnerableSoftwareByCpe23(cpe23Uri, versionEndExcluding,
-                versionEndIncluding, versionStartExcluding, versionStartIncluding);
-        if (vs != null) {
-            return vs;
-        }
+
+        final VulnerableSoftware vs;
         try {
             vs = ModelConverter.convertCpe23UriToVulnerableSoftware(cpe23Uri);
-            vs.setVulnerable(cpeMatch.get("vulnerable").asBoolean(true));
-            vs.setVersionEndExcluding(versionEndExcluding);
-            vs.setVersionEndIncluding(versionEndIncluding);
-            vs.setVersionStartExcluding(versionStartExcluding);
-            vs.setVersionStartIncluding(versionStartIncluding);
-            //Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
-            return vs;
         } catch (CpeParsingException | CpeEncodingException e) {
             LOGGER.warn("An error occurred while parsing: " + cpe23Uri + " - The CPE is invalid and will be discarded.");
+            return null;
         }
-        return null;
+
+        vs.setVulnerable(cpeMatch.get("vulnerable").asBoolean(true));
+        vs.setVersionEndExcluding(versionEndExcluding);
+        vs.setVersionEndIncluding(versionEndIncluding);
+        vs.setVersionStartExcluding(versionStartExcluding);
+        vs.setVersionStartIncluding(versionStartIncluding);
+        return vs;
     }
 }

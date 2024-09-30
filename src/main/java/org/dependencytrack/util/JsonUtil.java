@@ -14,11 +14,11 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.util;
 
-import javax.json.JsonObjectBuilder;
+import jakarta.json.JsonObjectBuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.ZonedDateTime;

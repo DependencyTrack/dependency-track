@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.nvd.api20;
 
@@ -183,7 +183,7 @@ public final class ModelConverter {
                 .collect(Collectors.toList());
     }
 
-    private static Predicate<VulnerableSoftware> distinctIgnoringDatastoreIdentity() {
+    public static Predicate<VulnerableSoftware> distinctIgnoringDatastoreIdentity() {
         final var seen = new HashSet<Integer>();
         return vs -> seen.add(vs.hashCodeWithoutDatastoreIdentity());
     }

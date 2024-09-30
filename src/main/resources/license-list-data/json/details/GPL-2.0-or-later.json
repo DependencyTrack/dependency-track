@@ -10,22 +10,22 @@
   "standardLicenseHeader": "\u003cone line to give the program\u0027s name and an idea of what it does.\u003e\n\nCopyright (C) \u003cyyyy\u003e \u003cname of author\u003e\n\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA .\n\n",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/GPL-2.0",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-02-08T16:35:33Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:35:33Z",
+      "timestamp": "2024-08-19T17:39:47Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/GPL-2.0",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2024-08-19T17:39:47Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.util;
 
@@ -24,6 +24,7 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
 import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -32,9 +33,12 @@ import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyCondition.Operator;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vex;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
@@ -46,6 +50,7 @@ import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
+import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -54,21 +59,24 @@ import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import javax.jdo.FetchPlan;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -480,6 +488,26 @@ public final class NotificationUtil {
         return builder.build();
     }
 
+    public static JsonObject toJson(final BomValidationFailed vo) {
+        final var builder = Json.createObjectBuilder();
+        if (vo.getProject() != null) {
+            builder.add("project", toJson(vo.getProject()));
+        }
+        if (vo.getBom() != null) {
+            builder.add("bom", Json.createObjectBuilder()
+                    .add("content", Optional.ofNullable(vo.getBom()).orElse("Unknown"))
+                    .add("format", Optional.ofNullable(vo.getFormat()).map(Bom.Format::getFormatShortName).orElse("Unknown"))
+                    .build()
+            );
+        }
+        final var errors = vo.getErrors();
+        if (errors != null && !errors.isEmpty()) {
+            final var commaSeparatedErrors = String.join(",", errors);
+            JsonUtil.add(builder, "errors", commaSeparatedErrors);
+        }
+        return builder.build();
+    }
+
     public static JsonObject toJson(final VexConsumedOrProcessed vo) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getProject() != null) {
@@ -613,4 +641,105 @@ public final class NotificationUtil {
         }
         return messageType;
     }
+
+    public static Object generateSubject(String group) {
+        final Project project = createProject();
+        final Vulnerability vuln = createVulnerability();
+        final Component component = createComponent(project);
+        final Analysis analysis = createAnalysis(component, vuln);
+        final PolicyViolation policyViolation = createPolicyViolation(component, project);
+
+        switch (group) {
+            case "BOM_CONSUMED":
+                return new BomConsumedOrProcessed(project, "bomContent", Bom.Format.CYCLONEDX, "1.5");
+            case "BOM_PROCESSED":
+                return new BomConsumedOrProcessed(project, "bomContent", Bom.Format.CYCLONEDX, "1.5");
+            case "BOM_PROCESSING_FAILED":
+                return new BomProcessingFailed(project, "bomContent", "cause", Bom.Format.CYCLONEDX, "1.5");
+            case "BOM_VALIDATION_FAILED":
+                return new BomValidationFailed(project, "bomContent", List.of("TEST"), Bom.Format.CYCLONEDX);
+            case "VEX_CONSUMED":
+                return new VexConsumedOrProcessed(project, "", Vex.Format.CYCLONEDX, "");
+            case "VEX_PROCESSED":
+                return new VexConsumedOrProcessed(project, "", Vex.Format.CYCLONEDX, "");
+            case "NEW_VULNERABILITY":
+                return new NewVulnerabilityIdentified(vuln, component, Set.of(project), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+            case "NEW_VULNERABLE_DEPENDENCY":
+                return new NewVulnerableDependency(component, List.of(vuln));
+            case "POLICY_VIOLATION":
+                return new PolicyViolationIdentified(policyViolation, component, project);
+            case "PROJECT_CREATED":
+                return NotificationUtil.toJson(project);
+            case "PROJECT_AUDIT_CHANGE":
+                return new AnalysisDecisionChange(vuln, component, project, analysis);
+            default:
+                return null;
+        }
+    }
+
+    private static Project createProject() {
+        final Project project = new Project();
+        project.setUuid(UUID.fromString("c9c9539a-e381-4b36-ac52-6a7ab83b2c95"));
+        project.setName("projectName");
+        project.setVersion("projectVersion");
+        project.setPurl("pkg:maven/org.acme/projectName@projectVersion");
+        return project;
+    }
+
+    private static Vulnerability createVulnerability() {
+        final Vulnerability vuln = new Vulnerability();
+        vuln.setUuid(UUID.fromString("bccec5d5-ec21-4958-b3e8-22a7a866a05a"));
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.MEDIUM);
+        return vuln;
+    }
+
+    private static Component createComponent(Project project) {
+        final Component component = new Component();
+        component.setProject(project);
+        component.setUuid(UUID.fromString("94f87321-a5d1-4c2f-b2fe-95165debebc6"));
+        component.setName("componentName");
+        component.setVersion("componentVersion");
+        return component;
+    }
+
+    private static Analysis createAnalysis(Component component, Vulnerability vuln) {
+        final Analysis analysis = new Analysis();
+        analysis.setComponent(component);
+        analysis.setVulnerability(vuln);
+        analysis.setAnalysisState(AnalysisState.FALSE_POSITIVE);
+        analysis.setSuppressed(true);
+        return analysis;
+    }
+
+    private static PolicyViolation createPolicyViolation(Component component, Project project) {
+        final Policy policy = new Policy();
+        policy.setId(1);
+        policy.setName("test");
+        policy.setOperator(Policy.Operator.ALL);
+        policy.setProjects(List.of(project));
+        policy.setUuid(UUID.randomUUID());
+        policy.setViolationState(Policy.ViolationState.INFO);
+
+        final PolicyCondition condition = new PolicyCondition();
+        condition.setId(1);
+        condition.setUuid(UUID.randomUUID());
+        condition.setOperator(Operator.NUMERIC_EQUAL);
+        condition.setSubject(PolicyCondition.Subject.AGE);
+        condition.setValue("1");
+        condition.setPolicy(policy);
+
+        final PolicyViolation policyViolation = new PolicyViolation();
+        policyViolation.setId(1);
+        policyViolation.setPolicyCondition(condition);
+        policyViolation.setComponent(component);
+        policyViolation.setText("test");
+        policyViolation.setType(PolicyViolation.Type.SECURITY);
+        policyViolation.setAnalysis(new ViolationAnalysis());
+        policyViolation.setUuid(UUID.randomUUID());
+        policyViolation.setTimestamp(new Date(System.currentTimeMillis()));
+        return policyViolation;
+    }
+
 }

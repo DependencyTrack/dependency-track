@@ -2,7 +2,7 @@
 title: Deploying the Executable WAR
 category: Getting Started
 chapter: 1
-order: 2
+order: 3
 ---
 
 An executable WAR is a traditional Java Web Archive (WAR) that is packaged in a way where it can executed from 

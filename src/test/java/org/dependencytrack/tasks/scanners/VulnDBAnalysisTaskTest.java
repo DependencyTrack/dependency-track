@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.scanners;
 
@@ -41,8 +41,8 @@ import org.junit.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 
+import jakarta.json.Json;
 import javax.jdo.Query;
-import javax.json.Json;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -237,7 +237,7 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
 
         final ComponentAnalysisCache cacheEntry = cacheEntries.get(0);
         assertThat(cacheEntry.getTarget()).isEqualTo("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
-        List result = new ArrayList<Integer>();
+        final var result = new ArrayList<>();
         result.add(1);
         assertThat(cacheEntry.getResult())
                 .containsEntry("vulnIds", Json.createArrayBuilder(result).build());

@@ -14,16 +14,16 @@
       "url": "http://wayback.archive.org/web/20021204204652/http://www.opensource.org/licenses/academic.php",
       "isValid": false,
       "isLive": false,
-      "timestamp": "2024-02-08T16:43:21Z",
+      "timestamp": "2024-08-19T17:49:02Z",
       "isWayBackLink": false,
       "order": 1
     },
     {
-      "match": "false",
+      "match": "N/A",
       "url": "http://opensource.linux-mirror.org/licenses/afl-1.2.txt",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:43:22Z",
+      "isLive": false,
+      "timestamp": "2024-08-19T17:49:02Z",
       "isWayBackLink": false,
       "order": 0
     }

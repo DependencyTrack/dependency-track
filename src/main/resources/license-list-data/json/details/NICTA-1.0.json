@@ -6,11 +6,11 @@
   "licenseId": "NICTA-1.0",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://opensource.apple.com/source/mDNSResponder/mDNSResponder-320.10/mDNSPosix/nss_ReadMe.txt",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:30:21Z",
+      "isLive": false,
+      "timestamp": "2024-08-19T17:43:48Z",
       "isWayBackLink": false,
       "order": 0
     }

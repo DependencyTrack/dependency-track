@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack;
 
@@ -23,8 +23,8 @@ import alpine.common.logging.Logger;
 import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.exception.RequirementsException;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 public class RequirementsVerifier implements ServletContextListener {
 

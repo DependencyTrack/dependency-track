@@ -20,8 +20,8 @@ Other affected projects:
 Project:           [{{ affectedProject.name }} : {{ affectedProject.version }}]
 Project URL:       {{ baseUrl }}/projects/{{ affectedProject.uuid }}
 {% endif %}{% endfor %}{% endif %}{% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
-Project:           {{ subject.component.project.toString }}
-Project URL:       {{ baseUrl }}/projects/?uuid={{ subject.component.project.uuid }}
+Project:           [{{ subject.component.project.name }} : {{ subject.component.project.version }}]
+Project URL:       {{ baseUrl }}/projects/{{ subject.component.project.uuid }}
 Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
 
@@ -55,7 +55,7 @@ Source:            {{ subject.vulnerability.source }}
 {% endif %}
 Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
-Project:           {{ subject.component.project.toString }}
+Project:           [{{ subject.component.project.name }} : {{ subject.component.project.version }}]
 Description:       {{ subject.component.project.description }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.component.project.uuid }}
 {% if  notification.subject.affectedProjects|length > 1%}
@@ -70,6 +70,12 @@ Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}
 Description:       {{ subject.project.description }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "BOM_VALIDATION_FAILED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+Errors:            {{ subject.errors }}
 {% elseif notification.group == "BOM_PROCESSED" %}
 Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}

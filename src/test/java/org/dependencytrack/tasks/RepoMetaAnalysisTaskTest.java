@@ -19,7 +19,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;

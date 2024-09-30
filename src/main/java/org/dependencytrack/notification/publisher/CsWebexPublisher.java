@@ -14,14 +14,14 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
 import io.pebbletemplates.pebble.PebbleEngine;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 public class CsWebexPublisher extends AbstractWebhookPublisher implements Publisher {
 

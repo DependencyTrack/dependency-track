@@ -9,10 +9,19 @@
   "crossRef": [
     {
       "match": "N/A",
+      "url": "http://freetype.fis.uniroma2.it/FTL.TXT",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2024-08-19T17:37:30Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "N/A",
       "url": "http://gitlab.freedesktop.org/freetype/freetype/-/raw/master/docs/FTL.TXT",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2024-02-08T16:39:07Z",
+      "timestamp": "2024-08-19T17:37:30Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -21,18 +30,9 @@
       "url": "http://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:39:07Z",
+      "timestamp": "2024-08-19T17:37:31Z",
       "isWayBackLink": false,
       "order": 1
-    },
-    {
-      "match": "N/A",
-      "url": "http://freetype.fis.uniroma2.it/FTL.TXT",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-02-08T16:39:17Z",
-      "isWayBackLink": false,
-      "order": 0
     }
   ],
   "seeAlso": [

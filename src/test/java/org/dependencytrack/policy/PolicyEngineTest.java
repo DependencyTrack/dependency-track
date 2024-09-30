@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.policy;
 
@@ -98,7 +98,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         Tag commonTag = qm.createTag("Tag 1");
-        policy.setTags(List.of(commonTag));
+        qm.bind(policy, List.of(commonTag));
         Project project = qm.createProject("My Project", null, "1", List.of(commonTag), null, null, true, false);
         Component component = new Component();
         component.setName("Test Component");
@@ -121,7 +121,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
     public void noTagMatchPolicyLimitedToTag() {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
-        policy.setTags(List.of(qm.createTag("Tag 1")));
+        qm.bind(policy, List.of(qm.createTag("Tag 1")));
         Project project = qm.createProject("My Project", null, "1", List.of(qm.createTag("Tag 2")), null, null, true, false);
         Component component = new Component();
         component.setName("Test Component");
@@ -187,6 +187,52 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         qm.persist(parent);
         qm.persist(child);
         qm.persist(grandchild);
+        qm.persist(component);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        PolicyEngine policyEngine = new PolicyEngine();
+        List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
+        Assert.assertEquals(0, violations.size());
+    }
+
+    @Test
+    public void policyForLatestTriggersOnLatestVersion() {
+        Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO, true);
+        qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
+        Project project = qm.createProject("My Project", null, "1", null, null,
+                null, true, true, false);
+        Component component = new Component();
+        component.setName("Test Component");
+        component.setVersion("1.0");
+        component.setProject(project);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId("12345");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(project);
+        qm.persist(component);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        PolicyEngine policyEngine = new PolicyEngine();
+        List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
+        Assert.assertEquals(1, violations.size());
+    }
+
+    @Test
+    public void policyForLatestTriggersNotOnNotLatestVersion() {
+        Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO, true);
+        qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
+        Project project = qm.createProject("My Project", null, "1", null, null,
+                null, true, false, false);
+        Component component = new Component();
+        component.setName("Test Component");
+        component.setVersion("1.0");
+        component.setProject(project);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId("12345");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(project);
         qm.persist(component);
         qm.persist(vulnerability);
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
@@ -342,13 +388,17 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         // Evaluate policies and ensure that a notification has been sent.
         final var policyEngine = new PolicyEngine();
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(1);
-        assertThat(NOTIFICATIONS).hasSize(1);
+        assertThat(NOTIFICATIONS).hasSize(2);
 
         // Create an additional policy condition that matches on the exact version of the component,
         // and re-evaluate policies. Ensure that only one notification per newly violated condition was sent.
         final var policyConditionB = qm.createPolicyCondition(policy, Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.2.3");
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(2);
         assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification -> {
+                    assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+                    assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name());
+                },
                 notification -> {
                     assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
                     assertThat(notification.getGroup()).isEqualTo(NotificationGroup.POLICY_VIOLATION.name());
@@ -374,7 +424,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         // Delete a policy condition and re-evaluate policies again. No new notifications should be sent.
         qm.deletePolicyCondition(policyConditionA);
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(1);
-        assertThat(NOTIFICATIONS).hasSize(2);
+        assertThat(NOTIFICATIONS).hasSize(3);
     }
 
     @Test

@@ -14,16 +14,16 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.ComponentAnalysisCache;
 
+import jakarta.json.JsonObject;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.json.JsonObject;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.search;
 
@@ -50,6 +50,8 @@ public class IndexManagerFactory {
                 public String[] getSearchFields() { return new String[0]; }
                 @Override
                 public void add(final DummyDocument object) { }
+                @Override
+                public void update(final DummyDocument object) { }
                 @Override
                 public void remove(final DummyDocument object) { }
                 @Override

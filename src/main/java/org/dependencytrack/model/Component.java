@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -27,12 +27,19 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.validation.ValidSpdxExpression;
+import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
+import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 
+import jakarta.json.JsonObject;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Convert;
 import javax.jdo.annotations.Element;
@@ -48,11 +55,6 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Serialized;
 import javax.jdo.annotations.Unique;
-import javax.json.JsonObject;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,6 +76,7 @@ import java.util.UUID;
                 @Persistent(name = "externalReferences"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
+                @Persistent(name = "properties"),
                 @Persistent(name = "vulnerabilities"),
         }),
         @FetchGroup(name = "INTERNAL_IDENTIFICATION", members = {
@@ -108,10 +111,10 @@ public class Component implements Serializable {
     @JsonIgnore
     private long id;
 
-    @Persistent
-    @Column(name = "AUTHOR", jdbcType = "CLOB")
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
-    private String author;
+    @Persistent(defaultFetchGroup = "true")
+    @Convert(OrganizationalContactsJsonConverter.class)
+    @Column(name = "AUTHORS", jdbcType = "CLOB", allowsNull = "true")
+    private List<OrganizationalContact> authors;
 
     @Persistent
     @Column(name = "PUBLISHER", jdbcType = "VARCHAR")
@@ -248,15 +251,17 @@ public class Component implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_IDX")
-    @Size(max = 255)
+    @Column(name = "PURL", length = 786)
+    @Size(max = 786)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @ApiModelProperty(dataType = "string")
+    @Schema(type = "string")
     private String purl;
 
     @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_COORDINATES_IDX")
-    @Size(max = 255)
+    @Column(name = "PURLCOORDINATES", length = 786)
+    @Size(max = 786)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String purlCoordinates; // Field should contain only type, namespace, name, and version. Everything up to the qualifiers
@@ -328,6 +333,10 @@ public class Component implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private Collection<Component> children;
 
+    @Persistent(mappedBy = "component", defaultFetchGroup = "false")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "groupName ASC, propertyName ASC, id ASC"))
+    private List<ComponentProperty> properties;
+
     @Persistent(table = "COMPONENTS_VULNERABILITIES")
     @Join(column = "COMPONENT_ID")
     @Element(column = "VULNERABILITY_ID")
@@ -367,7 +376,6 @@ public class Component implements Serializable {
     private transient DependencyMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
     private transient boolean isNew;
-    private transient int usedBy;
     private transient JsonObject cacheResult;
     private transient Set<String> dependencyGraph;
     private transient boolean expandDependencyGraph;
@@ -380,16 +388,34 @@ public class Component implements Serializable {
         this.id = id;
     }
 
-    public String getAuthor() {
-        return author;
+    public List<OrganizationalContact> getAuthors() {
+        return authors;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setAuthors(List<OrganizationalContact> authors) {
+        this.authors = authors;
     }
 
     public String getPublisher() {
         return publisher;
+    }
+
+    @Deprecated
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getAuthor(){
+        return ModelConverter.convertContactsToString(this.authors);
+    }
+
+    @Deprecated
+    public void setAuthor(String author){
+        if(this.authors==null){
+            this.authors = new ArrayList<>();
+        } else {
+            this.authors.clear();
+        }
+        this.authors.add(new OrganizationalContact() {{
+            setName(author);
+        }});
     }
 
     public void setPublisher(String publisher) {
@@ -581,6 +607,7 @@ public class Component implements Serializable {
     }
 
     @JsonSerialize(using = CustomPackageURLSerializer.class)
+    @Schema(type = "string", accessMode = Schema.AccessMode.READ_ONLY)
     public PackageURL getPurlCoordinates() {
         if (purlCoordinates == null) {
             return null;
@@ -710,6 +737,14 @@ public class Component implements Serializable {
         this.children = children;
     }
 
+    public List<ComponentProperty> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(final List<ComponentProperty> properties) {
+        this.properties = properties;
+    }
+
     public List<Vulnerability> getVulnerabilities() {
         return vulnerabilities;
     }
@@ -769,10 +804,13 @@ public class Component implements Serializable {
         this.repositoryMeta = repositoryMeta;
     }
 
+    @JsonIgnore
+    @Schema(hidden = true)
     public boolean isNew() {
         return isNew;
     }
 
+    @JsonIgnore
     public void setNew(final boolean aNew) {
         isNew = aNew;
     }
@@ -785,31 +823,30 @@ public class Component implements Serializable {
         this.lastInheritedRiskScore = lastInheritedRiskScore;
     }
 
+    @JsonIgnore
+    @Schema(hidden = true)
     public String getBomRef() {
         return bomRef;
     }
 
+    @JsonIgnore
     public void setBomRef(String bomRef) {
         this.bomRef = bomRef;
     }
 
+    @JsonIgnore
+    @Schema(hidden = true)
     public List<org.cyclonedx.model.License> getLicenseCandidates() {
         return licenseCandidates;
     }
 
+    @JsonIgnore
     public void setLicenseCandidates(final List<org.cyclonedx.model.License> licenseCandidates) {
         this.licenseCandidates = licenseCandidates;
     }
 
-    public int getUsedBy() {
-        return usedBy;
-    }
-
-    public void setUsedBy(int usedBy) {
-        this.usedBy = usedBy;
-    }
-
     @JsonIgnore
+    @Schema(hidden = true)
     public JsonObject getCacheResult() {
         return cacheResult;
     }

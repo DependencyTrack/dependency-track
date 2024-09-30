@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.scanners;
 
@@ -22,7 +22,6 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
@@ -35,7 +34,9 @@ import org.dependencytrack.parser.vulndb.ModelConverter;
 import org.dependencytrack.parser.vulndb.VulnDbClient;
 import org.dependencytrack.parser.vulndb.model.Results;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.DebugDataEncryption;
 import org.dependencytrack.util.NotificationUtil;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -103,7 +104,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 }
                 this.apiConsumerKey = apiConsumerKey.getPropertyValue();
                 try {
-                    this.apiConsumerSecret = DataEncryption.decryptAsString(apiConsumerSecret.getPropertyValue());
+                    this.apiConsumerSecret = DebugDataEncryption.decryptAsString(apiConsumerSecret.getPropertyValue());
                 } catch (Exception ex) {
                     LOGGER.error("An error occurred decrypting the VulnDB consumer secret. Skipping", ex);
                     return;

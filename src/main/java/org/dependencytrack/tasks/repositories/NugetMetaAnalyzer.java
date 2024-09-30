@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.repositories;
 
@@ -46,7 +46,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
 
     public static final DateFormat[] SUPPORTED_DATE_FORMATS = new DateFormat[]{
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
-            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"),
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
     };
     private static final Logger LOGGER = Logger.getLogger(NugetMetaAnalyzer.class);
     private static final String DEFAULT_BASE_URL = "https://api.nuget.org";
@@ -104,7 +105,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private boolean performVersionCheck(final MetaModel meta, final Component component) {
-        final String url = String.format(versionQueryUrl, component.getPurl().getName().toLowerCase());
+        final String url = String.format(versionQueryUrl, urlEncode(component.getPurl().getName().toLowerCase()));
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {
@@ -160,7 +161,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     } 
 
     private boolean performLastPublishedCheck(final MetaModel meta, final Component component) {
-        final String url = String.format(registrationUrl, component.getPurl().getName().toLowerCase(), meta.getLatestVersion());
+        final String url = String.format(registrationUrl, urlEncode(component.getPurl().getName().toLowerCase()), urlEncode(meta.getLatestVersion()));
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {

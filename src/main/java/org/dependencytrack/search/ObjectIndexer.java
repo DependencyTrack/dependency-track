@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.search;
 
@@ -40,6 +40,13 @@ public interface ObjectIndexer<T extends SearchDocument> {
      * @param object the object to add
      */
     void add(T object);
+
+    /**
+     * Update object in index.
+     * @param object the object to update
+     * @since 4.11.0
+     */
+    void update(T object);
 
     /**
      * Remove object from index.

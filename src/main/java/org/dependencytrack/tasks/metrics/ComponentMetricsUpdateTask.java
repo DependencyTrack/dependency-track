@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.metrics;
 
@@ -97,12 +97,17 @@ public class ComponentMetricsUpdateTask implements Subscriber {
 
                 counters.vulnerabilities++;
 
-                switch (vulnerability.getSeverity()) {
-                    case CRITICAL -> counters.critical++;
-                    case HIGH -> counters.high++;
-                    case MEDIUM -> counters.medium++;
-                    case LOW, INFO -> counters.low++;
-                    case UNASSIGNED -> counters.unassigned++;
+                if (vulnerability.getSeverity() == null) {
+                    LOGGER.warn("Vulnerability severity is " + vulnerability.getSeverity()+ " null for " + vulnerability.getSource() + "|" + vulnerability.getVulnId());
+                }
+                else {
+                    switch (vulnerability.getSeverity()) {
+                        case CRITICAL -> counters.critical++;
+                        case HIGH -> counters.high++;
+                        case MEDIUM -> counters.medium++;
+                        case LOW, INFO -> counters.low++;
+                        case UNASSIGNED -> counters.unassigned++;
+                    }
                 }
             }
 

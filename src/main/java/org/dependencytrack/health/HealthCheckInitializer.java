@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.health;
 
@@ -22,8 +22,8 @@ import alpine.common.logging.Logger;
 import alpine.server.health.HealthCheckRegistry;
 import alpine.server.health.checks.DatabaseHealthCheck;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 public class HealthCheckInitializer implements ServletContextListener {
 

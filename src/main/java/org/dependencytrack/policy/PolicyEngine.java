@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.policy;
 
@@ -59,6 +59,7 @@ public class PolicyEngine {
         evaluators.add(new CwePolicyEvaluator());
         evaluators.add(new VulnerabilityIdPolicyEvaluator());
         evaluators.add(new VersionDistancePolicyEvaluator());
+        evaluators.add(new EpssPolicyEvaluator());
     }
 
     public List<PolicyViolation> evaluate(final List<Component> components) {
@@ -79,6 +80,9 @@ public class PolicyEngine {
         final List<PolicyViolation> policyViolations = new ArrayList<>();
         final List<PolicyViolation> existingPolicyViolations = qm.detach(qm.getAllPolicyViolations(component));
         for (final Policy policy : policies) {
+            if(policy.isOnlyLatestProjectVersion() && Boolean.FALSE.equals(component.getProject().isLatest())) {
+                continue;
+            }
             if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())
                     || isPolicyAssignedToProjectTag(policy, component.getProject())) {
                 LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy (" + policy.getUuid() + ")");
@@ -139,7 +143,7 @@ public class PolicyEngine {
             return null;
         }
         return switch (subject) {
-            case CWE, SEVERITY, VULNERABILITY_ID -> PolicyViolation.Type.SECURITY;
+            case CWE, SEVERITY, VULNERABILITY_ID, EPSS -> PolicyViolation.Type.SECURITY;
             case AGE, COORDINATES, PACKAGE_URL, CPE, SWID_TAGID, COMPONENT_HASH, VERSION, VERSION_DISTANCE ->
                     PolicyViolation.Type.OPERATIONAL;
             case LICENSE, LICENSE_GROUP -> PolicyViolation.Type.LICENSE;

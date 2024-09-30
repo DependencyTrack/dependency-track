@@ -14,15 +14,15 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.common.resolver;
 
-import javax.annotation.Generated;
+import jakarta.annotation.Generated;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Generated(value = "cwe-dictionary-generate.py", date = "2024-02-24T10:51:02.559228+00:00")
+@Generated(value = "From dictionary version 4.14")
 public final class CweDictionary {
 
     public static final Map<Integer, String> DICTIONARY = new LinkedHashMap<>();
@@ -49,44 +49,44 @@ public final class CweDictionary {
         DICTIONARY.put(19, "Data Processing Errors");
         DICTIONARY.put(20, "Improper Input Validation");
         DICTIONARY.put(21, "DEPRECATED: Pathname Traversal and Equivalence Errors");
-        DICTIONARY.put(22, "Improper Limitation of a Pathname to a Restricted Directory (\u0027Path Traversal\u0027)");
+        DICTIONARY.put(22, "Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')");
         DICTIONARY.put(23, "Relative Path Traversal");
-        DICTIONARY.put(24, "Path Traversal: \u0027../filedir\u0027");
-        DICTIONARY.put(25, "Path Traversal: \u0027/../filedir\u0027");
-        DICTIONARY.put(26, "Path Traversal: \u0027/dir/../filename\u0027");
-        DICTIONARY.put(27, "Path Traversal: \u0027dir/../../filename\u0027");
-        DICTIONARY.put(28, "Path Traversal: \u0027..\\filedir\u0027");
-        DICTIONARY.put(29, "Path Traversal: \u0027\\..\\filename\u0027");
-        DICTIONARY.put(30, "Path Traversal: \u0027\\dir\\..\\filename\u0027");
-        DICTIONARY.put(31, "Path Traversal: \u0027dir\\..\\..\\filename\u0027");
-        DICTIONARY.put(32, "Path Traversal: \u0027...\u0027 (Triple Dot)");
-        DICTIONARY.put(33, "Path Traversal: \u0027....\u0027 (Multiple Dot)");
-        DICTIONARY.put(34, "Path Traversal: \u0027....//\u0027");
-        DICTIONARY.put(35, "Path Traversal: \u0027.../...//\u0027");
+        DICTIONARY.put(24, "Path Traversal: '../filedir'");
+        DICTIONARY.put(25, "Path Traversal: '/../filedir'");
+        DICTIONARY.put(26, "Path Traversal: '/dir/../filename'");
+        DICTIONARY.put(27, "Path Traversal: 'dir/../../filename'");
+        DICTIONARY.put(28, "Path Traversal: '..\\filedir'");
+        DICTIONARY.put(29, "Path Traversal: '\\..\\filename'");
+        DICTIONARY.put(30, "Path Traversal: '\\dir\\..\\filename'");
+        DICTIONARY.put(31, "Path Traversal: 'dir\\..\\..\\filename'");
+        DICTIONARY.put(32, "Path Traversal: '...' (Triple Dot)");
+        DICTIONARY.put(33, "Path Traversal: '....' (Multiple Dot)");
+        DICTIONARY.put(34, "Path Traversal: '....//'");
+        DICTIONARY.put(35, "Path Traversal: '.../...//'");
         DICTIONARY.put(36, "Absolute Path Traversal");
-        DICTIONARY.put(37, "Path Traversal: \u0027/absolute/pathname/here\u0027");
-        DICTIONARY.put(38, "Path Traversal: \u0027\\absolute\\pathname\\here\u0027");
-        DICTIONARY.put(39, "Path Traversal: \u0027C:dirname\u0027");
-        DICTIONARY.put(40, "Path Traversal: \u0027\\\\UNC\\share\\name\\\u0027 (Windows UNC Share)");
+        DICTIONARY.put(37, "Path Traversal: '/absolute/pathname/here'");
+        DICTIONARY.put(38, "Path Traversal: '\\absolute\\pathname\\here'");
+        DICTIONARY.put(39, "Path Traversal: 'C:dirname'");
+        DICTIONARY.put(40, "Path Traversal: '\\\\UNC\\share\\name\\' (Windows UNC Share)");
         DICTIONARY.put(41, "Improper Resolution of Path Equivalence");
-        DICTIONARY.put(42, "Path Equivalence: \u0027filename.\u0027 (Trailing Dot)");
-        DICTIONARY.put(43, "Path Equivalence: \u0027filename....\u0027 (Multiple Trailing Dot)");
-        DICTIONARY.put(44, "Path Equivalence: \u0027file.name\u0027 (Internal Dot)");
-        DICTIONARY.put(45, "Path Equivalence: \u0027file...name\u0027 (Multiple Internal Dot)");
-        DICTIONARY.put(46, "Path Equivalence: \u0027filename \u0027 (Trailing Space)");
-        DICTIONARY.put(47, "Path Equivalence: \u0027 filename\u0027 (Leading Space)");
-        DICTIONARY.put(48, "Path Equivalence: \u0027file name\u0027 (Internal Whitespace)");
-        DICTIONARY.put(49, "Path Equivalence: \u0027filename/\u0027 (Trailing Slash)");
-        DICTIONARY.put(50, "Path Equivalence: \u0027//multiple/leading/slash\u0027");
-        DICTIONARY.put(51, "Path Equivalence: \u0027/multiple//internal/slash\u0027");
-        DICTIONARY.put(52, "Path Equivalence: \u0027/multiple/trailing/slash//\u0027");
-        DICTIONARY.put(53, "Path Equivalence: \u0027\\multiple\\\\internal\\backslash\u0027");
-        DICTIONARY.put(54, "Path Equivalence: \u0027filedir\\\u0027 (Trailing Backslash)");
-        DICTIONARY.put(55, "Path Equivalence: \u0027/./\u0027 (Single Dot Directory)");
-        DICTIONARY.put(56, "Path Equivalence: \u0027filedir*\u0027 (Wildcard)");
-        DICTIONARY.put(57, "Path Equivalence: \u0027fakedir/../realdir/filename\u0027");
+        DICTIONARY.put(42, "Path Equivalence: 'filename.' (Trailing Dot)");
+        DICTIONARY.put(43, "Path Equivalence: 'filename....' (Multiple Trailing Dot)");
+        DICTIONARY.put(44, "Path Equivalence: 'file.name' (Internal Dot)");
+        DICTIONARY.put(45, "Path Equivalence: 'file...name' (Multiple Internal Dot)");
+        DICTIONARY.put(46, "Path Equivalence: 'filename ' (Trailing Space)");
+        DICTIONARY.put(47, "Path Equivalence: ' filename' (Leading Space)");
+        DICTIONARY.put(48, "Path Equivalence: 'file name' (Internal Whitespace)");
+        DICTIONARY.put(49, "Path Equivalence: 'filename/' (Trailing Slash)");
+        DICTIONARY.put(50, "Path Equivalence: '//multiple/leading/slash'");
+        DICTIONARY.put(51, "Path Equivalence: '/multiple//internal/slash'");
+        DICTIONARY.put(52, "Path Equivalence: '/multiple/trailing/slash//'");
+        DICTIONARY.put(53, "Path Equivalence: '\\multiple\\\\internal\\backslash'");
+        DICTIONARY.put(54, "Path Equivalence: 'filedir\\' (Trailing Backslash)");
+        DICTIONARY.put(55, "Path Equivalence: '/./' (Single Dot Directory)");
+        DICTIONARY.put(56, "Path Equivalence: 'filedir*' (Wildcard)");
+        DICTIONARY.put(57, "Path Equivalence: 'fakedir/../realdir/filename'");
         DICTIONARY.put(58, "Path Equivalence: Windows 8.3 Filename");
-        DICTIONARY.put(59, "Improper Link Resolution Before File Access (\u0027Link Following\u0027)");
+        DICTIONARY.put(59, "Improper Link Resolution Before File Access ('Link Following')");
         DICTIONARY.put(60, "DEPRECATED: UNIX Path Link Problems");
         DICTIONARY.put(61, "UNIX Symbolic Link (Symlink) Following");
         DICTIONARY.put(62, "UNIX Hard Link");
@@ -98,15 +98,15 @@ public final class CweDictionary {
         DICTIONARY.put(68, "DEPRECATED: Windows Virtual File Problems");
         DICTIONARY.put(69, "Improper Handling of Windows ::DATA Alternate Data Stream");
         DICTIONARY.put(70, "DEPRECATED: Mac Virtual File Problems");
-        DICTIONARY.put(71, "DEPRECATED: Apple \u0027.DS_Store\u0027");
+        DICTIONARY.put(71, "DEPRECATED: Apple '.DS_Store'");
         DICTIONARY.put(72, "Improper Handling of Apple HFS+ Alternate Data Stream Path");
         DICTIONARY.put(73, "External Control of File Name or Path");
-        DICTIONARY.put(74, "Improper Neutralization of Special Elements in Output Used by a Downstream Component (\u0027Injection\u0027)");
+        DICTIONARY.put(74, "Improper Neutralization of Special Elements in Output Used by a Downstream Component ('Injection')");
         DICTIONARY.put(75, "Failure to Sanitize Special Elements into a Different Plane (Special Element Injection)");
         DICTIONARY.put(76, "Improper Neutralization of Equivalent Special Elements");
-        DICTIONARY.put(77, "Improper Neutralization of Special Elements used in a Command (\u0027Command Injection\u0027)");
-        DICTIONARY.put(78, "Improper Neutralization of Special Elements used in an OS Command (\u0027OS Command Injection\u0027)");
-        DICTIONARY.put(79, "Improper Neutralization of Input During Web Page Generation (\u0027Cross-site Scripting\u0027)");
+        DICTIONARY.put(77, "Improper Neutralization of Special Elements used in a Command ('Command Injection')");
+        DICTIONARY.put(78, "Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')");
+        DICTIONARY.put(79, "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
         DICTIONARY.put(80, "Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)");
         DICTIONARY.put(81, "Improper Neutralization of Script in an Error Message Web Page");
         DICTIONARY.put(82, "Improper Neutralization of Script in Attributes of IMG Tags in a Web Page");
@@ -115,18 +115,18 @@ public final class CweDictionary {
         DICTIONARY.put(85, "Doubled Character XSS Manipulations");
         DICTIONARY.put(86, "Improper Neutralization of Invalid Characters in Identifiers in Web Pages");
         DICTIONARY.put(87, "Improper Neutralization of Alternate XSS Syntax");
-        DICTIONARY.put(88, "Improper Neutralization of Argument Delimiters in a Command (\u0027Argument Injection\u0027)");
-        DICTIONARY.put(89, "Improper Neutralization of Special Elements used in an SQL Command (\u0027SQL Injection\u0027)");
-        DICTIONARY.put(90, "Improper Neutralization of Special Elements used in an LDAP Query (\u0027LDAP Injection\u0027)");
+        DICTIONARY.put(88, "Improper Neutralization of Argument Delimiters in a Command ('Argument Injection')");
+        DICTIONARY.put(89, "Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')");
+        DICTIONARY.put(90, "Improper Neutralization of Special Elements used in an LDAP Query ('LDAP Injection')");
         DICTIONARY.put(91, "XML Injection (aka Blind XPath Injection)");
         DICTIONARY.put(92, "DEPRECATED: Improper Sanitization of Custom Special Characters");
-        DICTIONARY.put(93, "Improper Neutralization of CRLF Sequences (\u0027CRLF Injection\u0027)");
-        DICTIONARY.put(94, "Improper Control of Generation of Code (\u0027Code Injection\u0027)");
-        DICTIONARY.put(95, "Improper Neutralization of Directives in Dynamically Evaluated Code (\u0027Eval Injection\u0027)");
-        DICTIONARY.put(96, "Improper Neutralization of Directives in Statically Saved Code (\u0027Static Code Injection\u0027)");
+        DICTIONARY.put(93, "Improper Neutralization of CRLF Sequences ('CRLF Injection')");
+        DICTIONARY.put(94, "Improper Control of Generation of Code ('Code Injection')");
+        DICTIONARY.put(95, "Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')");
+        DICTIONARY.put(96, "Improper Neutralization of Directives in Statically Saved Code ('Static Code Injection')");
         DICTIONARY.put(97, "Improper Neutralization of Server-Side Includes (SSI) Within a Web Page");
-        DICTIONARY.put(98, "Improper Control of Filename for Include/Require Statement in PHP Program (\u0027PHP Remote File Inclusion\u0027)");
-        DICTIONARY.put(99, "Improper Control of Resource Identifiers (\u0027Resource Injection\u0027)");
+        DICTIONARY.put(98, "Improper Control of Filename for Include/Require Statement in PHP Program ('PHP Remote File Inclusion')");
+        DICTIONARY.put(99, "Improper Control of Resource Identifiers ('Resource Injection')");
         DICTIONARY.put(100, "DEPRECATED: Technology-Specific Input Validation Problems");
         DICTIONARY.put(101, "DEPRECATED: Struts Validation Problems");
         DICTIONARY.put(102, "Struts: Duplicate Validation Forms");
@@ -140,18 +140,18 @@ public final class CweDictionary {
         DICTIONARY.put(110, "Struts: Validator Without Form Field");
         DICTIONARY.put(111, "Direct Use of Unsafe JNI");
         DICTIONARY.put(112, "Missing XML Validation");
-        DICTIONARY.put(113, "Improper Neutralization of CRLF Sequences in HTTP Headers (\u0027HTTP Request/Response Splitting\u0027)");
+        DICTIONARY.put(113, "Improper Neutralization of CRLF Sequences in HTTP Headers ('HTTP Request/Response Splitting')");
         DICTIONARY.put(114, "Process Control");
         DICTIONARY.put(115, "Misinterpretation of Input");
         DICTIONARY.put(116, "Improper Encoding or Escaping of Output");
         DICTIONARY.put(117, "Improper Output Neutralization for Logs");
-        DICTIONARY.put(118, "Incorrect Access of Indexable Resource (\u0027Range Error\u0027)");
+        DICTIONARY.put(118, "Incorrect Access of Indexable Resource ('Range Error')");
         DICTIONARY.put(119, "Improper Restriction of Operations within the Bounds of a Memory Buffer");
-        DICTIONARY.put(120, "Buffer Copy without Checking Size of Input (\u0027Classic Buffer Overflow\u0027)");
+        DICTIONARY.put(120, "Buffer Copy without Checking Size of Input ('Classic Buffer Overflow')");
         DICTIONARY.put(121, "Stack-based Buffer Overflow");
         DICTIONARY.put(122, "Heap-based Buffer Overflow");
         DICTIONARY.put(123, "Write-what-where Condition");
-        DICTIONARY.put(124, "Buffer Underwrite (\u0027Buffer Underflow\u0027)");
+        DICTIONARY.put(124, "Buffer Underwrite ('Buffer Underflow')");
         DICTIONARY.put(125, "Out-of-bounds Read");
         DICTIONARY.put(126, "Buffer Over-read");
         DICTIONARY.put(127, "Buffer Under-read");
@@ -271,7 +271,7 @@ public final class CweDictionary {
         DICTIONARY.put(241, "Improper Handling of Unexpected Data Type");
         DICTIONARY.put(242, "Use of Inherently Dangerous Function");
         DICTIONARY.put(243, "Creation of chroot Jail Without Changing Working Directory");
-        DICTIONARY.put(244, "Improper Clearing of Heap Memory Before Release (\u0027Heap Inspection\u0027)");
+        DICTIONARY.put(244, "Improper Clearing of Heap Memory Before Release ('Heap Inspection')");
         DICTIONARY.put(245, "J2EE Bad Practices: Direct Management of Connections");
         DICTIONARY.put(246, "J2EE Bad Practices: Direct Use of Sockets");
         DICTIONARY.put(247, "DEPRECATED: Reliance on DNS Lookups in a Security Decision");
@@ -323,7 +323,7 @@ public final class CweDictionary {
         DICTIONARY.put(293, "Using Referer Field for Authentication");
         DICTIONARY.put(294, "Authentication Bypass by Capture-replay");
         DICTIONARY.put(295, "Improper Certificate Validation");
-        DICTIONARY.put(296, "Improper Following of a Certificate\u0027s Chain of Trust");
+        DICTIONARY.put(296, "Improper Following of a Certificate's Chain of Trust");
         DICTIONARY.put(297, "Improper Validation of Certificate with Host Mismatch");
         DICTIONARY.put(298, "Improper Validation of Certificate Expiration");
         DICTIONARY.put(299, "Improper Check for Certificate Revocation");
@@ -389,7 +389,7 @@ public final class CweDictionary {
         DICTIONARY.put(359, "Exposure of Private Personal Information to an Unauthorized Actor");
         DICTIONARY.put(360, "Trust of System Event Data");
         DICTIONARY.put(361, "7PK - Time and State");
-        DICTIONARY.put(362, "Concurrent Execution using Shared Resource with Improper Synchronization (\u0027Race Condition\u0027)");
+        DICTIONARY.put(362, "Concurrent Execution using Shared Resource with Improper Synchronization ('Race Condition')");
         DICTIONARY.put(363, "Race Condition Enabling Link Following");
         DICTIONARY.put(364, "Signal Handler Race Condition");
         DICTIONARY.put(365, "DEPRECATED: Race Condition in Switch");
@@ -429,8 +429,8 @@ public final class CweDictionary {
         DICTIONARY.put(399, "Resource Management Errors");
         DICTIONARY.put(400, "Uncontrolled Resource Consumption");
         DICTIONARY.put(401, "Missing Release of Memory after Effective Lifetime");
-        DICTIONARY.put(402, "Transmission of Private Resources into a New Sphere (\u0027Resource Leak\u0027)");
-        DICTIONARY.put(403, "Exposure of File Descriptor to Unintended Control Sphere (\u0027File Descriptor Leak\u0027)");
+        DICTIONARY.put(402, "Transmission of Private Resources into a New Sphere ('Resource Leak')");
+        DICTIONARY.put(403, "Exposure of File Descriptor to Unintended Control Sphere ('File Descriptor Leak')");
         DICTIONARY.put(404, "Improper Resource Shutdown or Release");
         DICTIONARY.put(405, "Asymmetric Resource Consumption (Amplification)");
         DICTIONARY.put(406, "Insufficient Control of Network Message Volume (Network Amplification)");
@@ -449,10 +449,10 @@ public final class CweDictionary {
         DICTIONARY.put(419, "Unprotected Primary Channel");
         DICTIONARY.put(420, "Unprotected Alternate Channel");
         DICTIONARY.put(421, "Race Condition During Access to Alternate Channel");
-        DICTIONARY.put(422, "Unprotected Windows Messaging Channel (\u0027Shatter\u0027)");
+        DICTIONARY.put(422, "Unprotected Windows Messaging Channel ('Shatter')");
         DICTIONARY.put(423, "DEPRECATED: Proxied Trusted Channel");
         DICTIONARY.put(424, "Improper Protection of Alternate Path");
-        DICTIONARY.put(425, "Direct Request (\u0027Forced Browsing\u0027)");
+        DICTIONARY.put(425, "Direct Request ('Forced Browsing')");
         DICTIONARY.put(426, "Untrusted Search Path");
         DICTIONARY.put(427, "Uncontrolled Search Path Element");
         DICTIONARY.put(428, "Unquoted Search Path or Element");
@@ -468,10 +468,10 @@ public final class CweDictionary {
         DICTIONARY.put(438, "Behavioral Problems");
         DICTIONARY.put(439, "Behavioral Change in New Version or Environment");
         DICTIONARY.put(440, "Expected Behavior Violation");
-        DICTIONARY.put(441, "Unintended Proxy or Intermediary (\u0027Confused Deputy\u0027)");
+        DICTIONARY.put(441, "Unintended Proxy or Intermediary ('Confused Deputy')");
         DICTIONARY.put(442, "DEPRECATED: Web Problems");
         DICTIONARY.put(443, "DEPRECATED: HTTP response splitting");
-        DICTIONARY.put(444, "Inconsistent Interpretation of HTTP Requests (\u0027HTTP Request/Response Smuggling\u0027)");
+        DICTIONARY.put(444, "Inconsistent Interpretation of HTTP Requests ('HTTP Request/Response Smuggling')");
         DICTIONARY.put(445, "DEPRECATED: User Interface Errors");
         DICTIONARY.put(446, "UI Discrepancy for Security Feature");
         DICTIONARY.put(447, "Unimplemented or Unsupported Feature in UI");
@@ -497,7 +497,7 @@ public final class CweDictionary {
         DICTIONARY.put(467, "Use of sizeof() on a Pointer Type");
         DICTIONARY.put(468, "Incorrect Pointer Scaling");
         DICTIONARY.put(469, "Use of Pointer Subtraction to Determine Size");
-        DICTIONARY.put(470, "Use of Externally-Controlled Input to Select Classes or Code (\u0027Unsafe Reflection\u0027)");
+        DICTIONARY.put(470, "Use of Externally-Controlled Input to Select Classes or Code ('Unsafe Reflection')");
         DICTIONARY.put(471, "Modification of Assumed-Immutable Data (MAID)");
         DICTIONARY.put(472, "External Control of Assumed-Immutable Web Parameter");
         DICTIONARY.put(473, "PHP External Variable Modification");
@@ -518,7 +518,7 @@ public final class CweDictionary {
         DICTIONARY.put(488, "Exposure of Data Element to Wrong Session");
         DICTIONARY.put(489, "Active Debug Code");
         DICTIONARY.put(490, "DEPRECATED: Mobile Code Issues");
-        DICTIONARY.put(491, "Public cloneable() Method Without Final (\u0027Object Hijack\u0027)");
+        DICTIONARY.put(491, "Public cloneable() Method Without Final ('Object Hijack')");
         DICTIONARY.put(492, "Use of Inner Class Containing Sensitive Data");
         DICTIONARY.put(493, "Critical Public Variable Without Final Modifier");
         DICTIONARY.put(494, "Download of Code Without Integrity Check");
@@ -628,7 +628,7 @@ public final class CweDictionary {
         DICTIONARY.put(598, "Use of GET Request Method With Sensitive Query Strings");
         DICTIONARY.put(599, "Missing Validation of OpenSSL Certificate");
         DICTIONARY.put(600, "Uncaught Exception in Servlet ");
-        DICTIONARY.put(601, "URL Redirection to Untrusted Site (\u0027Open Redirect\u0027)");
+        DICTIONARY.put(601, "URL Redirection to Untrusted Site ('Open Redirect')");
         DICTIONARY.put(602, "Client-Side Enforcement of Server-Side Security");
         DICTIONARY.put(603, "Use of Client-Side Authentication");
         DICTIONARY.put(604, "Deprecated Entries");
@@ -641,12 +641,12 @@ public final class CweDictionary {
         DICTIONARY.put(611, "Improper Restriction of XML External Entity Reference");
         DICTIONARY.put(612, "Improper Authorization of Index Containing Sensitive Information");
         DICTIONARY.put(613, "Insufficient Session Expiration");
-        DICTIONARY.put(614, "Sensitive Cookie in HTTPS Session Without \u0027Secure\u0027 Attribute");
+        DICTIONARY.put(614, "Sensitive Cookie in HTTPS Session Without 'Secure' Attribute");
         DICTIONARY.put(615, "Inclusion of Sensitive Information in Source Code Comments");
         DICTIONARY.put(616, "Incomplete Identification of Uploaded File Variables (PHP)");
         DICTIONARY.put(617, "Reachable Assertion");
         DICTIONARY.put(618, "Exposed Unsafe ActiveX Method");
-        DICTIONARY.put(619, "Dangling Database Cursor (\u0027Cursor Injection\u0027)");
+        DICTIONARY.put(619, "Dangling Database Cursor ('Cursor Injection')");
         DICTIONARY.put(620, "Unverified Password Change");
         DICTIONARY.put(621, "Variable Extraction Error");
         DICTIONARY.put(622, "Improper Validation of Function Hook Arguments");
@@ -663,14 +663,14 @@ public final class CweDictionary {
         DICTIONARY.put(633, "DEPRECATED: Weaknesses that Affect Memory");
         DICTIONARY.put(634, "DEPRECATED: Weaknesses that Affect System Processes");
         DICTIONARY.put(635, "Weaknesses Originally Used by NVD from 2008 to 2016");
-        DICTIONARY.put(636, "Not Failing Securely (\u0027Failing Open\u0027)");
-        DICTIONARY.put(637, "Unnecessary Complexity in Protection Mechanism (Not Using \u0027Economy of Mechanism\u0027)");
+        DICTIONARY.put(636, "Not Failing Securely ('Failing Open')");
+        DICTIONARY.put(637, "Unnecessary Complexity in Protection Mechanism (Not Using 'Economy of Mechanism')");
         DICTIONARY.put(638, "Not Using Complete Mediation");
         DICTIONARY.put(639, "Authorization Bypass Through User-Controlled Key");
         DICTIONARY.put(640, "Weak Password Recovery Mechanism for Forgotten Password");
         DICTIONARY.put(641, "Improper Restriction of Names for Files and Other Resources");
         DICTIONARY.put(642, "External Control of Critical State Data");
-        DICTIONARY.put(643, "Improper Neutralization of Data within XPath Expressions (\u0027XPath Injection\u0027)");
+        DICTIONARY.put(643, "Improper Neutralization of Data within XPath Expressions ('XPath Injection')");
         DICTIONARY.put(644, "Improper Neutralization of HTTP Headers for Scripting Syntax");
         DICTIONARY.put(645, "Overly Restrictive Account Lockout Mechanism");
         DICTIONARY.put(646, "Reliance on File Name or Extension of Externally-Supplied File");
@@ -679,7 +679,7 @@ public final class CweDictionary {
         DICTIONARY.put(649, "Reliance on Obfuscation or Encryption of Security-Relevant Inputs without Integrity Checking");
         DICTIONARY.put(650, "Trusting HTTP Permission Methods on the Server Side");
         DICTIONARY.put(651, "Exposure of WSDL File Containing Sensitive Information");
-        DICTIONARY.put(652, "Improper Neutralization of Data within XQuery Expressions (\u0027XQuery Injection\u0027)");
+        DICTIONARY.put(652, "Improper Neutralization of Data within XQuery Expressions ('XQuery Injection')");
         DICTIONARY.put(653, "Improper Isolation or Compartmentalization");
         DICTIONARY.put(654, "Reliance on a Single Factor in a Security Decision");
         DICTIONARY.put(655, "Insufficient Psychological Acceptability");
@@ -784,7 +784,7 @@ public final class CweDictionary {
         DICTIONARY.put(754, "Improper Check for Unusual or Exceptional Conditions");
         DICTIONARY.put(755, "Improper Handling of Exceptional Conditions");
         DICTIONARY.put(756, "Missing Custom Error Page");
-        DICTIONARY.put(757, "Selection of Less-Secure Algorithm During Negotiation (\u0027Algorithm Downgrade\u0027)");
+        DICTIONARY.put(757, "Selection of Less-Secure Algorithm During Negotiation ('Algorithm Downgrade')");
         DICTIONARY.put(758, "Reliance on Undefined, Unspecified, or Implementation-Defined Behavior");
         DICTIONARY.put(759, "Use of a One-Way Hash without a Salt");
         DICTIONARY.put(760, "Use of a One-Way Hash with a Predictable Salt");
@@ -803,7 +803,7 @@ public final class CweDictionary {
         DICTIONARY.put(773, "Missing Reference to Active File Descriptor or Handle");
         DICTIONARY.put(774, "Allocation of File Descriptors or Handles Without Limits or Throttling");
         DICTIONARY.put(775, "Missing Release of File Descriptor or Handle after Effective Lifetime");
-        DICTIONARY.put(776, "Improper Restriction of Recursive Entity References in DTDs (\u0027XML Entity Expansion\u0027)");
+        DICTIONARY.put(776, "Improper Restriction of Recursive Entity References in DTDs ('XML Entity Expansion')");
         DICTIONARY.put(777, "Regular Expression without Anchors");
         DICTIONARY.put(778, "Insufficient Logging");
         DICTIONARY.put(779, "Logging of Excessive Data");
@@ -862,7 +862,7 @@ public final class CweDictionary {
         DICTIONARY.put(832, "Unlock of a Resource that is not Locked");
         DICTIONARY.put(833, "Deadlock");
         DICTIONARY.put(834, "Excessive Iteration");
-        DICTIONARY.put(835, "Loop with Unreachable Exit Condition (\u0027Infinite Loop\u0027)");
+        DICTIONARY.put(835, "Loop with Unreachable Exit Condition ('Infinite Loop')");
         DICTIONARY.put(836, "Use of Password Hash Instead of Password for Authentication");
         DICTIONARY.put(837, "Improper Enforcement of a Single, Unique Action");
         DICTIONARY.put(838, "Inappropriate Encoding for Output Context");
@@ -870,7 +870,7 @@ public final class CweDictionary {
         DICTIONARY.put(840, "Business Logic Errors");
         DICTIONARY.put(841, "Improper Enforcement of Behavioral Workflow");
         DICTIONARY.put(842, "Placement of User into Incorrect Group");
-        DICTIONARY.put(843, "Access of Resource Using Incompatible Type (\u0027Type Confusion\u0027)");
+        DICTIONARY.put(843, "Access of Resource Using Incompatible Type ('Type Confusion')");
         DICTIONARY.put(844, "Weaknesses Addressed by The CERT Oracle Secure Coding Standard for Java (2011)");
         DICTIONARY.put(845, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 2 - Input Validation and Data Sanitization (IDS)");
         DICTIONARY.put(846, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 3 - Declarations and Initialization (DCL)");
@@ -944,7 +944,7 @@ public final class CweDictionary {
         DICTIONARY.put(914, "Improper Control of Dynamically-Identified Variables");
         DICTIONARY.put(915, "Improperly Controlled Modification of Dynamically-Determined Object Attributes");
         DICTIONARY.put(916, "Use of Password Hash With Insufficient Computational Effort");
-        DICTIONARY.put(917, "Improper Neutralization of Special Elements used in an Expression Language Statement (\u0027Expression Language Injection\u0027)");
+        DICTIONARY.put(917, "Improper Neutralization of Special Elements used in an Expression Language Statement ('Expression Language Injection')");
         DICTIONARY.put(918, "Server-Side Request Forgery (SSRF)");
         DICTIONARY.put(919, "Weaknesses in Mobile Applications");
         DICTIONARY.put(920, "Improper Restriction of Power Consumption");
@@ -1031,7 +1031,7 @@ public final class CweDictionary {
         DICTIONARY.put(1001, "SFP Secondary Cluster: Use of an Improper API");
         DICTIONARY.put(1002, "SFP Secondary Cluster: Unexpected Entry Points");
         DICTIONARY.put(1003, "Weaknesses for Simplified Mapping of Published Vulnerabilities");
-        DICTIONARY.put(1004, "Sensitive Cookie Without \u0027HttpOnly\u0027 Flag");
+        DICTIONARY.put(1004, "Sensitive Cookie Without 'HttpOnly' Flag");
         DICTIONARY.put(1005, "7PK - Input Validation and Representation");
         DICTIONARY.put(1006, "Bad Coding Practices");
         DICTIONARY.put(1007, "Insufficient Visual Distinction of Homoglyphs Presented to User");
@@ -1219,7 +1219,7 @@ public final class CweDictionary {
         DICTIONARY.put(1189, "Improper Isolation of Shared Resources on System-on-a-Chip (SoC)");
         DICTIONARY.put(1190, "DMA Device Enabled Too Early in Boot Phase");
         DICTIONARY.put(1191, "On-Chip Debug and Test Interface With Improper Access Control");
-        DICTIONARY.put(1192, "System-on-Chip (SoC) Using Components without Unique, Immutable Identifiers");
+        DICTIONARY.put(1192, "Improper Identifier for IP Block used in System-On-Chip (SOC)");
         DICTIONARY.put(1193, "Power-On of Untrusted Execution Core Before Enabling Fabric Access Control");
         DICTIONARY.put(1194, "Hardware Design");
         DICTIONARY.put(1195, "Manufacturing and Life Cycle Management Concerns");
@@ -1329,7 +1329,7 @@ public final class CweDictionary {
         DICTIONARY.put(1299, "Missing Protection Mechanism for Alternate Hardware Interface");
         DICTIONARY.put(1300, "Improper Protection of Physical Side Channels");
         DICTIONARY.put(1301, "Insufficient or Incomplete Data Removal within Hardware Component");
-        DICTIONARY.put(1302, "Missing Security Identifier");
+        DICTIONARY.put(1302, "Missing Source Identifier in Entity Transactions on a System-On-Chip (SOC)");
         DICTIONARY.put(1303, "Non-Transparent Sharing of Microarchitectural Resources");
         DICTIONARY.put(1304, "Improperly Preserved Integrity of Hardware Configuration State During a Power Save/Restore Operation");
         DICTIONARY.put(1305, "CISQ Quality Measures (2020)");
@@ -1348,7 +1348,7 @@ public final class CweDictionary {
         DICTIONARY.put(1318, "Missing Support for Security Features in On-chip Fabrics or Buses");
         DICTIONARY.put(1319, "Improper Protection against Electromagnetic Fault Injection (EM-FI)");
         DICTIONARY.put(1320, "Improper Protection for Outbound Error Messages and Alert Signals");
-        DICTIONARY.put(1321, "Improperly Controlled Modification of Object Prototype Attributes (\u0027Prototype Pollution\u0027)");
+        DICTIONARY.put(1321, "Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')");
         DICTIONARY.put(1322, "Use of Blocking Code in Single-threaded, Non-blocking Context");
         DICTIONARY.put(1323, "Improper Management of Sensitive Trace Data");
         DICTIONARY.put(1324, "DEPRECATED: Sensitive Information Accessible by Physical Probing of JTAG Interface");
@@ -1447,10 +1447,14 @@ public final class CweDictionary {
         DICTIONARY.put(1417, "Comprehensive Categorization: Sensitive Information Exposure");
         DICTIONARY.put(1418, "Comprehensive Categorization: Violation of Secure Design Principles");
         DICTIONARY.put(1419, "Incorrect Initialization of Resource");
+        DICTIONARY.put(1420, "Exposure of Sensitive Information during Transient Execution");
+        DICTIONARY.put(1421, "Exposure of Sensitive Information in Shared Microarchitectural Structures during Transient Execution");
+        DICTIONARY.put(1422, "Exposure of Sensitive Information caused by Incorrect Data Forwarding during Transient Execution");
+        DICTIONARY.put(1423, "Exposure of Sensitive Information caused by Shared Microarchitectural Predictor State that Influences Transient Execution");
+        DICTIONARY.put(1424, "Weaknesses Addressed by ISA/IEC 62443 Requirements");
         DICTIONARY.put(1425, "Weaknesses in the 2023 CWE Top 25 Most Dangerous Software Weaknesses");
         DICTIONARY.put(2000, "Comprehensive CWE Dictionary");
-        
-    }
+        }
 
     private CweDictionary() {
     }

@@ -14,30 +14,29 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.integrations.fortifyssc;
 
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.integrations.ProjectFindingUploader;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.util.DebugDataEncryption;
 import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
-
-import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_URL;
 
 public class FortifySscUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 
@@ -82,8 +81,8 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
             return;
         }
         try {
-            final FortifySscClient client = new FortifySscClient(this, new URL(sscUrl.getPropertyValue()));
-            final String token = client.generateOneTimeUploadToken(DataEncryption.decryptAsString(citoken.getPropertyValue()));
+            final FortifySscClient client = new FortifySscClient(this, URI.create(sscUrl.getPropertyValue()).toURL());
+            final String token = client.generateOneTimeUploadToken(DebugDataEncryption.decryptAsString(citoken.getPropertyValue()));
             if (token != null) {
                 client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), payload);
             }

@@ -14,26 +14,19 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.search;
 
 import alpine.common.logging.Logger;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.License;
-import org.dependencytrack.notification.NotificationConstants;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.document.LicenseDocument;
 
 import javax.jdo.Query;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 
@@ -48,7 +41,7 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
     private static final Logger LOGGER = Logger.getLogger(LicenseIndexer.class);
     private static final LicenseIndexer INSTANCE = new LicenseIndexer();
 
-    protected static LicenseIndexer getInstance() {
+    static LicenseIndexer getInstance() {
         return INSTANCE;
     }
 
@@ -70,25 +63,15 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      * @param license A persisted License object.
      */
     public void add(final LicenseDocument license) {
-        final Document doc = new Document();
-        addField(doc, IndexConstants.LICENSE_UUID, license.uuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.LICENSE_LICENSEID, license.licenseId(), Field.Store.YES, true);
-        addField(doc, IndexConstants.LICENSE_NAME, license.name(), Field.Store.YES, true);
+        final Document doc = convertToDocument(license);
+        addDocument(doc);
+    }
 
-        try {
-            getIndexWriter().addDocument(doc);
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while adding a license to the index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.LICENSE_INDEXER)
-                    .content("An error occurred while adding a license to the index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+    @Override
+    public void update(final LicenseDocument license) {
+        final Term term = convertToTerm(license);
+        final Document doc = convertToDocument(license);
+        updateDocument(term, doc);
     }
 
     /**
@@ -97,20 +80,8 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      * @param license A persisted License object.
      */
     public void remove(final LicenseDocument license) {
-        try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.LICENSE_UUID, license.uuid().toString()));
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while removing a license from the index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.LICENSE_INDEXER)
-                    .content("An error occurred while removing a license from the index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+        final Term term = convertToTerm(license);
+        deleteDocuments(term);
     }
 
     /**
@@ -151,6 +122,18 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
         } finally {
             query.closeAll();
         }
+    }
+
+    private Document convertToDocument(final LicenseDocument license) {
+        final var doc = new Document();
+        addField(doc, IndexConstants.LICENSE_UUID, license.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.LICENSE_LICENSEID, license.licenseId(), Field.Store.YES, true);
+        addField(doc, IndexConstants.LICENSE_NAME, license.name(), Field.Store.YES, true);
+        return doc;
+    }
+
+    private static Term convertToTerm(final LicenseDocument license) {
+        return new Term(IndexConstants.LICENSE_UUID, license.uuid().toString());
     }
 
 }

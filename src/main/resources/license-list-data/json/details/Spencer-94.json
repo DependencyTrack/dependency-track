@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://metacpan.org/release/KNOK/File-MMagic-1.30/source/COPYING#L28",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:41:48Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing/Henry_Spencer_Reg-Ex_Library_License",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:41:48Z",
+      "timestamp": "2024-08-19T17:37:11Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://metacpan.org/release/KNOK/File-MMagic-1.30/source/COPYING#L28",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:37:11Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

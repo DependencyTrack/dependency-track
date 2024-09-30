@@ -14,52 +14,59 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
 import alpine.model.Team;
-import alpine.server.auth.PasswordService;
+import alpine.server.auth.JsonWebToken;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.IdentifiableObject;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.UUID;
 
 public class UserResourceAuthenticatedTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(UserResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
-                .build();
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(UserResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
+
+    private ManagedUser testUser;
+    private String jwt;
+
+    @Before
+    public void before() throws Exception {
+        super.before();
+        testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        this.jwt = new JsonWebToken().createToken(testUser);
+        qm.addUserToTeam(testUser, team);
     }
 
     @Test
     public void getManagedUsersTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
         for (int i=0; i<1000; i++) {
-            qm.createManagedUser("managed-user-" + i, hashedPassword);
+            qm.createManagedUser("managed-user-" + i, TEST_USER_PASSWORD_HASH);
         }
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -75,7 +82,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         for (int i=0; i<1000; i++) {
             qm.createLdapUser("ldap-user-" + i);
         }
-        Response response = target(V1_USER + "/ldap").request()
+        Response response = jersey.target(V1_USER + "/ldap").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -88,7 +95,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void getSelfTest() {
-        Response response = target(V1_USER + "/self").request()
+        Response response = jersey.target(V1_USER + "/self").request()
                 .header("Authorization", "Bearer " + jwt)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -100,7 +107,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void getSelfNonUserTest() {
-        Response response = target(V1_USER + "/self").request()
+        Response response = jersey.target(V1_USER + "/self").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(401, response.getStatus(), 0);
@@ -112,7 +119,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setUsername(testUser.getUsername());
         user.setFullname("Captain BlackBeard");
         user.setEmail("blackbeard@example.com");
-        Response response = target(V1_USER + "/self").request()
+        Response response = jersey.target(V1_USER + "/self").request()
                 .header("Authorization", "Bearer " + jwt)
                 .post(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -129,7 +136,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setUsername(testUser.getUsername());
         user.setFullname("");
         user.setEmail("blackbeard@example.com");
-        Response response = target(V1_USER + "/self").request()
+        Response response = jersey.target(V1_USER + "/self").request()
                 .header("Authorization", "Bearer " + jwt)
                 .post(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -143,7 +150,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setUsername(testUser.getUsername());
         user.setFullname("Captain BlackBeard");
         user.setEmail("");
-        Response response = target(V1_USER + "/self").request()
+        Response response = jersey.target(V1_USER + "/self").request()
                 .header("Authorization", "Bearer " + jwt)
                 .post(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -155,7 +162,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
     public void updateSelfUnauthorizedTest() {
         ManagedUser user = new ManagedUser();
         user.setUsername(testUser.getUsername());
-        Response response = target(V1_USER + "/self").request()
+        Response response = jersey.target(V1_USER + "/self").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(401, response.getStatus(), 0);
@@ -169,7 +176,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setEmail("blackbeard@example.com");
         user.setNewPassword("newPassword");
         user.setConfirmPassword("newPassword");
-        Response response = target(V1_USER + "/self").request()
+        Response response = jersey.target(V1_USER + "/self").request()
                 .header("Authorization", "Bearer " + jwt)
                 .post(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -188,7 +195,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setEmail("blackbeard@example.com");
         user.setNewPassword("newPassword");
         user.setConfirmPassword("blah");
-        Response response = target(V1_USER + "/self").request()
+        Response response = jersey.target(V1_USER + "/self").request()
                 .header("Authorization", "Bearer " + jwt)
                 .post(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -200,7 +207,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
     public void createLdapUserTest() {
         LdapUser user = new LdapUser();
         user.setUsername("blackbeard");
-        Response response = target(V1_USER + "/ldap").request()
+        Response response = jersey.target(V1_USER + "/ldap").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus(), 0);
@@ -214,7 +221,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
     public void createLdapUserInvalidUsernameTest() {
         LdapUser user = new LdapUser();
         user.setUsername("");
-        Response response = target(V1_USER + "/ldap").request()
+        Response response = jersey.target(V1_USER + "/ldap").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -227,7 +234,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         qm.createLdapUser("blackbeard");
         LdapUser user = new LdapUser();
         user.setUsername("blackbeard");
-        Response response = target(V1_USER + "/ldap").request()
+        Response response = jersey.target(V1_USER + "/ldap").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(409, response.getStatus(), 0);
@@ -240,7 +247,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         qm.createLdapUser("blackbeard");
         LdapUser user = new LdapUser();
         user.setUsername("blackbeard");
-        Response response = target(V1_USER + "/ldap").request()
+        Response response = jersey.target(V1_USER + "/ldap").request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(user, MediaType.APPLICATION_JSON)); // HACK
@@ -256,7 +263,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setUsername("blackbeard");
         user.setNewPassword("password");
         user.setConfirmPassword("password");
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus(), 0);
@@ -276,7 +283,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setUsername("");
         user.setNewPassword("password");
         user.setConfirmPassword("password");
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -293,7 +300,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setUsername("blackbeard");
         user.setNewPassword("password");
         user.setConfirmPassword("password");
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -310,7 +317,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setUsername("blackbeard");
         user.setNewPassword("password");
         user.setConfirmPassword("password");
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -327,7 +334,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setUsername("blackbeard");
         user.setNewPassword("");
         user.setConfirmPassword("password");
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -344,7 +351,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setUsername("blackbeard");
         user.setNewPassword("password");
         user.setConfirmPassword("blah");
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -355,14 +362,14 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void createManagedUserDuplicateUsernameTest() {
-        qm.createManagedUser("blackbeard", String.valueOf(PasswordService.createHash("password".toCharArray())));
+        qm.createManagedUser("blackbeard", TEST_USER_PASSWORD_HASH);
         ManagedUser user = new ManagedUser();
         user.setFullname("Captain BlackBeard");
         user.setEmail("blackbeard@example.com");
         user.setUsername("blackbeard");
         user.setNewPassword("password");
         user.setConfirmPassword("password");
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(409, response.getStatus(), 0);
@@ -373,8 +380,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void updateManagedUserTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         ManagedUser user = new ManagedUser();
         user.setUsername("blackbeard");
         user.setFullname("Dr BlackBeard, Ph.D.");
@@ -382,7 +388,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setForcePasswordChange(true);
         user.setNonExpiryPassword(true);
         user.setSuspended(true);
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .post(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -398,8 +404,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void updateManagedUserInvalidFullnameTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         ManagedUser user = new ManagedUser();
         user.setUsername("blackbeard");
         user.setFullname("");
@@ -407,7 +412,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setForcePasswordChange(true);
         user.setNonExpiryPassword(true);
         user.setSuspended(true);
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .post(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -418,8 +423,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void updateManagedUserInvalidEmailTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         ManagedUser user = new ManagedUser();
         user.setUsername("blackbeard");
         user.setFullname("Captain BlackBeard");
@@ -427,7 +431,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setForcePasswordChange(true);
         user.setNonExpiryPassword(true);
         user.setSuspended(true);
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .post(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
@@ -438,8 +442,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void updateManagedUserInvalidUsernameTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         ManagedUser user = new ManagedUser();
         user.setUsername("");
         user.setFullname("Captain BlackBeard");
@@ -447,7 +450,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         user.setForcePasswordChange(true);
         user.setNonExpiryPassword(true);
         user.setSuspended(true);
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header("Authorization", "Bearer " + jwt)
                 .post(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -458,11 +461,10 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void deleteManagedUserTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         ManagedUser user = new ManagedUser();
         user.setUsername("blackbeard");
-        Response response = target(V1_USER + "/managed").request()
+        Response response = jersey.target(V1_USER + "/managed").request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(user, MediaType.APPLICATION_JSON)); // HACK
@@ -474,7 +476,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
     public void createOidcUserTest() {
         final OidcUser user = new OidcUser();
         user.setUsername("blackbeard");
-        Response response = target(V1_USER + "/oidc").request()
+        Response response = jersey.target(V1_USER + "/oidc").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus(), 0);
@@ -489,7 +491,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         qm.createOidcUser("blackbeard");
         final OidcUser user = new OidcUser();
         user.setUsername("blackbeard");
-        Response response = target(V1_USER + "/oidc").request()
+        Response response = jersey.target(V1_USER + "/oidc").request()
                 .header("Authorization", "Bearer " + jwt)
                 .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         Assert.assertEquals(409, response.getStatus(), 0);
@@ -499,14 +501,13 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void addTeamToUserTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         Team team = qm.createTeam("Pirates", false);
         IdentifiableObject ido = new IdentifiableObject();
         ido.setUuid(team.getUuid().toString());
         ManagedUser user = new ManagedUser();
         user.setUsername("blackbeard");
-        Response response = target(V1_USER + "/blackbeard/membership").request()
+        Response response = jersey.target(V1_USER + "/blackbeard/membership").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(ido, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -522,13 +523,12 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void addTeamToUserInvalidTeamTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
-        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         IdentifiableObject ido = new IdentifiableObject();
         ido.setUuid(UUID.randomUUID().toString());
         ManagedUser user = new ManagedUser();
         user.setUsername("blackbeard");
-        Response response = target(V1_USER + "/blackbeard/membership").request()
+        Response response = jersey.target(V1_USER + "/blackbeard/membership").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(ido, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -544,7 +544,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
         ido.setUuid(team.getUuid().toString());
         ManagedUser user = new ManagedUser();
         user.setUsername("blah");
-        Response response = target(V1_USER + "/blackbeard/membership").request()
+        Response response = jersey.target(V1_USER + "/blackbeard/membership").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(ido, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -555,13 +555,12 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void addTeamToUserDuplicateMembershipTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
         Team team = qm.createTeam("Pirates", false);
-        ManagedUser user = qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        ManagedUser user = qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         qm.addUserToTeam(user, team);
         IdentifiableObject ido = new IdentifiableObject();
         ido.setUuid(team.getUuid().toString());
-        Response response = target(V1_USER + "/blackbeard/membership").request()
+        Response response = jersey.target(V1_USER + "/blackbeard/membership").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(ido, MediaType.APPLICATION_JSON));
         Assert.assertEquals(304, response.getStatus(), 0);
@@ -573,13 +572,12 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void removeTeamFromUserTest() {
-        String hashedPassword = String.valueOf(PasswordService.createHash("password".toCharArray()));
         Team team = qm.createTeam("Pirates", false);
-        ManagedUser user = qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", hashedPassword, false, false, false);
+        ManagedUser user = qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         qm.addUserToTeam(user, team);
         IdentifiableObject ido = new IdentifiableObject();
         ido.setUuid(team.getUuid().toString());
-        Response response = target(V1_USER + "/blackbeard/membership").request()
+        Response response = jersey.target(V1_USER + "/blackbeard/membership").request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(ido, MediaType.APPLICATION_JSON)); // HACK

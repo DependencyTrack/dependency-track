@@ -14,36 +14,44 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * JAX-RS resources for processing policy violations.
@@ -52,25 +60,61 @@ import java.util.Collection;
  * @since 4.0.0
  */
 @Path("/v1/violation")
-@Api(value = "violation", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "violation")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class PolicyViolationResource extends AlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all policy violations for the entire portfolio",
-            response = PolicyViolation.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations")
+    @Operation(
+            summary = "Returns a list of all policy violations for the entire portfolio",
+            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
+    @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all policy violations for the entire portfolio",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response getViolations(@ApiParam(value = "Optionally includes suppressed violations")
-                                  @QueryParam("suppressed") boolean suppressed) {
+    public Response getViolations(@Parameter(description = "Optionally includes suppressed violations")
+                                  @QueryParam("suppressed") boolean suppressed,
+                                  @Parameter(description = "Optionally includes inactive projects")
+                                  @QueryParam("showInactive") boolean showInactive,
+                                  @Parameter(description = "Filter by violation state")
+                                  @QueryParam("violationState") String violationState,
+                                  @Parameter(description = "Filter by risk type")
+                                  @QueryParam("riskType") String riskType,
+                                  @Parameter(description = "Filter by policy")
+                                  @QueryParam("policy") String policy,
+                                  @Parameter(description = "Filter by analysis state")
+                                  @QueryParam("analysisState") String analysisState,
+                                  @Parameter(description = "Filter occurred on from")
+                                  @QueryParam("occurredOnDateFrom") String occurredOnDateFrom,
+                                  @Parameter(description = "Filter occurred on to")
+                                  @QueryParam("occurredOnDateTo") String occurredOnDateTo,
+                                  @Parameter(description = "Filter the text input in these fields")
+                                  @QueryParam("textSearchField") String textSearchField,
+                                  @Parameter(description = "Filter by this text input")
+                                  @QueryParam("textSearchInput") String textSearchInput) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = qm.getPolicyViolations(suppressed);
+            Map<String, String> filters = new HashMap<>();
+            filters.put("violationState", violationState);
+            filters.put("riskType", riskType);
+            filters.put("policy", policy);
+            filters.put("analysisState", analysisState);
+            filters.put("occurredOnDateFrom", occurredOnDateFrom);
+            filters.put("occurredOnDateTo", occurredOnDateTo);
+            filters.put("textSearchField", textSearchField);
+            filters.put("textSearchInput", textSearchInput);
+            final PaginatedResult result = qm.getPolicyViolations(suppressed, showInactive, filters);
             return Response.ok(detachViolations(qm, result.getList(PolicyViolation.class)))
                     .header(TOTAL_COUNT_HEADER, result.getTotal())
                     .build();
@@ -80,20 +124,26 @@ public class PolicyViolationResource extends AlpineResource {
     @GET
     @Path("/project/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all policy violations for a specific project",
-            response = PolicyViolation.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations")
+    @Operation(
+            summary = "Returns a list of all policy violations for a specific project",
+            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
+    @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "The project could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all policy violations for a specific project",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response getViolationsByProject(@PathParam("uuid") String uuid,
-                                           @ApiParam(value = "Optionally includes suppressed violations")
+    public Response getViolationsByProject(@Parameter(description = "The UUID of the project", schema = @Schema(type = "string", format = "uuid"), required = true)
+                                           @PathParam("uuid") @ValidUuid String uuid,
+                                           @Parameter(description = "Optionally includes suppressed violations")
                                            @QueryParam("suppressed") boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -115,20 +165,26 @@ public class PolicyViolationResource extends AlpineResource {
     @GET
     @Path("/component/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all policy violations for a specific component",
-            response = PolicyViolation.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of policy violations")
+    @Operation(
+            summary = "Returns a list of all policy violations for a specific component",
+            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
     )
+    @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
-            @ApiResponse(code = 404, message = "The component could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all policy violations for a specific component",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified component is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The component could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response getViolationsByComponent(@PathParam("uuid") String uuid,
-                                             @ApiParam(value = "Optionally includes suppressed violations")
+    public Response getViolationsByComponent(@Parameter(description = "The UUID of the component", schema = @Schema(type = "string", format = "uuid"), required = true)
+                                             @PathParam("uuid") @ValidUuid String uuid,
+                                             @Parameter(description = "Optionally includes suppressed violations")
                                              @QueryParam("suppressed") boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);

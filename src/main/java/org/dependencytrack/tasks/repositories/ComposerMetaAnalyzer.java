@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.repositories;
 
@@ -77,7 +77,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             return meta;
         }
 
-        final String url = String.format(baseUrl + API_URL, component.getPurl().getNamespace(), component.getPurl().getName());
+        final String url = String.format(baseUrl + API_URL, urlEncode(component.getPurl().getNamespace()), urlEncode(component.getPurl().getName()));
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);

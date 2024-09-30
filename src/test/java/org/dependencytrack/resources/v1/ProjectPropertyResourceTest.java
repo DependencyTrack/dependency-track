@@ -14,48 +14,44 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import alpine.model.IConfigProperty;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.UUID;
 
 public class ProjectPropertyResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(ProjectPropertyResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(ProjectPropertyResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Test
     public void getPropertiesTest() {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         qm.createProjectProperty(project, "mygroup", "prop1", "value1", IConfigProperty.PropertyType.STRING, "Test Property 1");
         qm.createProjectProperty(project, "mygroup", "prop2", "value2", IConfigProperty.PropertyType.ENCRYPTEDSTRING, "Test Property 2");
-        Response response = target(V1_PROJECT + "/" + project.getUuid().toString() + "/property").request()
+        Response response = jersey.target(V1_PROJECT + "/" + project.getUuid().toString() + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -77,7 +73,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
 
     @Test
     public void getPropertiesInvalidTest() {
-       Response response = target(V1_PROJECT + "/" + UUID.randomUUID().toString() + "/property").request()
+       Response response = jersey.target(V1_PROJECT + "/" + UUID.randomUUID().toString() + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -96,7 +92,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         property.setPropertyValue("value1");
         property.setPropertyType(IConfigProperty.PropertyType.STRING);
         property.setDescription("Test Property 1");
-        Response response = target(V1_PROJECT + "/" + project.getUuid().toString() + "/property").request()
+        Response response = jersey.target(V1_PROJECT + "/" + project.getUuid().toString() + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(property, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus(), 0);
@@ -119,7 +115,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         property.setPropertyValue("value1");
         property.setPropertyType(IConfigProperty.PropertyType.ENCRYPTEDSTRING);
         property.setDescription("Test Property 1");
-        Response response = target(V1_PROJECT + "/" + project.getUuid().toString() + "/property").request()
+        Response response = jersey.target(V1_PROJECT + "/" + project.getUuid().toString() + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(property, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus(), 0);
@@ -145,7 +141,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         property.setPropertyValue("value1");
         property.setPropertyType(IConfigProperty.PropertyType.STRING);
         property.setDescription("Test Property 1");
-        Response response = target(V1_PROJECT + "/" + uuid + "/property").request()
+        Response response = jersey.target(V1_PROJECT + "/" + uuid + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(property, MediaType.APPLICATION_JSON));
         Assert.assertEquals(409, response.getStatus(), 0);
@@ -164,7 +160,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         property.setPropertyValue("value1");
         property.setPropertyType(IConfigProperty.PropertyType.STRING);
         property.setDescription("Test Property 1");
-        Response response = target(V1_PROJECT + "/" + UUID.randomUUID() + "/property").request()
+        Response response = jersey.target(V1_PROJECT + "/" + UUID.randomUUID() + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(property, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -181,7 +177,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         qm.getPersistenceManager().detachCopy(property);
         qm.close();
         property.setPropertyValue("updatedValue");
-        Response response = target(V1_PROJECT + "/" + uuid + "/property").request()
+        Response response = jersey.target(V1_PROJECT + "/" + uuid + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(property, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -203,7 +199,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         property.setPropertyValue("value1");
         property.setPropertyType(IConfigProperty.PropertyType.STRING);
         property.setDescription("Test Property 1");
-        Response response = target(V1_PROJECT + "/" + UUID.randomUUID().toString() + "/property").request()
+        Response response = jersey.target(V1_PROJECT + "/" + UUID.randomUUID().toString() + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(property, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -219,7 +215,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         String uuid = project.getUuid().toString();
         qm.getPersistenceManager().detachCopy(property);
         qm.close();
-        Response response = target(V1_PROJECT + "/" + uuid + "/property").request()
+        Response response = jersey.target(V1_PROJECT + "/" + uuid + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(property, MediaType.APPLICATION_JSON)); // HACK

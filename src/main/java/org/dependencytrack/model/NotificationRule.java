@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -30,6 +30,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
@@ -40,10 +44,6 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -115,6 +115,12 @@ public class NotificationRule implements Serializable {
     @Element(column = "PROJECT_ID")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC, version ASC"))
     private List<Project> projects;
+
+    @Persistent(table = "NOTIFICATIONRULE_TAGS", defaultFetchGroup = "true", mappedBy = "notificationRules")
+    @Join(column = "NOTIFICATIONRULE_ID")
+    @Element(column = "TAG_ID")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
+    private List<Tag> tags;
 
     @Persistent(table = "NOTIFICATIONRULE_TEAMS", defaultFetchGroup = "true")
     @Join(column = "NOTIFICATIONRULE_ID")
@@ -212,6 +218,14 @@ public class NotificationRule implements Serializable {
 
     public void setProjects(List<Project> projects) {
         this.projects = projects;
+    }
+
+    public List<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(final List<Tag> tags) {
+        this.tags = tags;
     }
 
     public List<Team> getTeams() {

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification;
 
@@ -58,6 +58,7 @@ public class NotificationConstants {
         public static final String BOM_CONSUMED = "Bill of Materials Consumed";
         public static final String BOM_PROCESSED = "Bill of Materials Processed";
         public static final String BOM_PROCESSING_FAILED = "Bill of Materials Processing Failed";
+        public static final String BOM_VALIDATION_FAILED = "Bill of Materials Validation Failed";
         public static final String VEX_CONSUMED = "Vulnerability Exploitability Exchange (VEX) Consumed";
         public static final String VEX_PROCESSED = "Vulnerability Exploitability Exchange (VEX) Processed";
         public static final String PROJECT_CREATED = "Project Added";

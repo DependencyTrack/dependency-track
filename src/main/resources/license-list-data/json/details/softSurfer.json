@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://fedoraproject.org/wiki/Licensing/softSurfer",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:38:19Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://github.com/mm2/Little-CMS/blob/master/src/cmssm.c#L207",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:38:19Z",
+      "timestamp": "2024-08-19T17:44:11Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/softSurfer",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:44:11Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

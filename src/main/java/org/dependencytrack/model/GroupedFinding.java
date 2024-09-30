@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -68,8 +68,6 @@ public class GroupedFinding implements Serializable {
               AND "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
             INNER JOIN "PROJECT"
                ON "COMPONENT"."PROJECT_ID" = "PROJECT"."ID"
-             LEFT JOIN "PROJECT_ACCESS_TEAMS"
-               ON "PROJECT"."ID" = "PROJECT_ACCESS_TEAMS"."PROJECT_ID"
             """;
 
     private final Map<String, Object> vulnerability = new LinkedHashMap<>();

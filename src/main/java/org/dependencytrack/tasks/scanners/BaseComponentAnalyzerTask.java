@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.scanners;
 
@@ -34,12 +34,14 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonObject;
 import java.util.Date;
+
+import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 /**
  * A base class that has logic common or useful to all classes that extend it.
@@ -112,7 +114,20 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
 
     protected synchronized void updateAnalysisCacheStats(QueryManager qm, Vulnerability.Source source, String
             targetHost, String target, JsonObject result) {
-        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target, new Date(), result);
+        try {
+            qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target, new Date(), result);
+        } catch (RuntimeException e) {
+            if (isUniqueConstraintViolation(e)) {
+                LOGGER.debug("""
+                        Encountered unique constraint violation while updating cache. \
+                        This happens when vulnerability analysis is executed for the same \
+                        component identity multiple times concurrently, and is safe to ignore. \
+                        [targetHost=%s, source=%s, target=%s]\
+                        """.formatted(targetHost, source, target), e);
+            } else {
+                throw e;
+            }
+        }
     }
 
     protected void addVulnerabilityToCache(Component component, Vulnerability vulnerability) {

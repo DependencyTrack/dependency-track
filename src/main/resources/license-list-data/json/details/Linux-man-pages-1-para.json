@@ -6,11 +6,11 @@
   "licenseId": "Linux-man-pages-1-para",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man2/getcpu.2#n4",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:31:38Z",
+      "isLive": false,
+      "timestamp": "2024-08-19T17:47:15Z",
       "isWayBackLink": false,
       "order": 0
     }

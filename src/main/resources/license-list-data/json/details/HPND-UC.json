@@ -3,7 +3,7 @@
   "licenseText": "Copyright 1989 Regents of the University of California \n\nPermission to use,\ncopy, modify, and distribute this software and its documentation for any\npurpose and without fee is hereby granted, provided that the above\ncopyright notice appear in all copies. The University of California makes\nno representations about the suitability of this software for any purpose.\nIt is provided \"as is\" without express or implied warranty.\n",
   "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1989 Regents of the University of California\";match\u003d\".{0,5000}\"\u003e\u003e\n\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose and without fee is hereby granted, provided that the above copyright notice appear in all copies. \u003c\u003cvar;name\u003d\"copyrightHolder\";original\u003d\"THE AUTHORS OR COPYRIGHT HOLDERS\";match\u003d\".+\"\u003e\u003e \u003c\u003cvar;name\u003d\"make\";original\u003d\"make\";match\u003d\"makes?\"\u003e\u003e no representations about the suitability of this software for any purpose. It is provided \"as is\" without express or implied warranty.\n\n",
   "name": "Historical Permission Notice and Disclaimer - University of California variant",
-  "licenseComments": "This license is similar to HPND but omits the obligation to provide the copyright notice and this permission notice appear in supporting documentation.",
+  "licenseComments": "This license is similar to HPND but omits the obligation that the copyright notice and this permission notice appear in supporting documentation.",
   "licenseId": "HPND-UC",
   "crossRef": [
     {
@@ -11,7 +11,7 @@
       "url": "https://core.tcl-lang.org/tk/file?name\u003dcompat/unistd.h",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:30:40Z",
+      "timestamp": "2024-08-19T17:41:55Z",
       "isWayBackLink": false,
       "order": 0
     }

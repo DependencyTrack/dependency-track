@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -24,12 +24,19 @@ import alpine.common.util.UuidUtil;
 import alpine.model.IConfigProperty;
 import alpine.security.crypto.DataEncryption;
 import alpine.server.resources.AlpineResource;
+import org.dependencytrack.model.BomValidationMode;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 
-import javax.ws.rs.core.Response;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonString;
+import jakarta.ws.rs.core.Response;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Set;
@@ -85,7 +92,7 @@ abstract class AbstractConfigPropertyResource extends AlpineResource {
                 property.setPropertyValue(null);
             } else {
                 try {
-                    final URL url = new URL(json.getPropertyValue());
+                    final URL url = URI.create(json.getPropertyValue()).toURL();
                     property.setPropertyValue(url.toExternalForm());
                 } catch (MalformedURLException e) {
                     return Response.status(Response.Status.BAD_REQUEST).entity("The property expected a URL but the URL was malformed.").build();
@@ -119,6 +126,32 @@ abstract class AbstractConfigPropertyResource extends AlpineResource {
                 property.setPropertyValue(String.join(";", ecosystems));
             } else {
                 property.setPropertyValue(propertyValue);
+            }
+        } else if (ConfigPropertyConstants.BOM_VALIDATION_MODE.getPropertyName().equals(json.getPropertyName())) {
+            try {
+                BomValidationMode.valueOf(json.getPropertyValue());
+                property.setPropertyValue(json.getPropertyValue());
+            } catch (IllegalArgumentException e) {
+                return Response
+                        .status(Response.Status.BAD_REQUEST)
+                        .entity("Value must be any of: %s".formatted(Arrays.stream(BomValidationMode.values()).map(Enum::name).collect(Collectors.joining(", "))))
+                        .build();
+            }
+        } else if (ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName().equals(json.getPropertyName())
+                || ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyName().equals(json.getPropertyName())) {
+            try {
+                final JsonReader jsonReader = Json.createReader(new StringReader(json.getPropertyValue()));
+                final JsonArray jsonArray = jsonReader.readArray();
+                jsonArray.getValuesAs(JsonString::getString);
+
+                // NB: Storing the string representation of the parsed array instead of the original value,
+                // since this removes any unnecessary whitespace.
+                property.setPropertyValue(jsonArray.toString());
+            } catch (RuntimeException e) {
+                return Response
+                        .status(Response.Status.BAD_REQUEST)
+                        .entity("Value must be a valid JSON array of strings")
+                        .build();
             }
         } else {
             property.setPropertyValue(json.getPropertyValue());

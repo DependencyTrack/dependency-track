@@ -14,11 +14,10 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks;
 
-import alpine.common.logging.Logger;
 import alpine.common.metrics.Metrics;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
@@ -36,8 +35,6 @@ import org.dependencytrack.search.ObjectIndexer;
  */
 public class IndexTask implements Subscriber {
 
-    private static final Logger LOGGER = Logger.getLogger(IndexTask.class);
-
     /**
      * {@inheritDoc}
      */
@@ -53,12 +50,11 @@ public class IndexTask implements Subscriber {
             final ObjectIndexer indexManager = IndexManagerFactory.getIndexManager(event);
 
             if (IndexEvent.Action.CREATE == event.getAction()) {
-                indexManager.add((event).getDocument());
+                indexManager.add(event.getDocument());
             } else if (IndexEvent.Action.UPDATE == event.getAction()) {
-                indexManager.remove((event).getDocument());
-                indexManager.add((event).getDocument());
+                indexManager.update(event.getDocument());
             } else if (IndexEvent.Action.DELETE == event.getAction()) {
-                indexManager.remove((event).getDocument());
+                indexManager.remove(event.getDocument());
             } else if (IndexEvent.Action.COMMIT == event.getAction()) {
                 indexManager.commit();
             } else if (IndexEvent.Action.REINDEX == event.getAction()) {

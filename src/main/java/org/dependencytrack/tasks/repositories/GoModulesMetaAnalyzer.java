@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.repositories;
 
@@ -64,7 +64,7 @@ public class GoModulesMetaAnalyzer extends AbstractMetaAnalyzer {
         if (component.getPurl() == null || component.getPurl().getNamespace() == null) {
             return meta;
         }
-        final String url = String.format(baseUrl + API_URL, caseEncode(component.getPurl().getNamespace()), caseEncode(component.getPurl().getName()));
+        final String url = String.format(baseUrl + API_URL, urlEncode(caseEncode(component.getPurl().getNamespace())), urlEncode(caseEncode(component.getPurl().getName())));
 
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {

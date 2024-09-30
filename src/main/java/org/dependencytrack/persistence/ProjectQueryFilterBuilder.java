@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
@@ -112,6 +112,11 @@ class ProjectQueryFilterBuilder {
         params.put("parentUuid", uuid);
 
         filterCriteria.add("parent.uuid == :parentUuid");
+        return this;
+    }
+
+    public ProjectQueryFilterBuilder onlyLatestVersion() {
+        filterCriteria.add("(isLatest == true)");
         return this;
     }
 

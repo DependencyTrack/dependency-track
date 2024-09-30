@@ -9,21 +9,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://fedoraproject.org/wiki/Licensing/TGPPL",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:31:50Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/COPYING.TGPPL.rst",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-02-08T16:31:52Z",
+      "timestamp": "2024-08-19T17:35:34Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/TGPPL",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-08-19T17:35:43Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

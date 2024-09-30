@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.event;
 
@@ -29,7 +29,9 @@ public class CloneProjectEventTest {
     @Test
     public void testEvent() {
         UUID uuid = UUID.randomUUID();
-        CloneProjectRequest request = new CloneProjectRequest(uuid.toString(), "1.0", true, true, true, true, true, true, true, true);
+        CloneProjectRequest request = new CloneProjectRequest(uuid.toString(), "1.0", true,
+                true, true, true, true, true,
+                true, true, false);
         CloneProjectEvent event = new CloneProjectEvent(request);
         Assert.assertEquals(request, event.getRequest());
     }

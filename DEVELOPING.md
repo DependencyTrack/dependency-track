@@ -18,7 +18,7 @@ This document primarily covers the API server. Please refer to the frontend repo
 
 There are a few things you'll need on your journey:
 
-* JDK 17+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
+* JDK 21+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
 * Maven (comes bundled with IntelliJ and Eclipse)
 * A Java IDE of your preference (we recommend IntelliJ, but any other IDE is fine as well)
 * Docker (optional)
@@ -343,3 +343,36 @@ This will start a local webserver that listens on `127.0.0.1:4000` and rebuilds 
 > ```
 > docker run --rm -it --name jekyll -p "127.0.0.1:4000:4000" -v "$(pwd)/docs:/srv/jekyll:Z" jekyll/jekyll:3.8 jekyll serve
 > ```
+
+## Feature Branches
+
+When working on larger changes, it can happen that pull requests remain open for a prolonged period of time.
+As the `master` branch evolves, more and more merge conflicts occur, which the PR author needs to address.
+
+Sometimes it's desired to get user feedback on a new feature before it's being merged to `master`.
+Expecting users to clone the repository and build the project on their own however is not realistic.
+Instead, it would be beneficial to offer a container image including the new feature.
+
+When a feature is built in collaboration by multiple individuals, teams have to jump through annoying hoops
+to make it work with the GitHub workflow. Usually this requires one individual to raise a PR from their fork,
+and giving the rest of the team write permissions to their repository.
+
+To address the use cases above, contributors to the Dependency-Track project can request a *feature branch*
+from a maintainer. Feature branches follow the `feature-*` naming pattern, and are subject to branch protection rules.
+Just like for the `master` branch, changes pushed to a `feature` branch trigger a container image build.
+Images built from `feature` branches are tagged with the name of the branch, for example for a branch named `feature-foobar`:
+
+```
+docker.io/dependencytrack/apiserver:feature-foobar
+```
+
+This imagine can be shared with colleagues and community members for testing. Images built this way will be deleted
+shortly after the respective feature has been merged into the `master` branch.
+
+Instead of raising PRs into `master`, contributors would now raise PRs into `feature-foobar`. 
+
+> [!NOTE]
+> PRs into `feature` branches must still be approved by maintainers, to avoid malicious code being introduced.
+> However, this is only a surface-level review, unless explicitly requested otherwise by the contributor(s).
+
+Once the feature is considered ready, a PR can be raised from `feature-foobar` into `master`.

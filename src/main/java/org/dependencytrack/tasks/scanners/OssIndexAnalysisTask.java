@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.scanners;
 
@@ -25,7 +25,6 @@ import alpine.common.util.Pageable;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
@@ -55,6 +54,7 @@ import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.DebugDataEncryption;
 import org.dependencytrack.util.HttpUtil;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
@@ -137,41 +137,45 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * {@inheritDoc}
      */
     public void inform(final Event e) {
-        if (e instanceof OssIndexAnalysisEvent) {
-            if (!super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ENABLED)) {
-                return;
-            }
-            try (QueryManager qm = new QueryManager()) {
-                final ConfigProperty apiUsernameProperty = qm.getConfigProperty(
-                        ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
-                        ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME.getPropertyName()
-                );
-                final ConfigProperty apiTokenProperty = qm.getConfigProperty(
-                        ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
-                        ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getPropertyName()
-                );
-                if (apiUsernameProperty == null || apiUsernameProperty.getPropertyValue() == null
-                        || apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
-                    LOGGER.warn("An API username or token has not been specified for use with OSS Index. Using anonymous access");
-                } else {
-                    try {
-                        apiUsername = apiUsernameProperty.getPropertyValue();
-                        apiToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
-                    } catch (Exception ex) {
-                        LOGGER.error("An error occurred decrypting the OSS Index API Token. Skipping", ex);
-                        return;
-                    }
-                }
-                aliasSyncEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ALIAS_SYNC_ENABLED);
-            }
-            final var event = (OssIndexAnalysisEvent) e;
-            LOGGER.info("Starting Sonatype OSS Index analysis task");
-            vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
-            if (event.getComponents().size() > 0) {
-                analyze(event.getComponents());
-            }
-            LOGGER.info("Sonatype OSS Index analysis complete");
+        if (!(e instanceof final OssIndexAnalysisEvent event)) {
+            return;
         }
+        if (!super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ENABLED)) {
+            return;
+        }
+
+        try (final var qm = new QueryManager()) {
+            final ConfigProperty apiUsernameProperty = qm.getConfigProperty(
+                    ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
+                    ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME.getPropertyName()
+            );
+            final ConfigProperty apiTokenProperty = qm.getConfigProperty(
+                    ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
+                    ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getPropertyName()
+            );
+            if (apiUsernameProperty == null || apiUsernameProperty.getPropertyValue() == null
+                    || apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
+                LOGGER.warn("An API username or token has not been specified for use with OSS Index. Using anonymous access");
+            } else {
+                try {
+                    apiUsername = apiUsernameProperty.getPropertyValue();
+                    apiToken = DebugDataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+                } catch (Exception ex) {
+                    // NB: OSS Index can be used without AuthN, however stricter rate limiting may apply.
+                    // We favour "service degradation" over "service outage" here. Analysis will continue
+                    // to work, although more retries may need to be performed until a new token is supplied.
+                    LOGGER.error("An error occurred decrypting the OSS Index API Token; Continuing without authentication", ex);
+                }
+            }
+            aliasSyncEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ALIAS_SYNC_ENABLED);
+        }
+
+        LOGGER.info("Starting Sonatype OSS Index analysis task");
+        vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
+        if (!event.getComponents().isEmpty()) {
+            analyze(event.getComponents());
+        }
+        LOGGER.info("Sonatype OSS Index analysis complete");
     }
 
     /**

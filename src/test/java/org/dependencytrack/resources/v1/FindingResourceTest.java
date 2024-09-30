@@ -14,15 +14,17 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
 import alpine.Config;
+import alpine.model.About;
 import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -33,29 +35,31 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.core.Response;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.resources.v1.FindingResource.MEDIA_TYPE_SARIF_JSON;
+import static org.hamcrest.CoreMatchers.equalTo;
+
 public class FindingResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(FindingResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
-                .build();
-    }
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(FindingResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Test
     public void getFindingsByProjectTest() {
@@ -75,7 +79,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -116,8 +120,31 @@ public class FindingResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getFindingsByProjectEmptyTest() {
+        final var metaComponent = new RepositoryMetaComponent();
+        metaComponent.setRepositoryType(RepositoryType.MAVEN);
+        metaComponent.setNamespace("com.acme");
+        metaComponent.setName("acme-lib");
+        metaComponent.setLatestVersion("1.2.3");
+        metaComponent.setLastCheck(new Date());
+        qm.persist(metaComponent);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_FINDING + "/project/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("0");
+        assertThat(getPlainTextBody(response)).isEqualTo("[]");
+    }
+
+    @Test
     public void getFindingsByProjectInvalidTest() {
-        Response response = target(V1_FINDING + "/project/" + UUID.randomUUID().toString()).request()
+        Response response = jersey.target(V1_FINDING + "/project/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -144,7 +171,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString() + "/export").request()
+        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString() + "/export").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -194,7 +221,7 @@ public class FindingResourceTest extends ResourceTest {
 
     @Test
     public void exportFindingsByProjectInvalidTest() {
-        Response response = target(V1_FINDING + "/project/" + UUID.randomUUID().toString() + "/export").request()
+        Response response = jersey.target(V1_FINDING + "/project/" + UUID.randomUUID().toString() + "/export").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -252,7 +279,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -303,7 +330,7 @@ public class FindingResourceTest extends ResourceTest {
 
         Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -349,7 +376,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c3, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING)
+        Response response = jersey.target(V1_FINDING)
                 .queryParam("sortName", "component.projectName")
                 .queryParam("sortOrder", "asc")
                 .request()
@@ -416,7 +443,7 @@ public class FindingResourceTest extends ResourceTest {
             aclToggle.setPropertyValue("true");
             qm.persist(aclToggle);
         }
-        Response response = target(V1_FINDING).request()
+        Response response = jersey.target(V1_FINDING).request()
                 .header(X_API_KEY, team.getApiKeys().get(0).getKey())
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -465,7 +492,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c6, AnalyzerIdentity.NONE);
         qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
-        Response response = target(V1_FINDING + "/grouped").request()
+        Response response = jersey.target(V1_FINDING + "/grouped").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -550,7 +577,7 @@ public class FindingResourceTest extends ResourceTest {
             aclToggle.setPropertyValue("true");
             qm.persist(aclToggle);
         }
-        Response response = target(V1_FINDING + "/grouped").request()
+        Response response = jersey.target(V1_FINDING + "/grouped").request()
                 .header(X_API_KEY, team.getApiKeys().get(0).getKey())
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -589,6 +616,204 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals(1, json.getJsonObject(2).getJsonObject("vulnerability").getInt("affectedProjectCount"));
     }
 
+    @Test
+    public void getSARIFFindingsByProjectTest() {
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Component c1 = createComponent(project, "Component 1", "1.1.4");
+        Component c2 = createComponent(project, "Component 2", "2.78.123");
+        c1.setGroup("org.acme");
+        c2.setGroup("com.xyz");
+        c1.setPurl("pkg:maven/org.acme/component1@1.1.4?type=jar");
+        c2.setPurl("pkg:maven/com.xyz/component2@2.78.123?type=jar");
+
+        Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL, "Vuln Title 1", "This is a description", null, 80);
+        Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH, "Vuln Title 2", "   Yet another description but with surrounding whitespaces   ", "", 46);
+        Vulnerability v3 = createVulnerability("Vuln-3", Severity.LOW, "Vuln Title 3", "A description-with-hyphens-(and parentheses)", "  Recommendation with whitespaces  ", 23);
+
+        // Note: Same vulnerability added to multiple components to test whether "rules" field doesn't contain duplicates
+        qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
+
+        Response response = jersey.target(V1_FINDING + "/project/" + project.getUuid().toString()).request()
+            .header(HttpHeaders.ACCEPT, MEDIA_TYPE_SARIF_JSON)
+            .header(X_API_KEY, apiKey)
+            .get(Response.class);
+
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(MEDIA_TYPE_SARIF_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
+        final String jsonResponse = getPlainTextBody(response);
+
+        assertThatJson(jsonResponse)
+            .withMatcher("version", equalTo(new About().getVersion()))
+            .withMatcher("fullName", equalTo("OWASP Dependency-Track - " + new About().getVersion()))
+            .isEqualTo(json("""
+                {
+                        "version": "2.1.0",
+                        "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
+                        "runs": [
+                          {
+                            "tool": {
+                              "driver": {
+                                "name": "OWASP Dependency-Track",
+                                "fullName": "${json-unit.matches:fullName}",
+                                "version": "${json-unit.matches:version}",
+                                "informationUri": "https://dependencytrack.org/",
+                                "rules": [
+                                  {
+                                    "id": "Vuln-1",
+                                    "name": "ImproperNeutralizationOfScript-relatedHtmlTagsInAWebPage(basicXss)",
+                                    "shortDescription": {
+                                      "text": "Vuln-1"
+                                    },
+                                    "fullDescription": {
+                                      "text": "This is a description"
+                                    }
+                                  },
+                                  {
+                                    "id": "Vuln-2",
+                                    "name": "PathEquivalence:'filename'(trailingSpace)",
+                                    "shortDescription": {
+                                      "text": "Vuln-2"
+                                    },
+                                    "fullDescription": {
+                                      "text": "Yet another description but with surrounding whitespaces"
+                                    }
+                                  },
+                                  {
+                                    "id": "Vuln-3",
+                                    "name": "RelativePathTraversal",
+                                    "shortDescription": {
+                                      "text": "Vuln-3"
+                                    },
+                                    "fullDescription": {
+                                      "text": "A description-with-hyphens-(and parentheses)"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "results": [
+                              {
+                                "ruleId": "Vuln-1",
+                                "message": {
+                                  "text": "This is a description"
+                                },
+                                "locations": [
+                                  {
+                                    "logicalLocations": [
+                                      {
+                                        "fullyQualifiedName": "pkg:maven/org.acme/component1@1.1.4?type=jar"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "level": "error",
+                                "properties": {
+                                  "name": "Component 1",
+                                  "group": "org.acme",
+                                  "version": "1.1.4",
+                                  "source": "INTERNAL",
+                                  "cweId": "80",
+                                  "cvssV3BaseScore": "",
+                                  "epssScore": "",
+                                  "epssPercentile": "",
+                                  "severityRank": "0",
+                                  "recommendation": ""
+                                }
+                              },
+                              {
+                                "ruleId": "Vuln-2",
+                                "message": {
+                                  "text": "Yet another description but with surrounding whitespaces"
+                                },
+                                "locations": [
+                                  {
+                                    "logicalLocations": [
+                                      {
+                                        "fullyQualifiedName": "pkg:maven/org.acme/component1@1.1.4?type=jar"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "level": "error",
+                                "properties": {
+                                  "name": "Component 1",
+                                  "group": "org.acme",
+                                  "version": "1.1.4",
+                                  "source": "INTERNAL",
+                                  "cweId": "46",
+                                  "cvssV3BaseScore": "",
+                                  "epssScore": "",
+                                  "epssPercentile": "",
+                                  "severityRank": "1",
+                                  "recommendation": ""
+                                }
+                              },
+                              {
+                                "ruleId": "Vuln-3",
+                                "message": {
+                                  "text": "A description-with-hyphens-(and parentheses)"
+                                },
+                                "locations": [
+                                  {
+                                    "logicalLocations": [
+                                      {
+                                        "fullyQualifiedName": "pkg:maven/org.acme/component1@1.1.4?type=jar"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "level": "note",
+                                "properties": {
+                                  "name": "Component 1",
+                                  "group": "org.acme",
+                                  "version": "1.1.4",
+                                  "source": "INTERNAL",
+                                  "cweId": "23",
+                                  "cvssV3BaseScore": "",
+                                  "epssScore": "",
+                                  "epssPercentile": "",
+                                  "severityRank": "3",
+                                  "recommendation": "Recommendation with whitespaces"
+                                }
+                              },
+                              {
+                                "ruleId": "Vuln-3",
+                                "message": {
+                                  "text": "A description-with-hyphens-(and parentheses)"
+                                },
+                                "locations": [
+                                  {
+                                    "logicalLocations": [
+                                      {
+                                        "fullyQualifiedName": "pkg:maven/com.xyz/component2@2.78.123?type=jar"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "level": "note",
+                                "properties": {
+                                  "name": "Component 2",
+                                  "group": "com.xyz",
+                                  "version": "2.78.123",
+                                  "source": "INTERNAL",
+                                  "cweId": "23",
+                                  "cvssV3BaseScore": "",
+                                  "epssScore": "",
+                                  "epssPercentile": "",
+                                  "severityRank": "3",
+                                  "recommendation": "Recommendation with whitespaces"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+            """));
+    }
+
     private Component createComponent(Project project, String name, String version) {
         Component component = new Component();
         component.setProject(project);
@@ -604,5 +829,30 @@ public class FindingResourceTest extends ResourceTest {
         vulnerability.setSeverity(severity);
         vulnerability.setCwes(List.of(80, 666));
         return qm.createVulnerability(vulnerability, false);
+    }
+
+    private Vulnerability createVulnerability(String vulnId, Severity severity, String title, String description, String recommendation, Integer cweId) {
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId(vulnId);
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(severity);
+        vulnerability.setTitle(title);
+        vulnerability.setDescription(description);
+        vulnerability.setRecommendation(recommendation);
+        vulnerability.setCwes(List.of(cweId));
+        return qm.createVulnerability(vulnerability, false);
+    }
+
+    private static String getSARIFLevelFromSeverity(Severity severity) {
+        if (Severity.LOW == severity || Severity.INFO == severity) {
+            return "note";
+        }
+        if (Severity.MEDIUM == severity) {
+            return "warning";
+        }
+        if (Severity.HIGH == severity || Severity.CRITICAL == severity) {
+            return "error";
+        }
+        return "none";
     }
 }

@@ -7,11 +7,11 @@
   "licenseId": "Linux-man-pages-copyleft-var",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man2/set_mempolicy.2#n5",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-02-08T16:30:40Z",
+      "isLive": false,
+      "timestamp": "2024-08-19T17:36:32Z",
       "isWayBackLink": false,
       "order": 0
     }

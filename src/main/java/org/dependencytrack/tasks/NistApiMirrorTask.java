@@ -172,7 +172,7 @@ public class NistApiMirrorTask extends AbstractNistMirrorTask implements Subscri
                                         AffectedVersionAttribution.class, Vulnerability.class, VulnerableSoftware.class);
 
                                 final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
-                                synchronizeVulnerableSoftware(qm, persistentVuln, vsList);
+                                qm.synchronizeVulnerableSoftware(persistentVuln, vsList, Vulnerability.Source.NVD);
                             } catch (RuntimeException ex) {
                                 LOGGER.error("An unexpected error occurred while processing %s".formatted(vuln.getVulnId()), ex);
                             } finally {

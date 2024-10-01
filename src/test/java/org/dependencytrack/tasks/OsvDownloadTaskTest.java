@@ -428,6 +428,12 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         Assert.assertNotNull(advisory);
         severity = task.calculateOSVSeverity(advisory);
         Assert.assertEquals(Severity.UNASSIGNED, severity);
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-CURL-CVE-2009-0037.json");
+        advisory = parser.parse(jsonObject);
+        Assert.assertNotNull(advisory);
+        severity = task.calculateOSVSeverity(advisory);
+        Assert.assertEquals(Severity.UNASSIGNED, severity);
     }
 
     @Test

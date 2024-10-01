@@ -408,7 +408,7 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
                     AffectedVersionAttribution.class, Vulnerability.class, VulnerableSoftware.class);
 
             final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
-            synchronizeVulnerableSoftware(qm, persistentVuln, vsList);
+            qm.synchronizeVulnerableSoftware(persistentVuln, vsList, Vulnerability.Source.NVD);
         } catch (RuntimeException e) {
             LOGGER.error("An unexpected error occurred while processing %s".formatted(vuln.getVulnId()), e);
         }

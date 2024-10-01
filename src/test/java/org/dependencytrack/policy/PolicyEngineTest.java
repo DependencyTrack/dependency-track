@@ -51,6 +51,7 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
 import java.sql.Date;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,6 +60,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 public class PolicyEngineTest extends PersistenceCapableTest {
 
@@ -394,32 +396,33 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         // and re-evaluate policies. Ensure that only one notification per newly violated condition was sent.
         final var policyConditionB = qm.createPolicyCondition(policy, Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.2.3");
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(2);
-        assertThat(NOTIFICATIONS).satisfiesExactly(
-                notification -> {
-                    assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
-                    assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name());
-                },
-                notification -> {
-                    assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
-                    assertThat(notification.getGroup()).isEqualTo(NotificationGroup.POLICY_VIOLATION.name());
-                    assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-                    assertThat(notification.getSubject()).isInstanceOf(PolicyViolationIdentified.class);
-                    final var subject = (PolicyViolationIdentified) notification.getSubject();
-                    assertThat(subject.getComponent().getUuid()).isEqualTo(component.getUuid());
-                    assertThat(subject.getProject().getUuid()).isEqualTo(project.getUuid());
-                    assertThat(subject.getPolicyViolation().getPolicyCondition().getUuid()).isEqualTo(policyConditionA.getUuid());
-                },
-                notification -> {
-                    assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
-                    assertThat(notification.getGroup()).isEqualTo(NotificationGroup.POLICY_VIOLATION.name());
-                    assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-                    assertThat(notification.getSubject()).isInstanceOf(PolicyViolationIdentified.class);
-                    final var subject = (PolicyViolationIdentified) notification.getSubject();
-                    assertThat(subject.getComponent().getUuid()).isEqualTo(component.getUuid());
-                    assertThat(subject.getProject().getUuid()).isEqualTo(project.getUuid());
-                    assertThat(subject.getPolicyViolation().getPolicyCondition().getUuid()).isEqualTo(policyConditionB.getUuid());
-                }
-        );
+        await("Notifications")
+                .atMost(Duration.ofSeconds(3))
+                .untilAsserted(() -> assertThat(NOTIFICATIONS).satisfiesExactly(
+                        notification -> {
+                            assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+                            assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name());
+                        },
+                        notification -> {
+                            assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+                            assertThat(notification.getGroup()).isEqualTo(NotificationGroup.POLICY_VIOLATION.name());
+                            assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
+                            assertThat(notification.getSubject()).isInstanceOf(PolicyViolationIdentified.class);
+                            final var subject = (PolicyViolationIdentified) notification.getSubject();
+                            assertThat(subject.getComponent().getUuid()).isEqualTo(component.getUuid());
+                            assertThat(subject.getProject().getUuid()).isEqualTo(project.getUuid());
+                            assertThat(subject.getPolicyViolation().getPolicyCondition().getUuid()).isEqualTo(policyConditionA.getUuid());
+                        },
+                        notification -> {
+                            assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+                            assertThat(notification.getGroup()).isEqualTo(NotificationGroup.POLICY_VIOLATION.name());
+                            assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
+                            assertThat(notification.getSubject()).isInstanceOf(PolicyViolationIdentified.class);
+                            final var subject = (PolicyViolationIdentified) notification.getSubject();
+                            assertThat(subject.getComponent().getUuid()).isEqualTo(component.getUuid());
+                            assertThat(subject.getProject().getUuid()).isEqualTo(project.getUuid());
+                            assertThat(subject.getPolicyViolation().getPolicyCondition().getUuid()).isEqualTo(policyConditionB.getUuid());
+                        }));
 
         // Delete a policy condition and re-evaluate policies again. No new notifications should be sent.
         qm.deletePolicyCondition(policyConditionA);

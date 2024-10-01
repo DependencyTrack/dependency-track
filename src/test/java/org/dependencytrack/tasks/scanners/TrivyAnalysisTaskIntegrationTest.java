@@ -93,7 +93,10 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
                 .withExposedPorts(8080)
                 .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
                         .withBinds(Bind.parse("%s:/tmp/cache".formatted(trivyCacheVolumeName))))
-                .waitingFor(forLogMessage(".*Listening :8080.*", 1));
+                .waitingFor(forLogMessage(".*Listening :8080.*", 1))
+                // https://github.com/aquasecurity/trivy-action/issues/389
+                .withEnv("TRIVY_DB_REPOSITORY", "public.ecr.aws/aquasecurity/trivy-db:2")
+                .withEnv("TRIVY_JAVA_DB_REPOSITORY", "public.ecr.aws/aquasecurity/trivy-java-db:1");
         trivyContainer.start();
 
         qm.createConfigProperty(

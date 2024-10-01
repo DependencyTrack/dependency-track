@@ -290,14 +290,13 @@ public class OsvDownloadTask implements LoggableSubscriber {
             }
         }
         // get largest ecosystem_specific severity from its affected packages
-        if (advisory.getAffectedPackages() != null) {
+        if (!advisory.getAffectedPackages().isEmpty()) {
             List<Integer> severityLevels = new ArrayList<>();
             for (OsvAffectedPackage vuln : advisory.getAffectedPackages()) {
                 severityLevels.add(vuln.getSeverity().getLevel());
             }
             Collections.sort(severityLevels);
-            Collections.reverse(severityLevels);
-            return getSeverityByLevel(severityLevels.get(0));
+            return getSeverityByLevel(severityLevels.getLast());
         }
         return Severity.UNASSIGNED;
     }

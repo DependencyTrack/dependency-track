@@ -51,7 +51,7 @@ public class ProjectMetrics implements Serializable {
 
     @Persistent
     @Column(name = "PROJECT_ID", allowsNull = "false")
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @JsonIgnore
     private Project project;
 
     @Persistent

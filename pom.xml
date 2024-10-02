@@ -130,7 +130,7 @@
         <lib.jdbc-driver.postgresql.version>42.7.4</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.jetty.version>12.0.13</plugin.jetty.version>
+        <plugin.jetty.version>12.0.14</plugin.jetty.version>
         <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>

@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import org.dependencytrack.event.PolicyEvaluationEvent;
@@ -26,26 +25,45 @@ import org.dependencytrack.event.ProjectMetricsUpdateEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.policy.PolicyEngine;
+import org.slf4j.MDC;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static org.dependencytrack.common.MdcKeys.MDC_EVENT_TOKEN;
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
+import static org.dependencytrack.util.LockUtil.getLockForProjectAndNamespace;
 
 public class PolicyEvaluationTask implements Subscriber {
-
-    private static final Logger LOGGER = Logger.getLogger(PolicyEvaluationTask.class);
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void inform(final Event e) {
-        if (e instanceof PolicyEvaluationEvent event) {
-            if (event.getProject() != null) {
-                if (event.getComponents() != null && !event.getComponents().isEmpty()) {
-                    performPolicyEvaluation(event.getProject(), event.getComponents());
-                } else {
-                    performPolicyEvaluation(event.getProject(), new ArrayList<>());
-                }
+        if (!(e instanceof final PolicyEvaluationEvent event)) {
+            return;
+        }
+        if (event.getProject() == null) {
+            return;
+        }
+
+        final ReentrantLock lock = getLockForProjectAndNamespace(event.getProject(), getClass().getSimpleName());
+        try (var ignoredMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, event.getProject().getUuid().toString());
+             var ignoredMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, event.getProject().getName());
+             var ignoredMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, event.getProject().getVersion());
+             var ignoredMdcEventToken = MDC.putCloseable(MDC_EVENT_TOKEN, event.getChainIdentifier().toString())) {
+            lock.lock();
+            if (event.getComponents() != null && !event.getComponents().isEmpty()) {
+                performPolicyEvaluation(event.getProject(), event.getComponents());
+            } else {
+                performPolicyEvaluation(event.getProject(), new ArrayList<>());
             }
+        } finally {
+            lock.unlock();
         }
     }
 

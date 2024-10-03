@@ -235,8 +235,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
     private void updateLatestVersionChildrenCollectionMetrics(final Project project, final PersistenceManager pm, final Counters counters) {
         LOGGER.warn("Collection logic LATEST_VERSION_CHILDREN not yet implemented. Waiting for https://github.com/DependencyTrack/dependency-track/issues/4148");
         /*
-        TODO: Enable and test once #4148 is implemented
-        TODO: Create Test case in ProjectMetricsUpdateTaskTest after implementation
+        TODO: Create Test case in ProjectMetricsUpdateTaskTest*/
         LOGGER.debug("Fetching metrics of children of collection project " + project.getUuid() +
                 " using collection logic " + project.getCollectionLogic());
 
@@ -257,7 +256,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
         // Hint: There could be multiple children with isLatest==true from different project parts, so we aggregate those.
         for (ProjectMetrics metrics : childrenMetrics) {
             this.addToCounters(counters, metrics);
-        }*/
+        }
     }
 
     private List<Component> fetchNextComponentsPage(final PersistenceManager pm, final Project project, final Long lastId) throws Exception {

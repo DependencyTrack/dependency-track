@@ -27,6 +27,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -102,10 +103,10 @@ public class PolicyEngine {
                 }
                 if (Policy.Operator.ANY == policy.getOperator()) {
                     if (policyConditionsViolated > 0) {
-                        policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
+                        policyViolations.addAll(createPolicyViolations(policyConditionViolations));
                     }
                 } else if (Policy.Operator.ALL == policy.getOperator() && policyConditionsViolated == policy.getPolicyConditions().size()) {
-                    policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
+                    policyViolations.addAll(createPolicyViolations(policyConditionViolations));
                 }
             }
         }
@@ -125,7 +126,7 @@ public class PolicyEngine {
         return (policy.getProjects().stream().anyMatch(p -> p.getId() == project.getId()) || (Boolean.TRUE.equals(policy.isIncludeChildren()) && isPolicyAssignedToParentProject(policy, project)));
     }
 
-    private List<PolicyViolation> createPolicyViolations(final QueryManager qm, final List<PolicyConditionViolation> pcvList) {
+    private List<PolicyViolation> createPolicyViolations(final List<PolicyConditionViolation> pcvList) {
         final List<PolicyViolation> policyViolations = new ArrayList<>();
         for (PolicyConditionViolation pcv : pcvList) {
             final PolicyViolation pv = new PolicyViolation();
@@ -133,7 +134,7 @@ public class PolicyEngine {
             pv.setPolicyCondition(pcv.getPolicyCondition());
             pv.setType(determineViolationType(pcv.getPolicyCondition().getSubject()));
             pv.setTimestamp(new Date());
-            policyViolations.add(qm.addPolicyViolationIfNotExist(pv));
+            policyViolations.add(pv);
         }
         return policyViolations;
     }

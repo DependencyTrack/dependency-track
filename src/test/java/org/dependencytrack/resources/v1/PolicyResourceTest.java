@@ -211,7 +211,6 @@ public class PolicyResourceTest extends ResourceTest {
         violation.setPolicyCondition(condition);
         violation.setType(PolicyViolation.Type.OPERATIONAL);
         violation.setTimestamp(new Date());
-        violation = qm.addPolicyViolationIfNotExist(violation);
 
         qm.reconcilePolicyViolations(component, singletonList(violation));
 

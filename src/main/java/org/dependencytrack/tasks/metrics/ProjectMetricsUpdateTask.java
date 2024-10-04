@@ -78,7 +78,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                 case NONE -> this.updateRegularProjectMetrics(project, pm, counters);
                 case AGGREGATE_DIRECT_CHILDREN -> this.updateAggregateDirectChildrenCollectionMetrics(project, pm, counters);
                 case AGGREGATE_DIRECT_CHILDREN_WITH_TAG -> this.updateAggregateDirectChildrenWithTagCollectionMetrics(project, pm, counters);
-                case LATEST_VERSION_CHILDREN -> this.updateLatestVersionChildrenCollectionMetrics(project, pm, counters);
+                case AGGREGATE_LATEST_VERSION_CHILDREN -> this.updateLatestVersionChildrenCollectionMetrics(project, pm, counters);
             }
 
             AtomicBoolean metricsChanged = new AtomicBoolean(false);

@@ -327,6 +327,49 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
         assertThat(metrics.getInheritedRiskScore()).isEqualTo(25.0);
     }
 
+    @Test
+    public void testCollectionProjectMetricsAggregatingLatestChildren() {
+        var project = new Project();
+        project.setActive(true);
+        project.setName("testCollectionProjectMetricsAggregatingAllChildren");
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_LATEST_VERSION_CHILDREN);
+        project = qm.createProject(project, List.of(), false);
+        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
+
+        // add vulnerable projects as children
+        Project child1 = this.prepareProjectWithVulns("test1_", project, "2.0.2");
+        Project child2 = this.prepareProjectWithVulns("test2_", project, "1.0.0");
+        Project child3 = this.prepareProjectWithVulns("test2_", project, "1.0.1");
+
+        // mark 1 and 3 as latest versions
+        child1.setIsLatest(true);
+        child3.setIsLatest(true);
+        qm.persist(child1);
+        qm.persist(child3);
+
+        // add another vulnerability to second child
+        Vulnerability vuln2 = this.prepareVulnerability("test4_");
+        this.prepareVulnerableComponent("test4_vulnComponent", vuln2, child2);
+        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(child2.getUuid()));
+
+        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
+
+        final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+        assertThat(metrics.getComponents()).isEqualTo(6);
+        assertThat(metrics.getVulnerableComponents()).isEqualTo(4); // Finding for 2 components is suppressed
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isEqualTo(4); // 2 are suppressed
+        assertThat(metrics.getMedium()).isZero();
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isEqualTo(4); // 2 are suppressed
+        assertThat(metrics.getSuppressed()).isEqualTo(2);
+        assertThat(metrics.getFindingsTotal()).isEqualTo(4); // 2 are suppressed
+        assertThat(metrics.getFindingsAudited()).isEqualTo(2);
+        assertThat(metrics.getFindingsUnaudited()).isEqualTo(2);
+        assertThat(metrics.getInheritedRiskScore()).isEqualTo(20.0);
+    }
+
     private Project prepareProjectWithVulns(String prefix, Project parent, String version) {
         var project = new Project();
         project.setActive(true);
@@ -335,7 +378,8 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
         project.setVersion(version);
         project = qm.createProject(project, List.of(), false);
 
-        var vuln = this.prepareVulnerability(prefix);
+        String vulnPrefix = version == null ? prefix : prefix + version;
+        var vuln = this.prepareVulnerability(vulnPrefix);
         // Create a component with an unaudited vulnerability.
         var componentUnaudited = this.prepareVulnerableComponent(prefix + "acme-lib-a", vuln, project);
 

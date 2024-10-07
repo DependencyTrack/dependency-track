@@ -500,6 +500,19 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
+    public void deleteOidcUserTest() {
+        qm.createOidcUser("blackbeard");
+        OidcUser user = new OidcUser();
+        user.setUsername("blackbeard");
+        Response response = jersey.target(V1_USER + "/oidc").request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
+                .method("DELETE", Entity.entity(user, MediaType.APPLICATION_JSON)); // HACK
+        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+        Assert.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
     public void addTeamToUserTest() {
         qm.createManagedUser("blackbeard", "Captain BlackBeard", "blackbeard@example.com", TEST_USER_PASSWORD_HASH, false, false, false);
         Team team = qm.createTeam("Pirates", false);

@@ -1,0 +1,163 @@
+---
+title: Configuration - API Server
+category: Getting Started
+chapter: 1
+order: 7
+---
+<!--
+  GENERATED. DO NOT EDIT.
+
+  Generated with: jbang gen-config-docs@DependencyTrack {{ generateCommand }}
+-->
+
+The central configuration file `application.properties` resides in the classpath of the WAR by default.
+This configuration file controls many performance tuning parameters but is most useful for defining
+optional external database sources, directory services (LDAP), and proxy settings.
+
+For containerized deployments, the properties defined in the configuration file can also be specified
+as environment variables. All environment variables are upper case with periods (.) replaced with underscores (_).
+Refer to the [Docker instructions]({{ "{{ site.baseurl }}{% link _docs/getting-started/deploy-docker.md %}" }}) for
+configuration examples using environment variables.
+
+Dependency-Track administrators are highly encouraged to create a copy of this file in the
+Dependency-Track data directory and customize it prior to deploying to production.
+
+
+> The default embedded H2 database is designed to quickly evaluate and experiment with Dependency-Track.
+> Do not use the embedded H2 database in production environments.
+>
+> See: [Database Support]({{ "{{ site.baseurl }}{% link _docs/getting-started/database-support.md %}" }}).
+
+
+To start Dependency-Track using custom configuration, add the system property
+`alpine.application.properties` when executing. For example:
+
+```bash
+-Dalpine.application.properties=~/.dependency-track/application.properties
+```
+
+### Proxy Configuration
+
+Proxy support can be configured in one of two ways, using the proxy settings defined
+in `application.properties` or through environment variables. By default, the system
+will attempt to read the `https_proxy`, `http_proxy` and `no_proxy` environment variables. If one
+of these are set, Dependency-Track will use them automatically.
+
+`no_proxy` specifies URLs that should be excluded from proxying.
+This can be a comma-separated list of hostnames, domain names, or a mixture of both.
+If a port number is specified for a URL, only the requests with that port number to that URL will be excluded from proxying.
+`no_proxy` can also set to be a single asterisk ('*') to match all hosts.
+
+Dependency-Track supports proxies that require BASIC, DIGEST, and NTLM authentication.
+
+### Logging Levels
+
+Logging levels (INFO, WARN, ERROR, DEBUG, TRACE) can be specified by passing the level
+to the `dependencyTrack.logging.level` system property on startup. For example, the
+following command will start Dependency-Track (embedded) with DEBUG logging:
+
+```bash
+java -Xmx4G -DdependencyTrack.logging.level=DEBUG -jar dependency-track-embedded.war
+```
+
+For Docker deployments, simply set the `LOGGING_LEVEL` environment variable to one of
+INFO, WARN, ERROR, DEBUG, or TRACE.
+
+### Secret Key
+
+Dependency-Track will encrypt certain confidential data (e.g. access tokens for external service providers) with AES256
+prior to storing it in the database. The secret key used for encrypting and decrypting will be automatically generated
+when Dependency-Track starts for the first time, and is placed in `<alpine.data.directory>/keys/secret.key`
+(`/data/.dependency-track/keys/secret.key` for containerized deployments).
+
+Starting with Dependency-Track 4.7, it is possible to change the location of the secret key via the `alpine.secret.key.path`
+property. This makes it possible to use Kubernetes secrets for example, to mount secrets into the custom location.
+
+Secret keys may be generated manually upfront instead of relying on Dependency-Track to do it. This can be achieved
+with OpenSSL like this:
+
+```shell
+openssl rand 32 > secret.key
+```
+
+> Note that the default key format has changed in version 4.7. While existing keys using the old format will continue
+> to work, keys for new instances will be generated in the new format. Old keys may be converted using the following
+> [JShell](https://docs.oracle.com/en/java/javase/17/jshell/introduction-jshell.html) script:
+> ```java
+> import java.io.ObjectInputStream;
+> import java.nio.file.Files;
+> import java.nio.file.Paths;
+> import javax.crypto.SecretKey;
+> String inputFilePath = System.getProperty("secret.key.input")
+> String outputFilePath = System.getProperty("secret.key.output");
+> SecretKey secretKey = null;
+> System.out.println("Reading old key from " + inputFilePath);
+> try (var fis = Files.newInputStream(Paths.get(inputFilePath));
+>      var ois = new ObjectInputStream(fis)) {
+>     secretKey = (SecretKey) ois.readObject();
+> }
+> System.out.println("Writing new key to " + outputFilePath);
+> try (var fos = Files.newOutputStream(Paths.get(outputFilePath))) {
+>     fos.write(secretKey.getEncoded());
+> }
+> /exit
+> ```
+> Example execution:
+> ```shell
+> jshell -R"-Dsecret.key.input=$HOME/.dependency-track/keys/secret.key" -R"-Dsecret.key.output=secret.key.new" convert-key.jsh
+> ```
+
+---
+
+## Reference
+
+<ul>
+{% for entry in propertiesByCategory %}
+  <li><a href="#{{ entry.key | lower | replace({' ': '-'}) }}">{{ entry.key }}</a></li>
+{% endfor %}
+</ul>
+
+{% for entry in propertiesByCategory %}
+### {{ entry.key }}
+
+{% for property in entry.value -%}
+#### {{ property.name }}
+
+{{ property.description | replace({'  ': '
+'}) }}
+
+<table>
+  <tbody style="border: 0">
+    <tr>
+      <th style="text-align: right">Required</th>
+      <td style="border-width: 0">{{ property.required ? "Yes" : "No" }}</td>
+    </tr>
+    <tr>
+      <th style="text-align: right">Type</th>
+      <td style="border-width: 0">{{ property.type }}</td>
+    </tr>
+    {% if property.validValues -%}
+    <tr>
+      <th style="text-align: right">Valid Values</th>
+      <td style="border-width: 0">{{ property.validValues }}</td>
+    </tr>
+    {% endif -%}
+    <tr>
+      <th style="text-align: right">Default</th>
+      <td style="border-width: 0">{{ property.defaultValue }}</td>
+    </tr>
+    {% if property.example -%}
+    <tr>
+      <th style="text-align: right">Example</th>
+      <td style="border-width: 0">{{ property.example }}</td>
+    </tr>
+    {% endif -%}
+    <tr>
+      <th style="text-align: right">ENV</th>
+      <td style="border-width: 0">{{ property.env }}</td>
+    </tr>
+  </tbody>
+</table>
+
+{% endfor %}
+{% endfor %}

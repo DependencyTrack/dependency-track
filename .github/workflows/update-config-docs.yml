@@ -1,0 +1,62 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+name: Update Config Documentation
+
+on:
+  push:
+    branches:
+    - master
+    paths:
+    - ".github/workflows/update-config-docs.yml"
+    - "dev/scripts/config-docs.md.peb"
+    - "src/main/resources/application.properties"
+  workflow_dispatch: { }
+
+permissions: { }
+
+jobs:
+  generate-docs:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    if: "${{ github.repository_owner == 'DependencyTrack' }}"
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # tag=v4.1.6
+    - name: Generate Documentation
+      uses: jbangdev/jbang-action@74844c9631cf1f35650427323e9bb3ffa41dfbd9 # tag=v0.115.0
+      with:
+        trust: https://github.com/DependencyTrack/jbang-catalog
+        script: gen-config-docs@DependencyTrack
+        scriptargs: >-
+          --template ./dev/scripts/config-docs.md.peb
+          --output docs/_docs/getting-started/configuration-apiserver.md
+          ./src/main/resources/application.properties
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e # tag=v6.0.5
+      with:
+        add-paths: "docs/_docs/getting-started/configuration-apiserver.md"
+        branch: update-config-docs
+        body: "Updates configuration documentation."
+        commit-message: Update config docs
+        delete-branch: true
+        labels: documentation
+        signoff: true
+        title: Update config docs

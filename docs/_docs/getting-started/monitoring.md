@@ -2,7 +2,7 @@
 title: Monitoring
 category: Getting Started
 chapter: 1
-order: 13
+order: 14
 ---
 
 
@@ -357,7 +357,7 @@ An [example dashboard] is provided as a quickstart. Refer to the [Grafana docume
 ![Event Metrics in Grafana]({{ site.baseurl }}/images/screenshots/monitoring-metrics-events.png)
 
 [community integrations]: {{ site.baseurl }}{% link _docs/integrations/community-integrations.md %}
-[Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration.md %}
+[Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration-apiserver.md %}
 [Connection Pooling]: {{ site.baseurl }}{% link _docs/getting-started/database-support.md %}#connection-pooling
 [default Logback configuration]: https://github.com/DependencyTrack/dependency-track/blob/master/src/main/docker/logback.xml
 [dependency-track-exporter]: https://github.com/jetstack/dependency-track-exporter

@@ -2,7 +2,7 @@
 title: Data Directory
 category: Getting Started
 chapter: 1
-order: 8
+order: 9
 ---
 
 Dependency-Track uses `~/.dependency-track` on UNIX/Linux systems and `.dependency-track` in the current users 

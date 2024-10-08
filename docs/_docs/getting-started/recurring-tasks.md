@@ -2,7 +2,7 @@
 title: Recurring Tasks
 category: Getting Started
 chapter: 1
-order: 9
+order: 10
 ---
 
 Dependency-Track heavily relies on asynchronous recurring tasks to perform various forms of analyses, calculations,

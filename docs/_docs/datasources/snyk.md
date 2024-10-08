@@ -93,7 +93,7 @@ When evaluating the severity of a vulnerability, it's important to note that the
 **NOTE:** For Beta version, user can select either from NVD or SNYK to prioritize the cvss vectors.
 
 [Authentication for API]: https://docs.snyk.io/snyk-api-info/authentication-for-api
-[Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration.md %}
+[Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration-apiserver.md %}
 [Finding the Snyk ID and internal name of an Organization]: https://docs.snyk.io/products/snyk-code/cli-for-snyk-code/before-you-start-set-the-organization-for-the-cli-tests/finding-the-snyk-id-and-internal-name-of-an-organization
 [Monitoring]: {{ site.baseurl }}{% link _docs/getting-started/monitoring.md %}#retries
 [REST API documentation]: https://apidocs.snyk.io

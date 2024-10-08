@@ -2,7 +2,7 @@
 title: LDAP Configuration
 category: Getting Started
 chapter: 1
-order: 10
+order: 11
 ---
 
 Dependency-Track has been tested with multiple LDAP servers. The following are

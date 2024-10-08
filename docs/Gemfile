@@ -11,4 +11,6 @@ group :jekyll_plugins do
   gem 'jekyll-sitemap', '1.4.0'
   gem 'jekyll-redirect-from', '0.16.0'
   gem 'jekyll-mermaid', '1.0.0'
+  # https://github.com/ffi/ffi/issues/1103#issuecomment-2186974923
+  gem 'ffi', '< 1.17.0'
 end

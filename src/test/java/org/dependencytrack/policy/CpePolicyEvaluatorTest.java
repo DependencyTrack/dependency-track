@@ -93,5 +93,13 @@ public class CpePolicyEvaluatorTest extends PersistenceCapableTest {
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
-
+    
+    @Test
+    public void noCpePresent() {
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.CPE, PolicyCondition.Operator.NOT_PRESENT, "NOT_PRESENT");
+        Component component = new Component();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+    }
 }

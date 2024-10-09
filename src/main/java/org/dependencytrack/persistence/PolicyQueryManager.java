@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -187,13 +188,54 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
 
             final var existingViolationByIdentity = new HashMap<ViolationIdentity, PolicyViolation>();
             for (final PolicyViolation violation : existingViolations) {
-                // Previous reconciliation logic allowed for duplicate violations
-                // to exist. Take that into consideration and ensure their deletion.
-                final boolean isDuplicate = existingViolationByIdentity.putIfAbsent(
-                        new ViolationIdentity(violation), violation) != null;
-                if (isDuplicate) {
+                // Previous (<= 4.12.0) reconciliation logic allowed for duplicate violations to exist.
+                // Take that into consideration and ensure their deletion.
+                existingViolationByIdentity.compute(new ViolationIdentity(violation), (ignored, duplicateViolation) -> {
+                    if (duplicateViolation == null) {
+                        return violation;
+                    }
+
+                    // Prefer to keep violations with existing analysis.
+                    if (violation.getAnalysis() != null && duplicateViolation.getAnalysis() == null) {
+                        violationsToDelete.add(duplicateViolation);
+                        return violation;
+                    } else if (violation.getAnalysis() == null && duplicateViolation.getAnalysis() != null) {
+                        violationsToDelete.add(violation);
+                        return duplicateViolation;
+                    }
+
+                    // If none of the violations have an analysis, prefer to keep the oldest.
+                    if (violation.getAnalysis() == null && duplicateViolation.getAnalysis() == null) {
+                        final int timestampComparisonResult = Objects.compare(
+                                violation.getTimestamp(), duplicateViolation.getTimestamp(), Date::compareTo);
+                        if (timestampComparisonResult < 0) {
+                            // Duplicate violation is newer.
+                            violationsToDelete.add(duplicateViolation);
+                            return violation;
+                        } else if (timestampComparisonResult > 0) {
+                            // Duplicate violation is older.
+                            violationsToDelete.add(violation);
+                            return duplicateViolation;
+                        }
+
+                        // Everything else being equal, keep the duplicate violation.
+                        violationsToDelete.add(violation);
+                        return duplicateViolation;
+                    }
+
+                    // If both violations have an analysis, prefer to keep the suppressed one.
+                    if (violation.getAnalysis().isSuppressed() && !duplicateViolation.getAnalysis().isSuppressed()) {
+                        violationsToDelete.add(duplicateViolation);
+                        return violation;
+                    } else if (!violation.getAnalysis().isSuppressed() && duplicateViolation.getAnalysis().isSuppressed()) {
+                        violationsToDelete.add(violation);
+                        return duplicateViolation;
+                    }
+
+                    // Everything else being equal, keep the duplicate violation.
                     violationsToDelete.add(violation);
-                }
+                    return duplicateViolation;
+                });
             }
 
             final var reportedViolationsByIdentity = new HashMap<ViolationIdentity, PolicyViolation>();

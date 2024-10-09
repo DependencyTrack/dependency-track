@@ -77,6 +77,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -99,6 +100,7 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertSe
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProject;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProjectMetadata;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
+import static org.dependencytrack.util.LockUtil.getLockForProjectAndNamespace;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
@@ -169,10 +171,12 @@ public class BomUploadProcessingTask implements Subscriber {
             ctx.bomSerialNumber = cdxBom.getSerialNumber().replaceFirst("^urn:uuid:", "");
         }
 
+        final ReentrantLock lock = getLockForProjectAndNamespace(ctx.project, getClass().getSimpleName());
         try (var ignoredMdcBomFormat = MDC.putCloseable(MDC_BOM_FORMAT, ctx.bomFormat.getFormatShortName());
              var ignoredMdcBomSpecVersion = MDC.putCloseable(MDC_BOM_SPEC_VERSION, ctx.bomSpecVersion);
              var ignoredMdcBomSerialNumber = MDC.putCloseable(MDC_BOM_SERIAL_NUMBER, ctx.bomSerialNumber);
              var ignoredMdcBomVersion = MDC.putCloseable(MDC_BOM_VERSION, String.valueOf(ctx.bomVersion))) {
+            lock.lock();
             processBom(ctx, cdxBom);
 
             LOGGER.debug("Dispatching %d events".formatted(eventsToDispatch.size()));
@@ -180,6 +184,8 @@ public class BomUploadProcessingTask implements Subscriber {
         } catch (RuntimeException e) {
             LOGGER.error("Failed to process BOM", e);
             dispatchBomProcessingFailedNotification(ctx, e);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -271,8 +277,6 @@ public class BomUploadProcessingTask implements Subscriber {
             // Synchronizing all components and services in a single TRX is viable because they are "sharded"
             // by project; This is not the case for vulnerabilities. We don't want the entire TRX to fail,
             // just because another TRX created or modified the same vulnerability record.
-
-            // TODO: Introduce locking by project ID / UUID to avoid processing BOMs for the same project concurrently.
 
             qm.runInTransaction(() -> {
                 final Project persistentProject = processProject(ctx, qm, project, projectMetadata);

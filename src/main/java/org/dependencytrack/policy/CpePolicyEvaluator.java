@@ -55,6 +55,10 @@ public class CpePolicyEvaluator extends AbstractPolicyEvaluator {
                 if (Matcher.matches(component.getCpe(), condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
+            } else if(PolicyCondition.Operator.NOT_PRESENT == condition.getOperator()){
+                if(component.getCpe() == null){
+                    violations.add(new PolicyConditionViolation(condition, component));
+                }
             } else if (PolicyCondition.Operator.NO_MATCH == condition.getOperator()) {
                 if (!Matcher.matches(component.getCpe(), condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));

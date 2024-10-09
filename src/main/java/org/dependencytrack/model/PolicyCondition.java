@@ -52,6 +52,7 @@ public class PolicyCondition implements Serializable {
         IS_NOT,
         MATCHES,
         NO_MATCH,
+        NOT_PRESENT,
         NUMERIC_GREATER_THAN,
         NUMERIC_LESS_THAN,
         NUMERIC_EQUAL,

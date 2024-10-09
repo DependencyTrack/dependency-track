@@ -151,7 +151,7 @@ public class Component implements Serializable {
     private String version;
 
     @Persistent
-    @Column(name = "CLASSIFIER", jdbcType = "VARCHAR", allowsNull = "false")
+    @Column(name = "CLASSIFIER", jdbcType = "VARCHAR")
     @Index(name = "COMPONENT_CLASSIFIER_IDX")
     @NotNull
     @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")

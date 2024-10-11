@@ -221,6 +221,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                         String srcName = null;
                         String srcVersion = null;
                         String srcRelease = null;
+                        Integer srcEpoch = null;
 
                         String pkgType = component.getPurl().getType();
                         String arch = null;
@@ -251,6 +252,8 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                                 srcVersion = property.getPropertyValue();
                             } else if (property.getPropertyName().equals("trivy:SrcRelease")) {
                                 srcRelease = property.getPropertyValue();
+                            } else if (property.getPropertyName().equals("trivy:SrcEpoch")) {
+                                srcEpoch = Integer.parseInt(property.getPropertyValue());
                             } else if (!pkgType.contains("-") && property.getPropertyName().equals("trivy:PkgType")) {
                                 pkgType = property.getPropertyValue();
 
@@ -278,6 +281,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                                 .setSrcVersion(srcVersion != null ? srcVersion : component.getVersion());
                         Optional.ofNullable(srcRelease).ifPresent(packageBuilder::setSrcRelease);
                         Optional.ofNullable(epoch).ifPresent(packageBuilder::setEpoch);
+                        Optional.ofNullable(srcEpoch).ifPresent(packageBuilder::setSrcEpoch);
                         pkg.addPackages(packageBuilder);
                     }
                 }

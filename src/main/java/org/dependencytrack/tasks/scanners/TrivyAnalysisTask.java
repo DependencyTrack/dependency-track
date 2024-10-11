@@ -120,6 +120,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
     private String apiBaseUrl;
     private String apiToken;
+    private boolean shouldIgnoreUnfixed;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     @Override
@@ -151,6 +152,8 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 LOGGER.error("An error occurred decrypting the Trivy API token; Skipping", ex);
                 return;
             }
+
+            shouldIgnoreUnfixed = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED);
         }
 
         vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
@@ -344,7 +347,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 var vulnerability = result.getVulnerabilities(idx);
                 var key = vulnerability.getPkgIdentifier().getPurl();
                 LOGGER.debug("Searching key %s in map".formatted(key));
-                if (!super.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED) || vulnerability.getStatus() == 3) {
+                if (!shouldIgnoreUnfixed || vulnerability.getStatus() == 3) {
                     handle(componentByPurl.get(key), vulnerability);
                 }
             }

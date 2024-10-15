@@ -135,7 +135,7 @@ jobs:
 
       - name: Run Trivy Vulnerability Scanner
         if: ${{ inputs.publish-container }}
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # tag=0.24.0
+        uses: aquasecurity/trivy-action@5681af892cd0f4997658e2bacc62bd0a894cf564 # tag=0.27.0
         env:
           # https://github.com/aquasecurity/trivy-action/issues/389
           TRIVY_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-db:2"

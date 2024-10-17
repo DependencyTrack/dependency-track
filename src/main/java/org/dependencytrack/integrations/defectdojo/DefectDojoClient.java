@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.integrations.defectdojo;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -32,6 +33,7 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.util.EntityUtils;
+import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.common.HttpClientPool;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -50,10 +52,12 @@ public class DefectDojoClient {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private final DefectDojoUploader uploader;
     private final URL baseURL;
+    private final boolean autoVerifyFindings;
 
     public DefectDojoClient(final DefectDojoUploader uploader, final URL baseURL) {
         this.uploader = uploader;
         this.baseURL = baseURL;
+        this.autoVerifyFindings = Config.getInstance().getPropertyAsBoolean(ConfigKey.DEFECT_DOJO_FINDINGS_AUTO_VERIFY);
     }
 
     public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson) {
@@ -66,7 +70,7 @@ public class DefectDojoClient {
                 .addPart("file", inputStreamBody)
                 .addPart("engagement", new StringBody(engagementId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_type", new StringBody("Dependency Track Finding Packaging Format (FPF) Export", ContentType.MULTIPART_FORM_DATA))
-                .addPart("verified", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
+                .addPart("verified", new StringBody(Boolean.toString(autoVerifyFindings), ContentType.MULTIPART_FORM_DATA))
                 .addPart("active", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
                 .addPart("minimum_severity", new StringBody("Info", ContentType.MULTIPART_FORM_DATA))
                 .addPart("close_old_findings", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
@@ -173,7 +177,7 @@ public class DefectDojoClient {
                 .addPart("file", inputStreamBody)
                 .addPart("engagement", new StringBody(engagementId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_type", new StringBody("Dependency Track Finding Packaging Format (FPF) Export", ContentType.MULTIPART_FORM_DATA))
-                .addPart("verified", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
+                .addPart("verified", new StringBody(Boolean.toString(autoVerifyFindings), ContentType.MULTIPART_FORM_DATA))
                 .addPart("active", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
                 .addPart("minimum_severity", new StringBody("Info", ContentType.MULTIPART_FORM_DATA))
                 .addPart("close_old_findings", new StringBody("true", ContentType.MULTIPART_FORM_DATA))

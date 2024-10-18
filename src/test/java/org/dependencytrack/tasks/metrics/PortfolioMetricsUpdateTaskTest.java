@@ -79,8 +79,17 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
         assertThat(metrics.getFindingsUnaudited()).isZero();
         assertThat(metrics.getInheritedRiskScore()).isZero();
         assertThat(metrics.getPolicyViolationsFail()).isZero();
+        assertThat(metrics.getPolicyViolationsFailTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsFailAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsFailUnaudited()).isZero();
         assertThat(metrics.getPolicyViolationsWarn()).isZero();
+        assertThat(metrics.getPolicyViolationsWarnTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsWarnAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsWarnUnaudited()).isZero();
         assertThat(metrics.getPolicyViolationsInfo()).isZero();
+        assertThat(metrics.getPolicyViolationsInfoTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsInfoAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsInfoUnaudited()).isZero();
         assertThat(metrics.getPolicyViolationsTotal()).isZero();
         assertThat(metrics.getPolicyViolationsAudited()).isZero();
         assertThat(metrics.getPolicyViolationsUnaudited()).isZero();
@@ -171,8 +180,17 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
         assertThat(metrics.getFindingsUnaudited()).isEqualTo(1);
         assertThat(metrics.getInheritedRiskScore()).isEqualTo(10.0);
         assertThat(metrics.getPolicyViolationsFail()).isZero();
+        assertThat(metrics.getPolicyViolationsFailTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsFailAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsFailUnaudited()).isZero();
         assertThat(metrics.getPolicyViolationsWarn()).isZero();
+        assertThat(metrics.getPolicyViolationsWarnTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsWarnAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsWarnUnaudited()).isZero();
         assertThat(metrics.getPolicyViolationsInfo()).isZero();
+        assertThat(metrics.getPolicyViolationsInfoTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsInfoAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsInfoUnaudited()).isZero();
         assertThat(metrics.getPolicyViolationsTotal()).isZero();
         assertThat(metrics.getPolicyViolationsAudited()).isZero();
         assertThat(metrics.getPolicyViolationsUnaudited()).isZero();
@@ -249,20 +267,29 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
         assertThat(metrics.getFindingsUnaudited()).isZero();
         assertThat(metrics.getInheritedRiskScore()).isZero();
         assertThat(metrics.getPolicyViolationsFail()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsFailTotal()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsFailAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsFailUnaudited()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsWarn()).isEqualTo(1);
-        assertThat(metrics.getPolicyViolationsInfo()).isZero(); // Suppressed
-        assertThat(metrics.getPolicyViolationsTotal()).isEqualTo(2);
-        assertThat(metrics.getPolicyViolationsAudited()).isEqualTo(1);
-        assertThat(metrics.getPolicyViolationsUnaudited()).isEqualTo(1);
-        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero(); // Suppressed
-        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsWarnTotal()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsWarnAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsWarnUnaudited()).isEqualTo(1);;
+        assertThat(metrics.getPolicyViolationsInfo()).isZero();
+        assertThat(metrics.getPolicyViolationsInfoTotal()).isEqualTo(1); // Suppressed
+        assertThat(metrics.getPolicyViolationsInfoAudited()).isEqualTo(1); // Suppressed
+        assertThat(metrics.getPolicyViolationsInfoUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsTotal()).isEqualTo(3);
+        assertThat(metrics.getPolicyViolationsAudited()).isEqualTo(1); // Suppressed
+        assertThat(metrics.getPolicyViolationsUnaudited()).isEqualTo(2);
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isEqualTo(1); // Suppressed
         assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
         assertThat(metrics.getPolicyViolationsLicenseTotal()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
         assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsOperationalTotal()).isEqualTo(1);
-        assertThat(metrics.getPolicyViolationsOperationalAudited()).isEqualTo(1);
-        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isEqualTo(1);
 
         qm.getPersistenceManager().refreshAll(projectUnaudited, projectAudited, projectSuppressed,
                 componentUnaudited, componentAudited, componentSuppressed);

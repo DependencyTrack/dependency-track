@@ -34,10 +34,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
 
 public class DefectDojoUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 
@@ -45,6 +45,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     private static final String ENGAGEMENTID_PROPERTY = "defectdojo.engagementId";
     private static final String REIMPORT_PROPERTY = "defectdojo.reimport";
     private static final String DO_NOT_REACTIVATE_PROPERTY = "defectdojo.doNotReactivate";
+    private static final String VERIFIED_PROPERTY = "defectdojo.verified";
 
 
     public boolean isReimportConfigured(final Project project) {
@@ -60,6 +61,15 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         final ProjectProperty reactivate = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), DO_NOT_REACTIVATE_PROPERTY);
         if (reactivate != null) {
             return Boolean.parseBoolean(reactivate.getPropertyValue());
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isVerifiedConfigured(final Project project) {
+        final ProjectProperty reimport = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), VERIFIED_PROPERTY);
+        if (reimport != null) {
+            return Boolean.parseBoolean(reimport.getPropertyValue());
         } else {
             return false;
         }
@@ -100,7 +110,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         final boolean globalReimportEnabled = qm.isEnabled(DEFECTDOJO_REIMPORT_ENABLED);
         final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         try {
-            final DefectDojoClient client = new DefectDojoClient(this, URI.create(defectDojoUrl.getPropertyValue()).toURL());
+            final DefectDojoClient client = new DefectDojoClient(this, URI.create(defectDojoUrl.getPropertyValue()).toURL(),
+                    isVerifiedConfigured(project));
             if (isReimportConfigured(project) || globalReimportEnabled) {
                 final ArrayList<String> testsIds = client.getDojoTestIds(apiKey.getPropertyValue(), engagementId.getPropertyValue());
                 final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds);

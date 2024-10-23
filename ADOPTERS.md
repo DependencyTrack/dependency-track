@@ -6,9 +6,8 @@
 This is a list of organizations that have spoken publicly about their adoption or
 production users that have added themselves (in alphabetical order):
 
-* [Coming Soon]
-
-
+* [World Kinect Corporation](https://world-kinect.com/) uses Dependency-Track to continuously identify software supply chain risks and to enforce policy compliance across the portfolio.
+  World Kinect's usage of Dependency-Track was [showcased in the community meeting of May 2024](https://www.youtube.com/watch?v=MS2DlMdUI7Q&t=1320s).
 
 This is a list of adopters in early stages of production or
 pre-production (in alphabetical order):
@@ -24,10 +23,8 @@ pre-production (in alphabetical order):
 * [Dutch Tax Office - Belastingdienst](https://www.belastingdienst.nl/) has integrated OWASP Dependency-Track into their 
 development processes as part of the DevSecOps program. We integrate Dependency-Track
 with various platforms and programming languages to gain vulnerability insights in 
-our internally developed software. 
-
-We want to thank all contributors of Dependency-Track creating a resilient and 
-extensible SCA tool. Especially the API is a huge asset to integrate 
+our internally developed software. We want to thank all contributors of Dependency-Track creating a resilient and
+extensible SCA tool. Especially the API is a huge asset to integrate
 within the current organization processes.
 
 If you have adopted OWASP Depenency Track and would like to be included in this list,

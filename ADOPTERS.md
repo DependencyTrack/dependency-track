@@ -1,6 +1,6 @@
 # Adopters
 
-<!-- Hello! If you are using OWASP Dependency Trtack and contributing to this file, thank you! -->
+<!-- Hello! If you are using OWASP Dependency Track and contributing to this file, thank you! -->
 <!-- Please keep lines shorter than 80 characters (or so.) Links can go long. -->
 
 This is a list of organizations that have spoken publicly about their adoption or
@@ -21,6 +21,14 @@ pre-production (in alphabetical order):
 
 * [Apex Fintech Solutions](https://apexfintechsolutions.com/) has integrated OWASP Dependency-Track into their CI/CD pipeline as part of the DevSecOps program. This integration allows for the upload of SBOMs (Software Bill of Materials) to the platform for comprehensive component analysis and a detailed understanding of the software inventory used in software applications. By analyzing the components in our monorepo, we enhance our vulnerability management program and gain valuable insights into transitive dependencies, which traditional SCA (Software Composition Analysis) tools often overlook.
 
+* [Dutch Tax Office - Belastingdienst](https://www.belastingdienst.nl/) has integrated OWASP Dependency-Track into their 
+development processes as part of the DevSecOps program. We integrate Dependency-Track
+with various platforms and programming languages to gain vulnerability insights in 
+our internally developed software. 
+
+We want to thank all contributors of Dependency-Track creating a resilient and 
+extensible SCA tool. Especially the API is a huge asset to integrate 
+within the current organization processes.
 
 If you have adopted OWASP Depenency Track and would like to be included in this list,
 feel free to submit a PR updating this file or

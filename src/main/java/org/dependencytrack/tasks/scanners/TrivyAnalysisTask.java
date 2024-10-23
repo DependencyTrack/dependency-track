@@ -60,6 +60,7 @@ import trivy.proto.common.Application;
 import trivy.proto.common.OS;
 import trivy.proto.common.Package;
 import trivy.proto.common.PackageInfo;
+import trivy.proto.common.PkgIdentifier;
 import trivy.proto.scanner.v1.Result;
 import trivy.proto.scanner.v1.ScanOptions;
 import trivy.proto.scanner.v1.ScanResponse;
@@ -119,6 +120,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
     private String apiBaseUrl;
     private String apiToken;
+    private boolean shouldIgnoreUnfixed;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     @Override
@@ -150,6 +152,8 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 LOGGER.error("An error occurred decrypting the Trivy API token; Skipping", ex);
                 return;
             }
+
+            shouldIgnoreUnfixed = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED);
         }
 
         vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
@@ -191,41 +195,42 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
         final var pkgs = new HashMap<String, PackageInfo.Builder>();
         final var apps = new HashMap<String, Application.Builder>();
         final var os = new HashMap<String, OS>();
-        final var map = new HashMap<String, Component>();
+        final var componentByPurl = new HashMap<String, Component>();
 
         for (final Component component : components) {
             if (component.getPurl() != null) {
                 var appType = PurlType.getApp(component.getPurl().getType());
 
-                var name = component.getName();
+                var name = component.getPurl().getName();
 
-                if (component.getGroup() != null) {
-                    name = component.getGroup() + ":" + name;
+                if (component.getPurl().getNamespace() != null) {
+                    name = component.getPurl().getNamespace() + ":" + name;
                 }
 
                 if (!PurlType.UNKNOWN.getAppType().equals(appType)) {
                     if (!PurlType.Constants.PACKAGES.equals(appType)) {
                         final Application.Builder app = apps.computeIfAbsent(appType, Application.newBuilder()::setType);
-                        final String key = name + ":" + component.getVersion();
+                        final String key = component.getPurl().toString();
 
                         LOGGER.debug("Add key %s to map".formatted(key));
-                        map.put(key, component);
+                        componentByPurl.put(key, component);
 
                         LOGGER.debug("add library %s".formatted(component.toString()));
                         app.addPackages(Package.newBuilder()
                                 .setName(name)
-                                .setVersion(component.getVersion())
+                                .setVersion(component.getPurl().getVersion())
                                 .setSrcName(name)
-                                .setSrcVersion(component.getVersion()));
+                                .setSrcVersion(component.getPurl().getVersion())
+                                .setIdentifier(PkgIdentifier.newBuilder().setPurl(component.getPurl().toString())));
                     } else {
                         String srcName = null;
                         String srcVersion = null;
                         String srcRelease = null;
+                        Integer srcEpoch = null;
 
                         String pkgType = component.getPurl().getType();
                         String arch = null;
                         Integer epoch = null;
-                        String versionKey = "";
 
                         if (component.getPurl().getQualifiers() != null) {
                             arch = component.getPurl().getQualifiers().get("arch");
@@ -233,7 +238,6 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                             String tmpEpoch = component.getPurl().getQualifiers().get("epoch");
                             if (tmpEpoch != null) {
                                 epoch = Integer.parseInt(tmpEpoch);
-                                versionKey = tmpEpoch + ":";
                             }
 
                             String distro = component.getPurl().getQualifiers().get("distro");
@@ -251,6 +255,8 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                                 srcVersion = property.getPropertyValue();
                             } else if (property.getPropertyName().equals("trivy:SrcRelease")) {
                                 srcRelease = property.getPropertyValue();
+                            } else if (property.getPropertyName().equals("trivy:SrcEpoch")) {
+                                srcEpoch = Integer.parseInt(property.getPropertyValue());
                             } else if (!pkgType.contains("-") && property.getPropertyName().equals("trivy:PkgType")) {
                                 pkgType = property.getPropertyValue();
 
@@ -264,20 +270,21 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
                         final PackageInfo.Builder pkg = pkgs.computeIfAbsent(pkgType, ignored -> PackageInfo.newBuilder());
 
-                        versionKey += component.getVersion();
-                        final String key = name + ":" + versionKey;
+                        final String key = component.getPurl().toString();
 
                         LOGGER.debug("Add key %s to map".formatted(key));
-                        map.put(key, component);
+                        componentByPurl.put(key, component);
                         LOGGER.debug("add package %s".formatted(component.toString()));
                         final Package.Builder packageBuilder = Package.newBuilder()
-                                .setName(component.getName())
-                                .setVersion(component.getVersion())
+                                .setName(component.getPurl().getName())
+                                .setVersion(component.getPurl().getVersion())
                                 .setArch(arch != null ? arch : "x86_64")
-                                .setSrcName(srcName != null ? srcName : component.getName())
-                                .setSrcVersion(srcVersion != null ? srcVersion : component.getVersion());
+                                .setSrcName(srcName != null ? srcName : component.getPurl().getName())
+                                .setSrcVersion(srcVersion != null ? srcVersion : component.getPurl().getVersion())
+                                .setIdentifier(PkgIdentifier.newBuilder().setPurl(component.getPurl().toString()));
                         Optional.ofNullable(srcRelease).ifPresent(packageBuilder::setSrcRelease);
                         Optional.ofNullable(epoch).ifPresent(packageBuilder::setEpoch);
+                        Optional.ofNullable(srcEpoch).ifPresent(packageBuilder::setSrcEpoch);
                         pkg.addPackages(packageBuilder);
                     }
                 }
@@ -314,7 +321,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
         try {
             final var results = analyzeBlob(infos);
-            handleResults(map, results);
+            handleResults(componentByPurl, results);
         } catch (Throwable ex) {
             handleRequestException(LOGGER, ex);
         }
@@ -334,14 +341,14 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                         component.getPurl().getCoordinates(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel));
     }
 
-    private void handleResults(final Map<String, Component> components, final ArrayList<Result> input) {
+    private void handleResults(final Map<String, Component> componentByPurl, final ArrayList<Result> input) {
         for (final Result result : input) {
             for (int idx = 0; idx < result.getVulnerabilitiesCount(); idx++) {
                 var vulnerability = result.getVulnerabilities(idx);
-                var key = vulnerability.getPkgName() + ":" + vulnerability.getInstalledVersion();
+                var key = vulnerability.getPkgIdentifier().getPurl();
                 LOGGER.debug("Searching key %s in map".formatted(key));
-                if (!super.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED) || vulnerability.getStatus() == 3) {
-                    handle(components.get(key), vulnerability);
+                if (!shouldIgnoreUnfixed || vulnerability.getStatus() == 3) {
+                    handle(componentByPurl.get(key), vulnerability);
                 }
             }
         }

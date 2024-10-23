@@ -6,6 +6,11 @@
 This is a list of organizations that have spoken publicly about their adoption or
 production users that have added themselves (in alphabetical order):
 
+* [Rohde & Schwarz](https://www.rohde-schwarz.com/): At Rohde & Schwarz, we are deeply committed to ensuring the
+cybersecurity of our products, systems, and solutions. As part of our comprehensive security strategy,
+we utilize a diverse set of tools to safeguard our technology. We value Dependency-Track for its scalability,
+adherence to open standards, and active community. Additionally, we actively contribute to the development of
+Dependency-Track by adding features, improving its usability for large organizations, and strengthening its security posture.
 * [World Kinect Corporation](https://world-kinect.com/) uses Dependency-Track to continuously identify software supply chain risks and to enforce policy compliance across the portfolio.
   World Kinect's usage of Dependency-Track was [showcased in the community meeting of May 2024](https://www.youtube.com/watch?v=MS2DlMdUI7Q&t=1320s).
 

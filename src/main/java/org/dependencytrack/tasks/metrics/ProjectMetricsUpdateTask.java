@@ -106,9 +106,15 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                         counters.vulnerableComponents += 1;
                     }
 
-                    counters.policyViolationsFail += componentCounters.policyViolationsFail;
-                    counters.policyViolationsWarn += componentCounters.policyViolationsWarn;
-                    counters.policyViolationsInfo += componentCounters.policyViolationsInfo;
+                    counters.policyViolationsFailTotal += componentCounters.policyViolationsFailTotal;
+                    counters.policyViolationsFailAudited += componentCounters.policyViolationsFailAudited;
+                    counters.policyViolationsFailUnaudited += componentCounters.policyViolationsFailUnaudited;
+                    counters.policyViolationsWarnTotal += componentCounters.policyViolationsWarnTotal;
+                    counters.policyViolationsWarnAudited += componentCounters.policyViolationsWarnAudited;
+                    counters.policyViolationsWarnUnaudited += componentCounters.policyViolationsWarnUnaudited;
+                    counters.policyViolationsInfoTotal += componentCounters.policyViolationsInfoTotal;
+                    counters.policyViolationsInfoAudited += componentCounters.policyViolationsInfoAudited;
+                    counters.policyViolationsInfoUnaudited += componentCounters.policyViolationsInfoUnaudited;
                     counters.policyViolationsTotal += componentCounters.policyViolationsTotal;
                     counters.policyViolationsAudited += componentCounters.policyViolationsAudited;
                     counters.policyViolationsUnaudited += componentCounters.policyViolationsUnaudited;

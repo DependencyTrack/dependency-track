@@ -99,6 +99,7 @@
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>9.1.0</lib.cyclonedx-java.version>
+        <lib.datanucleus-cache-caffeine.version>0.4.0</lib.datanucleus-cache-caffeine.version>
         <lib.greenmail.version>2.1.0</lib.greenmail.version>
         <lib.jackson.version>2.18.0</lib.jackson.version>
         <lib.jackson-databind.version>2.18.0</lib.jackson-databind.version>
@@ -197,6 +198,12 @@
             <groupId>org.cyclonedx</groupId>
             <artifactId>cyclonedx-core-java</artifactId>
             <version>${lib.cyclonedx-java.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.nscuro</groupId>
+            <artifactId>datanucleus-cache-caffeine</artifactId>
+            <version>${lib.datanucleus-cache-caffeine.version}</version>
         </dependency>
 
         <!-- org.json
@@ -616,6 +623,7 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <configuration>
                     <excludes>
+                        <exclude>org/dependencytrack/observability/MeterRegistryCustomizer.class</exclude>
                         <exclude>org/dependencytrack/upgrade/**/*</exclude>
                         <exclude>trivy/proto/**/*</exclude>
                     </excludes>

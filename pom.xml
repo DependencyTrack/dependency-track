@@ -90,6 +90,7 @@
         <lib.awaitility.version>4.2.2</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
         <lib.checkstyle.version>10.18.1</lib.checkstyle.version>
+        <lib.aws-advanced-jdbc-wrapper.version>2.5.0</lib.aws-advanced-jdbc-wrapper.version>
         <lib.cloud-sql-connector-jdbc-sqlserver.version>1.20.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
         <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.20.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
         <lib.cloud-sql-postgres-socket-factory.version>1.20.1</lib.cloud-sql-postgres-socket-factory.version>
@@ -348,6 +349,11 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${lib.jdbc-driver.postgresql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.jdbc</groupId>
+            <artifactId>aws-advanced-jdbc-wrapper</artifactId>
+            <version>${lib.aws-advanced-jdbc-wrapper.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.sql</groupId>

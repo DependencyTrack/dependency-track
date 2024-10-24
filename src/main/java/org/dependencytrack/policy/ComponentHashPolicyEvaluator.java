@@ -21,10 +21,8 @@ package org.dependencytrack.policy;
 import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Hash;
-
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Component;
-
 import org.dependencytrack.model.PolicyCondition;
 import org.json.JSONObject;
 
@@ -32,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Evaluates a components HASH against a policy.
+ * Evaluates a component's HASH against a policy.
  */
 public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
 
@@ -55,7 +53,7 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
         for (final PolicyCondition condition : super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final Hash hash = extractHashValues(condition);
-            if (matches(hash, component)) {
+            if (conditionApplies(hash, component, condition.getOperator())) {
                 violations.add(new PolicyConditionViolation(condition, component));
             }
         }
@@ -63,7 +61,6 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
     }
 
     private Hash extractHashValues(PolicyCondition condition) {
-
         if (condition.getValue() == null) {
             return null;
         }
@@ -74,10 +71,26 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
         );
     }
 
-    private boolean matches(Hash hash, Component component) {
+    private boolean conditionApplies(Hash hash, Component component, PolicyCondition.Operator operator) {
+        boolean matchFound = matches(hash, component);
 
+        switch (operator) {
+            case IS:
+                return matchFound;  // Violation if the hash match
+
+            case IS_NOT:
+                return !matchFound;  // Violation if the hash does not match
+
+            default:
+                LOGGER.warn("Unsupported operator: " + operator);
+                return false;
+        }
+    }
+
+    private boolean matches(Hash hash, Component component) {
         if (hash != null && hash.getAlgorithm() != null && hash.getValue() != null) {
             String value = StringUtils.trimToNull(hash.getValue());
+
             if (Hash.Algorithm.MD5.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
                 return value.equalsIgnoreCase(component.getMd5());
             } else if (Hash.Algorithm.SHA1.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {

@@ -90,6 +90,11 @@ import java.util.UUID;
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
                 @Persistent(name = "uuid")
+        }),
+        @FetchGroup(name = "REPO_META_ANALYSIS", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "purl"),
+                @Persistent(name = "uuid")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -103,7 +108,8 @@ public class Component implements Serializable {
     public enum FetchGroup {
         ALL,
         INTERNAL_IDENTIFICATION,
-        METRICS_UPDATE
+        METRICS_UPDATE,
+        REPO_META_ANALYSIS
     }
 
     @PrimaryKey

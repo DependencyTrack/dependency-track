@@ -353,7 +353,9 @@ public class NotificationPublisherResource extends AlpineResource {
             JsonObject configObject = jsonReader.readObject();
             jsonReader.close();
             final JsonObject config = Json.createObjectBuilder()
-                    .add(Publisher.CONFIG_DESTINATION, configObject.getString("destination"))
+                    .add(Publisher.CONFIG_DESTINATION, configObject.containsKey("destination") && 
+                        !configObject.isNull("destination") ? configObject.getString("destination") : "")
+
                     .add(Publisher.CONFIG_TEMPLATE_KEY, rule.getPublisher().getTemplate())
                     .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, rule.getPublisher().getTemplateMimeType())
                     .build();

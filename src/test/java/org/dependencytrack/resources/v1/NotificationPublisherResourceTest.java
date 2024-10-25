@@ -392,13 +392,13 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         rule.setTeams(teams);
 
         Set<NotificationGroup> groups = new HashSet<>(Set.of(NotificationGroup.BOM_CONSUMED, NotificationGroup.BOM_PROCESSED, NotificationGroup.BOM_PROCESSING_FAILED,
-                                NotificationGroup.BOM_VALIDATION_FAILED, NotificationGroup.NEW_VULNERABILITY, NotificationGroup.NEW_VULNERABLE_DEPENDENCY, 
-                                NotificationGroup.POLICY_VIOLATION, NotificationGroup.PROJECT_CREATED, NotificationGroup.PROJECT_AUDIT_CHANGE, 
-                                NotificationGroup.VEX_CONSUMED, NotificationGroup.VEX_PROCESSED));
+        NotificationGroup.BOM_VALIDATION_FAILED, NotificationGroup.NEW_VULNERABILITY, NotificationGroup.NEW_VULNERABLE_DEPENDENCY, 
+        NotificationGroup.POLICY_VIOLATION, NotificationGroup.PROJECT_CREATED, NotificationGroup.PROJECT_AUDIT_CHANGE, 
+        NotificationGroup.VEX_CONSUMED, NotificationGroup.VEX_PROCESSED));
         rule.setNotifyOn(groups);
-
-        rule.setPublisherConfig("{\"destination\":\"https://example.com/webhook\"}");
         
+        rule.setPublisherConfig("{}");
+
         Response sendMailResponse = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + rule.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity("", MediaType.APPLICATION_FORM_URLENCODED_TYPE));

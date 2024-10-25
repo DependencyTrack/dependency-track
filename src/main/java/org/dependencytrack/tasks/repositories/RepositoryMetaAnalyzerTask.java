@@ -24,6 +24,7 @@ import alpine.common.metrics.Metrics;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
+import alpine.persistence.ScopedCustomization;
 import io.micrometer.core.instrument.Timer;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.common.ConfigKey;
@@ -99,12 +100,18 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                 try (final QueryManager qm = new QueryManager()) {
                     List<Component> components = fetchNextComponentBatch(qm, null);
                     while (!components.isEmpty()) {
+                        final long lastId = components.getLast().getId();
+
                         LOGGER.debug("Analyzing batch of %d components".formatted(components.size()));
                         for (final Component component : components) {
                             analyze(qm, component);
                         }
 
-                        final long lastId = components.getLast().getId();
+                        // Remove components and meta components from the L1 cache
+                        // to prevent it from growing too large.
+                        qm.getPersistenceManager().evictAll(false, Component.class);
+                        qm.getPersistenceManager().evictAll(false, RepositoryMetaComponent.class);
+
                         components = fetchNextComponentBatch(qm, lastId);
                     }
                 }
@@ -295,7 +302,10 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
         }
 
         final Query<Component> query = qm.getPersistenceManager().newQuery(Component.class);
-        try {
+
+        // NB: Set fetch group on PM level to avoid fields of the default fetch group from being loaded.
+        try (var ignoredPersistenceCustomization = new ScopedCustomization(qm.getPersistenceManager())
+                .withFetchGroup(Component.FetchGroup.REPO_META_ANALYSIS.name())) {
             query.setFilter(String.join(" && ", filterConditions));
             query.setNamedParameters(filterParams);
             query.setOrdering("id DESC");

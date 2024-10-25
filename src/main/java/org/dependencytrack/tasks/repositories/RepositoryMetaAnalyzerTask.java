@@ -31,7 +31,6 @@ import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
@@ -52,17 +51,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 public class RepositoryMetaAnalyzerTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(RepositoryMetaAnalyzerTask.class);
-
     private static final String LATEST_VERSION = "latestVersion";
-
     private static final String PUBLISHED_TIMESTAMP = "publishedTimestamp";
-
     private static final CacheStampedeBlocker<String, Void> cacheStampedeBlocker;
+
+    private long cacheValidityPeriod;
 
     static {
         cacheStampedeBlocker = new CacheStampedeBlocker<>(
@@ -78,6 +77,13 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
      */
     public void inform(final Event e) {
         if (e instanceof final RepositoryMetaEvent event) {
+            try (final var qm = new QueryManager()) {
+                final ConfigProperty cacheValidityPeriodProperty = qm.getConfigProperty(
+                        SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(),
+                        SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
+                cacheValidityPeriod = Long.parseLong(cacheValidityPeriodProperty.getPropertyValue());
+            }
+
             LOGGER.debug("Analyzing component repository metadata");
             // TODO - Remove when https://github.com/DependencyTrack/dependency-track/issues/2110 is implemented
             Timer timer = Timer.builder("repository_meta_analyzer_task")
@@ -107,9 +113,10 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                             analyze(qm, component);
                         }
 
-                        // Remove components and meta components from the L1 cache
-                        // to prevent it from growing too large.
+                        // Remove components, analysis cache, and meta components from
+                        // the L1 cache to prevent it from growing too large.
                         qm.getPersistenceManager().evictAll(false, Component.class);
+                        qm.getPersistenceManager().evictAll(false, ComponentAnalysisCache.class);
                         qm.getPersistenceManager().evictAll(false, RepositoryMetaComponent.class);
 
                         components = fetchNextComponentBatch(qm, lastId);
@@ -250,8 +257,6 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
 
     protected boolean isRepositoryMetaComponentStillValid(final QueryManager qm, final RepositoryType repositoryType, final String namespace, final String name) {
         boolean isRepositoryMetaComponentStillValid = false;
-        ConfigProperty cacheClearPeriod = qm.getConfigProperty(ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(), ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
-        long cacheValidityPeriod = Long.parseLong(cacheClearPeriod.getPropertyValue());
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(repositoryType, namespace, name);
         long delta = 0L;
         if (metaComponent != null) {
@@ -270,25 +275,21 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
     }
 
     protected boolean isCacheCurrent(ComponentAnalysisCache cac, String target) {
-        try (QueryManager qm = new QueryManager()) {
-            boolean isCacheCurrent = false;
-            ConfigProperty cacheClearPeriod = qm.getConfigProperty(ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(), ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
-            long cacheValidityPeriod = Long.parseLong(cacheClearPeriod.getPropertyValue());
-            long delta = 0L;
-            if (cac != null) {
-                final Date now = new Date();
-                if (now.getTime() > cac.getLastOccurrence().getTime()) {
-                    delta = now.getTime() - cac.getLastOccurrence().getTime();
-                    isCacheCurrent = delta <= cacheValidityPeriod;
-                }
+        boolean isCacheCurrent = false;
+        long delta = 0L;
+        if (cac != null) {
+            final Date now = new Date();
+            if (now.getTime() > cac.getLastOccurrence().getTime()) {
+                delta = now.getTime() - cac.getLastOccurrence().getTime();
+                isCacheCurrent = delta <= cacheValidityPeriod;
             }
-            if (isCacheCurrent) {
-                LOGGER.debug("Cache is current. External repository call was made in the last " + cacheValidityPeriod + " ms (precisely " + delta + " ms ago). Skipping analysis. (target: " + target + ")");
-            } else {
-                LOGGER.debug("Cache is not current. External repository call was not made in the last " + cacheValidityPeriod + " ms. Analysis should be performed (target: " + target + ")");
-            }
-            return isCacheCurrent;
         }
+        if (isCacheCurrent) {
+            LOGGER.debug("Cache is current. External repository call was made in the last " + cacheValidityPeriod + " ms (precisely " + delta + " ms ago). Skipping analysis. (target: " + target + ")");
+        } else {
+            LOGGER.debug("Cache is not current. External repository call was not made in the last " + cacheValidityPeriod + " ms. Analysis should be performed (target: " + target + ")");
+        }
+        return isCacheCurrent;
     }
 
     private List<Component> fetchNextComponentBatch(final QueryManager qm, final Long lastId) {

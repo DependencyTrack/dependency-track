@@ -340,7 +340,7 @@ public class NotificationPublisherResource extends AlpineResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
-    public Response testSlackPublisherConfig(
+    public Response testRuleConfiguration (
             @Parameter(description = "The UUID of the rule to test", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String ruleUuid) throws Exception {
         try(QueryManager qm = new QueryManager()){
@@ -366,7 +366,12 @@ public class NotificationPublisherResource extends AlpineResource {
                     .content("Rule configuration test")
                     .level(rule.getNotificationLevel())
                     .subject(NotificationUtil.generateSubject(group.toString()));
-                publisher.inform(PublishContext.from(notification), notification, config);
+                    if(SendMailPublisher.class.isAssignableFrom(publisherClass) && rule.getTeams() != null && rule.getTeams().size() > 0){
+                        SendMailPublisher sendMailPublisher = (SendMailPublisher) publisherClass.getDeclaredConstructor().newInstance();
+                        sendMailPublisher.inform(PublishContext.from(notification), notification, config, rule.getTeams());
+                    }else  {
+                        publisher.inform(PublishContext.from(notification), notification, config);
+                    }
             }
             return Response.ok().build();
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {

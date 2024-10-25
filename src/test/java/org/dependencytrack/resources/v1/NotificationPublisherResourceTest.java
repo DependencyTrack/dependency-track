@@ -18,7 +18,9 @@
  */
 package org.dependencytrack.resources.v1;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,6 +43,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import alpine.common.util.UuidUtil;
+import alpine.model.ManagedUser;
+import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
@@ -348,10 +352,21 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     public void testNotificationRuleTest() {
         NotificationPublisher publisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",
-                SlackPublisher.class, "template", "text/html",
+                SendMailPublisher.class, "template", "text/html",
                 false);
         
         NotificationRule rule = qm.createNotificationRule("Example Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+
+        List<Team> teams = new ArrayList<>();
+        Team team = new Team();
+        List<ManagedUser> managedUsers = new ArrayList<>();
+        ManagedUser managedUser = new ManagedUser();
+        managedUsers.add(managedUser);
+        team.setManagedUsers(managedUsers);
+        teams.add(team);
+        rule.setTeams(teams);
+
+        qm.updateNotificationRule(rule);
 
         Set<NotificationGroup> groups = new HashSet<>(Set.of(NotificationGroup.BOM_CONSUMED, NotificationGroup.BOM_PROCESSED, NotificationGroup.BOM_PROCESSING_FAILED,
                                 NotificationGroup.BOM_VALIDATION_FAILED, NotificationGroup.NEW_VULNERABILITY, NotificationGroup.NEW_VULNERABLE_DEPENDENCY, 

@@ -31,7 +31,6 @@ import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
@@ -43,7 +42,9 @@ import org.dependencytrack.util.PurlUtil;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import javax.jdo.Query;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -96,14 +97,15 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
             } else {
                 LOGGER.info("Analyzing portfolio component repository metadata");
                 try (final QueryManager qm = new QueryManager()) {
-                    final List<Project> projects = qm.getAllProjects(true);
-                    for (final Project project : projects) {
-                        final List<Component> components = qm.getAllComponents(project);
-                        LOGGER.debug("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+                    List<Component> components = fetchNextComponentBatch(qm, null);
+                    while (!components.isEmpty()) {
+                        LOGGER.debug("Analyzing batch of %d components".formatted(components.size()));
                         for (final Component component : components) {
                             analyze(qm, component);
                         }
-                        LOGGER.debug("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+
+                        final long lastId = components.getLast().getId();
+                        components = fetchNextComponentBatch(qm, lastId);
                     }
                 }
                 LOGGER.info("Portfolio component repository metadata analysis complete");
@@ -281,4 +283,27 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
             return isCacheCurrent;
         }
     }
+
+    private List<Component> fetchNextComponentBatch(final QueryManager qm, final Long lastId) {
+        final var filterConditions = new ArrayList<>(List.of(
+                "(project.active == null || project.active)",
+                "purl != null"));
+        final var filterParams = new HashMap<String, Object>();
+        if (lastId != null) {
+            filterConditions.add("id < :lastId");
+            filterParams.put("lastId", lastId);
+        }
+
+        final Query<Component> query = qm.getPersistenceManager().newQuery(Component.class);
+        try {
+            query.setFilter(String.join(" && ", filterConditions));
+            query.setNamedParameters(filterParams);
+            query.setOrdering("id DESC");
+            query.setRange(0, 1000);
+            return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
+        }
+    }
+
 }

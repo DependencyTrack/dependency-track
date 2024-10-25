@@ -44,7 +44,6 @@ import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.NistApiMirrorEvent;
 import org.dependencytrack.event.NistMirrorEvent;
-import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
@@ -53,7 +52,6 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.listener.IndexingInstanceLifecycleListener;
-import org.dependencytrack.persistence.listener.L2CacheEvictingInstanceLifecycleListener;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -399,13 +397,11 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
     }
 
     private void processVulnerability(final Vulnerability vuln, final List<VulnerableSoftware> vsList) {
-        try (final var qm = new QueryManager().withL2CacheDisabled()) {
+        try (final var qm = new QueryManager()) {
             qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
             qm.getPersistenceManager().addInstanceLifecycleListener(new IndexingInstanceLifecycleListener(Event::dispatch),
                     Vulnerability.class, VulnerableSoftware.class);
-            qm.getPersistenceManager().addInstanceLifecycleListener(new L2CacheEvictingInstanceLifecycleListener(qm),
-                    AffectedVersionAttribution.class, Vulnerability.class, VulnerableSoftware.class);
 
             final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
             qm.synchronizeVulnerableSoftware(persistentVuln, vsList, Vulnerability.Source.NVD);

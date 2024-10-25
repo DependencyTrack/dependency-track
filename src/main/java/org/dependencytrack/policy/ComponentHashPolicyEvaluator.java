@@ -21,8 +21,10 @@ package org.dependencytrack.policy;
 import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Hash;
+
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Component;
+
 import org.dependencytrack.model.PolicyCondition;
 import org.json.JSONObject;
 
@@ -30,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Evaluates a component's HASH against a policy.
+ * Evaluates a components HASH against a policy.
  */
 public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
 
@@ -90,7 +92,6 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
     private boolean matches(Hash hash, Component component) {
         if (hash != null && hash.getAlgorithm() != null && hash.getValue() != null) {
             String value = StringUtils.trimToNull(hash.getValue());
-
             if (Hash.Algorithm.MD5.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
                 return value.equalsIgnoreCase(component.getMd5());
             } else if (Hash.Algorithm.SHA1.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {

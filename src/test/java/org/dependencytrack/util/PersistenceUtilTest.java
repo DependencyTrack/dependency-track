@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.util;
 
-import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
-import org.datanucleus.cache.Level2Cache;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.util.PersistenceUtil.Diff;
@@ -27,7 +25,6 @@ import org.dependencytrack.util.PersistenceUtil.Differ;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Transaction;
 import java.util.Map;
@@ -37,7 +34,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.util.PersistenceUtil.assertNonPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
-import static org.dependencytrack.util.PersistenceUtil.evictFromL2Cache;
 
 public class PersistenceUtilTest extends PersistenceCapableTest {
 
@@ -178,29 +174,6 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
         assertThat(differ.applyIfChanged("description", Project::getDescription, projectB::setDescription)).isFalse();
 
         assertThat(differ.getDiffs()).isEmpty();
-    }
-
-    @Test
-    public void testEvictFromL2Cache() {
-        final var project = new Project();
-        project.setName("acme-app");
-        qm.persist(project);
-
-        final PersistenceManager pm = qm.getPersistenceManager();
-        final var pmf = (JDOPersistenceManagerFactory) pm.getPersistenceManagerFactory();
-        final Level2Cache l2Cache = pmf.getNucleusContext().getLevel2Cache();
-        assertThat(l2Cache.getSize()).isEqualTo(1);
-
-        // Try to evict using ID obtained from JDOHelper...
-        pmf.getDataStoreCache().evict(JDOHelper.getObjectId(project));
-        assertThat(l2Cache.getSize()).isEqualTo(1);
-
-        // Try to evict using ID obtained from PersistenceManager...
-        pmf.getDataStoreCache().evict(qm.getPersistenceManager().getObjectId(project));
-        assertThat(l2Cache.getSize()).isEqualTo(1);
-
-        evictFromL2Cache(qm, project);
-        assertThat(l2Cache.getSize()).isEqualTo(0);
     }
 
 }

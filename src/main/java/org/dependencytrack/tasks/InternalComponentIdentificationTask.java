@@ -23,7 +23,6 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.datanucleus.PropertyNames;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.persistence.QueryManager;
@@ -63,11 +62,6 @@ public class InternalComponentIdentificationTask implements Subscriber {
     private void analyze() throws Exception {
         try (final var qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
-
-            // Disable the DataNucleus L2 cache for this persistence manager.
-            // The cache will hold references to the queried objects, preventing them
-            // from being garbage collected. This is not required the case of this task.
-            pm.setProperty(PropertyNames.PROPERTY_CACHE_L2_TYPE, "none");
 
             final var internalComponentIdentifier = new InternalComponentIdentifier();
             List<Component> components = fetchNextComponentsPage(pm, null);

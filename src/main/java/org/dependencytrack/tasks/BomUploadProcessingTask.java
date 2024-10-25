@@ -57,7 +57,6 @@ import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.listener.IndexingInstanceLifecycleListener;
-import org.dependencytrack.persistence.listener.L2CacheEvictingInstanceLifecycleListener;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.json.JSONArray;
 import org.slf4j.MDC;
@@ -233,7 +232,7 @@ public class BomUploadProcessingTask implements Subscriber {
         dispatchBomConsumedNotification(ctx);
 
         final var processedComponents = new ArrayList<Component>(components.size());
-        try (final var qm = new QueryManager().withL2CacheDisabled()) {
+        try (final var qm = new QueryManager()) {
             // Disable reachability checks on commit.
             // See https://www.datanucleus.org/products/accessplatform_4_1/jdo/performance_tuning.html
             //
@@ -266,8 +265,6 @@ public class BomUploadProcessingTask implements Subscriber {
 
             qm.getPersistenceManager().addInstanceLifecycleListener(new IndexingInstanceLifecycleListener(eventsToDispatch::add),
                     Component.class, Project.class, ProjectMetadata.class, ServiceComponent.class);
-            qm.getPersistenceManager().addInstanceLifecycleListener(new L2CacheEvictingInstanceLifecycleListener(qm),
-                    Bom.class, Component.class, Project.class, ProjectMetadata.class, ServiceComponent.class);
 
             final List<Component> finalComponents = components;
             final List<ServiceComponent> finalServices = services;

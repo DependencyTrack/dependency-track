@@ -361,6 +361,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Team team = new Team();
         List<ManagedUser> managedUsers = new ArrayList<>();
         ManagedUser managedUser = new ManagedUser();
+        managedUser.setEmail("test@test.com");
         managedUsers.add(managedUser);
         team.setManagedUsers(managedUsers);
         teams.add(team);

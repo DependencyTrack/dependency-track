@@ -352,6 +352,30 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     public void testNotificationRuleTest() {
         NotificationPublisher publisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",
+                SlackPublisher.class, "template", "text/html",
+                false);
+        
+        NotificationRule rule = qm.createNotificationRule("Example Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+
+        Set<NotificationGroup> groups = new HashSet<>(Set.of(NotificationGroup.BOM_CONSUMED, NotificationGroup.BOM_PROCESSED, NotificationGroup.BOM_PROCESSING_FAILED,
+                                NotificationGroup.BOM_VALIDATION_FAILED, NotificationGroup.NEW_VULNERABILITY, NotificationGroup.NEW_VULNERABLE_DEPENDENCY, 
+                                NotificationGroup.POLICY_VIOLATION, NotificationGroup.PROJECT_CREATED, NotificationGroup.PROJECT_AUDIT_CHANGE, 
+                                NotificationGroup.VEX_CONSUMED, NotificationGroup.VEX_PROCESSED));
+        rule.setNotifyOn(groups);
+
+        rule.setPublisherConfig("{\"destination\":\"https://example.com/webhook\"}");
+        
+        Response sendMailResponse = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + rule.getUuid()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity("", MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+        
+        Assert.assertEquals(200, sendMailResponse.getStatus());
+    }
+
+    @Test
+    public void testEmailNotificationRuleTest() {
+        NotificationPublisher publisher = qm.createNotificationPublisher(
+                "Example Publisher", "Publisher description",
                 SendMailPublisher.class, "template", "text/html",
                 false);
         
@@ -366,8 +390,6 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         team.setManagedUsers(managedUsers);
         teams.add(team);
         rule.setTeams(teams);
-
-        qm.updateNotificationRule(rule);
 
         Set<NotificationGroup> groups = new HashSet<>(Set.of(NotificationGroup.BOM_CONSUMED, NotificationGroup.BOM_PROCESSED, NotificationGroup.BOM_PROCESSING_FAILED,
                                 NotificationGroup.BOM_VALIDATION_FAILED, NotificationGroup.NEW_VULNERABILITY, NotificationGroup.NEW_VULNERABLE_DEPENDENCY, 

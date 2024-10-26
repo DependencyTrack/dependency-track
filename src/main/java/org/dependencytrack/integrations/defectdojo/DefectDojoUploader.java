@@ -67,11 +67,12 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     }
 
     public boolean isVerifiedConfigured(final Project project) {
-        final ProjectProperty reimport = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), VERIFIED_PROPERTY);
-        if (reimport != null) {
-            return Boolean.parseBoolean(reimport.getPropertyValue());
+        final ProjectProperty verified = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), VERIFIED_PROPERTY);
+        if (verified != null) {
+            return Boolean.parseBoolean(verified.getPropertyValue());
         } else {
-            return false;
+            // Defaults to true for backward compatibility with old behavior where "verified" was always true
+            return true;
         }
     }
 
@@ -109,20 +110,20 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         final ConfigProperty apiKey = qm.getConfigProperty(DEFECTDOJO_API_KEY.getGroupName(), DEFECTDOJO_API_KEY.getPropertyName());
         final boolean globalReimportEnabled = qm.isEnabled(DEFECTDOJO_REIMPORT_ENABLED);
         final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
+        final boolean verifyFindings = isVerifiedConfigured(project);
         try {
-            final DefectDojoClient client = new DefectDojoClient(this, URI.create(defectDojoUrl.getPropertyValue()).toURL(),
-                    isVerifiedConfigured(project));
+            final DefectDojoClient client = new DefectDojoClient(this, URI.create(defectDojoUrl.getPropertyValue()).toURL());
             if (isReimportConfigured(project) || globalReimportEnabled) {
                 final ArrayList<String> testsIds = client.getDojoTestIds(apiKey.getPropertyValue(), engagementId.getPropertyValue());
                 final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds);
                 LOGGER.debug("Found existing test Id: " + testId);
                 if (testId.equals("")) {
-                    client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);
+                    client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, verifyFindings);
                 } else {
-                    client.reimportDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, testId, isDoNotReactivateConfigured(project));
+                    client.reimportDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, testId, isDoNotReactivateConfigured(project), verifyFindings);
                 }
             } else {
-                client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);
+                client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, verifyFindings);
             }
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to DefectDojo", e);

@@ -39,7 +39,9 @@ final class Counters {
     double inheritedRiskScore;
     int components, vulnerableComponents, projects, vulnerableProjects;
     int vulnerabilities, suppressions, findingsTotal, findingsAudited, findingsUnaudited;
-    int policyViolationsFail, policyViolationsWarn, policyViolationsInfo,
+    int policyViolationsFailTotal, policyViolationsFailAudited, policyViolationsFailUnaudited,
+            policyViolationsWarnTotal, policyViolationsWarnAudited, policyViolationsWarnUnaudited,
+            policyViolationsInfoTotal,policyViolationsInfoAudited, policyViolationsInfoUnaudited,
             policyViolationsTotal, policyViolationsAudited, policyViolationsUnaudited,
             policyViolationsSecurityTotal, policyViolationsSecurityAudited, policyViolationsSecurityUnaudited,
             policyViolationsLicenseTotal, policyViolationsLicenseAudited, policyViolationsLicenseUnaudited,
@@ -66,9 +68,15 @@ final class Counters {
         metrics.setFindingsAudited(this.findingsAudited);
         metrics.setFindingsUnaudited(this.findingsUnaudited);
         metrics.setInheritedRiskScore(this.inheritedRiskScore);
-        metrics.setPolicyViolationsFail(this.policyViolationsFail);
-        metrics.setPolicyViolationsWarn(this.policyViolationsWarn);
-        metrics.setPolicyViolationsInfo(this.policyViolationsInfo);
+        metrics.setPolicyViolationsFailTotal(this.policyViolationsFailTotal);
+        metrics.setPolicyViolationsFailAudited(this.policyViolationsFailAudited);
+        metrics.setPolicyViolationsFailUnaudited(this.policyViolationsFailUnaudited);
+        metrics.setPolicyViolationsWarnTotal(this.policyViolationsWarnTotal);
+        metrics.setPolicyViolationsWarnAudited(this.policyViolationsWarnAudited);
+        metrics.setPolicyViolationsWarnUnaudited(this.policyViolationsWarnUnaudited);
+        metrics.setPolicyViolationsInfoTotal(this.policyViolationsInfoTotal);
+        metrics.setPolicyViolationsInfoAudited(this.policyViolationsInfoAudited);
+        metrics.setPolicyViolationsInfoUnaudited(this.policyViolationsInfoUnaudited);
         metrics.setPolicyViolationsTotal(this.policyViolationsTotal);
         metrics.setPolicyViolationsAudited(this.policyViolationsAudited);
         metrics.setPolicyViolationsUnaudited(this.policyViolationsUnaudited);
@@ -102,9 +110,15 @@ final class Counters {
         metrics.setFindingsAudited(this.findingsAudited);
         metrics.setFindingsUnaudited(this.findingsUnaudited);
         metrics.setInheritedRiskScore(this.inheritedRiskScore);
-        metrics.setPolicyViolationsFail(this.policyViolationsFail);
-        metrics.setPolicyViolationsWarn(this.policyViolationsWarn);
-        metrics.setPolicyViolationsInfo(this.policyViolationsInfo);
+        metrics.setPolicyViolationsFailTotal(this.policyViolationsFailTotal);
+        metrics.setPolicyViolationsFailAudited(this.policyViolationsFailAudited);
+        metrics.setPolicyViolationsFailUnaudited(this.policyViolationsFailUnaudited);
+        metrics.setPolicyViolationsWarnTotal(this.policyViolationsWarnTotal);
+        metrics.setPolicyViolationsWarnAudited(this.policyViolationsWarnAudited);
+        metrics.setPolicyViolationsWarnUnaudited(this.policyViolationsWarnUnaudited);
+        metrics.setPolicyViolationsInfoTotal(this.policyViolationsInfoTotal);
+        metrics.setPolicyViolationsInfoAudited(this.policyViolationsInfoAudited);
+        metrics.setPolicyViolationsInfoUnaudited(this.policyViolationsInfoUnaudited);
         metrics.setPolicyViolationsTotal(this.policyViolationsTotal);
         metrics.setPolicyViolationsAudited(this.policyViolationsAudited);
         metrics.setPolicyViolationsUnaudited(this.policyViolationsUnaudited);
@@ -139,9 +153,15 @@ final class Counters {
         metrics.setProjects(this.projects);
         metrics.setVulnerableProjects(this.vulnerableProjects);
         metrics.setInheritedRiskScore(this.inheritedRiskScore);
-        metrics.setPolicyViolationsFail(this.policyViolationsFail);
-        metrics.setPolicyViolationsWarn(this.policyViolationsWarn);
-        metrics.setPolicyViolationsInfo(this.policyViolationsInfo);
+        metrics.setPolicyViolationsFailTotal(this.policyViolationsFailTotal);
+        metrics.setPolicyViolationsFailAudited(this.policyViolationsFailAudited);
+        metrics.setPolicyViolationsFailUnaudited(this.policyViolationsFailUnaudited);
+        metrics.setPolicyViolationsWarnTotal(this.policyViolationsWarnTotal);
+        metrics.setPolicyViolationsWarnAudited(this.policyViolationsWarnAudited);
+        metrics.setPolicyViolationsWarnUnaudited(this.policyViolationsWarnUnaudited);
+        metrics.setPolicyViolationsInfoTotal(this.policyViolationsInfoTotal);
+        metrics.setPolicyViolationsInfoAudited(this.policyViolationsInfoAudited);
+        metrics.setPolicyViolationsInfoUnaudited(this.policyViolationsInfoUnaudited);
         metrics.setPolicyViolationsTotal(this.policyViolationsTotal);
         metrics.setPolicyViolationsAudited(this.policyViolationsAudited);
         metrics.setPolicyViolationsUnaudited(this.policyViolationsUnaudited);
@@ -172,9 +192,18 @@ final class Counters {
                 || comparedTo.getFindingsAudited() != this.findingsAudited
                 || comparedTo.getFindingsUnaudited() != this.findingsUnaudited
                 || comparedTo.getInheritedRiskScore() != this.inheritedRiskScore
-                || comparedTo.getPolicyViolationsFail() != this.policyViolationsFail
-                || comparedTo.getPolicyViolationsWarn() != this.policyViolationsWarn
-                || comparedTo.getPolicyViolationsInfo() != this.policyViolationsInfo
+                || comparedTo.getPolicyViolationsFail() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailTotal() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailAudited() != this.policyViolationsFailAudited
+                || comparedTo.getPolicyViolationsFailUnaudited() != this.policyViolationsFailUnaudited
+                || comparedTo.getPolicyViolationsWarn() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnTotal() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnAudited() != this.policyViolationsWarnAudited
+                || comparedTo.getPolicyViolationsWarnUnaudited() != this.policyViolationsWarnUnaudited
+                || comparedTo.getPolicyViolationsInfo() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoTotal() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoAudited() != this.policyViolationsInfoAudited
+                || comparedTo.getPolicyViolationsInfoUnaudited() != this.policyViolationsInfoUnaudited
                 || comparedTo.getPolicyViolationsTotal() != this.policyViolationsTotal
                 || comparedTo.getPolicyViolationsAudited() != this.policyViolationsAudited
                 || comparedTo.getPolicyViolationsUnaudited() != this.policyViolationsUnaudited
@@ -202,9 +231,18 @@ final class Counters {
                 || comparedTo.getFindingsAudited() != this.findingsAudited
                 || comparedTo.getFindingsUnaudited() != this.findingsUnaudited
                 || comparedTo.getInheritedRiskScore() != this.inheritedRiskScore
-                || comparedTo.getPolicyViolationsFail() != this.policyViolationsFail
-                || comparedTo.getPolicyViolationsWarn() != this.policyViolationsWarn
-                || comparedTo.getPolicyViolationsInfo() != this.policyViolationsInfo
+                || comparedTo.getPolicyViolationsFail() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailTotal() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailAudited() != this.policyViolationsFailAudited
+                || comparedTo.getPolicyViolationsFailUnaudited() != this.policyViolationsFailUnaudited
+                || comparedTo.getPolicyViolationsWarn() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnTotal() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnAudited() != this.policyViolationsWarnAudited
+                || comparedTo.getPolicyViolationsWarnUnaudited() != this.policyViolationsWarnUnaudited
+                || comparedTo.getPolicyViolationsInfo() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoTotal() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoAudited() != this.policyViolationsInfoAudited
+                || comparedTo.getPolicyViolationsInfoUnaudited() != this.policyViolationsInfoUnaudited
                 || comparedTo.getPolicyViolationsTotal() != this.policyViolationsTotal
                 || comparedTo.getPolicyViolationsAudited() != this.policyViolationsAudited
                 || comparedTo.getPolicyViolationsUnaudited() != this.policyViolationsUnaudited
@@ -230,9 +268,18 @@ final class Counters {
                 || comparedTo.getUnassigned() != this.unassigned
                 || comparedTo.getVulnerabilities() != this.vulnerabilities
                 || comparedTo.getInheritedRiskScore() != this.inheritedRiskScore
-                || comparedTo.getPolicyViolationsFail() != this.policyViolationsFail
-                || comparedTo.getPolicyViolationsWarn() != this.policyViolationsWarn
-                || comparedTo.getPolicyViolationsInfo() != this.policyViolationsInfo
+                || comparedTo.getPolicyViolationsFail() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailTotal() != this.policyViolationsFailTotal
+                || comparedTo.getPolicyViolationsFailAudited() != this.policyViolationsFailAudited
+                || comparedTo.getPolicyViolationsFailUnaudited() != this.policyViolationsFailUnaudited
+                || comparedTo.getPolicyViolationsWarn() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnTotal() != this.policyViolationsWarnTotal
+                || comparedTo.getPolicyViolationsWarnAudited() != this.policyViolationsWarnAudited
+                || comparedTo.getPolicyViolationsWarnUnaudited() != this.policyViolationsWarnUnaudited
+                || comparedTo.getPolicyViolationsInfo() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoTotal() != this.policyViolationsInfoTotal
+                || comparedTo.getPolicyViolationsInfoAudited() != this.policyViolationsInfoAudited
+                || comparedTo.getPolicyViolationsInfoUnaudited() != this.policyViolationsInfoUnaudited
                 || comparedTo.getPolicyViolationsTotal() != this.policyViolationsTotal
                 || comparedTo.getPolicyViolationsAudited() != this.policyViolationsAudited
                 || comparedTo.getPolicyViolationsUnaudited() != this.policyViolationsUnaudited

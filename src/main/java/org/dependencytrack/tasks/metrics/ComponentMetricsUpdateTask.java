@@ -21,6 +21,7 @@ package org.dependencytrack.tasks.metrics;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.dependencytrack.event.ComponentMetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
@@ -30,8 +31,6 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyViolation;
-import org.dependencytrack.model.ViolationAnalysis;
-import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.persistence.QueryManager;
@@ -127,29 +126,36 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                 }
 
                 switch (Policy.ViolationState.valueOf(violation.violationState().name())) {
-                    case FAIL -> counters.policyViolationsFail++;
-                    case WARN -> counters.policyViolationsWarn++;
-                    case INFO -> counters.policyViolationsInfo++;
+                    case FAIL -> counters.policyViolationsFailTotal++;
+                    case WARN -> counters.policyViolationsWarnTotal++;
+                    case INFO -> counters.policyViolationsInfoTotal++;
+                }
+
+                if (BooleanUtils.isTrue(violation.suppressed)) {
+                    counters.policyViolationsAudited++;
+
+                    switch (PolicyViolation.Type.valueOf(violation.type().name())) {
+                        case LICENSE -> counters.policyViolationsLicenseAudited++;
+                        case OPERATIONAL -> counters.policyViolationsOperationalAudited++;
+                        case SECURITY -> counters.policyViolationsSecurityAudited++;
+                    }
+
+                    switch (Policy.ViolationState.valueOf(violation.violationState().name())) {
+                        case FAIL -> counters.policyViolationsFailAudited++;
+                        case WARN -> counters.policyViolationsWarnAudited++;
+                        case INFO -> counters.policyViolationsInfoAudited++;
+                    }
                 }
             }
 
-            if (counters.policyViolationsLicenseTotal > 0) {
-                counters.policyViolationsLicenseAudited = toIntExact(getTotalAuditedPolicyViolations(pm, component, PolicyViolation.Type.LICENSE));
-                counters.policyViolationsLicenseUnaudited = counters.policyViolationsLicenseTotal - counters.policyViolationsLicenseAudited;
-            }
-            if (counters.policyViolationsOperationalTotal > 0) {
-                counters.policyViolationsOperationalAudited = toIntExact(getTotalAuditedPolicyViolations(pm, component, PolicyViolation.Type.OPERATIONAL));
-                counters.policyViolationsOperationalUnaudited = counters.policyViolationsOperationalTotal - counters.policyViolationsOperationalAudited;
-            }
-            if (counters.policyViolationsSecurityTotal > 0) {
-                counters.policyViolationsSecurityAudited = toIntExact(getTotalAuditedPolicyViolations(pm, component, PolicyViolation.Type.SECURITY));
-                counters.policyViolationsSecurityUnaudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityAudited;
-            }
-
-            counters.policyViolationsAudited = counters.policyViolationsLicenseAudited +
-                    counters.policyViolationsOperationalAudited +
-                    counters.policyViolationsSecurityAudited;
             counters.policyViolationsUnaudited = counters.policyViolationsTotal - counters.policyViolationsAudited;
+            counters.policyViolationsLicenseUnaudited = counters.policyViolationsLicenseTotal - counters.policyViolationsLicenseAudited;
+            counters.policyViolationsOperationalUnaudited = counters.policyViolationsOperationalTotal - counters.policyViolationsOperationalAudited;
+            counters.policyViolationsSecurityUnaudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityAudited;
+            counters.policyViolationsFailUnaudited = counters.policyViolationsFailTotal - counters.policyViolationsFailAudited;
+            counters.policyViolationsWarnUnaudited = counters.policyViolationsWarnTotal - counters.policyViolationsWarnAudited;
+            counters.policyViolationsInfoUnaudited = counters.policyViolationsInfoTotal - counters.policyViolationsInfoAudited;
+
 
             qm.runInTransaction(() -> {
                 final DependencyMetrics latestMetrics = qm.getMostRecentDependencyMetrics(component);
@@ -219,28 +225,14 @@ public class ComponentMetricsUpdateTask implements Subscriber {
 
     private static List<PolicyViolationProjection> getPolicyViolations(final PersistenceManager pm, final Component component) throws Exception {
         try (final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class)) {
-            query.setFilter("component == :component && (analysis == null || analysis.suppressed == false)");
+            query.setFilter("component == :component");
             query.setParameters(component);
-            query.setResult("type, policyCondition.policy.violationState");
+            query.setResult("type, policyCondition.policy.violationState, analysis.suppressed");
             return List.copyOf(query.executeResultList(PolicyViolationProjection.class));
         }
     }
 
-    private static long getTotalAuditedPolicyViolations(final PersistenceManager pm, final Component component, final PolicyViolation.Type violationType) throws Exception {
-        try (final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class)) {
-            query.setFilter("""
-                    component == :component &&
-                    suppressed == false &&
-                    analysisState != :notSet &&
-                    policyViolation.type == :violationType
-                    """);
-            query.setParameters(component, ViolationAnalysisState.NOT_SET, violationType);
-            query.setResult("count(this)");
-            return query.executeResultUnique(Long.class);
-        }
-    }
-
-    public record PolicyViolationProjection(Enum<?> type, Enum<?> violationState) {
+    public record PolicyViolationProjection(Enum<?> type, Enum<?> violationState, Boolean suppressed) {
     }
 
 }

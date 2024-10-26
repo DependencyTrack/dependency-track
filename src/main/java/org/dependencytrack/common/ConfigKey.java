@@ -41,7 +41,6 @@ public enum ConfigKey implements Config.Key {
     REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_MAX_ATTEMPTS("repo.meta.analyzer.cacheStampedeBlocker.max.attempts", 10),
     SYSTEM_REQUIREMENT_CHECK_ENABLED("system.requirement.check.enabled", true),
     ALPINE_WORKER_POOL_DRAIN_TIMEOUT_DURATION("alpine.worker.pool.drain.timeout.duration", "PT5S");
-
     private final String propertyName;
     private final Object defaultValue;
 

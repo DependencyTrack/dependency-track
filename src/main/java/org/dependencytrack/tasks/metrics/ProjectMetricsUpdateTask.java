@@ -21,6 +21,7 @@ package org.dependencytrack.tasks.metrics;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import alpine.persistence.ScopedCustomization;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.dependencytrack.event.ProjectMetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
@@ -73,6 +74,8 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             List<Component> components = fetchNextComponentsPage(pm, project, null);
 
             while (!components.isEmpty()) {
+                final long lastId = components.getLast().getId();
+
                 for (final Component component : components) {
                     final Counters componentCounters;
                     try {
@@ -123,8 +126,12 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                     counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
                 }
 
+                // Remove components from the L1 cache to prevent it from growing too large.
+                // Note that because ComponentMetricsUpdateTask uses its own QueryManager,
+                // component metrics objects are not in this L1 cache.
+                pm.evictAll(false, Component.class);
+
                 LOGGER.debug("Fetching next components page for project " + uuid);
-                final long lastId = components.get(components.size() - 1).getId();
                 components = fetchNextComponentsPage(pm, project, lastId);
             }
 
@@ -141,7 +148,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             });
 
             if (project.getLastInheritedRiskScore() == null ||
-                    project.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
+                project.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
                 LOGGER.debug("Updating inherited risk score of project " + uuid);
                 qm.runInTransaction(() -> project.setLastInheritedRiskScore(counters.inheritedRiskScore));
             }
@@ -151,19 +158,24 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                 DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
     }
 
-    private List<Component> fetchNextComponentsPage(final PersistenceManager pm, final Project project, final Long lastId) throws Exception {
-        try (final Query<Component> query = pm.newQuery(Component.class)) {
-            if (lastId == null) {
-                query.setFilter("project == :project");
-                query.setParameters(project);
-            } else {
-                query.setFilter("project == :project && id < :lastId");
-                query.setParameters(project, lastId);
-            }
-            query.setOrdering("id DESC");
-            query.setRange(0, 500);
-            query.getFetchPlan().setGroup(Component.FetchGroup.METRICS_UPDATE.name());
+    private List<Component> fetchNextComponentsPage(final PersistenceManager pm, final Project project, final Long lastId) {
+        final Query<Component> query = pm.newQuery(Component.class);
+        if (lastId == null) {
+            query.setFilter("project == :project");
+            query.setParameters(project);
+        } else {
+            query.setFilter("project == :project && id < :lastId");
+            query.setParameters(project, lastId);
+        }
+        query.setOrdering("id DESC");
+        query.setRange(0, 1000);
+
+        // NB: Set fetch group on PM level to avoid fields of the default fetch group from being loaded.
+        try (var ignoredPersistenceCustomization = new ScopedCustomization(pm)
+                .withFetchGroup(Component.FetchGroup.METRICS_UPDATE.name())) {
             return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
         }
     }
 

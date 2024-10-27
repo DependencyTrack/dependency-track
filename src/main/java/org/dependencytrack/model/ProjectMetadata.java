@@ -18,11 +18,7 @@
  */
 package org.dependencytrack.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
-import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
+import java.util.List;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Convert;
@@ -31,7 +27,14 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
-import java.util.List;
+
+import org.dependencytrack.persistence.converter.MetadataPropertyJsonConverter;
+import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
+import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * Metadata that relates to, but does not directly describe, a {@link Project}.
@@ -66,6 +69,11 @@ public class ProjectMetadata {
     @Column(name = "AUTHORS", jdbcType = "CLOB", allowsNull = "true")
     private List<OrganizationalContact> authors;
 
+    @Persistent(defaultFetchGroup = "true")
+    @Convert(MetadataPropertyJsonConverter.class)
+    @Column(name = "PROPERTIES", jdbcType = "CLOB", allowsNull = "true")
+    private List<MetadataProperty> properties;
+
     public long getId() {
         return id;
     }
@@ -98,4 +106,11 @@ public class ProjectMetadata {
         this.authors = authors;
     }
 
+    public List<MetadataProperty> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(final List<MetadataProperty> properties) {
+        this.properties = properties;
+    }
 }

@@ -58,6 +58,16 @@
                 <phone>123-456-7890</phone>
             </contact>
         </supplier>
+        <properties>
+            <property>
+                <name>BUILD_SYSTEM</name>
+                <value>Maven</value>
+            </property>
+            <property>
+                <name>LANGUAGE</name>
+                <value>Java</value>
+            </property>
+        </properties>
     </metadata>
     <components>
         <component type="application">

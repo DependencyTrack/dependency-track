@@ -147,6 +147,7 @@ public class BomResource extends AlpineResource {
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
+
             if (! qm.hasAccess(super.getPrincipal(), project)) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }

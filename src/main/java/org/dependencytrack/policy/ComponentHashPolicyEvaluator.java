@@ -56,7 +56,10 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final Hash hash = extractHashValues(condition);
             if (conditionApplies(hash, component, condition.getOperator())) {
+                LOGGER.info("Adding violation for component: " + component.getName() + " with condition: " + condition.getOperator());
                 violations.add(new PolicyConditionViolation(condition, component));
+            } else {
+                LOGGER.info("No violation added for component: " + component.getName() + " with condition: " + condition.getOperator());
             }
         }
         return violations;
@@ -75,23 +78,28 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
 
     private boolean conditionApplies(Hash hash, Component component, PolicyCondition.Operator operator) {
         boolean matchFound = matches(hash, component);
+        LOGGER.debug("Evaluating condition: " + operator + ", Match found: " + matchFound);
 
-        switch (operator) {
-            case IS:
-                return matchFound;  // Violation if the hash match
-
-            case IS_NOT:
-                return !matchFound;  // Violation if the hash does not match
-
-            default:
-                LOGGER.warn("Unsupported operator: " + operator);
-                return false;
-        }
+        return switch (operator) {
+            case IS -> {
+                LOGGER.info("IS Result: " + !matchFound);
+                yield !matchFound; // Violation if the hash does not match
+            }
+            case IS_NOT -> {
+                LOGGER.info("IS_NOT Result: " + matchFound);
+                yield matchFound;
+            }
+            default -> {
+                LOGGER.error("Unsupported operator: " + operator);
+                yield false;
+            }
+        };
     }
 
     private boolean matches(Hash hash, Component component) {
         if (hash != null && hash.getAlgorithm() != null && hash.getValue() != null) {
             String value = StringUtils.trimToNull(hash.getValue());
+            LOGGER.debug("Matching Hash: " + value + " with Component Hash for Algorithm: " + hash.getAlgorithm());
             if (Hash.Algorithm.MD5.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
                 return value.equalsIgnoreCase(component.getMd5());
             } else if (Hash.Algorithm.SHA1.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
@@ -118,7 +126,7 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
                 return value.equalsIgnoreCase(component.getBlake2b_512());
             }
         }
+        LOGGER.info("No match found - hash or algorithm is null.");
         return false;
     }
-
 }

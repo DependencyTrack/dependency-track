@@ -439,4 +439,28 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
         );
     }
 
+    @Test
+public void testInformWithIgnoringAmbiguousRunningOnCpeMatchesAlt() throws Exception {
+        wireMock.stubFor(get(anyUrl())
+                .willReturn(aResponse()
+                        .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2024-23113.json"))));
+
+        new NistApiMirrorTask().inform(new NistApiMirrorEvent());
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.NVD, "CVE-2024-23113");
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getVulnerableSoftware()).extracting(VulnerableSoftware::getCpe23).containsExactlyInAnyOrder(
+                "cpe:2.3:a:fortinet:fortiproxy:*:*:*:*:*:*:*:*",
+                "cpe:2.3:a:fortinet:fortiproxy:*:*:*:*:*:*:*:*",
+                "cpe:2.3:a:fortinet:fortiproxy:*:*:*:*:*:*:*:*",
+                "cpe:2.3:a:fortinet:fortiswitchmanager:*:*:*:*:*:*:*:*",
+                "cpe:2.3:a:fortinet:fortiswitchmanager:*:*:*:*:*:*:*:*",
+                "cpe:2.3:o:fortinet:fortios:*:*:*:*:*:*:*:*",
+                "cpe:2.3:o:fortinet:fortios:*:*:*:*:*:*:*:*",
+                "cpe:2.3:o:fortinet:fortios:*:*:*:*:*:*:*:*",
+                "cpe:2.3:o:fortinet:fortipam:*:*:*:*:*:*:*:*",
+                "cpe:2.3:o:fortinet:fortipam:*:*:*:*:*:*:*:*",
+                "cpe:2.3:o:fortinet:fortipam:1.2.0:*:*:*:*:*:*:*"
+        );
+    }
 }

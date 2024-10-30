@@ -1,8 +1,8 @@
 source 'https://rubygems.org'
 
-ruby '~> 3.1'
+ruby '~> 3'
 
-gem 'jekyll', '~> 3.9'
+gem 'jekyll', '~> 3.10'
 gem 'kramdown-parser-gfm', '1.1.0'
 
 group :jekyll_plugins do

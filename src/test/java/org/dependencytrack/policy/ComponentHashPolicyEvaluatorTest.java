@@ -20,10 +20,10 @@
 /*
  * Logic Explanation:
  * TEST                         OPERATOR         POLICY HASH	COMPONENT HASH	OUTCOME	        EXPLANATION
- * testIsConditionWithMatch     IS	             da39...709	    da39...709	    No Violation	Hashes match, so no violation.
- * testIsConditionNoMatch       IS	             da39...709	    abcd...f12	    Violation	    Hashes differ, so violation occurs.
- * testIsNotConditionWithMatch  IS_NOT	         da39...709	    da39...709	    Violation	    Hashes match, so violation occurs.
- * testIsNotConditionNoMatch    IS_NOT	         da39...709	    abcd...f12	    No Violation	Hashes differ, so no violation.
+ * testIsConditionWithMatch     IS	             da39...709	    da39...709	    Violation	    Hashes match, violation. (1)
+ * testIsConditionNoMatch       IS	             da39...709	    abcd...f12	    No Violation	Hashes differ, no violation. (0)
+ * testIsNotConditionWithMatch  IS_NOT	         da39...709	    da39...709	    No Violation	Hashes match, no violation. (0)
+ * testIsNotConditionNoMatch    IS_NOT	         da39...709	    abcd...f12	    Violation	    Hashes differ, violation. (1)
  */
 package org.dependencytrack.policy;
 
@@ -62,7 +62,7 @@ public class ComponentHashPolicyEvaluatorTest {
         component.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
 
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size()); // No violation expected
+        Assert.assertEquals(1, violations.size()); // No violation expected
     }
 
     @Test
@@ -82,7 +82,7 @@ public class ComponentHashPolicyEvaluatorTest {
         component.setSha1("abcdef1234567890abcdef1234567890abcdef12");
 
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size()); //  Violation expected
+        Assert.assertEquals(0, violations.size()); //  Violation expected
     }
 
     @Test
@@ -102,7 +102,7 @@ public class ComponentHashPolicyEvaluatorTest {
         component.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
 
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size()); //  Violation expected
+        Assert.assertEquals(0, violations.size()); //  Violation expected
     }
 
     @Test
@@ -122,6 +122,6 @@ public class ComponentHashPolicyEvaluatorTest {
         component.setSha1("abcdef1234567890abcdef1234567890abcdef12");
 
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size()); // No violation expected
+        Assert.assertEquals(1, violations.size()); // No violation expected
     }
 }

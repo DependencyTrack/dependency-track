@@ -83,11 +83,11 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
         return switch (operator) {
             case IS -> {
                 LOGGER.info("IS Result: " + !matchFound);
-                yield !matchFound; // Violation if the hash does not match
+                yield matchFound; // No Violation if the hash does not match
             }
             case IS_NOT -> {
                 LOGGER.info("IS_NOT Result: " + matchFound);
-                yield matchFound;
+                yield !matchFound; // Violation if the hash match
             }
             default -> {
                 LOGGER.error("Unsupported operator: " + operator);

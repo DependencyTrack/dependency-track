@@ -86,7 +86,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
 
     @Test
     public void getAllEventNotificationPublishersTest() {
-        Response response = target(V1_NOTIFICATION_PUBLISHER_EVENT).request()
+        Response response = jersey.target(V1_NOTIFICATION_PUBLISHER_EVENT).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -104,7 +104,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
 
     @Test
     public void getAllScheduledNotificationPublishersTest() {
-        Response response = target(V1_NOTIFICATION_PUBLISHER_SCHEDULED).request()
+        Response response = jersey.target(V1_NOTIFICATION_PUBLISHER_SCHEDULED).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -361,7 +361,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     @Test
     public void deleteDefaultNotificationPublisherTest() {
         NotificationPublisher notificationPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.EMAIL);
-        Response response = target(V1_NOTIFICATION_PUBLISHER + "/" + notificationPublisher.getUuid()).request()
+        Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/" + notificationPublisher.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(400, response.getStatus(), 0);

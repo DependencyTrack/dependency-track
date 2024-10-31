@@ -25,13 +25,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
+import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
@@ -49,6 +50,7 @@ import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -62,7 +64,7 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class ScheduledNotificationRuleResourceTest extends ResourceTest {
 
-    @Override
+    
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
                 new ResourceConfig(ScheduledNotificationRuleResource.class)
@@ -70,6 +72,12 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
                         .register(AuthenticationFilter.class)))
                 .build();
     }
+
+    @ClassRule
+    public static JerseyTestRule jersey = new JerseyTestRule(
+            new ResourceConfig(ScheduledNotificationRuleResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
     
     @Before
     public void before() throws Exception {
@@ -84,7 +92,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         ScheduledNotificationRule r1 = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
         qm.createScheduledNotificationRule("Rule 2", NotificationScope.PORTFOLIO, publisher);
         qm.createScheduledNotificationRule("Rule 3", NotificationScope.SYSTEM, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -116,7 +124,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         rule.setName("Example Rule");
         rule.setScope(NotificationScope.SYSTEM);
         rule.setPublisher(publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(rule, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus(), 0);
@@ -173,7 +181,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         rule.setPublisher(publisher);
         rule.setCronConfig("0 * * * *");
         rule.setLastExecutionTime(ZonedDateTime.now());
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(rule, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -207,7 +215,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
         rule.setName("Example Rule");
         rule.setNotifyOn(Collections.singleton(NotificationGroup.NEW_VULNERABILITY));
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -258,7 +266,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
         rule = qm.detach(ScheduledNotificationRule.class, rule.getId());
         rule.setUuid(UUID.randomUUID());
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -272,7 +280,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Rule 1", NotificationScope.PORTFOLIO, publisher);
         rule.setName("Example Rule");
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE).request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(rule, MediaType.APPLICATION_JSON)); // HACK
@@ -302,7 +310,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -317,7 +325,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void addProjectToRuleInvalidRuleTest() {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/project/" + project.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -331,7 +339,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.SYSTEM, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assert.assertEquals(406, response.getStatus(), 0);
@@ -344,7 +352,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void addProjectToRuleInvalidProjectTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + UUID.randomUUID().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -362,7 +370,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         projects.add(project);
         rule.setProjects(projects);
         qm.persist(rule);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assert.assertEquals(304, response.getStatus(), 0);
@@ -378,7 +386,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         projects.add(project);
         rule.setProjects(projects);
         qm.persist(rule);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -388,7 +396,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void removeProjectFromRuleInvalidRuleTest() {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/project/" + project.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -402,7 +410,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.SYSTEM, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(406, response.getStatus(), 0);
@@ -415,7 +423,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void removeProjectFromRuleInvalidProjectTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + UUID.randomUUID().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -429,7 +437,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(304, response.getStatus(), 0);
@@ -441,7 +449,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Team team = qm.createTeam("Team Example", false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -456,7 +464,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void addTeamToRuleInvalidRuleTest(){
         Team team = qm.createTeam("Team Example", false);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/team/" + team.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -469,7 +477,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void addTeamToRuleInvalidTeamTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + UUID.randomUUID().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -487,7 +495,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         teams.add(team);
         rule.setTeams(teams);
         qm.persist(rule);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assert.assertEquals(304, response.getStatus(), 0);
@@ -499,7 +507,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Team team = qm.createTeam("Team Example", false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         Assert.assertEquals(406, response.getStatus(), 0);
@@ -515,7 +523,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         final ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
         final ZonedDateTime testTime = ZonedDateTime.parse("2024-05-31T13:24:46Z", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         rule.setLastExecutionTime(testTime);
-        final Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + team.getUuid()).request()
+        final Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + team.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         assertThat(response.getStatus()).isEqualTo(200);
@@ -566,7 +574,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         teams.add(team);
         rule.setTeams(teams);
         qm.persist(rule);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -576,7 +584,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     @Test
     public void removeTeamFromRuleInvalidRuleTest() {
         Team team = qm.createTeam("Team Example", false);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/team/" + team.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -589,7 +597,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void removeTeamFromRuleInvalidTeamTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + UUID.randomUUID().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(404, response.getStatus(), 0);
@@ -603,7 +611,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Team team = qm.createTeam("Team Example", false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(304, response.getStatus(), 0);
@@ -615,7 +623,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         Team team = qm.createTeam("Team Example", false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(406, response.getStatus(), 0);
@@ -628,7 +636,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
     public void executeScheduledNotificationRuleNowTest(){
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SCHEDULED_EMAIL.getPublisherName());
         ScheduledNotificationRule rule = qm.createScheduledNotificationRule("Example Rule", NotificationScope.PORTFOLIO, publisher);
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/execute").request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/execute").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -675,7 +683,7 @@ public class ScheduledNotificationRuleResourceTest extends ResourceTest {
         // detach the rule to uncouple from database, else setUuid(...) will update the persistent entry and the request will be valid with http code 200
         rule = qm.detach(ScheduledNotificationRule.class, rule.getId());
         rule.setUuid(UUID.randomUUID());
-        Response response = target(V1_SCHEDULED_NOTIFICATION_RULE + "/execute").request()
+        Response response = jersey.target(V1_SCHEDULED_NOTIFICATION_RULE + "/execute").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
         Assert.assertEquals(404, response.getStatus(), 0);

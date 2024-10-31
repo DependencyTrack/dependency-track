@@ -111,14 +111,12 @@ public class NotificationPublisherResource extends AlpineResource {
     @GET
     @Path("/event")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all event-driven notification publishers",
-            response = NotificationPublisher.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Returns a list of all event-driven notification publishers",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getAllEventNotificationPublishers() {
@@ -131,14 +129,17 @@ public class NotificationPublisherResource extends AlpineResource {
     @GET
     @Path("/scheduled")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all scheduled notification publishers",
-            response = NotificationPublisher.class,
-            responseContainer = "List",
-            notes = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    @Operation(
+            summary = "Returns a list of all scheduled notification publishers",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all notification publishers",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationPublisher.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getAllScheduledNotificationPublishers() {

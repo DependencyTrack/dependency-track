@@ -100,6 +100,7 @@
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>9.1.0</lib.cyclonedx-java.version>
+        <lib.jakarta-validation.version>3.0.2</lib.jakarta-validation.version>
         <lib.greenmail.version>2.1.0</lib.greenmail.version>
         <lib.jackson.version>2.18.0</lib.jackson.version>
         <lib.jackson-databind.version>2.18.0</lib.jackson-databind.version>
@@ -114,6 +115,7 @@
         <lib.pebble.version>3.2.2</lib.pebble.version>
         <lib.protobuf-java.version>4.28.3</lib.protobuf-java.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
+        <lib.swagger.version>2.2.25</lib.swagger.version>
         <lib.swagger-parser.version>2.1.22</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.testcontainers.version>1.20.3</lib.testcontainers.version>
@@ -216,6 +218,12 @@
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>${lib.jakarta-validation.version}</version> 
         </dependency>
 
         <dependency>

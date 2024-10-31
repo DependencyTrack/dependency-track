@@ -28,6 +28,7 @@ import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.VulnIdAndSource;
 import org.dependencytrack.model.Vulnerability;
@@ -40,6 +41,7 @@ import javax.jdo.Query;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;

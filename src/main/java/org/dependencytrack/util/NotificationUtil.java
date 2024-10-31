@@ -77,7 +77,7 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import javax.jdo.FetchPlan;
-import javax.json.JsonValue;
+import jakarta.json.JsonValue;
 
 import java.io.File;
 import java.io.IOException;

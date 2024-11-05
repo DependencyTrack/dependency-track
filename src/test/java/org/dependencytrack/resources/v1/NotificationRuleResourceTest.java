@@ -227,6 +227,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
                             "publisherClass": "${json-unit.any-string}",
                             "templateMimeType": "${json-unit.any-string}",
                             "defaultPublisher": true,
+                            "publishScheduled": false, 
                             "uuid": "${json-unit.any-string}"
                           },
                           "uuid": "${json-unit.matches:ruleUuid}"
@@ -274,6 +275,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
                             "publisherClass": "${json-unit.any-string}",
                             "templateMimeType": "${json-unit.any-string}",
                             "defaultPublisher": true,
+                            "publishScheduled": false, 
                             "uuid": "${json-unit.any-string}"
                           },
                           "uuid": "${json-unit.matches:ruleUuid}"

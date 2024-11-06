@@ -83,10 +83,18 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 public abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCapableTest {
 
     final DefaultNotificationPublishers publisher;
+    final DefaultNotificationPublishers scheduledPublisher;
     final T publisherInstance;
+
+    AbstractPublisherTest(final DefaultNotificationPublishers publisher, final DefaultNotificationPublishers scheduledPublisher, final T publisherInstance) {
+        this.publisher = publisher;
+        this.scheduledPublisher = scheduledPublisher;
+        this.publisherInstance = publisherInstance;
+    }
 
     AbstractPublisherTest(final DefaultNotificationPublishers publisher, final T publisherInstance) {
         this.publisher = publisher;
+        this.scheduledPublisher = DefaultNotificationPublishers.SCHEDULED_EMAIL;
         this.publisherInstance = publisherInstance;
     }
 
@@ -294,7 +302,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createScheduledConfig()));
     }
 
     @Test
@@ -325,7 +333,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createScheduledConfig()));
     }
 
     private static Component createComponent(final Project project) {
@@ -426,6 +434,14 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         return Json.createObjectBuilder()
                 .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
                 .add(Publisher.CONFIG_TEMPLATE_KEY, IOUtils.resourceToString(publisher.getPublisherTemplateFile(), UTF_8))
+                .addAll(extraConfig())
+                .build();
+    }
+
+    private JsonObject createScheduledConfig() throws Exception {
+        return Json.createObjectBuilder()
+                .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
+                .add(Publisher.CONFIG_TEMPLATE_KEY, IOUtils.resourceToString(scheduledPublisher.getPublisherTemplateFile(), UTF_8))
                 .addAll(extraConfig())
                 .build();
     }

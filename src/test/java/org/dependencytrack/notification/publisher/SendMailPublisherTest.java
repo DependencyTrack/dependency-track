@@ -40,7 +40,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
                     withUser("username", "password"));
 
     public SendMailPublisherTest() {
-        super(DefaultNotificationPublishers.EMAIL, new SendMailPublisher());
+        super(DefaultNotificationPublishers.EMAIL, DefaultNotificationPublishers.SCHEDULED_EMAIL, new SendMailPublisher());
     }
 
     @Before
@@ -322,7 +322,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
-            assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
+            assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringWhitespace("""
                     <html>
                         <head>
                             <style>
@@ -356,6 +356,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
                             <p>New Vulnerability Identified</p>
                             <p>-------------</p>
                             <p></p>
+
 
                             <h2>Overview</h2>
                             <div style="overflow-x: auto">
@@ -414,7 +415,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
                                     <td>
                                     </td>
                                 </tr>
-                                {% endfor %}
+
                                 </tbody>
                             </table>
                             </div>
@@ -460,12 +461,12 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
                                         MEDIUM
                                         </td>
                                         <td>
-                                        <a href=""http://example.com"">
+                                        <a href="http://example.com">
                                             analyzer
                                         </a>
                                         </td>
                                         <td>
-                                        Thu Jan 01 18:31:06 GMT 1970
+                                        Thu Jan 01 19:31:06 CET 1970
                                         </td>
                                         <td>
                                         EXPLOITABLE
@@ -490,8 +491,10 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     public void testPublishWithScheduledNewPolicyViolationsNotification() {
         super.testPublishWithScheduledNewPolicyViolationsNotification();
 
+        assertThat(greenMail.getReceivedMessages()).hasSize(1);
+
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Policy Violation Identified");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);

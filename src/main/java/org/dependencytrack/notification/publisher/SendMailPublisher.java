@@ -60,6 +60,8 @@ public class SendMailPublisher implements Publisher {
 
     private static final Logger LOGGER = Logger.getLogger(SendMailPublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
+    private static final String TEXT_HTML_UTF8 = "text/html; charset=UTF-8";
+    private static final String TEXT_PLAIN_UTF8 = "text/plain; charset=UTF-8";
 
     public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
         if (config == null) {
@@ -147,7 +149,7 @@ public class SendMailPublisher implements Publisher {
                     .to(destinations)
                     .subject(emailSubjectPrefix + " " + notification.getTitle())
                     .body(mimeType == MediaType.TEXT_HTML ? StringEscapeUtils.escapeHtml4(unescapedContent): unescapedContent)
-                    .bodyMimeType(mimeType)
+                    .bodyMimeType(mimeType == MediaType.TEXT_HTML ? TEXT_HTML_UTF8 : TEXT_PLAIN_UTF8)
                     .host(smtpHostname)
                     .port(smtpPort)
                     .username(smtpUser)

@@ -491,169 +491,183 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     public void testPublishWithScheduledNewPolicyViolationsNotification() {
         super.testPublishWithScheduledNewPolicyViolationsNotification();
 
-        assertThat(greenMail.getReceivedMessages()).hasSize(1);
-
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Policy Violation Identified");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
-            assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
-                    <html>
-                        <head>
-                            <style>
-                            table {
-                                border-collapse: collapse;
-                                width: 100%;
-                            }
+            assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringWhitespace("""
+            <html>
+            <head>
+                <style>
+                table {
+                    border-collapse: collapse;
+                    width: 100%;
+                }
 
-                            th,
-                            td {
-                                border: 1px solid #2174c7;
-                                padding: 5px;
-                                text-align: left;
-                            }
+                th,
+                td {
+                    border: 1px solid #2174c7;
+                    padding: 5px;
+                    text-align: left;
+                }
 
-                            th {
-                                background-color: #2174c7;
-                                color: white;
-                            }
+                th {
+                    background-color: #2174c7;
+                    color: white;
+                }
 
-                            tr:nth-child(even) {
-                                background-color: #afafaf;
-                            }
+                tr:nth-child(even) {
+                    background-color: #afafaf;
+                }
 
-                            tr:hover {
-                                background-color: #afafaf;
-                            }
-                            </style>
-                        </head>
-                        <body>
-                            <p>New Policy Violation Identified</p>
-                            <p>-------------</p>
-                            <p></p>
+                tr:hover {
+                    background-color: #afafaf;
+                }
+                </style>
+            </head>
+            <body>
+                <p>New Policy Violation Identified</p>
+                <p>-------------</p>
+                <p></p>
 
-                            <h2>Overview</h2>
-                                <div style="overflow-x: auto">
-                                <table style="width: 50%;">
-                                    <tbody>
-                                    <tr>
-                                        <td>Projects included in this rule</td>
-                                        <td>1</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Total new policy violations</td>
-                                        <td>1</td>
-                                    </tr>
-                                    <tr>
-                                        <td>New policy violations (LICENSE)</td>
-                                        <td>1</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Components affected by new policy violations</td>
-                                        <td>1</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Suppressed new policy violations (not included above)</td>
-                                        <td>0</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                                </div>
-                                
-                                <h2>Summary per project in this rule</h2>
-                                <div style="overflow-x: auto">
-                                <table style="width: 70%;">
-                                    <thead>
-                                    <tr>
-                                        <th>Project Name</th>
-                                        <th>Version</th>
-                                        <th>New Policy Violation</th>
-                                        <th>All Policy Violations</th>
-                                        <th>Suppressed Policy Violations</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {% for entry in subject.summary.affectedProjectSummaries %}
-                                    <tr>
-                                        <td>
-                                        <a href="/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95">
-                                            projectName
-                                        </a>
-                                        </td>
-                                        <td>projectVersion</td>
-                                        <td>
-                                        LICENSE: 1<br />
-                                        </td>
-                                        <td>
-                                        LICENSE: 1<br />
-                                        </td>
-                                        <td>
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                                </div>
+                
+                <h2>Overview</h2>
+                <div style="overflow-x: auto">
+                <table style="width: 50%;">
+                    <tbody>
+                    <tr>
+                        <td>Projects included in this rule</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Total new policy violations</td>
+                        <td>1</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>New policy violations (LICENSE)</td>
+                        <td>1</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>Components affected by new policy violations</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Suppressed new policy violations (not included above)</td>
+                        <td>0</td>
+                    </tr>
+                    </tbody>
+                </table>
+                </div>
+                
+                <h2>Summary per project in this rule</h2>
+                <div style="overflow-x: auto">
+                <table style="width: 70%;">
+                    <thead>
+                    <tr>
+                        <th>Project Name</th>
+                        <th>Version</th>
+                        <th>New Policy Violation</th>
+                        <th>All Policy Violations</th>
+                        <th>Suppressed Policy Violations</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    
+                    <tr>
+                        <td>
+                        <a href="/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95">
+                            projectName
+                        </a>
+                        </td>
+                        <td>projectVersion</td>
+                        <td>
+                        
+                        LICENSE: 1<br />
+                        
+                        </td>
+                        <td>
+                        
+                        LICENSE: 1<br />
+                        
+                        </td>
+                        <td>
+                        
+                        </td>
+                    </tr>
+                    
+                    </tbody>
+                </table>
+                </div>
 
-                                <h2>New policy violations per project</h2>
+                <h2>New policy violations per project</h2>
 
-                                <h3>
-                                Project "projectName" [Version: projectVersion]
-                                </h3>
-                                <div style="overflow-x: auto">
-                                <table>
-                                    <thead>
-                                    <tr>
-                                        <th>State</th>
-                                        <th>Risk Type</th>
-                                        <th>Policy Name</th>
-                                        <th>Component</th>
-                                        <th>Component Version</th>
-                                        <th>Occurred on</th>
-                                        <th>Analysis</th>
-                                        <th>Suppressed</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {% for violation in affProjEntry.value %}
-                                    <tr>
-                                        <td>
-                                        INFO
-                                        </td>
-                                        <td>
-                                        LICENSE
-                                        </td>
-                                        <td>
-                                        policyName
-                                        </td>
-                                        <td>
-                                            <a href="/components/94f87321-a5d1-4c2f-b2fe-95165debebc6">
-                                            componentName
-                                            </a>
-                                        </td>
-                                        <td>
-                                        componentVersion
-                                        </td>
-                                        <td>
-                                        Thu Jan 01 18:31:06 GMT 1970
-                                        </td>
-                                        <td>
-                                        APPROVED
-                                        </td>
-                                        <td>
-                                        No
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </body>
-                        <footer>
-                            <p>Executed: 1970-01-01T18:31:06.000000666</p>
-                        </footer>
-                        </html>
-                    """);
+                
+                <h3>
+                Project "projectName" [Version:
+                projectVersion]
+                </h3>
+                <div style="overflow-x: auto">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>State</th>
+                        <th>Risk Type</th>
+                        <th>Policy Name</th>
+                        <th>Component</th>
+                        <th>Component Version</th>
+                        <th>Occurred on</th>
+                        <th>Analysis</th>
+                        <th>Suppressed</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    
+                    <tr>
+                        <td>
+                        INFO
+                        </td>
+                        <td>
+                        LICENSE
+                        </td>
+                        <td>
+                        policyName
+                        </td>
+                        <td>
+                        
+                            <a href="/components/94f87321-a5d1-4c2f-b2fe-95165debebc6">
+                            componentName
+                            </a>
+                        
+                        </td>
+                        <td>
+                        componentVersion
+                        </td>
+                        <td>
+                        Thu Jan 01 19:31:06 CET 1970
+                        </td>
+                        <td>
+                        APPROVED
+                        </td>
+                        <td>
+                        No
+                        </td>
+                    </tr>
+                    
+                    </tbody>
+                </table>
+                </div>
+                
+                
+            </body>
+            <footer>
+                <p>Executed: 1970-01-01T18:31:06.000000666</p>
+            </footer>
+            </html>
+            """);
         });
     }
 

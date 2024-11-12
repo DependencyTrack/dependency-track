@@ -30,6 +30,7 @@ import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyCondition.Operator;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
@@ -396,6 +397,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
 
     private static Policy createPolicy() {
         final var policy = new Policy();
+        policy.setUuid(UUID.fromString("8d2f1ec1-3625-48c6-97c4-2a7553c7a376"));
         policy.setViolationState(ViolationState.INFO);
         policy.setName("policyName");
         return policy;
@@ -411,7 +413,10 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
     private static PolicyCondition createPolicyCondition() {
         final var policy = createPolicy();
         final var policyCondition = new PolicyCondition();
+        policyCondition.setUuid(UUID.fromString("b029fce3-96f2-4c4a-9049-61070e9b6ea6"));
         policyCondition.setPolicy(policy);
+        policyCondition.setSubject(PolicyCondition.Subject.AGE);
+        policyCondition.setOperator(Operator.NUMERIC_EQUAL);
         return policyCondition;
     }
 
@@ -422,6 +427,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         final var violationAnalysis = createViolationAnalysis();
         final var policyCondition = createPolicyCondition();
         
+        violation.setUuid(UUID.fromString("bf956a83-6013-4a69-9c76-857e2a8c8e45"));
         violation.setPolicyCondition(policyCondition);
         violation.setType(Type.LICENSE);
         violation.setComponent(component);

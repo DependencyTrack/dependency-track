@@ -66,8 +66,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import javax.jdo.FetchGroup;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -801,6 +803,56 @@ public class ProjectResource extends AlpineResource {
             });
 
             return Response.status(Response.Status.NO_CONTENT).build();
+        }
+    }
+
+    @POST
+    @Path("/batchDelete")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Deletes a list of projects specified by their UUIDs",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Projects removed successfully"),
+            @ApiResponse(responseCode = "207", description = "Access is forbidden to the projects listed in the response"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response deleteProjects(List<UUID> uuids) {
+        List<UUID> inaccessibleProjects = new ArrayList<>();
+        try (QueryManager qm = new QueryManager()) {
+            for (Iterator<UUID> it = uuids.iterator(); it.hasNext();) {
+                UUID uuid = it.next();
+                final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
+                if (project != null) {
+                    if (!qm.hasAccess(super.getPrincipal(), project)) {
+                        LOGGER.warn(super.getPrincipal().getName() + " lacks access to project " + project
+                                + ",  delete request denied"
+                        );
+                        inaccessibleProjects.add(uuid);
+                        it.remove();
+                    }
+                } else {
+                    LOGGER.warn("No project found by UUID " + uuid);
+                    it.remove();
+                }
+            }
+
+            if (uuids.isEmpty()) {
+                return Response.status(Response.Status.FORBIDDEN)
+                        .entity(inaccessibleProjects)
+                        .build();
+            }
+
+            qm.deleteProjectsByUUIDs(uuids);
+
+            if (inaccessibleProjects.isEmpty()) {
+                return Response.status(Response.Status.NO_CONTENT).build();
+            } else {
+                return Response.status(207).entity(inaccessibleProjects).build();
+            }
         }
     }
 

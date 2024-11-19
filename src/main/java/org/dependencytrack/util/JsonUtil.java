@@ -38,6 +38,13 @@ public final class JsonUtil {
         return builder;
     }
 
+    public static JsonObjectBuilder add(final JsonObjectBuilder builder, final String key, final Integer value) {
+        if (value != null) {
+            builder.add(key, value);
+        }
+        return builder;
+    }
+    
     public static JsonObjectBuilder add(final JsonObjectBuilder builder, final String key, final BigInteger value) {
         if (value != null) {
             builder.add(key, value);
@@ -46,6 +53,13 @@ public final class JsonUtil {
     }
 
     public static JsonObjectBuilder add(final JsonObjectBuilder builder, final String key, final BigDecimal value) {
+        if (value != null) {
+            builder.add(key, value);
+        }
+        return builder;
+    }
+    
+    public static JsonObjectBuilder add(final JsonObjectBuilder builder, final String key, final Boolean value) {
         if (value != null) {
             builder.add(key, value);
         }

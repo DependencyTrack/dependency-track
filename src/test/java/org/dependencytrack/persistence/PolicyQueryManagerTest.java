@@ -19,7 +19,6 @@
 package org.dependencytrack.persistence;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyViolation;
@@ -30,21 +29,10 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.junit.Test;
 import org.junit.Assert;
 
-import com.github.packageurl.PackageURL;
-import com.github.packageurl.PackageURLBuilder;
-
-import ch.qos.logback.core.subst.Token.Type;
-import us.springett.parsers.cpe.Cpe;
-import us.springett.parsers.cpe.CpeParser;
-import us.springett.parsers.cpe.exceptions.CpeParsingException;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.jdo.PersistenceManager;
-
-import static java.util.Collections.newSetFromMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PolicyQueryManagerTest extends PersistenceCapableTest {

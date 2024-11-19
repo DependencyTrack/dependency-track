@@ -136,7 +136,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
         Assert.assertEquals(404, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The UUID of the notification publisher could not be found.", body);
+        Assert.assertEquals("The UUID of the notification rule could not be found.", body);
     }
 
     @Test
@@ -227,6 +227,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
                             "publisherClass": "${json-unit.any-string}",
                             "templateMimeType": "${json-unit.any-string}",
                             "defaultPublisher": true,
+                            "publishScheduled": false, 
                             "uuid": "${json-unit.any-string}"
                           },
                           "uuid": "${json-unit.matches:ruleUuid}"
@@ -274,6 +275,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
                             "publisherClass": "${json-unit.any-string}",
                             "templateMimeType": "${json-unit.any-string}",
                             "defaultPublisher": true,
+                            "publishScheduled": false, 
                             "uuid": "${json-unit.any-string}"
                           },
                           "uuid": "${json-unit.matches:ruleUuid}"
@@ -545,6 +547,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
                             "publisherClass": "org.dependencytrack.notification.publisher.SendMailPublisher",
                             "templateMimeType": "templateMimeType",
                             "defaultPublisher": false,
+                            "publishScheduled": false,
                             "uuid": "${json-unit.matches:publisherUuid}"
                           },
                           "uuid": "${json-unit.matches:ruleUuid}"

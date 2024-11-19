@@ -69,6 +69,7 @@ import jakarta.json.JsonObjectBuilder;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.EnumMap;
@@ -283,7 +284,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 vuln.getSeverity().name(),
                 "analyzer",
                 "http://example.com",
-                Date.from(Instant.ofEpochSecond(66666, 666)).toString(), // Thu Jan 01 18:31:06 GMT 1970
+                "Thu Jan 01 18:31:06 GMT 1970", // Thu Jan 01 18:31:06 GMT 1970
                 AnalysisState.EXPLOITABLE.name(),
                 false)));
 

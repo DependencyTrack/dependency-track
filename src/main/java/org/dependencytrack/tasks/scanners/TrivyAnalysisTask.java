@@ -204,7 +204,11 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 var name = component.getPurl().getName();
 
                 if (component.getPurl().getNamespace() != null) {
-                    name = component.getPurl().getNamespace() + ":" + name;
+                    if (PackageURL.StandardTypes.GOLANG.equals(component.getPurl().getType())) {
+                        name = component.getPurl().getNamespace() + "/" + name;
+                    } else {
+                        name = component.getPurl().getNamespace() + ":" + name;
+                    }
                 }
 
                 if (!PurlType.UNKNOWN.getAppType().equals(appType)) {

@@ -252,7 +252,7 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         assertThat(qm.getAllVulnerabilities(component)).isEmpty();
     }
 
-     /**
+    /**
      * This test documents the case where Trivy is able to correlate a package with vulnerabilities
      * when additional properties provided. When including libc6 in an SBOM,
      * Trivy adds metadata to the component, which among other things includes alternative package names.
@@ -346,7 +346,7 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         });
     }
 
-     /**
+    /**
      * This test documents the case where Trivy generates a sbom and operative system is not entirely on distro qualifier.
      * <p>
      * Here's an excerpt of the properties included:
@@ -436,4 +436,25 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
             assertThat(vuln.getReferences()).isNotBlank();
         });
     }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/4376
+    public void testWithGoPackage() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("golang/github.com/nats-io/nkeys");
+        component.setVersion("0.4.4");
+        component.setClassifier(Classifier.LIBRARY);
+        component.setPurl("pkg:golang/github.com/nats-io/nkeys@0.4.4");
+        qm.persist(component);
+
+        final var analysisEvent = new TrivyAnalysisEvent(List.of(component));
+        new TrivyAnalysisTask().inform(analysisEvent);
+
+        assertThat(qm.getAllVulnerabilities(component)).hasSizeGreaterThanOrEqualTo(1);
+    }
+
 }

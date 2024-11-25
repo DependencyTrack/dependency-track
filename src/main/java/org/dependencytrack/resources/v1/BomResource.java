@@ -191,7 +191,7 @@ public class BomResource extends AlpineResource {
 
     @GET
     @Path("/cyclonedx/component/{uuid}")
-    @Produces(CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
+    @Produces({CycloneDxMediaType.APPLICATION_CYCLONEDX_XML, CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON})
     @Operation(
             summary = "Returns dependency metadata for a specific component in CycloneDX format",
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"

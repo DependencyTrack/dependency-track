@@ -1967,6 +1967,51 @@ public class ProjectResourceTest extends ResourceTest {
                 });
     }
 
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/4413
+    public void cloneProjectWithBrokenDependencyGraphTest() {
+        EventService.getInstance().subscribe(CloneProjectEvent.class, CloneProjectTask.class);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setDirectDependencies("[{\"uuid\":\"d6b6f140-f547-4fe2-a98c-f4942ad51f86\"}]");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        component.setDirectDependencies("[{\"uuid\":\"61503628-d2a2-447b-b99c-701b9d492cbd\"}]");
+        qm.persist(component);
+
+        final Response response = jersey.target("%s/clone".formatted(V1_PROJECT)).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "version": "1.1.0",
+                          "includeComponents": true,
+                          "includeServices": true
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        await("Cloning completion")
+                .atMost(Duration.ofSeconds(15))
+                .pollInterval(Duration.ofMillis(50))
+                .untilAsserted(() -> {
+                    final Project clonedProject = qm.getProject("acme-app", "1.1.0");
+                    assertThat(clonedProject).isNotNull();
+                });
+
+        final Project clonedProject = qm.getProject("acme-app", "1.1.0");
+        assertThat(clonedProject.getDirectDependencies()).isEqualTo(
+                "[{\"uuid\":\"d6b6f140-f547-4fe2-a98c-f4942ad51f86\"}]");
+
+        assertThat(qm.getAllComponents(clonedProject).getFirst().getDirectDependencies()).isEqualTo(
+                "[{\"uuid\":\"61503628-d2a2-447b-b99c-701b9d492cbd\"}]");
+    }
+
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3883
     public void issue3883RegressionTest() {
         Response response = jersey.target(V1_PROJECT)

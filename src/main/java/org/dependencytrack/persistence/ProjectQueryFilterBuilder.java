@@ -46,7 +46,7 @@ class ProjectQueryFilterBuilder {
 
     ProjectQueryFilterBuilder excludeInactive(boolean excludeInactive) {
         if (excludeInactive) {
-            filterCriteria.add("(active == true || active == null)");
+            filterCriteria.add("active");
         }
         return this;
     }

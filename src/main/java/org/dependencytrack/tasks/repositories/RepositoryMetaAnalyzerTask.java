@@ -294,7 +294,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
 
     private List<Component> fetchNextComponentBatch(final QueryManager qm, final Long lastId) {
         final var filterConditions = new ArrayList<>(List.of(
-                "(project.active == null || project.active)",
+                "project.active",
                 "purl != null"));
         final var filterParams = new HashMap<String, Object>();
         if (lastId != null) {

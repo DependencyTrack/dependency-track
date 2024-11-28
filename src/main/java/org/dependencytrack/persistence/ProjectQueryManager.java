@@ -711,7 +711,19 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 String directDependencies = project.getDirectDependencies();
                 for (final UUID sourceComponentUuid : projectDirectDepsSourceComponentUuids) {
                     final UUID clonedComponentUuid = clonedComponentUuidBySourceComponentUuid.get(sourceComponentUuid);
-                    directDependencies = directDependencies.replace(sourceComponentUuid.toString(), clonedComponentUuid.toString());
+                    if (clonedComponentUuid != null) {
+                        directDependencies = directDependencies.replace(
+                                sourceComponentUuid.toString(), clonedComponentUuid.toString());
+                    } else {
+                        // NB: This may happen when the source project itself is a clone,
+                        // and it was cloned before DT v4.12.0.
+                        // https://github.com/DependencyTrack/dependency-track/pull/4171
+                        LOGGER.warn("""
+                                The source project's directDependencies refer to a component with UUID \
+                                %s, which does not exist in the project. The cloned project's dependency graph \
+                                may be broken as a result. A BOM upload will resolve the issue.\
+                                """.formatted(sourceComponentUuid));
+                    }
                 }
 
                 project.setDirectDependencies(directDependencies);
@@ -724,7 +736,16 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 String directDependencies = component.getDirectDependencies();
                 for (final UUID sourceComponentUuid : sourceComponentUuids) {
                     final UUID clonedComponentUuid = clonedComponentUuidBySourceComponentUuid.get(sourceComponentUuid);
-                    directDependencies = directDependencies.replace(sourceComponentUuid.toString(), clonedComponentUuid.toString());
+                    if (clonedComponentUuid != null) {
+                        directDependencies = directDependencies.replace(
+                                sourceComponentUuid.toString(), clonedComponentUuid.toString());
+                    } else {
+                        LOGGER.warn("""
+                                The directDependencies of component %s refer to a component with UUID \
+                                %s, which does not exist in the source project. The cloned project's dependency graph \
+                                may be broken as a result. A BOM upload will resolve the issue.\
+                                """.formatted(component, sourceComponentUuid));
+                    }
                 }
 
                 component.setDirectDependencies(directDependencies);

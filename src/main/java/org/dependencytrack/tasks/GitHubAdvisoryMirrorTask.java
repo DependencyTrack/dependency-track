@@ -113,6 +113,24 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 final long end = System.currentTimeMillis();
                 LOGGER.info("GitHub Advisory mirroring complete");
                 LOGGER.info("Time spent (total): " + (end - start) + "ms");
+
+                if (mirroredWithoutErrors) {
+                    Notification.dispatch(new Notification()
+                            .scope(NotificationScope.SYSTEM)
+                            .group(NotificationGroup.DATASOURCE_MIRRORING)
+                            .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
+                            .content("Mirroring of GitHub Advisories completed successfully")
+                            .level(NotificationLevel.INFORMATIONAL)
+                    );
+                } else {
+                    Notification.dispatch(new Notification()
+                            .scope(NotificationScope.SYSTEM)
+                            .group(NotificationGroup.DATASOURCE_MIRRORING)
+                            .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
+                            .content("An error occurred mirroring the contents of GitHub Advisories. Check log for details.")
+                            .level(NotificationLevel.ERROR)
+                    );
+                }
             } else {
                 LOGGER.warn("GitHub Advisory mirroring is enabled, but no personal access token is configured. Skipping.");
             }
@@ -159,24 +177,6 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 if (pageableList.isHasNextPage()) {
                     retrieveAdvisories(pageableList.getEndCursor());
                 }
-            }
-
-            if (mirroredWithoutErrors) {
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.SYSTEM)
-                        .group(NotificationGroup.DATASOURCE_MIRRORING)
-                        .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
-                        .content("Mirroring of GitHub Advisories completed successfully")
-                        .level(NotificationLevel.INFORMATIONAL)
-                );
-            } else {
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.SYSTEM)
-                        .group(NotificationGroup.DATASOURCE_MIRRORING)
-                        .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
-                        .content("An error occurred mirroring the contents of GitHub Advisories. Check log for details.")
-                        .level(NotificationLevel.ERROR)
-                );
             }
         }
     }

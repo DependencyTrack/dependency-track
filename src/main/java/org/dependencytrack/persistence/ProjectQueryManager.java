@@ -182,7 +182,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     public List<Project> getAllProjects(boolean excludeInactive) {
         final Query<Project> query = pm.newQuery(Project.class);
         if (excludeInactive) {
-            query.setFilter("active == true || active == null");
+            query.setFilter("active");
         }
         query.setOrdering("id asc");
         return query.executeList();
@@ -472,9 +472,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     public Project createProject(final Project project, List<Tag> tags, boolean commitIndex) {
         if (project.getParent() != null && !Boolean.TRUE.equals(project.getParent().isActive())){
             throw new IllegalArgumentException("An inactive Parent cannot be selected as parent");
-        }
-        if (project.isActive() == null) {
-            project.setActive(Boolean.TRUE);
         }
         final Project oldLatestProject = project.isLatest() ? getLatestProjectVersion(project.getName()) : null;
         final Project result = callInTransaction(() -> {

@@ -114,7 +114,7 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
         final Query<Component> query = qm.getPersistenceManager().newQuery(Component.class);
         var filterParts = new ArrayList<String>();
         var params = new HashMap<String, Object>();
-        filterParts.add("(project.active == null || project.active)");
+        filterParts.add("project.active");
         if (lastId != null) {
             filterParts.add("id > :lastId");
             params.put("lastId", lastId);

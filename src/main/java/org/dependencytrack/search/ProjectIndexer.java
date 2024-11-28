@@ -114,7 +114,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
         final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
         var filterParts = new ArrayList<String>();
         var params = new HashMap<String, Object>();
-        filterParts.add("(active == null || active)");
+        filterParts.add("active");
         if (lastId != null) {
             filterParts.add("id > :lastId");
             params.put("lastId", lastId);

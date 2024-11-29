@@ -175,9 +175,9 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
     private List<Project> fetchNextActiveProjectsBatch(final PersistenceManager pm, final Long lastId) {
         final Query<Project> query = pm.newQuery(Project.class);
         if (lastId == null) {
-            query.setFilter("(active == null || active == true)");
+            query.setFilter("active");
         } else {
-            query.setFilter("(active == null || active == true) && id < :lastId");
+            query.setFilter("active && id < :lastId");
             query.setParameters(lastId);
         }
         query.setOrdering("id DESC");

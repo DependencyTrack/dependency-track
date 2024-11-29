@@ -460,7 +460,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             filterCriteria.add("(analysis.suppressed == false || analysis.suppressed == null)");
         }
         if (!showInactive) {
-            filterCriteria.add("(project.active == true || project.active == null)");
+            filterCriteria.add("project.active");
         }
         processViolationsFilters(filters, params, filterCriteria);
         if (orderBy == null) {

@@ -37,6 +37,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import jakarta.validation.constraints.Size;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.CloneProjectEvent;
@@ -46,6 +47,8 @@ import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+import org.dependencytrack.resources.v1.problems.ProblemDetails;
+import org.dependencytrack.resources.v1.problems.ProjectOperationProblemDetails;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 
@@ -66,10 +69,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import javax.jdo.FetchGroup;
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -816,44 +817,18 @@ public class ProjectResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Projects removed successfully"),
-            @ApiResponse(responseCode = "207", description = "Access is forbidden to the projects listed in the response"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Operation failed",
+                    content = @Content(schema = @Schema(implementation = ProjectOperationProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)
+            )
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
-    public Response deleteProjects(List<UUID> uuids) {
-        List<UUID> inaccessibleProjects = new ArrayList<>();
-        try (QueryManager qm = new QueryManager()) {
-            for (Iterator<UUID> it = uuids.iterator(); it.hasNext();) {
-                UUID uuid = it.next();
-                final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
-                if (project != null) {
-                    if (!qm.hasAccess(super.getPrincipal(), project)) {
-                        LOGGER.warn(super.getPrincipal().getName() + " lacks access to project " + project
-                                + ",  delete request denied"
-                        );
-                        inaccessibleProjects.add(uuid);
-                        it.remove();
-                    }
-                } else {
-                    LOGGER.warn("No project found by UUID " + uuid);
-                    it.remove();
-                }
-            }
-
-            if (uuids.isEmpty()) {
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity(inaccessibleProjects)
-                        .build();
-            }
-
-            qm.deleteProjectsByUUIDs(uuids);
-
-            if (inaccessibleProjects.isEmpty()) {
-                return Response.status(Response.Status.NO_CONTENT).build();
-            } else {
-                return Response.status(207).entity(inaccessibleProjects).build();
-            }
+    public Response deleteProjects(@Size(min = 1, max = 1000) final Set<UUID> uuids) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+                qm.deleteProjectsByUUIDs(uuids);
         }
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @PUT

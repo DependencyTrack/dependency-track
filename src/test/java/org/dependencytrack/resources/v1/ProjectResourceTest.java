@@ -26,6 +26,8 @@ import alpine.model.Team;
 import alpine.server.auth.JsonWebToken;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.cyclonedx.model.ExternalReference.Type;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
@@ -47,8 +49,10 @@ import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.resources.v1.exception.ProjectOperationExceptionMapper;
 import org.dependencytrack.tasks.CloneProjectTask;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.hamcrest.CoreMatchers;
@@ -88,7 +92,8 @@ public class ProjectResourceTest extends ResourceTest {
     public static JerseyTestRule jersey = new JerseyTestRule(
             new ResourceConfig(ProjectResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFilter.class));
+                    .register(AuthenticationFilter.class)
+                    .register(ProjectOperationExceptionMapper.class));
 
     @After
     @Override
@@ -1249,7 +1254,7 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    public void batchDeleteProjectsTest() {
+    public void batchDeleteProjectsTest() throws JsonProcessingException {
         // Enable portfolio access control.
         qm.createConfigProperty(
             ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
@@ -1269,19 +1274,50 @@ public class ProjectResourceTest extends ResourceTest {
             .post(Entity.json(uuidsOfAccessibleProjects));
         Assert.assertEquals(204, response.getStatus(), 0);
 
+        // Try to delete them again (they should now be gone)
+        response = jersey.target(V1_PROJECT + "/batchDelete")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .post(Entity.json(uuidsOfAccessibleProjects));
+        Assert.assertEquals(400, response.getStatus(), 0);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        Map<String, String> expectedErrors = uuidsOfAccessibleProjects.stream()
+                .collect(Collectors.toMap(UUID::toString, uuid -> "Project not found"));
+        ObjectMapper objectMapper = new ObjectMapper();
+        String expectedErrorsJson = objectMapper.writeValueAsString(expectedErrors);
+        assertThatJson(
+                getPlainTextBody(response)
+        ).isEqualTo("""
+                {
+                  "status": 400,
+                  "title": "Project operation failed",
+                  "detail": "One or more projects could not be deleted",
+                  "errors": %s
+                }
+                """.formatted(expectedErrorsJson)
+        );
+
         // Delete only inaccessible projects
         response = jersey.target(V1_PROJECT + "/batchDelete")
             .request()
             .header(X_API_KEY, apiKey)
+            .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
             .post(Entity.json(uuidsOfInaccessibleProjects));
-        Assert.assertEquals(403, response.getStatus(), 0);
-        JsonArray jsonResponse = parseJsonArray(response);
-        JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
-        for (UUID uuid: uuidsOfInaccessibleProjects)  {
-            jsonArrayBuilder.add(uuid.toString());
-        }
-        JsonArray uuidsOfInaccessibleProjectsAsJson = jsonArrayBuilder.build();
-        Assert.assertEquals("", uuidsOfInaccessibleProjectsAsJson, jsonResponse);
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(
+                getPlainTextBody(response)
+        ).isEqualTo("""
+                {
+                  "status": 400,
+                  "title": "Project operation failed",
+                  "detail": "One or more projects could not be deleted",
+                  "errors": {
+                    "%": "Access denied to project"
+                  }
+                }
+                """.replaceAll("%", uuidsOfInaccessibleProjects.getFirst().toString()));
 
         // Delete mixed accessible + inaccessible projects
         List<UUID> uuidsOfMixedProjects = new ArrayList<>();
@@ -1292,9 +1328,20 @@ public class ProjectResourceTest extends ResourceTest {
             .request()
             .header(X_API_KEY, apiKey)
             .post(Entity.json(uuidsOfMixedProjects));
-        Assert.assertEquals(207, response.getStatus(), 0);
-        jsonResponse = parseJsonArray(response);
-        Assert.assertEquals("", uuidsOfInaccessibleProjectsAsJson, jsonResponse);
+        Assert.assertEquals(400, response.getStatus(), 0);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        expectedErrors = uuidsOfInaccessibleProjects.stream()
+                .collect(Collectors.toMap(UUID::toString, uuid -> "Access denied to project"));
+        expectedErrorsJson = objectMapper.writeValueAsString(expectedErrors);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        {
+          "status": 400,
+          "title": "Project operation failed",
+          "detail": "One or more projects could not be deleted",
+          "errors": %s
+        }
+        """.formatted(expectedErrorsJson));
+
     }
 
     @Test

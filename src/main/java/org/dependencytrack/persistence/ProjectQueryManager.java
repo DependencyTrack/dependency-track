@@ -39,6 +39,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.exception.ProjectOperationException;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.Classifier;
@@ -66,14 +67,18 @@ import javax.jdo.metadata.TypeMetadata;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 
@@ -893,16 +898,43 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * NB: if ON DELETE rules had been set up, this would be as simple as "delete from project where ..."
      */
     @Override
-    public void deleteProjectsByUUIDs(List<UUID> uuids) {
+    public void deleteProjectsByUUIDs(Collection<UUID> uuids) {
+        final var errorByUUID = new HashMap<String, String>();
+
+        for (Iterator<UUID> it = uuids.iterator(); it.hasNext(); ) {
+            UUID uuid = it.next();
+            final Project project = getObjectByUuid(Project.class, uuid);
+            if (project == null) {
+                errorByUUID.put(String.valueOf(uuid), "Project not found");
+                it.remove();
+            }
+            else {
+                if (!hasAccess(principal, project)) {
+                    errorByUUID.put(String.valueOf(uuid), "Access denied to project");
+                    it.remove();
+                }
+            }
+        }
+        if (!errorByUUID.isEmpty()) {
+            throw ProjectOperationException.forDeletion(errorByUUID);
+        }
+
         String[] uuidsArray = uuids.stream().map(UUID::toString).toArray(String[]::new);
+        String commaSeparatedUUIDs = String.join(",", Collections.nCopies(uuidsArray.length, "?"));
+        var queryParameter = Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("com.microsoft.sqlserver.jdbc.SQLServerDriver") ?
+                commaSeparatedUUIDs : uuidsArray;
+        String inExpression = Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("com.microsoft.sqlserver.jdbc.SQLServerDriver") ?
+            "IN(SELECT value FROM STRING_SPLIT(?, ','))" : "= ANY(?)";
+
         runInTransaction(() -> {
             try (var ignored = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
                 Query<?> sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "PROJECTMETRICS" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     )
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
                     DELETE FROM "DEPENDENCYMETRICS" WHERE "COMPONENT_ID" IN (
@@ -912,8 +944,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     ) OR "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray, uuidsArray);
+                    """.replaceAll(Pattern.quote("= ANY(?)"), inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
                     DELETE FROM "FINDINGATTRIBUTION" WHERE "COMPONENT_ID" IN (
@@ -923,8 +956,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     ) AND "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray, uuidsArray);
+                    """.replaceAll(Pattern.quote("= ANY(?)"), inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "COMPONENTS_VULNERABILITIES" WHERE "COMPONENT_ID" IN (
@@ -932,8 +966,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                             SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                         )
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "ANALYSISCOMMENT" WHERE "ANALYSIS_ID" IN (
@@ -941,15 +976,17 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                             SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                         )
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
                     DELETE FROM "ANALYSIS" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
                     DELETE FROM "COMPONENT_PROPERTY" WHERE "COMPONENT_ID" IN (
@@ -957,192 +994,303 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                             SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                         )
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                // Does not work with H2, but verified on Postgres
-                if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.postgresql.Driver")) {
-                    sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
-                        WITH RECURSIVE c_family("ID", "PARENT_COMPONENT_ID") AS (
-                            SELECT "COMPONENT"."ID", "PARENT_COMPONENT_ID"
-                            FROM "COMPONENT" JOIN "PROJECT" ON "PROJECT_ID" = "PROJECT"."ID"
-                            WHERE "PROJECT"."UUID" = ANY(?)
-                          UNION ALL
-                            SELECT "COMPONENT"."ID", "COMPONENT"."PARENT_COMPONENT_ID"
-                            FROM c_family, "COMPONENT"
-                            WHERE "COMPONENT"."ID" = c_family."PARENT_COMPONENT_ID"
-                        )
-                        DELETE FROM "COMPONENT"
-                          WHERE "ID" = ANY(SELECT "ID" FROM c_family);
-                        """);
-                    executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                // Deletion with CTEs does not work with H2, but verified on Postgres and MS SQL Server
+                if ( ! Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.h2.Driver")) {
+                    if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.postgresql.Driver")) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH RECURSIVE c_family("ID", "PARENT_COMPONENT_ID") AS (
+                                SELECT "COMPONENT"."ID", "PARENT_COMPONENT_ID"
+                                FROM "COMPONENT"
+                                JOIN "PROJECT" ON "PROJECT_ID" = "PROJECT"."ID"
+                                WHERE "PROJECT"."UUID" = ANY(?)
+                                UNION ALL
+                                SELECT "COMPONENT"."ID", "COMPONENT"."PARENT_COMPONENT_ID"
+                                FROM c_family, "COMPONENT"
+                                WHERE "COMPONENT"."ID" = c_family."PARENT_COMPONENT_ID"
+                            )
+                            DELETE FROM "COMPONENT"
+                              WHERE "ID" IN (SELECT "ID" FROM c_family);
+                            """
+                        );
+                    }
+                    if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("com.microsoft.sqlserver.jdbc.SQLServerDriver")) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH c_family AS (
+                                SELECT COMPONENT.ID, COMPONENT.PARENT_COMPONENT_ID
+                                FROM COMPONENT
+                                JOIN PROJECT ON COMPONENT.PROJECT_ID = PROJECT.ID
+                                WHERE PROJECT.UUID = ANY(?)
+                                UNION ALL
+                                SELECT COMPONENT.ID, COMPONENT.PARENT_COMPONENT_ID
+                                FROM COMPONENT
+                                INNER JOIN c_family ON COMPONENT.ID = c_family.PARENT_COMPONENT_ID
+                            )
+                            DELETE FROM COMPONENT
+                            WHERE ID IN (SELECT ID FROM c_family);
+                            """.replace("= ANY(?)", inExpression)
+                        );
+                    }
+                    executeAndCloseWithArray(sqlQuery, queryParameter);
                 }
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
                     DELETE FROM "COMPONENT" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "BOM" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "PROJECT_METADATA" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "PROJECT_PROPERTY" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "PROJECTS_TAGS" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "TAG"
                     WHERE "ID" NOT IN (SELECT "TAG_ID" FROM "PROJECTS_TAGS");
                     """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                executeAndClose(sqlQuery);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "NOTIFICATIONRULE_PROJECTS" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "NOTIFICATIONRULE"
                     WHERE "ID" NOT IN (SELECT "NOTIFICATIONRULE_ID" FROM "NOTIFICATIONRULE_PROJECTS");
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """
+                );
+                executeAndClose(sqlQuery);
 
-                // Does not work with H2, but verified on Postgres
-                if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.postgresql.Driver")) {
-                    sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
-                        WITH v_ids AS (
-                            SELECT "VIOLATIONANALYSIS"."ID"
-                            FROM "VIOLATIONANALYSIS"
-                            JOIN "PROJECT" ON "PROJECT_ID" = "PROJECT"."ID"
-                            WHERE "PROJECT"."UUID" = ANY(?)
-                        )
-                        DELETE FROM "VIOLATIONANALYSISCOMMENT"
-                        USING v_ids
-                        WHERE "VIOLATIONANALYSIS_ID" = v_ids."ID";
-                        """);
-                    executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                if ( ! Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.h2.Driver")) {
+                    if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.postgresql.Driver")) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH v_ids AS (
+                                SELECT "VIOLATIONANALYSIS"."ID"
+                                FROM "VIOLATIONANALYSIS"
+                                JOIN "PROJECT" ON "PROJECT_ID" = "PROJECT"."ID"
+                                WHERE "PROJECT"."UUID" = ANY(?)
+                            )
+                            DELETE FROM "VIOLATIONANALYSISCOMMENT"
+                            USING v_ids
+                            WHERE "VIOLATIONANALYSIS_ID" = v_ids."ID";
+                            """.replace("= ANY(?)", inExpression)
+                        );
+                    }
+                    if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("com.microsoft.sqlserver.jdbc.SQLServerDriver")) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH v_ids AS (
+                                SELECT VIOLATIONANALYSIS.ID
+                                FROM VIOLATIONANALYSIS
+                                JOIN PROJECT ON PROJECT_ID = PROJECT.ID
+                                WHERE PROJECT.UUID IN (SELECT value FROM STRING_SPLIT(?, ','))
+                            )
+                            DELETE VAC
+                            FROM VIOLATIONANALYSISCOMMENT AS VAC
+                            JOIN v_ids ON VAC.VIOLATIONANALYSIS_ID = v_ids.ID;
+                            """);
+                    }
+                    executeAndCloseWithArray(sqlQuery, queryParameter);
                 }
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "VIOLATIONANALYSIS" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "POLICYVIOLATION" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "POLICY_PROJECTS" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "POLICY"
                     WHERE "ID" NOT IN (SELECT "POLICY_ID" FROM "POLICY_PROJECTS");
                     """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                executeAndClose(sqlQuery);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "PROJECT_ACCESS_TEAMS" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "VEX" WHERE "PROJECT_ID" IN (
                         SELECT "ID" FROM "PROJECT" WHERE "UUID" = ANY(?)
                     );
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                // The below has only been tested with Postgres, but should work on any RDBMS supporting SQL:1999
-                if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.postgresql.Driver")) {
-                    sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
-                        WITH sc_cte AS (
-                          SELECT "SERVICECOMPONENT"."ID" FROM "SERVICECOMPONENT"
-                          JOIN "PROJECT" ON "SERVICECOMPONENT"."PROJECT_ID" = "PROJECT"."ID"
-                          WHERE "PROJECT"."UUID" = ANY(?)
-                        )
-                        DELETE FROM "SERVICECOMPONENTS_VULNERABILITIES"
-                        USING sc_cte
-                        WHERE "SERVICECOMPONENTS_VULNERABILITIES"."SERVICECOMPONENT_ID" = sc_cte."ID";
-                        """);
-                    executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                if ( ! Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.h2.Driver")) {
+                    if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.postgresql.Driver")) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH sc_cte AS (
+                              SELECT "SERVICECOMPONENT"."ID" FROM "SERVICECOMPONENT"
+                              JOIN "PROJECT" ON "SERVICECOMPONENT"."PROJECT_ID" = "PROJECT"."ID"
+                              WHERE "PROJECT"."UUID" = ANY(?)
+                            )
+                            DELETE FROM "SERVICECOMPONENTS_VULNERABILITIES"
+                            USING sc_cte
+                            WHERE "SERVICECOMPONENTS_VULNERABILITIES"."SERVICECOMPONENT_ID" = sc_cte."ID";
+                            """
+                        );
+                    }
+                    if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("com.microsoft.sqlserver.jdbc.SQLServerDriver")) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH sc_cte AS (
+                                SELECT SERVICECOMPONENT.ID
+                                FROM SERVICECOMPONENT
+                                JOIN PROJECT ON SERVICECOMPONENT.PROJECT_ID = PROJECT.ID
+                                WHERE PROJECT.UUID IN (SELECT value FROM STRING_SPLIT(?, ','))
+                            )
+                            DELETE SVCV
+                            FROM SERVICECOMPONENTS_VULNERABILITIES AS SVCV
+                            JOIN sc_cte ON SVCV.SERVICECOMPONENT_ID = sc_cte.ID;
+                            """
+                        );
+                    }
+                    executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                    sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
-                        WITH RECURSIVE sc_family("ID", "PARENT_SERVICECOMPONENT_ID") AS (
-                            SELECT "SERVICECOMPONENT"."ID", "PARENT_SERVICECOMPONENT_ID"
-                            FROM "SERVICECOMPONENT"
-                            JOIN "PROJECT" ON "PROJECT"."ID" = "SERVICECOMPONENT"."PROJECT_ID"
-                            WHERE "PROJECT"."UUID" = ANY(?)
-                          UNION ALL
-                            SELECT "SERVICECOMPONENT"."ID", "SERVICECOMPONENT"."PARENT_SERVICECOMPONENT_ID"
-                            FROM sc_family, "SERVICECOMPONENT"
-                            WHERE "SERVICECOMPONENT"."ID" = sc_family."PARENT_SERVICECOMPONENT_ID"
-                        )
-                        DELETE FROM "SERVICECOMPONENT"
-                          WHERE "ID" = ANY(SELECT "ID" FROM sc_family);
-                        """);
-                    executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.postgresql.Driver")) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH RECURSIVE sc_family("ID", "PARENT_SERVICECOMPONENT_ID") AS (
+                                SELECT "SERVICECOMPONENT"."ID", "PARENT_SERVICECOMPONENT_ID"
+                                FROM "SERVICECOMPONENT"
+                                JOIN "PROJECT" ON "PROJECT"."ID" = "SERVICECOMPONENT"."PROJECT_ID"
+                                WHERE "PROJECT"."UUID" = ANY(?)
+                              UNION ALL
+                                SELECT "SERVICECOMPONENT"."ID", "SERVICECOMPONENT"."PARENT_SERVICECOMPONENT_ID"
+                                FROM sc_family, "SERVICECOMPONENT"
+                                WHERE "SERVICECOMPONENT"."ID" = sc_family."PARENT_SERVICECOMPONENT_ID"
+                            )
+                            DELETE FROM "SERVICECOMPONENT"
+                              WHERE "ID" = ANY(SELECT "ID" FROM sc_family);
+                            """);
+                    }
+                    if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("com.microsoft.sqlserver.jdbc.SQLServerDriver")) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                                WITH sc_family AS (
+                                   SELECT
+                                       SERVICECOMPONENT.ID,
+                                       SERVICECOMPONENT.PARENT_SERVICECOMPONENT_ID
+                                   FROM SERVICECOMPONENT
+                                   JOIN PROJECT ON PROJECT.ID = SERVICECOMPONENT.PROJECT_ID
+                                   WHERE PROJECT.UUID = ANY(?)
+                                   UNION ALL
+                                   SELECT
+                                       SERVICECOMPONENT.ID,
+                                       SERVICECOMPONENT.PARENT_SERVICECOMPONENT_ID
+                                   FROM SERVICECOMPONENT
+                                   INNER JOIN sc_family ON SERVICECOMPONENT.ID = sc_family.PARENT_SERVICECOMPONENT_ID
+                               )
+                               DELETE FROM SERVICECOMPONENT
+                               WHERE ID IN (SELECT ID FROM sc_family);
+                            """.replace("= ANY(?)", inExpression)
+                        );
+                    }
+                    executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                    sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
-                        WITH RECURSIVE p_family("ID", "PARENT_PROJECT_ID") AS (
-                            SELECT "PROJECT"."ID", "PARENT_PROJECT_ID"
-                            FROM "PROJECT"
-                            WHERE "PROJECT"."UUID" = ANY(?)
-                          UNION ALL
-                            SELECT "PROJECT"."ID", "PROJECT"."PARENT_PROJECT_ID"
-                            FROM p_family, "PROJECT"
-                            WHERE "PROJECT"."ID" = p_family."PARENT_PROJECT_ID"
-                        )
-                        DELETE FROM "PROJECT"
-                          WHERE "ID" = ANY(SELECT "ID" FROM p_family);
-                        """);
-                    executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("org.postgresql.Driver")) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH RECURSIVE p_family("ID", "PARENT_PROJECT_ID") AS (
+                                SELECT "PROJECT"."ID", "PARENT_PROJECT_ID"
+                                FROM "PROJECT"
+                                WHERE "PROJECT"."UUID" = ANY(?)
+                              UNION ALL
+                                SELECT "PROJECT"."ID", "PROJECT"."PARENT_PROJECT_ID"
+                                FROM p_family, "PROJECT"
+                                WHERE "PROJECT"."ID" = p_family."PARENT_PROJECT_ID"
+                            )
+                            DELETE FROM "PROJECT"
+                              WHERE "ID" = ANY(SELECT "ID" FROM p_family);
+                            """
+                        );
+                    }
+                    if (Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER).equals("com.microsoft.sqlserver.jdbc.SQLServerDriver")) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                              WITH p_family AS (
+                                  SELECT
+                                      PROJECT.ID,
+                                      PROJECT.PARENT_PROJECT_ID
+                                  FROM PROJECT
+                                  WHERE PROJECT.UUID = ANY(?)
+                                  UNION ALL
+                                  SELECT
+                                      PROJECT.ID,
+                                      PROJECT.PARENT_PROJECT_ID
+                                  FROM PROJECT
+                                  INNER JOIN p_family ON PROJECT.ID = p_family.PARENT_PROJECT_ID
+                              )
+                              DELETE FROM PROJECT
+                              WHERE ID IN (SELECT ID FROM p_family);
+                            """.replace("= ANY(?)", inExpression)
+                        );
+                    }
+                    executeAndCloseWithArray(sqlQuery, queryParameter);
                 }
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
                     DELETE FROM "PROJECT" WHERE "UUID" = ANY(?);
-                    """);
-                executeAndCloseWithArray(sqlQuery, (Object) uuidsArray);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
             }
         });
     }
-
 
     /**
      * Creates a key/value pair (ProjectProperty) for the specified Project.

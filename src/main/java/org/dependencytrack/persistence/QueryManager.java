@@ -503,7 +503,7 @@ public class QueryManager extends AlpineQueryManager {
         getProjectQueryManager().recursivelyDelete(project, commitIndex);
     }
 
-    public void deleteProjectsByUUIDs(List<UUID> uuids) {
+    public void deleteProjectsByUUIDs(Collection<UUID> uuids) {
         getProjectQueryManager().deleteProjectsByUUIDs(uuids);
     }
 

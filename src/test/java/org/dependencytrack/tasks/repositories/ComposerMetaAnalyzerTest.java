@@ -31,6 +31,7 @@ import org.mockserver.integration.ClientAndServer;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 
 import static org.mockserver.model.HttpRequest.request;
@@ -76,7 +77,7 @@ public class ComposerMetaAnalyzerTest {
                 .when(
                         request()
                                 .withMethod("GET")
-                                .withPath("/p/typo3/class-alias-loader.json")
+                                .withPath("/p2/typo3/class-alias-loader.json")
                 )
                 .respond(
                         response()
@@ -89,9 +90,9 @@ public class ComposerMetaAnalyzerTest {
 
         MetaModel metaModel = analyzer.analyze(component);
 
-        Assert.assertEquals("v1.1.3", metaModel.getLatestVersion());
+        Assert.assertEquals("v1.2.0", metaModel.getLatestVersion());
         Assert.assertEquals(
-                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2020-05-24 13:03:22 Z"),
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 12:00:00 Z"),
                 metaModel.getPublishedTimestamp()
         );
     }
@@ -101,15 +102,15 @@ public class ComposerMetaAnalyzerTest {
         Component component = new Component();
         ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
-        component.setPurl(new PackageURL("pkg:composer/magento/adobe-ims@v1.0.0"));
-        final File packagistFile = getResourceFile("magento", "adobe-ims");
+        component.setPurl(new PackageURL("pkg:composer/mockery/mockery@1.6.12"));
+        final File packagistFile = getResourceFile("mockery", "mockery");
 
         analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
         new MockServerClient("localhost", mockServer.getPort())
                 .when(
                         request()
                                 .withMethod("GET")
-                                .withPath("/p/magento/adobe-ims.json")
+                                .withPath("/p2/mockery/mockery.json")
                 )
                 .respond(
                         response()
@@ -124,16 +125,26 @@ public class ComposerMetaAnalyzerTest {
         Assert.assertNull(metaModel.getLatestVersion());
     }
 
-    private static File getResourceFile(String namespace, String name) throws Exception{
-        return new File(
-                Thread.currentThread().getContextClassLoader()
-                        .getResource(String.format(
-                                "unit/tasks/repositories/https---repo.packagist.org-p-%s-%s.json",
-                                namespace,
-                                name
-                        ))
-                        .toURI()
+    private static File getResourceFile(String namespace, String name) throws Exception {
+        String resourcePathP = String.format(
+            "unit/tasks/repositories/https---repo.packagist.org-p-%s-%s.json",
+            namespace, name
         );
+        String resourcePathP2 = String.format(
+            "unit/tasks/repositories/https---repo.packagist.org-p2-%s-%s.json",
+            namespace, name
+        );
+    
+        URL resource = Thread.currentThread().getContextClassLoader().getResource(resourcePathP2);
+        if (resource == null) {
+            resource = Thread.currentThread().getContextClassLoader().getResource(resourcePathP);
+        }
+    
+        if (resource == null) {
+            throw new IllegalArgumentException("Test resource not found: " + resourcePathP + " or " + resourcePathP2);
+        }
+    
+        return new File(resource.toURI());
     }
 
     private static byte[] getTestData(File file) throws Exception {

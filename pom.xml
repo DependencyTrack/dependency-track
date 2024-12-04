@@ -31,7 +31,7 @@
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>4.12.2-SNAPSHOT</version>
+    <version>4.12.2</version>
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>

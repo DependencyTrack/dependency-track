@@ -111,13 +111,14 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         for (String packageName : packages.keySet()) {
             Object packageData = packages.get(packageName);
             if (packageData instanceof JSONObject) {
-                For Composer 1 (/p endpoint)
+                // For Composer 1 (/p endpoint)
                 JSONObject packageDataObj = (JSONObject) packageData;
                 JSONObject versionsObj = packageDataObj.optJSONObject("versions");
                 if (versionsObj != null) {
                     parseVersions(versionsObj, meta);
                 }
             } else if (packageData instanceof JSONArray) {
+                // For Composer 2 (/p2 endpoint)
                 JSONArray versionsArray = (JSONArray) packageData;
                 for (int i = 0; i < versionsArray.length(); i++) {
                     JSONObject versionData = versionsArray.getJSONObject(i);
@@ -184,11 +185,12 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         }
         version = version.trim();
 
+        // Remove leading 'v' or 'V'
         if (version.startsWith("v") || version.startsWith("V")) {
             version = version.substring(1);
         }
 
-        Remove trailing ".0" components
+        // Remove trailing ".0" components
         version = version.replaceAll("(\\.0)+$", "");
 
         return version;

@@ -111,14 +111,13 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         for (String packageName : packages.keySet()) {
             Object packageData = packages.get(packageName);
             if (packageData instanceof JSONObject) {
-                // For Composer 1 (/p endpoint)
+                For Composer 1 (/p endpoint)
                 JSONObject packageDataObj = (JSONObject) packageData;
                 JSONObject versionsObj = packageDataObj.optJSONObject("versions");
                 if (versionsObj != null) {
                     parseVersions(versionsObj, meta);
                 }
             } else if (packageData instanceof JSONArray) {
-                // For Composer 2 (/p2 endpoint)
                 JSONArray versionsArray = (JSONArray) packageData;
                 for (int i = 0; i < versionsArray.length(); i++) {
                     JSONObject versionData = versionsArray.getJSONObject(i);
@@ -144,8 +143,8 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private void parseVersionData(JSONObject versionData, MetaModel meta) {
-        String version = versionData.optString("version");
-        String normalizedVersion = stripLeadingV(versionData.optString("version_normalized", version));
+        String version = versionData.optString("version", null);
+        String normalizedVersion = normalizeVersion(versionData.optString("version_normalized", version));
         String time = versionData.optString("time", null);
 
         if (version == null || normalizedVersion == null) {
@@ -153,21 +152,45 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             return;
         }
 
-        if (meta.getLatestVersion() == null || new ComparableVersion(normalizedVersion)
-                .compareTo(new ComparableVersion(stripLeadingV(meta.getLatestVersion()))) > 0) {
-            meta.setLatestVersion(version);
-            if (time != null) {
-                try {
-                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
-                    meta.setPublishedTimestamp(format.parse(time));
-                } catch (ParseException e) {
-                    LOGGER.error("Failed to parse timestamp: " + time, e);
+        String currentLatestVersionNormalized = meta.getLatestVersion() != null
+                ? normalizeVersion(meta.getLatestVersion())
+                : null;
+
+        try {
+            ComparableVersion newVersion = new ComparableVersion(normalizedVersion);
+            ComparableVersion currentLatestVersion = currentLatestVersionNormalized != null
+                    ? new ComparableVersion(currentLatestVersionNormalized)
+                    : null;
+
+            if (currentLatestVersion == null || newVersion.compareTo(currentLatestVersion) > 0) {
+                meta.setLatestVersion(version);
+                if (time != null) {
+                    try {
+                        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+                        meta.setPublishedTimestamp(format.parse(time));
+                    } catch (ParseException e) {
+                        LOGGER.error("Failed to parse timestamp: " + time, e);
+                    }
                 }
             }
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("Invalid version format: " + normalizedVersion, e);
         }
     }
 
-    private static String stripLeadingV(String version) {
-        return version != null && version.startsWith("v") ? version.substring(1) : version;
+    private static String normalizeVersion(String version) {
+        if (version == null) {
+            return null;
+        }
+        version = version.trim();
+
+        if (version.startsWith("v") || version.startsWith("V")) {
+            version = version.substring(1);
+        }
+
+        Remove trailing ".0" components
+        version = version.replaceAll("(\\.0)+$", "");
+
+        return version;
     }
 }

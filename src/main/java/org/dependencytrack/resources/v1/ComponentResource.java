@@ -374,7 +374,7 @@ public class ComponentResource extends AlpineResource {
                 // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
                 // as both might be needed in policy evaluation
                 .onSuccess(new RepositoryMetaEvent(List.of(component)))
-                .onSuccess(new PolicyEvaluationEvent(component))
+                .onSuccess(new PolicyEvaluationEvent(component).project(component.getProject()))
             );
             return Response.status(Response.Status.CREATED).entity(component).build();
         }
@@ -483,7 +483,7 @@ public class ComponentResource extends AlpineResource {
                     // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
 // as both might be needed in policy evaluation
                     .onSuccess(new RepositoryMetaEvent(List.of(component)))
-                    .onSuccess(new PolicyEvaluationEvent(component))
+                    .onSuccess(new PolicyEvaluationEvent(component).project(component.getProject()))
                 );
                 return Response.ok(component).build();
             } else {

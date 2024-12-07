@@ -126,6 +126,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                     final org.dependencytrack.parser.vulndb.model.Vulnerability vulnDbVuln = (org.dependencytrack.parser.vulndb.model.Vulnerability) o;
                     final org.dependencytrack.model.Vulnerability vulnerability = ModelConverter.convert(qm, vulnDbVuln);
                     final Vulnerability synchronizeVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+                    if (synchronizeVulnerability == null) continue;
                     final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(synchronizeVulnerability.getSource(), synchronizeVulnerability.getVulnId()));
                     List<VulnerableSoftware> vsList = parseCpes(qm, synchronizeVulnerability, vulnDbVuln);
                     qm.updateAffectedVersionAttributions(synchronizeVulnerability, vsList, Vulnerability.Source.VULNDB);

@@ -34,7 +34,6 @@ import alpine.server.util.DbUtil;
 import com.github.packageurl.PackageURL;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.ClassUtils;
-import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
@@ -340,22 +339,6 @@ public class QueryManager extends AlpineQueryManager {
             cacheQueryManager = (request == null) ? new CacheQueryManager(getPersistenceManager()) : new CacheQueryManager(getPersistenceManager(), request);
         }
         return cacheQueryManager;
-    }
-
-    /**
-     * Disables the second level cache for this {@link QueryManager} instance.
-     * <p>
-     * Disabling the L2 cache is useful in situations where large amounts of objects
-     * are created or updated in close succession, and it's unlikely that they'll be
-     * accessed again anytime soon. Keeping those objects in cache would unnecessarily
-     * blow up heap usage.
-     *
-     * @return This {@link QueryManager} instance
-     * @see <a href="https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#cache_level2">L2 Cache docs</a>
-     */
-    public QueryManager withL2CacheDisabled() {
-        pm.setProperty(PropertyNames.PROPERTY_CACHE_L2_TYPE, "none");
-        return this;
     }
 
     /**

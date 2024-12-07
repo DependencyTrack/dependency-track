@@ -6,7 +6,9 @@
         <MavenRunnerSettings>
           <option name="delegateBuildToMaven" value="false" />
           <option name="environmentProperties">
-            <map />
+            <map>
+              <entry key="SYSTEM_REQUIREMENT_CHECK_ENABLED" value="false" />
+            </map>
           </option>
           <option name="jreName" value="#USE_PROJECT_JDK" />
           <option name="mavenProperties">
@@ -15,7 +17,7 @@
           <option name="passParentEnv" value="true" />
           <option name="runMavenInBackground" value="true" />
           <option name="skipTests" value="false" />
-          <option name="vmOptions" value="-XX:+UseParallelGC -XX:+UseStringDeduplication" />
+          <option name="vmOptions" value="-XX:+UseParallelGC -XX:+UseStringDeduplication -Xmx2g" />
         </MavenRunnerSettings>
       </option>
       <option name="myRunnerParameters">

@@ -26,5 +26,5 @@ import java.util.UUID;
  * Value object holding UUID and version for a project
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record ProjectVersion(UUID uuid, String version, Boolean active) implements Serializable {
+public record ProjectVersion(UUID uuid, String version, boolean active) implements Serializable {
 }

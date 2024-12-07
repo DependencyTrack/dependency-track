@@ -18,7 +18,7 @@ other than a modern version of Docker.
 | 4.5GB RAM   | 16GB RAM    |
 | 2 CPU cores | 4 CPU cores |
 
-> These requirements can be disabled by setting the 'system.requirement.check.enabled' property or the 'SYSTEM_REQUIREMENT_CHECK_ENABLED' environment variable to 'false'. 
+> These requirements can be disabled by setting the 'system.requirement.check.enabled' property or the 'SYSTEM_REQUIREMENT_CHECK_ENABLED' environment variable to 'false'.
 
 ### Container Requirements (Front End)
 
@@ -29,12 +29,15 @@ other than a modern version of Docker.
 
 ### Quickstart (Docker Compose)
 
+> The easiest way to use Docker Compose is by installing Docker Desktop, since Compose comes bundled as a plugin.
+> See the official [Docker Compose installation guide](https://docs.docker.com/compose/install/) for alternative installation methods.
+
 ```bash
 # Downloads the latest Docker Compose file
 curl -LO https://dependencytrack.org/docker-compose.yml
 
 # Starts the stack using Docker Compose
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Quickstart (Docker Swarm)
@@ -69,11 +72,9 @@ docker run -d -m 8192m -p 8080:8080 --name dependency-track -v dependency-track:
 
 The preferred method for production environments is to use docker-compose.yml with a corresponding
 database container (Postgres, MySQL, or Microsoft SQL). The following is an example YAML file that
-can be used with `docker-compose` or `docker stack deploy`.
+can be used with `docker compose` or `docker stack deploy`.
 
 ```yaml
-version: '3.7'
-
 #####################################################
 # This Docker Compose file contains two services
 #    Dependency-Track API Server
@@ -123,6 +124,7 @@ services:
     #
     # Optional OpenID Connect (OIDC) Properties
     # - ALPINE_OIDC_ENABLED=true
+    # - ALPINE_OIDC_CLIENT_ID=
     # - ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example
     # - ALPINE_OIDC_USERNAME_CLAIM=preferred_username
     # - ALPINE_OIDC_TEAMS_CLAIM=groups

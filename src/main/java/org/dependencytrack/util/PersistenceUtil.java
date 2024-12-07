@@ -21,15 +21,11 @@ package org.dependencytrack.util;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.datanucleus.enhancement.Persistable;
-import org.dependencytrack.persistence.QueryManager;
 import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.postgresql.util.PSQLState;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.ObjectState;
-import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -240,61 +236,6 @@ public final class PersistenceUtil {
                 || objectState == PERSISTENT_NEW
                 || objectState == PERSISTENT_NONTRANSACTIONAL_DIRTY
                 || objectState == HOLLOW_PERSISTENT_NONTRANSACTIONAL;
-    }
-
-    /**
-     * Evict a given object from the JDO L2 cache.
-     *
-     * @param qm     The {@link QueryManager} to use
-     * @param object The object to evict from the cache
-     * @since 4.11.0
-     */
-    public static void evictFromL2Cache(final QueryManager qm, final Object object) {
-        final PersistenceManagerFactory pmf = qm.getPersistenceManager().getPersistenceManagerFactory();
-        pmf.getDataStoreCache().evict(getDataNucleusJdoObjectId(object));
-    }
-
-    /**
-     * Evict a given {@link Collection} of objects from the JDO L2 cache.
-     *
-     * @param qm      The {@link QueryManager} to use
-     * @param objects The objects to evict from the cache
-     * @since 4.11.0
-     */
-    public static void evictFromL2Cache(final QueryManager qm, final Collection<?> objects) {
-        final PersistenceManagerFactory pmf = qm.getPersistenceManager().getPersistenceManagerFactory();
-        pmf.getDataStoreCache().evictAll(getDataNucleusJdoObjectIds(objects));
-    }
-
-    private static Collection<?> getDataNucleusJdoObjectIds(final Collection<?> objects) {
-        return objects.stream().map(PersistenceUtil::getDataNucleusJdoObjectId).toList();
-    }
-
-    /**
-     * {@link JDOHelper#getObjectId(Object)} and {@link PersistenceManager#getObjectId(Object)}
-     * return instances of {@link javax.jdo.identity.LongIdentity}, but the DataNucleus L2 cache is maintained
-     * with DataNucleus-specific {@link org.datanucleus.identity.LongId}s instead.
-     * <p>
-     * Calling {@link javax.jdo.datastore.DataStoreCache#evict(Object)} with {@link javax.jdo.identity.LongIdentity}
-     * is pretty much a no-op. The mismatch is undetectable because {@code evict} doesn't throw when a wrong identity
-     * type is passed either.
-     * <p>
-     * (╯°□°)╯︵ ┻━┻
-     *
-     * @param object The object to get the JDO object ID for
-     * @return A JDO object ID
-     */
-    private static Object getDataNucleusJdoObjectId(final Object object) {
-        if (!(object instanceof final Persistable persistable)) {
-            throw new IllegalArgumentException("Can't get JDO object ID from non-Persistable objects");
-        }
-
-        final Object objectId = persistable.dnGetObjectId();
-        if (objectId == null) {
-            throw new IllegalStateException("Object does not have a JDO object ID");
-        }
-
-        return objectId;
     }
 
     public static boolean isUniqueConstraintViolation(final Throwable throwable) {

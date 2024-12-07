@@ -50,13 +50,13 @@ public class DefectDojoClient {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private final DefectDojoUploader uploader;
     private final URL baseURL;
-
+    
     public DefectDojoClient(final DefectDojoUploader uploader, final URL baseURL) {
         this.uploader = uploader;
         this.baseURL = baseURL;
     }
 
-    public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson) {
+    public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final Boolean verifyFindings) {
         LOGGER.debug("Uploading Dependency-Track findings to DefectDojo");
         HttpPost request = new HttpPost(baseURL + "/api/v2/import-scan/");
         InputStreamBody inputStreamBody = new InputStreamBody(findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json");
@@ -66,7 +66,7 @@ public class DefectDojoClient {
                 .addPart("file", inputStreamBody)
                 .addPart("engagement", new StringBody(engagementId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_type", new StringBody("Dependency Track Finding Packaging Format (FPF) Export", ContentType.MULTIPART_FORM_DATA))
-                .addPart("verified", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
+                .addPart("verified", new StringBody(Boolean.toString(verifyFindings), ContentType.MULTIPART_FORM_DATA))
                 .addPart("active", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
                 .addPart("minimum_severity", new StringBody("Info", ContentType.MULTIPART_FORM_DATA))
                 .addPart("close_old_findings", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
@@ -163,7 +163,7 @@ public class DefectDojoClient {
      * A Reimport will reuse (overwrite) the existing test, instead of create a new test.
      * The Successfully reimport will also  increase the reimport counter by 1.
      */
-    public void reimportDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final String testId, final Boolean doNotReactivate) {
+    public void reimportDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final String testId, final Boolean doNotReactivate, final Boolean verifyFindings) {
         LOGGER.debug("Re-reimport Dependency-Track findings to DefectDojo per Engagement");
         HttpPost request = new HttpPost(baseURL + "/api/v2/reimport-scan/");
         request.addHeader("accept", "application/json");
@@ -173,7 +173,7 @@ public class DefectDojoClient {
                 .addPart("file", inputStreamBody)
                 .addPart("engagement", new StringBody(engagementId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_type", new StringBody("Dependency Track Finding Packaging Format (FPF) Export", ContentType.MULTIPART_FORM_DATA))
-                .addPart("verified", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
+                .addPart("verified", new StringBody(Boolean.toString(verifyFindings), ContentType.MULTIPART_FORM_DATA))
                 .addPart("active", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
                 .addPart("minimum_severity", new StringBody("Info", ContentType.MULTIPART_FORM_DATA))
                 .addPart("close_old_findings", new StringBody("true", ContentType.MULTIPART_FORM_DATA))

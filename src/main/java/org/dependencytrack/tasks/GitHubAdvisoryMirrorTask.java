@@ -18,17 +18,17 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.common.logging.Logger;
-import alpine.event.framework.Event;
-import alpine.event.framework.LoggableSubscriber;
-import alpine.model.ConfigProperty;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
-import com.github.packageurl.MalformedPackageURLException;
-import com.github.packageurl.PackageURL;
-import com.github.packageurl.PackageURLBuilder;
-import io.pebbletemplates.pebble.PebbleEngine;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -38,6 +38,9 @@ import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -54,20 +57,18 @@ import org.dependencytrack.parser.github.graphql.model.PageableList;
 import org.dependencytrack.persistence.QueryManager;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+import com.github.packageurl.PackageURLBuilder;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
+import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
+import alpine.event.framework.LoggableSubscriber;
+import alpine.model.ConfigProperty;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
@@ -112,6 +113,24 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 final long end = System.currentTimeMillis();
                 LOGGER.info("GitHub Advisory mirroring complete");
                 LOGGER.info("Time spent (total): " + (end - start) + "ms");
+
+                if (mirroredWithoutErrors) {
+                    Notification.dispatch(new Notification()
+                            .scope(NotificationScope.SYSTEM)
+                            .group(NotificationGroup.DATASOURCE_MIRRORING)
+                            .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
+                            .content("Mirroring of GitHub Advisories completed successfully")
+                            .level(NotificationLevel.INFORMATIONAL)
+                    );
+                } else {
+                    Notification.dispatch(new Notification()
+                            .scope(NotificationScope.SYSTEM)
+                            .group(NotificationGroup.DATASOURCE_MIRRORING)
+                            .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
+                            .content("An error occurred mirroring the contents of GitHub Advisories. Check log for details.")
+                            .level(NotificationLevel.ERROR)
+                    );
+                }
             } else {
                 LOGGER.warn("GitHub Advisory mirroring is enabled, but no personal access token is configured. Skipping.");
             }
@@ -159,24 +178,6 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                     retrieveAdvisories(pageableList.getEndCursor());
                 }
             }
-
-            if (mirroredWithoutErrors) {
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.SYSTEM)
-                        .group(NotificationGroup.DATASOURCE_MIRRORING)
-                        .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
-                        .content("Mirroring of GitHub Advisories completed successfully")
-                        .level(NotificationLevel.INFORMATIONAL)
-                );
-            } else {
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.SYSTEM)
-                        .group(NotificationGroup.DATASOURCE_MIRRORING)
-                        .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
-                        .content("An error occurred mirroring the contents of GitHub Advisories. Check log for details.")
-                        .level(NotificationLevel.ERROR)
-                );
-            }
         }
     }
 
@@ -187,12 +188,13 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      */
     void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
         LOGGER.debug("Updating datasource with GitHub advisories");
-        try (QueryManager qm = new QueryManager().withL2CacheDisabled()) {
+        try (QueryManager qm = new QueryManager()) {
             for (final GitHubSecurityAdvisory advisory : advisories) {
                 LOGGER.debug("Synchronizing GitHub advisory: " + advisory.getGhsaId());
                 final Vulnerability mappedVulnerability = mapAdvisoryToVulnerability(qm, advisory);
                 final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(mappedVulnerability.getSource(), mappedVulnerability.getVulnId()));
                 final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mappedVulnerability, false);
+                if (synchronizedVulnerability == null) continue;
                 List<VulnerableSoftware> vsList = new ArrayList<>();
                 for (GitHubVulnerability ghvuln : advisory.getVulnerabilities()) {
                     final VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, ghvuln, advisory);

@@ -203,7 +203,7 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
                                                 .setVulnerabilityId("CVE-2022-40152")
                                                 .setPkgName("com.fasterxml.woodstox:woodstox-core")
                                                 .setPkgIdentifier(PkgIdentifier.newBuilder()
-                                                        .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0")
+                                                        .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz")
                                                         .build())
                                                 .setInstalledVersion("5.0.0")
                                                 .setFixedVersion("6.4.0, 5.4.0")

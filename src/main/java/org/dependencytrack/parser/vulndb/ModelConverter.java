@@ -94,12 +94,12 @@ public final class ModelConverter {
             final OffsetDateTime odt = OffsetDateTime.parse(vulnDbVuln.disclosureDate());
             vuln.setPublished(Date.from(odt.toInstant()));
         }
-        /*
-        if (StringUtils.isNotBlank(vulnDbVuln.getUpdatedAt())) {
-            final OffsetDateTime odt = OffsetDateTime.parse(vulnDbVuln.getUpdatedAt());
+
+        if (StringUtils.isNotBlank(vulnDbVuln.lastModified())) {
+            final OffsetDateTime odt = OffsetDateTime.parse(vulnDbVuln.lastModified());
             vuln.setUpdated(Date.from(odt.toInstant()));
         }
-        */
+
 
 
         /* References */

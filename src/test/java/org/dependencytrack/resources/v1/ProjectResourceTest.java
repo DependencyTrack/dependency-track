@@ -318,7 +318,7 @@ public class ProjectResourceTest extends ResourceTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .withMatcher("parentUuid", equalTo(parentProject.getUuid().toString()))
                 .withMatcher("childUuid", equalTo(childProject.getUuid().toString()))
-                .isEqualTo("""
+                .isEqualTo(/* language=JSON */ """
                         {
                           "name": "acme-app",
                           "version": "1.0.0",
@@ -346,7 +346,8 @@ public class ProjectResourceTest extends ResourceTest {
                           "versions": [
                             {
                               "uuid": "${json-unit.matches:projectUuid}",
-                              "version": "1.0.0"
+                              "version": "1.0.0",
+                              "active": true
                             }
                           ]
                         }
@@ -1019,20 +1020,25 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void updateProjectTestIsActiveEqualsNull() {
-        Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
-        project.setDescription("Test project");
-        project.setActive(null);
-        Assert.assertNull(project.isActive());
-        Response response = jersey.target(V1_PROJECT)
+        final Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        final Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header(X_API_KEY, apiKey)
-                .post(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "ABC",
+                          "version": "1.0",
+                          "description": "Test project"
+                        }
+                        """.formatted(project.getUuid())));
         Assert.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
         Assert.assertEquals("ABC", json.getString("name"));
         Assert.assertEquals("1.0", json.getString("version"));
         Assert.assertEquals("Test project", json.getString("description"));
+        Assert.assertTrue(json.getBoolean("active"));
     }
 
     @Test
@@ -1974,6 +1980,51 @@ public class ProjectResourceTest extends ResourceTest {
                     qm.getPersistenceManager().refresh(project);
                     assertThat(project.isLatest()).isFalse();
                 });
+    }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/4413
+    public void cloneProjectWithBrokenDependencyGraphTest() {
+        EventService.getInstance().subscribe(CloneProjectEvent.class, CloneProjectTask.class);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setDirectDependencies("[{\"uuid\":\"d6b6f140-f547-4fe2-a98c-f4942ad51f86\"}]");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        component.setDirectDependencies("[{\"uuid\":\"61503628-d2a2-447b-b99c-701b9d492cbd\"}]");
+        qm.persist(component);
+
+        final Response response = jersey.target("%s/clone".formatted(V1_PROJECT)).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "version": "1.1.0",
+                          "includeComponents": true,
+                          "includeServices": true
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        await("Cloning completion")
+                .atMost(Duration.ofSeconds(15))
+                .pollInterval(Duration.ofMillis(50))
+                .untilAsserted(() -> {
+                    final Project clonedProject = qm.getProject("acme-app", "1.1.0");
+                    assertThat(clonedProject).isNotNull();
+                });
+
+        final Project clonedProject = qm.getProject("acme-app", "1.1.0");
+        assertThat(clonedProject.getDirectDependencies()).isEqualTo(
+                "[{\"uuid\":\"d6b6f140-f547-4fe2-a98c-f4942ad51f86\"}]");
+
+        assertThat(qm.getAllComponents(clonedProject).getFirst().getDirectDependencies()).isEqualTo(
+                "[{\"uuid\":\"61503628-d2a2-447b-b99c-701b9d492cbd\"}]");
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3883

@@ -24,14 +24,13 @@ import alpine.common.metrics.Metrics;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
+import alpine.persistence.ScopedCustomization;
 import io.micrometer.core.instrument.Timer;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
@@ -43,24 +42,26 @@ import org.dependencytrack.util.PurlUtil;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import javax.jdo.Query;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 public class RepositoryMetaAnalyzerTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(RepositoryMetaAnalyzerTask.class);
-
     private static final String LATEST_VERSION = "latestVersion";
-
     private static final String PUBLISHED_TIMESTAMP = "publishedTimestamp";
-
     private static final CacheStampedeBlocker<String, Void> cacheStampedeBlocker;
+
+    private long cacheValidityPeriod;
 
     static {
         cacheStampedeBlocker = new CacheStampedeBlocker<>(
@@ -76,6 +77,13 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
      */
     public void inform(final Event e) {
         if (e instanceof final RepositoryMetaEvent event) {
+            try (final var qm = new QueryManager()) {
+                final ConfigProperty cacheValidityPeriodProperty = qm.getConfigProperty(
+                        SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(),
+                        SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
+                cacheValidityPeriod = Long.parseLong(cacheValidityPeriodProperty.getPropertyValue());
+            }
+
             LOGGER.debug("Analyzing component repository metadata");
             // TODO - Remove when https://github.com/DependencyTrack/dependency-track/issues/2110 is implemented
             Timer timer = Timer.builder("repository_meta_analyzer_task")
@@ -96,14 +104,22 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
             } else {
                 LOGGER.info("Analyzing portfolio component repository metadata");
                 try (final QueryManager qm = new QueryManager()) {
-                    final List<Project> projects = qm.getAllProjects(true);
-                    for (final Project project : projects) {
-                        final List<Component> components = qm.getAllComponents(project);
-                        LOGGER.debug("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+                    List<Component> components = fetchNextComponentBatch(qm, null);
+                    while (!components.isEmpty()) {
+                        final long lastId = components.getLast().getId();
+
+                        LOGGER.debug("Analyzing batch of %d components".formatted(components.size()));
                         for (final Component component : components) {
                             analyze(qm, component);
                         }
-                        LOGGER.debug("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+
+                        // Remove components, analysis cache, and meta components from
+                        // the L1 cache to prevent it from growing too large.
+                        qm.getPersistenceManager().evictAll(false, Component.class);
+                        qm.getPersistenceManager().evictAll(false, ComponentAnalysisCache.class);
+                        qm.getPersistenceManager().evictAll(false, RepositoryMetaComponent.class);
+
+                        components = fetchNextComponentBatch(qm, lastId);
                     }
                 }
                 LOGGER.info("Portfolio component repository metadata analysis complete");
@@ -241,8 +257,6 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
 
     protected boolean isRepositoryMetaComponentStillValid(final QueryManager qm, final RepositoryType repositoryType, final String namespace, final String name) {
         boolean isRepositoryMetaComponentStillValid = false;
-        ConfigProperty cacheClearPeriod = qm.getConfigProperty(ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(), ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
-        long cacheValidityPeriod = Long.parseLong(cacheClearPeriod.getPropertyValue());
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(repositoryType, namespace, name);
         long delta = 0L;
         if (metaComponent != null) {
@@ -261,24 +275,46 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
     }
 
     protected boolean isCacheCurrent(ComponentAnalysisCache cac, String target) {
-        try (QueryManager qm = new QueryManager()) {
-            boolean isCacheCurrent = false;
-            ConfigProperty cacheClearPeriod = qm.getConfigProperty(ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(), ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
-            long cacheValidityPeriod = Long.parseLong(cacheClearPeriod.getPropertyValue());
-            long delta = 0L;
-            if (cac != null) {
-                final Date now = new Date();
-                if (now.getTime() > cac.getLastOccurrence().getTime()) {
-                    delta = now.getTime() - cac.getLastOccurrence().getTime();
-                    isCacheCurrent = delta <= cacheValidityPeriod;
-                }
+        boolean isCacheCurrent = false;
+        long delta = 0L;
+        if (cac != null) {
+            final Date now = new Date();
+            if (now.getTime() > cac.getLastOccurrence().getTime()) {
+                delta = now.getTime() - cac.getLastOccurrence().getTime();
+                isCacheCurrent = delta <= cacheValidityPeriod;
             }
-            if (isCacheCurrent) {
-                LOGGER.debug("Cache is current. External repository call was made in the last " + cacheValidityPeriod + " ms (precisely " + delta + " ms ago). Skipping analysis. (target: " + target + ")");
-            } else {
-                LOGGER.debug("Cache is not current. External repository call was not made in the last " + cacheValidityPeriod + " ms. Analysis should be performed (target: " + target + ")");
-            }
-            return isCacheCurrent;
+        }
+        if (isCacheCurrent) {
+            LOGGER.debug("Cache is current. External repository call was made in the last " + cacheValidityPeriod + " ms (precisely " + delta + " ms ago). Skipping analysis. (target: " + target + ")");
+        } else {
+            LOGGER.debug("Cache is not current. External repository call was not made in the last " + cacheValidityPeriod + " ms. Analysis should be performed (target: " + target + ")");
+        }
+        return isCacheCurrent;
+    }
+
+    private List<Component> fetchNextComponentBatch(final QueryManager qm, final Long lastId) {
+        final var filterConditions = new ArrayList<>(List.of(
+                "project.active",
+                "purl != null"));
+        final var filterParams = new HashMap<String, Object>();
+        if (lastId != null) {
+            filterConditions.add("id < :lastId");
+            filterParams.put("lastId", lastId);
+        }
+
+        final Query<Component> query = qm.getPersistenceManager().newQuery(Component.class);
+
+        // NB: Set fetch group on PM level to avoid fields of the default fetch group from being loaded.
+        try (var ignoredPersistenceCustomization = new ScopedCustomization(qm.getPersistenceManager())
+                .withFetchGroup(Component.FetchGroup.REPO_META_ANALYSIS.name())) {
+            query.setFilter(String.join(" && ", filterConditions));
+            query.setNamedParameters(filterParams);
+            query.setOrdering("id DESC");
+            query.setRange(0, 1000);
+            return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
         }
     }
+
 }

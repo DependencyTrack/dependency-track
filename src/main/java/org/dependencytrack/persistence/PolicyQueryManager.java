@@ -43,10 +43,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
+import static org.dependencytrack.util.PersistenceUtil.assertNonPersistentAll;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
@@ -153,38 +157,120 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         return persist(pc);
     }
 
+    private record ViolationIdentity(
+            long componentId,
+            long conditionId,
+            PolicyViolation.Type type) {
+
+        private ViolationIdentity(final PolicyViolation violation) {
+            this(violation.getComponent().getId(), violation.getPolicyCondition().getId(), violation.getType());
+        }
+
+    }
+
     /**
      * Intelligently adds dependencies for components that are not already a dependency
      * of the specified project and removes the dependency relationship for components
      * that are not in the list of specified components.
      * @param component the project to bind components to
-     * @param policyViolations the complete list of existing dependent components
+     * @param reportedViolations the complete list of existing dependent components
      */
-    public synchronized void reconcilePolicyViolations(final Component component, final List<PolicyViolation> policyViolations) {
-        // Removes violations as dependencies to the project for all
-        // components not included in the list provided
-        List<PolicyViolation> markedForDeletion = new ArrayList<>();
-        for (final PolicyViolation existingViolation: getAllPolicyViolations(component)) {
-            boolean keep = false;
-            for (final PolicyViolation violation: policyViolations) {
-                if (violation.getType() == existingViolation.getType()
-                        && violation.getPolicyCondition().getId() == existingViolation.getPolicyCondition().getId()
-                        && violation.getComponent().getId() == existingViolation.getComponent().getId())
-                {
-                    keep = true;
-                    break;
+    public synchronized void reconcilePolicyViolations(
+            final Component component,
+            final List<PolicyViolation> reportedViolations) {
+        assertPersistent(component, "component must be persistent");
+        assertNonPersistentAll(reportedViolations, "reportedViolations must not be persistent");
+
+        runInTransaction(() -> {
+            final List<PolicyViolation> existingViolations = getAllPolicyViolations(component);
+            final var violationsToCreate = new ArrayList<PolicyViolation>();
+            final var violationsToDelete = new ArrayList<PolicyViolation>();
+
+            final var existingViolationByIdentity = new HashMap<ViolationIdentity, PolicyViolation>();
+            for (final PolicyViolation violation : existingViolations) {
+                // Previous (<= 4.12.0) reconciliation logic allowed for duplicate violations to exist.
+                // Take that into consideration and ensure their deletion.
+                existingViolationByIdentity.compute(new ViolationIdentity(violation), (ignored, duplicateViolation) -> {
+                    if (duplicateViolation == null) {
+                        return violation;
+                    }
+
+                    // Prefer to keep violations with existing analysis.
+                    if (violation.getAnalysis() != null && duplicateViolation.getAnalysis() == null) {
+                        violationsToDelete.add(duplicateViolation);
+                        return violation;
+                    } else if (violation.getAnalysis() == null && duplicateViolation.getAnalysis() != null) {
+                        violationsToDelete.add(violation);
+                        return duplicateViolation;
+                    }
+
+                    // If none of the violations have an analysis, prefer to keep the oldest.
+                    if (violation.getAnalysis() == null && duplicateViolation.getAnalysis() == null) {
+                        final int timestampComparisonResult = Objects.compare(
+                                violation.getTimestamp(), duplicateViolation.getTimestamp(), Date::compareTo);
+                        if (timestampComparisonResult < 0) {
+                            // Duplicate violation is newer.
+                            violationsToDelete.add(duplicateViolation);
+                            return violation;
+                        } else if (timestampComparisonResult > 0) {
+                            // Duplicate violation is older.
+                            violationsToDelete.add(violation);
+                            return duplicateViolation;
+                        }
+
+                        // Everything else being equal, keep the duplicate violation.
+                        violationsToDelete.add(violation);
+                        return duplicateViolation;
+                    }
+
+                    // If both violations have an analysis, prefer to keep the suppressed one.
+                    if (violation.getAnalysis().isSuppressed() && !duplicateViolation.getAnalysis().isSuppressed()) {
+                        violationsToDelete.add(duplicateViolation);
+                        return violation;
+                    } else if (!violation.getAnalysis().isSuppressed() && duplicateViolation.getAnalysis().isSuppressed()) {
+                        violationsToDelete.add(violation);
+                        return duplicateViolation;
+                    }
+
+                    // Everything else being equal, keep the duplicate violation.
+                    violationsToDelete.add(violation);
+                    return duplicateViolation;
+                });
+            }
+
+            final var reportedViolationsByIdentity = new HashMap<ViolationIdentity, PolicyViolation>();
+            for (final PolicyViolation violation : reportedViolations) {
+                reportedViolationsByIdentity.put(new ViolationIdentity(violation), violation);
+            }
+
+            final Set<ViolationIdentity> violationIdentities = new HashSet<>(
+                    existingViolationByIdentity.size() + reportedViolationsByIdentity.size());
+            violationIdentities.addAll(existingViolationByIdentity.keySet());
+            violationIdentities.addAll(reportedViolationsByIdentity.keySet());
+
+            for (final ViolationIdentity identity : violationIdentities) {
+                final PolicyViolation existingViolation = existingViolationByIdentity.get(identity);
+                final PolicyViolation reportedViolation = reportedViolationsByIdentity.get(identity);
+
+                if (existingViolation == null) {
+                    violationsToCreate.add(reportedViolation);
+                } else if (reportedViolation == null) {
+                    violationsToDelete.add(existingViolation);
                 }
             }
-            if (!keep) {
-                markedForDeletion.add(existingViolation);
+
+            if (!violationsToCreate.isEmpty()) {
+                persist(violationsToCreate);
             }
-        }
-        if (!markedForDeletion.isEmpty()) {
-            for (final PolicyViolation violation : markedForDeletion) {
-                deleteViolationAnalysisTrail(violation);
+
+            if (!violationsToDelete.isEmpty()) {
+                for (final PolicyViolation violation : violationsToDelete) {
+                    deleteViolationAnalysisTrail(violation);
+                }
+
+                delete(violationsToDelete);
             }
-            delete(markedForDeletion);
-        }
+        });
     }
 
     /**
@@ -222,7 +308,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             if(comments != null){
                 violationAnalysis.setAnalysisComments(comments);
             }
-            policyViolation.setAnalysis(violationAnalysis); 
+            policyViolation.setAnalysis(violationAnalysis);
             policyViolation.getAnalysis().setPolicyViolation(policyViolation);
             policyViolation.setUuid(sourcePolicyViolation.getUuid());
             return policyViolation;
@@ -374,7 +460,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             filterCriteria.add("(analysis.suppressed == false || analysis.suppressed == null)");
         }
         if (!showInactive) {
-            filterCriteria.add("(project.active == true || project.active == null)");
+            filterCriteria.add("project.active");
         }
         processViolationsFilters(filters, params, filterCriteria);
         if (orderBy == null) {
@@ -465,7 +551,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
                 comments.add(comment);
             }
         }
-        
+
         return comments;
     }
 

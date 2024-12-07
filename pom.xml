@@ -24,7 +24,7 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.2</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -85,12 +85,13 @@
         <maven.compiler.target>21</maven.compiler.target>
 
         <!-- Dependency Versions -->
-        <frontend.version>4.12.0</frontend.version>
+        <frontend.version>4.12.2</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.2.2</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
         <lib.checkstyle.version>10.18.1</lib.checkstyle.version>
-        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.20.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
+        <lib.aws-advanced-jdbc-wrapper.version>2.5.3</lib.aws-advanced-jdbc-wrapper.version>
+        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.21.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
         <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.20.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
         <lib.cloud-sql-postgres-socket-factory.version>1.20.1</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
@@ -98,30 +99,30 @@
         <lib.commons-text.version>1.12.0</lib.commons-text.version>
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.cyclonedx-java.version>9.0.5</lib.cyclonedx-java.version>
-        <lib.greenmail.version>2.0.1</lib.greenmail.version>
-        <lib.jackson.version>2.17.2</lib.jackson.version>
-        <lib.jackson-databind.version>2.17.2</lib.jackson-databind.version>
+        <lib.cyclonedx-java.version>9.1.0</lib.cyclonedx-java.version>
+        <lib.greenmail.version>2.1.2</lib.greenmail.version>
+        <lib.jackson.version>2.18.0</lib.jackson.version>
+        <lib.jackson-databind.version>2.18.0</lib.jackson-databind.version>
         <lib.json-java.version>20240303</lib.json-java.version>
-        <lib.json-unit.version>3.4.1</lib.json-unit.version>
+        <lib.json-unit.version>4.1.0</lib.json-unit.version>
         <lib.junit.version>4.13.2</lib.junit.version>
         <lib.lucene.version>8.11.4</lib.lucene.version>
         <lib.maven-artifact.version>3.9.9</lib.maven-artifact.version>
         <lib.mockserver-netty.version>5.15.0</lib.mockserver-netty.version>
-        <lib.open-vulnerability-clients.version>7.0.0</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>7.0.2</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>3.2.2</lib.pebble.version>
-        <lib.protobuf-java.version>4.28.2</lib.protobuf-java.version>
+        <lib.protobuf-java.version>4.29.0</lib.protobuf-java.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
         <lib.swagger-parser.version>2.1.22</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
-        <lib.testcontainers.version>1.20.2</lib.testcontainers.version>
+        <lib.testcontainers.version>1.20.4</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
         <lib.woodstox.version>7.0.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
-        <lib.httpclient5.version>5.4</lib.httpclient5.version>
+        <lib.httpclient5.version>5.4.1</lib.httpclient5.version>
         <lib.log4j-over-slf4j.version>2.0.16</lib.log4j-over-slf4j.version>
         <lib.org-kohsuke-github-api.version>1.323</lib.org-kohsuke-github-api.version>
         <!-- JDBC Drivers -->
@@ -130,7 +131,7 @@
         <lib.jdbc-driver.postgresql.version>42.7.4</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.jetty.version>12.0.14</plugin.jetty.version>
+        <plugin.jetty.version>12.0.15</plugin.jetty.version>
         <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
@@ -350,6 +351,11 @@
             <version>${lib.jdbc-driver.postgresql.version}</version>
         </dependency>
         <dependency>
+            <groupId>software.amazon.jdbc</groupId>
+            <artifactId>aws-advanced-jdbc-wrapper</artifactId>
+            <version>${lib.aws-advanced-jdbc-wrapper.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>mysql-socket-factory-connector-j-8</artifactId>
             <version>${lib.cloud-sql-mysql-socket-factory-connector-j-8.version}</version>
@@ -546,7 +552,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.6.0</version>
                 <configuration>
                     <configLocation>${project.basedir}/.checkstyle.xml</configLocation>
                     <includeResources>false</includeResources>
@@ -679,7 +685,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>merge-services-bom</id>

@@ -453,7 +453,7 @@ public class UserResource extends AlpineResource {
             if (user != null) {
                 final LdapUser detachedUser = qm.getPersistenceManager().detachCopy(user);
                 qm.delete(user);
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user deleted: " + detachedUser);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user deleted: " + detachedUser.getUsername());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.SYSTEM)
                         .group(NotificationGroup.USER_DELETED)
@@ -593,7 +593,7 @@ public class UserResource extends AlpineResource {
             if (user != null) {
                 final ManagedUser detachedUser = qm.getPersistenceManager().detachCopy(user);
                 qm.delete(user);
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: " +detachedUser);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: " + detachedUser.getUsername());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.SYSTEM)
                         .group(NotificationGroup.USER_DELETED)
@@ -670,7 +670,7 @@ public class UserResource extends AlpineResource {
             if (user != null) {
                 final OidcUser detachedUser = qm.getPersistenceManager().detachCopy(user);
                 qm.delete(user);
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user deleted: " + detachedUser);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user deleted: " + detachedUser.getUsername());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.SYSTEM)
                         .group(NotificationGroup.USER_DELETED)

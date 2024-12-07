@@ -45,12 +45,10 @@ import org.dependencytrack.common.AlpineHttpProxySelector;
 import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.NistApiMirrorEvent;
-import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.listener.IndexingInstanceLifecycleListener;
-import org.dependencytrack.persistence.listener.L2CacheEvictingInstanceLifecycleListener;
 import org.dependencytrack.util.DebugDataEncryption;
 
 import java.time.Duration;
@@ -163,13 +161,11 @@ public class NistApiMirrorTask extends AbstractNistMirrorTask implements Subscri
                         final List<VulnerableSoftware> vsList = convertConfigurations(cveItem.getId(), cveItem.getConfigurations());
 
                         executor.submit(() -> {
-                            try (final var qm = new QueryManager().withL2CacheDisabled()) {
+                            try (final var qm = new QueryManager()) {
                                 qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
                                 qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
                                 qm.getPersistenceManager().addInstanceLifecycleListener(new IndexingInstanceLifecycleListener(Event::dispatch),
                                         Vulnerability.class, VulnerableSoftware.class);
-                                qm.getPersistenceManager().addInstanceLifecycleListener(new L2CacheEvictingInstanceLifecycleListener(qm),
-                                        AffectedVersionAttribution.class, Vulnerability.class, VulnerableSoftware.class);
 
                                 final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
                                 qm.synchronizeVulnerableSoftware(persistentVuln, vsList, Vulnerability.Source.NVD);

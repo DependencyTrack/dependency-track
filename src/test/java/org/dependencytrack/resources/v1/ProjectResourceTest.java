@@ -334,9 +334,11 @@ public class ProjectResourceTest extends ResourceTest {
                               "version": "1.0.0",
                               "uuid": "${json-unit.matches:childUuid}",
                               "active": true,
-                              "isLatest":false
+                              "isLatest":false,
+                              "collectionLogic":"NONE"
                             }
                           ],
+                          "collectionLogic":"NONE",
                           "properties": [],
                           "tags": [],
                           "active": true,
@@ -591,6 +593,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -637,6 +640,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -678,6 +682,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -760,6 +765,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -870,6 +876,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -1384,7 +1391,8 @@ public class ProjectResourceTest extends ResourceTest {
                           ],
                           "active": false,
                           "isLatest":false,
-                          "children": []
+                          "children": [],
+                          "collectionLogic":"NONE"
                         }
                         """);
     }
@@ -1457,7 +1465,8 @@ public class ProjectResourceTest extends ResourceTest {
                           "properties": [],
                           "tags": [],
                           "active": true,
-                          "isLatest":false
+                          "isLatest":false,
+                          "collectionLogic":"NONE"
                         }
                         """);
 
@@ -2065,13 +2074,15 @@ public class ProjectResourceTest extends ResourceTest {
                       "classifier": "APPLICATION",
                       "uuid": "${json-unit.any-string}",
                       "active": true,
-                      "isLatest":false
+                      "isLatest":false,
+                      "collectionLogic":"NONE"
                     }
                   ],
                   "properties": [],
                   "tags": [],
                   "active": true,
                   "isLatest":false,
+                  "collectionLogic":"NONE",
                   "versions": [
                     {
                       "uuid": "${json-unit.any-string}",
@@ -2103,6 +2114,7 @@ public class ProjectResourceTest extends ResourceTest {
                   "tags": [],
                   "active": true,
                   "isLatest":false,
+                  "collectionLogic":"NONE",
                   "versions": [
                     {
                       "uuid": "${json-unit.any-string}",

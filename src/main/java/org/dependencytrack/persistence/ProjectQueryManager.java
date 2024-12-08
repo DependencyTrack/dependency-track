@@ -596,11 +596,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             } else {
                 project.setCollectionTag(null);
             }
-            // Force loading parent. This seems useless but somehow the code block above magically unloads the parent,
-            // making it missing in the API response. Following line enforces it to be available again.
-            // For reference see following Unit Test which would fail without this:
-            // org.dependencytrack.resources.v1.ProjectResourceTest.patchProjectParentTest
-            project.getParent();
 
             return persist(project);
         });

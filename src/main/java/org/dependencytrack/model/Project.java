@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
@@ -190,10 +189,9 @@ public class Project implements Serializable {
     private Classifier classifier;
 
     @Persistent
-    @Column(name = "COLLECTION_LOGIC", jdbcType = "VARCHAR", allowsNull = "true", defaultValue = "NONE") // New column, must allow nulls on existing databases
-    @Index(name = "PROJECT_COLLECTION_LOGIC_IDX")
+    @Column(name = "COLLECTION_LOGIC", jdbcType = "VARCHAR", allowsNull = "true")
     @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
-    private ProjectCollectionLogic collectionLogic = ProjectCollectionLogic.NONE;
+    private ProjectCollectionLogic collectionLogic;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "COLLECTION_TAG", allowsNull = "true")
@@ -405,13 +403,16 @@ public class Project implements Serializable {
         this.classifier = classifier;
     }
 
-
     public ProjectCollectionLogic getCollectionLogic() {
-        return collectionLogic;
+        return collectionLogic == null
+                ? ProjectCollectionLogic.NONE
+                : collectionLogic;
     }
 
     public void setCollectionLogic(ProjectCollectionLogic collectionLogic) {
-        this.collectionLogic = collectionLogic;
+        this.collectionLogic = collectionLogic != ProjectCollectionLogic.NONE
+                ? collectionLogic
+                : null;
     }
 
     public Tag getCollectionTag() {

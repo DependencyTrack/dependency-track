@@ -115,7 +115,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
         }
     }
 
-    private void updateRegularProjectMetrics(final Project project, final PersistenceManager pm, final Counters counters) throws Exception {
+    private void updateRegularProjectMetrics(final Project project, final PersistenceManager pm, final Counters counters) {
         final UUID uuid = project.getUuid();
 
         LOGGER.debug("Fetching first components page for project " + uuid);
@@ -240,13 +240,10 @@ public class ProjectMetricsUpdateTask implements Subscriber {
     }
 
     private void updateLatestVersionChildrenCollectionMetrics(final Project project, final PersistenceManager pm, final Counters counters) {
-        LOGGER.warn("Collection logic LATEST_VERSION_CHILDREN not yet implemented. Waiting for https://github.com/DependencyTrack/dependency-track/issues/4148");
-        /*
-        TODO: Create Test case in ProjectMetricsUpdateTaskTest*/
         LOGGER.debug("Fetching metrics of children of collection project " + project.getUuid() +
                 " using collection logic " + project.getCollectionLogic());
 
-        Query subQuery = pm.newQuery(ProjectMetrics.class);
+        Query<ProjectMetrics> subQuery = pm.newQuery(ProjectMetrics.class);
         subQuery.setFilter("project == :project");
         subQuery.setResult("max(lastOccurrence)");
 
@@ -293,7 +290,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
         counters.medium += projectMetrics.getMedium();
         counters.low += projectMetrics.getLow();
         counters.unassigned += projectMetrics.getUnassigned();
-        counters.vulnerabilities += projectMetrics.getVulnerabilities();
+        counters.vulnerabilities += Math.toIntExact(projectMetrics.getVulnerabilities());
 
         counters.findingsTotal += projectMetrics.getFindingsTotal();
         counters.findingsAudited += projectMetrics.getFindingsAudited();

@@ -103,11 +103,19 @@ import java.util.UUID;
         }),
         @FetchGroup(name = "METRICS_UPDATE", members = {
                 @Persistent(name = "id"),
+                @Persistent(name = "parent"),
+                @Persistent(name = "collectionLogic"),
+                @Persistent(name = "collectionTag"),
                 @Persistent(name = "lastInheritedRiskScore"),
                 @Persistent(name = "uuid")
         }),
         @FetchGroup(name = "PARENT", members = {
                 @Persistent(name = "parent")
+        }),
+        @FetchGroup(name = "PORTFOLIO_METRICS_UPDATE", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "lastInheritedRiskScore"),
+                @Persistent(name = "uuid")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -122,7 +130,8 @@ public class Project implements Serializable {
         ALL,
         METADATA,
         METRICS_UPDATE,
-        PARENT
+        PARENT,
+        PORTFOLIO_METRICS_UPDATE
     }
 
     @PrimaryKey

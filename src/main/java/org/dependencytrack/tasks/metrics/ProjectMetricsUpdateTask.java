@@ -62,13 +62,13 @@ public class ProjectMetricsUpdateTask implements Subscriber {
         }
     }
 
-    private void updateMetrics(final UUID uuid) throws Exception {
+    private void updateMetrics(final UUID uuid) {
         final var counters = new Counters();
 
         try (final QueryManager qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
 
-            final Project project = qm.getObjectByUuid(Project.class, uuid, List.of(Project.FetchGroup.METRICS_UPDATE.name()));
+            final Project project = fetchProject(pm, uuid);
             if (project == null) {
                 throw new NoSuchElementException("Project " + uuid + " does not exist");
             }
@@ -260,6 +260,20 @@ public class ProjectMetricsUpdateTask implements Subscriber {
         // Hint: There could be multiple children with isLatest==true from different project parts, so we aggregate those.
         for (ProjectMetrics metrics : childrenMetrics) {
             this.addToCounters(counters, metrics);
+        }
+    }
+
+    private Project fetchProject(final PersistenceManager pm, final UUID uuid) {
+        final Query<Project> query = pm.newQuery(Project.class);
+        query.setFilter("uuid == :uuid");
+        query.setParameters(uuid);
+
+        // NB: Set fetch group on PM level to avoid fields of the default fetch group from being loaded.
+        try (var ignoredPersistenceCustomization = new ScopedCustomization(pm)
+                .withFetchGroup(Project.FetchGroup.METRICS_UPDATE.name())) {
+            return query.executeUnique();
+        } finally {
+            query.closeAll();
         }
     }
 

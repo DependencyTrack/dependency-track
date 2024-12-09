@@ -189,7 +189,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
 
         // NB: Set fetch group on PM level to avoid fields of the default fetch group from being loaded.
         try (var ignoredPersistenceCustomization = new ScopedCustomization(pm)
-                .withFetchGroup(Project.FetchGroup.METRICS_UPDATE.name())) {
+                .withFetchGroup(Project.FetchGroup.PORTFOLIO_METRICS_UPDATE.name())) {
             return List.copyOf(query.executeList());
         } finally {
             query.closeAll();

@@ -25,7 +25,7 @@ package org.dependencytrack.model;
  * by this type.
  *
  * @author Ralf King
- * @since 4.11.0
+ * @since 4.13.0
  */
 public enum ProjectCollectionLogic {
     /**

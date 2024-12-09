@@ -172,12 +172,12 @@ public class ProjectMetrics implements Serializable {
     private Integer policyViolationsOperationalUnaudited;
 
     @Persistent
-    @Column(name = "COLLECTION_LOGIC", allowsNull = "true") // New column, must allow nulls on existing data bases
+    @Column(name = "COLLECTION_LOGIC", allowsNull = "true")
     private ProjectCollectionLogic collectionLogic;
 
     @Persistent
-    @Column(name = "COLLECTION_LOGIC_CHANGED", allowsNull = "true") // New column, must allow nulls on existing data bases
-    private Boolean collectionLogicChanged = false;
+    @Column(name = "COLLECTION_LOGIC_CHANGED", allowsNull = "false", defaultValue = "false")
+    private boolean collectionLogicChanged = false;
 
     @Persistent
     @Column(name = "FIRST_OCCURRENCE", allowsNull = "false")
@@ -433,16 +433,23 @@ public class ProjectMetrics implements Serializable {
         this.policyViolationsOperationalUnaudited = policyViolationsOperationalUnaudited;
     }
 
-    public ProjectCollectionLogic getCollectionLogic() { return collectionLogic; }
-
-    public void setCollectionLogic(ProjectCollectionLogic collectionLogic) {
-        // convert old NULL values from DB to NONE
-        this.collectionLogic = collectionLogic != null ? collectionLogic : ProjectCollectionLogic.NONE;
+    public ProjectCollectionLogic getCollectionLogic() {
+        return collectionLogic == null
+                ? ProjectCollectionLogic.NONE
+                : collectionLogic;
     }
 
-    public Boolean isCollectionLogicChanged() { return collectionLogicChanged; }
+    public void setCollectionLogic(ProjectCollectionLogic collectionLogic) {
+        this.collectionLogic = collectionLogic != ProjectCollectionLogic.NONE
+                ? collectionLogic
+                : null;
+    }
 
-    public void setCollectionLogicChanged(Boolean collectionLogicChanged) {
+    public boolean isCollectionLogicChanged() {
+        return collectionLogicChanged;
+    }
+
+    public void setCollectionLogicChanged(boolean collectionLogicChanged) {
         this.collectionLogicChanged = collectionLogicChanged;
     }
 

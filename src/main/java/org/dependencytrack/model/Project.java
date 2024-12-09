@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
@@ -104,11 +103,19 @@ import java.util.UUID;
         }),
         @FetchGroup(name = "METRICS_UPDATE", members = {
                 @Persistent(name = "id"),
+                @Persistent(name = "parent"),
+                @Persistent(name = "collectionLogic"),
+                @Persistent(name = "collectionTag"),
                 @Persistent(name = "lastInheritedRiskScore"),
                 @Persistent(name = "uuid")
         }),
         @FetchGroup(name = "PARENT", members = {
                 @Persistent(name = "parent")
+        }),
+        @FetchGroup(name = "PORTFOLIO_METRICS_UPDATE", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "lastInheritedRiskScore"),
+                @Persistent(name = "uuid")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -123,7 +130,8 @@ public class Project implements Serializable {
         ALL,
         METADATA,
         METRICS_UPDATE,
-        PARENT
+        PARENT,
+        PORTFOLIO_METRICS_UPDATE
     }
 
     @PrimaryKey
@@ -190,10 +198,9 @@ public class Project implements Serializable {
     private Classifier classifier;
 
     @Persistent
-    @Column(name = "COLLECTION_LOGIC", jdbcType = "VARCHAR", allowsNull = "true", defaultValue = "NONE") // New column, must allow nulls on existing databases
-    @Index(name = "PROJECT_COLLECTION_LOGIC_IDX")
+    @Column(name = "COLLECTION_LOGIC", jdbcType = "VARCHAR", allowsNull = "true")
     @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
-    private ProjectCollectionLogic collectionLogic = ProjectCollectionLogic.NONE;
+    private ProjectCollectionLogic collectionLogic;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "COLLECTION_TAG", allowsNull = "true")
@@ -405,13 +412,16 @@ public class Project implements Serializable {
         this.classifier = classifier;
     }
 
-
     public ProjectCollectionLogic getCollectionLogic() {
-        return collectionLogic;
+        return collectionLogic == null
+                ? ProjectCollectionLogic.NONE
+                : collectionLogic;
     }
 
     public void setCollectionLogic(ProjectCollectionLogic collectionLogic) {
-        this.collectionLogic = collectionLogic;
+        this.collectionLogic = collectionLogic != ProjectCollectionLogic.NONE
+                ? collectionLogic
+                : null;
     }
 
     public Tag getCollectionTag() {

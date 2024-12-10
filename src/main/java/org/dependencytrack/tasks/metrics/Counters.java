@@ -22,6 +22,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetrics;
 
 import java.util.Date;
@@ -44,6 +45,7 @@ final class Counters {
             policyViolationsSecurityTotal, policyViolationsSecurityAudited, policyViolationsSecurityUnaudited,
             policyViolationsLicenseTotal, policyViolationsLicenseAudited, policyViolationsLicenseUnaudited,
             policyViolationsOperationalTotal, policyViolationsOperationalAudited, policyViolationsOperationalUnaudited;
+    ProjectCollectionLogic projectCollectionLogic;
 
     final Date measuredAt;
 
@@ -86,7 +88,7 @@ final class Counters {
         return metrics;
     }
 
-    ProjectMetrics createProjectMetrics(final Project project) {
+    ProjectMetrics createProjectMetrics(final Project project, boolean collectionLogicChanged) {
         final var metrics = new ProjectMetrics();
         metrics.setProject(project);
         metrics.setCritical(this.critical);
@@ -117,6 +119,8 @@ final class Counters {
         metrics.setPolicyViolationsOperationalTotal(this.policyViolationsOperationalTotal);
         metrics.setPolicyViolationsOperationalAudited(this.policyViolationsOperationalAudited);
         metrics.setPolicyViolationsOperationalUnaudited(this.policyViolationsOperationalUnaudited);
+        metrics.setCollectionLogic(this.projectCollectionLogic);
+        metrics.setCollectionLogicChanged(collectionLogicChanged);
         metrics.setFirstOccurrence(this.measuredAt);
         metrics.setLastOccurrence(this.measuredAt);
         return metrics;
@@ -218,7 +222,8 @@ final class Counters {
                 || comparedTo.getPolicyViolationsOperationalAudited() != this.policyViolationsOperationalAudited
                 || comparedTo.getPolicyViolationsOperationalUnaudited() != this.policyViolationsOperationalUnaudited
                 || comparedTo.getComponents() != this.components
-                || comparedTo.getVulnerableComponents() != this.vulnerableComponents;
+                || comparedTo.getVulnerableComponents() != this.vulnerableComponents
+                || comparedTo.getCollectionLogic() != this.projectCollectionLogic;
     }
 
     boolean hasChanged(final PortfolioMetrics comparedTo) {

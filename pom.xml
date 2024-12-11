@@ -93,7 +93,7 @@
         <lib.aws-advanced-jdbc-wrapper.version>2.5.3</lib.aws-advanced-jdbc-wrapper.version>
         <lib.cloud-sql-connector-jdbc-sqlserver.version>1.21.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
         <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.20.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
-        <lib.cloud-sql-postgres-socket-factory.version>1.20.1</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.21.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.27.1</lib.commons-compress.version>
         <lib.commons-text.version>1.12.0</lib.commons-text.version>

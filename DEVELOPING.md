@@ -336,12 +336,12 @@ For local development, you may want to run this instead:
 
 This will start a local webserver that listens on `127.0.0.1:4000` and rebuilds the site whenever you make changes.
 
-> To be able to build the docs with Jekyll, you'll need [Ruby 2](https://www.ruby-lang.org/en/),
+> To be able to build the docs with Jekyll, you'll need [Ruby 3](https://www.ruby-lang.org/en/),
 > [RubyGems](https://rubygems.org/pages/download) and [Bundler](https://bundler.io/) installed.
 > If you can't be bothered to install all of this, you can use the 
 > [Jekyll container image](https://hub.docker.com/r/jekyll/jekyll) instead, e.g.:
 > ```
-> docker run --rm -it --name jekyll -p "127.0.0.1:4000:4000" -v "$(pwd)/docs:/srv/jekyll:Z" jekyll/jekyll:3.8 jekyll serve
+> docker run --rm -it --name jekyll -p "127.0.0.1:4000:4000" -v "$(pwd)/docs:/srv/jekyll:Z" jekyll/jekyll:4.2.2 jekyll serve
 > ```
 
 ## Feature Branches

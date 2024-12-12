@@ -50,14 +50,21 @@ import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.search.document.ComponentDocument;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 import javax.jdo.JDOObjectNotFoundException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -1440,21 +1447,72 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informIssue3936Test() throws Exception{
+    public void informIssue3936Test() throws Exception {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         List<String> boms = new ArrayList<>(Arrays.asList("/unit/bom-issue3936-authors.json", "/unit/bom-issue3936-author.json", "/unit/bom-issue3936-both.json"));
-        for(String bom : boms){
-          final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
-                  resourceToByteArray(bom));
-          new BomUploadProcessingTask().inform(bomUploadEvent);
-          awaitBomProcessedNotification(bomUploadEvent);
+        for (String bom : boms) {
+            final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
+                    resourceToByteArray(bom));
+            new BomUploadProcessingTask().inform(bomUploadEvent);
+            awaitBomProcessedNotification(bomUploadEvent);
 
-          assertThat(qm.getAllComponents(project)).isNotEmpty();
-          Component component = qm.getAllComponents().getFirst();
-          assertThat(component.getAuthor()).isEqualTo("Joane Doe et al.");
-          assertThat(component.getAuthors().get(0).getName()).isEqualTo("Joane Doe et al.");
-          assertThat(component.getAuthors().size()).isEqualTo(1);
+            assertThat(qm.getAllComponents(project)).isNotEmpty();
+            Component component = qm.getAllComponents().getFirst();
+            assertThat(component.getAuthor()).isEqualTo("Joane Doe et al.");
+            assertThat(component.getAuthors().get(0).getName()).isEqualTo("Joane Doe et al.");
+            assertThat(component.getAuthors().size()).isEqualTo(1);
         }
+    }
+
+    @Test
+    public void informIssue4455Test() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.2.3");
+        qm.persist(project);
+
+        var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
+                resourceToByteArray("/unit/bom-issue4455.json"));
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getDirectDependencies()).satisfies(directDependenciesJson -> {
+            final JsonReader jsonReader = Json.createReader(
+                    new StringReader(directDependenciesJson));
+            final JsonArray directDependenciesArray = jsonReader.readArray();
+
+            final var uuidsSeen = new HashSet<String>();
+            for (int i = 0; i < directDependenciesArray.size(); i++) {
+                final JsonObject directDependencyObject = directDependenciesArray.getJsonObject(i);
+                final String directDependencyUuid = directDependencyObject.getString("uuid");
+                if (!uuidsSeen.add(directDependencyUuid)) {
+                    Assert.fail("Duplicate UUID %s in project's directDependencies: %s".formatted(
+                            directDependencyUuid, directDependenciesJson));
+                }
+            }
+        });
+
+        final List<Component> components = qm.getAllComponents(project);
+        assertThat(components).allSatisfy(component -> {
+            if (component.getDirectDependencies() == null) {
+                return;
+            }
+
+            final JsonReader jsonReader = Json.createReader(
+                    new StringReader(component.getDirectDependencies()));
+            final JsonArray directDependenciesArray = jsonReader.readArray();
+
+            final var uuidsSeen = new HashSet<String>();
+            for (int i = 0; i < directDependenciesArray.size(); i++) {
+                final JsonObject directDependencyObject = directDependenciesArray.getJsonObject(i);
+                final String directDependencyUuid = directDependencyObject.getString("uuid");
+                if (!uuidsSeen.add(directDependencyUuid)) {
+                    Assert.fail("Duplicate UUID %s in component's directDependencies: %s".formatted(
+                            directDependencyUuid, component.getDirectDependencies()));
+                }
+            }
+        });
     }
 
     private void awaitBomProcessedNotification(final BomUploadEvent bomUploadEvent) {

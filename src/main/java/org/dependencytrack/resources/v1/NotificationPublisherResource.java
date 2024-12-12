@@ -34,7 +34,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
@@ -340,38 +339,52 @@ public class NotificationPublisherResource extends AlpineResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
-    public Response testSlackPublisherConfig(
+    public Response testNotificationRule(
             @Parameter(description = "The UUID of the rule to test", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String ruleUuid) throws Exception {
-        try(QueryManager qm = new QueryManager()){
-            NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
-            NotificationPublisher notificationPublisher = rule.getPublisher();
-            final Class<?> publisherClass = Class.forName(notificationPublisher.getPublisherClass());
-            Publisher publisher = (Publisher) publisherClass.getDeclaredConstructor().newInstance();
-            String publisherConfig = rule.getPublisherConfig();
-            JsonReader jsonReader = Json.createReader(new StringReader(publisherConfig));
-            JsonObject configObject = jsonReader.readObject();
-            jsonReader.close();
-            final JsonObject config = Json.createObjectBuilder()
-                    .add(Publisher.CONFIG_DESTINATION, configObject.getString("destination"))
+        try (final var qm = new QueryManager()) {
+            final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            if (rule == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            final JsonObject publisherConfig;
+            final String publisherConfigJson = rule.getPublisherConfig() != null ? rule.getPublisherConfig() : "{}";
+            try (final JsonReader jsonReader = Json.createReader(new StringReader(publisherConfigJson))) {
+                publisherConfig = jsonReader.readObject();
+            }
+
+            final JsonObject config = Json.createObjectBuilder(publisherConfig)
                     .add(Publisher.CONFIG_TEMPLATE_KEY, rule.getPublisher().getTemplate())
                     .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, rule.getPublisher().getTemplateMimeType())
                     .build();
-            
-            for(NotificationGroup group : rule.getNotifyOn()){
+
+            final Class<?> publisherClass = Class.forName(rule.getPublisher().getPublisherClass());
+            final Publisher publisher = (Publisher) publisherClass.getDeclaredConstructor().newInstance();
+
+            for (NotificationGroup group : rule.getNotifyOn()) {
                 final Notification notification = new Notification()
-                    .scope(rule.getScope())
-                    .group(group.toString())
-                    .title(group)
-                    .content("Rule configuration test")
-                    .level(rule.getNotificationLevel())
-                    .subject(NotificationUtil.generateSubject(group.toString()));
+                        .scope(rule.getScope())
+                        .group(group.toString())
+                        .title(group)
+                        .content("Rule configuration test")
+                        .level(rule.getNotificationLevel())
+                        .subject(NotificationUtil.generateSubject(group.toString()));
+
                 publisher.inform(PublishContext.from(notification), notification, config);
             }
+
             return Response.ok().build();
-        } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+        } catch (
+                InvocationTargetException
+                | InstantiationException
+                | IllegalAccessException
+                | NoSuchMethodException e) {
             LOGGER.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending the notification.").build();
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Exception occurred while sending the notification.")
+                    .build();
         }
     }
 }

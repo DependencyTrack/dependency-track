@@ -18,10 +18,13 @@
  */
 package org.dependencytrack.resources.v1;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-
+import alpine.common.util.UuidUtil;
+import alpine.notification.NotificationLevel;
+import alpine.security.crypto.DataEncryption;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -40,16 +43,24 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import alpine.common.util.UuidUtil;
-import alpine.notification.NotificationLevel;
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Form;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.time.Duration;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 public class NotificationPublisherResourceTest extends ResourceTest {
 
@@ -139,7 +150,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
                 .put(Entity.entity(publisher, MediaType.APPLICATION_JSON));
         Assert.assertEquals(409, response.getStatus(), 0);
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The notification with the name "+DefaultNotificationPublishers.SLACK.getPublisherName()+" already exist", body);
+        Assert.assertEquals("The notification with the name " + DefaultNotificationPublishers.SLACK.getPublisherName() + " already exist", body);
     }
 
     @Test
@@ -156,7 +167,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
                 .put(Entity.entity(publisher, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The class "+NotificationPublisherResource.class.getName()+" does not implement "+ Publisher.class.getName(), body);
+        Assert.assertEquals("The class " + NotificationPublisherResource.class.getName() + " does not implement " + Publisher.class.getName(), body);
     }
 
     @Test
@@ -245,7 +256,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Assert.assertEquals(409, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("An existing publisher with the name '"+DefaultNotificationPublishers.MS_TEAMS.getPublisherName()+"' already exist", body);
+        Assert.assertEquals("An existing publisher with the name '" + DefaultNotificationPublishers.MS_TEAMS.getPublisherName() + "' already exist", body);
     }
 
     @Test
@@ -279,7 +290,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Assert.assertEquals(400, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The class "+NotificationPublisherResource.class.getName()+" does not implement "+ Publisher.class.getName(), body);
+        Assert.assertEquals("The class " + NotificationPublisherResource.class.getName() + " does not implement " + Publisher.class.getName(), body);
     }
 
     @Test
@@ -350,28 +361,106 @@ public class NotificationPublisherResourceTest extends ResourceTest {
                 "Example Publisher", "Publisher description",
                 SlackPublisher.class, "template", "text/html",
                 false);
-        
+
         NotificationRule rule = qm.createNotificationRule("Example Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
 
         Set<NotificationGroup> groups = new HashSet<>(Set.of(NotificationGroup.BOM_CONSUMED, NotificationGroup.BOM_PROCESSED, NotificationGroup.BOM_PROCESSING_FAILED,
-                                NotificationGroup.BOM_VALIDATION_FAILED, NotificationGroup.NEW_VULNERABILITY, NotificationGroup.NEW_VULNERABLE_DEPENDENCY, 
-                                NotificationGroup.POLICY_VIOLATION, NotificationGroup.PROJECT_CREATED, NotificationGroup.PROJECT_AUDIT_CHANGE, 
-                                NotificationGroup.VEX_CONSUMED, NotificationGroup.VEX_PROCESSED));
+                NotificationGroup.BOM_VALIDATION_FAILED, NotificationGroup.NEW_VULNERABILITY, NotificationGroup.NEW_VULNERABLE_DEPENDENCY,
+                NotificationGroup.POLICY_VIOLATION, NotificationGroup.PROJECT_CREATED, NotificationGroup.PROJECT_AUDIT_CHANGE,
+                NotificationGroup.VEX_CONSUMED, NotificationGroup.VEX_PROCESSED));
         rule.setNotifyOn(groups);
 
         rule.setPublisherConfig("{\"destination\":\"https://example.com/webhook\"}");
-        
+
         Response sendMailResponse = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + rule.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity("", MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        
+
         Assert.assertEquals(200, sendMailResponse.getStatus());
+    }
+
+    @Test
+    public void testNotificationRuleJiraTest() throws Exception {
+        new DefaultObjectGenerator().loadDefaultNotificationPublishers();
+
+        final NotificationPublisher jiraPublisher = qm.getNotificationPublisher(
+                DefaultNotificationPublishers.JIRA.getPublisherName());
+        assertThat(jiraPublisher).isNotNull();
+
+        final var notificationRule = new NotificationRule();
+        notificationRule.setPublisher(jiraPublisher);
+        notificationRule.setPublisherConfig("""
+                {
+                  "destination": "FOO",
+                  "jiraTicketType": "Task"
+                }
+                """);
+        notificationRule.setName("Jira Test");
+        notificationRule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+        notificationRule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        notificationRule.setScope(NotificationScope.PORTFOLIO);
+        qm.persist(notificationRule);
+
+        final var wireMock = new WireMockServer(options().dynamicPort());
+        wireMock.start();
+
+        try {
+            qm.createConfigProperty(
+                    ConfigPropertyConstants.JIRA_URL.getGroupName(),
+                    ConfigPropertyConstants.JIRA_URL.getPropertyName(),
+                    wireMock.baseUrl(),
+                    ConfigPropertyConstants.JIRA_URL.getPropertyType(),
+                    ConfigPropertyConstants.JIRA_URL.getDescription());
+            qm.createConfigProperty(
+                    ConfigPropertyConstants.JIRA_PASSWORD.getGroupName(),
+                    ConfigPropertyConstants.JIRA_PASSWORD.getPropertyName(),
+                    DataEncryption.encryptAsString("authToken"),
+                    ConfigPropertyConstants.JIRA_PASSWORD.getPropertyType(),
+                    ConfigPropertyConstants.JIRA_PASSWORD.getDescription());
+
+            wireMock.stubFor(WireMock.post(WireMock.anyUrl())
+                    .willReturn(aResponse()
+                            .withStatus(200)));
+
+            final Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + notificationRule.getUuid()).request()
+                    .header(X_API_KEY, apiKey)
+                    .post(null);
+            assertThat(response.getStatus()).isEqualTo(200);
+
+            await("Notification Delivery")
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(() -> wireMock.verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
+                            .withRequestBody(equalToJson("""
+                                    {
+                                      "fields" : {
+                                        "project" : {
+                                          "key" : "FOO"
+                                        },
+                                        "issuetype" : {
+                                          "name" : "Task"
+                                        },
+                                        "summary" : "[Dependency-Track] [NEW_VULNERABILITY] [MEDIUM] New medium vulnerability identified: INT-001",
+                                        "description" : "A new vulnerability has been identified on your project(s).\\n\\\\\\\\\\n\\\\\\\\\\n*Vulnerability description*\\n{code:none|bgColor=white|borderStyle=none}{code}\\n\\n*VulnID*\\nINT-001\\n\\n*Severity*\\nMedium\\n\\n*Component*\\n[componentName : componentVersion|/components/94f87321-a5d1-4c2f-b2fe-95165debebc6]\\n\\n*Affected project(s)*\\n- [projectName (projectVersion)|/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95]\\n"
+                                      }
+                                    }
+                                    """))));
+        } finally {
+            wireMock.stop();
+        }
+    }
+
+    @Test
+    public void testNotificationRuleNotFoundTest() {
+        final Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + UUID.randomUUID()).request()
+                .header(X_API_KEY, apiKey)
+                .post(null);
+        assertThat(response.getStatus()).isEqualTo(404);
     }
 
     @Test
     public void restoreDefaultTemplatesTest() {
         NotificationPublisher slackPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherClass());
-        slackPublisher.setName(slackPublisher.getName()+" Updated");
+        slackPublisher.setName(slackPublisher.getName() + " Updated");
         qm.persist(slackPublisher);
         qm.detach(NotificationPublisher.class, slackPublisher.getId());
         qm.createConfigProperty(

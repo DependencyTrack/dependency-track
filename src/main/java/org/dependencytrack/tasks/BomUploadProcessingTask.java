@@ -657,9 +657,19 @@ public class BomUploadProcessingTask implements Subscriber {
         }
 
         final var jsonDependencies = new JSONArray();
+        final var directDependencyIdentitiesSeen = new HashSet<ComponentIdentity>();
         for (final String directDependencyBomRef : directDependencyBomRefs) {
             final ComponentIdentity directDependencyIdentity = identitiesByBomRef.get(directDependencyBomRef);
             if (directDependencyIdentity != null) {
+                if (!directDependencyIdentitiesSeen.add(directDependencyIdentity)) {
+                    // It's possible that multiple direct dependencies of a project or component
+                    // fall victim to de-duplication. In that case, we can ironically end up with
+                    // duplicate component identities (i.e. duplicate BOM refs).
+                    LOGGER.debug("Omitting duplicate direct dependency %s for BOM ref %s"
+                            .formatted(directDependencyBomRef, dependencyBomRef));
+                    continue;
+                }
+
                 jsonDependencies.put(directDependencyIdentity.toJSON());
             } else {
                 LOGGER.warn("""

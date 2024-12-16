@@ -39,6 +39,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.event.ProjectMetricsUpdateEvent;
 import org.dependencytrack.exception.ProjectOperationException;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
@@ -54,6 +55,7 @@ import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -77,6 +79,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -522,6 +525,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     @Override
     public Project updateProject(Project transientProject, boolean commitIndex) {
         final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
+
+        Project oldParent = project.getParent();
+        boolean scheduleProjectMetricsUpdate = this.needScheduleProjectMetricsUpdate(project, transientProject);
+        boolean scheduleParentMetricsUpdate = this.needScheduleParentMetricsUpdate(transientProject, scheduleProjectMetricsUpdate);
+        boolean scheduleOldParentMetricsUpdate = this.needScheduleOldParentMetricsUpdate(oldParent, transientProject);
+
         project.setAuthors(transientProject.getAuthors());
         project.setPublisher(transientProject.getPublisher());
         project.setManufacturer(transientProject.getManufacturer());
@@ -535,6 +544,16 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         project.setPurl(transientProject.getPurl());
         project.setSwidTagId(transientProject.getSwidTagId());
         project.setExternalReferences(transientProject.getExternalReferences());
+
+        // prevent illegal states of collection projects (must not contain components or services)
+        if(transientProject.getCollectionLogic() != null
+                && !project.getCollectionLogic().equals(transientProject.getCollectionLogic())) {
+            if(!transientProject.getCollectionLogic().equals(ProjectCollectionLogic.NONE)
+                    && (hasComponents(project) || hasServiceComponents(project))) {
+                throw new IllegalArgumentException("Project cannot be made a collection project while it has components or services!");
+            }
+            project.setCollectionLogic(transientProject.getCollectionLogic());
+        }
 
         if (Boolean.TRUE.equals(project.isActive()) && !Boolean.TRUE.equals(transientProject.isActive()) && hasActiveChild(project)){
             throw new IllegalArgumentException("Project cannot be set to inactive if active children are present.");
@@ -576,6 +595,17 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             final List<Tag> resolvedTags = resolveTags(transientProject.getTags());
             bind(project, resolvedTags);
 
+            // Set collection tag only if selected collectionLogic requires it. Clear it otherwise.
+            if(transientProject.getCollectionLogic().equals(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN_WITH_TAG) &&
+                    transientProject.getCollectionTag() != null) {
+                final List<Tag> resolvedCollectionTags = resolveTags(Collections.singletonList(
+                        transientProject.getCollectionTag()
+                ));
+                project.setCollectionTag(resolvedCollectionTags.get(0));
+            } else {
+                project.setCollectionTag(null);
+            }
+
             return persist(project);
         });
 
@@ -585,7 +615,51 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, Project.class);
+
+        this.scheduleMetricsUpdates(project, oldParent, scheduleProjectMetricsUpdate, scheduleParentMetricsUpdate, scheduleOldParentMetricsUpdate);
+
         return result;
+    }
+
+    /**
+     * if collection logic changes or collection tag changes or version changes we need to re-calculate the project's metrics in the end
+     */
+    private boolean needScheduleProjectMetricsUpdate(Project project, Project transientProject) {
+        return project.getCollectionLogic() != transientProject.getCollectionLogic()
+                || (transientProject.getCollectionTag() != null && !transientProject.getCollectionTag().equals(project.getCollectionTag()));
+    }
+
+    /**
+     * if parent is collection schedule an update, unless this project itself is scheduled already since that will trigger a parent update, too
+     */
+    private boolean needScheduleParentMetricsUpdate(Project transientProject, boolean scheduleProjectMetricsUpdate) {
+        return !scheduleProjectMetricsUpdate
+                && transientProject.getParent() != null
+                && transientProject.getParent().getCollectionLogic() != ProjectCollectionLogic.NONE;
+    }
+
+    /**
+     * if project gets a new parent and old parent was collection, we need to update old parent's metrics
+     */
+    private boolean needScheduleOldParentMetricsUpdate(Project oldParent, Project transientProject) {
+        return oldParent != transientProject.getParent()
+                && oldParent != null
+                && oldParent.getCollectionLogic() != ProjectCollectionLogic.NONE;
+    }
+
+    /**
+     * Schedules metrics updates for the project itself, the new parent and/or the old parent, as necessary.
+     */
+    private void scheduleMetricsUpdates(Project project, Project oldParent, boolean scheduleProjectMetricsUpdate, boolean scheduleParentMetricsUpdate, boolean scheduleOldParentMetricsUpdate) {
+        if(scheduleProjectMetricsUpdate) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(project.getUuid()));
+        }
+        if(scheduleParentMetricsUpdate) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(project.getParent().getUuid()));
+        }
+        if(scheduleOldParentMetricsUpdate) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(oldParent.getUuid()));
+        }
     }
 
     @Override
@@ -631,6 +705,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setDescription(source.getDescription());
             project.setVersion(newVersion);
             project.setClassifier(source.getClassifier());
+            project.setCollectionLogic(source.getCollectionLogic());
+            project.setCollectionTag(source.getCollectionTag());
             project.setActive(source.isActive());
             project.setIsLatest(makeCloneLatest);
             project.setCpe(source.getCpe());
@@ -826,6 +902,11 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, clonedProject));
         commitSearchIndex(true, Project.class);
+
+        if(clonedProject.getParent() != null && clonedProject.getParent().getCollectionLogic() != ProjectCollectionLogic.NONE) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(clonedProject.getParent().getUuid()));
+        }
+
         return clonedProject;
     }
 
@@ -860,6 +941,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     @Override
     public void recursivelyDelete(final Project project, final boolean commitIndex) {
+        Project parent = project.getParent();
+
         if (project.getChildren() != null) {
             for (final Project child: project.getChildren()) {
                 recursivelyDelete(child, false);
@@ -889,6 +972,11 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         delete(getAllBoms(project));
         delete(project.getChildren());
         delete(project);
+
+        // if project had a parent we need to re-calculate parents metrics to update collection projects
+        if(commitIndex && parent != null && parent.getCollectionLogic() != ProjectCollectionLogic.NONE) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(parent.getUuid()));
+        }
     }
 
     /**

@@ -340,9 +340,11 @@ public class ProjectResourceTest extends ResourceTest {
                               "version": "1.0.0",
                               "uuid": "${json-unit.matches:childUuid}",
                               "active": true,
-                              "isLatest":false
+                              "isLatest":false,
+                              "collectionLogic":"NONE"
                             }
                           ],
+                          "collectionLogic":"NONE",
                           "properties": [],
                           "tags": [],
                           "active": true,
@@ -597,6 +599,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -643,6 +646,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -684,6 +688,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -766,6 +771,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -876,6 +882,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -1221,6 +1228,60 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    public void updateProjectToCollectionProjectWhenHavingComponentsTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "acme-app",
+                          "collectionLogic": "AGGREGATE_DIRECT_CHILDREN"
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(409);
+        assertThat(getPlainTextBody(response)).isEqualTo("""
+                Project cannot be made a collection project while it has \
+                components or services!""");
+    }
+
+    @Test
+    public void updateProjectToCollectionProjectWhenHavingServicesTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var service = new ServiceComponent();
+        service.setProject(project);
+        service.setName("some-service");
+        qm.persist(service);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "acme-app",
+                          "collectionLogic": "AGGREGATE_DIRECT_CHILDREN"
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(409);
+        assertThat(getPlainTextBody(response)).isEqualTo("""
+                Project cannot be made a collection project while it has \
+                components or services!""");
+    }
+
+    @Test
     public void deleteProjectTest() {
         Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Response response = jersey.target(V1_PROJECT + "/" + project.getUuid().toString())
@@ -1494,7 +1555,8 @@ public class ProjectResourceTest extends ResourceTest {
                           ],
                           "active": false,
                           "isLatest":false,
-                          "children": []
+                          "children": [],
+                          "collectionLogic":"NONE"
                         }
                         """);
     }
@@ -1567,7 +1629,8 @@ public class ProjectResourceTest extends ResourceTest {
                           "properties": [],
                           "tags": [],
                           "active": true,
-                          "isLatest":false
+                          "isLatest":false,
+                          "collectionLogic":"NONE"
                         }
                         """);
 
@@ -2175,13 +2238,15 @@ public class ProjectResourceTest extends ResourceTest {
                       "classifier": "APPLICATION",
                       "uuid": "${json-unit.any-string}",
                       "active": true,
-                      "isLatest":false
+                      "isLatest":false,
+                      "collectionLogic":"NONE"
                     }
                   ],
                   "properties": [],
                   "tags": [],
                   "active": true,
                   "isLatest":false,
+                  "collectionLogic":"NONE",
                   "versions": [
                     {
                       "uuid": "${json-unit.any-string}",
@@ -2213,6 +2278,7 @@ public class ProjectResourceTest extends ResourceTest {
                   "tags": [],
                   "active": true,
                   "isLatest":false,
+                  "collectionLogic":"NONE",
                   "versions": [
                     {
                       "uuid": "${json-unit.any-string}",

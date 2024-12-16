@@ -174,10 +174,14 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
 
     private List<Project> fetchNextActiveProjectsBatch(final PersistenceManager pm, final Long lastId) {
         final Query<Project> query = pm.newQuery(Project.class);
+        // exclude collection projects since their numbers are included in other projects and would wrongly influence portfolio metrics.
         if (lastId == null) {
-            query.setFilter("active");
+            query.setFilter("active && (collectionLogic == null || collectionLogic == 'NONE')");
         } else {
-            query.setFilter("active && id < :lastId");
+            query.setFilter("""
+                    active \
+                    && (collectionLogic == null || collectionLogic == 'NONE') \
+                    && id < :lastId""");
             query.setParameters(lastId);
         }
         query.setOrdering("id DESC");
@@ -185,7 +189,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
 
         // NB: Set fetch group on PM level to avoid fields of the default fetch group from being loaded.
         try (var ignoredPersistenceCustomization = new ScopedCustomization(pm)
-                .withFetchGroup(Project.FetchGroup.METRICS_UPDATE.name())) {
+                .withFetchGroup(Project.FetchGroup.PORTFOLIO_METRICS_UPDATE.name())) {
             return List.copyOf(query.executeList());
         } finally {
             query.closeAll();

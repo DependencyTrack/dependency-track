@@ -89,11 +89,11 @@
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.2.2</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
-        <lib.checkstyle.version>10.18.1</lib.checkstyle.version>
+        <lib.checkstyle.version>10.20.2</lib.checkstyle.version>
         <lib.aws-advanced-jdbc-wrapper.version>2.5.3</lib.aws-advanced-jdbc-wrapper.version>
         <lib.cloud-sql-connector-jdbc-sqlserver.version>1.21.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
-        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.20.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
-        <lib.cloud-sql-postgres-socket-factory.version>1.20.1</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.21.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.21.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.27.1</lib.commons-compress.version>
         <lib.commons-text.version>1.12.0</lib.commons-text.version>
@@ -112,7 +112,7 @@
         <lib.open-vulnerability-clients.version>7.0.2</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>3.2.2</lib.pebble.version>
-        <lib.protobuf-java.version>4.29.0</lib.protobuf-java.version>
+        <lib.protobuf-java.version>4.29.1</lib.protobuf-java.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
         <lib.swagger-parser.version>2.1.22</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
@@ -131,7 +131,7 @@
         <lib.jdbc-driver.postgresql.version>42.7.4</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.jetty.version>12.0.15</plugin.jetty.version>
+        <plugin.jetty.version>12.0.16</plugin.jetty.version>
         <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>

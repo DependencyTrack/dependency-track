@@ -991,6 +991,10 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().getComponents(project, includeMetrics, onlyOutdated, onlyDirect);
     }
 
+    public boolean hasComponents(final Project project) {
+        return getComponentQueryManager().hasComponents(project);
+    }
+
     public ServiceComponent matchServiceIdentity(final Project project, final ComponentIdentity cid) {
         return getServiceComponentQueryManager().matchServiceIdentity(project, cid);
     }
@@ -1029,6 +1033,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public ServiceComponent updateServiceComponent(ServiceComponent transientServiceComponent, boolean commitIndex) {
         return getServiceComponentQueryManager().updateServiceComponent(transientServiceComponent, commitIndex);
+    }
+
+    public boolean hasServiceComponents(final Project project) {
+        return getServiceComponentQueryManager().hasServiceComponents(project);
     }
 
     public void recursivelyDelete(ServiceComponent service, boolean commitIndex) {

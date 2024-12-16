@@ -35,6 +35,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
@@ -180,6 +181,9 @@ public class ServiceResource extends AlpineResource {
             }
             if (! qm.hasAccess(super.getPrincipal(), project)) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+            }
+            if(!project.getCollectionLogic().equals(ProjectCollectionLogic.NONE)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Collection project cannot contain services.").build();
             }
             ServiceComponent service = new ServiceComponent();
             service.setProject(project);

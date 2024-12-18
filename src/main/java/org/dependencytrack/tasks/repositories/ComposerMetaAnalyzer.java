@@ -19,8 +19,10 @@
 package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
+
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.exception.MetaAnalyzerException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -47,6 +49,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
     /**
      * @see <a href="https://packagist.org/apidoc#get-package-data">Packagist's API doc for "Getting package data - Using the Composer v2 metadata"</a>
+     * Example: https://repo.packagist.org/p2/monolog/monolog.json
      */
     private static final String API_URL = "/p2/%s/%s.json";
 
@@ -101,30 +104,32 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 // the package no longer exists - for v2 there's no example (yet), v1 example https://repo.packagist.org/p/magento/adobe-ims.json
                 return meta;
             }
-            final JSONObject composerPackage = responsePackages.getJSONObject(expectedResponsePackage);
+            final JSONArray composerPackageVersions = responsePackages.getJSONArray(expectedResponsePackage);
 
             final ComparableVersion latestVersion = new ComparableVersion(stripLeadingV(component.getPurl().getVersion()));
             final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
-            composerPackage.names().forEach(key_ -> {
-                String key = (String) key_;
+            composerPackageVersions.forEach(item -> {
+                JSONObject composerPackage = (JSONObject) item;
+                String key =  composerPackage.getString("version");
                 if (key.startsWith("dev-") || key.endsWith("-dev")) {
                     // dev versions are excluded, since they are not pinned but a VCS-branch.
+                    // this case doesn't seem to happen anymore with V2, as dev (untagged) releases are not part of the response anymore
                     return;
                 }
 
-                final String version_normalized = composerPackage.getJSONObject(key).getString("version_normalized");
+                final String version_normalized = composerPackage.getString("version_normalized");
                 ComparableVersion currentComparableVersion = new ComparableVersion(version_normalized);
                 if (currentComparableVersion.compareTo(latestVersion) < 0) {
                     // smaller version can be skipped
                     return;
                 }
 
-                final String version = composerPackage.getJSONObject(key).getString("version");
+                final String version = composerPackage.getString("version");
                 latestVersion.parseVersion(stripLeadingV(version_normalized));
                 meta.setLatestVersion(version);
 
-                final String published = composerPackage.getJSONObject(key).getString("time");
+                final String published = composerPackage.getString("time");
                 try {
                     meta.setPublishedTimestamp(dateFormat.parse(published));
                 } catch (ParseException e) {

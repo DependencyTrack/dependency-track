@@ -125,7 +125,6 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                     return;
                 }
 
-                final String version = composerPackage.getString("version");
                 latestVersion.parseVersion(stripLeadingV(version_normalized));
                 meta.setLatestVersion(version);
 

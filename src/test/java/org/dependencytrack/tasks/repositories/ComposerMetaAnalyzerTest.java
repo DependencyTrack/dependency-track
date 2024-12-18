@@ -139,7 +139,6 @@ public class ComposerMetaAnalyzerTest {
         ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
         component.setPurl(new PackageURL("pkg:composer/magento/adobe-ims@v1.0.0"));
-        final File packagistFile = getResourceFile("magento", "adobe-ims");
 
         analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
         new MockServerClient("localhost", mockServer.getPort())

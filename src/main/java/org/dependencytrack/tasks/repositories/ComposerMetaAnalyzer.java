@@ -111,8 +111,8 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
             composerPackageVersions.forEach(item -> {
                 JSONObject composerPackage = (JSONObject) item;
-                String key =  composerPackage.getString("version");
-                if (key.startsWith("dev-") || key.endsWith("-dev")) {
+                String version =  composerPackage.getString("version");
+                if (version.startsWith("dev-") || version.endsWith("-dev")) {
                     // dev versions are excluded, since they are not pinned but a VCS-branch.
                     // this case doesn't seem to happen anymore with V2, as dev (untagged) releases are not part of the response anymore
                     return;

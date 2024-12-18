@@ -89,9 +89,9 @@ public class ComposerMetaAnalyzerTest {
 
         MetaModel metaModel = analyzer.analyze(component);
 
-        Assert.assertEquals("v1.1.3", metaModel.getLatestVersion());
+        Assert.assertEquals("v1.2.0", metaModel.getLatestVersion());
         Assert.assertEquals(
-                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2020-05-24 13:03:22 Z"),
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 08:11:39 Z"),
                 metaModel.getPublishedTimestamp()
         );
     }

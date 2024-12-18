@@ -46,9 +46,9 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
     private static final String DEFAULT_BASE_URL = "https://repo.packagist.org";
 
     /**
-     * @see <a href="https://packagist.org/apidoc#get-package-metadata-v1">Packagist's API doc for "Getting package data - Using the Composer v1 metadata (DEPRECATED)"</a>
+     * @see <a href="https://packagist.org/apidoc#get-package-data">Packagist's API doc for "Getting package data - Using the Composer v2 metadata"</a>
      */
-    private static final String API_URL = "/p/%s/%s.json";
+    private static final String API_URL = "/p2/%s/%s.json";
 
     ComposerMetaAnalyzer() {
         this.baseUrl = DEFAULT_BASE_URL;
@@ -98,7 +98,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             final JSONObject responsePackages = jsonObject
                     .getJSONObject("packages");
             if (!responsePackages.has(expectedResponsePackage)) {
-                // the package no longer exists - like this one: https://repo.packagist.org/p/magento/adobe-ims.json
+                // the package no longer exists - for v2 there's no example (yet), v1 example https://repo.packagist.org/p/magento/adobe-ims.json
                 return meta;
             }
             final JSONObject composerPackage = responsePackages.getJSONObject(expectedResponsePackage);

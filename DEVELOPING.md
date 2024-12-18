@@ -211,6 +211,12 @@ To run all tests:
 mvn clean verify -P enhance
 ```
 
+To run a single test:
+
+```shell
+mvn -P enhance -Dtest=ComposerMetaAnalyzerTest verify
+```
+
 Depending on your machine, this will take roughly 10-30min. Unless you modified central parts of the application,
 starting single tests separately via IDE is a better choice. 
 

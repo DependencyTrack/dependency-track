@@ -33,7 +33,8 @@ import java.net.URI;
         description = "An RFC 9457 problem object",
         subTypes = {
                 InvalidBomProblemDetails.class,
-                TagOperationProblemDetails.class
+                TagOperationProblemDetails.class,
+                ProjectOperationProblemDetails.class
         }
 )
 @JsonInclude(JsonInclude.Include.NON_NULL)

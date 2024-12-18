@@ -37,6 +37,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import jakarta.validation.constraints.Size;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.CloneProjectEvent;
@@ -46,6 +47,8 @@ import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+import org.dependencytrack.resources.v1.problems.ProblemDetails;
+import org.dependencytrack.resources.v1.problems.ProjectOperationProblemDetails;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 
@@ -807,6 +810,30 @@ public class ProjectResource extends AlpineResource {
 
             return Response.status(Response.Status.NO_CONTENT).build();
         }
+    }
+
+    @POST
+    @Path("/batchDelete")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Deletes a list of projects specified by their UUIDs",
+            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Projects removed successfully"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Operation failed",
+                    content = @Content(schema = @Schema(implementation = ProjectOperationProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)
+            )
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response deleteProjects(@Size(min = 1, max = 1000) final Set<UUID> uuids) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+                qm.deleteProjectsByUUIDs(uuids);
+        }
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @PUT

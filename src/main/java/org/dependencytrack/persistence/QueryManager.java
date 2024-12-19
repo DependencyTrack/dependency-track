@@ -503,6 +503,10 @@ public class QueryManager extends AlpineQueryManager {
         getProjectQueryManager().recursivelyDelete(project, commitIndex);
     }
 
+    public void deleteProjectsByUUIDs(Collection<UUID> uuids) {
+        getProjectQueryManager().deleteProjectsByUUIDs(uuids);
+    }
+
     public ProjectProperty createProjectProperty(final Project project, final String groupName, final String propertyName,
                                                  final String propertyValue, final ProjectProperty.PropertyType propertyType,
                                                  final String description) {

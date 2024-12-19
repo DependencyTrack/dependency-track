@@ -1797,6 +1797,7 @@ public class ProjectResourceTest extends ResourceTest {
         componentA.setProject(project);
         componentA.setName("acme-lib-a");
         componentA.setVersion("2.0.0");
+        componentA.setSwidTagId("swidTagId");
         componentA.setSupplier(componentSupplier);
         qm.persist(componentA);
 
@@ -1866,7 +1867,8 @@ public class ProjectResourceTest extends ResourceTest {
                                         "objectType": "COMPONENT",
                                         "uuid": "${json-unit.matches:notSourceComponentUuid}",
                                         "name": "acme-lib-a",
-                                        "version": "2.0.0"
+                                        "version": "2.0.0",
+                                        "swidTagId":"swidTagId"
                                       }
                                     ]
                                     """);
@@ -1896,6 +1898,7 @@ public class ProjectResourceTest extends ResourceTest {
                                 assertThat(clonedComponent.getUuid()).isNotEqualTo(componentA.getUuid());
                                 assertThat(clonedComponent.getName()).isEqualTo("acme-lib-a");
                                 assertThat(clonedComponent.getVersion()).isEqualTo("2.0.0");
+                                assertThat(clonedComponent.getSwidTagId()).isEqualTo("swidTagId");
                                 assertThat(clonedComponent.getSupplier()).isNotNull();
                                 assertThat(clonedComponent.getSupplier().getName()).isEqualTo("componentSupplier");
                                 assertThatJson(clonedComponent.getDirectDependencies())

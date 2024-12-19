@@ -370,6 +370,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setCpe(sourceComponent.getCpe());
         component.setPurl(sourceComponent.getPurl());
         component.setPurlCoordinates(sourceComponent.getPurlCoordinates());
+        component.setSwidTagId(sourceComponent.getSwidTagId());
         component.setInternal(sourceComponent.isInternal());
         component.setDescription(sourceComponent.getDescription());
         component.setCopyright(sourceComponent.getCopyright());

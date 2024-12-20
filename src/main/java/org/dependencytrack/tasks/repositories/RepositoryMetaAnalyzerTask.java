@@ -180,11 +180,16 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
 
                     if (Boolean.TRUE.equals(repository.isAuthenticationRequired())) {
                         try {
+                            LOGGER.error("decrypting credentials");
                             String decryptedPassword = null;
+                            String decryptedBearerToken = null;
+                            if (repository.getBearerToken() != null) {
+                                decryptedBearerToken = DebugDataEncryption.decryptAsString(repository.getBearerToken());
+                            }
                             if (repository.getPassword() != null) {
                                 decryptedPassword = DebugDataEncryption.decryptAsString(repository.getPassword());
                             }
-                            analyzer.setRepositoryUsernameAndPassword(repository.getUsername(), decryptedPassword);
+                            analyzer.setCredentials(repository.getUsername(), decryptedPassword, decryptedBearerToken);
                         } catch (Exception e) {
                             LOGGER.error("Failed decrypting password for repository: " + repository.getIdentifier(), e);
                         }

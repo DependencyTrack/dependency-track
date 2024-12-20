@@ -69,15 +69,6 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    @Override
-    public void setRepositoryUsernameAndPassword(String username, String password) {
-        this.repositoryUser = username;
-        this.repositoryPassword = password;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public boolean isApplicable(final Component component) {
         return component.getPurl() != null && PackageURL.StandardTypes.GITHUB.equals(component.getPurl().getType());
     }

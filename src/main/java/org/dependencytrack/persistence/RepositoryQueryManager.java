@@ -143,9 +143,10 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
      * @param isAuthenticationRequired if the repository needs authentication or not
      * @param username                 the username to access the (authenticated) repository with
      * @param password                 the password to access the (authenticated) repository with
+     * @param bearerToken              the token to access the (authenticated) repository with
      * @return the created Repository
      */
-    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal, boolean isAuthenticationRequired, String username, String password) {
+    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal, boolean isAuthenticationRequired, String username, String password, String bearerToken) {
         if (repositoryExist(type, identifier)) {
             return null;
         }
@@ -166,15 +167,21 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
         repo.setEnabled(enabled);
         repo.setInternal(internal);
         repo.setAuthenticationRequired(isAuthenticationRequired);
-        if (Boolean.TRUE.equals(isAuthenticationRequired) && (username != null || password != null)) {
+        if (Boolean.TRUE.equals(isAuthenticationRequired) && (username != null || password != null || bearerToken != null)) {
             repo.setUsername(StringUtils.trimToNull(username));
+            String msg = "password";
             try {
                 if (password != null) {
                     repo.setPassword(DataEncryption.encryptAsString(password));
                 }
+                msg = "bearerToken";
+                if (bearerToken != null) {
+                    repo.setBearerToken(DataEncryption.encryptAsString(bearerToken));
+                }
             } catch (Exception e) {
-                LOGGER.error("An error occurred while saving password in encrypted state");
+                LOGGER.error("An error occurred while saving %s in encrypted state".formatted(msg));
             }
+
         }
         return persist(repo);
     }
@@ -189,10 +196,11 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
      * @param authenticationRequired if the repository needs authentication or not
      * @param username               the username to access the (authenticated) repository with
      * @param password               the password to access the (authenticated) repository with
+     * @param bearerToken            the bearer token to access the (authenticated) repository with
      * @param enabled                specifies if the repository is enabled
      * @return the updated Repository
      */
-    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean authenticationRequired, String username, String password, boolean enabled) {
+    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean authenticationRequired, String username, String password, String bearerToken, boolean enabled) {
         final Repository repository = getObjectByUuid(Repository.class, uuid);
         repository.setIdentifier(identifier);
         repository.setUrl(url);
@@ -201,9 +209,11 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
         if (!authenticationRequired) {
             repository.setUsername(null);
             repository.setPassword(null);
+            repository.setBearerToken(null);
         } else {
             repository.setUsername(username);
             repository.setPassword(password);
+            repository.setBearerToken(bearerToken);
         }
 
         repository.setEnabled(enabled);

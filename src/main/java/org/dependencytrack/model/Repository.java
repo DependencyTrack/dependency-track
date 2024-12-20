@@ -100,6 +100,10 @@ public class Repository implements Serializable {
     @Column(name = "PASSWORD")
     private String password;
 
+    @Persistent
+    @Column(name = "BEARERTOKEN")
+    private String bearerToken;
+
     @Persistent(customValueStrategy = "uuid")
     @Index(name = "REPOSITORY_UUID_IDX") // Cannot be @Unique. Microsoft SQL Server throws an exception
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "true")
@@ -187,6 +191,16 @@ public class Repository implements Serializable {
     @JsonProperty(value = "password")
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    @JsonIgnore
+    public String getBearerToken() {
+        return bearerToken;
+    }
+
+    @JsonProperty(value = "bearerToken")
+    public void setBearerToken(String bearerToken) {
+        this.bearerToken = bearerToken;
     }
 
     public UUID getUuid() {

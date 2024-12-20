@@ -198,7 +198,8 @@ public class RepositoryResource extends AlpineResource {
                         jsonRepository.isEnabled(),
                         jsonRepository.isInternal(),
                         jsonRepository.isAuthenticationRequired(),
-                        jsonRepository.getUsername(), jsonRepository.getPassword());
+                        jsonRepository.getUsername(), jsonRepository.getPassword(),
+                        jsonRepository.getBearerToken());
 
                 return Response.status(Response.Status.CREATED).entity(repository).build();
             } else {
@@ -234,17 +235,24 @@ public class RepositoryResource extends AlpineResource {
             Repository repository = qm.getObjectByUuid(Repository.class, jsonRepository.getUuid());
             if (repository != null) {
                 final String url = StringUtils.trimToNull(jsonRepository.getUrl());
+                String msg = "password";
                 try {
                     // The password is not passed to the front-end, so it should only be overwritten if it is not null or not set to default value coming from ui
                     final String updatedPassword = jsonRepository.getPassword()!=null && !jsonRepository.getPassword().equals(ENCRYPTED_PLACEHOLDER)
                             ? DataEncryption.encryptAsString(jsonRepository.getPassword())
                             : repository.getPassword();
 
+                    // The bearerToken is not passed to the front-end, so it should only be overwritten if it is not null or not set to default value coming from ui
+                    msg = "bearerToken";
+                    final String updatedBearerToken = jsonRepository.getBearerToken()!=null && !jsonRepository.getBearerToken().equals(ENCRYPTED_PLACEHOLDER)
+                            ? DataEncryption.encryptAsString(jsonRepository.getBearerToken())
+                            : repository.getBearerToken();
+
                     repository = qm.updateRepository(jsonRepository.getUuid(), repository.getIdentifier(), url,
-                            jsonRepository.isInternal(), jsonRepository.isAuthenticationRequired(), jsonRepository.getUsername(), updatedPassword, jsonRepository.isEnabled());
+                            jsonRepository.isInternal(), jsonRepository.isAuthenticationRequired(), jsonRepository.getUsername(), updatedPassword, updatedBearerToken, jsonRepository.isEnabled());
                     return Response.ok(repository).build();
                 } catch (Exception e) {
-                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The specified repository password could not be encrypted.").build();
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The specified repository %s could not be encrypted.".formatted(msg)).build();
                 }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the repository could not be found.").build();

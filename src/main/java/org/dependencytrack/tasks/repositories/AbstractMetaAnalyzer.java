@@ -52,6 +52,8 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
 
     protected String password;
 
+    protected String bearerToken;
+
     /**
      * {@inheritDoc}
      */
@@ -66,9 +68,10 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         this.baseUrl = baseUrl;
     }
 
-    public void setRepositoryUsernameAndPassword(String username, String password) {
+    public void setCredentials(String username, String password, String bearerToken) {
         this.username = StringUtils.trimToNull(username);
         this.password = StringUtils.trimToNull(password);
+        this.bearerToken = StringUtils.trimToNull(bearerToken);
     }
 
     protected String urlEncode(final String value) {
@@ -105,8 +108,8 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
             URIBuilder uriBuilder = new URIBuilder(url);
             final HttpUriRequest request = new HttpGet(uriBuilder.build().toString());
             request.addHeader("accept", "application/json");
-            if (username != null || password != null) {
-                request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(username, password));
+            if (username != null || password != null || bearerToken != null) {
+                request.addHeader("Authorization", HttpUtil.constructAuthHeaderValue(username, password, bearerToken));
             }
             return HttpClientPool.getClient().execute(request);
         }catch (URISyntaxException ex){

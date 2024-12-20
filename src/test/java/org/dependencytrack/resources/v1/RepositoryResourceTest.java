@@ -20,6 +20,9 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.util.EntityUtils;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Repository;

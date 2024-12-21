@@ -79,6 +79,9 @@ import java.util.UUID;
                 @Persistent(name = "properties"),
                 @Persistent(name = "vulnerabilities"),
         }),
+        @FetchGroup(name = "BOM_UPLOAD_PROCESSING", members = {
+                @Persistent(name = "properties")
+        }),
         @FetchGroup(name = "INTERNAL_IDENTIFICATION", members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "group"),
@@ -107,6 +110,7 @@ public class Component implements Serializable {
      */
     public enum FetchGroup {
         ALL,
+        BOM_UPLOAD_PROCESSING,
         INTERNAL_IDENTIFICATION,
         METRICS_UPDATE,
         REPO_META_ANALYSIS

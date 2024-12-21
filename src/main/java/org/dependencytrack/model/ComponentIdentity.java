@@ -72,6 +72,13 @@ public class ComponentIdentity {
         this.objectType = ObjectType.COMPONENT;
     }
 
+    public ComponentIdentity(final Component component, final boolean excludeUuid) {
+        this(component);
+        if (excludeUuid) {
+            this.uuid = null;
+        }
+    }
+
     public ComponentIdentity(final org.cyclonedx.model.Component component) {
         try {
             this.purl = new PackageURL(component.getPurl());
@@ -93,6 +100,13 @@ public class ComponentIdentity {
         this.version = service.getVersion();
         this.uuid = service.getUuid();
         this.objectType = ObjectType.SERVICE;
+    }
+
+    public ComponentIdentity(final ServiceComponent service, final boolean excludeUuid) {
+        this(service);
+        if (excludeUuid) {
+            this.uuid = null;
+        }
     }
 
     public ComponentIdentity(final org.cyclonedx.model.Service service) {

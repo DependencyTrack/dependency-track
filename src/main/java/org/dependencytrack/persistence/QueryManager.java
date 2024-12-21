@@ -959,24 +959,12 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerableSoftwareQueryManager().getAllVulnerableSoftware(cpePart, cpeVendor, cpeProduct, purl);
     }
 
-    public Component matchSingleIdentityExact(final Project project, final ComponentIdentity cid) {
-        return getComponentQueryManager().matchSingleIdentityExact(project, cid);
-    }
-
-    public Component matchFirstIdentityExact(final Project project, final ComponentIdentity cid) {
-        return getComponentQueryManager().matchFirstIdentityExact(project, cid);
-    }
-
     public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {
         return getComponentQueryManager().matchIdentity(project, cid);
     }
 
     public List<Component> matchIdentity(final ComponentIdentity cid) {
         return getComponentQueryManager().matchIdentity(cid);
-    }
-
-    public void reconcileComponents(Project project, List<Component> existingProjectComponents, List<Component> components) {
-        getComponentQueryManager().reconcileComponents(project, existingProjectComponents, components);
     }
 
     public List<Component> getAllComponents(Project project) {
@@ -997,10 +985,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public ServiceComponent matchServiceIdentity(final Project project, final ComponentIdentity cid) {
         return getServiceComponentQueryManager().matchServiceIdentity(project, cid);
-    }
-
-    public void reconcileServiceComponents(Project project, List<ServiceComponent> existingProjectServices, List<ServiceComponent> services) {
-        getServiceComponentQueryManager().reconcileServiceComponents(project, existingProjectServices, services);
     }
 
     public ServiceComponent createServiceComponent(ServiceComponent service, boolean commitIndex) {

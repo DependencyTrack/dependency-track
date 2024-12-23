@@ -287,6 +287,7 @@ public class ComposerMetaAnalyzerTest {
         MetaModel metaModel = analyzer.analyze(component);
 
         Assert.assertEquals("2.3.8", metaModel.getLatestVersion());
+        // Timestamps are in invalid format for this repo
         Assert.assertNull(metaModel.getPublishedTimestamp());
 
         mockClient.verify(

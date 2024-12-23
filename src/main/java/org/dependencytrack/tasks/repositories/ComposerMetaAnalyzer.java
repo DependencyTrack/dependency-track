@@ -356,7 +356,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 try {
                     meta.setPublishedTimestamp(dateFormat.parse(published));
                 } catch (Exception e) {
-                    LOGGER.warn("An error occurred while parsing upload time", e);
+                    LOGGER.warn("An error occurred while parsing time", e);
                 }
             } else {
                 //TODO some repositories like packages.drupal.org include a 'dateStamp' field, example 1700068743

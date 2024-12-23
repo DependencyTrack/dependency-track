@@ -18,14 +18,19 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.Config;
-import alpine.common.logging.Logger;
-import alpine.common.metrics.Metrics;
-import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
-import alpine.model.ConfigProperty;
-import alpine.persistence.ScopedCustomization;
-import io.micrometer.core.instrument.Timer;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
+import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
+import javax.jdo.Query;
+
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.event.RepositoryMetaEvent;
@@ -39,20 +44,17 @@ import org.dependencytrack.util.CacheStampedeBlocker;
 import org.dependencytrack.util.DebugDataEncryption;
 import org.dependencytrack.util.PurlUtil;
 
+import alpine.Config;
+import alpine.common.logging.Logger;
+import alpine.common.metrics.Metrics;
+import alpine.event.framework.Event;
+import alpine.event.framework.Subscriber;
+import alpine.model.ConfigProperty;
+import alpine.persistence.ScopedCustomization;
+import io.micrometer.core.instrument.Timer;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
-import javax.jdo.Query;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
-import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
-import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 public class RepositoryMetaAnalyzerTask implements Subscriber {
 
@@ -211,6 +213,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
 
                 if (StringUtils.trimToNull(model.getLatestVersion()) != null) {
                     // Resolution from repository was successful. Update meta model
+                    //FIXME What happens if multiple repositories return a metamodel result with different lastPublishedTimestamps?
                     final RepositoryMetaComponent metaComponent = new RepositoryMetaComponent();
                     metaComponent.setRepositoryType(repository.getType());
                     metaComponent.setNamespace(component.getPurl().getNamespace());

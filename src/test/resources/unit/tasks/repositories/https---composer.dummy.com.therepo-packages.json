@@ -1,0 +1,256 @@
+{
+    "packages": {
+        "dummyspace\/base": {
+            "1.1.0": {
+                "name": "dummyspace\/base",
+                "description": "dummyspace Base",
+                "require": {
+                    "php": "~5.6.5|7.0.2|7.0.4|~7.0.6|~7.1.0"
+                },
+                "type": "magento2-module",
+                "version": "1.1.0",
+                "license": [
+                    "Commercial"
+                ],
+                "autoload": {
+                    "files": [
+                        "registration.php"
+                    ],
+                    "psr-4": {
+                        "dummyspace\\Base\\": ""
+                    }
+                },
+                "dist": {
+                    "url": "https:\/\/composer.dummyspace.com\/therepo\/packages\/dummyspace\/base-1.1.0-ee.zip",
+                    "type": "zip"
+                }
+            },
+            "1.0.1": {
+                "name": "dummyspace\/base",
+                "description": "dummyspace Base",
+                "require": {
+                    "php": "~5.5.0|~5.6.0|~7.0.0"
+                },
+                "type": "magento2-module",
+                "version": "1.0.1",
+                "license": [
+                    "Commercial"
+                ],
+                "autoload": {
+                    "files": [
+                        "registration.php"
+                    ],
+                    "psr-4": {
+                        "dummyspace\\Base\\": ""
+                    }
+                },
+                "dist": {
+                    "url": "https:\/\/composer.dummyspace.com\/therepo\/packages\/dummyspace\/base-1.0.1-ee.zip",
+                    "type": "zip"
+                }
+            },
+            "1.1.1": {
+                "name": "dummyspace\/base",
+                "description": "dummyspace Base",
+                "require": {
+                    "php": "~5.6.5|7.0.2|7.0.4|~7.0.6|~7.1.0"
+                },
+                "type": "magento2-module",
+                "version": "1.1.1",
+                "license": [
+                    "Commercial"
+                ],
+                "autoload": {
+                    "files": [
+                        "registration.php"
+                    ],
+                    "psr-4": {
+                        "dummyspace\\Base\\": ""
+                    }
+                },
+                "dist": {
+                    "url": "https:\/\/composer.dummyspace.com\/therepo\/packages\/dummyspace\/base-1.1.1-ee.zip",
+                    "type": "zip"
+                }
+            },
+            "1.1.2": {
+                "name": "dummyspace\/base",
+                "description": "dummyspace Base",
+                "require": {
+                    "php": "~5.6.5|7.0.2|7.0.4|~7.0.6|~7.1.0"
+                },
+                "type": "magento2-module",
+                "version": "1.1.2",
+                "license": [
+                    "Commercial"
+                ],
+                "autoload": {
+                    "files": [
+                        "registration.php"
+                    ],
+                    "psr-4": {
+                        "dummyspace\\Base\\": ""
+                    }
+                },
+                "dist": {
+                    "url": "https:\/\/composer.dummyspace.com\/therepo\/packages\/dummyspace\/base-1.1.2-ee.zip",
+                    "type": "zip"
+                }
+            },
+            "1.2.0": {
+                "name": "dummyspace\/base",
+                "description": "dummyspace Base",
+                "require": {
+                    "php": "~5.6.5|7.0.2|7.0.4|~7.0.6|~7.1.0"
+                },
+                "type": "magento2-module",
+                "version": "1.2.0",
+                "license": [
+                    "Commercial"
+                ],
+                "autoload": {
+                    "files": [
+                        "registration.php"
+                    ],
+                    "psr-4": {
+                        "dummyspace\\Base\\": ""
+                    }
+                },
+                "dist": {
+                    "url": "https:\/\/composer.dummyspace.com\/therepo\/packages\/dummyspace\/base-1.2.0-ee.zip",
+                    "type": "zip"
+                }
+            },
+           "1.18.0": {
+                "name": "dummyspace\/base",
+                "description": "dummyspace Base",
+                "require": {
+                    "php": ">=7.3",
+                    "ext-dom": "*",
+                    "monolog\/monolog": ">=1.17"
+                },
+                "type": "magento2-module",
+                "version": "1.18.0",
+                "license": [
+                    "proprietary"
+                ],
+                "autoload": {
+                    "files": [
+                        "registration.php"
+                    ],
+                    "psr-4": {
+                        "dummyspace\\Base\\": ""
+                    }
+                },
+                "dist": {
+                    "type": "zip",
+                    "url": "https:\/\/composer.dummyspace.com\/therepo\/packages\/dummyspace\/base-1.18.0.zip"
+                }
+            },
+            "master": {
+                "name": "dummyspace\/base",
+                "description": "dummyspace Base",
+                "require": {
+                    "php": ">=7.3",
+                    "ext-dom": "*",
+                    "monolog\/monolog": ">=1.17"
+                },
+                "type": "magento2-module",
+                "version": "1.18.0",
+                "license": [
+                    "proprietary"
+                ],
+                "autoload": {
+                    "files": [
+                        "registration.php"
+                    ],
+                    "psr-4": {
+                        "dummyspace\\Base\\": ""
+                    }
+                },
+                "dist": {
+                    "type": "zip",
+                    "url": "https:\/\/composer.dummyspace.com\/therepo\/packages\/dummyspace\/base-1.18.0.zip"
+                }
+            }
+        },
+        "dummyspace\/fb": {
+            "1.0.0": {
+                "name": "dummyspace\/fb",
+                "description": "dummyspace Facebook Review",
+                "require": {
+                    "php": "~5.6.5|7.0.2|7.0.4|~7.0.6|~7.1.0",
+                    "dummyspace\/base": "*"
+                },
+                "type": "magento2-module",
+                "version": "1.0.0",
+                "license": [
+                    "Commercial"
+                ],
+                "autoload": {
+                    "files": [
+                        "registration.php"
+                    ],
+                    "psr-4": {
+                        "dummyspace\\fb\\": ""
+                    }
+                },
+                "dist": {
+                    "url": "https:\/\/composer.dummyspace.com\/therepo\/packages\/dummyspace\/fb-1.0.0-ee.zip",
+                    "type": "zip"
+                }
+            },
+            "1.0.6": {
+                "name": "dummyspace\/fb",
+                "description": "dummyspace Facebook Review",
+                "require": {
+                    "php": ">=7.3",
+                    "dummyspace\/base": ">=1.14.7"
+                },
+                "type": "magento2-module",
+                "version": "1.0.6",
+                "license": [
+                    "proprietary"
+                ],
+                "autoload": {
+                    "files": [
+                        "registration.php"
+                    ],
+                    "psr-4": {
+                        "dummyspace\\fb\\": ""
+                    }
+                },
+                "dist": {
+                    "type": "zip",
+                    "url": "https:\/\/composer.dummyspace.com\/therepo\/packages\/dummyspace\/fb-1.0.6.zip"
+                }
+            },
+            "master": {
+                "name": "dummyspace\/fb",
+                "description": "dummyspace Facebook Review",
+                "require": {
+                    "php": ">=7.3",
+                    "dummyspace\/base": ">=1.14.7"
+                },
+                "type": "magento2-module",
+                "version": "1.0.6",
+                "license": [
+                    "proprietary"
+                ],
+                "autoload": {
+                    "files": [
+                        "registration.php"
+                    ],
+                    "psr-4": {
+                        "dummyspace\\fb\\": ""
+                    }
+                },
+                "dist": {
+                    "type": "zip",
+                    "url": "https:\/\/composer.dummyspace.com\/therepo\/packages\/dummyspace\/fb-1.0.6.zip"
+                }
+            }
+        }
+       }
+    }
+}

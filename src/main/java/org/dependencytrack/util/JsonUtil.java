@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
+import org.apache.commons.lang3.StringUtils;
 
 public final class JsonUtil {
 
@@ -68,6 +69,13 @@ public final class JsonUtil {
         } catch (DateTimeParseException e) {
             return null;
         }
+    }
+
+    public static boolean isBlankJson(final String jsonString) {
+        if (StringUtils.isBlank(jsonString) || jsonString.equalsIgnoreCase("{}")) {
+            return true;
+        }
+        return false;
     }
 
 }

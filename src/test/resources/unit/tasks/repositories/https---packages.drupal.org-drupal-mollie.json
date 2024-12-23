@@ -1,0 +1,374 @@
+{
+    "packages": {
+      "drupal/mollie": [
+        {
+          "keywords": "Actively maintained,Developer",
+          "homepage": "https://www.drupal.org/project/mollie",
+          "version": "2.2.1",
+          "version_normalized": "2.2.1.0",
+          "license": "GPL-2.0-or-later",
+          "authors": [
+            {
+              "name": "Rico van de Vin (ricovandevin)",
+              "homepage": "https://www.drupal.org/u/ricovandevin",
+              "role": "Maintainer"
+            }
+          ],
+          "support": {
+            "source": "https://cgit.drupalcode.org/mollie",
+            "issues": "https://www.drupal.org/project/issues/mollie"
+          },
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "2.2.1"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-2.2.1.zip",
+            "reference": "2.2.1",
+            "shasum": "ae2903586021ba361919184308601c733fa542f6"
+          },
+          "type": "drupal-module",
+          "uid": "mollie-3401860",
+          "name": "drupal/mollie",
+          "extra": {
+            "drupal": {
+              "version": "2.2.1",
+              "datestamp": "1700068743",
+              "security-coverage": {
+                "status": "covered",
+                "message": "Covered by Drupal's security advisory policy"
+              }
+            }
+          },
+          "require-dev": {
+            "drupal/webform": "^6",
+            "drupal/uc_payment": "*",
+            "drupal/commerce_payment": "*"
+          },
+          "require": {
+            "drupal/core": "^9.5 || ^10",
+            "php": "\u003E=8.1",
+            "mollie/mollie-api-php": "^2.52"
+          },
+          "description": "Enables online payments in Drupal through Mollie.",
+          "minimum-stability": "dev",
+          "suggest": {
+            "webform/webform": "Webform should be installed for using the Mollie for Drupal Webform submodule (mollie_webform)."
+          },
+          "conflict": {
+            "webform/webform": "\u003C6.0"
+          }
+        },
+        {
+          "version": "2.2.0",
+          "version_normalized": "2.2.0.0",
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "2.2.0"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-2.2.0.zip",
+            "reference": "2.2.0",
+            "shasum": "5edfe868a1c9c66b20dbd3554a84206f374666b2"
+          },
+          "uid": "mollie-3400823",
+          "extra": {
+            "drupal": {
+              "version": "2.2.0",
+              "datestamp": "1699622085",
+              "security-coverage": {
+                "status": "covered",
+                "message": "Covered by Drupal's security advisory policy"
+              }
+            }
+          }
+        },
+        {
+          "version": "2.1.4",
+          "version_normalized": "2.1.4.0",
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "2.1.4"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-2.1.4.zip",
+            "reference": "2.1.4",
+            "shasum": "ead8957d3a5c33ee10faccbb4dec3d374008dfb9"
+          },
+          "uid": "mollie-3232168",
+          "extra": {
+            "drupal": {
+              "version": "2.1.4",
+              "datestamp": "1631201996",
+              "security-coverage": {
+                "status": "covered",
+                "message": "Covered by Drupal's security advisory policy"
+              }
+            }
+          },
+          "require": {
+            "drupal/core": "^8.8 || ^9",
+            "php": "\u003E=7.3",
+            "mollie/mollie-api-php": "^2.29.0"
+          }
+        },
+        {
+          "version": "2.1.3",
+          "version_normalized": "2.1.3.0",
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "2.1.3"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-2.1.3.zip",
+            "reference": "2.1.3",
+            "shasum": "01383b7ffcd3463141a15720e4367c100cb7d1b9"
+          },
+          "uid": "mollie-3231988",
+          "extra": {
+            "drupal": {
+              "version": "2.1.3",
+              "datestamp": "1631124341",
+              "security-coverage": {
+                "status": "covered",
+                "message": "Covered by Drupal's security advisory policy"
+              }
+            }
+          }
+        },
+        {
+          "version": "2.1.2",
+          "version_normalized": "2.1.2.0",
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "2.1.2"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-2.1.2.zip",
+            "reference": "2.1.2",
+            "shasum": "b22b6e1210d3026c34149cb667e9b127cab15db0"
+          },
+          "uid": "mollie-3227899",
+          "extra": {
+            "drupal": {
+              "version": "2.1.2",
+              "datestamp": "1628782185",
+              "security-coverage": {
+                "status": "covered",
+                "message": "Covered by Drupal's security advisory policy"
+              }
+            }
+          }
+        },
+        {
+          "version": "2.1.1",
+          "version_normalized": "2.1.1.0",
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "2.1.1"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-2.1.1.zip",
+            "reference": "2.1.1",
+            "shasum": "47bcc40819b3880d942c4b02284bcd2b287c403f"
+          },
+          "uid": "mollie-3226406",
+          "extra": {
+            "drupal": {
+              "version": "2.1.1",
+              "datestamp": "1628782217",
+              "security-coverage": {
+                "status": "covered",
+                "message": "Covered by Drupal's security advisory policy"
+              }
+            }
+          }
+        },
+        {
+          "version": "2.1.0",
+          "version_normalized": "2.1.0.0",
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "2.1.0"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-2.1.0.zip",
+            "reference": "2.1.0",
+            "shasum": "2ecb1d32d0524071ca9df92b2a64f2ea957d512f"
+          },
+          "uid": "mollie-3225628",
+          "extra": {
+            "drupal": {
+              "version": "2.1.0",
+              "datestamp": "1627464377",
+              "security-coverage": {
+                "status": "covered",
+                "message": "Covered by Drupal's security advisory policy"
+              }
+            }
+          }
+        },
+        {
+          "version": "2.0.0",
+          "version_normalized": "2.0.0.0",
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "2.0.0"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-2.0.0.zip",
+            "reference": "2.0.0",
+            "shasum": "9ad2099d07aeb940d397867c43065ed7ee622219"
+          },
+          "uid": "mollie-3206665",
+          "extra": {
+            "drupal": {
+              "version": "2.0.0",
+              "datestamp": "1617221948",
+              "security-coverage": {
+                "status": "covered",
+                "message": "Covered by Drupal's security advisory policy"
+              }
+            }
+          }
+        },
+        {
+          "version": "1.0.0-rc1",
+          "version_normalized": "1.0.0.0-RC1",
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "8.x-1.0-rc1"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-8.x-1.0-rc1.zip",
+            "reference": "8.x-1.0-rc1",
+            "shasum": "e088b834c796cf1aa142b5ee24b1cf8aa098b236"
+          },
+          "uid": "mollie-3195582",
+          "extra": {
+            "drupal": {
+              "version": "8.x-1.0-rc1",
+              "datestamp": "1612017294",
+              "security-coverage": {
+                "status": "not-covered",
+                "message": "RC releases are not covered by Drupal security advisories."
+              }
+            }
+          },
+          "require-dev": {
+            "drupal/webform": "*",
+            "drupal/uc_payment": "*",
+            "drupal/commerce_payment": "*"
+          },
+          "require": {
+            "drupal/core": "^8.8 || ^9",
+            "php": "\u003E=7.2",
+            "mollie/mollie-api-php": "^2.29.0"
+          },
+          "suggest": "__unset",
+          "conflict": "__unset"
+        },
+        {
+          "version": "1.0.0-beta1",
+          "version_normalized": "1.0.0.0-beta1",
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "8.x-1.0-beta1"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-8.x-1.0-beta1.zip",
+            "reference": "8.x-1.0-beta1",
+            "shasum": "7eb22ab8c541940995c6a9ff002fe044564ea50a"
+          },
+          "uid": "mollie-3085503",
+          "extra": {
+            "drupal": {
+              "version": "8.x-1.0-beta1",
+              "datestamp": "1570111683",
+              "security-coverage": {
+                "status": "not-covered",
+                "message": "Beta releases are not covered by Drupal security advisories."
+              }
+            }
+          },
+          "require-dev": {
+            "drupal/uc_payment": "*",
+            "drupal/commerce_payment": "*"
+          },
+          "require": {
+            "php": "\u003E=7.2",
+            "mollie/mollie-api-php": "^2.6",
+            "drupal/core": "~8.0"
+          }
+        },
+        {
+          "version": "1.0.0-alpha1",
+          "version_normalized": "1.0.0.0-alpha1",
+          "source": {
+            "type": "git",
+            "url": "https://git.drupalcode.org/project/mollie.git",
+            "reference": "8.x-1.0-alpha1"
+          },
+          "dist": {
+            "type": "zip",
+            "url": "https://ftp.drupal.org/files/projects/mollie-8.x-1.0-alpha1.zip",
+            "reference": "8.x-1.0-alpha1",
+            "shasum": "7a6d9894bcb37f54f660ed831495701b9312d9f5"
+          },
+          "uid": "mollie-3084735",
+          "extra": {
+            "drupal": {
+              "version": "8.x-1.0-alpha1",
+              "datestamp": "1570111683",
+              "security-coverage": {
+                "status": "not-covered",
+                "message": "Alpha releases are not covered by Drupal security advisories."
+              }
+            }
+          },
+          "require-dev": {
+            "drupal/commerce_payment": "*"
+          }
+        }
+      ]
+    },
+    "minified": "composer/2.0",
+    "security-advisories": [
+      {
+        "advisoryId": "SA-CONTRIB-2023-052",
+        "packageName": "drupal/mollie",
+        "title": "Mollie for Drupal - Moderately critical - Faulty payment confirmation logic - SA-CONTRIB-2023-052",
+        "link": "https://www.drupal.org/sa-contrib-2023-052",
+        "cve": null,
+        "affectedVersions": "\u003C2.2.1",
+        "reportedAt": "2023-11-15 14:24:12",
+        "composerRepository": "http://packages.drupal.org/8/",
+        "sources": [
+          {
+            "name": "Mollie for Drupal - Moderately critical - Faulty payment confirmation logic - SA-CONTRIB-2023-052",
+            "remoteId": "SA-CONTRIB-2023-052"
+          }
+        ]
+      }
+    ]
+  }

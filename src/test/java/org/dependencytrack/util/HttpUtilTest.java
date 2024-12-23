@@ -21,17 +21,23 @@ package org.dependencytrack.util;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class HttpUtilTest { 
+public class HttpUtilTest {
 
-    @Test
-    public void testBasicAuthHeader() throws Exception {
-        String header = HttpUtil.basicAuthHeader("username", "password");
-        Assert.assertEquals("Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=", header);
-    } 
-
-    @Test
     public void testBasicAuthHeaderValue() throws Exception {
         String authvalue = HttpUtil.basicAuthHeaderValue("username", "password");
         Assert.assertEquals("Basic dXNlcm5hbWU6cGFzc3dvcmQ=", authvalue);
     }
-} 
+
+    @Test
+    public void testBearerAuthHeader() throws Exception {
+        String authvalue = HttpUtil.constructAuthHeaderValue("username", "password", "bearer_token");
+        Assert.assertEquals("Bearer bearer_token", authvalue);
+    }
+
+    @Test
+    public void testBasicAuthHeader() throws Exception {
+        String authvalue = HttpUtil.basicAuthHeader("username", "password");
+        Assert.assertEquals("Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=", authvalue);
+    }
+
+}

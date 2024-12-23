@@ -21,6 +21,8 @@ package org.dependencytrack.util;
 import java.util.Base64;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
+
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
 public final class HttpUtil {
@@ -31,10 +33,6 @@ public final class HttpUtil {
     private HttpUtil() {
     }
 
-    public static String basicAuthHeader(final String username, final String password) {
-        return AUTHORIZATION + ": " + basicAuthHeaderValue(username, password);
-    }
-
     public static String basicAuthHeaderValue(final String username, final String password) {
         return "Basic " +
                 Base64.getEncoder().encodeToString(
@@ -42,4 +40,21 @@ public final class HttpUtil {
                                 .getBytes()
                 );
     }
+
+    public static String basicAuthHeader(final String username, final String password) {
+        return AUTHORIZATION + ": " + basicAuthHeaderValue(username, password);
+    }
+
+    public static String bearerAuthHeaderValue(final String bearerToken) {
+        return  "Bearer " + bearerToken;
+    }
+
+    public static String constructAuthHeaderValue(final String username, final String password, final String bearerToken) {
+        if (StringUtils.isNotBlank(bearerToken)) {
+            return bearerAuthHeaderValue(bearerToken);
+        } else {
+            return basicAuthHeaderValue(username, password);
+        }
+    }
+
 }

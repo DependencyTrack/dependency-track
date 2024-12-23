@@ -41,12 +41,13 @@ public interface IMetaAnalyzer {
 
     /**
      * Sets the username and password (or access token) to use for authentication with the repository. Should not be used for repositories that do not
-     * use Basic authentication.
+     * use Basic or Bearer authentication.
      * @param username the username for access to the repository.
      * @param password the password or access token to be used for the repository.
+     * @param bearerToken the password or access token to be used for the repository.
      * @since 4.6.0
      */
-    void setRepositoryUsernameAndPassword(String username, String password);
+    void setCredentials(String username, String password, String bearerToken);
 
     /**
      * Returns the type of repositry the analyzer supports.
@@ -154,7 +155,7 @@ public interface IMetaAnalyzer {
             }
 
             @Override
-            public void setRepositoryUsernameAndPassword(String username, String password) {
+            public void setCredentials(String username, String password, String bearerToken) {
 
             }
 

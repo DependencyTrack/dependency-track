@@ -71,8 +71,8 @@ public class NugetMetaAnalyzerTest {
 
 
     // This test is to check if the analyzer is excluding pre-release versions
-    // The test is transitent depending on the current version of the package 
-    // retrieved from the repository at the time of running. 
+    // The test is transitent depending on the current version of the package
+    // retrieved from the repository at the time of running.
     // When it was created, the latest release version was 9.0.0-preview.1.24080.9
     @Test
     public void testAnalyzerExcludingPreRelease() throws Exception {
@@ -91,8 +91,8 @@ public class NugetMetaAnalyzerTest {
     }
 
     // This test is to check if the analyzer is including pre-release versions
-    // The test is transitent depending on the current version of the package 
-    // retrieved from the repository at the time of running. 
+    // The test is transitent depending on the current version of the package
+    // retrieved from the repository at the time of running.
     // When it was created, the latest release version was 9.0.0-preview.1.24080.9
     @Test
     public void testAnalyzerIncludingPreRelease() throws Exception {
@@ -161,7 +161,7 @@ public class NugetMetaAnalyzerTest {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:nuget/NUnitPrivate@5.0.1"));
         NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
-        analyzer.setRepositoryUsernameAndPassword(null, "password");
+        analyzer.setCredentials(null, "password", null);
         analyzer.setRepositoryBaseUrl("http://localhost:1080");
         MetaModel metaModel = analyzer.analyze(component);
         Assert.assertEquals("5.0.2", metaModel.getLatestVersion());

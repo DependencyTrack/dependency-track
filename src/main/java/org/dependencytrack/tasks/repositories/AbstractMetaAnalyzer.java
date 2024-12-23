@@ -40,18 +40,26 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 
 /**
- * Base abstract class that all IMetaAnalyzer implementations should likely extend.
+ * Base abstract class that all IMetaAnalyzer implementations should likely
+ * extend.
  *
  * @author Steve Springett
  * @since 3.1.0
  */
 public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
 
+    protected String repositoryId;
     protected String baseUrl;
-
     protected String username;
-
     protected String password;
+
+    /**
+     * Optionally set repositoryId that can be used in a cache key for example.
+     * @param repositoryId
+     */
+    public void setRepositoryID(String repositoryId) {
+        this.repositoryId = repositoryId.trim();
+    }
 
     /**
      * {@inheritDoc}
@@ -76,7 +84,8 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
-    protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode, final String statusText, final Component component) {
+    protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode,
+            final String statusText, final Component component) {
         logger.debug("HTTP Status : " + statusCode + " " + statusText);
         logger.debug(" - RepositoryType URL : " + url);
         logger.debug(" - Package URL : " + component.getPurl().canonicalize());
@@ -84,9 +93,9 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.REPOSITORY)
                 .title(NotificationConstants.Title.REPO_ERROR)
-                .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. URL: " + url + " HTTP Status: " + statusCode + ". Check log for details." )
-                .level(NotificationLevel.ERROR)
-        );
+                .content("An error occurred while communicating with an " + supportedRepositoryType().name()
+                        + " repository. URL: " + url + " HTTP Status: " + statusCode + ". Check log for details.")
+                .level(NotificationLevel.ERROR));
     }
 
     protected void handleRequestException(final Logger logger, final Exception e) {
@@ -96,9 +105,9 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.REPOSITORY)
                 .title(NotificationConstants.Title.REPO_ERROR)
-                .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. Check log for details. " + e.getMessage())
-                .level(NotificationLevel.ERROR)
-        );
+                .content("An error occurred while communicating with an " + supportedRepositoryType().name()
+                        + " repository. Check log for details. " + e.getMessage())
+                .level(NotificationLevel.ERROR));
     }
 
     protected CloseableHttpResponse processHttpRequest(String url) throws IOException {
@@ -111,7 +120,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
                 request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(username, password));
             }
             return HttpClientPool.getClient().execute(request);
-        }catch (URISyntaxException ex){
+        } catch (URISyntaxException ex) {
             handleRequestException(logger, ex);
             return null;
         }

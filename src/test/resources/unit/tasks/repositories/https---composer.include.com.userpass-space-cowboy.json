@@ -6,7 +6,7 @@
                 "version": "1.4.9",
                 "version_normalized": "1.4.9.0",
                 "dist": {
-                    "type": "tar",
+                    "type": "tar"
                 },
                 "require": {
                     "magento\/framework": "102.0.*|103.0.*",
@@ -38,7 +38,7 @@
                 "version": "1.1.0",
                 "version_normalized": "1.1.0.0",
                 "dist": {
-                    "type": "tar",
+                    "type": "tar"
                 },
                 "require": {
                     "space\/module-misspell": "1.0.*",
@@ -59,7 +59,7 @@
                 "version": "1.1.1",
                 "version_normalized": "1.1.1.0",
                 "dist": {
-                    "type": "tar",
+                    "type": "tar"
                 },
                 "require": {
                     "space\/module-misspell": "1.0.*",
@@ -90,7 +90,7 @@
                 "version": "1.0.1",
                 "version_normalized": "1.0.1.0",
                 "dist": {
-                    "type": "tar",
+                    "type": "tar"
                 },
                 "require": {
                     "space\/module-misspell": "1.0.*",
@@ -113,7 +113,7 @@
                 "version": "2.3.7",
                 "version_normalized": "2.3.7.0",
                 "dist": {
-                    "type": "tar",
+                    "type": "tar"
                 },
                 "require": {
                     "magento\/framework": "103.0.*",
@@ -162,7 +162,7 @@
                 "version": "2.3.8",
                 "version_normalized": "2.3.8.0",
                 "dist": {
-                    "type": "tar",
+                    "type": "tar"
                 },
                 "require": {
                     "magento\/framework": "103.0.*",

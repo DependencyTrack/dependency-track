@@ -157,6 +157,9 @@ public interface IMetaAnalyzer {
 
         return new IMetaAnalyzer() {
             @Override
+            public void setRepositoryId(String repositoryId) {}
+
+            @Override
             public void setRepositoryBaseUrl(String baseUrl) {
             }
 

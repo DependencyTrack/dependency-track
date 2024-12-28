@@ -79,7 +79,7 @@ public class ComposerMetaAnalyzerTest {
                 final File packagistFile = getPackageResourceFile("repo.packagist.org.v1", "monolog", "monolog");
                 final File packagistRepoRootFile = getRepoResourceFile("repo.packagist.org.v1", "packages");
 
-                analyzer.setRepositoryID("1");
+                analyzer.setRepositoryId("1");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
@@ -122,7 +122,7 @@ public class ComposerMetaAnalyzerTest {
                 final File packagistFile = getPackageResourceFile("repo.packagist.org", "typo3", "class-alias-loader");
                 final File packagistRepoRootFile = getRepoResourceFile("repo.packagist.org", "packages");
 
-                analyzer.setRepositoryID("2");
+                analyzer.setRepositoryId("2");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
@@ -164,7 +164,7 @@ public class ComposerMetaAnalyzerTest {
                 component.setPurl(new PackageURL("pkg:composer/dummyspace/base@v1.1.0"));
                 final File packagistRepoRootFile = getRepoResourceFile("composer.dummy.com.therepo", "packages");
 
-                analyzer.setRepositoryID("3");
+                analyzer.setRepositoryId("3");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d/therepo", mockServer.getPort()));
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
@@ -243,7 +243,7 @@ public class ComposerMetaAnalyzerTest {
                 final File packagistRepoRootFile = getRepoResourceFile("composer.include.com.userpass", "packages");
                 final File packagistFile = getPackageResourceFile("composer.include.com.userpass", "space", "cowboy");
 
-                analyzer.setRepositoryID("4");
+                analyzer.setRepositoryId("4");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d/user:pass/", mockServer.getPort()));
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
@@ -327,7 +327,7 @@ public class ComposerMetaAnalyzerTest {
                 final File packagistRepoRootFile = getRepoResourceFile("composer.include.com.metadata", "packages");
                 final File packagistFile = getPackageResourceFile("composer.include.com.metadata", "space", "cowboy");
 
-                analyzer.setRepositoryID("5");
+                analyzer.setRepositoryId("5");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d/user:pass/", mockServer.getPort()));
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
@@ -430,7 +430,7 @@ public class ComposerMetaAnalyzerTest {
                 final File packagistFile = getPackageResourceFile("repo.packagist.org", "typo3", "class-alias-loader");
                 final File packagistRepoRootFile = getRepoResourceFile("repo.packagist.org", "packages");
 
-                analyzer.setRepositoryID("6");
+                analyzer.setRepositoryId("6");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
@@ -497,7 +497,7 @@ public class ComposerMetaAnalyzerTest {
                 component.setPurl(new PackageURL("pkg:composer/empty/root@v1.1.0"));
                 final File packagistRepoRootFile = getRepoResourceFile("repo.empty.org", "packages");
 
-                analyzer.setRepositoryID("7");
+                analyzer.setRepositoryId("7");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
@@ -542,7 +542,7 @@ public class ComposerMetaAnalyzerTest {
                 final File packagistFile = getPackageResourceFile("packages.drupal.org", "drupal", "mollie");
                 final File packagistRepoRootFile = getRepoResourceFile("packages.drupal.org", "packages");
 
-                analyzer.setRepositoryID("8");
+                analyzer.setRepositoryId("8");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
@@ -595,7 +595,7 @@ public class ComposerMetaAnalyzerTest {
                 final File packagistFile = getPackageResourceFile("composer.available.com", "io", "captain-hook");
                 final File packagistRepoRootFile = getRepoResourceFile("composer.available.com", "packages");
 
-                analyzer.setRepositoryID("9");
+                analyzer.setRepositoryId("9");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
@@ -650,7 +650,7 @@ public class ComposerMetaAnalyzerTest {
                 final File packagistFile = getPackageResourceFile("composer.available.com.matches", "io", "captain-hook");
                 final File packagistRepoRootFile = getRepoResourceFile("composer.available.com.matches", "packages");
 
-                analyzer.setRepositoryID("11");
+                analyzer.setRepositoryId("11");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
@@ -716,7 +716,7 @@ public class ComposerMetaAnalyzerTest {
                 final File packagistFile = getPackageResourceFile("repo.packagist.org.v1", "magento", "adobe-ims");
                 final File packagistRepoRootFile = getRepoResourceFile("repo.packagist.org.v1", "packages");
 
-                analyzer.setRepositoryID("10");
+                analyzer.setRepositoryId("10");
                 @SuppressWarnings("resource")
                 MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
                 mockClient.when(
@@ -755,7 +755,7 @@ public class ComposerMetaAnalyzerTest {
 
                 component.setPurl(new PackageURL("pkg:composer/magento/adobe-ims@v1.0.0"));
 
-                analyzer.setRepositoryID("12");
+                analyzer.setRepositoryId("12");
                 analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
                 new MockServerClient("localhost", mockServer.getPort())
                                 .when(

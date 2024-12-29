@@ -21,6 +21,7 @@ package org.dependencytrack.tasks.repositories;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+
 import com.github.packageurl.PackageURL;
 
 /**
@@ -30,6 +31,12 @@ import com.github.packageurl.PackageURL;
  * @since 3.1.0
  */
 public interface IMetaAnalyzer {
+
+    /**
+     * Optionally set repositoryId that can be used in a cache key for example.
+     * @param repositoryId
+     */
+    public void setRepositoryId(String repositoryId);
 
     /**
      * Sets the base URL for the repository being used. If not specified, IMetaAnalyzer implementations
@@ -149,6 +156,9 @@ public interface IMetaAnalyzer {
         }
 
         return new IMetaAnalyzer() {
+            @Override
+            public void setRepositoryId(String repositoryId) {}
+
             @Override
             public void setRepositoryBaseUrl(String baseUrl) {
             }

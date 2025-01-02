@@ -103,7 +103,7 @@
         <lib.greenmail.version>2.1.2</lib.greenmail.version>
         <lib.jackson.version>2.18.0</lib.jackson.version>
         <lib.jackson-databind.version>2.18.0</lib.jackson-databind.version>
-        <lib.json-java.version>20240303</lib.json-java.version>
+        <lib.json-java.version>20241224</lib.json-java.version>
         <lib.json-unit.version>4.1.0</lib.json-unit.version>
         <lib.junit.version>4.13.2</lib.junit.version>
         <lib.lucene.version>8.11.4</lib.lucene.version>

@@ -18,12 +18,6 @@
  */
 package org.dependencytrack.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.util.VulnerabilityUtil;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Serializable;
@@ -38,6 +32,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.util.VulnerabilityUtil;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 
 /**
@@ -300,6 +301,12 @@ public class Finding implements Serializable {
             }
             if (alias.getVulnDbId() != null && !alias.getVulnDbId().isBlank()) {
                 map.put("vulnDbId", alias.getVulnDbId());
+            }
+            if (alias.getDrupalId() != null && !alias.getDrupalId().isBlank()) {
+                map.put("drupalId", alias.getDrupalId());
+            }
+            if (alias.getComposerId() != null && !alias.getComposerId().isBlank()) {
+                map.put("composerId", alias.getComposerId());
             }
             uniqueAliases.add(map);
         }

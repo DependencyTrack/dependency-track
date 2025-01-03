@@ -24,8 +24,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.dependencytrack.parser.composer.model.ComposerSecurityVulnerability;
+import org.dependencytrack.parser.composer.model.ComposerVulnerability;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -36,15 +35,15 @@ public class ComposerSecurityAdvisoryParser {
 
     private static final Logger LOGGER = Logger.getLogger(ComposerSecurityAdvisoryParser.class);
 
-    public List<ComposerSecurityVulnerability> parse(final JSONObject object) {
-        final List<ComposerSecurityVulnerability> result = new ArrayList<>();
+    public List<ComposerVulnerability> parse(final JSONObject object) {
+        final List<ComposerVulnerability> result = new ArrayList<>();
         final JSONObject advisories = object.optJSONObject("advisories");
         if (advisories != null) {
             advisories.names().forEach(packageName -> {
                 final JSONArray advisory = advisories.optJSONArray((String)packageName);
                 if (advisory != null) {
                     for (int i = 0; i < advisory.length(); i++) {
-                        final ComposerSecurityVulnerability composerVulnerability = parseSecurityAdvisory(advisory.getJSONObject(i));
+                        final ComposerVulnerability composerVulnerability = parseSecurityAdvisory(advisory.getJSONObject(i));
                         if (composerVulnerability != null) {
                             result.add(composerVulnerability);
                         }
@@ -56,48 +55,47 @@ public class ComposerSecurityAdvisoryParser {
         return result;
     }
 
-    private ComposerSecurityVulnerability parseSecurityAdvisory(final JSONObject object) {
-        final ComposerSecurityVulnerability advisory = new ComposerSecurityVulnerability();
+    private ComposerVulnerability parseSecurityAdvisory(final JSONObject object) {
+        final ComposerVulnerability vulnerability = new ComposerVulnerability();
 
         //There's no status field in the advisory object, so we cannot check if the advisory has been withdrawn
-        advisory.setAdvisoryId(object.getString("advisoryId"));
-        advisory.setPackageName(object.optString("packageName", null));
-        advisory.setRemoteId(object.optString("remoteId", null));
-        advisory.setTitle(object.optString("title", null));
-        advisory.setLink(object.optString("link", null));
-        advisory.setCve(object.optString("cve", null));
-        advisory.setAffectedVersionsCve(object.optString("affectedVersions", null));
-        advisory.setSource(object.optString("source", null));
+        vulnerability.setAdvisoryId(object.getString("advisoryId"));
+        vulnerability.setPackageName(object.optString("packageName", null));
+        vulnerability.setRemoteId(object.optString("remoteId", null));
+        vulnerability.setTitle(object.optString("title", null));
+        vulnerability.setLink(object.optString("link", null));
+        vulnerability.setCve(object.optString("cve", null));
+        vulnerability.setAffectedVersionsCve(object.optString("affectedVersions", null));
+        vulnerability.setSource(object.optString("source", null));
 
         String reportedAtStr = object.optString("reportedAt", null);
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             if (reportedAtStr != null) {
                 LocalDateTime reportedAt = LocalDateTime.parse(reportedAtStr, formatter);
-                advisory.setReportedAt(reportedAt);
+                vulnerability.setReportedAt(reportedAt);
             }
         } catch (DateTimeParseException e) {
             LOGGER.debug("Unabled to parse as LocalDateTime: " + reportedAtStr);
         }
 
-        advisory.setComposerRepository(object.optString("composerRepository", null));
-        advisory.setSeverity(object.optString("severity", null));
+        vulnerability.setComposerRepository(object.optString("composerRepository", null));
+        vulnerability.setSeverity(object.optString("severity", null));
 
         //Some repositories like drupal use something weird as name that might not be unique
         final JSONArray identifiers = object.optJSONArray("sources");
         if (identifiers != null) {
             for (int i = 0; i < identifiers.length(); i++) {
                 final JSONObject identifier = identifiers.getJSONObject(i);
-                final String type = identifier.optString("name", null);
-                final String value = identifier.optString("remoteId", null);
-                if (type != null && value != null) {
-                    final Pair<String, String> pair = Pair.of(type, value);
-                    advisory.addSource(pair);
+                final String name = identifier.optString("name", null);
+                final String remoteId = identifier.optString("remoteId", null);
+                if (name != null && remoteId != null) {
+                    vulnerability.addSource(name, remoteId);
                 }
             }
         }
 
-        return advisory;
+        return vulnerability;
     }
 
 }

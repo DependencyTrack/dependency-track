@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -32,14 +33,16 @@ import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.ComposerAdvisoryMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.composer.ComposerSecurityAdvisoryParser;
-import org.dependencytrack.parser.composer.model.ComposerSecurityVulnerability;
+import org.dependencytrack.parser.composer.model.ComposerVulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import org.json.JSONObject;
 
@@ -57,10 +60,8 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(ComposerAdvisoryMirrorTask.class);
     //TODO replace with url from Repository
-    // private static final String COMPOSER_SECURITY_API = "https://packagist.org/api/security-advisories/?updatedSince=100";
-    private static final String COMPOSER_SECURITY_API = "https://packages.drupal.org/8/security-advisories?updatedSince=100";
-
-
+    private static final String COMPOSER_SECURITY_API = "https://packagist.org/api/security-advisories/?updatedSince=100";
+    // private static final String COMPOSER_SECURITY_API = "https://packages.drupal.org/8/security-advisories?updatedSince=100";
 
     private final boolean isEnabled;
     private final boolean isAliasSyncEnabled;
@@ -76,6 +77,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
             // isAliasSyncEnabled = aliasSyncEnabled != null && Boolean.parseBoolean(aliasSyncEnabled.getPropertyValue());
             isEnabled = true;
             isAliasSyncEnabled = true;
+
         }
     }
 
@@ -83,8 +85,6 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
      * {@inheritDoc}
      */
     public void inform(final Event e) {
-        //TODO
-        LOGGER.info("Starting Composer Advisory mirroring taskVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
         if (e instanceof ComposerAdvisoryMirrorEvent && this.isEnabled) {
             final long start = System.currentTimeMillis();
             LOGGER.info("Starting Composer Advisory mirroring task");
@@ -132,7 +132,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                 String responseString = EntityUtils.toString(response.getEntity());
                 // LOGGER.debug("response from composer repository: \n" + responseString);
                 var jsonObject = new JSONObject(responseString);
-                final List<ComposerSecurityVulnerability> advisories = parser.parse(jsonObject);
+                final List<ComposerVulnerability> advisories = parser.parse(jsonObject);
                 updateDatasource(advisories);
             }
         } catch (Exception ex) {
@@ -145,74 +145,159 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
      *
      * @param advisories the results to synchronize
      */
-    void updateDatasource(final List<ComposerSecurityVulnerability> advisories) {
+    void updateDatasource(final List<ComposerVulnerability> advisories) {
         LOGGER.debug("Updating datasource with Composer advisories");
         try (QueryManager qm = new QueryManager()) {
-            for (final ComposerSecurityVulnerability advisory : advisories) {
+            for (final ComposerVulnerability advisory : advisories) {
                 LOGGER.debug("Synchronizing Composer advisory: " + advisory.getAdvisoryId());
 
                 final Vulnerability mappedVulnerability = mapComposerVulnerabilityToVulnerability(qm, advisory);
                 final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(mappedVulnerability.getSource(), mappedVulnerability.getVulnId()));
 
-                // final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mappedVulnerability, false);
+                final Vulnerability existingVulnerability = qm.getVulnerabilityByVulnId(mappedVulnerability.getSource(), mappedVulnerability.getVulnId());
 
-                // if (synchronizedVulnerability == null) continue;
+                final Vulnerability.Source vulnerabilitySource = Vulnerability.Source.resolve(mappedVulnerability.getSource());
+                final ConfigPropertyConstants vulnAuthoritativeSourceToggle = switch (vulnerabilitySource) {
+                    case Vulnerability.Source.NVD -> ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
+                    case Vulnerability.Source.GITHUB -> ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
+                    default -> ConfigPropertyConstants.VULNERABILITY_SOURCE_COMPOSER_ENABLED;
+                };
+                final boolean vulnAuthoritativeSourceEnabled = Boolean.valueOf(qm.getConfigProperty(vulnAuthoritativeSourceToggle.getGroupName(), vulnAuthoritativeSourceToggle.getPropertyName()).getPropertyValue());
+                Vulnerability synchronizedVulnerability = existingVulnerability;
+                if (shouldUpdateExistingVulnerability(existingVulnerability, vulnerabilitySource, vulnAuthoritativeSourceEnabled)) {
+                    synchronizedVulnerability  = qm.synchronizeVulnerability(mappedVulnerability, false);
+                    if (synchronizedVulnerability == null) continue; //No changes in vulnerability
+                }
+
                 List<VulnerableSoftware> vsList = mapVulnerabilityToVulnerableSoftware(qm, advisory);
-                // TODO ALIAS SYNC
-                // if (isAliasSyncEnabled) {
-                //     for (Pair<String, String> identifier : advisory.getIdentifiers()) {
-                //         if (identifier != null && identifier.getLeft() != null
-                //                 && "CVE".equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
-                //             LOGGER.debug("Updating vulnerability alias for " + advisory.getGhsaId());
-                //             final VulnerabilityAlias alias = new VulnerabilityAlias();
-                //             alias.setGhsaId(advisory.getGhsaId());
-                //             alias.setCveId(identifier.getRight());
-                //             qm.synchronizeVulnerabilityAlias(alias);
-                //         }
-                //     }
-                // }
+                if (isAliasSyncEnabled) {
+                    for (VulnerabilityAlias alias: mappedVulnerability.getAliases()) {
+                        qm.synchronizeVulnerabilityAlias(alias);
+                    }
+                }
                 LOGGER.debug("Updating vulnerable software for advisory: " + advisory.getAdvisoryId());
-                // qm.persist(vsList);
-                // vsList.forEach(vs -> qm.updateAffectedVersionAttribution(synchronizedVulnerability, vs, Vulnerability.Source.COMPOSER));
-                // vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.COMPOSER);
-                // synchronizedVulnerability.setVulnerableSoftware(vsList);
-                // qm.persist(synchronizedVulnerability);
+                qm.persist(vsList);
+                final Vulnerability finalSynchronizedVulnerability = synchronizedVulnerability;
+                vsList.forEach(vs -> qm.updateAffectedVersionAttribution(finalSynchronizedVulnerability, vs, Vulnerability.Source.COMPOSER));
+                vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.COMPOSER);
+                synchronizedVulnerability.setVulnerableSoftware(vsList);
+                qm.persist(synchronizedVulnerability);
             }
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
+    private boolean shouldUpdateExistingVulnerability(Vulnerability existingVulnerability, Vulnerability.Source vulnerabilitySource, boolean vulnAuthoritativeSourceEnabled) {
+        return (Vulnerability.Source.COMPOSER == vulnerabilitySource) // Non GHSA nor NVD nor DRUPAL
+                || (existingVulnerability == null) // Vuln is not replicated yet or declared by authoritative source with appropriate state
+                || (existingVulnerability != null && !vulnAuthoritativeSourceEnabled); // Vuln has been replicated but authoritative source is disabled
+    }
+
     /**
      * Helper method that maps an GitHub SecurityAdvisory object to a Dependency-Track vulnerability object.
      *
-     * @param vulnerability the GitHub SecurityAdvisory to map
+     * @param composerVulnerability the GitHub SecurityAdvisory to map
      * @return a Dependency-Track Vulnerability object
      */
-    private Vulnerability mapComposerVulnerabilityToVulnerability(final QueryManager qm, final ComposerSecurityVulnerability vulnerability) {
+    private Vulnerability mapComposerVulnerabilityToVulnerability(final QueryManager qm, final ComposerVulnerability composerVulnerability) {
         final Vulnerability vuln = new Vulnerability();
-        //TODO MAP Known sources
-        vuln.setSource(Vulnerability.Source.COMPOSER);
-        vuln.setVulnId(vulnerability.getAdvisoryId());
 
-        vuln.setDescription("Composer repository: %s".formatted(vulnerability.getComposerRepository()));
-        vuln.setTitle(vulnerability.getTitle());
-        if (vulnerability.getReportedAt() != null) {
-            vuln.setPublished(Date.from(vulnerability.getReportedAt().toInstant(ZoneOffset.UTC)));
-            // Should we leave Updated null?
-            vuln.setUpdated(Date.from(vulnerability.getReportedAt().toInstant(ZoneOffset.UTC)));
+        /**
+         * First determine what the primay ID of the vulnerability is.
+         * Authoritative sources take precedence over non-authoritative sources.
+         */
+        VulnerabilityAlias alias = new VulnerabilityAlias();
+        alias.setComposerId(composerVulnerability.getAdvisoryId());
+        if (composerVulnerability.getAdvisoryId().startsWith("SA-CORE") || composerVulnerability.getAdvisoryId().startsWith("SA-CONTRIB")) {
+            vuln.setSource(Vulnerability.Source.DRUPAL);
+            alias.setCveId(composerVulnerability.getCve());
+            alias.setDrupalId(composerVulnerability.getAdvisoryId());
+            // use sources as alias
+        } else if (composerVulnerability.getCve() != null && composerVulnerability.getCve().startsWith("CVE")) {
+            vuln.setVulnId(composerVulnerability.getCve());
+            vuln.setSource(Vulnerability.Source.NVD);
+            alias.setCveId(composerVulnerability.getCve());
+            // use PKSA as alias
+            // use sources as alias
+        } else if (composerVulnerability.getRemoteId() != null && composerVulnerability.getRemoteId().startsWith("GHSA")) {
+            vuln.setVulnId(composerVulnerability.getRemoteId());
+            vuln.setSource(Vulnerability.Source.GITHUB);
+            alias.setGhsaId(composerVulnerability.getRemoteId());
+            // use sources as alias
+        } else if (composerVulnerability.getSources() != null && composerVulnerability.getSources().containsKey("github")) {
+            vuln.setVulnId(composerVulnerability.getSources().get("github"));
+            vuln.setSource(Vulnerability.Source.GITHUB);
+            alias.setGhsaId(composerVulnerability.getRemoteId());
+            // use sources as alias
+        } else {
+            vuln.setVulnId(composerVulnerability.getAdvisoryId());
+            //Example Id PKSA-jvj8-gbfh-v875, where PKSA stands for Packagist Security Advisory (I think)
+            //Should this be another SOURCE? DT uses sources for sources and for analyzers, which are slighly different
+            //But adding an extra source feels to much. Or should we rename the new COMPOSER source to PACKAGIST?
+            vuln.setSource(Vulnerability.Source.COMPOSER);
         }
-        vuln.setReferences(vulnerability.getLink());
 
-        vuln.setVulnerableVersions(vulnerability.getAffectedVersions());
+        //Make sure RemoteId is always used as alias if present
+        if (composerVulnerability.getRemoteId() != null) {
+            String remoteId = composerVulnerability.getRemoteId();
+            if (remoteId.startsWith("GHSA") && alias.getGhsaId() == null) {
+                alias.setGhsaId(remoteId);
+            }
+            if (remoteId.startsWith("CVE") && alias.getCveId() == null) {
+                alias.setCveId(remoteId);
+            }
+        }
+        vuln.setAliases(Arrays.asList(alias));
 
-        if (vulnerability.getSeverity() != null) {
-            if (vulnerability.getSeverity().equalsIgnoreCase("CRITICAL")) {
+        String description = composerVulnerability.getTitle() + " in " + composerVulnerability.getPackageName() + " " + composerVulnerability.getAffectedVersions();
+        List<String> references = new ArrayList<>();
+        references.add(composerVulnerability.getLink());
+        for (Entry<String, String> source: composerVulnerability.getSources().entrySet()) {
+            if (source.getKey().equalsIgnoreCase("github")) {
+                references.add("https://github.com/advisories/" + source.getValue());
+                if (alias.getGhsaId() == null) alias.setGhsaId(source.getValue());
+            } else if (source.getKey().equalsIgnoreCase("friendsofphp/security-advisories")) {
+                references.add("https://github.com/FriendsOfPHP/security-advisories/blob/master/" + source.getValue());
+                description += "\nUnmapped alias: " + source.getKey() + " : " + source.getValue() + "\n";
+            } else {
+                description += "\nUnmapped alias: " + source.getKey() + " : " + source.getValue() + "\n";
+            }
+        }
+        references.add(composerVulnerability.getComposerRepository());
+
+        if (!references.isEmpty()) {
+            final StringBuilder sb = new StringBuilder();
+            for (String ref : references) {
+                // Convert reference to Markdown format;
+                sb.append("* [").append(ref).append("](").append(ref).append(")\n");
+            }
+            vuln.setReferences(sb.toString());
+        }
+
+        vuln.setDescription(description);
+        vuln.setTitle(composerVulnerability.getTitle());
+        if (composerVulnerability.getReportedAt() != null) {
+            vuln.setPublished(Date.from(composerVulnerability.getReportedAt().toInstant(ZoneOffset.UTC)));
+            // Should we leave Updated null?
+            vuln.setUpdated(Date.from(composerVulnerability.getReportedAt().toInstant(ZoneOffset.UTC)));
+        }
+
+        if (composerVulnerability.getAffectedVersions() != null && composerVulnerability.getAffectedVersions().length() > 255) {
+            // https://github.com/DependencyTrack/dependency-track/issues/4512
+            LOGGER.warn("Affected versions for " + composerVulnerability.getAdvisoryId() + " is too long. Truncating to 255 characters.");
+            vuln.setVulnerableVersions(composerVulnerability.getAffectedVersions().substring(0, 254));
+        } else {
+            vuln.setVulnerableVersions(composerVulnerability.getAffectedVersions());
+        }
+
+        if (composerVulnerability.getSeverity() != null) {
+            if (composerVulnerability.getSeverity().equalsIgnoreCase("CRITICAL")) {
                 vuln.setSeverity(Severity.CRITICAL);
-            } else if (vulnerability.getSeverity().equalsIgnoreCase("HIGH")) {
+            } else if (composerVulnerability.getSeverity().equalsIgnoreCase("HIGH")) {
                 vuln.setSeverity(Severity.HIGH);
-            } else if (vulnerability.getSeverity().equalsIgnoreCase("MEDIUM")) {
+            } else if (composerVulnerability.getSeverity().equalsIgnoreCase("MEDIUM")) {
                 vuln.setSeverity(Severity.MEDIUM);
-            } else if (vulnerability.getSeverity().equalsIgnoreCase("LOW")) {
+            } else if (composerVulnerability.getSeverity().equalsIgnoreCase("LOW")) {
                 vuln.setSeverity(Severity.LOW);
             } else {
                 vuln.setSeverity(Severity.UNASSIGNED);
@@ -230,7 +315,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
      * @param vuln the GitHub Vulnerability to map
      * @return a Dependency-Track VulnerableSoftware object
      */
-    private List<VulnerableSoftware> mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final ComposerSecurityVulnerability advisory) {
+    private List<VulnerableSoftware> mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final ComposerVulnerability advisory) {
         final List<VulnerableSoftware> vsList = new ArrayList<>();
         try {
             final PackageURL purl = generatePurlFromComposerAdvisory(advisory);
@@ -276,7 +361,10 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                     VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
                             versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
                     if (vs != null) {
-                        continue;
+                        if (!vsList.contains(vs)) {
+                            vsList.add(vs);
+                            continue;
+                        }
                     }
                     vs = new VulnerableSoftware();
                     vs.setVulnerable(true);
@@ -300,7 +388,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
         return null;
     }
 
-    private PackageURL generatePurlFromComposerAdvisory(final ComposerSecurityVulnerability vuln) throws MalformedPackageURLException {
+    private PackageURL generatePurlFromComposerAdvisory(final ComposerVulnerability vuln) throws MalformedPackageURLException {
             final String[] parts = vuln.getPackageName().split("/");
             final String namespace = String.join("/", Arrays.copyOfRange(parts, 0, parts.length - 1));
             return PackageURLBuilder.aPackageURL().withType(vuln.getPackageEcosystem()).withNamespace(namespace).withName(parts[parts.length - 1]).build();

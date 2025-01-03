@@ -18,18 +18,15 @@
  */
 package org.dependencytrack.event;
 
-import alpine.Config;
-import alpine.common.logging.Logger;
-import alpine.event.LdapSyncEvent;
-import alpine.event.framework.EventService;
-import alpine.event.framework.SingleThreadedEventService;
-import alpine.server.tasks.LdapSyncTask;
+import java.time.Duration;
+
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.tasks.BomUploadProcessingTask;
 import org.dependencytrack.tasks.CallbackTask;
 import org.dependencytrack.tasks.ClearComponentAnalysisCacheTask;
 import org.dependencytrack.tasks.CloneProjectTask;
+import org.dependencytrack.tasks.ComposerAdvisoryMirrorTask;
 import org.dependencytrack.tasks.DefectDojoUploadTask;
 import org.dependencytrack.tasks.EpssMirrorTask;
 import org.dependencytrack.tasks.FortifySscUploadTask;
@@ -57,9 +54,14 @@ import org.dependencytrack.tasks.scanners.SnykAnalysisTask;
 import org.dependencytrack.tasks.scanners.TrivyAnalysisTask;
 import org.dependencytrack.tasks.scanners.VulnDbAnalysisTask;
 
+import alpine.Config;
+import alpine.common.logging.Logger;
+import alpine.event.LdapSyncEvent;
+import alpine.event.framework.EventService;
+import alpine.event.framework.SingleThreadedEventService;
+import alpine.server.tasks.LdapSyncTask;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
-import java.time.Duration;
 
 /**
  * Initializes the event subsystem and configures event subscribers.
@@ -99,6 +101,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(GitHubAdvisoryMirrorEvent.class, GitHubAdvisoryMirrorTask.class);
         EVENT_SERVICE.subscribe(OsvMirrorEvent.class, OsvDownloadTask.class);
         EVENT_SERVICE.subscribe(VulnDbSyncEvent.class, VulnDbSyncTask.class);
+        EVENT_SERVICE.subscribe(ComposerAdvisoryMirrorEvent.class, ComposerAdvisoryMirrorTask.class);
         EVENT_SERVICE.subscribe(VulnDbAnalysisEvent.class, VulnDbAnalysisTask.class);
         EVENT_SERVICE.subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.subscribe(PortfolioVulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);

@@ -18,37 +18,46 @@
  */
 package org.dependencytrack.parser.composer;
 
-import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
-
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.dependencytrack.parser.composer.model.ComposerSecurityAdvisory;
+import org.dependencytrack.parser.composer.model.ComposerSecurityVulnerability;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import alpine.common.logging.Logger;
+
+
 public class ComposerSecurityAdvisoryParser {
 
-    public List<ComposerSecurityAdvisory> parse(final JSONObject object) {
-        final List<ComposerSecurityAdvisory> result = new ArrayList<>();
+    private static final Logger LOGGER = Logger.getLogger(ComposerSecurityAdvisoryParser.class);
+
+    public List<ComposerSecurityVulnerability> parse(final JSONObject object) {
+        final List<ComposerSecurityVulnerability> result = new ArrayList<>();
         final JSONObject advisories = object.optJSONObject("advisories");
         if (advisories != null) {
-            advisories.keys().forEachRemaining(key -> {
-                final JSONObject advisory = advisories.optJSONObject(key);
+            advisories.names().forEach(packageName -> {
+                final JSONArray advisory = advisories.optJSONArray((String)packageName);
                 if (advisory != null) {
-                    final ComposerSecurityAdvisory composerAdvisory = parseSecurityAdvisory(advisory);
-                    if (composerAdvisory != null) {
-                        result.add(composerAdvisory);
+                    for (int i = 0; i < advisory.length(); i++) {
+                        final ComposerSecurityVulnerability composerVulnerability = parseSecurityAdvisory(advisory.getJSONObject(i));
+                        if (composerVulnerability != null) {
+                            result.add(composerVulnerability);
+                        }
                     }
+
                 }
             });
         }
         return result;
     }
 
-    private ComposerSecurityAdvisory parseSecurityAdvisory(final JSONObject object) {
-        final ComposerSecurityAdvisory advisory = new ComposerSecurityAdvisory();
+    private ComposerSecurityVulnerability parseSecurityAdvisory(final JSONObject object) {
+        final ComposerSecurityVulnerability advisory = new ComposerSecurityVulnerability();
 
         //There's no status field in the advisory object, so we cannot check if the advisory has been withdrawn
         advisory.setAdvisoryId(object.getString("advisoryId"));
@@ -59,7 +68,18 @@ public class ComposerSecurityAdvisoryParser {
         advisory.setCve(object.optString("cve", null));
         advisory.setAffectedVersionsCve(object.optString("affectedVersions", null));
         advisory.setSource(object.optString("source", null));
-        advisory.setReportedAt(jsonStringToTimestamp(object.optString("reportedAt", null)));
+
+        String reportedAtStr = object.optString("reportedAt", null);
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            if (reportedAtStr != null) {
+                LocalDateTime reportedAt = LocalDateTime.parse(reportedAtStr, formatter);
+                advisory.setReportedAt(reportedAt);
+            }
+        } catch (DateTimeParseException e) {
+            LOGGER.debug("Unabled to parse as LocalDateTime: " + reportedAtStr);
+        }
+
         advisory.setComposerRepository(object.optString("composerRepository", null));
         advisory.setSeverity(object.optString("severity", null));
 

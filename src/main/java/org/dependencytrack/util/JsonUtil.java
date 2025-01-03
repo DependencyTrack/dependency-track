@@ -18,15 +18,18 @@
  */
 package org.dependencytrack.util;
 
-import jakarta.json.JsonObjectBuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
+
 import org.apache.commons.lang3.StringUtils;
 
-public final class JsonUtil {
+import alpine.common.logging.Logger;
+import jakarta.json.JsonObjectBuilder;
 
+public final class JsonUtil {
+    private static final Logger LOGGER = Logger.getLogger(JsonUtil.class);
     /**
      * Private constructor.
      */
@@ -67,6 +70,7 @@ public final class JsonUtil {
         try {
             return ZonedDateTime.parse(s);
         } catch (DateTimeParseException e) {
+            LOGGER.trace("Unabled to parse ZonedDateTime: " + s);
             return null;
         }
     }

@@ -105,6 +105,7 @@ public enum ConfigPropertyConstants {
     TASK_SCHEDULER_OSV_MIRROR_CADENCE("task-scheduler", "osv.mirror.cadence", "24", PropertyType.INTEGER, "Mirror cadence (in hours) for OSV database"),
     TASK_SCHEDULER_NIST_MIRROR_CADENCE("task-scheduler", "nist.mirror.cadence", "24", PropertyType.INTEGER, "Mirror cadence (in hours) for NVD database"),
     TASK_SCHEDULER_VULNDB_MIRROR_CADENCE("task-scheduler", "vulndb.mirror.cadence", "24", PropertyType.INTEGER, "Mirror cadence (in hours) for VulnDB database"),
+    TASK_SCHEDULER_COMPOSER_MIRROR_CADENCE("task-scheduler", "composer.mirror.cadencee", "24", PropertyType.INTEGER, "Mirror cadence (in hours) for Vulnerability mirroring of Composer repositories"),
     TASK_SCHEDULER_PORTFOLIO_METRICS_UPDATE_CADENCE("task-scheduler", "portfolio.metrics.update.cadence", "1", PropertyType.INTEGER, "Update cadence (in hours) for portfolio metrics"),
     TASK_SCHEDULER_VULNERABILITY_METRICS_UPDATE_CADENCE("task-scheduler", "vulnerability.metrics.update.cadence", "1", PropertyType.INTEGER, "Update cadence (in hours) for vulnerability metrics"),
     TASK_SCHEDULER_PORTFOLIO_VULNERABILITY_ANALYSIS_CADENCE("task-scheduler", "portfolio.vulnerability.analysis.cadence", "24", PropertyType.INTEGER, "Launch cadence (in hours) for portfolio vulnerability analysis"),

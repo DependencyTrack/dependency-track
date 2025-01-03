@@ -116,8 +116,10 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
             URIBuilder uriBuilder = new URIBuilder(url);
             final HttpUriRequest request = new HttpGet(uriBuilder.build().toString());
             request.addHeader("accept", "application/json");
-            if (username != null || password != null) {
+            if (username != null) { // for some reason there is a testcase for password being null
                 request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(username, password));
+            } else if (password != null) {
+                request.addHeader("Authorization", "Bearer " + password);
             }
             return HttpClientPool.getClient().execute(request);
         } catch (URISyntaxException ex) {

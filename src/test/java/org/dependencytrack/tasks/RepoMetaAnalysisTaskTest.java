@@ -1,11 +1,11 @@
 package org.dependencytrack.tasks;
 
-import alpine.event.framework.EventService;
-import com.github.packageurl.PackageURL;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.http.Body;
-import com.github.tomakehurst.wiremock.http.ContentTypeHeader;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
@@ -19,12 +19,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import jakarta.ws.rs.core.MediaType;
-import java.util.List;
+import com.github.packageurl.PackageURL;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.http.Body;
+import com.github.tomakehurst.wiremock.http.ContentTypeHeader;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.assertj.core.api.Assertions.assertThat;
+import alpine.event.framework.EventService;
+import jakarta.ws.rs.core.MediaType;
 
 public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
 
@@ -70,7 +72,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
                                                                </versions>
                                                                <lastUpdated>20210213164433</lastUpdated>
                                                                </versioning>
-                                                               </metadata>     
+                                                               </metadata>
                                 """.getBytes(), new ContentTypeHeader(MediaType.APPLICATION_JSON))
                         )
                         .withHeader("X-CheckSum-MD5", "md5hash")
@@ -94,7 +96,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     public void informTestNullUserName() throws Exception {
-        WireMock.stubFor(WireMock.get(WireMock.anyUrl()).withHeader("Authorization", containing("Basic"))
+        WireMock.stubFor(WireMock.get(WireMock.anyUrl()).withHeader("Authorization", containing("Bearer"))
                 .willReturn(WireMock.aResponse()
                         .withStatus(200)
                         .withResponseBody(Body.ofBinaryOrText("""
@@ -116,7 +118,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
                                                                </versions>
                                                                <lastUpdated>20210213164433</lastUpdated>
                                                                </versioning>
-                                                               </metadata>     
+                                                               </metadata>
                                 """.getBytes(), new ContentTypeHeader(MediaType.APPLICATION_JSON))
                         )
                         .withHeader("X-CheckSum-MD5", "md5hash")
@@ -162,7 +164,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
                                                                </versions>
                                                                <lastUpdated>20210213164433</lastUpdated>
                                                                </versioning>
-                                                               </metadata>     
+                                                               </metadata>
                                 """.getBytes(), new ContentTypeHeader(MediaType.APPLICATION_JSON))
                         )
                         .withHeader("X-CheckSum-MD5", "md5hash")
@@ -186,7 +188,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     public void informTestUserNameAndPassword() throws Exception {
-        WireMock.stubFor(WireMock.get(WireMock.anyUrl())
+        WireMock.stubFor(WireMock.get(WireMock.anyUrl()).withHeader("Authorization", containing("Basic"))
                 .willReturn(WireMock.aResponse()
                         .withStatus(200)
                         .withResponseBody(Body.ofBinaryOrText("""
@@ -208,7 +210,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
                                                                </versions>
                                                                <lastUpdated>20210213164433</lastUpdated>
                                                                </versioning>
-                                                               </metadata>     
+                                                               </metadata>
                                 """.getBytes(), new ContentTypeHeader(MediaType.APPLICATION_JSON))
                         )
                         .withHeader("X-CheckSum-MD5", "md5hash")
@@ -229,4 +231,51 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         qm.getPersistenceManager().refresh(metaComponent);
         assertThat(metaComponent.getLatestVersion()).isEqualTo("4.13.2");
     }
+
+    @Test
+    public void informTestBearerToken() throws Exception {
+        WireMock.stubFor(WireMock.get(WireMock.anyUrl()).withHeader("Authorization", containing("Bearer"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withResponseBody(Body.ofBinaryOrText("""
+                                                               <metadata>
+                                                               <groupId>test4</groupId>
+                                                               <artifactId>test4</artifactId>
+                                                               <versioning>
+                                                               <latest>5.13.2</latest>
+                                                               <release>5.13.2</release>
+                                                               <versions>
+                                                               <version>5.13-beta-1</version>
+                                                               <version>5.13-beta-2</version>
+                                                               <version>5.13-beta-3</version>
+                                                               <version>5.13-rc-1</version>
+                                                               <version>5.13-rc-2</version>
+                                                               <version>5.13</version>
+                                                               <version>5.13.1</version>
+                                                               <version>5.13.2</version>
+                                                               </versions>
+                                                               <lastUpdated>20210213164433</lastUpdated>
+                                                               </versioning>
+                                                               </metadata>
+                                """.getBytes(), new ContentTypeHeader(MediaType.APPLICATION_JSON))
+                        )
+                        .withHeader("X-CheckSum-MD5", "md5hash")
+                        .withHeader("X-Checksum-SHA1", "sha1hash")
+                        .withHeader("X-Checksum-SHA512", "sha512hash")
+                        .withHeader("X-Checksum-SHA256", "sha256hash")
+                        .withHeader("Last-Modified", "Thu, 07 Jul 2022 14:00:00 GMT")));
+        EventService.getInstance().subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("test3");
+        component.setPurl(new PackageURL("pkg:maven/test4/test4@5.12"));
+        qm.createComponent(component, false);
+        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, null, "testPassword");
+        new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
+        RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test4", "test4");
+        qm.getPersistenceManager().refresh(metaComponent);
+        assertThat(metaComponent.getLatestVersion()).isEqualTo("5.13.2");
+    }
+
 }

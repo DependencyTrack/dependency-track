@@ -119,6 +119,50 @@ public class ComponentResourceTest extends ResourceTest {
         return project;
     }
 
+    /**
+     * Generate a project with ungrouped dependencies
+     * @return A project with 10 dependencies: <ul>
+     * <li>7 outdated dependencies</li>
+     * <li>3 recent dependencies</li></ul>
+     * @throws MalformedPackageURLException
+     */
+    private Project prepareProjectUngroupedComponents() throws MalformedPackageURLException {
+        final Project project = qm.createProject("Ungrouped Application", null, null, null, null, null, true, false);
+        final List<String> directDepencencies = new ArrayList<>();
+        // Generate 10 dependencies
+        for (int i = 0; i < 10; i++) {
+            Component component = new Component();
+            component.setProject(project);
+            component.setName("component-name-"+i);
+            component.setVersion(String.valueOf(i)+".0");
+            component.setPurl(new PackageURL(RepositoryType.PYPI.toString(), null, "component-name-"+i , String.valueOf(i)+".0", null, null));
+            component = qm.createComponent(component, false);
+            // direct depencencies
+            if (i < 4) {
+                // 4 direct depencencies, 6 transitive depencencies
+                directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
+            }
+            // Recent & Outdated
+            if ((i < 7)) {
+                final var metaComponent = new RepositoryMetaComponent();
+                metaComponent.setRepositoryType(RepositoryType.PYPI);
+                metaComponent.setName("component-name-"+i);
+                metaComponent.setLatestVersion(String.valueOf(i+1)+".0");
+                metaComponent.setLastCheck(new Date());
+                qm.persist(metaComponent);
+            } else {
+                final var metaComponent = new RepositoryMetaComponent();
+                metaComponent.setRepositoryType(RepositoryType.PYPI);
+                metaComponent.setName("component-name-"+i);
+                metaComponent.setLatestVersion(String.valueOf(i)+".0");
+                metaComponent.setLastCheck(new Date());
+                qm.persist(metaComponent);
+            }
+        }
+        project.setDirectDependencies("[" + String.join(",", directDepencencies.toArray(new String[0])) + "]");
+        return project;
+    }
+
     @Test
     public void getOutdatedComponentsTest() throws MalformedPackageURLException {
         final Project project = prepareProject();
@@ -137,6 +181,23 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getUngroupedOutdatedComponentsTest() throws MalformedPackageURLException {
+        final Project project = prepareProjectUngroupedComponents();
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyOutdated", true)
+                .queryParam("onlyDirect", false)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("7"); // 7 outdated dependencies, direct and transitive
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(7);
+    }
+
+    @Test
     public void getOutdatedDirectComponentsTest() throws MalformedPackageURLException {
         final Project project = prepareProject();
 
@@ -151,6 +212,23 @@ public class ComponentResourceTest extends ResourceTest {
 
         final JsonArray json = parseJsonArray(response);
         assertThat(json).hasSize(75);
+    }
+
+    @Test
+    public void getUngroupedOutdatedDirectComponentsTest() throws MalformedPackageURLException {
+        final Project project = prepareProjectUngroupedComponents();
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyOutdated", true)
+                .queryParam("onlyDirect", true)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4"); // 4 outdated direct dependencies
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(4);
     }
 
     @Test

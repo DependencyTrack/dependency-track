@@ -206,16 +206,21 @@ public class RepositoryResourceTest extends ResourceTest {
 
     @Test
     public void createRepositoryTestWithBearerAuth() {
-        Repository repository = new Repository();
-        repository.setAuthenticationRequired(true);
-        repository.setEnabled(true);
-        repository.setPassword("testToken");
-        repository.setInternal(true);
-        repository.setIdentifier("test");
-        repository.setUrl("www.foobar.com");
-        repository.setType(RepositoryType.MAVEN);
+        //Password field gets ignored during json serialization, so create the json ourselves
+        String repo = """
+            {
+                "identifier":"test2",
+                "url":"https://www.foobar2.com",
+                "internal":true,
+                "authenticationRequired":true,
+                "password":"letoken",
+                "enabled":true,
+                "type":"MAVEN"
+            }
+        """;
+
         Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
-                .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
+                .put(Entity.entity(repo, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus());
 
         response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
@@ -225,11 +230,11 @@ public class RepositoryResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals(18, json.size());
         Assert.assertEquals("MAVEN", json.getJsonObject(13).getString("type"));
-        Assert.assertEquals("test", json.getJsonObject(13).getString("identifier"));
-        Assert.assertEquals("www.foobar.com", json.getJsonObject(13).getString("url"));
+        Assert.assertEquals("test2", json.getJsonObject(13).getString("identifier"));
+        Assert.assertEquals("https://www.foobar2.com", json.getJsonObject(13).getString("url"));
         Assert.assertTrue(json.getJsonObject(13).getInt("resolutionOrder") > 0);
         Assert.assertTrue(json.getJsonObject(13).getBoolean("authenticationRequired"));
-        Assert.assertNull(json.getJsonObject(13).getString("username"));
+        Assert.assertFalse(json.getJsonObject(13).containsKey("username"));
         Assert.assertTrue(json.getJsonObject(13).getBoolean("enabled"));
     }
 

@@ -240,23 +240,18 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
             String versionEndIncluding = null;
             String versionEndExcluding = null;
             if (advisory.getAffectedVersions() != null) {
+                // TODO Testcases for version ranges
                 // Examples:
                 //  "affectedVersions": ">=2.2,<2.2.10|>=2.3,<2.3.2-p2"
-                //  "affectedVersions": <1.8.0 || >=2.2.0 <2.2.2
+                //  "affectedVersions": <1.8.0 || >=2.2.0 <2.2.2 ">= 8.0.0 < 10.2.11 || >= 10.3.0 < 10.3.9 || >= 11.0.0 < 11.0.8"
 
-                // Support both || and |
+                // regex splitters copied from Composer Version Parser
                 LOGGER.trace("Parsing version ranges for " + advisory.getPackageEcosystem() + " : " + advisory.getPackageName() + " : " + advisory.getAffectedVersions());
-                String[] ranges = Arrays.stream(advisory.getAffectedVersions().split("\\|\\|")).map(String::trim).toArray(String[]::new);
-                if (ranges.length == 1) {
-                    ranges = Arrays.stream(ranges[0].split("\\|")).map(String::trim).toArray(String[]::new);
-                }
+                String[] ranges = Arrays.stream(advisory.getAffectedVersions().split("\\s*\\|\\|?\\s*")).map(String::trim).toArray(String[]::new);
 
                 for (String range: ranges) {
-                    // Support both ',' and ' '
-                    String[] parts = Arrays.stream(range.split(",")).map(String::trim).toArray(String[]::new);
-                    if (parts.length == 1) {
-                        parts = Arrays.stream(range.split("\\ ")).map(String::trim).toArray(String[]::new);
-                    }
+                    // Split by both ',' and ' '
+                    String[] parts = Arrays.stream(range.split("(?<!^|as|[=>< ,]) *(?<!-)[, ](?!-) *(?!,|as|$)")).map(String::trim).toArray(String[]::new);
                     for (String part : parts) {
                         if (part.startsWith(">=")) {
                             versionStartIncluding = part.replace(">=", "").trim();
@@ -270,9 +265,8 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                             versionStartIncluding = part.replace("=", "").trim();
                             versionEndIncluding = part.replace("=", "").trim();
                         } else {
-                            //TODO Try to support all version ranages seen in Drupal package repo. All from packagist are supported above.
+                            //TODO Try to support all version ranges seen in Drupal package repo. All from packagist are supported above.
                             /* "<5.25.0 || 6.0.0 || 6.0.1" (no = for exact version)
-                             * "<1.8.0 || >=2.2.0 <2.2.2 || 2.0.* || 2.1.*" (wildcards)
                              * "*" (all versions, plugin marked as unsupported)
                              */
                             LOGGER.warn("Unable to determine version range of " + advisory.getPackageEcosystem()

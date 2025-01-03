@@ -167,11 +167,13 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                 if (shouldUpdateExistingVulnerability(existingVulnerability, vulnerabilitySource, vulnAuthoritativeSourceEnabled)) {
                     synchronizedVulnerability  = qm.synchronizeVulnerability(mappedVulnerability, false);
                     if (synchronizedVulnerability == null) continue; //No changes in vulnerability
+                    //TODO what if aliases haved changed? This doesn't get detected currently
                 }
 
                 List<VulnerableSoftware> vsList = mapVulnerabilityToVulnerableSoftware(qm, advisory);
                 if (isAliasSyncEnabled) {
                     for (VulnerabilityAlias alias: mappedVulnerability.getAliases()) {
+                        //TODO ensure we don't persist aliases with only one id
                         qm.synchronizeVulnerabilityAlias(alias);
                     }
                 }

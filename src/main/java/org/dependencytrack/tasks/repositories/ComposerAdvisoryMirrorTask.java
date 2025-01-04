@@ -176,6 +176,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                                 .valueOf(qm.getConfigProperty(vulnAuthoritativeSourceToggle.getGroupName(),
                                         vulnAuthoritativeSourceToggle.getPropertyName()).getPropertyValue());
                 Vulnerability synchronizedVulnerability = existingVulnerability;
+                //TODO VS Only store vulnerabilities that don't have a CVE or GHSA id? plus Drupal maybe? To avoid lots of aliases for the same vulnz
                 if (shouldUpdateExistingVulnerability(existingVulnerability, vulnerabilitySource,
                         vulnAuthoritativeSourceEnabled)) {
                     synchronizedVulnerability = qm.synchronizeVulnerability(mappedVulnerability, false);

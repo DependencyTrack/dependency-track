@@ -162,6 +162,8 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                     case Vulnerability.Source.GITHUB -> ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
                     default -> ConfigPropertyConstants.VULNERABILITY_SOURCE_COMPOSER_ENABLED;
                 };
+                //TODO use extract aliases to avoid them getting peristed here?
+
                 final boolean vulnAuthoritativeSourceEnabled = Boolean.valueOf(qm.getConfigProperty(vulnAuthoritativeSourceToggle.getGroupName(), vulnAuthoritativeSourceToggle.getPropertyName()).getPropertyValue());
                 Vulnerability synchronizedVulnerability = existingVulnerability;
                 if (shouldUpdateExistingVulnerability(existingVulnerability, vulnerabilitySource, vulnAuthoritativeSourceEnabled)) {

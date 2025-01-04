@@ -18,21 +18,25 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.common.util.BooleanUtil;
-import alpine.event.framework.Event;
-import alpine.model.ApiKey;
-import alpine.model.ConfigProperty;
-import alpine.model.IConfigProperty;
-import alpine.model.Team;
-import alpine.model.UserPrincipal;
-import alpine.notification.NotificationLevel;
-import alpine.persistence.AlpineQueryManager;
-import alpine.persistence.PaginatedResult;
-import alpine.persistence.ScopedCustomization;
-import alpine.resources.AlpineRequest;
-import alpine.server.util.DbUtil;
-import com.github.packageurl.PackageURL;
-import com.google.common.collect.Lists;
+import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
+import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
+
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.jdo.FetchPlan;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+
 import org.apache.commons.lang3.ClassUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
@@ -83,24 +87,23 @@ import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
-import jakarta.json.JsonObject;
-import javax.jdo.FetchPlan;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import com.github.packageurl.PackageURL;
+import com.google.common.collect.Lists;
 
-import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
-import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
+import alpine.common.util.BooleanUtil;
+import alpine.event.framework.Event;
+import alpine.model.ApiKey;
+import alpine.model.ConfigProperty;
+import alpine.model.IConfigProperty;
+import alpine.model.Team;
+import alpine.model.UserPrincipal;
+import alpine.notification.NotificationLevel;
+import alpine.persistence.AlpineQueryManager;
+import alpine.persistence.PaginatedResult;
+import alpine.persistence.ScopedCustomization;
+import alpine.resources.AlpineRequest;
+import alpine.server.util.DbUtil;
+import jakarta.json.JsonObject;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -1221,12 +1224,12 @@ public class QueryManager extends AlpineQueryManager {
         return getRepositoryQueryManager().repositoryExist(type, identifier);
     }
 
-    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal, boolean isAuthenticationRequired, String username, String password) {
-        return getRepositoryQueryManager().createRepository(type, identifier, url, enabled, internal, isAuthenticationRequired, username, password);
+    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal, boolean isAuthenticationRequired, String username, String password, String config) {
+        return getRepositoryQueryManager().createRepository(type, identifier, url, enabled, internal, isAuthenticationRequired, username, password, config);
     }
 
-    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean authenticationRequired, String username, String password, boolean enabled) {
-        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, authenticationRequired, username, password, enabled);
+    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean authenticationRequired, String username, String password, boolean enabled, String config) {
+        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, authenticationRequired, username, password, enabled, config);
     }
 
     public RepositoryMetaComponent getRepositoryMetaComponent(RepositoryType repositoryType, String namespace, String name) {

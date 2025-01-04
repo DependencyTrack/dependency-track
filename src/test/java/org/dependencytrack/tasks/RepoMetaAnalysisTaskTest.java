@@ -1,11 +1,11 @@
 package org.dependencytrack.tasks;
 
-import alpine.event.framework.EventService;
-import com.github.packageurl.PackageURL;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.http.Body;
-import com.github.tomakehurst.wiremock.http.ContentTypeHeader;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
@@ -19,12 +19,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import jakarta.ws.rs.core.MediaType;
-import java.util.List;
+import com.github.packageurl.PackageURL;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.http.Body;
+import com.github.tomakehurst.wiremock.http.ContentTypeHeader;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.assertj.core.api.Assertions.assertThat;
+import alpine.event.framework.EventService;
+import jakarta.ws.rs.core.MediaType;
 
 public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
 
@@ -70,7 +72,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
                                                                </versions>
                                                                <lastUpdated>20210213164433</lastUpdated>
                                                                </versioning>
-                                                               </metadata>     
+                                                               </metadata>
                                 """.getBytes(), new ContentTypeHeader(MediaType.APPLICATION_JSON))
                         )
                         .withHeader("X-CheckSum-MD5", "md5hash")
@@ -85,7 +87,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         component.setName("junit");
         component.setPurl(new PackageURL("pkg:maven/junit/junit@4.12"));
         qm.createComponent(component, false);
-        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, "testuser", null);
+        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, "testuser", null, null);
         new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "junit", "junit");
         qm.getPersistenceManager().refresh(metaComponent);
@@ -116,7 +118,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
                                                                </versions>
                                                                <lastUpdated>20210213164433</lastUpdated>
                                                                </versioning>
-                                                               </metadata>     
+                                                               </metadata>
                                 """.getBytes(), new ContentTypeHeader(MediaType.APPLICATION_JSON))
                         )
                         .withHeader("X-CheckSum-MD5", "md5hash")
@@ -131,7 +133,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         component.setName("test1");
         component.setPurl(new PackageURL("pkg:maven/test1/test1@1.2.0"));
         qm.createComponent(component, false);
-        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, null, "testPassword");
+        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, null, "testPassword", null);
         new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test1", "test1");
         qm.getPersistenceManager().refresh(metaComponent);
@@ -162,7 +164,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
                                                                </versions>
                                                                <lastUpdated>20210213164433</lastUpdated>
                                                                </versioning>
-                                                               </metadata>     
+                                                               </metadata>
                                 """.getBytes(), new ContentTypeHeader(MediaType.APPLICATION_JSON))
                         )
                         .withHeader("X-CheckSum-MD5", "md5hash")
@@ -177,7 +179,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         component.setName("junit");
         component.setPurl(new PackageURL("pkg:maven/test2/test2@4.12"));
         qm.createComponent(component, false);
-        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, false, null, null);
+        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, false, null, null, null);
         new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test2", "test2");
         qm.getPersistenceManager().refresh(metaComponent);
@@ -208,7 +210,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
                                                                </versions>
                                                                <lastUpdated>20210213164433</lastUpdated>
                                                                </versioning>
-                                                               </metadata>     
+                                                               </metadata>
                                 """.getBytes(), new ContentTypeHeader(MediaType.APPLICATION_JSON))
                         )
                         .withHeader("X-CheckSum-MD5", "md5hash")
@@ -223,7 +225,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         component.setName("test3");
         component.setPurl(new PackageURL("pkg:maven/test3/test3@4.12"));
         qm.createComponent(component, false);
-        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, "testUser", "testPassword");
+        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, "testUser", "testPassword", null);
         new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test3", "test3");
         qm.getPersistenceManager().refresh(metaComponent);

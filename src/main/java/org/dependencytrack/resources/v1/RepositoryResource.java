@@ -18,12 +18,24 @@
  */
 package org.dependencytrack.resources.v1;
 
+import static org.dependencytrack.resources.v1.AbstractConfigPropertyResource.ENCRYPTED_PLACEHOLDER;
+
+import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.Repository;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.validation.ValidUuid;
+import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+
 import alpine.persistence.PaginatedResult;
 import alpine.security.crypto.DataEncryption;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import com.github.packageurl.MalformedPackageURLException;
-import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -35,15 +47,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.apache.commons.lang3.StringUtils;
-import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.Repository;
-import org.dependencytrack.model.RepositoryMetaComponent;
-import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.model.validation.ValidUuid;
-import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.resources.v1.openapi.PaginatedApi;
-
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -56,8 +59,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import static org.dependencytrack.resources.v1.AbstractConfigPropertyResource.ENCRYPTED_PLACEHOLDER;
 
 /**
  * JAX-RS resources for processing repositories.
@@ -198,7 +199,8 @@ public class RepositoryResource extends AlpineResource {
                         jsonRepository.isEnabled(),
                         jsonRepository.isInternal(),
                         jsonRepository.isAuthenticationRequired(),
-                        jsonRepository.getUsername(), jsonRepository.getPassword());
+                        jsonRepository.getUsername(), jsonRepository.getPassword(),
+                        jsonRepository.getConfig());
 
                 return Response.status(Response.Status.CREATED).entity(repository).build();
             } else {
@@ -241,7 +243,7 @@ public class RepositoryResource extends AlpineResource {
                             : repository.getPassword();
 
                     repository = qm.updateRepository(jsonRepository.getUuid(), repository.getIdentifier(), url,
-                            jsonRepository.isInternal(), jsonRepository.isAuthenticationRequired(), jsonRepository.getUsername(), updatedPassword, jsonRepository.isEnabled());
+                            jsonRepository.isInternal(), jsonRepository.isAuthenticationRequired(), jsonRepository.getUsername(), updatedPassword, jsonRepository.isEnabled(), jsonRepository.getConfig());
                     return Response.ok(repository).build();
                 } catch (Exception e) {
                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The specified repository password could not be encrypted.").build();

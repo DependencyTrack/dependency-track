@@ -152,8 +152,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                 final Vulnerability existingVulnerability = qm.getVulnerabilityByVulnId(mappedVulnerability.getSource(),
                         mappedVulnerability.getVulnId());
 
-                final Vulnerability.Source vulnerabilitySource = Vulnerability.Source
-                        .resolve(mappedVulnerability.getSource());
+                final Vulnerability.Source vulnerabilitySource = Vulnerability.Source.valueOf(mappedVulnerability.getSource());
 
                 // Compose Advisories can have their own Id (PKSA-xxxx-yyy) or an Id from an
                 // authoritive source (CVE-xxxx-yyy, GHSA-xxxx-yyy)
@@ -192,9 +191,9 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                 qm.persist(vsList);
                 final Vulnerability finalSynchronizedVulnerability = synchronizedVulnerability;
                 vsList.forEach(vs -> qm.updateAffectedVersionAttribution(finalSynchronizedVulnerability, vs,
-                        Vulnerability.Source.COMPOSER));
+                    vulnerabilitySource));
                 vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList,
-                        Vulnerability.Source.COMPOSER);
+                    vulnerabilitySource);
                 synchronizedVulnerability.setVulnerableSoftware(vsList);
                 qm.persist(synchronizedVulnerability);
             }

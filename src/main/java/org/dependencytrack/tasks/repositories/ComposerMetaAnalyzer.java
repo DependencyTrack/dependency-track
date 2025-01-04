@@ -84,8 +84,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
      * - search: not relevant
      */
 
-     //TODO VS discuss where to put code handling vulnerabilities
-    public ComposerMetaAnalyzer() {
+    ComposerMetaAnalyzer() {
         this.baseUrl = DEFAULT_BASE_URL;
     }
 

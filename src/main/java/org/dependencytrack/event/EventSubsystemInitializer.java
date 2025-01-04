@@ -144,6 +144,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(InternalAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(OssIndexAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(GitHubAdvisoryMirrorTask.class);
+        EVENT_SERVICE.unsubscribe(ComposerAdvisoryMirrorTask.class);
         EVENT_SERVICE.unsubscribe(OsvDownloadTask.class);
         EVENT_SERVICE.unsubscribe(VulnDbSyncTask.class);
         EVENT_SERVICE.unsubscribe(VulnDbAnalysisTask.class);

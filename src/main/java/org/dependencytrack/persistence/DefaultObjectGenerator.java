@@ -215,7 +215,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     public void loadDefaultRepositories() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing default repositories to datastore");
-
+            //TODO VS Update docs
             qm.createRepository(RepositoryType.CPAN, "cpan-public-registry", "https://fastapi.metacpan.org/v1/", true, false, false, null, null, null);
             qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true, false, false, null, null, null);
             qm.createRepository(RepositoryType.HEX, "hex.pm", "https://hex.pm/", true, false, false, null, null, null);

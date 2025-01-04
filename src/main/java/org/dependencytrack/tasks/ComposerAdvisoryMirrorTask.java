@@ -58,7 +58,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(ComposerAdvisoryMirrorTask.class);
 
-    //TODO do something with it or remove
+    //TODO VS do something with it or remove
     private boolean mirroredWithoutErrors = true;
 
     /**
@@ -176,7 +176,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                     synchronizedVulnerability = qm.synchronizeVulnerability(mappedVulnerability, false);
                     if (synchronizedVulnerability == null)
                         continue; // No changes in vulnerability
-                    // TODO what if aliases haved changed? This doesn't get detected currently
+                    // TODO what if aliases haved changed? This doesn't get detected currently by other mirroring tasks either
                 }
 
                 if (syncAliases) {
@@ -333,7 +333,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
             String versionEndIncluding = null;
             String versionEndExcluding = null;
             if (advisory.getAffectedVersions() != null) {
-                // TODO Testcases for version ranges
+                // TODO VS Testcases for version ranges
                 // Examples:
                 // "affectedVersions": ">=2.2,<2.2.10|>=2.3,<2.3.2-p2"
                 // "affectedVersions": <1.8.0 || >=2.2.0 <2.2.2 ">= 8.0.0 < 10.2.11 || >= 10.3.0
@@ -362,7 +362,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                             versionStartIncluding = part.replace("=", "").trim();
                             versionEndIncluding = part.replace("=", "").trim();
                         } else {
-                            // TODO Try to support all version ranges seen in Drupal package repo. All from
+                            // TODO VS Try to support all version ranges seen in Drupal package repo. All from
                             // packagist are supported above.
                             /*
                              * "<5.25.0 || 6.0.0 || 6.0.1" (no = for exact version)

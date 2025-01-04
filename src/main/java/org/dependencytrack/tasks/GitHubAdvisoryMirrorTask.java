@@ -165,7 +165,6 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         var stringEntity = new StringEntity(jsonBody.toString());
         request.setEntity(stringEntity);
         try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-            LOGGER.error(Arrays.toString(response.getAllHeaders()));
             if (response.getStatusLine().getStatusCode() < HttpStatus.SC_OK || response.getStatusLine().getStatusCode() >= HttpStatus.SC_MULTIPLE_CHOICES) {
                 LOGGER.error("An error was encountered retrieving advisories with HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
                 LOGGER.debug(queryTemplate);
@@ -177,14 +176,10 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 final PageableList pageableList = parser.parse(jsonObject);
                 updateDatasource(pageableList.getAdvisories());
                 if (pageableList.isHasNextPage()) {
-                    Thread.sleep(10000);
                     retrieveAdvisories(pageableList.getEndCursor());
                 }
             }
-        } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+        }
     }
 
     /**

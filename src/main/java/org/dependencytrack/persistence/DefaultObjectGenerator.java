@@ -31,7 +31,6 @@ import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
 import org.dependencytrack.util.NotificationUtil;
-import org.json.JSONObject;
 
 import alpine.common.logging.Logger;
 import alpine.model.ManagedUser;
@@ -217,11 +216,6 @@ public class DefaultObjectGenerator implements ServletContextListener {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing default repositories to datastore");
 
-            //TODO by default disable mirroring, now true for testing
-            JSONObject composerRepositoryConfig = new JSONObject();
-            composerRepositoryConfig.put("vulnerabilitiyMirroringEnabled", true);
-            composerRepositoryConfig.put("vulnerabilityMirroringAliasSyncEnabled", true);
-
             qm.createRepository(RepositoryType.CPAN, "cpan-public-registry", "https://fastapi.metacpan.org/v1/", true, false, false, null, null, null);
             qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true, false, false, null, null, null);
             qm.createRepository(RepositoryType.HEX, "hex.pm", "https://hex.pm/", true, false, false, null, null, null);
@@ -235,9 +229,8 @@ public class DefaultObjectGenerator implements ServletContextListener {
             qm.createRepository(RepositoryType.NPM, "npm-public-registry", "https://registry.npmjs.org/", true, false, false, null, null, null);
             qm.createRepository(RepositoryType.PYPI, "pypi.org", "https://pypi.org/", true, false, false, null, null, null);
             qm.createRepository(RepositoryType.NUGET, "nuget-gallery", "https://api.nuget.org/", true, false, false, null, null, null);
-            //TODO Disable Composert repos by default, update docs
-            qm.createRepository(RepositoryType.COMPOSER, "packagist", "https://repo.packagist.org/", true, false, false, null, null, composerRepositoryConfig.toString(4));
-            qm.createRepository(RepositoryType.COMPOSER, "drupal8", "https://packages.drupal.org/8", true, false, false, null, null, composerRepositoryConfig.toString(4));
+            qm.createRepository(RepositoryType.COMPOSER, "packagist", "https://repo.packagist.org/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.COMPOSER, "drupal8", "https://packages.drupal.org/8", false, false, false, null, null, null);
             qm.createRepository(RepositoryType.CARGO, "crates.io", "https://crates.io", true, false, false, null, null, null);
             qm.createRepository(RepositoryType.GO_MODULES, "proxy.golang.org", "https://proxy.golang.org", true, false, false, null, null, null);
             qm.createRepository(RepositoryType.GITHUB, "github.com", "https://github.com", true, false, false, null, null, null);

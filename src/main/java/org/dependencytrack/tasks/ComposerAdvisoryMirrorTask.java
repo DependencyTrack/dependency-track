@@ -58,7 +58,6 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(ComposerAdvisoryMirrorTask.class);
 
-    //TODO VS do something with it or remove
     private boolean mirroredWithoutErrors = true;
 
     /**
@@ -82,7 +81,8 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                                 LOGGER.info(
                                         "Vulnerability mirroring is disabled for repository " + repository.getUrl());
                             }
-                            mirrorAdvisories(repository, isVulnerabilityMirroringAliasSyncEnabled);
+                            //Should we try catch all exceptions to make sure notification is sent?
+                            mirroredWithoutErrors &= mirrorAdvisories(repository, isVulnerabilityMirroringAliasSyncEnabled);
                         }
                     }
                 }
@@ -111,7 +111,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
         }
     }
 
-    private void mirrorAdvisories(Repository repository, boolean syncAliases) {
+    private boolean mirrorAdvisories(Repository repository, boolean syncAliases) {
         // Vulnerability mirroring builds on the Composer meta analyzer
         // To avoid duplicating lots of code or having to extract alle common parts and
         // error handling, we just use it here.
@@ -124,9 +124,10 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
         LOGGER.info("Updating datasource with Composer advisories from " + repository.getUrl());
         JSONObject advisories = composerMetaAnalyzer.retrieveAdvisories();
 
-        if (advisories != null) {
-            updateDatasource(advisories, syncAliases);
+        if (advisories == null) {
+            return false;
         }
+        return updateDatasource(advisories, syncAliases);
     }
 
     /**
@@ -137,7 +138,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
      *
      * @param advisories  the results to synchronize
      */
-    void updateDatasource(final JSONObject jsonAdvisories, boolean syncAliases) {
+    boolean updateDatasource(final JSONObject jsonAdvisories, boolean syncAliases) {
         var parser = new ComposerSecurityAdvisoryParser();
         final List<ComposerVulnerability> advisories = parser.parse(jsonAdvisories);
 
@@ -199,6 +200,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
             }
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+        return true;
     }
 
     private boolean shouldUpdateExistingVulnerability(Vulnerability existingVulnerability,

@@ -418,6 +418,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         try (CloseableHttpResponse response = processHttpRequest(advisoryJsonUrl)) {
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 LOGGER.error("An error was encountered retrieving advisories with HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
+                return null;
             } else {
                 String responseString = EntityUtils.toString(response.getEntity());
                 // LOGGER.debug("response from composer repository: \n" + responseString);

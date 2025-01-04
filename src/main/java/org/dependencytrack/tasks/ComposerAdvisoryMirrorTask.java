@@ -23,6 +23,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -60,8 +61,8 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(ComposerAdvisoryMirrorTask.class);
     //TODO replace with url from Repository
-    private static final String COMPOSER_SECURITY_API = "https://packagist.org/api/security-advisories/?updatedSince=100";
-    // private static final String COMPOSER_SECURITY_API = "https://packages.drupal.org/8/security-advisories?updatedSince=100";
+    // private static final String COMPOSER_SECURITY_API = "https://packagist.org/api/security-advisories/?updatedSince=100";
+    private static final String COMPOSER_SECURITY_API = "https://packages.drupal.org/8/security-advisories?updatedSince=100";
 
     private final boolean isEnabled;
     private final boolean isAliasSyncEnabled;
@@ -135,7 +136,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                 final List<ComposerVulnerability> advisories = parser.parse(jsonObject);
                 updateDatasource(advisories);
             }
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             LOGGER.error("Exception while executing Http client request", ex);
         }
     }
@@ -157,12 +158,15 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                 final Vulnerability existingVulnerability = qm.getVulnerabilityByVulnId(mappedVulnerability.getSource(), mappedVulnerability.getVulnId());
 
                 final Vulnerability.Source vulnerabilitySource = Vulnerability.Source.resolve(mappedVulnerability.getSource());
+
+                // Compose Advisories can have their own Id (PKSA-xxxx-yyy) or an Id from an authoritive source  (CVE-xxxx-yyy, GHSA-xxxx-yyy)
+                // Make sure that we don't overwrite data of the authoritative source
+                // Please note that Drupal is also considered authoritative source, but provided by Composer
                 final ConfigPropertyConstants vulnAuthoritativeSourceToggle = switch (vulnerabilitySource) {
                     case Vulnerability.Source.NVD -> ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
                     case Vulnerability.Source.GITHUB -> ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
                     default -> ConfigPropertyConstants.VULNERABILITY_SOURCE_COMPOSER_ENABLED;
                 };
-                //TODO use extract aliases to avoid them getting peristed here?
 
                 final boolean vulnAuthoritativeSourceEnabled = Boolean.valueOf(qm.getConfigProperty(vulnAuthoritativeSourceToggle.getGroupName(), vulnAuthoritativeSourceToggle.getPropertyName()).getPropertyValue());
                 Vulnerability synchronizedVulnerability = existingVulnerability;
@@ -174,8 +178,8 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
 
                 List<VulnerableSoftware> vsList = mapVulnerabilityToVulnerableSoftware(qm, advisory);
                 if (isAliasSyncEnabled) {
-                    for (VulnerabilityAlias alias: mappedVulnerability.getAliases()) {
-                        //TODO ensure we don't persist aliases with only one id
+                    VulnerabilityAlias alias = extractAliases(advisory);
+                    if (alias != null) {
                         qm.synchronizeVulnerabilityAlias(alias);
                     }
                 }
@@ -192,79 +196,53 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
     }
 
     private boolean shouldUpdateExistingVulnerability(Vulnerability existingVulnerability, Vulnerability.Source vulnerabilitySource, boolean vulnAuthoritativeSourceEnabled) {
-        return (Vulnerability.Source.COMPOSER == vulnerabilitySource) // Non GHSA nor NVD nor DRUPAL
+        return (EnumSet.of(Vulnerability.Source.COMPOSER, Vulnerability.Source.DRUPAL).contains(vulnerabilitySource)) // Composer is (in DT) the authoritative source for Drupal
                 || (existingVulnerability == null) // Vuln is not replicated yet or declared by authoritative source with appropriate state
                 || (existingVulnerability != null && !vulnAuthoritativeSourceEnabled); // Vuln has been replicated but authoritative source is disabled
     }
 
-    /**
-     * Helper method that maps an GitHub SecurityAdvisory object to a Dependency-Track vulnerability object.
-     *
-     * @param composerVulnerability the GitHub SecurityAdvisory to map
-     * @return a Dependency-Track Vulnerability object
-     */
+
+    private Vulnerability.Source extractSource(ComposerVulnerability composerVulnerability) {
+        if (composerVulnerability.getAdvisoryId().startsWith("SA-CORE") || composerVulnerability.getAdvisoryId().startsWith("SA-CONTRIB")) {
+            return Vulnerability.Source.DRUPAL;
+        } else {
+            return Vulnerability.Source.COMPOSER;
+        }
+    }
+
+    private VulnerabilityAlias extractAliases(ComposerVulnerability composerVulnerability) {
+        //We only support one alias per source and do not store effectively alias records
+        VulnerabilityAlias alias = new VulnerabilityAlias();
+        //Make sure we set DrupalId or ComposerId depending on AdvisoryId
+        alias.setAliasFromVulnId(composerVulnerability.getAdvisoryId());
+        boolean aliasesPresent = false;
+        aliasesPresent |= alias.setAliasFromVulnId(composerVulnerability.getCve());
+        aliasesPresent |= alias.setAliasFromVulnId(composerVulnerability.getRemoteId());
+        for (String possibleAlias: composerVulnerability.getSources().values()) {
+            aliasesPresent |= alias.setAliasFromVulnId(possibleAlias);
+        }
+        if (aliasesPresent) {
+            return alias;
+        }
+        return null;
+    }
+
     private Vulnerability mapComposerVulnerabilityToVulnerability(final QueryManager qm, final ComposerVulnerability composerVulnerability) {
         final Vulnerability vuln = new Vulnerability();
 
-        /**
-         * First determine what the primay ID of the vulnerability is.
-         * Authoritative sources take precedence over non-authoritative sources.
-         */
-        VulnerabilityAlias alias = new VulnerabilityAlias();
-        alias.setComposerId(composerVulnerability.getAdvisoryId());
-        if (composerVulnerability.getAdvisoryId().startsWith("SA-CORE") || composerVulnerability.getAdvisoryId().startsWith("SA-CONTRIB")) {
-            vuln.setSource(Vulnerability.Source.DRUPAL);
-            alias.setCveId(composerVulnerability.getCve());
-            alias.setDrupalId(composerVulnerability.getAdvisoryId());
-            // use sources as alias
-        } else if (composerVulnerability.getCve() != null && composerVulnerability.getCve().startsWith("CVE")) {
-            vuln.setVulnId(composerVulnerability.getCve());
-            vuln.setSource(Vulnerability.Source.NVD);
-            alias.setCveId(composerVulnerability.getCve());
-            // use PKSA as alias
-            // use sources as alias
-        } else if (composerVulnerability.getRemoteId() != null && composerVulnerability.getRemoteId().startsWith("GHSA")) {
-            vuln.setVulnId(composerVulnerability.getRemoteId());
-            vuln.setSource(Vulnerability.Source.GITHUB);
-            alias.setGhsaId(composerVulnerability.getRemoteId());
-            // use sources as alias
-        } else if (composerVulnerability.getSources() != null && composerVulnerability.getSources().containsKey("github")) {
-            vuln.setVulnId(composerVulnerability.getSources().get("github"));
-            vuln.setSource(Vulnerability.Source.GITHUB);
-            alias.setGhsaId(composerVulnerability.getRemoteId());
-            // use sources as alias
-        } else {
-            vuln.setVulnId(composerVulnerability.getAdvisoryId());
-            //Example Id PKSA-jvj8-gbfh-v875, where PKSA stands for Packagist Security Advisory (I think)
-            //Should this be another SOURCE? DT uses sources for sources and for analyzers, which are slighly different
-            //But adding an extra source feels to much. Or should we rename the new COMPOSER source to PACKAGIST?
-            vuln.setSource(Vulnerability.Source.COMPOSER);
-        }
+        vuln.setVulnId(composerVulnerability.getAdvisoryId());
+        vuln.setSource(extractSource(composerVulnerability));
 
-        //Make sure RemoteId is always used as alias if present
-        if (composerVulnerability.getRemoteId() != null) {
-            String remoteId = composerVulnerability.getRemoteId();
-            if (remoteId.startsWith("GHSA") && alias.getGhsaId() == null) {
-                alias.setGhsaId(remoteId);
-            }
-            if (remoteId.startsWith("CVE") && alias.getCveId() == null) {
-                alias.setCveId(remoteId);
-            }
-        }
-        vuln.setAliases(Arrays.asList(alias));
-
-        String description = composerVulnerability.getTitle() + " in " + composerVulnerability.getPackageName() + " " + composerVulnerability.getAffectedVersions();
+        String description = composerVulnerability.getTitle() + " in " + composerVulnerability.getPackageName() + " " + composerVulnerability.getAffectedVersions() + "\n\n";
         List<String> references = new ArrayList<>();
         references.add(composerVulnerability.getLink());
         for (Entry<String, String> source: composerVulnerability.getSources().entrySet()) {
             if (source.getKey().equalsIgnoreCase("github")) {
                 references.add("https://github.com/advisories/" + source.getValue());
-                if (alias.getGhsaId() == null) alias.setGhsaId(source.getValue());
             } else if (source.getKey().equalsIgnoreCase("friendsofphp/security-advisories")) {
                 references.add("https://github.com/FriendsOfPHP/security-advisories/blob/master/" + source.getValue());
-                description += "\nUnmapped alias: " + source.getKey() + " : " + source.getValue() + "\n";
             } else {
-                description += "\nUnmapped alias: " + source.getKey() + " : " + source.getValue() + "\n";
+                description += "\nUnmapped source: " + source.getKey() + " : " + source.getValue() + "\n";
             }
         }
         references.add(composerVulnerability.getComposerRepository());

@@ -197,6 +197,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                 List<VulnerableSoftware> vsList = mapVulnerabilityToVulnerableSoftware(qm, advisory);
                 qm.persist(vsList);
                 final Vulnerability finalSynchronizedVulnerability = synchronizedVulnerability;
+                //TODO VS make sure only DRUPAL or COMPOSER is used as attribution source
                 vsList.forEach(vs -> qm.updateAffectedVersionAttribution(finalSynchronizedVulnerability, vs,
                         vulnerabilitySource));
                 vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList,

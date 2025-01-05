@@ -560,6 +560,7 @@
                     <configLocation>${project.basedir}/.checkstyle.xml</configLocation>
                     <includeResources>false</includeResources>
                     <includeTestResources>false</includeTestResources>
+					<excludeGeneratedSources>true</excludeGeneratedSources>
                 </configuration>
                 <executions>
                     <execution>

@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_API_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_ENABLED;
+import static org.junit.Assume.assumeTrue;
 import static org.testcontainers.containers.wait.strategy.Wait.forLogMessage;
 
 @RunWith(Parameterized.class)
@@ -74,11 +75,21 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
     @BeforeClass
     @SuppressWarnings("resource")
     public static void beforeClass() {
+        assumeTrue("No Docker available", isDockerAvailable());
         final DockerClient dockerClient = DockerClientFactory.lazyClient();
         final CreateVolumeResponse response = dockerClient.createVolumeCmd()
                 .withName("dtrack-test-trivy-cache")
                 .exec();
         trivyCacheVolumeName = response.getName();
+    }
+
+    private static boolean isDockerAvailable() {
+        try {
+            DockerClientFactory.instance().client();
+            return true;
+        } catch (Exception ignore) {
+            return false;
+        }
     }
 
     @Before

@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ComposerVulnerability {
+public class ComposerAdvisory {
 
     private String advisoryId;
     private String packageName;

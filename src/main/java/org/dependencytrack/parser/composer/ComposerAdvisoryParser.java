@@ -24,28 +24,28 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.dependencytrack.parser.composer.model.ComposerVulnerability;
+import org.dependencytrack.parser.composer.model.ComposerAdvisory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import alpine.common.logging.Logger;
 
 
-public class ComposerSecurityAdvisoryParser {
+public class ComposerAdvisoryParser {
 
-    private static final Logger LOGGER = Logger.getLogger(ComposerSecurityAdvisoryParser.class);
+    private static final Logger LOGGER = Logger.getLogger(ComposerAdvisoryParser.class);
 
-    public List<ComposerVulnerability> parse(final JSONObject object) {
-        final List<ComposerVulnerability> result = new ArrayList<>();
+    public static List<ComposerAdvisory> parseAdvisoryFeed(final JSONObject object) {
+        final List<ComposerAdvisory> result = new ArrayList<>();
         final JSONObject advisories = object.optJSONObject("advisories");
         if (advisories != null) {
             advisories.names().forEach(packageName -> {
                 final JSONArray advisory = advisories.optJSONArray((String)packageName);
                 if (advisory != null) {
                     for (int i = 0; i < advisory.length(); i++) {
-                        final ComposerVulnerability composerVulnerability = parseSecurityAdvisory(advisory.getJSONObject(i));
-                        if (composerVulnerability != null) {
-                            result.add(composerVulnerability);
+                        final ComposerAdvisory composerAdvisory = parseAdvisory(advisory.getJSONObject(i));
+                        if (composerAdvisory != null) {
+                            result.add(composerAdvisory);
                         }
                     }
 
@@ -55,8 +55,8 @@ public class ComposerSecurityAdvisoryParser {
         return result;
     }
 
-    private ComposerVulnerability parseSecurityAdvisory(final JSONObject object) {
-        final ComposerVulnerability vulnerability = new ComposerVulnerability();
+    public static ComposerAdvisory parseAdvisory(final JSONObject object) {
+        final ComposerAdvisory vulnerability = new ComposerAdvisory();
 
         //There's no status field in the advisory object, so we cannot check if the advisory has been withdrawn
         vulnerability.setAdvisoryId(object.getString("advisoryId"));

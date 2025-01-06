@@ -175,6 +175,7 @@ public class RepositoryResourceTest extends ResourceTest {
     }
 
 
+    //TODO VS Add create repository with config advisory mirroring
     @Test
     public void createRepositoryTest() {
         Repository repository = new Repository();
@@ -268,6 +269,7 @@ public class RepositoryResourceTest extends ResourceTest {
 
     }
 
+    //TODO VS Add create repository with config advisory mirroring
     @Test
     public void updateRepositoryTest() throws Exception {
         Repository repository = new Repository();

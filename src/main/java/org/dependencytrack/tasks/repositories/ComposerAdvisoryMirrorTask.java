@@ -76,7 +76,7 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
                             final boolean isAdvisoryMirroringEnabled = config
                                     .optBoolean("advisoryMirroringEnabled", false);
                             final boolean isAliasSyncEnabled = config
-                                    .optBoolean("aliasSyncEnabled", true);
+                                    .optBoolean("advisoryAliasSyncEnabled", true);
                             if (!isAdvisoryMirroringEnabled) {
                                 LOGGER.info(
                                         "Advisory  mirroring is disabled for repository " + repository.getUrl());

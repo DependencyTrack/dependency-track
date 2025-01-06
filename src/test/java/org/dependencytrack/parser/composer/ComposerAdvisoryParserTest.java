@@ -215,9 +215,9 @@ public class ComposerAdvisoryParserTest {
         ComposerAdvisory vuln = ComposerAdvisoryParser.parseAdvisory(vulnFriends);
         Assert.assertEquals(2, vuln.getSources().size());
         Assert.assertTrue(vuln.getSources().containsKey("github"));
-        Assert.assertEquals("GHSA-h377-287m-w2r9", vuln.getSources().get("github"));
-        Assert.assertTrue(vuln.getSources().containsKey("FriendsOfPHP/security-advisories"));
-        Assert.assertEquals("drupal/core/2019-12-18-1.yaml", vuln.getSources().get("FriendsOfPHP/security-advisories"));
+        Assert.assertEquals("GHSA-r8v4-7vwj-983x", vuln.getSources().get("github"));
+        Assert.assertTrue(vuln.getSources().containsKey("friendsofphp/security-advisories"));
+        Assert.assertEquals("simplesamlphp/saml2/CVE-2016-9814.yaml", vuln.getSources().get("friendsofphp/security-advisories"));
     }
 
     @Test

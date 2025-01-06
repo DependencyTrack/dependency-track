@@ -18,20 +18,20 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.PackageURL;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
+import com.github.packageurl.PackageURL;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.assertj.core.api.Assertions.assertThat;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 public class NpmMetaAnalyzerTest {
 
@@ -48,7 +48,23 @@ public class NpmMetaAnalyzerTest {
         Assert.assertEquals(RepositoryType.NPM, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
         Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertFalse(metaModel.isDeprecated());
+        Assert.assertNull(metaModel.getDeprecationMessage());
         //Assert.assertNotNull(metaModel.getPublishedTimestamp()); // todo: not yet supported
+    }
+
+    @Test
+    public void AnalyzerDeprecatedPackage() throws Exception {
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:npm/uuid@0.0.1"));
+
+        NpmMetaAnalyzer analyzer = new NpmMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.NPM, analyzer.supportedRepositoryType());
+        MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertTrue(metaModel.isDeprecated());
+        Assert.assertNotNull(metaModel.getDeprecationMessage());
     }
 
     @Test
@@ -74,6 +90,18 @@ public class NpmMetaAnalyzerTest {
                                 }
                                 """)));
 
+        stubFor(get(urlPathEqualTo("/%40angular%2Fcli/17.1.1"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody("""
+                                {
+                                  "name": "@angular/cli",
+                                  "version": "17.1.1",
+                                  "description": "CLI tool for Angular",
+                                  "main": "index.js",
+                                }
+                                """)));
+
         final var component = new Component();
         component.setPurl("pkg:npm/%40angular/cli@17.1.1");
 
@@ -95,6 +123,14 @@ public class NpmMetaAnalyzerTest {
                         .withBody("""
                                 "Not Found"
                                 """)));
+
+        stubFor(get(urlPathEqualTo("/jquery%20joyride%20plugin%20/2.1"))
+                                .willReturn(aResponse()
+                                        .withStatus(404)
+                                        .withBody("""
+                                                "Not Found"
+                                                """)));
+                
 
         final var component = new Component();
         component.setPurl("pkg:npm/jquery%20joyride%20plugin%20@2.1");

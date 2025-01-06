@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.PackageURL;
+import java.io.IOException;
+
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -28,7 +28,9 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.json.JSONObject;
 
-import java.io.IOException;
+import com.github.packageurl.PackageURL;
+
+import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports NPM.
@@ -40,7 +42,8 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private static final Logger LOGGER = Logger.getLogger(NpmMetaAnalyzer.class);
     private static final String DEFAULT_BASE_URL = "https://registry.npmjs.org";
-    private static final String API_URL = "/-/package/%s/dist-tags";
+    private static final String VERSION_URL = "/-/package/%s/dist-tags";
+    private static final String PACKAGE_URL = "/%s/%s";
 
     NpmMetaAnalyzer() {
         this.baseUrl = DEFAULT_BASE_URL;
@@ -74,8 +77,9 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
                 packageName = component.getPurl().getName();
             }
 
-            final String url = String.format(baseUrl + API_URL, urlEncode(packageName));
-            try (final CloseableHttpResponse response = processHttpRequest(url)) {
+            // Get the latest version
+            final String versionUrl = String.format(baseUrl + VERSION_URL, urlEncode(packageName));
+            try (final CloseableHttpResponse response = processHttpRequest(versionUrl)) {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                     if (response.getEntity()!=null) {
                         String responseString = EntityUtils.toString(response.getEntity());
@@ -86,7 +90,29 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
                         }
                     }
                 } else {
-                    handleUnexpectedHttpResponse(LOGGER, url, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
+                    handleUnexpectedHttpResponse(LOGGER, versionUrl, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
+                }
+            } catch (IOException e) {
+                handleRequestException(LOGGER, e);
+            } catch (Exception ex) {
+                throw new MetaAnalyzerException(ex);
+            }
+
+            // Get deprecation information
+            final String packageUrl = String.format(baseUrl + PACKAGE_URL, urlEncode(packageName), urlEncode(component.getPurl().getVersion()));   
+            try (final CloseableHttpResponse response = processHttpRequest(packageUrl)) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    if (response.getEntity()!=null) {
+                        String responseString = EntityUtils.toString(response.getEntity());
+                        var jsonObject = new JSONObject(responseString);
+                        final String deprecated = jsonObject.optString("deprecated");
+                        if (deprecated != null && deprecated.length() > 0) {
+                            meta.setDeprecated(true);
+                            meta.setDeprecationMessage(deprecated);
+                        }
+                    }
+                } else {
+                    handleUnexpectedHttpResponse(LOGGER, packageUrl, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
                 }
             } catch (IOException e) {
                 handleRequestException(LOGGER, e);

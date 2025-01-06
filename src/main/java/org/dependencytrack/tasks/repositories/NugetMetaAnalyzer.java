@@ -18,8 +18,12 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.common.logging.Logger;
-import com.github.packageurl.PackageURL;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -30,11 +34,9 @@ import org.dependencytrack.model.RepositoryType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.github.packageurl.PackageURL;
+
+import alpine.common.logging.Logger;
 
 /**
  * An IMetaAnalyzer implementation that supports Nuget.
@@ -164,11 +166,32 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                 if (response.getEntity() != null) {
                     String stringResponse = EntityUtils.toString(response.getEntity());
                     if (!stringResponse.equalsIgnoreCase("") && !stringResponse.equalsIgnoreCase("{}")) {
-                        JSONObject jsonResponse = new JSONObject(stringResponse);
+                        final JSONObject jsonResponse = new JSONObject(stringResponse);
                         final String updateTime = jsonResponse.optString("published", null);
                         if (updateTime != null) {
                             meta.setPublishedTimestamp(parseUpdateTime(updateTime));
                         }
+
+                        final String catalogEntry = jsonResponse.optString("catalogEntry", null);
+
+                        try (final CloseableHttpResponse catalogResponse = processHttpRequest(catalogEntry)) {
+                            if (catalogResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                                if (catalogResponse.getEntity() != null) {
+                                    final String responseString = EntityUtils.toString(catalogResponse.getEntity());
+                                    final JSONObject responseJson = new JSONObject(responseString);
+                                    final JSONObject deprecationObject = responseJson.optJSONObject("deprecation");
+                                    if (deprecationObject != null) {
+                                        meta.setDeprecated(deprecationObject.optJSONArray("reasons") != null);
+                                        meta.setDeprecationMessage(deprecationObject.optString("message"));
+                                    }
+                                }
+                            }
+                        } catch (IOException e) {
+                            handleRequestException(LOGGER, e);
+                        } catch (Exception ex) {
+                            throw new MetaAnalyzerException(ex);
+                        }
+
                         return true;
                     }
                 }

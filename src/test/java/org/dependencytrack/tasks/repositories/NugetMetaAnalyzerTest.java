@@ -18,17 +18,6 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.PackageURL;
-import org.apache.http.HttpHeaders;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.RepositoryType;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.integration.ClientAndServer;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -36,9 +25,20 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.apache.http.HttpHeaders;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.RepositoryType;
 import static org.dependencytrack.tasks.repositories.NugetMetaAnalyzer.SUPPORTED_DATE_FORMATS;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockserver.client.MockServerClient;
+import org.mockserver.integration.ClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+
+import com.github.packageurl.PackageURL;
 
 public class NugetMetaAnalyzerTest {
 
@@ -66,6 +66,26 @@ public class NugetMetaAnalyzerTest {
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
         Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertFalse(metaModel.isDeprecated());
+        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+    }
+
+
+
+    @Test
+    public void testAnalyzerPackageDeprecated() throws Exception {
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:nuget/Microsoft.AspNetCore@2.2.0"));
+        NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
+
+        analyzer.setRepositoryBaseUrl("https://api.nuget.org");
+        MetaModel metaModel = analyzer.analyze(component);
+
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertTrue(metaModel.isDeprecated());
+        Assert.assertNotNull(metaModel.getDeprecationMessage());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }
 

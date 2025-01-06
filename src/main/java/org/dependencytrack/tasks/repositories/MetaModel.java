@@ -18,14 +18,16 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import org.dependencytrack.model.Component;
-
 import java.util.Date;
+
+import org.dependencytrack.model.Component;
 
 public class MetaModel {
 
     private final Component component;
     private String latestVersion;
+    private boolean isDeprecated;
+    private String deprecationMessage;
     private Date publishedTimestamp;
 
     public MetaModel(final Component component) {
@@ -42,6 +44,22 @@ public class MetaModel {
 
     public void setLatestVersion(final String latestVersion) {
         this.latestVersion = latestVersion;
+    }
+
+    public boolean isDeprecated() {
+        return isDeprecated;
+    }
+
+    public void setDeprecated(boolean isDeprecated) {
+        this.isDeprecated = isDeprecated;
+    }
+
+    public String getDeprecationMessage() {
+        return deprecationMessage;
+    }
+
+    public void setDeprecationMessage(final String deprecationMessage) {
+        this.deprecationMessage = deprecationMessage;
     }
 
     public Date getPublishedTimestamp() {

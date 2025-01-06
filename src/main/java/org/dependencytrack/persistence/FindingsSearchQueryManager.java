@@ -141,6 +141,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                     final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
                     if (repoMetaComponent != null) {
                         finding.getComponent().put("latestVersion", repoMetaComponent.getLatestVersion());
+                        finding.getComponent().put("isDeprecated", repoMetaComponent.isDeprecated());
                     }
                 }
 

@@ -54,9 +54,9 @@ public class NpmMetaAnalyzerTest {
     }
 
     @Test
-    public void AnalyzerDeprecatedPackage() throws Exception {
+    public void testAnalyzerPackageDeprecated() throws Exception {
         Component component = new Component();
-        component.setPurl(new PackageURL("pkg:npm/uuid@0.0.1"));
+        component.setPurl(new PackageURL("pkg:npm/har-validator@5.1.5"));
 
         NpmMetaAnalyzer analyzer = new NpmMetaAnalyzer();
         Assert.assertTrue(analyzer.isApplicable(component));
@@ -65,6 +65,20 @@ public class NpmMetaAnalyzerTest {
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertTrue(metaModel.isDeprecated());
         Assert.assertNotNull(metaModel.getDeprecationMessage());
+    }
+
+    @Test
+    public void testAnalyzerPackageVersionDeprecatedButNewerVersionFound() throws Exception {
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:npm/uuid@0.0.1"));
+
+        NpmMetaAnalyzer analyzer = new NpmMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.NPM, analyzer.supportedRepositoryType());
+        MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertFalse(metaModel.isDeprecated());
+        Assert.assertNull(metaModel.getDeprecationMessage());
     }
 
     @Test
@@ -90,7 +104,7 @@ public class NpmMetaAnalyzerTest {
                                 }
                                 """)));
 
-        stubFor(get(urlPathEqualTo("/%40angular%2Fcli/17.1.1"))
+        stubFor(get(urlPathEqualTo("/%40angular%2Fcli/17.1.2"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody("""

@@ -99,25 +99,27 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
             }
 
             // Get deprecation information
-            final String packageUrl = String.format(baseUrl + PACKAGE_URL, urlEncode(packageName), urlEncode(component.getPurl().getVersion()));   
-            try (final CloseableHttpResponse response = processHttpRequest(packageUrl)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    if (response.getEntity()!=null) {
-                        String responseString = EntityUtils.toString(response.getEntity());
-                        var jsonObject = new JSONObject(responseString);
-                        final String deprecated = jsonObject.optString("deprecated");
-                        if (deprecated != null && deprecated.length() > 0) {
-                            meta.setDeprecated(true);
-                            meta.setDeprecationMessage(deprecated);
+            if (meta.getLatestVersion() != null && !meta.getLatestVersion().isEmpty()) {
+                final String packageUrl = String.format(baseUrl + PACKAGE_URL, urlEncode(packageName), urlEncode(meta.getLatestVersion()));   
+                try (final CloseableHttpResponse response = processHttpRequest(packageUrl)) {
+                    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                        if (response.getEntity()!=null) {
+                            String responseString = EntityUtils.toString(response.getEntity());
+                            var jsonObject = new JSONObject(responseString);
+                            final String deprecated = jsonObject.optString("deprecated");
+                            if (deprecated != null && deprecated.length() > 0) {
+                                meta.setDeprecated(true);
+                                meta.setDeprecationMessage(deprecated);
+                            }
                         }
+                    } else {
+                        handleUnexpectedHttpResponse(LOGGER, packageUrl, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
                     }
-                } else {
-                    handleUnexpectedHttpResponse(LOGGER, packageUrl, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase(), component);
+                } catch (IOException e) {
+                    handleRequestException(LOGGER, e);
+                } catch (Exception ex) {
+                    throw new MetaAnalyzerException(ex);
                 }
-            } catch (IOException e) {
-                handleRequestException(LOGGER, e);
-            } catch (Exception ex) {
-                throw new MetaAnalyzerException(ex);
             }
         }
         return meta;

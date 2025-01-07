@@ -90,6 +90,25 @@ public class NugetMetaAnalyzerTest {
     }
 
 
+
+    @Test
+    public void testAnalyzerPackageVersionDeprecatedButNewerVersionFound() throws Exception {
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:nuget/Microsoft.Extensions.Configuration@5.0.0"));
+        NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
+
+        analyzer.setRepositoryBaseUrl("https://api.nuget.org");
+        MetaModel metaModel = analyzer.analyze(component);
+
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
+        Assert.assertNotEquals("5.0.0", metaModel.getLatestVersion());
+        Assert.assertFalse(metaModel.isDeprecated());
+        Assert.assertNull(metaModel.getDeprecationMessage());
+        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+    }
+
+
     // This test is to check if the analyzer is excluding pre-release versions
     // The test is transitent depending on the current version of the package 
     // retrieved from the repository at the time of running. 

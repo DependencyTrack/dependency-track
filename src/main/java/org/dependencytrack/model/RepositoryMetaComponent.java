@@ -89,7 +89,7 @@ public class RepositoryMetaComponent implements Serializable {
     @Persistent
     @Column(name = "IS_DEPRECATED", allowsNull = "false", defaultValue="false")
     @NotNull
-    private boolean isDeprecated = false; // Added in 4.13.0
+    private boolean isDeprecated; // Added in 4.13.0
 
     /**
      * Whether the component is deprecated or not.

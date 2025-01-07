@@ -344,6 +344,14 @@ public class BomResource extends AlpineResource {
                                 null, true, request.isLatestProjectVersion(), true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
+                        if (request.isDeactivateOtherVersions()) {
+                            if (!request.isLatestProjectVersion()) {
+                                var message = "Value \"isLatest=true\" required when \"deactivateOtherVersions=true\".";
+                                LOGGER.error(message);
+                                return Response.status(Response.Status.NOT_ACCEPTABLE).entity(message).build();
+                            }
+                            qm.runInTransaction(() -> deactivateOtherVersions(qm, trimmedProjectName));
+                        }
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }
@@ -404,6 +412,7 @@ public class BomResource extends AlpineResource {
             @FormDataParam("parentVersion") String parentVersion,
             @FormDataParam("parentUUID") String parentUUID,
             @DefaultValue("false") @FormDataParam("isLatest") boolean isLatest,
+            @DefaultValue("false") @FormDataParam("deactivateOtherVersions") boolean deactivateOtherVersions,
             @Parameter(schema = @Schema(type = "string")) @FormDataParam("bom") final List<FormDataBodyPart> artifactParts
     ) {
         if (projectUuid != null) { // behavior in v3.0.0
@@ -450,6 +459,15 @@ public class BomResource extends AlpineResource {
                         project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, tags, parent, null, true, isLatest, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
+
+                        if (deactivateOtherVersions) {
+                            if (!isLatest) {
+                                var message = "Value \"isLatest=true\" required when \"deactivateOtherVersions=true\".";
+                                LOGGER.error(message);
+                                return Response.status(Response.Status.NOT_ACCEPTABLE).entity(message).build();
+                            }
+                            qm.runInTransaction(() -> deactivateOtherVersions(qm, trimmedProjectName));
+                        }
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }
@@ -458,6 +476,7 @@ public class BomResource extends AlpineResource {
             }
         }
     }
+
 
     @GET
     @Path("/token/{uuid}")
@@ -499,6 +518,26 @@ public class BomResource extends AlpineResource {
         response.setProcessing(value);
 
         return Response.ok(response).build();
+    }
+
+    /**
+     * Deactivates all non-latest versions of a specific project.
+     * Ensures that only the latest version of a project remains active.
+     * If the principal does not have access to a project version, an exception is thrown.
+     *
+     * @param qm The QueryManager instance used to query and manage projects.
+     * @param projectName A string representing the name of the project versions to be evaluated.
+     */
+    private void deactivateOtherVersions(QueryManager qm, String projectName) {
+        qm.getProjects(projectName, true, false, null).getList(Project.class).forEach(p -> {
+            if (p.isLatest()) {
+                return;
+            } else if (!qm.hasAccess(super.getPrincipal(), p)) {
+                throw new WebApplicationException("Could not deactivate project, no access: " + p.getUuid() + " / " + p.getName());
+            }
+            p.setActive(false);
+            qm.updateProject(p, true);
+        });
     }
 
     /**

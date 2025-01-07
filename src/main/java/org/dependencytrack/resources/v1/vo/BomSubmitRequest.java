@@ -74,14 +74,17 @@ public final class BomSubmitRequest {
 
     private final boolean isLatestProjectVersion;
 
+    private final boolean deactivateOtherVersions;
+
     public BomSubmitRequest(String project,
                             String projectName,
                             String projectVersion,
                             List<Tag> projectTags,
                             boolean autoCreate,
                             boolean isLatestProjectVersion,
+                            boolean deactivateOtherProjectVersions,
                             String bom) {
-        this(project, projectName, projectVersion, projectTags, autoCreate, null, null, null, isLatestProjectVersion, bom);
+        this(project, projectName, projectVersion, projectTags, autoCreate, null, null, null, isLatestProjectVersion, deactivateOtherProjectVersions, bom);
     }
 
     @JsonCreator
@@ -94,6 +97,7 @@ public final class BomSubmitRequest {
                             @JsonProperty(value = "parentName") String parentName,
                             @JsonProperty(value = "parentVersion") String parentVersion,
                             @JsonProperty(value = "isLatestProjectVersion", defaultValue = "false") boolean isLatestProjectVersion,
+                            @JsonProperty(value = "deactivateOtherVersions", defaultValue = "false") boolean deactivateOtherVersions,
                             @JsonProperty(value = "bom", required = true) String bom) {
         this.project = project;
         this.projectName = projectName;
@@ -104,6 +108,7 @@ public final class BomSubmitRequest {
         this.parentName = parentName;
         this.parentVersion = parentVersion;
         this.isLatestProjectVersion = isLatestProjectVersion;
+        this.deactivateOtherVersions = deactivateOtherVersions;
         this.bom = bom;
     }
 
@@ -148,6 +153,10 @@ public final class BomSubmitRequest {
 
     @JsonProperty("isLatestProjectVersion")
     public boolean isLatestProjectVersion() { return isLatestProjectVersion; }
+
+    public boolean isDeactivateOtherVersions() {
+        return deactivateOtherVersions;
+    }
 
     @Schema(
             description = "Base64 encoded BOM",

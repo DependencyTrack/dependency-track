@@ -70,21 +70,9 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
 
             try (final var qm = new QueryManager()) {
                 for (final Repository repository : qm.getAllRepositoriesOrdered(RepositoryType.COMPOSER)) {
-                    if (repository.isEnabled() && repository.getConfig() != null) {
-                        final JSONObject config = new JSONObject(repository.getConfig());
-                        final boolean isAdvisoryMirroringEnabled = config
-                                .optBoolean("advisoryMirroringEnabled", false);
-                        final boolean isAliasSyncEnabled = config
-                                .optBoolean("advisoryAliasSyncEnabled", true);
-                        if (!isAdvisoryMirroringEnabled) {
-                            LOGGER.info(
-                                    "Advisory  mirroring is disabled for repository " + repository.getUrl());
-                        }
                         // Should we try catch all exceptions to make sure notification is sent?
-                        mirroredWithoutErrors &= mirrorAdvisories(repository,
-                                isAliasSyncEnabled);
+                        mirroredWithoutErrors &= mirrorAdvisories(qm, repository);
                     }
-                }
             }
 
             final long end = System.currentTimeMillis();
@@ -111,7 +99,25 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
-    private boolean mirrorAdvisories(Repository repository, boolean syncAliases) {
+    private boolean mirrorAdvisories(QueryManager qm, Repository repository) {
+        if (repository.isEnabled()) {
+            return true;
+        }
+        boolean isAdvisoryMirroringEnabled = false;
+        boolean isAliasSyncEnabled = false;
+
+        if (repository.getConfig() != null) {
+            final JSONObject config = new JSONObject(repository.getConfig());
+            isAdvisoryMirroringEnabled = config
+                    .optBoolean("advisoryMirroringEnabled", false);
+            isAliasSyncEnabled = config
+                    .optBoolean("advisoryAliasSyncEnabled", true);
+            if (!isAdvisoryMirroringEnabled) {
+                LOGGER.info(
+                        "Advisory  mirroring is disabled for repository " + repository.getUrl());
+            }
+        }
+
         boolean result = true;
         // Vulnerability mirroring builds on the Composer meta analyzer
         // To avoid duplicating lots of code or having to extract alle common parts and
@@ -121,19 +127,18 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
         composerMetaAnalyzer.setRepositoryBaseUrl(repository.getUrl());
         composerMetaAnalyzer.setRepositoryUsernameAndPassword(repository.getUsername(), repository.getPassword());
 
-        LOGGER.info("Updating datasource with Composer advisories from " + repository.getUrl());
+        LOGGER.info("Mirorring Composer Advisories from " + repository.getUrl());
         JSONObject jsonAdvisories = composerMetaAnalyzer.retrieveAdvisories();
 
         if (jsonAdvisories == null) {
             return false;
         }
-        var parser = new ComposerAdvisoryParser();
-        final List<ComposerAdvisory> composerAdvisories = parser.parseAdvisoryFeed(jsonAdvisories);
-        try (QueryManager qm = new QueryManager()) {
-            for (final ComposerAdvisory advisory : composerAdvisories) {
-                result &= processAdvisory(qm, advisory, syncAliases);
-            }
+
+        final List<ComposerAdvisory> composerAdvisories = ComposerAdvisoryParser.parseAdvisoryFeed(jsonAdvisories);
+        for (final ComposerAdvisory advisory : composerAdvisories) {
+            result &= processAdvisory(qm, advisory, isAliasSyncEnabled);
         }
+
         return result;
     }
 

@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
-import org.apache.commons.lang3.StringUtils;
+//import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
@@ -118,7 +118,7 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
     /**
      * A list of the version parts.
      */
-    private List<String> versionParts;
+    private List<Token> versionParts;
 
     /**
      * Member holding to with ecosystem this version belongs to.
@@ -158,24 +158,36 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      */
     public final void parseVersion(String version) {
         versionParts = new ArrayList<>();
-        if (version != null) {
-            // https://github.com/DependencyTrack/dependency-track/issues/1374
-            // handle deb versions
-            String lcVersion = version.toLowerCase();
-            final Pattern debrx = Pattern.compile("^([0-9]+:)?(.*)(-[^-]+ubuntu[^-]+)$");
-            final Matcher debmatcher = debrx.matcher(lcVersion);
-            if (debmatcher.matches()) {
-                lcVersion = debmatcher.group(2);
+        String regex = this.ecosystem.getElements().stream().map(e -> "(" + e + ")").reduce((e1, e2) -> e1 + "|" + e2).orElse("");
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+
+        if(version == null) {
+            return;
+        }
+
+        // Debian/Ubuntu specific
+        if(this.ecosystem.name=="deb") {
+            // When no epoch is given, use default epoch 0
+            if (!version.contains(":")) {
+               version = "0:" + version;
             }
 
-            final Pattern rx = Pattern.compile("(\\d+[a-z]{1,3}$|[a-z]{1,3}[_-]?\\d+|\\d+|(rc|release|snapshot|beta|alpha)$)",
-                    Pattern.CASE_INSENSITIVE);
-            final Matcher matcher = rx.matcher(lcVersion);
-            while (matcher.find()) {
-                versionParts.add(matcher.group());
-            }
-            if (versionParts.isEmpty()) {
-                versionParts.add(version);
+           // So we replace '-' which acts a blocks splitter (split between upstream and debian version) by the block-splitter "\n" since
+           // also upstream versions uses sometimes '-'. But to follow semver with debian sorting it should be debian pre-splitter '~'
+           int debianSplitterIndex = version.lastIndexOf("-");
+           if(debianSplitterIndex > 0) {
+               version = version.substring(0, debianSplitterIndex) + "\n" + version.substring(debianSplitterIndex + 1);
+           }
+        }
+
+        // General part
+        Matcher matcher = pattern.matcher(version.toLowerCase());
+        while (matcher.find()) {
+            for (int i = 1; i <= this.ecosystem.getElements().size(); i++) {
+                if (matcher.group(i) != null) {
+                    versionParts.add(new Token(i - 1, matcher.group(i)));
+                    break;
+                }
             }
         }
     }
@@ -185,7 +197,7 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      *
      * @return the value of versionParts
      */
-    public List<String> getVersionParts() {
+    public List<Token> getVersionParts() {
         return versionParts;
     }
 
@@ -194,7 +206,7 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      *
      * @param versionParts new value of versionParts
      */
-    public void setVersionParts(List<String> versionParts) {
+    public void setVersionParts(List<Token> versionParts) {
         this.versionParts = versionParts;
     }
 
@@ -204,7 +216,7 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      * @return an iterator for the version parts
      */
     @Override
-    public Iterator<String> iterator() {
+    public Iterator<Token> iterator() {
         return versionParts.iterator();
     }
 
@@ -215,7 +227,11 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      */
     @Override
     public String toString() {
-        return StringUtils.join(versionParts, '.');
+        StringBuilder result = new StringBuilder();
+        for (Token token : this.versionParts) {
+            result.append(token.getValue());
+        }
+        return result.toString();
     }
 
     /**

@@ -18,6 +18,12 @@
  */
 package org.dependencytrack.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.util.VulnerabilityUtil;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Serializable;
@@ -32,13 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.util.VulnerabilityUtil;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 
 /**

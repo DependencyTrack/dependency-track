@@ -18,9 +18,8 @@
  */
 package org.dependencytrack.resources.v1;
 
-import java.util.Date;
-import java.util.List;
-
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Repository;
@@ -34,13 +33,13 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.Date;
+import java.util.List;
 
 public class RepositoryResourceTest extends ResourceTest {
 

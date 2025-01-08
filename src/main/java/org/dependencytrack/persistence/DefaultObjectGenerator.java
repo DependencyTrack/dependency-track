@@ -18,10 +18,11 @@
  */
 package org.dependencytrack.persistence;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import alpine.common.logging.Logger;
+import alpine.model.ManagedUser;
+import alpine.model.Permission;
+import alpine.model.Team;
+import alpine.server.auth.PasswordService;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -32,13 +33,11 @@ import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
 import org.dependencytrack.util.NotificationUtil;
 
-import alpine.common.logging.Logger;
-import alpine.model.ManagedUser;
-import alpine.model.Permission;
-import alpine.model.Team;
-import alpine.server.auth.PasswordService;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Creates default objects on an empty database.

@@ -1,11 +1,11 @@
 package org.dependencytrack.tasks;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.List;
-
+import alpine.event.framework.EventService;
+import com.github.packageurl.PackageURL;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.http.Body;
+import com.github.tomakehurst.wiremock.http.ContentTypeHeader;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
@@ -19,14 +19,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import com.github.packageurl.PackageURL;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.http.Body;
-import com.github.tomakehurst.wiremock.http.ContentTypeHeader;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-
-import alpine.event.framework.EventService;
 import jakarta.ws.rs.core.MediaType;
+import java.util.List;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
 

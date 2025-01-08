@@ -18,8 +18,12 @@
  */
 package org.dependencytrack.event;
 
-import java.time.Duration;
-
+import alpine.Config;
+import alpine.common.logging.Logger;
+import alpine.event.LdapSyncEvent;
+import alpine.event.framework.EventService;
+import alpine.event.framework.SingleThreadedEventService;
+import alpine.server.tasks.LdapSyncTask;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.tasks.BomUploadProcessingTask;
@@ -54,14 +58,9 @@ import org.dependencytrack.tasks.scanners.SnykAnalysisTask;
 import org.dependencytrack.tasks.scanners.TrivyAnalysisTask;
 import org.dependencytrack.tasks.scanners.VulnDbAnalysisTask;
 
-import alpine.Config;
-import alpine.common.logging.Logger;
-import alpine.event.LdapSyncEvent;
-import alpine.event.framework.EventService;
-import alpine.event.framework.SingleThreadedEventService;
-import alpine.server.tasks.LdapSyncTask;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
+import java.time.Duration;
 
 /**
  * Initializes the event subsystem and configures event subscribers.

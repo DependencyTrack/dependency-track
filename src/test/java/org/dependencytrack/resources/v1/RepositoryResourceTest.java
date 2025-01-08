@@ -28,6 +28,7 @@ import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -268,7 +269,6 @@ public class RepositoryResourceTest extends ResourceTest {
 
     }
 
-    //TODO VS Add create repository with config advisory mirroring
     @Test
     public void updateRepositoryTest() throws Exception {
         Repository repository = new Repository();
@@ -304,4 +304,48 @@ public class RepositoryResourceTest extends ResourceTest {
         }
 
     }
+
+    @Test
+    public void updateRepositoryTestAdvisoryMirroring() throws Exception {
+        Repository repository = new Repository();
+        repository.setAuthenticationRequired(true);
+        repository.setEnabled(true);
+        repository.setUsername("testuser");
+        repository.setPassword("testPassword");
+        repository.setInternal(true);
+        repository.setIdentifier("composer_repo");
+        repository.setUrl("www.foobar.com");
+        repository.setType(RepositoryType.COMPOSER);
+        Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus());
+
+        try (QueryManager qm = new QueryManager()) {
+            List<Repository> repositoryList = qm.getRepositories(RepositoryType.COMPOSER).getList(Repository.class);
+            for (Repository repository1 : repositoryList) {
+                if (repository1.getIdentifier().equals("composer_repo")) {
+                    Assert.assertNull(repository1.getConfig());
+                    repository1.setConfig("{\"advisoryMirroringEnabled\": true, \"advisoryAliasSyncEnabled\": true}");
+                    response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                            .post(Entity.entity(repository1, MediaType.APPLICATION_JSON));
+                    Assert.assertEquals(200, response.getStatus());
+                    break;
+                }
+            }
+
+            repositoryList = qm.getRepositories(RepositoryType.COMPOSER).getList(Repository.class);
+            for (Repository repository1 : repositoryList) {
+                if (repository1.getIdentifier().equals("composer_repo")) {
+                    Assert.assertNotNull(repository1.getConfig());
+                    JSONObject jsonConfig = new JSONObject(repository1.getConfig());
+                    Assert.assertTrue(jsonConfig.optBoolean("advisoryMirroringEnabled"));
+                    Assert.assertTrue(jsonConfig.optBoolean("advisoryAliasSyncEnabled"));
+                    break;
+                }
+            }
+        }
+
+    }
+
+
 }

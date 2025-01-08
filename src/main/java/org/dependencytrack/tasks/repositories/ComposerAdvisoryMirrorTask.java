@@ -70,21 +70,19 @@ public class ComposerAdvisoryMirrorTask implements LoggableSubscriber {
 
             try (final var qm = new QueryManager()) {
                 for (final Repository repository : qm.getAllRepositoriesOrdered(RepositoryType.COMPOSER)) {
-                    if (repository.isEnabled()) {
-                        if (repository.getConfig() != null) {
-                            final JSONObject config = new JSONObject(repository.getConfig());
-                            final boolean isAdvisoryMirroringEnabled = config
-                                    .optBoolean("advisoryMirroringEnabled", false);
-                            final boolean isAliasSyncEnabled = config
-                                    .optBoolean("advisoryAliasSyncEnabled", true);
-                            if (!isAdvisoryMirroringEnabled) {
-                                LOGGER.info(
-                                        "Advisory  mirroring is disabled for repository " + repository.getUrl());
-                            }
-                            // Should we try catch all exceptions to make sure notification is sent?
-                            mirroredWithoutErrors &= mirrorAdvisories(repository,
-                                    isAliasSyncEnabled);
+                    if (repository.isEnabled() && repository.getConfig() != null) {
+                        final JSONObject config = new JSONObject(repository.getConfig());
+                        final boolean isAdvisoryMirroringEnabled = config
+                                .optBoolean("advisoryMirroringEnabled", false);
+                        final boolean isAliasSyncEnabled = config
+                                .optBoolean("advisoryAliasSyncEnabled", true);
+                        if (!isAdvisoryMirroringEnabled) {
+                            LOGGER.info(
+                                    "Advisory  mirroring is disabled for repository " + repository.getUrl());
                         }
+                        // Should we try catch all exceptions to make sure notification is sent?
+                        mirroredWithoutErrors &= mirrorAdvisories(repository,
+                                isAliasSyncEnabled);
                     }
                 }
             }

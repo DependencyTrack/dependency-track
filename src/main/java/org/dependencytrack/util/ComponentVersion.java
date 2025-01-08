@@ -47,6 +47,32 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  */
 @NotThreadSafe
 public class ComponentVersion implements Iterable<String>, Comparable<ComponentVersion> {
+    /**
+     * A class for describing a version part or a separator.
+     */
+    private class Token {
+        /**
+         * An integer describing the sort order, the main sort criterion
+         */
+        private Integer priority;
+        /**
+         * A string holding a actual value, the secondary sort criterion
+         */
+        private String value;
+
+        public Token(Integer priority, String value) {
+            this.priority = priority;
+            this.value = value;
+        }
+
+        public Integer getPriority() {
+            return priority;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
 
     /**
      * A list of the version parts.

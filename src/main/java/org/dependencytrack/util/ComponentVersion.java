@@ -216,35 +216,6 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      * @param version the version number to compare
      * @return true if the first three major parts of the version are identical
      */
-    public boolean matchesAtLeastThreeLevels(ComponentVersion version) {
-        if (version == null) {
-            return false;
-        }
-        if (Math.abs(this.versionParts.size() - version.versionParts.size()) >= 3) {
-            return false;
-        }
-
-        final int max = (this.versionParts.size() < version.versionParts.size())
-                ? this.versionParts.size() : version.versionParts.size();
-
-        boolean ret = true;
-        for (int i = 0; i < max; i++) {
-            final String thisVersion = this.versionParts.get(i);
-            final String otherVersion = version.getVersionParts().get(i);
-            if (i >= 3) {
-                if (thisVersion.compareToIgnoreCase(otherVersion) >= 0) {
-                    ret = false;
-                    break;
-                }
-            } else if (!thisVersion.equals(otherVersion)) {
-                ret = false;
-                break;
-            }
-        }
-
-        return ret;
-    }
-
     @Override
     public int compareTo(ComponentVersion version) {
         if (version == null) {

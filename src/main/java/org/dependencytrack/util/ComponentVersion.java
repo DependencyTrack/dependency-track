@@ -31,9 +31,11 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 /**
  * <p>
  * Simple object to track the parts of a version number. The parts are contained
- * in a List such that version 1.2.3 will be stored as:  <code>versionParts[0] = 1;
- * versionParts[1] = 2;
- * versionParts[2] = 3;
+ * in a List such that version 1.2.3 will be stored as:  <code>versionParts[0] = new Token(PRIOITY_OF_STRING, "1");
+ * versionParts[1] = new Token(PRIORITY_OF_DOT, ".");
+ * versionParts[2] = new Token(PRIORITY_OF_STRING, "2");
+ * versionParts[3] = new Token(PRIORITY_OF_DOT, ".");
+ * versionParts[4] = new Token(PRIORITY_OF_STRING, "3");
  * </code></p>
  * <p>
  * Note, the parser contained in this class expects the version numbers to be

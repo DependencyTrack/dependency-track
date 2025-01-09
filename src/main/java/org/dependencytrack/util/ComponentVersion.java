@@ -19,6 +19,7 @@
 package org.dependencytrack.util;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -240,55 +241,55 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
                 .toHashCode();
     }
 
-    /**
-     * Determines if the three most major major version parts are identical. For
-     * instances, if version 1.2.3.4 was compared to 1.2.3 this function would
-     * return true.
-     *
-     * @param version the version number to compare
-     * @return true if the first three major parts of the version are identical
-     */
     @Override
     public int compareTo(ComponentVersion version) {
         if (version == null) {
             return 1;
         }
-        final List<String> left = this.getVersionParts();
-        final List<String> right = version.getVersionParts();
-        final int max = left.size() < right.size() ? left.size() : right.size();
 
-        for (int i = 0; i < max; i++) {
-            final String lStr = left.get(i);
-            final String rStr = right.get(i);
-            if (lStr.equals(rStr)) {
-                continue;
+        int result_code = 0;
+
+        Iterator<Token> version1_iterator = this.getVersionParts().iterator();
+        Iterator<Token> version2_iterator = version.getVersionParts().iterator();
+
+        Token version1_field;
+        Token version2_field;
+
+        while(true) {
+            version1_field = version1_iterator.hasNext() ? version1_iterator.next() : null;
+            version2_field = version2_iterator.hasNext() ? version2_iterator.next() : null;
+
+
+            Integer priority1 = (version1_field != null) ? version1_field.getPriority() : this.ecosystem.getEndOfStringPriority();
+            Integer priority2 = (version2_field != null) ? version2_field.getPriority() : this.ecosystem.getEndOfStringPriority();
+
+            if((result_code = Integer.compare(priority1, priority2)) != 0) {
+                break;
             }
-            try {
-                final int l = Integer.parseInt(lStr);
-                final int r = Integer.parseInt(rStr);
-                if (l < r) {
-                    return -1;
-                } else if (l > r) {
-                    return 1;
+
+
+            if (version1_field == null || version2_field == null) {
+                break;
+            }
+
+            String value1 = version1_field.getValue();
+            String value2 = version2_field.getValue();
+
+            if(Character.isDigit(value1.charAt(0)) && Character.isDigit(value2.charAt(0))) {
+                if(value1.length() > value2.length()) {
+                    value2 = "0".repeat(value1.length() - value2.length()) + value2;
                 }
-            } catch (NumberFormatException ex) {
-                final int comp = left.get(i).compareTo(right.get(i));
-                if (comp < 0) {
-                    return -1;
-                } else if (comp > 0) {
-                    return 1;
+                else if(value1.length() < value2.length()) {
+                    value1 = "0".repeat(value2.length() - value1.length()) + value1;
                 }
+            }
+
+            if((result_code = value1.compareTo(value2)) != 0) {
+                break;
             }
         }
-        // Modified from original by Steve Springett
-        // Account for comparisons where one version may be 1.0.0 and another may be 1.0.0.0.
-        if (left.size() == max && right.size() == left.size()+1 && right.get(right.size()-1).equals("0")) {
-            return 0;
-        } else if (right.size() == max && left.size() == right.size()+1 && left.get(left.size()-1).equals("0")) {
-            return 0;
-        } else {
-            return Integer.compare(left.size(), right.size());
-        }
+
+        return result_code;
     }
 
     /**

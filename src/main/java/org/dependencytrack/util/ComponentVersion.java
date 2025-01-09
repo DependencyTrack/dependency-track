@@ -201,15 +201,6 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
     }
 
     /**
-     * Set the value of versionParts.
-     *
-     * @param versionParts new value of versionParts
-     */
-    public void setVersionParts(List<Token> versionParts) {
-        this.versionParts = versionParts;
-    }
-
-    /**
      * Reconstructs the version string from the split version parts.
      *
      * @return a string representing the version.

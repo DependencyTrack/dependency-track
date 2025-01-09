@@ -19,7 +19,6 @@
 package org.dependencytrack.util;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,7 +45,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  * Ported from DependencyVersion in Dependency-Check v5.2.1
  */
 @NotThreadSafe
-public class ComponentVersion implements Iterable<String>, Comparable<ComponentVersion> {
+public class ComponentVersion implements Comparable<ComponentVersion> {
     /**
      * A class for describing a version part or a separator.
      */
@@ -208,16 +207,6 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      */
     public void setVersionParts(List<Token> versionParts) {
         this.versionParts = versionParts;
-    }
-
-    /**
-     * Retrieves an iterator for the version parts.
-     *
-     * @return an iterator for the version parts
-     */
-    @Override
-    public Iterator<Token> iterator() {
-        return versionParts.iterator();
     }
 
     /**

@@ -196,7 +196,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
      *
      * @return the value of versionParts
      */
-    public List<Token> getVersionParts() {
+    private List<Token> getVersionParts() {
         return versionParts;
     }
 
@@ -289,5 +289,14 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
         } else {
             return Integer.compare(left.size(), right.size());
         }
+    }
+
+    /**
+     * Reflects if there is a version contained.
+     *
+     * @return true if there is.
+     */
+    public boolean isEmpty() {
+        return versionParts == null || versionParts.isEmpty();
     }
 }

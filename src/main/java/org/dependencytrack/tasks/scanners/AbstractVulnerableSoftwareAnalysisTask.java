@@ -153,7 +153,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         }
 
         final ComponentVersion target = new ComponentVersion(targetVersion);
-        if (target.getVersionParts().isEmpty()) {
+        if (target.isEmpty()) {
             return false;
         }
         if (result && vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty()) {

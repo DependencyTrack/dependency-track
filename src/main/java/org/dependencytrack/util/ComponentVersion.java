@@ -211,7 +211,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
     public String toString() {
         StringBuilder result = new StringBuilder();
         for (Token token : this.versionParts) {
-            result.append(token.getValue());
+            result.append(token.getValue().replaceAll("\n","-"));
         }
         return result.toString();
     }

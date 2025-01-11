@@ -831,21 +831,23 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * @since 4.12.0
+     * @since 4.12.3
      */
     @Override
-    public boolean bind(final Policy policy, final Collection<Tag> tags) {
+    public boolean bind(final Policy policy, final Collection<Tag> tags, final boolean keepExisting) {
         assertPersistent(policy, "policy must be persistent");
         assertPersistentAll(tags, "tags must be persistent");
 
         return callInTransaction(() -> {
             boolean modified = false;
 
-            for (final Tag existingTag : policy.getTags()) {
-                if (!tags.contains(existingTag)) {
-                    policy.getTags().remove(existingTag);
-                    existingTag.getPolicies().remove(policy);
-                    modified = true;
+            if (!keepExisting) {
+                for (final Tag existingTag : policy.getTags()) {
+                    if (!tags.contains(existingTag)) {
+                        policy.getTags().remove(existingTag);
+                        existingTag.getPolicies().remove(policy);
+                        modified = true;
+                    }
                 }
             }
 
@@ -865,6 +867,14 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
 
             return modified;
         });
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public boolean bind(final Policy policy, final Collection<Tag> tags) {
+        return bind(policy, tags, /* keepExisting */ false);
     }
 
 }

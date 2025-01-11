@@ -76,7 +76,7 @@ public class ComposerMetaAnalyzerTest {
                 .when(
                         request()
                                 .withMethod("GET")
-                                .withPath("/p/typo3/class-alias-loader.json")
+                                .withPath("/p2/typo3/class-alias-loader.json")
                 )
                 .respond(
                         response()
@@ -89,12 +89,20 @@ public class ComposerMetaAnalyzerTest {
 
         MetaModel metaModel = analyzer.analyze(component);
 
-        Assert.assertEquals("v1.1.3", metaModel.getLatestVersion());
+        Assert.assertEquals("v1.2.0", metaModel.getLatestVersion());
         Assert.assertEquals(
-                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2020-05-24 13:03:22 Z"),
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 08:11:39 Z"),
                 metaModel.getPublishedTimestamp()
         );
     }
+
+    /*
+     * This case no longer happens in the composer v2 repositories. It now returns a 404 for all examples from #2134
+     * - adobe-ims.json
+     * - adobe-stock-integration.json
+     * - composter-root-update-plugin.json
+     * - module-aws-s3.json
+     * Leaving it here in case we find a different package triggering this behaviour.
 
     @Test
     public void testAnalyzerGetsUnexpectedResponseContentCausingLatestVersionBeingNull() throws Exception {
@@ -109,7 +117,7 @@ public class ComposerMetaAnalyzerTest {
                 .when(
                         request()
                                 .withMethod("GET")
-                                .withPath("/p/magento/adobe-ims.json")
+                                .withPath("/p2/magento/adobe-ims.json")
                 )
                 .respond(
                         response()
@@ -123,12 +131,40 @@ public class ComposerMetaAnalyzerTest {
 
         Assert.assertNull(metaModel.getLatestVersion());
     }
+     */
+
+     @Test
+    public void testAnalyzerGetsUnexpectedResponseContent404() throws Exception {
+        Component component = new Component();
+        ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
+
+        component.setPurl(new PackageURL("pkg:composer/magento/adobe-ims@v1.0.0"));
+
+        analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
+        new MockServerClient("localhost", mockServer.getPort())
+                .when(
+                        request()
+                                .withMethod("GET")
+                                .withPath("/p2/magento/adobe-ims.json")
+                )
+                .respond(
+                        response()
+                                .withStatusCode(404)
+                                .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                );
+
+        analyzer.analyze(component);
+        MetaModel metaModel = analyzer.analyze(component);
+
+        Assert.assertNull(metaModel.getLatestVersion());
+    }
+
 
     private static File getResourceFile(String namespace, String name) throws Exception{
         return new File(
                 Thread.currentThread().getContextClassLoader()
                         .getResource(String.format(
-                                "unit/tasks/repositories/https---repo.packagist.org-p-%s-%s.json",
+                                "unit/tasks/repositories/https---repo.packagist.org-p2-%s-%s.json",
                                 namespace,
                                 name
                         ))

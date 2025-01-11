@@ -1318,12 +1318,24 @@ public class QueryManager extends AlpineQueryManager {
         getCacheQueryManager().clearComponentAnalysisCache(threshold);
     }
 
+    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags, final boolean keepExisting) {
+        return getNotificationQueryManager().bind(notificationRule, tags, keepExisting);
+    }
+
     public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
         return getNotificationQueryManager().bind(notificationRule, tags);
     }
 
+    public boolean bind(final Project project, final Collection<Tag> tags, final boolean keepExisting) {
+        return getProjectQueryManager().bind(project, tags, keepExisting);
+    }
+
     public void bind(Project project, List<Tag> tags) {
         getProjectQueryManager().bind(project, tags);
+    }
+
+    public boolean bind(final Policy policy, final Collection<Tag> tags, final boolean keepExisting) {
+        return getPolicyQueryManager().bind(policy, tags, keepExisting);
     }
 
     public boolean bind(final Policy policy, final Collection<Tag> tags) {

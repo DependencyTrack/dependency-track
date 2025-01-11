@@ -49,13 +49,13 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -83,6 +83,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
 final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
@@ -1370,30 +1372,52 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * @since 4.12.3
+     */
+    @Override
+    public boolean bind(final Project project, final Collection<Tag> tags, final boolean keepExisting) {
+        assertPersistent(project, "project must be persistent");
+        assertPersistentAll(tags, "tags must be persistent");
+
+        return callInTransaction(() -> {
+            boolean modified = false;
+
+            if (!keepExisting) {
+                for (final Tag existingTag : project.getTags()) {
+                    if (!tags.contains(existingTag)) {
+                        project.getTags().remove(existingTag);
+                        existingTag.getProjects().remove(project);
+                        modified = true;
+                    }
+                }
+            }
+
+            for (final Tag tag : tags) {
+                if (!project.getTags().contains(tag)) {
+                    project.getTags().add(tag);
+
+                    if (tag.getProjects() == null) {
+                        tag.setProjects(new ArrayList<>(List.of(project)));
+                    } else if (!tag.getProjects().contains(project)) {
+                        tag.getProjects().add(project);
+                    }
+
+                    modified = true;
+                }
+            }
+
+            return modified;
+        });
+    }
+
+    /**
      * Binds the two objects together in a corresponding join table.
      * @param project a Project object
      * @param tags a List of Tag objects
      */
     @Override
-    public void bind(Project project, List<Tag> tags) {
-        runInTransaction(() -> {
-            final Query<Tag> query = pm.newQuery(Tag.class, "projects.contains(:project)");
-            query.setParameters(project);
-            final List<Tag> currentProjectTags = executeAndCloseList(query);
-
-            for (final Tag tag : currentProjectTags) {
-                if (!tags.contains(tag)) {
-                    tag.getProjects().remove(project);
-                }
-            }
-            project.setTags(tags);
-            for (final Tag tag : tags) {
-                final List<Project> projects = tag.getProjects();
-                if (!projects.contains(project)) {
-                    projects.add(project);
-                }
-            }
-        });
+    public void bind(final Project project, final List<Tag> tags) {
+        bind(project, tags, /* keepExisting */ false);
     }
 
     /**

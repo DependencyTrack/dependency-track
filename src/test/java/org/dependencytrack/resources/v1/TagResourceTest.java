@@ -814,6 +814,36 @@ public class TagResourceTest extends ResourceTest {
     }
 
     @Test
+    public void tagProjectsExtraTagTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        qm.persist(projectB);
+
+        final Tag tagFoo = qm.createTag("foo");
+        qm.bind(projectA, List.of(tagFoo));
+
+        final Tag tagBar = qm.createTag("bar");
+        qm.bind(projectB, List.of(tagBar));
+
+        final Response response = jersey.target(V1_TAG + "/bar/project")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(List.of(projectA.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(204);
+
+        qm.getPersistenceManager().evictAll();
+        List<Tag> tagsA = projectA.getTags();
+        assertThat(tagsA).satisfiesExactlyInAnyOrder( projectTag -> assertThat(projectTag.getName()).isEqualTo("foo"),
+                                                                    projectTag -> assertThat(projectTag.getName()).isEqualTo("bar"));
+    }
+
+    @Test
     public void untagProjectsTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
 

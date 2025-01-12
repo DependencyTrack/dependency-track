@@ -210,6 +210,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             LOGGER.error("Error retrieving packages.json from " + packageJsonUrl, e);
             handleRequestException(LOGGER, e);
         }
+        LOGGER.debug("retrieved packages.json from: " + packageJsonUrl);
         return repoRoot;
     }
 

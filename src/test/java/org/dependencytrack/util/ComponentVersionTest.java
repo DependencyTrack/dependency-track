@@ -15,7 +15,30 @@ public class ComponentVersionTest {
         ComponentVersion version1 = new ComponentVersion("1.0.0");
         ComponentVersion version2 = new ComponentVersion("2.0.0");
 
-        Assert.assertEquals(-1, version1.compareTo(version2));
+        Assert.assertTrue(version1.compareTo(version2) < 0);
+    }
+
+    @Test
+    public void testBranchCoverage() {
+        List<String[]> list = new ArrayList<>();
+        list.add(new String[]{"0+20131201.3459502-1.1","0.0.0-11build2"});
+        list.add(new String[]{"0+git20190925.6d01903-0.1","2021.1~dfsg-2build2"});
+        list.add(new String[]{"0.0.10","0.0.10-rc5+git20190411+3595f87-5"});
+        list.add(new String[]{"0.002+source-5","0.10-1ubuntu0.22.04.3"});
+        list.add(new String[]{"0.05-16+nmu2.1","0.5.1+dfsg+~cs3.2.4-2"});
+        list.add(new String[]{"0.0~git20170619.f3a7b8f-2","2.3.0-49-g97d20249-1"});
+        list.add(new String[]{"0.0~git20200204.15e6a9d+ds-3build1","0.0~hg1314+dfsg-1.1"});
+        list.add(new String[]{"0.1+13.10.20130723-0ubuntu3","0.01-1-7"});
+        list.add(new String[]{"1:0.9.6.2~0.22.04.8","1:0.9.6.2~0.22.04.8"});
+
+        // Iterate over the list and print each array
+        for (String[] version : list) {
+            ComponentVersion version1 = new ComponentVersion(version[0]);
+            ComponentVersion version2 = new ComponentVersion(version[1]);
+
+            Assert.assertTrue(version1.compareTo(version2) <= 0);
+        }
+
     }
     /*
     @Test

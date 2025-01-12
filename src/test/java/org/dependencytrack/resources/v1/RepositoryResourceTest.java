@@ -174,8 +174,6 @@ public class RepositoryResourceTest extends ResourceTest {
         Assert.assertEquals("The repository metadata for the specified component cannot be found.", body);
     }
 
-
-    //TODO VS Add create repository with config advisory mirroring
     @Test
     public void createRepositoryTest() {
         Repository repository = new Repository();
@@ -190,7 +188,6 @@ public class RepositoryResourceTest extends ResourceTest {
         Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
                 .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus());
-
 
         response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
@@ -222,7 +219,6 @@ public class RepositoryResourceTest extends ResourceTest {
         Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
                 .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus());
-
 
         response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);

@@ -114,6 +114,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
         final JSONObject repoRoot = getRepoRoot();
         if (repoRoot == null) {
+            LOGGER.debug("repoRoot is null, fallback to v1 metadata url %s".formatted(PACKAGE_META_DATA_PATH_PATTERN_V1));
             // absence of packages.json shouldn't happen, but let's try to get metadata as
             // we did in <=4.12.2
             return analyzeFromMetadataUrl(meta, component, PACKAGE_META_DATA_PATH_PATTERN_V1);
@@ -127,6 +128,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 // According to https://github.com/composer/composer/blob/fb397acaa0648ba2668893e4b786af6465a41696/doc/05-repositories.md?plain=1#L197
                 // available-packages should contain ALL the packages in the repo.
                 // But in the Composer implementation the patterns are consulted even if available-packages is present and doesn't contain the package
+                LOGGER.debug("package not present in available-packages nor available-package-patterns");
                 return meta;
             }
         }
@@ -140,6 +142,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                     .anyMatch(pattern -> composerPackageName.matches(pattern));
 
             if (!found) {
+                LOGGER.debug("package doesn't match available-package-patterns");
                 return meta;
             }
         }
@@ -148,6 +151,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             // presence of metadata-url implies V2 repository, and takes precedence over
             // included packages and other V1 features
             final String packageMetaDataPathPattern = repoRoot.getString("metadata-url");
+            LOGGER.debug("using metadata-url pattern from packages.json: " + packageMetaDataPathPattern);
             return analyzeFromMetadataUrl(meta, component, packageMetaDataPathPattern);
         }
 
@@ -163,6 +167,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             JSONObject packages = repoRoot.getJSONObject("packages");
             if (!packages.isEmpty()) {
                 if (!packages.has(getComposerPackageName(component))) {
+                    LOGGER.debug("package %s not found in this repository.".formatted(component.getPurl()));
                     return meta;
                 }
                 JSONObject packageVersions = packages.getJSONObject(getComposerPackageName(component));
@@ -172,6 +177,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
         // V1 and no included packages, so we have to retrieve the package specific
         // metadata
+        LOGGER.debug("no metadata-url pattern and package %s not found in included packages, analyzing using v1 url pattern: %s".formatted(component.getPurl(), PACKAGE_META_DATA_PATH_PATTERN_V1));
         return analyzeFromMetadataUrl(meta, component, PACKAGE_META_DATA_PATH_PATTERN_V1);
     }
 
@@ -297,6 +303,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             if (!responsePackages.has(expectedResponsePackage)) {
                 // the package no longer exists - for v2 there's no example (yet), v1 example
                 // https://repo.packagist.org/p/magento/adobe-ims.json
+                LOGGER.debug("Package %s no longer exists in this repository.". formatted(component.getPurl()));
                 return meta;
             }
 
@@ -345,6 +352,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         final ComparableVersion latestVersion = new ComparableVersion(stripLeadingV(component.getPurl().getVersion()));
         final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
+        LOGGER.debug("analyzing package versions for: " + component.getPurl());
         packageVersions.names().forEach(item -> {
             JSONObject packageVersion = packageVersions.getJSONObject((String) item);
             // Sometimes the JSON key differs from the the version inside the JSON value. The latter is leading.

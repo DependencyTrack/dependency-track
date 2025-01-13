@@ -114,6 +114,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
         final JSONObject repoRoot = getRepoRoot();
         if (repoRoot == null) {
+            LOGGER.debug("%s: repoRoot is null for repository %s, fallback to v1 metadata url %s".formatted(composerPackageName, this.repositoryId, PACKAGE_META_DATA_PATH_PATTERN_V1));
             // absence of packages.json shouldn't happen, but let's try to get metadata as
             // we did in <=4.12.2
             return analyzeFromMetadataUrl(meta, component, PACKAGE_META_DATA_PATH_PATTERN_V1);
@@ -127,6 +128,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 // According to https://github.com/composer/composer/blob/fb397acaa0648ba2668893e4b786af6465a41696/doc/05-repositories.md?plain=1#L197
                 // available-packages should contain ALL the packages in the repo.
                 // But in the Composer implementation the patterns are consulted even if available-packages is present and doesn't contain the package
+                LOGGER.debug("%s: package not present in available-packages nor available-package-patterns for repository %s".formatted(composerPackageName, this.repositoryId));
                 return meta;
             }
         }
@@ -140,6 +142,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                     .anyMatch(pattern -> composerPackageName.matches(pattern));
 
             if (!found) {
+                LOGGER.debug("%s: package doesn't match available-package-patterns in repository %s".formatted(composerPackageName, this.repositoryId));
                 return meta;
             }
         }
@@ -148,6 +151,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             // presence of metadata-url implies V2 repository, and takes precedence over
             // included packages and other V1 features
             final String packageMetaDataPathPattern = repoRoot.getString("metadata-url");
+            LOGGER.debug("%s: using metadata-url pattern from packages.json: %s".formatted(this.repositoryId, packageMetaDataPathPattern));
             return analyzeFromMetadataUrl(meta, component, packageMetaDataPathPattern);
         }
 
@@ -163,6 +167,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             JSONObject packages = repoRoot.getJSONObject("packages");
             if (!packages.isEmpty()) {
                 if (!packages.has(getComposerPackageName(component))) {
+                    LOGGER.debug("%s: package not found in repository %s.".formatted(component.getPurl(), this.repositoryId));
                     return meta;
                 }
                 JSONObject packageVersions = packages.getJSONObject(getComposerPackageName(component));
@@ -172,6 +177,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
         // V1 and no included packages, so we have to retrieve the package specific
         // metadata
+        LOGGER.debug("%s: no metadata-url pattern and package not found in included packages for repository %s, analyzing using v1 url pattern: %s".formatted(component.getPurl(), this.repositoryId, PACKAGE_META_DATA_PATH_PATTERN_V1));
         return analyzeFromMetadataUrl(meta, component, PACKAGE_META_DATA_PATH_PATTERN_V1);
     }
 
@@ -191,19 +197,20 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 LOGGER.warn("Failed to retrieve packages.json from " + packageJsonUrl + " HTTP status code: "
                         + packageJsonResponse.getStatusLine().getStatusCode());
             } else if (packageJsonResponse.getEntity().getContent() == null) {
-                LOGGER.warn("Null packages.json from " + packageJsonUrl);
+                LOGGER.warn("%s: Null packages.json from %s".formatted(this.repositoryId, packageJsonUrl));
             } else {
                 final String packageJsonString = EntityUtils.toString(packageJsonResponse.getEntity());
                 if (JsonUtil.isBlankJson(packageJsonString)) {
-                    LOGGER.warn("Empty packages.json from " + packageJsonUrl);
+                    LOGGER.warn("%s: Empty packages.json from %s".formatted(this.repositoryId, packageJsonUrl));
                 } else {
                     repoRoot = new JSONObject(packageJsonString);
                 }
             }
         } catch (IOException e) {
-            LOGGER.error("Error retrieving packages.json from " + packageJsonUrl, e);
+            LOGGER.error("%s: Error retrieving packages.json from %s".formatted(this.repositoryId, packageJsonUrl), e);
             handleRequestException(LOGGER, e);
         }
+        LOGGER.debug("%s: retrieved packages.json from: %s".formatted(this.repositoryId, packageJsonUrl));
         return repoRoot;
     }
 
@@ -245,11 +252,11 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                         LOGGER.warn("Failed to retrieve include " + includeFilename + " HTTP status code: "
                                 + includeResponse.getStatusLine().getStatusCode());
                     } else if (includeResponse.getEntity().getContent() == null) {
-                        LOGGER.warn("Null include from " + includeFilename);
+                        LOGGER.warn("%s: Null include from %s".formatted(this.repositoryId, includeFilename));
                     } else {
                         final String nextDataString = EntityUtils.toString(includeResponse.getEntity());
                         if (JsonUtil.isBlankJson(nextDataString)) {
-                            LOGGER.warn("Empty include from " + includeFilename);
+                            LOGGER.warn("%s: Empty include from %s".formatted(this.repositoryId, includeFilename));
                         } else {
                             JSONObject nextData = new JSONObject(nextDataString);
 
@@ -257,7 +264,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                         }
                     }
                 } catch (IOException e) {
-                    LOGGER.error("Error retrieving include from " + includeFilename, e);
+                    LOGGER.error("%s: Error retrieving include from %s".formatted(this.repositoryId, includeFilename), e);
                     handleRequestException(LOGGER, e);
                 }
             });
@@ -297,6 +304,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             if (!responsePackages.has(expectedResponsePackage)) {
                 // the package no longer exists - for v2 there's no example (yet), v1 example
                 // https://repo.packagist.org/p/magento/adobe-ims.json
+                LOGGER.debug("%s: Package no longer exists in repository %s.". formatted(component.getPurl(), this.repositoryId));
                 return meta;
             }
 
@@ -345,6 +353,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         final ComparableVersion latestVersion = new ComparableVersion(stripLeadingV(component.getPurl().getVersion()));
         final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
+        LOGGER.debug("%s: analyzing package versions in %s: ".formatted(component.getPurl(), this.repositoryId));
         packageVersions.names().forEach(item -> {
             JSONObject packageVersion = packageVersions.getJSONObject((String) item);
             // Sometimes the JSON key differs from the the version inside the JSON value. The latter is leading.
@@ -380,14 +389,14 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 try {
                     meta.setPublishedTimestamp(dateFormat.parse(published));
                 } catch (Exception e) {
-                    LOGGER.warn("An error occurred while parsing time", e);
+                    LOGGER.warn("%s: An error occurred while parsing time in repository %s".formatted(component.getPurl(), this.repositoryId), e);
                 }
             } else {
                 // TODO some repositories like packages.drupal.org include a 'dateStamp' field,
                 // example 1700068743
                 // Some repositories like packages.drupal.org and composer.amasty.com/entprise
                 // do not include the name field for a version, so print purl
-                LOGGER.warn("Field 'time' not present in metadata for " + component.getPurl());
+                LOGGER.warn("%s: Field 'time' not present in metadata in repository %s".formatted(component.getPurl(), this.repositoryId));
             }
         });
         return meta;

@@ -137,6 +137,33 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals("Example Publisher", json.getString("name"));
         Assert.assertFalse(json.getBoolean("defaultPublisher"));
+        Assert.assertFalse(json.getBoolean("publishScheduled"));
+        Assert.assertEquals("Publisher description", json.getString("description"));
+        Assert.assertEquals("template", json.getString("template"));
+        Assert.assertEquals("application/json", json.getString("templateMimeType"));
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        Assert.assertEquals(SendMailPublisher.class.getName(), json.getString("publisherClass"));
+    }
+
+    @Test
+    public void createNotificationPublisherWithPublishScheduledTest() {
+        NotificationPublisher publisher = new NotificationPublisher();
+        publisher.setName("Example Publisher");
+        publisher.setDescription("Publisher description");
+        publisher.setTemplate("template");
+        publisher.setTemplateMimeType("application/json");
+        publisher.setPublisherClass(SendMailPublisher.class.getName());
+        publisher.setDefaultPublisher(false);
+        publisher.setPublishScheduled(true);
+        Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(publisher, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Example Publisher", json.getString("name"));
+        Assert.assertFalse(json.getBoolean("defaultPublisher"));
+        Assert.assertTrue(json.getBoolean("publishScheduled"));
         Assert.assertEquals("Publisher description", json.getString("description"));
         Assert.assertEquals("template", json.getString("template"));
         Assert.assertEquals("application/json", json.getString("templateMimeType"));
@@ -228,6 +255,32 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals("Updated Publisher name", json.getString("name"));
         Assert.assertFalse(json.getBoolean("defaultPublisher"));
+        Assert.assertFalse(json.getBoolean("publishScheduled"));
+        Assert.assertEquals("Publisher description", json.getString("description"));
+        Assert.assertEquals("template", json.getString("template"));
+        Assert.assertEquals("text/html", json.getString("templateMimeType"));
+        Assert.assertEquals(notificationPublisher.getUuid().toString(), json.getString("uuid"));
+        Assert.assertEquals(SendMailPublisher.class.getName(), json.getString("publisherClass"));
+    }
+
+    @Test
+    public void updateNotificationPublisherToScheduledTest() {
+        NotificationPublisher notificationPublisher = qm.createNotificationPublisher(
+                "Example Publisher", "Publisher description",
+                SendMailPublisher.class, "template", "text/html",
+                false
+        );
+        notificationPublisher.setName("Updated Publisher name");
+        notificationPublisher.setPublishScheduled(true);
+        Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(notificationPublisher, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Updated Publisher name", json.getString("name"));
+        Assert.assertFalse(json.getBoolean("defaultPublisher"));
+        Assert.assertTrue(json.getBoolean("publishScheduled"));
         Assert.assertEquals("Publisher description", json.getString("description"));
         Assert.assertEquals("template", json.getString("template"));
         Assert.assertEquals("text/html", json.getString("templateMimeType"));

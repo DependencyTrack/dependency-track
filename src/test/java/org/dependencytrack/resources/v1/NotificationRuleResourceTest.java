@@ -178,6 +178,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
     @Test
     public void updateNotificationRuleWithTagsTest() {
         final NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
+        publisher.setPublishScheduled(true);
         final NotificationRule rule = qm.createNotificationRule("Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
 
         // Tag the rule with "foo" and "bar".
@@ -227,7 +228,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
                             "publisherClass": "${json-unit.any-string}",
                             "templateMimeType": "${json-unit.any-string}",
                             "defaultPublisher": true,
-                            "publishScheduled": false, 
+                            "publishScheduled": true, 
                             "uuid": "${json-unit.any-string}"
                           },
                           "uuid": "${json-unit.matches:ruleUuid}"
@@ -275,7 +276,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
                             "publisherClass": "${json-unit.any-string}",
                             "templateMimeType": "${json-unit.any-string}",
                             "defaultPublisher": true,
-                            "publishScheduled": false, 
+                            "publishScheduled": true, 
                             "uuid": "${json-unit.any-string}"
                           },
                           "uuid": "${json-unit.matches:ruleUuid}"

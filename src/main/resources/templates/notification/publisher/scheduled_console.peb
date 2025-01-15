@@ -1,0 +1,10 @@
+--------------------------------------------------------------------------------
+Notification
+  -- timestamp: {{ timestamp }}
+  -- level:     {{ notification.level }}
+  -- scope:     {{ notification.scope }}
+  -- group:     {{ notification.group }}
+  -- title:     {{ notification.title }}{% if subject.overview.newVulnerabilitiesCount > 0 %}
+  -- details:{% for entry in subject.summary.affectedProjectSummaries %}{% if entry.value.newVulnerabilitiesBySeverity|length > 0 %}
+    -- project: {{ entry.key.name }} {% if entry.key.version %}[{{ entry.key.version }}]{% endif %}{% for newVulnEntry in entry.value.newVulnerabilitiesBySeverity %}{% if newVulnEntry.value > 0 %}
+      -- {{ newVulnEntry.key }}: {{ newVulnEntry.value }}{% endif %}{% endfor %}{% endif %}{% endfor %}{% endif %}

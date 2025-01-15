@@ -20,17 +20,36 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+
+import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.io.IOUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyCondition.Operator;
+import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.ViolationAnalysis;
+import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.model.Policy.ViolationState;
+import org.dependencytrack.model.PolicyViolation.Type;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationDetails;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationOverview;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummary;
+import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummaryInfo;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityDetails;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityDetailsInfo;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityOverview;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilitySummary;
+import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilitySummaryInfo;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -39,17 +58,23 @@ import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
-import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
+import org.dependencytrack.notification.vo.ScheduledPolicyViolationsIdentified;
 import org.junit.Test;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Date;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -59,10 +84,18 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 public abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCapableTest {
 
     final DefaultNotificationPublishers publisher;
+    final DefaultNotificationPublishers scheduledPublisher;
     final T publisherInstance;
+
+    AbstractPublisherTest(final DefaultNotificationPublishers publisher, final DefaultNotificationPublishers scheduledPublisher, final T publisherInstance) {
+        this.publisher = publisher;
+        this.scheduledPublisher = scheduledPublisher;
+        this.publisherInstance = publisherInstance;
+    }
 
     AbstractPublisherTest(final DefaultNotificationPublishers publisher, final T publisherInstance) {
         this.publisher = publisher;
+        this.scheduledPublisher = DefaultNotificationPublishers.SCHEDULED_EMAIL;
         this.publisherInstance = publisherInstance;
     }
 
@@ -229,6 +262,81 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
+    @Test
+    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var vuln = createVulnerability();
+        final Map<Severity, Integer> mapVulnBySev = new EnumMap<>(Severity.class);
+        final Map<Project, VulnerabilitySummaryInfo> mapVulnSummInfos = new LinkedHashMap<>();
+        final Map<Project, List<VulnerabilityDetailsInfo>> mapVulnDetailInfos = new LinkedHashMap<>();
+
+        mapVulnBySev.put(Severity.CRITICAL, 1);
+        mapVulnSummInfos.put(project, new VulnerabilitySummaryInfo(mapVulnBySev, mapVulnBySev, new LinkedMap<>()));
+        mapVulnDetailInfos.put(project, List.of(new VulnerabilityDetailsInfo(
+                component.getUuid().toString(),
+                component.getName(),
+                component.getVersion(),
+                component.getGroup(),
+                vuln.getSource(),
+                vuln.getVulnId(),
+                vuln.getSeverity().name(),
+                "analyzer",
+                "http://example.com",
+                "Thu Jan 01 18:31:06 GMT 1970", // Thu Jan 01 18:31:06 GMT 1970
+                AnalysisState.EXPLOITABLE.name(),
+                false)));
+
+        final var subject = new ScheduledNewVulnerabilitiesIdentified(
+            new VulnerabilityOverview(1, 1, mapVulnBySev, 1, 0),
+            new VulnerabilitySummary(mapVulnSummInfos),
+            new VulnerabilityDetails(mapVulnDetailInfos)
+        );
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.NEW_VULNERABILITY)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.NEW_VULNERABILITY)
+                .content("")
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createScheduledConfig()));
+    }
+
+    @Test
+    public void testPublishWithScheduledNewPolicyViolationsNotification() {
+        final var project = createProject();
+        final var violation = createPolicyViolation();
+        final Map<PolicyViolation.Type, Integer> mapPolViolBySev = new EnumMap<>(PolicyViolation.Type.class);
+        final Map<Project, PolicyViolationSummaryInfo> mapPolViolSummInfos = new LinkedHashMap<>();
+        final Map<Project, List<PolicyViolation>> mapPolViolDetailInfos = new LinkedHashMap<>();
+
+        mapPolViolBySev.put(PolicyViolation.Type.LICENSE, 1);
+        mapPolViolSummInfos.put(project, new PolicyViolationSummaryInfo(mapPolViolBySev, mapPolViolBySev, new LinkedMap<>()));
+        mapPolViolDetailInfos.put(project, List.of(violation));
+
+        final var subject = new ScheduledPolicyViolationsIdentified(
+            new PolicyViolationOverview(1, 1, mapPolViolBySev, 1, 0),
+            new PolicyViolationSummary(mapPolViolSummInfos),
+            new PolicyViolationDetails(mapPolViolDetailInfos)
+        );
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.POLICY_VIOLATION)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.NEW_POLICY_VIOLATION)
+                .content("")
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createScheduledConfig()));
+    }
+
     private static Component createComponent(final Project project) {
         final var component = new Component();
         component.setProject(project);
@@ -287,10 +395,59 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         return analysis;
     }
 
+    private static Policy createPolicy() {
+        final var policy = new Policy();
+        policy.setUuid(UUID.fromString("8d2f1ec1-3625-48c6-97c4-2a7553c7a376"));
+        policy.setViolationState(ViolationState.INFO);
+        policy.setName("policyName");
+        return policy;
+    }
+
+    private static ViolationAnalysis createViolationAnalysis() {
+        final var violationAnalysis = new ViolationAnalysis();
+        violationAnalysis.setViolationAnalysisState(ViolationAnalysisState.APPROVED);
+        violationAnalysis.setSuppressed(false);
+        return violationAnalysis;
+    }
+
+    private static PolicyCondition createPolicyCondition() {
+        final var policy = createPolicy();
+        final var policyCondition = new PolicyCondition();
+        policyCondition.setUuid(UUID.fromString("b029fce3-96f2-4c4a-9049-61070e9b6ea6"));
+        policyCondition.setPolicy(policy);
+        policyCondition.setSubject(PolicyCondition.Subject.AGE);
+        policyCondition.setOperator(Operator.NUMERIC_EQUAL);
+        return policyCondition;
+    }
+
+    private static PolicyViolation createPolicyViolation() {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var violation = new PolicyViolation();
+        final var violationAnalysis = createViolationAnalysis();
+        final var policyCondition = createPolicyCondition();
+        
+        violation.setUuid(UUID.fromString("bf956a83-6013-4a69-9c76-857e2a8c8e45"));
+        violation.setPolicyCondition(policyCondition);
+        violation.setType(Type.LICENSE);
+        violation.setComponent(component);
+        violation.setTimestamp(Date.from(Instant.ofEpochSecond(66666, 666))); // Thu Jan 01 18:31:06 GMT 1970
+        violation.setAnalysis(violationAnalysis);
+        return violation;
+    }
+
     private JsonObject createConfig() throws Exception {
         return Json.createObjectBuilder()
                 .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
                 .add(Publisher.CONFIG_TEMPLATE_KEY, IOUtils.resourceToString(publisher.getPublisherTemplateFile(), UTF_8))
+                .addAll(extraConfig())
+                .build();
+    }
+
+    private JsonObject createScheduledConfig() throws Exception {
+        return Json.createObjectBuilder()
+                .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
+                .add(Publisher.CONFIG_TEMPLATE_KEY, IOUtils.resourceToString(scheduledPublisher.getPublisherTemplateFile(), UTF_8))
                 .addAll(extraConfig())
                 .build();
     }

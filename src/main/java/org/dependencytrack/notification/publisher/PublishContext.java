@@ -21,12 +21,15 @@ package org.dependencytrack.notification.publisher;
 import alpine.notification.Notification;
 import com.google.common.base.MoreObjects;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.Rule;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
+import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
+import org.dependencytrack.notification.vo.ScheduledPolicyViolationsIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 
@@ -101,6 +104,10 @@ public record PublishContext(String notificationGroup, String notificationLevel,
             notificationSubjects.put(SUBJECT_VULNERABILITY, Vulnerability.convert(subject.getVulnerability()));
         } else if (notification.getSubject() instanceof final VexConsumedOrProcessed subject) {
             notificationSubjects.put(SUBJECT_PROJECT, Project.convert(subject.getProject()));
+        } else if (notification.getSubject() instanceof final ScheduledNewVulnerabilitiesIdentified subject) {
+            notificationSubjects.put(SUBJECT_PROJECTS, subject.summary().affectedProjectSummaries().keySet().stream().map(Project::convert).toList());
+        } else if (notification.getSubject() instanceof final ScheduledPolicyViolationsIdentified subject) {
+            notificationSubjects.put(SUBJECT_PROJECTS, subject.summary().affectedProjectSummaries().keySet().stream().map(Project::convert).toList());
         }
 
         return new PublishContext(notification.getGroup(), Optional.ofNullable(notification.getLevel()).map(Enum::name).orElse(null),
@@ -114,7 +121,7 @@ public record PublishContext(String notificationGroup, String notificationLevel,
      * @param rule The applicable {@link NotificationRule}
      * @return This {@link PublishContext}
      */
-    public PublishContext withRule(final NotificationRule rule) {
+    public PublishContext withRule(final Rule rule) {
         return new PublishContext(this.notificationGroup, this.notificationLevel, this.notificationScope, this.notificationTimestamp,
                 this.notificationSubjects, rule.getName(), rule.getScope().name(), rule.getNotificationLevel().name(), rule.isLogSuccessfulPublish());
     }

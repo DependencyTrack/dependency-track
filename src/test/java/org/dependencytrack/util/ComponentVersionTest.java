@@ -18,6 +18,7 @@ public class ComponentVersionTest {
         Assert.assertTrue(version1.compareTo(version2) < 0);
     }
 
+    /*
     @Test
     public void testBranchCoverage() {
         List<String[]> list = new ArrayList<>();
@@ -40,10 +41,10 @@ public class ComponentVersionTest {
         }
 
     }
-    /*
+    */
     @Test
     public void testComplex()  {
-        String filePath = "src/test/resources/version/ubuntu2.txt";
+        String filePath = "src/test/resources/version/npm2.txt";
         List<String> lines = new ArrayList();
 
         try {
@@ -81,6 +82,5 @@ public class ComponentVersionTest {
             System.out.println("<<<<<<<BUG!!!!!!!!!!!!!!!!!!!!!!");
         }
     }
-    */
 }
 

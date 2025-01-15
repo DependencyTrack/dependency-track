@@ -9,7 +9,7 @@ Dependency-Track supports badges in Scalable Vector Graphics (SVG) format. Suppo
 basis via permission or globally for unauthenticated access.
 
 To enable badges for a team, activate the permission `VIEW_BADGES`. To deactivate badges, remove the permission. To 
-retrieve a badge, use a team's API key either in the badge API header `X-API-Key` or in the URI parameter `apiKey`.
+retrieve a badge, use a team's API key either in the badge API header `X-Api-Key` or in the URI parameter `apiKey`.
 
 As an alternative, badges can also be accessed without authentication. On new Dependency-Track installations, this is
 disabled by default. On Dependency-Track installations updated from &leq; v4.11, where (unauthenticated) badge support 

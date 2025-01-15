@@ -35,5 +35,5 @@ Instead they show a list of projects contained in this collection and their metr
 
 ![collection projects details](/images/screenshots/collection-projects-details.png)
 
-Collection projects can be easily identified via the "culculator" icon, and hovering it
+Collection projects can be easily identified via the "calculator" icon, and hovering it
 displays the applied collection logic.

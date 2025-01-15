@@ -132,7 +132,9 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
     public ComponentVersion() {
         /* TODO: Do not create for every instance an own object. Generate once and reference it then */
         /* TODO: The selected Ecosystem should be depedent on the purl. if there is no purl default to semver */
-        this.ecosystem = new Ecosystem("deb", List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":"));
+        //this.ecosystem = new Ecosystem("deb", List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":"));
+        /* semver */
+        this.ecosystem = new Ecosystem("semver", List.of("-"), List.of("#"), List.of("\\d+", "[a-z]+", "\\."));
     }
 
     /**
@@ -146,7 +148,9 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
     public ComponentVersion(String version) {
         /* TODO: Do not create for every instance an own object. Generate once and reference it then */
         /* TODO: The selected Ecosystem should be depedent on the purl. if there is no purl default to semver */
-        this.ecosystem = new Ecosystem("deb", List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":"));
+        //this.ecosystem = new Ecosystem("deb", List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":"));
+        /* semver */
+        this.ecosystem = new Ecosystem("semver", List.of("-"), List.of("#"), List.of("\\d+", "[a-z]+", "\\."));
         parseVersion(version);
     }
 

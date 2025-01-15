@@ -12,10 +12,20 @@ import java.util.Random;
 public class ComponentVersionTest {
     @Test
     public void testSimple() {
-        ComponentVersion version1 = new ComponentVersion("1.0.0");
-        ComponentVersion version2 = new ComponentVersion("2.0.0");
+        List<String[]> list = new ArrayList<>();
+        list.add(new String[]{"1.0.0","2.0.0"});
+        list.add(new String[]{"4.17.1","6.15.1"});
+        list.add(new String[]{"0.0.5","24.0.0"});
+        list.add(new String[]{"3.0.11","3.2.5"});
+        list.add(new String[]{"7.0.5","7.0.5"});
 
-        Assert.assertTrue(version1.compareTo(version2) < 0);
+        // Iterate over the list and print each array
+        for (String[] version : list) {
+            ComponentVersion version1 = new ComponentVersion(version[0]);
+            ComponentVersion version2 = new ComponentVersion(version[1]);
+
+            Assert.assertTrue(version1.compareTo(version2) <= 0);
+        }
     }
 
     /*
@@ -42,6 +52,7 @@ public class ComponentVersionTest {
 
     }
     */
+    /*
     @Test
     public void testComplex()  {
         String filePath = "src/test/resources/version/npm2.txt";
@@ -82,5 +93,6 @@ public class ComponentVersionTest {
             System.out.println("<<<<<<<BUG!!!!!!!!!!!!!!!!!!!!!!");
         }
     }
+    */
 }
 

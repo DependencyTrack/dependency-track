@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks.scanners;
 
 import alpine.common.logging.Logger;
+import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
@@ -153,7 +154,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             return true;
         }
 
-        final String ecosystem = (vs.getPurl() != null) ? vs.getPurlType() : "semver";
+        final String ecosystem = (vs.getPurl() != null) ? vs.getPurlType() : PackageURL.StandardTypes.GENERIC;
         final ComponentVersion target = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), targetVersion);
 
         if (target.isEmpty()) {

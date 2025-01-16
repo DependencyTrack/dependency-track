@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
+import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
@@ -90,7 +91,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
      * Constructor for a empty DependencyVersion.
      */
     public ComponentVersion() {
-        this.ecosystem = EcosystemFactory.getEcosystem("semver");
+        this.ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.GENERIC);
     }
 
     public ComponentVersion(Ecosystem ecosystem) {
@@ -106,7 +107,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
      * @param version the well formatted version number to parse
      */
     public ComponentVersion(String version) {
-        this.ecosystem = EcosystemFactory.getEcosystem("semver");
+        this.ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.GENERIC);
         parseVersion(version);
     }
 

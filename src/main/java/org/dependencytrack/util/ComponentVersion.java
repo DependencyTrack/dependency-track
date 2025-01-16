@@ -90,11 +90,10 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
      * Constructor for a empty DependencyVersion.
      */
     public ComponentVersion() {
-        /* TODO: Do not create for every instance an own object. Generate once and reference it then */
         /* TODO: The selected Ecosystem should be depedent on the purl. if there is no purl default to semver */
-        //this.ecosystem = new Ecosystem("deb", List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":"));
+        //this.ecosystem = EcosystemFactory.getEcosystem("deb");
         /* semver */
-        this.ecosystem = new Ecosystem("semver", List.of("-"), List.of("#"), List.of("\\d+", "[a-z]+", "\\."));
+        this.ecosystem = EcosystemFactory.getEcosystem("semver");
     }
 
     /**
@@ -106,11 +105,10 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
      * @param version the well formatted version number to parse
      */
     public ComponentVersion(String version) {
-        /* TODO: Do not create for every instance an own object. Generate once and reference it then */
         /* TODO: The selected Ecosystem should be depedent on the purl. if there is no purl default to semver */
-        //this.ecosystem = new Ecosystem("deb", List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":"));
+        //this.ecosystem = EcosystemFactory.getEcosystem("deb");
         /* semver */
-        this.ecosystem = new Ecosystem("semver", List.of("-"), List.of("#"), List.of("\\d+", "[a-z]+", "\\."));
+        this.ecosystem = EcosystemFactory.getEcosystem("semver");
         parseVersion(version);
     }
 

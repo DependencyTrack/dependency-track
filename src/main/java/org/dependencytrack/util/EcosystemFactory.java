@@ -18,13 +18,11 @@
  */
 package org.dependencytrack.util;
 
+import com.github.packageurl.PackageURL;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
-/*
- * TODO: Refactor using com.github.packageurl.PackageURL
- */
-
 
 /**
  * A class for producing Ecosystem objects, e.g. ubuntu.
@@ -34,13 +32,12 @@ public class EcosystemFactory {
 
     public static Ecosystem getEcosystem(String name) {
         if(!cache.containsKey(name)) {
-            Ecosystem eco =  new Ecosystem("deb", List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":"));
-            if(name.equals("deb")) {
-                cache.put("deb", new Ecosystem("deb", List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":")));
+            if(name.equals(PackageURL.StandardTypes.DEBIAN)) {
+                cache.put(PackageURL.StandardTypes.DEBIAN, new Ecosystem(PackageURL.StandardTypes.DEBIAN, List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":")));
             }
             else  {
-                cache.put("semver", new Ecosystem("semver", List.of("-"), List.of("#"), List.of("\\d+", "[a-z]+", "\\.")));
-                name = "semver";
+                cache.put(PackageURL.StandardTypes.GENERIC, new Ecosystem(PackageURL.StandardTypes.GENERIC, List.of("-"), List.of("#"), List.of("\\d+", "[a-z]+", "\\.")));
+                name = PackageURL.StandardTypes.GENERIC;
             }
         }
 

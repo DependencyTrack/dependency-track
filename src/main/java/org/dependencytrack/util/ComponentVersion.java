@@ -90,10 +90,11 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
      * Constructor for a empty DependencyVersion.
      */
     public ComponentVersion() {
-        /* TODO: The selected Ecosystem should be depedent on the purl. if there is no purl default to semver */
-        //this.ecosystem = EcosystemFactory.getEcosystem("deb");
-        /* semver */
         this.ecosystem = EcosystemFactory.getEcosystem("semver");
+    }
+
+    public ComponentVersion(Ecosystem ecosystem) {
+        this.ecosystem = ecosystem;
     }
 
     /**
@@ -105,10 +106,12 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
      * @param version the well formatted version number to parse
      */
     public ComponentVersion(String version) {
-        /* TODO: The selected Ecosystem should be depedent on the purl. if there is no purl default to semver */
-        //this.ecosystem = EcosystemFactory.getEcosystem("deb");
-        /* semver */
         this.ecosystem = EcosystemFactory.getEcosystem("semver");
+        parseVersion(version);
+    }
+
+    public ComponentVersion(Ecosystem ecosystem, String version) {
+        this.ecosystem = ecosystem;
         parseVersion(version);
     }
 

@@ -33,11 +33,10 @@ public class EcosystemFactory {
     public static Ecosystem getEcosystem(String name) {
         if(!cache.containsKey(name)) {
             if(name.equals(PackageURL.StandardTypes.DEBIAN)) {
-                cache.put(PackageURL.StandardTypes.DEBIAN, new Ecosystem(PackageURL.StandardTypes.DEBIAN, List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":")));
+                cache.put(name, new Ecosystem(PackageURL.StandardTypes.DEBIAN, List.of("~"), List.of("#"), List.of("\\d+", "[a-z]+", "\\+", "-", "\\.", ":")));
             }
             else  {
-                cache.put(PackageURL.StandardTypes.GENERIC, new Ecosystem(PackageURL.StandardTypes.GENERIC, List.of("-"), List.of("#"), List.of("\\d+", "[a-z]+", "\\.")));
-                name = PackageURL.StandardTypes.GENERIC;
+                cache.put(name, new Ecosystem(PackageURL.StandardTypes.GENERIC, List.of("-"), List.of("#"), List.of("\\d+", "[a-z]+", "\\.")));
             }
         }
 

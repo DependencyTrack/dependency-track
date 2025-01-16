@@ -25,6 +25,7 @@ import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.ComponentVersion;
+import org.dependencytrack.util.EcosystemFactory;
 import org.dependencytrack.util.NotificationUtil;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.util.Relation;
@@ -152,7 +153,9 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             return true;
         }
 
-        final ComponentVersion target = new ComponentVersion(targetVersion);
+        final String ecosystem = (vs.getPurl() != null) ? vs.getPurlType() : "semver";
+        final ComponentVersion target = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), targetVersion);
+
         if (target.isEmpty()) {
             return false;
         }

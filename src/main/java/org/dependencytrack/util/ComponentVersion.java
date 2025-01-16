@@ -75,46 +75,6 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
         }
     }
 
-    /**
-     * A class for assigning strings matched by regexes a certain priority specific to a ecosystem, e.g. ubuntu.
-     */
-    private class Ecosystem {
-        private String name;
-        private final Integer equalToEmptyStringIndex;
-        /**
-         * The list of regexs, sorting from low priority to high priority
-         */
-        private List<String> elements;
-        /**
-         * Constructor for a Ecosystem with three partial lists, each sorting from low priority to high priority
-         *
-         * @param pre_elements List with regexes with priorities lower than EndOfString
-         * @param ignore_elements List with regexes with priorities same as EndOfString
-         * @param post_elements List with regexes with priorities higher than EndOfString
-         */
-        public Ecosystem(String name, List<String> pre_elements, List<String> ignore_elements, List<String> post_elements) {
-            this.name = name;
-            this.equalToEmptyStringIndex = pre_elements.size();
-            this.elements = new ArrayList<>();
-            this.elements.addAll(pre_elements);
-            this.elements.addAll(ignore_elements);
-            /* This acts as a splitter between two different version blocks which are compared separatly */
-            this.elements.add("\n");
-            this.elements.addAll(post_elements);
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public Integer getEndOfStringPriority() {
-            return equalToEmptyStringIndex;
-        }
-
-        public List<String> getElements() {
-            return elements;
-        }
-    }
 
     /**
      * A list of the version parts.
@@ -171,7 +131,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
         }
 
         // Debian/Ubuntu specific
-        if(this.ecosystem.name=="deb") {
+        if(this.ecosystem.getName()=="deb") {
             // When no epoch is given, use default epoch 0
             if (!version.contains(":")) {
                version = "0:" + version;

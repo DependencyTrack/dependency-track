@@ -21,6 +21,10 @@ package org.dependencytrack.util;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+/*
+ * TODO: Refactor using com.github.packageurl.PackageURL
+ */
+
 
 /**
  * A class for producing Ecosystem objects, e.g. ubuntu.

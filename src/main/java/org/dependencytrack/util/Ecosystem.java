@@ -21,6 +21,10 @@ package org.dependencytrack.util;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+ * TODO: Refactor using com.github.packageurl.PackageURL
+ */
+
 /**
  * A class for assigning strings matched by regexes a certain priority specific to a ecosystem, e.g. ubuntu.
  */

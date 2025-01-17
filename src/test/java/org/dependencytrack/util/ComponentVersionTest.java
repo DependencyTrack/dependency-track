@@ -32,6 +32,58 @@ public class ComponentVersionTest {
     }
 
     @Test
+    public void testSimpleOpensslVersion() {
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
+        ComponentVersion version_1_1_0 = new ComponentVersion(ecosystem, "1.1.0");
+        ComponentVersion version_1_1_1 = new ComponentVersion(ecosystem, "1.1.1");
+        ComponentVersion version_1_1_1b = new ComponentVersion(ecosystem, "1.1.1b");
+        ComponentVersion version_1_1_1i = new ComponentVersion(ecosystem, "1.1.1i");
+        ComponentVersion version_1_1_1j = new ComponentVersion(ecosystem, "1.1.1j");
+        ComponentVersion version_1_1_1k = new ComponentVersion(ecosystem, "1.1.1k");
+        ComponentVersion version_1_1_2 = new ComponentVersion(ecosystem, "1.1.2");
+
+        // equality
+        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_1j) == 0);
+        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_1b) != 0);
+        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_1) != 0);
+
+        // less than
+        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_2) < 0);
+        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_1k) < 0);
+
+        // greater than
+        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_0) > 0);
+        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_1i) > 0);
+    }
+
+    @Test
+    public void testUbuntuOpensslVersion() {
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
+        ComponentVersion version_1_1_0 = new ComponentVersion(ecosystem, "1.1.0");
+        ComponentVersion version_1_1_1 = new ComponentVersion(ecosystem, "1.1.1");
+        ComponentVersion version_1_1_1b = new ComponentVersion(ecosystem, "1.1.1b");
+        ComponentVersion version_1_1_1i = new ComponentVersion(ecosystem, "1.1.1i");
+        ComponentVersion version_1_1_1j = new ComponentVersion(ecosystem, "1.1.1j");
+        ComponentVersion version_1_1_1j_1ubuntu2_10 = new ComponentVersion(ecosystem, "1.1.1j-1ubuntu2.10");
+        ComponentVersion version_1_1_1k = new ComponentVersion(ecosystem, "1.1.1k");
+        ComponentVersion version_1_1_2 = new ComponentVersion(ecosystem, "1.1.2");
+
+        // equality
+        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1j_1ubuntu2_10) == 0);
+        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1b) != 0);
+        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1) != 0);
+
+        // less than
+        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_2) < 0);
+        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1k) < 0);
+
+        // greater than
+        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1j) > 0);
+        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_0) > 0);
+        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1i) > 0);
+    }
+
+    @Test
     public void testDebian() {
         Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
 

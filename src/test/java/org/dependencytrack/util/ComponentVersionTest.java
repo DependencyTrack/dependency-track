@@ -1,5 +1,6 @@
 package org.dependencytrack.util;
 
+import com.github.packageurl.PackageURL;
 import org.junit.Assert;
 import org.junit.Test;
 import java.nio.file.Files;
@@ -11,7 +12,9 @@ import java.util.Random;
 
 public class ComponentVersionTest {
     @Test
-    public void testSimple() {
+    public void testGeneric() {
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.GENERIC);
+
         List<String[]> list = new ArrayList<>();
         list.add(new String[]{"1.0.0","2.0.0"});
         list.add(new String[]{"4.17.1","6.15.1"});
@@ -21,16 +24,17 @@ public class ComponentVersionTest {
 
         // Iterate over the list and print each array
         for (String[] version : list) {
-            ComponentVersion version1 = new ComponentVersion(version[0]);
-            ComponentVersion version2 = new ComponentVersion(version[1]);
+            ComponentVersion version1 = new ComponentVersion(ecosystem, version[0]);
+            ComponentVersion version2 = new ComponentVersion(ecosystem, version[1]);
 
             Assert.assertTrue(version1.compareTo(version2) <= 0);
         }
     }
 
-    /*
     @Test
-    public void testBranchCoverage() {
+    public void testDebian() {
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
+
         List<String[]> list = new ArrayList<>();
         list.add(new String[]{"0+20131201.3459502-1.1","0.0.0-11build2"});
         list.add(new String[]{"0+git20190925.6d01903-0.1","2021.1~dfsg-2build2"});
@@ -44,17 +48,19 @@ public class ComponentVersionTest {
 
         // Iterate over the list and print each array
         for (String[] version : list) {
-            ComponentVersion version1 = new ComponentVersion(version[0]);
-            ComponentVersion version2 = new ComponentVersion(version[1]);
+            ComponentVersion version1 = new ComponentVersion(ecosystem, version[0]);
+            ComponentVersion version2 = new ComponentVersion(ecosystem, version[1]);
 
             Assert.assertTrue(version1.compareTo(version2) <= 0);
         }
 
     }
-    */
-    /*
-    @Test
-    public void testComplex()  {
+
+    //@Test
+    //@Disabled("Temporary disabled since test will run until the first error, in best case forever")
+    public void testNpmRandomized()  {
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.GENERIC);
+
         String filePath = "src/test/resources/version/npm2.txt";
         List<String> lines = new ArrayList();
 
@@ -85,14 +91,55 @@ public class ComponentVersionTest {
             greater = lines.get(firstPick);
         }
 
-        ComponentVersion version_lesser = new ComponentVersion(lesser);
-        ComponentVersion version_greater = new ComponentVersion(greater);
+        ComponentVersion version_lesser = new ComponentVersion(ecosystem, lesser);
+        ComponentVersion version_greater = new ComponentVersion(ecosystem, greater);
 
         System.out.println(lesser +  "<<" + greater);
-        if(!(version_lesser.compareTo(version_greater) <= 0))
-            System.out.println("<<<<<<<BUG!!!!!!!!!!!!!!!!!!!!!!");
+        Assert.assertTrue(version_lesser.compareTo(version_greater) <= 0);
         }
     }
-    */
+
+    //@Test
+    //@Disabled("Temporary disabled since test will run until the first error, in best case forever")
+    public void testUbuntuRandomized()  {
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
+
+        String filePath = "src/test/resources/version/ubuntu2.txt";
+        List<String> lines = new ArrayList();
+
+        try {
+            lines = Files.readAllLines(Path.of(filePath));
+        }
+        catch (IOException e) {
+            // Handle the exception
+            System.err.println("An error occurred while reading the file:");
+            e.printStackTrace();
+        }
+
+        Random random = new Random();
+
+        while(true) {
+        Integer firstPick = random.nextInt(lines.size());
+        Integer secondPick = random.nextInt(lines.size());
+
+        // Determine lesser and greater
+        String lesser;
+        String greater;
+
+        if (firstPick.compareTo(secondPick) <= 0) {
+            lesser = lines.get(firstPick);
+            greater = lines.get(secondPick);
+        } else {
+            lesser = lines.get(secondPick);
+            greater = lines.get(firstPick);
+        }
+
+        ComponentVersion version_lesser = new ComponentVersion(ecosystem, lesser);
+        ComponentVersion version_greater = new ComponentVersion(ecosystem, greater);
+
+        System.out.println(lesser +  "<<" + greater);
+        Assert.assertTrue(version_lesser.compareTo(version_greater) <= 0);
+        }
+    }
 }
 

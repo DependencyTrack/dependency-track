@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -125,8 +124,6 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
      */
     public final void parseVersion(String version) {
         versionParts = new ArrayList<>();
-        String regex = this.ecosystem.getElements().stream().map(e -> "(" + e + ")").reduce((e1, e2) -> e1 + "|" + e2).orElse("");
-        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
 
         if(version == null) {
             return;
@@ -148,9 +145,9 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
         }
 
         // General part
-        Matcher matcher = pattern.matcher(version.toLowerCase());
+        Matcher matcher = this.ecosystem.getTokenRegex().matcher(version.toLowerCase());
         while (matcher.find()) {
-            for (int i = 1; i <= this.ecosystem.getElements().size(); i++) {
+            for (int i = 1; i <= matcher.groupCount(); i++) {
                 if (matcher.group(i) != null) {
                     versionParts.add(new Token(i - 1, matcher.group(i)));
                     break;

@@ -20,6 +20,7 @@ package org.dependencytrack.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * A class for assigning strings matched by regexes a certain priority specific to a ecosystem, e.g. ubuntu.
@@ -28,9 +29,9 @@ public class Ecosystem {
     private String name;
     private final Integer equalToEmptyStringIndex;
     /**
-     * The list of regexs, sorting from low priority to high priority
+     * The regex used for tokenizing the version string and assigning priorities to the tokens
      */
-    private List<String> elements;
+    private Pattern tokenRegex;
     /**
      * Constructor for a Ecosystem with three partial lists, each sorting from low priority to high priority
      *
@@ -41,12 +42,17 @@ public class Ecosystem {
     public Ecosystem(String name, List<String> pre_elements, List<String> ignore_elements, List<String> post_elements) {
         this.name = name;
         this.equalToEmptyStringIndex = pre_elements.size();
-        this.elements = new ArrayList<>();
-        this.elements.addAll(pre_elements);
-        this.elements.addAll(ignore_elements);
+
+        List<String> elements = new ArrayList<>();
+        elements.addAll(pre_elements);
+        elements.addAll(ignore_elements);
         /* This acts as a splitter between two different version blocks which are compared separatly */
-        this.elements.add("\n");
-        this.elements.addAll(post_elements);
+        elements.add("\n");
+        elements.addAll(post_elements);
+
+        /* Make a matching group from each element and concate them with logical OR */
+        String regexString = elements.stream().map(e -> "(" + e + ")").reduce((e1, e2) -> e1 + "|" + e2).orElse("");
+        this.tokenRegex = Pattern.compile(regexString, Pattern.CASE_INSENSITIVE);
     }
 
     public String getName() {
@@ -57,8 +63,8 @@ public class Ecosystem {
         return equalToEmptyStringIndex;
     }
 
-    public List<String> getElements() {
-        return elements;
+    public Pattern getTokenRegex() {
+        return tokenRegex;
     }
 }
 

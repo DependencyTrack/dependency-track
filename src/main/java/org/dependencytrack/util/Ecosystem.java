@@ -36,16 +36,16 @@ public class Ecosystem {
      * Constructor for a Ecosystem with three partial lists, each sorting from low priority to high priority
      *
      * @param pre_elements List with regexes with priorities lower than EndOfString
-     * @param ignore_elements List with regexes with priorities same as EndOfString
+     * @param ignore_elements Regexes with priority same as EndOfString
      * @param post_elements List with regexes with priorities higher than EndOfString
      */
-    public Ecosystem(String name, List<String> pre_elements, List<String> ignore_elements, List<String> post_elements) {
+    public Ecosystem(String name, List<String> pre_elements, String ignore_element, List<String> post_elements) {
         this.name = name;
         this.equalToEmptyStringIndex = pre_elements.size();
 
         List<String> elements = new ArrayList<>();
         elements.addAll(pre_elements);
-        elements.addAll(ignore_elements);
+        elements.add(ignore_element);
         /* This acts as a splitter between two different version blocks which are compared separatly */
         elements.add("\n");
         elements.addAll(post_elements);

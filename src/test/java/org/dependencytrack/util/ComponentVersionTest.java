@@ -12,6 +12,14 @@ import java.util.Random;
 
 public class ComponentVersionTest {
     @Test
+    public void testParseVersion() {
+        String versionString = "0:1.a.#b+c-d~e";
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
+        ComponentVersion version = new ComponentVersion(ecosystem, versionString);
+        Assert.assertEquals(versionString, version.toString());
+    }
+
+    @Test
     public void testGeneric() {
         Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.GENERIC);
 

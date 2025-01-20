@@ -757,7 +757,7 @@ public class ProjectResourceTest extends ResourceTest {
 
         final String userJwt = new JsonWebToken().createToken(testUser);
 
-        final Team otherTeam = qm.createTeam("otherTeam", false);
+        final Team otherTeam = qm.createTeam("otherTeam");
 
         final Response response = jersey.target(V1_PROJECT)
                 .request()

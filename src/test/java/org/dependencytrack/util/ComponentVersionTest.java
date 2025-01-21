@@ -105,6 +105,8 @@ public class ComponentVersionTest {
         list.add(new String[]{"0.0~git20200204.15e6a9d+ds-3build1","0.0~hg1314+dfsg-1.1"});
         list.add(new String[]{"0.1+13.10.20130723-0ubuntu3","0.01-1-7"});
         list.add(new String[]{"1:0.9.6.2~0.22.04.8","1:0.9.6.2~0.22.04.8"});
+        list.add(new String[]{"2.15.0-1~deb10u1", "2.15.0-1~deb11u1"});
+        list.add(new String[]{"2.15.0-1~deb11u1", "2.15.0-1~deb105u1"});
 
         // Iterate over the list and print each array
         for (String[] version : list) {

@@ -159,6 +159,39 @@ public class ComponentVersionTest {
         }
     }
 
+    @Test
+    public void testNpmFull()  {
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.GENERIC);
+
+        String filePath = "src/test/resources/version/npm2.txt";
+        List<String> lines = new ArrayList();
+
+        try {
+            lines = Files.readAllLines(Path.of(filePath));
+        }
+        catch (IOException e) {
+            // Handle the exception
+            System.err.println("An error occurred while reading the file:");
+            e.printStackTrace();
+        }
+
+        for(Integer i=0; i<lines.size(); i++) {
+            if((i%(lines.size()/100))==0) {
+                System.out.println("testNpmFull: " + ((i*100)/lines.size()) + "%");
+            }
+            ComponentVersion version1 = new ComponentVersion(ecosystem, lines.get(i));
+            for(Integer j=0; j<lines.size(); j++) {
+                ComponentVersion version2 = new ComponentVersion(ecosystem, lines.get(j));
+
+                // Custom message + speedup
+                if(Math.signum(i.compareTo(j)) != Math.signum(version1.compareTo(version2)))
+                {
+                    Assert.assertTrue("Failing: " + version1.toString() + " " + version2.toString(), false);
+                }
+            }
+        }
+    }
+
     //@Test
     //@Disabled("Temporary disabled since test will run until the first error, in best case forever")
     public void testUbuntuRandomized()  {
@@ -201,5 +234,42 @@ public class ComponentVersionTest {
         Assert.assertTrue(version_lesser.compareTo(version_greater) <= 0);
         }
     }
+
+    @Test
+    public void testUbuntuFull()  {
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
+
+        String filePath = "src/test/resources/version/ubuntu2.txt";
+        List<String> lines = new ArrayList();
+
+        try {
+            lines = Files.readAllLines(Path.of(filePath));
+        }
+        catch (IOException e) {
+            // Handle the exception
+            System.err.println("An error occurred while reading the file:");
+            e.printStackTrace();
+        }
+
+        for(Integer i=0; i<lines.size(); i++) {
+            if((i%(lines.size()/100))==0) {
+                System.out.println("testUbuntuFull: " + ((i*100)/lines.size()) + "%");
+            }
+            ComponentVersion version1 = new ComponentVersion(ecosystem, lines.get(i));
+            for(Integer j=0; j<lines.size(); j++) {
+                ComponentVersion version2 = new ComponentVersion(ecosystem, lines.get(j));
+
+                // Custom message + speedup
+                if(Math.signum(i.compareTo(j)) != Math.signum(version1.compareTo(version2)))
+                {
+                    Assert.assertTrue("Failing: " + version1.toString() + " " + version2.toString(), false);
+                }
+            }
+        }
+    }
+
+
+
+
 }
 

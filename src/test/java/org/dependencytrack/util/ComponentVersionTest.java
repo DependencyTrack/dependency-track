@@ -163,7 +163,6 @@ public class ComponentVersionTest {
 
     @Test
     public void testNpmFull()  {
-        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.GENERIC);
 
         String filePath = "src/test/resources/version/npm2.txt";
         List<String> lines = new ArrayList();
@@ -177,18 +176,22 @@ public class ComponentVersionTest {
             e.printStackTrace();
         }
 
-        for(Integer i=0; i<lines.size(); i++) {
-            if((i%(lines.size()/100))==0) {
-                System.out.println("testNpmFull: " + ((i*100)/lines.size()) + "%");
-            }
-            ComponentVersion version1 = new ComponentVersion(ecosystem, lines.get(i));
-            for(Integer j=0; j<lines.size(); j++) {
-                ComponentVersion version2 = new ComponentVersion(ecosystem, lines.get(j));
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.GENERIC);
 
+        List<ComponentVersion> versions = new ArrayList();
+        for(Integer x=0; x<lines.size(); x++) {
+            versions.add(new ComponentVersion(ecosystem, lines.get(x)));
+        }
+
+        for(Integer i=0; i<versions.size(); i++) {
+            if((i%(versions.size()/100))==0) {
+                System.out.println("testNpmFull: " + ((i*100)/versions.size()) + "%");
+            }
+            for(Integer j=0; j<versions.size(); j++) {
                 // Custom message + speedup
-                if(Math.signum(i.compareTo(j)) != Math.signum(version1.compareTo(version2)))
+                if(Math.signum(i.compareTo(j)) != Math.signum(versions.get(i).compareTo(versions.get(j))))
                 {
-                    Assert.assertTrue("Failing: " + version1.toString() + " " + version2.toString(), false);
+                    Assert.assertTrue("Failing: " + versions.get(i).toString() + " " + versions.get(j).toString(), false);
                 }
             }
         }
@@ -239,7 +242,6 @@ public class ComponentVersionTest {
 
     @Test
     public void testUbuntuFull()  {
-        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
 
         String filePath = "src/test/resources/version/ubuntu2.txt";
         List<String> lines = new ArrayList();
@@ -253,18 +255,22 @@ public class ComponentVersionTest {
             e.printStackTrace();
         }
 
-        for(Integer i=0; i<lines.size(); i++) {
-            if((i%(lines.size()/100))==0) {
-                System.out.println("testUbuntuFull: " + ((i*100)/lines.size()) + "%");
-            }
-            ComponentVersion version1 = new ComponentVersion(ecosystem, lines.get(i));
-            for(Integer j=0; j<lines.size(); j++) {
-                ComponentVersion version2 = new ComponentVersion(ecosystem, lines.get(j));
+        Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
 
+        List<ComponentVersion> versions = new ArrayList();
+        for(Integer x=0; x<lines.size(); x++) {
+            versions.add(new ComponentVersion(ecosystem, lines.get(x)));
+        }
+
+        for(Integer i=0; i<versions.size(); i++) {
+            if((i%(versions.size()/100))==0) {
+                System.out.println("testUbuntuFull: " + ((i*100)/versions.size()) + "%");
+            }
+            for(Integer j=0; j<versions.size(); j++) {
                 // Custom message + speedup
-                if(Math.signum(i.compareTo(j)) != Math.signum(version1.compareTo(version2)))
+                if(Math.signum(i.compareTo(j)) != Math.signum(versions.get(i).compareTo(versions.get(j))))
                 {
-                    Assert.assertTrue("Failing: " + version1.toString() + " " + version2.toString(), false);
+                    Assert.assertTrue("Failing: " + versions.get(i).toString() + " " + versions.get(j).toString(), false);
                 }
             }
         }

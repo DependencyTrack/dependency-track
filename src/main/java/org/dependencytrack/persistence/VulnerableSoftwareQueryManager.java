@@ -141,35 +141,69 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     }
 
     /**
-     * Returns a List of all VulnerableSoftware objects that match the specified PackageURL
-     * @return a List of matching VulnerableSoftware objects
-     */
-    @SuppressWarnings("unchecked")
-    public VulnerableSoftware getVulnerableSoftwareByPurl(String purlType, String purlNamespace, String purlName,
-                                                                   String versionEndExcluding, String versionEndIncluding,
-                                                                   String versionStartExcluding, String versionStartIncluding) {
-        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class, "purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && versionEndExcluding == :versionEndExcluding && versionEndIncluding == :versionEndIncluding && versionStartExcluding == :versionStartExcluding && versionStartIncluding == :versionStartIncluding");
-        query.setRange(0, 1);
-        return singleResult(query.executeWithArray(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding));
-    }
-
-    /**
-     * @since 4.12.0
+     * @since 4.12.3
      */
     public VulnerableSoftware getVulnerableSoftwareByPurl(
-            final String purl,
+            final String purlType,
+            final String purlNamespace,
+            final String purlName,
+            final String version,
             final String versionEndExcluding,
             final String versionEndIncluding,
             final String versionStartExcluding,
             final String versionStartIncluding) {
+        final var queryFilterParts = new ArrayList<>(List.of(
+                "purlType == :purlType",
+                "purlName == :purlName"));
+        final var queryParams = new HashMap<String, Object>(Map.ofEntries(
+                Map.entry("purlType", purlType),
+                Map.entry("purlName", purlName)));
+
+        if (purlNamespace == null) {
+            queryFilterParts.add("purlNamespace == null");
+        } else {
+            queryFilterParts.add("purlNamespace == :purlNamespace");
+            queryParams.put("purlNamespace", purlNamespace);
+        }
+
+        if (version != null) {
+            queryFilterParts.add("version == :version");
+            queryParams.put("version", version);
+        } else {
+            queryFilterParts.add("version == null");
+        }
+
+        if (versionEndExcluding == null) {
+            queryFilterParts.add("versionEndExcluding == null");
+        } else {
+            queryFilterParts.add("versionEndExcluding == :versionEndExcluding");
+            queryParams.put("versionEndExcluding", versionEndExcluding);
+        }
+
+        if (versionEndIncluding == null) {
+            queryFilterParts.add("versionEndIncluding == null");
+        } else {
+            queryFilterParts.add("versionEndIncluding == :versionEndIncluding");
+            queryParams.put("versionEndIncluding", versionEndIncluding);
+        }
+
+        if (versionStartExcluding == null) {
+            queryFilterParts.add("versionStartExcluding == null");
+        } else {
+            queryFilterParts.add("versionStartExcluding == :versionStartExcluding");
+            queryParams.put("versionStartExcluding", versionStartExcluding);
+        }
+
+        if (versionStartIncluding == null) {
+            queryFilterParts.add("versionStartIncluding == null");
+        } else {
+            queryFilterParts.add("versionStartIncluding == :versionStartIncluding");
+            queryParams.put("versionStartIncluding", versionStartIncluding);
+        }
+
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
-        query.setFilter("""
-                purl == :purl \
-                  && versionEndExcluding == :versionEndExcluding \
-                  && versionEndIncluding == :versionEndIncluding \
-                  && versionStartExcluding == :versionStartExcluding \
-                  && versionStartIncluding == :versionStartIncluding""");
-        query.setParameters(purl, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+        query.setFilter(String.join(" && ", queryFilterParts));
+        query.setNamedParameters(queryParams);
         query.setRange(0, 1);
         return executeAndCloseUnique(query);
     }
@@ -378,9 +412,16 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
             // Records to keep are removed from vsList. Remaining records in vsList thus are entirely new.
             final var vsListToRemove = new ArrayList<VulnerableSoftware>();
             final var vsListToKeep = new ArrayList<VulnerableSoftware>();
+
+            // Separately track existing VulnerableSoftware records that are reported by the source.
+            // Records in this list must be attributed to the source.
+            // Records in vsListToKeep that are NOT in this list could have been reported by other sources.
+            final var matchedOldVsList = new ArrayList<VulnerableSoftware>();
+
             for (final VulnerableSoftware vsOld : vsOldList) {
                 if (vsList.removeIf(vsOld::equalsIgnoringDatastoreIdentity)) {
                     vsListToKeep.add(vsOld);
+                    matchedOldVsList.add(vsOld);
                 } else {
                     final List<AffectedVersionAttribution> attributions = vsOld.getAffectedVersionAttributions();
                     if (attributions == null || attributions.isEmpty()) {
@@ -413,12 +454,26 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
 
             final var attributionDate = new Date();
 
-            // For VulnerableSoftware records that existed before, update the lastSeen timestamp.
+            // For VulnerableSoftware records that existed before, update the lastSeen timestamp,
+            // or create an attribution if it doesn't exist already.
             for (final VulnerableSoftware oldVs : vsListToKeep) {
-                oldVs.getAffectedVersionAttributions().stream()
-                        .filter(attribution -> attribution.getSource() == source)
-                        .findAny()
-                        .ifPresent(attribution -> attribution.setLastSeen(attributionDate));
+                boolean hasAttribution = false;
+                for (final AffectedVersionAttribution attribution : oldVs.getAffectedVersionAttributions()) {
+                    if (attribution.getSource() == source) {
+                        attribution.setLastSeen(attributionDate);
+                        hasAttribution = true;
+                        break;
+                    }
+                }
+
+                // The record was previously reported by others, but now the source reports it, too.
+                // Ensure that an attribution is added accordingly.
+                if (matchedOldVsList.contains(oldVs) && !hasAttribution) {
+                    LOGGER.trace("%s: Adding attribution".formatted(persistentVuln.getVulnId()));
+                    final AffectedVersionAttribution attribution = createAttribution(
+                            persistentVuln, oldVs, attributionDate, source);
+                    persist(attribution);
+                }
             }
 
             // For VulnerableSoftware records that are newly reported for this vulnerability, check if any matching
@@ -434,7 +489,10 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                             vs.getVersionStartIncluding());
                 } else if (vs.getPurl() != null) {
                     existingVs = getVulnerableSoftwareByPurl(
-                            vs.getPurl(),
+                            vs.getPurlType(),
+                            vs.getPurlNamespace(),
+                            vs.getPurlName(),
+                            vs.getVersion(),
                             vs.getVersionEndExcluding(),
                             vs.getVersionEndIncluding(),
                             vs.getVersionStartExcluding(),

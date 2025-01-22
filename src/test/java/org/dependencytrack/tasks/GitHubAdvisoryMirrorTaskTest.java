@@ -18,59 +18,110 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.model.IConfigProperty;
-import org.apache.commons.lang3.tuple.Pair;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.github.jeremylong.openvulnerability.client.ghsa.SecurityAdvisory;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.message.BasicHttpResponse;
+import org.apache.hc.core5.util.TimeValue;
+import org.assertj.core.data.Offset;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AffectedVersionAttribution;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.Vulnerability.Source;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
-import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_API_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
 
 public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
 
-    @Test
-    public void testUpdateDatasource() {
+    private final ObjectMapper jsonMapper = new JsonMapper()
+            .registerModule(new JavaTimeModule());
+
+    @Before
+    public void beforeEach() {
         qm.createConfigProperty(
-                ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(),
-                ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getPropertyName(),
                 "true",
-                IConfigProperty.PropertyType.BOOLEAN,
-                null
-        );
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getPropertyType(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getDescription());
+        qm.createConfigProperty(
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_API_URL.getGroupName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_API_URL.getPropertyName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_API_URL.getDefaultPropertyValue(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_API_URL.getPropertyType(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_API_URL.getDescription());
+        qm.createConfigProperty(
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN.getGroupName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN.getPropertyName(),
+                "accessToken",
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN.getPropertyType(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN.getDescription());
+    }
 
-        final var ghVuln1 = new GitHubVulnerability();
-        ghVuln1.setPackageEcosystem("maven");
-        ghVuln1.setPackageName("com.fasterxml.jackson.core:jackson-databind");
-        ghVuln1.setVulnerableVersionRange(">=2.13.0,<=2.13.2.0");
+    @Test
+    public void testProcessAdvisory() throws Exception {
+        qm.createConfigProperty(
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName(),
+                "true",
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyType(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getDescription());
 
-        final var ghVuln2 = new GitHubVulnerability();
-        ghVuln2.setPackageEcosystem("maven");
-        ghVuln2.setPackageName("com.fasterxml.jackson.core:jackson-databind");
-        ghVuln2.setVulnerableVersionRange("<=2.12.6.0");
-
-        final var ghAdvisory = new GitHubSecurityAdvisory();
-        ghAdvisory.setId("GHSA-57j2-w4cx-62h2");
-        ghAdvisory.setGhsaId("GHSA-57j2-w4cx-62h2");
-        ghAdvisory.setIdentifiers(List.of(Pair.of("CVE", "CVE-2020-36518")));
-        ghAdvisory.setSeverity("HIGH");
-        ghAdvisory.setVulnerabilities(List.of(ghVuln1, ghVuln2));
-        ghAdvisory.setPublishedAt(ZonedDateTime.of(2022, 3, 12, 0, 0, 0, 0, ZoneOffset.UTC));
-        ghAdvisory.setUpdatedAt(ZonedDateTime.of(2022, 8, 11, 0, 0, 0, 0, ZoneOffset.UTC));
+        final var advisory = jsonMapper.readValue(/* language=JSON */ """
+                {
+                  "id": "GHSA-57j2-w4cx-62h2",
+                  "ghsaId": "GHSA-57j2-w4cx-62h2",
+                  "identifiers": [
+                    {
+                      "type": "CVE",
+                      "value": "CVE-2020-36518"
+                    }
+                  ],
+                  "severity": "HIGH",
+                  "publishedAt": "2022-03-12T00:00:00Z",
+                  "updatedAt": "2022-08-11T00:00:00Z",
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "maven",
+                            "name": "com.fasterxml.jackson.core:jackson-databind"
+                          },
+                          "vulnerableVersionRange": ">=2.13.0,<=2.13.2.0"
+                        }
+                      },
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "maven",
+                            "name": "com.fasterxml.jackson.core:jackson-databind"
+                          },
+                          "vulnerableVersionRange": "<=2.12.6.0"
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
 
         final var task = new GitHubAdvisoryMirrorTask();
-        task.updateDatasource(List.of(ghAdvisory));
+        final boolean createdOrUpdated = task.processAdvisory(advisory);
+        assertThat(createdOrUpdated).isTrue();
 
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.GITHUB, "GHSA-57j2-w4cx-62h2");
         assertThat(vuln).isNotNull();
@@ -91,31 +142,55 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUpdateDatasourceWithAliasSyncDisabled() {
+    public void testProcessAdvisoryWithAliasSyncDisabled() throws Exception {
         qm.createConfigProperty(
-                ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(),
-                ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName(),
                 "false",
-                IConfigProperty.PropertyType.BOOLEAN,
-                null
-        );
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyType(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getDescription());
 
-        final var ghVuln1 = new GitHubVulnerability();
-        ghVuln1.setPackageEcosystem("maven");
-        ghVuln1.setPackageName("com.fasterxml.jackson.core:jackson-databind");
-        ghVuln1.setVulnerableVersionRange(">=2.13.0,<=2.13.2.0");
-
-        final var ghAdvisory = new GitHubSecurityAdvisory();
-        ghAdvisory.setId("GHSA-57j2-w4cx-62h2");
-        ghAdvisory.setGhsaId("GHSA-57j2-w4cx-62h2");
-        ghAdvisory.setIdentifiers(List.of(Pair.of("CVE", "CVE-2020-36518")));
-        ghAdvisory.setSeverity("HIGH");
-        ghAdvisory.setVulnerabilities(List.of(ghVuln1));
-        ghAdvisory.setPublishedAt(ZonedDateTime.of(2022, 3, 12, 0, 0, 0, 0, ZoneOffset.UTC));
-        ghAdvisory.setUpdatedAt(ZonedDateTime.of(2022, 8, 11, 0, 0, 0, 0, ZoneOffset.UTC));
+        final var advisory = jsonMapper.readValue(/* language=JSON */ """
+                {
+                  "id": "GHSA-57j2-w4cx-62h2",
+                  "ghsaId": "GHSA-57j2-w4cx-62h2",
+                  "identifiers": [
+                    {
+                      "type": "CVE",
+                      "value": "CVE-2020-36518"
+                    }
+                  ],
+                  "severity": "HIGH",
+                  "publishedAt": "2022-03-12T00:00:00Z",
+                  "updatedAt": "2022-08-11T00:00:00Z",
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "maven",
+                            "name": "com.fasterxml.jackson.core:jackson-databind"
+                          },
+                          "vulnerableVersionRange": ">=2.13.0,<=2.13.2.0"
+                        }
+                      },
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "maven",
+                            "name": "com.fasterxml.jackson.core:jackson-databind"
+                          },
+                          "vulnerableVersionRange": "<=2.12.6.0"
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
 
         final var task = new GitHubAdvisoryMirrorTask();
-        task.updateDatasource(List.of(ghAdvisory));
+        final boolean createdOrUpdated = task.processAdvisory(advisory);
+        assertThat(createdOrUpdated).isTrue();
 
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.GITHUB, "GHSA-57j2-w4cx-62h2");
         assertThat(vuln).isNotNull();
@@ -124,8 +199,9 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUpdateDatasourceVulnerableVersionRanges() {
+    public void testProcessAdvisoryVulnerableVersionRanges() throws Exception {
         var vs1 = new VulnerableSoftware();
+        vs1.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind");
         vs1.setPurlType("maven");
         vs1.setPurlNamespace("com.fasterxml.jackson.core");
         vs1.setPurlName("jackson-databind");
@@ -135,6 +211,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
         vs1 = qm.persist(vs1);
 
         var vs2 = new VulnerableSoftware();
+        vs2.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind");
         vs2.setPurlType("maven");
         vs2.setPurlNamespace("com.fasterxml.jackson.core");
         vs2.setPurlName("jackson-databind");
@@ -143,6 +220,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
         vs2 = qm.persist(vs2);
 
         var vs3 = new VulnerableSoftware();
+        vs3.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind");
         vs3.setPurlType("maven");
         vs3.setPurlNamespace("com.fasterxml.jackson.core");
         vs3.setPurlName("jackson-databind");
@@ -159,34 +237,52 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
         qm.updateAffectedVersionAttribution(existingVuln, vs2, Source.OSV);
         qm.updateAffectedVersionAttribution(existingVuln, vs3, Source.GITHUB);
 
-        // Create a vulnerable version range that is equal to vs1.
-        final var ghVuln1 = new GitHubVulnerability();
-        ghVuln1.setPackageEcosystem("maven");
-        ghVuln1.setPackageName("com.fasterxml.jackson.core:jackson-databind");
-        ghVuln1.setVulnerableVersionRange(">=2.13.0,<=2.13.2.0");
-
-        // Create a vulnerable version range that is only differs slightly from vs2.
-        final var ghVuln2 = new GitHubVulnerability();
-        ghVuln2.setPackageEcosystem("maven");
-        ghVuln2.setPackageName("com.fasterxml.jackson.core:jackson-databind");
-        ghVuln2.setVulnerableVersionRange("<=2.12.6.0");
-
         // No vulnerable version range matching vs3 is created.
         // Because vs3 was attributed to GitHub, the association with the vulnerability
         // should be removed in the mirroring process.
 
-        final var ghAdvisory = new GitHubSecurityAdvisory();
-        ghAdvisory.setId("GHSA-57j2-w4cx-62h2");
-        ghAdvisory.setGhsaId("GHSA-57j2-w4cx-62h2");
-        ghAdvisory.setIdentifiers(List.of(Pair.of("CVE", "CVE-2020-36518")));
-        ghAdvisory.setSeverity("HIGH");
-        ghAdvisory.setVulnerabilities(List.of(ghVuln1, ghVuln2));
-        ghAdvisory.setPublishedAt(ZonedDateTime.of(2022, 3, 12, 0, 0, 0, 0, ZoneOffset.UTC));
-        ghAdvisory.setUpdatedAt(ZonedDateTime.of(2022, 8, 11, 0, 0, 0, 0, ZoneOffset.UTC));
+        final var advisory = jsonMapper.readValue(/* language=JSON */ """
+                {
+                  "id": "GHSA-57j2-w4cx-62h2",
+                  "ghsaId": "GHSA-57j2-w4cx-62h2",
+                  "identifiers": [
+                    {
+                      "type": "CVE",
+                      "value": "CVE-2020-36518"
+                    }
+                  ],
+                  "severity": "HIGH",
+                  "publishedAt": "2022-03-12T00:00:00Z",
+                  "updatedAt": "2022-08-11T00:00:00Z",
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "maven",
+                            "name": "com.fasterxml.jackson.core:jackson-databind"
+                          },
+                          "vulnerableVersionRange": ">=2.13.0,<=2.13.2.0"
+                        }
+                      },
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "maven",
+                            "name": "com.fasterxml.jackson.core:jackson-databind"
+                          },
+                          "vulnerableVersionRange": "<=2.12.6.0"
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
 
         // Run the mirror task
         final var task = new GitHubAdvisoryMirrorTask();
-        task.updateDatasource(List.of(ghAdvisory));
+        final boolean createdOrUpdated = task.processAdvisory(advisory);
+        assertThat(createdOrUpdated).isTrue();
 
         qm.getPersistenceManager().evictAll();
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.GITHUB, "GHSA-57j2-w4cx-62h2");
@@ -249,6 +345,173 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
                     );
                 }
         );
+    }
+
+    @Test
+    public void shouldNotRetryOnResponseWithCode403() {
+        final var httpResponse = new BasicHttpResponse(403);
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isFalse();
+    }
+
+    @Test
+    public void shouldRetryOnResponseWithCode429() {
+        final var httpResponse = new BasicHttpResponse(429);
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isTrue();
+    }
+
+    @Test
+    public void shouldRetryOnResponseWithCode503() {
+        final var httpResponse = new BasicHttpResponse(503);
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isTrue();
+    }
+
+    @Test
+    public void shouldRetryUpToSixAttempts() {
+        final var httpResponse = new BasicHttpResponse(503);
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+
+        boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 6, httpContext);
+        assertThat(shouldRetry).isTrue();
+
+        shouldRetry = retryStrategy.retryRequest(httpResponse, 7, httpContext);
+        assertThat(shouldRetry).isFalse();
+    }
+
+    @Test
+    public void shouldRetryOnResponseWithCode403AndRetryAfterHeader() {
+        final var httpResponse = new BasicHttpResponse(403);
+        httpResponse.addHeader("retry-after", /* 1min */ 60);
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isTrue();
+    }
+
+    @Test
+    public void shouldRetryOnResponseWithCode429AndRetryAfterHeader() {
+        final var httpResponse = new BasicHttpResponse(429);
+        httpResponse.addHeader("retry-after", /* 1min */ 60);
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isTrue();
+    }
+
+    @Test
+    public void shouldNotRetryWhenRetryAfterExceedsMaxDelay() {
+        final var httpResponse = new BasicHttpResponse(403);
+        httpResponse.addHeader("retry-after", /* 3min */ 180);
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isTrue();
+
+        httpResponse.setHeader("retry-after", /* 3min 1sec */ 181);
+        shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isFalse();
+    }
+
+    @Test
+    public void shouldRetryOnResponseWithCode403AndRateLimitHeaders() {
+        final var httpResponse = new BasicHttpResponse(403);
+        httpResponse.addHeader("x-ratelimit-remaining", 6);
+        httpResponse.addHeader("x-ratelimit-limit", 666);
+        httpResponse.setHeader("x-ratelimit-reset", Instant.now().getEpochSecond());
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isTrue();
+    }
+
+    @Test
+    public void shouldRetryOnResponseWithCode429AndRateLimitHeaders() {
+        final var httpResponse = new BasicHttpResponse(429);
+        httpResponse.addHeader("x-ratelimit-remaining", 6);
+        httpResponse.addHeader("x-ratelimit-limit", 666);
+        httpResponse.setHeader("x-ratelimit-reset", Instant.now().getEpochSecond());
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isTrue();
+    }
+
+    @Test
+    public void shouldRetryWhenLimitResetIsShorterThanMaxDelay() {
+        final var httpResponse = new BasicHttpResponse(429);
+        httpResponse.addHeader("x-ratelimit-remaining", 0);
+        httpResponse.addHeader("x-ratelimit-limit", 666);
+        httpResponse.setHeader("x-ratelimit-reset", Instant.now().plusSeconds(/* 3min */ 180).getEpochSecond());
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isTrue();
+    }
+
+    @Test
+    public void shouldNotRetryWhenLimitResetExceedsMaxDelay() {
+        final var httpResponse = new BasicHttpResponse(429);
+        httpResponse.addHeader("x-ratelimit-remaining", 0);
+        httpResponse.addHeader("x-ratelimit-limit", 666);
+        httpResponse.setHeader("x-ratelimit-reset", Instant.now().plusSeconds(/* 3min 1sec */ 181).getEpochSecond());
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final boolean shouldRetry = retryStrategy.retryRequest(httpResponse, 1, httpContext);
+        assertThat(shouldRetry).isFalse();
+    }
+
+    @Test
+    public void shouldUseRetryAfterHeaderForRetryDelay() {
+        final var httpResponse = new BasicHttpResponse(429);
+        httpResponse.addHeader("retry-after", /* 1min 6sec */ 66);
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final TimeValue retryDelay = retryStrategy.getRetryInterval(httpResponse, 1, httpContext);
+        assertThat(retryDelay.toSeconds()).isEqualTo(66);
+    }
+
+    @Test
+    public void shouldUseLimitResetHeaderForRetryDelay() {
+        final var httpResponse = new BasicHttpResponse(429);
+        httpResponse.addHeader("x-ratelimit-remaining", 0);
+        httpResponse.addHeader("x-ratelimit-limit", 666);
+        httpResponse.addHeader("x-ratelimit-reset", Instant.now().plusSeconds(66).getEpochSecond());
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final TimeValue retryDelay = retryStrategy.getRetryInterval(httpResponse, 1, httpContext);
+        assertThat(retryDelay.toSeconds()).isCloseTo(66, Offset.offset(1L));
+    }
+
+    @Test
+    public void shouldUseOneSecondAsDefaultRetryDelay() {
+        final var httpResponse = new BasicHttpResponse(503);
+        final var httpContext = HttpClientContext.create();
+
+        final var retryStrategy = new GitHubAdvisoryMirrorTask.HttpRequestRetryStrategy();
+        final TimeValue retryDelay = retryStrategy.getRetryInterval(httpResponse, 1, httpContext);
+        assertThat(retryDelay.toSeconds()).isEqualTo(1);
     }
 
 }

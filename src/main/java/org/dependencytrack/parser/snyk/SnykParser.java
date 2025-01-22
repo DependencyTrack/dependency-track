@@ -302,7 +302,7 @@ public class SnykParser {
             
             //check for a numeric definite version range
             if ((versionStartIncluding != null && versionEndIncluding != null) || (versionStartIncluding != null && versionEndExcluding != null) || (versionStartExcluding != null && versionEndIncluding != null) || (versionStartExcluding != null && versionEndExcluding != null)) {
-                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), packageURL.getVersion(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
                 if (vs == null) {
                     vs = new VulnerableSoftware();
                     vs.setVulnerable(true);

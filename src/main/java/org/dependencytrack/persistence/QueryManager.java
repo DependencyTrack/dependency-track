@@ -940,24 +940,17 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerableSoftwareQueryManager().getAllVulnerableSoftwareByCpe(cpeString);
     }
 
-    public VulnerableSoftware getVulnerableSoftwareByPurl(String purlType, String purlNamespace, String purlName,
-                                                          String versionEndExcluding, String versionEndIncluding,
-                                                          String versionStartExcluding, String versionStartIncluding) {
-        return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
-    }
-
     public VulnerableSoftware getVulnerableSoftwareByPurl(
-            final String purl,
+            final String purlType,
+            final String purlNamespace,
+            final String purlName,
+            final String version,
             final String versionEndExcluding,
             final String versionEndIncluding,
             final String versionStartExcluding,
-            final String versionStartIncluding) {
+            String versionStartIncluding) {
         return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(
-                purl,
-                versionEndExcluding,
-                versionEndIncluding,
-                versionStartExcluding,
-                versionStartIncluding);
+                purlType, purlNamespace, purlName, version, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
     }
 
     public List<VulnerableSoftware> getVulnerableSoftwareByVulnId(final String source, final String vulnId) {

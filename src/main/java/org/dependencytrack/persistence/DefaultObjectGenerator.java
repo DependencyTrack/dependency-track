@@ -146,13 +146,13 @@ public class DefaultObjectGenerator implements ServletContextListener {
                     new String(PasswordService.createHash("admin".toCharArray())), true, true, false);
 
             LOGGER.debug("Creating team: Administrators");
-            final Team sysadmins = qm.createTeam("Administrators", false);
+            final Team sysadmins = qm.createTeam("Administrators");
             LOGGER.debug("Creating team: Portfolio Managers");
-            final Team managers = qm.createTeam("Portfolio Managers", false);
+            final Team managers = qm.createTeam("Portfolio Managers");
             LOGGER.debug("Creating team: Automation");
-            final Team automation = qm.createTeam("Automation", true);
+            final Team automation = qm.createTeam("Automation");
             LOGGER.debug("Creating team: Badge Viewers");
-            final Team badges = qm.createTeam("Badge Viewers", true);
+            final Team badges = qm.createTeam("Badge Viewers");
 
             final List<Permission> fullList = qm.getPermissions();
 

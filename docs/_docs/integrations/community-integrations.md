@@ -30,4 +30,4 @@ to make custom tools and integrations. Many tools that integrate with Dependency
 |[Dependency-Track Backstage plugin](https://github.com/TRIMM/plugin-dependencytrack)| [TRIMM](https://www.trimm.nl/)|
 | [dependency-track-exporter](https://github.com/jetstack/dependency-track-exporter) | [Jetstack](https://jetstack.io) |
 | [Azure DevOps Extension](https://marketplace.visualstudio.com/items?itemName=eshaar-me.vss-dependency-track-integration) | |
-
+| [SecObserve](https://github.com/MaibornWolff/SecObserve) | [MaibornWolff](https://www.maibornwolff.de/en/) |

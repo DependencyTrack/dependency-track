@@ -198,7 +198,8 @@ public class RepositoryResource extends AlpineResource {
                         jsonRepository.isEnabled(),
                         jsonRepository.isInternal(),
                         jsonRepository.isAuthenticationRequired(),
-                        jsonRepository.getUsername(), jsonRepository.getPassword());
+                        jsonRepository.getUsername(), jsonRepository.getPassword(),
+                        jsonRepository.getConfig());
 
                 return Response.status(Response.Status.CREATED).entity(repository).build();
             } else {
@@ -241,7 +242,7 @@ public class RepositoryResource extends AlpineResource {
                             : repository.getPassword();
 
                     repository = qm.updateRepository(jsonRepository.getUuid(), repository.getIdentifier(), url,
-                            jsonRepository.isInternal(), jsonRepository.isAuthenticationRequired(), jsonRepository.getUsername(), updatedPassword, jsonRepository.isEnabled());
+                            jsonRepository.isInternal(), jsonRepository.isAuthenticationRequired(), jsonRepository.getUsername(), updatedPassword, jsonRepository.isEnabled(), jsonRepository.getConfig());
                     return Response.ok(repository).build();
                 } catch (Exception e) {
                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The specified repository password could not be encrypted.").build();

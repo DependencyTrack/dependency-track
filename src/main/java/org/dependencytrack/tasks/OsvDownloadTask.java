@@ -334,7 +334,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
         final String versionEndIncluding = affectedPackage.getUpperVersionRangeIncluding();
 
         VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
-                versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
+                purl.getVersion(), versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
         if (vs != null) {
             return vs;
         }

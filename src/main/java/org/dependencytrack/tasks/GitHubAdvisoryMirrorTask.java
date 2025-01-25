@@ -210,7 +210,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
         final List<VulnerableSoftware> vsList = modelConverter.convert(advisory.getVulnerabilities());
 
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager().withL2CacheDisabled()) {
             qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
             qm.getPersistenceManager().addInstanceLifecycleListener(
                     new IndexingInstanceLifecycleListener(Event::dispatch),

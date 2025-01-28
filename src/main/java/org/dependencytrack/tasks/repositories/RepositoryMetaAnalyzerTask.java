@@ -61,6 +61,8 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
     private static final Logger LOGGER = Logger.getLogger(RepositoryMetaAnalyzerTask.class);
     private static final String LATEST_VERSION = "latestVersion";
     private static final String PUBLISHED_TIMESTAMP = "publishedTimestamp";
+    private static final String IS_DEPRECATED = "isDeprecated";
+    private static final String DEPRECATION_MESSAGE = "deprecationMessage";
     private static final CacheStampedeBlocker<String, Void> cacheStampedeBlocker;
 
     private long cacheValidityPeriod;
@@ -175,6 +177,8 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                 if (cac != null && isCacheCurrent(cac, component.getPurl().toString())) {
                     LOGGER.debug("Building repository Metamodel from cache for " + purl);
                     model.setLatestVersion(StringUtils.trimToNull(cac.getResult().getString(LATEST_VERSION)));
+                    model.setDeprecated(cac.getResult().getInt(IS_DEPRECATED) == 1);
+                    model.setDeprecationMessage(StringUtils.trimToNull(cac.getResult().getString(DEPRECATION_MESSAGE)));
                     model.setPublishedTimestamp(Date.from(Instant.ofEpochMilli(cac.getResult().getJsonNumber(PUBLISHED_TIMESTAMP).longValue())));
                 } else {
                     LOGGER.debug("Analyzing component: " + component.getUuid() + " using repository: "
@@ -221,6 +225,8 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     metaComponent.setName(component.getPurl().getName());
                     metaComponent.setPublished(model.getPublishedTimestamp());
                     metaComponent.setLatestVersion(model.getLatestVersion());
+                    metaComponent.setDeprecated(model.isDeprecated());
+                    metaComponent.setDeprecationMessage(model.getDeprecationMessage());
                     metaComponent.setLastCheck(new Date());
                     try {
                         qm.synchronizeRepositoryMetaComponent(metaComponent);
@@ -253,9 +259,13 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
     private JsonObject buildRepositoryComponentAnalysisCacheResult(MetaModel model) {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         String latestVersion = model.getLatestVersion() != null ? model.getLatestVersion() : "";
+        Integer isDeprecated = model.isDeprecated() ? 1 : 0;
+        String deprecationMessage = model.getDeprecationMessage() != null ? model.getDeprecationMessage() : "";
         Long published = model.getPublishedTimestamp() != null ? model.getPublishedTimestamp().getTime() : 0L;
         builder.add(LATEST_VERSION, Json.createValue(latestVersion));
         builder.add(PUBLISHED_TIMESTAMP, Json.createValue(published));
+        builder.add(IS_DEPRECATED, Json.createValue(isDeprecated));
+        builder.add(DEPRECATION_MESSAGE, Json.createValue(deprecationMessage));
         return builder.build();
     }
 

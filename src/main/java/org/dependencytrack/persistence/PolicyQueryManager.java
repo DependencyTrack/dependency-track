@@ -841,11 +841,17 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         return callInTransaction(() -> {
             boolean modified = false;
 
+            if (policy.getTags() == null) {
+                policy.setTags(new ArrayList<>());
+            }
+
             if (!keepExisting) {
                 for (final Tag existingTag : policy.getTags()) {
                     if (!tags.contains(existingTag)) {
                         policy.getTags().remove(existingTag);
-                        existingTag.getPolicies().remove(policy);
+                        if (existingTag.getPolicies() != null) {
+                            existingTag.getPolicies().remove(policy);
+                        }
                         modified = true;
                     }
                 }

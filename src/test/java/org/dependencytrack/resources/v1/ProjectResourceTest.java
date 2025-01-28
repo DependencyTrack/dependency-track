@@ -467,14 +467,21 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void createProjectTest(){
-        Project project = new Project();
-        project.setName("Acme Example");
-        project.setVersion("1.0");
-        project.setDescription("Test project");
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .put(Entity.json("""
+                        {
+                          "name": "Acme Example",
+                          "version": "1.0",
+                          "description": "Test project",
+                          "tags": [
+                            {
+                              "name": "foo"
+                            }
+                          ]
+                        }
+                        """));
         Assert.assertEquals(201, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
@@ -483,6 +490,8 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertEquals("Test project", json.getString("description"));
         Assert.assertTrue(json.getBoolean("active"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        assertThat(json.getJsonArray("tags").getValuesAs(JsonObject.class)).satisfiesExactly(
+                jsonObject -> assertThat(jsonObject.getString("name")).isEqualTo("foo"));
     }
 
     @Test

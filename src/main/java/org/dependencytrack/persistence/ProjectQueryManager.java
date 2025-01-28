@@ -1382,11 +1382,17 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         return callInTransaction(() -> {
             boolean modified = false;
 
+            if (project.getTags() == null) {
+                project.setTags(new ArrayList<>());
+            }
+
             if (!keepExisting) {
                 for (final Tag existingTag : project.getTags()) {
                     if (!tags.contains(existingTag)) {
                         project.getTags().remove(existingTag);
-                        existingTag.getProjects().remove(project);
+                        if (existingTag.getProjects() != null) {
+                            existingTag.getProjects().remove(project);
+                        }
                         modified = true;
                     }
                 }

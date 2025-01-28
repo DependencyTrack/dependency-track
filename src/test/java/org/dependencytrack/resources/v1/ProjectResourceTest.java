@@ -64,7 +64,6 @@ import org.junit.Test;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.HttpMethod;
@@ -758,7 +757,7 @@ public class ProjectResourceTest extends ResourceTest {
 
         final String userJwt = new JsonWebToken().createToken(testUser);
 
-        final Team otherTeam = qm.createTeam("otherTeam", false);
+        final Team otherTeam = qm.createTeam("otherTeam");
 
         final Response response = jersey.target(V1_PROJECT)
                 .request()

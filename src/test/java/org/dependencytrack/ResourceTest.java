@@ -99,8 +99,8 @@ public abstract class ResourceTest {
     public void before() throws Exception {
         // Add a test user and team with API key. Optional if this is used, but its available to all tests.
         this.qm = new QueryManager();
-        team = qm.createTeam("Test Users", true);
-        this.apiKey = team.getApiKeys().get(0).getKey();
+        team = qm.createTeam("Test Users");
+        this.apiKey = qm.createApiKey(team).getKey();
     }
 
     @After

@@ -28,6 +28,7 @@ import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -62,16 +63,18 @@ public class RepositoryResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(17), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(18), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(17, json.size());
+        Assert.assertEquals(18, json.size());
         for (int i = 0; i < json.size(); i++) {
             Assert.assertNotNull(json.getJsonObject(i).getString("type"));
             Assert.assertNotNull(json.getJsonObject(i).getString("identifier"));
             Assert.assertNotNull(json.getJsonObject(i).getString("url"));
             Assert.assertTrue(json.getJsonObject(i).getInt("resolutionOrder") > 0);
-            Assert.assertTrue(json.getJsonObject(i).getBoolean("enabled"));
+            if (!json.getJsonObject(i).getString("identifier").equals("drupal8")) {
+                Assert.assertTrue(json.getJsonObject(i).getBoolean("enabled"));
+            }
         }
     }
 
@@ -171,7 +174,6 @@ public class RepositoryResourceTest extends ResourceTest {
         Assert.assertEquals("The repository metadata for the specified component cannot be found.", body);
     }
 
-
     @Test
     public void createRepositoryTest() {
         Repository repository = new Repository();
@@ -187,20 +189,19 @@ public class RepositoryResourceTest extends ResourceTest {
                 .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus());
 
-
         response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(18), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(19), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(18, json.size());
-        Assert.assertEquals("MAVEN", json.getJsonObject(13).getString("type"));
-        Assert.assertEquals("test", json.getJsonObject(13).getString("identifier"));
-        Assert.assertEquals("www.foobar.com", json.getJsonObject(13).getString("url"));
-        Assert.assertTrue(json.getJsonObject(13).getInt("resolutionOrder") > 0);
-        Assert.assertTrue(json.getJsonObject(13).getBoolean("authenticationRequired"));
-        Assert.assertEquals("testuser", json.getJsonObject(13).getString("username"));
-        Assert.assertTrue(json.getJsonObject(13).getBoolean("enabled"));
+        Assert.assertEquals(19, json.size());
+        Assert.assertEquals("MAVEN", json.getJsonObject(14).getString("type"));
+        Assert.assertEquals("test", json.getJsonObject(14).getString("identifier"));
+        Assert.assertEquals("www.foobar.com", json.getJsonObject(14).getString("url"));
+        Assert.assertTrue(json.getJsonObject(14).getInt("resolutionOrder") > 0);
+        Assert.assertTrue(json.getJsonObject(14).getBoolean("authenticationRequired"));
+        Assert.assertEquals("testuser", json.getJsonObject(14).getString("username"));
+        Assert.assertTrue(json.getJsonObject(14).getBoolean("enabled"));
     }
 
     @Test
@@ -219,21 +220,20 @@ public class RepositoryResourceTest extends ResourceTest {
                 .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus());
 
-
         response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(18), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(19), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(18, json.size());
-        Assert.assertEquals("MAVEN", json.getJsonObject(13).getString("type"));
-        Assert.assertEquals("test", json.getJsonObject(13).getString("identifier"));
-        Assert.assertEquals("www.foobar.com", json.getJsonObject(13).getString("url"));
-        Assert.assertTrue(json.getJsonObject(13).getInt("resolutionOrder") > 0);
-        Assert.assertTrue(json.getJsonObject(13).getBoolean("authenticationRequired"));
-        Assert.assertFalse(json.getJsonObject(13).getBoolean("internal"));
-        Assert.assertEquals("testuser", json.getJsonObject(13).getString("username"));
-        Assert.assertTrue(json.getJsonObject(13).getBoolean("enabled"));
+        Assert.assertEquals(19, json.size());
+        Assert.assertEquals("MAVEN", json.getJsonObject(14).getString("type"));
+        Assert.assertEquals("test", json.getJsonObject(14).getString("identifier"));
+        Assert.assertEquals("www.foobar.com", json.getJsonObject(14).getString("url"));
+        Assert.assertTrue(json.getJsonObject(14).getInt("resolutionOrder") > 0);
+        Assert.assertTrue(json.getJsonObject(14).getBoolean("authenticationRequired"));
+        Assert.assertFalse(json.getJsonObject(14).getBoolean("internal"));
+        Assert.assertEquals("testuser", json.getJsonObject(14).getString("username"));
+        Assert.assertTrue(json.getJsonObject(14).getBoolean("enabled"));
     }
 
     @Test
@@ -243,6 +243,7 @@ public class RepositoryResourceTest extends ResourceTest {
         repository.setEnabled(true);
         repository.setInternal(true);
         repository.setIdentifier("test");
+        repository.setDescription("description");
         repository.setUrl("www.foobar.com");
         repository.setType(RepositoryType.MAVEN);
         Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
@@ -252,16 +253,17 @@ public class RepositoryResourceTest extends ResourceTest {
 
         response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(18), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(19), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(18, json.size());
-        Assert.assertEquals("MAVEN", json.getJsonObject(13).getString("type"));
-        Assert.assertEquals("test", json.getJsonObject(13).getString("identifier"));
-        Assert.assertEquals("www.foobar.com", json.getJsonObject(13).getString("url"));
-        Assert.assertTrue(json.getJsonObject(13).getInt("resolutionOrder") > 0);
-        Assert.assertFalse(json.getJsonObject(13).getBoolean("authenticationRequired"));
-        Assert.assertTrue(json.getJsonObject(13).getBoolean("enabled"));
+        Assert.assertEquals(19, json.size());
+        Assert.assertEquals("MAVEN", json.getJsonObject(14).getString("type"));
+        Assert.assertEquals("test", json.getJsonObject(14).getString("identifier"));
+        Assert.assertEquals("description", json.getJsonObject(14).getString("description"));
+        Assert.assertEquals("www.foobar.com", json.getJsonObject(14).getString("url"));
+        Assert.assertTrue(json.getJsonObject(14).getInt("resolutionOrder") > 0);
+        Assert.assertFalse(json.getJsonObject(14).getBoolean("authenticationRequired"));
+        Assert.assertTrue(json.getJsonObject(14).getBoolean("enabled"));
 
     }
 
@@ -274,6 +276,7 @@ public class RepositoryResourceTest extends ResourceTest {
         repository.setPassword("testPassword");
         repository.setInternal(true);
         repository.setIdentifier("test");
+        repository.setDescription("description");
         repository.setUrl("www.foobar.com");
         repository.setType(RepositoryType.MAVEN);
         Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
@@ -284,6 +287,7 @@ public class RepositoryResourceTest extends ResourceTest {
             for (Repository repository1 : repositoryList) {
                 if (repository1.getIdentifier().equals("test")) {
                     repository1.setAuthenticationRequired(false);
+                    repository1.setDescription("new description");
                     response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
                             .post(Entity.entity(repository1, MediaType.APPLICATION_JSON));
                     Assert.assertEquals(200, response.getStatus());
@@ -294,10 +298,55 @@ public class RepositoryResourceTest extends ResourceTest {
             for (Repository repository1 : repositoryList) {
                 if (repository1.getIdentifier().equals("test")) {
                     Assert.assertEquals(false, repository1.isAuthenticationRequired());
+                    Assert.assertEquals("new description", repository1.getDescription());
                     break;
                 }
             }
         }
 
     }
+
+    @Test
+    public void updateRepositoryTestAdvisoryMirroring() throws Exception {
+        Repository repository = new Repository();
+        repository.setAuthenticationRequired(true);
+        repository.setEnabled(true);
+        repository.setUsername("testuser");
+        repository.setPassword("testPassword");
+        repository.setInternal(true);
+        repository.setIdentifier("composer_repo");
+        repository.setUrl("www.foobar.com");
+        repository.setType(RepositoryType.COMPOSER);
+        Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                .put(Entity.entity(repository, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus());
+
+        try (QueryManager qm = new QueryManager()) {
+            List<Repository> repositoryList = qm.getRepositories(RepositoryType.COMPOSER).getList(Repository.class);
+            for (Repository repository1 : repositoryList) {
+                if (repository1.getIdentifier().equals("composer_repo")) {
+                    Assert.assertNull(repository1.getConfig());
+                    repository1.setConfig("{\"advisoryMirroringEnabled\": true, \"advisoryAliasSyncEnabled\": true}");
+                    response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                            .post(Entity.entity(repository1, MediaType.APPLICATION_JSON));
+                    Assert.assertEquals(200, response.getStatus());
+                    break;
+                }
+            }
+
+            repositoryList = qm.getRepositories(RepositoryType.COMPOSER).getList(Repository.class);
+            for (Repository repository1 : repositoryList) {
+                if (repository1.getIdentifier().equals("composer_repo")) {
+                    Assert.assertNotNull(repository1.getConfig());
+                    JSONObject jsonConfig = new JSONObject(repository1.getConfig());
+                    Assert.assertTrue(jsonConfig.optBoolean("advisoryMirroringEnabled"));
+                    Assert.assertTrue(jsonConfig.optBoolean("advisoryAliasSyncEnabled"));
+                    break;
+                }
+            }
+        }
+
+    }
+
+
 }

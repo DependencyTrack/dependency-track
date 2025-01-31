@@ -155,7 +155,7 @@ public class TeamResource extends AlpineResource {
         );
 
         try (QueryManager qm = new QueryManager()) {
-            final Team team = qm.createTeam(jsonTeam.getName(), false);
+            final Team team = qm.createTeam(jsonTeam.getName());
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Team created: " + team.getName());
             return Response.status(Response.Status.CREATED).entity(team).build();
         }

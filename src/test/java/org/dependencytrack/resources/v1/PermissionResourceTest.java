@@ -240,7 +240,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void addPermissionToTeamTest() {
-        Team team = qm.createTeam("team1", false);
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         qm.close();
         Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + teamUuid).request()
@@ -267,7 +267,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void addPermissionToTeamInvalidPermissionTest() {
-        Team team = qm.createTeam("team1", false);
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         qm.close();
         Response response = jersey.target(V1_PERMISSION + "/BLAH/team/" + teamUuid).request()
@@ -281,7 +281,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void addPermissionToTeamDuplicateTest() {
-        Team team = qm.createTeam("team1", false);
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         Permission permission = qm.getPermission(Permissions.PORTFOLIO_MANAGEMENT.name());
         team.getPermissions().add(permission);
@@ -296,7 +296,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void removePermissionFromTeamTest() {
-        Team team = qm.createTeam("team1", false);
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         Permission permission = qm.getPermission(Permissions.PORTFOLIO_MANAGEMENT.name());
         team.getPermissions().add(permission);
@@ -325,7 +325,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void removePermissionFromTeamInvalidPermissionTest() {
-        Team team = qm.createTeam("team1", false);
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         qm.close();
         Response response = jersey.target(V1_PERMISSION + "/BLAH/team/" + teamUuid).request()
@@ -339,7 +339,7 @@ public class PermissionResourceTest extends ResourceTest {
 
     @Test
     public void removePermissionFromTeamNoChangesTest() {
-        Team team = qm.createTeam("team1", false);
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         Response response = jersey.target(V1_PERMISSION + "/BOM_UPLOAD/team/" + teamUuid).request()
                 .header(X_API_KEY, apiKey)

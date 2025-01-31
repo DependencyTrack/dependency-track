@@ -214,24 +214,25 @@ public class DefaultObjectGenerator implements ServletContextListener {
     public void loadDefaultRepositories() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing default repositories to datastore");
-            qm.createRepository(RepositoryType.CPAN, "cpan-public-registry", "https://fastapi.metacpan.org/v1/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.HEX, "hex.pm", "https://hex.pm/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.HACKAGE, "hackage.haskell.org", "https://hackage.haskell.org/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.MAVEN, "central", "https://repo1.maven.org/maven2/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.MAVEN, "atlassian-public", "https://packages.atlassian.com/content/repositories/atlassian-public/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.MAVEN, "jboss-releases", "https://repository.jboss.org/nexus/content/repositories/releases/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.MAVEN, "clojars", "https://repo.clojars.org/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.MAVEN, "google-android", "https://maven.google.com/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.NIXPKGS, "nixpkgs-unstable", "https://channels.nixos.org/nixpkgs-unstable/packages.json.br", true, false, false, null, null);
-            qm.createRepository(RepositoryType.NPM, "npm-public-registry", "https://registry.npmjs.org/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.PYPI, "pypi.org", "https://pypi.org/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.NUGET, "nuget-gallery", "https://api.nuget.org/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.COMPOSER, "packagist", "https://repo.packagist.org/", true, false, false, null, null);
-            qm.createRepository(RepositoryType.CARGO, "crates.io", "https://crates.io", true, false, false, null, null);
-            qm.createRepository(RepositoryType.GO_MODULES, "proxy.golang.org", "https://proxy.golang.org", true, false, false, null, null);
-            qm.createRepository(RepositoryType.GITHUB, "github.com", "https://github.com", true, false, false, null, null);
-        }
+            qm.createRepository(RepositoryType.CPAN, "cpan-public-registry", null, "https://fastapi.metacpan.org/v1/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.GEM, "rubygems.org", null, "https://rubygems.org/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.HEX, "hex.pm", null, "https://hex.pm/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.HACKAGE, "hackage.haskell.org", null, "https://hackage.haskell.org/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.MAVEN, "central", null, "https://repo1.maven.org/maven2/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.MAVEN, "atlassian-public", null, "https://packages.atlassian.com/content/repositories/atlassian-public/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.MAVEN, "jboss-releases", null, "https://repository.jboss.org/nexus/content/repositories/releases/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.MAVEN, "clojars", null, "https://repo.clojars.org/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.MAVEN, "google-android", null, "https://maven.google.com/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.NIXPKGS, "nixpkgs-unstable", null, "https://channels.nixos.org/nixpkgs-unstable/packages.json.br", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.NPM, "npm-public-registry", null, "https://registry.npmjs.org/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.PYPI, "pypi.org", null, "https://pypi.org/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.NUGET, "nuget-gallery", null, "https://api.nuget.org/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.COMPOSER, "packagist", null, "https://repo.packagist.org/", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.COMPOSER, "drupal8", null, "https://packages.drupal.org/8", false, false, false, null, null, null);
+            qm.createRepository(RepositoryType.CARGO, "crates.io", null, "https://crates.io", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.GO_MODULES, "proxy.golang.org", null, "https://proxy.golang.org", true, false, false, null, null, null);
+            qm.createRepository(RepositoryType.GITHUB, "github.com", null, "https://github.com", true, false, false, null, null, null);
+       }
     }
 
     /**

@@ -60,7 +60,6 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
         super(pm, request);
     }
 
-
     /**
      * Returns a list of all repositories.
      *
@@ -133,10 +132,11 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
     }
 
     /**
-     * Creates a new Repository.
+     * Creates a new Repository. Unless there alreaady is an existing Repository with the same type and identifier.
      *
      * @param type                     the type of repository
      * @param identifier               a unique (to the type) identifier for the repo
+     * @param description              description of the repository
      * @param url                      the URL to the repository
      * @param enabled                  if the repo is enabled or not
      * @param internal                 if the repo is internal or not
@@ -145,7 +145,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
      * @param password                 the password to access the (authenticated) repository with
      * @return the created Repository
      */
-    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal, boolean isAuthenticationRequired, String username, String password) {
+    public Repository createRepository(RepositoryType type, String identifier, String description, String url, boolean enabled, boolean internal, boolean isAuthenticationRequired, String username, String password, String config) {
         if (repositoryExist(type, identifier)) {
             return null;
         }
@@ -161,6 +161,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
         final Repository repo = new Repository();
         repo.setType(type);
         repo.setIdentifier(identifier);
+        repo.setDescription(description);
         repo.setUrl(url);
         repo.setResolutionOrder(order + 1);
         repo.setEnabled(enabled);
@@ -176,6 +177,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
                 LOGGER.error("An error occurred while saving password in encrypted state");
             }
         }
+        repo.setConfig(config);
         return persist(repo);
     }
 
@@ -184,6 +186,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
      *
      * @param uuid                   the uuid of the repository to update
      * @param identifier             the identifier of the repository
+     * @param description            description of the repository
      * @param url                    a url of the repository
      * @param internal               specifies if the repository is internal
      * @param authenticationRequired if the repository needs authentication or not
@@ -192,9 +195,10 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
      * @param enabled                specifies if the repository is enabled
      * @return the updated Repository
      */
-    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean authenticationRequired, String username, String password, boolean enabled) {
+    public Repository updateRepository(UUID uuid, String identifier, String description, String url, boolean internal, boolean authenticationRequired, String username, String password, boolean enabled, String config) {
         final Repository repository = getObjectByUuid(Repository.class, uuid);
         repository.setIdentifier(identifier);
+        repository.setDescription(description);
         repository.setUrl(url);
         repository.setInternal(internal);
         repository.setAuthenticationRequired(authenticationRequired);
@@ -207,6 +211,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
         }
 
         repository.setEnabled(enabled);
+        repository.setConfig(config);
         return persist(repository);
     }
 

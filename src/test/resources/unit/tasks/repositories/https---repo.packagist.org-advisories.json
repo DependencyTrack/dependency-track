@@ -1,0 +1,200 @@
+{
+    "advisories": {
+      "nilsteampassnet/teampass": [
+        {
+          "advisoryId": "PKSA-q4rt-5vfc-wksb",
+          "packageName": "nilsteampassnet/teampass",
+          "remoteId": "GHSA-2697-96mv-3gfm",
+          "title": "TeamPass does not properly check whether a folder is in a user's allowed folders list",
+          "link": "https://github.com/advisories/GHSA-2697-96mv-3gfm",
+          "cve": "CVE-2024-50701",
+          "affectedVersions": "\u003C3.1.3.1",
+          "source": "GitHub",
+          "reportedAt": "2024-12-30 15:31:59",
+          "composerRepository": "https://packagist.org",
+          "severity": "medium",
+          "sources": [
+            {
+              "name": "GitHub",
+              "remoteId": "GHSA-2697-96mv-3gfm"
+            }
+          ]
+        },
+        {
+          "advisoryId": "PKSA-r8k5-qv9m-hf6j",
+          "packageName": "nilsteampassnet/teampass",
+          "remoteId": "GHSA-7rm3-4w6j-8xx4",
+          "title": "TeamPass mail_me operation authorization issue",
+          "link": "https://github.com/advisories/GHSA-7rm3-4w6j-8xx4",
+          "cve": "CVE-2024-50702",
+          "affectedVersions": "\u003C3.1.3.1",
+          "source": "GitHub",
+          "reportedAt": "2024-12-30 15:31:59",
+          "composerRepository": "https://packagist.org",
+          "severity": "medium",
+          "sources": [
+            {
+              "name": "GitHub",
+              "remoteId": "GHSA-7rm3-4w6j-8xx4"
+            }
+          ]
+        },
+        {
+          "advisoryId": "PKSA-x31v-w4h8-4xrb",
+          "packageName": "nilsteampassnet/teampass",
+          "remoteId": "GHSA-9wmc-988h-2mv2",
+          "title": "TeamPass privileges issue",
+          "link": "https://github.com/advisories/GHSA-9wmc-988h-2mv2",
+          "cve": "CVE-2024-50703",
+          "affectedVersions": "\u003C3.1.3.1",
+          "source": "GitHub",
+          "reportedAt": "2024-12-30 15:31:59",
+          "composerRepository": "https://packagist.org",
+          "severity": "critical",
+          "sources": [
+            {
+              "name": "GitHub",
+              "remoteId": "GHSA-9wmc-988h-2mv2"
+            }
+          ]
+        },
+        {
+          "advisoryId": "PKSA-tmqs-sp77-dd7y",
+          "packageName": "nilsteampassnet/teampass",
+          "remoteId": "GHSA-28pv-2j2h-fmhc",
+          "title": "TeamPass Cross-Site Scripting (XSS)",
+          "link": "https://github.com/advisories/GHSA-28pv-2j2h-fmhc",
+          "cve": "CVE-2017-15278",
+          "affectedVersions": "\u003C2.1.27.9",
+          "source": "GitHub",
+          "reportedAt": "2022-05-17 00:29:54",
+          "composerRepository": "https://packagist.org",
+          "severity": "medium",
+          "sources": [
+            {
+              "name": "GitHub",
+              "remoteId": "GHSA-28pv-2j2h-fmhc"
+            }
+          ]
+        }
+      ],
+      "dcat/laravel-admin": [
+        {
+          "advisoryId": "PKSA-6p1r-xpgk-hcz2",
+          "packageName": "dcat/laravel-admin",
+          "remoteId": "GHSA-9q34-7hfr-h8jm",
+          "title": "Dcat Admin Cross-site Scripting (XSS) vulnerability",
+          "link": "https://github.com/advisories/GHSA-9q34-7hfr-h8jm",
+          "cve": "CVE-2024-54774",
+          "affectedVersions": "=2.2.0-beta",
+          "source": "GitHub",
+          "reportedAt": "2024-12-28 00:30:43",
+          "composerRepository": "https://packagist.org",
+          "severity": "medium",
+          "sources": [
+            {
+              "name": "GitHub",
+              "remoteId": "GHSA-9q34-7hfr-h8jm"
+            }
+          ]
+        },
+        {
+          "advisoryId": "PKSA-m82y-5rmz-8w8p",
+          "packageName": "dcat/laravel-admin",
+          "remoteId": "GHSA-37x3-j9jq-vrjx",
+          "title": "Dcat-Admin Cross-Site Scripting (XSS) vulnerability",
+          "link": "https://github.com/advisories/GHSA-37x3-j9jq-vrjx",
+          "cve": "CVE-2024-54775",
+          "affectedVersions": "=2.2.2-beta|=2.2.0-beta",
+          "source": "GitHub",
+          "reportedAt": "2024-12-28 00:30:43",
+          "composerRepository": "https://packagist.org",
+          "severity": "medium",
+          "sources": [
+            {
+              "name": "GitHub",
+              "remoteId": "GHSA-37x3-j9jq-vrjx"
+            }
+          ]
+        },
+        {
+          "advisoryId": "PKSA-98qy-9244-htqs",
+          "packageName": "dcat/laravel-admin",
+          "remoteId": "GHSA-mr24-cf69-5chq",
+          "title": "dcat-admin Cross Site Scripting vulnerability",
+          "link": "https://github.com/advisories/GHSA-mr24-cf69-5chq",
+          "cve": "CVE-2024-29644",
+          "affectedVersions": "\u003C=2.1.3",
+          "source": "GitHub",
+          "reportedAt": "2024-03-26 12:31:28",
+          "composerRepository": "https://packagist.org",
+          "severity": "medium",
+          "sources": [
+            {
+              "name": "GitHub",
+              "remoteId": "GHSA-mr24-cf69-5chq"
+            }
+          ]
+        },
+        {
+          "advisoryId": "PKSA-1b2w-knm8-9nnm",
+          "packageName": "dcat/laravel-admin",
+          "remoteId": "GHSA-p74v-mwvg-8ghp",
+          "title": "Dcat-Admin vulnerable to Stored Cross-site Scripting",
+          "link": "https://github.com/advisories/GHSA-p74v-mwvg-8ghp",
+          "cve": "CVE-2023-33736",
+          "affectedVersions": "\u003C=2.1.3-beta",
+          "source": "GitHub",
+          "reportedAt": "2023-05-31 15:30:18",
+          "composerRepository": "https://packagist.org",
+          "severity": "medium",
+          "sources": [
+            {
+              "name": "GitHub",
+              "remoteId": "GHSA-p74v-mwvg-8ghp"
+            }
+          ]
+        }
+      ],
+      "tltneon/lgsl": [
+        {
+          "advisoryId": "PKSA-81bx-8rdn-n435",
+          "packageName": "tltneon/lgsl",
+          "remoteId": "GHSA-ggwq-xc72-33r3",
+          "title": "LGSL has a reflected XSS at /lgsl_files/lgsl_list.php",
+          "link": "https://github.com/advisories/GHSA-ggwq-xc72-33r3",
+          "cve": "CVE-2024-56517",
+          "affectedVersions": "\u003C=6.2.1",
+          "source": "GitHub",
+          "reportedAt": "2024-12-30 16:49:28",
+          "composerRepository": "https://packagist.org",
+          "severity": "medium",
+          "sources": [
+            {
+              "name": "GitHub",
+              "remoteId": "GHSA-ggwq-xc72-33r3"
+            }
+          ]
+        },
+        {
+          "advisoryId": "PKSA-jsdk-m8fr-4rfv",
+          "packageName": "tltneon/lgsl",
+          "remoteId": "GHSA-xx95-62h6-h7v3",
+          "title": "lgsl Stored Cross-Site Scripting vulnerability",
+          "link": "https://github.com/advisories/GHSA-xx95-62h6-h7v3",
+          "cve": "CVE-2024-56361",
+          "affectedVersions": "\u003E=4.3.0,\u003C=4.4.5|\u003C7.0.0",
+          "source": "GitHub",
+          "reportedAt": "2024-12-26 20:20:12",
+          "composerRepository": "https://packagist.org",
+          "severity": "high",
+          "sources": [
+            {
+              "name": "GitHub",
+              "remoteId": "GHSA-xx95-62h6-h7v3"
+            }
+          ]
+        }
+      ]
+    }
+  }

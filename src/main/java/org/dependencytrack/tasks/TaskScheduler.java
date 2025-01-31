@@ -25,6 +25,7 @@ import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.server.tasks.AlpineTaskScheduler;
 import org.dependencytrack.event.ClearComponentAnalysisCacheEvent;
+import org.dependencytrack.event.ComposerAdvisoryMirrorEvent;
 import org.dependencytrack.event.DefectDojoUploadEventAbstract;
 import org.dependencytrack.event.FortifySscUploadEventAbstract;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
@@ -50,6 +51,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SEARCH_INDEXES_C
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_SYNC_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_COMPOSER_MIRROR_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_GHSA_MIRROR_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_INTERNAL_COMPONENT_IDENTIFICATION_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_LDAP_SYNC_CADENCE;
@@ -71,44 +73,47 @@ public final class TaskScheduler extends AlpineTaskScheduler {
 
     // Holds an instance of TaskScheduler
     private static final TaskScheduler INSTANCE = new TaskScheduler();
+        /**
+             * Private constructor.
+             */
+            private TaskScheduler() {
+                try (QueryManager qm = new QueryManager()) {
+                    // Creates a new event that executes every 6 hours (21600000) by default after an initial 10 second (10000) delay
+                    scheduleEvent(new LdapSyncEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_LDAP_SYNC_CADENCE));
 
-    /**
-     * Private constructor.
-     */
-    private TaskScheduler() {
-        try (QueryManager qm = new QueryManager()) {
-            // Creates a new event that executes every 6 hours (21600000) by default after an initial 10 second (10000) delay
-            scheduleEvent(new LdapSyncEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_LDAP_SYNC_CADENCE));
+                    // Creates a new event that executes every 24 hours (86400000) by default after an initial 10 second (10000) delay
+                    scheduleEvent(new GitHubAdvisoryMirrorEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_GHSA_MIRROR_CADENCE));
 
-            // Creates a new event that executes every 24 hours (86400000) by default after an initial 10 second (10000) delay
-            scheduleEvent(new GitHubAdvisoryMirrorEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_GHSA_MIRROR_CADENCE));
+                    // Creates a new event that executes every 24 hours (86400000) by default after an initial 10 second (10000) delay
+                    scheduleEvent(new OsvMirrorEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_OSV_MIRROR_CADENCE));
 
-            // Creates a new event that executes every 24 hours (86400000) by default after an initial 10 second (10000) delay
-            scheduleEvent(new OsvMirrorEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_OSV_MIRROR_CADENCE));
+                    // Creates a new event that executes every 24 hours (86400000) by default after an initial 1 minute (60000) delay
+                    scheduleEvent(new NistMirrorEvent(), 60000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_NIST_MIRROR_CADENCE));
 
-            // Creates a new event that executes every 24 hours (86400000) by default after an initial 1 minute (60000) delay
-            scheduleEvent(new NistMirrorEvent(), 60000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_NIST_MIRROR_CADENCE));
+                    // Creates a new event that executes every 24 hours (86400000) by default after an initial 1 minute (60000) delay
+                    scheduleEvent(new VulnDbSyncEvent(), 60000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_VULNDB_MIRROR_CADENCE));
 
-            // Creates a new event that executes every 24 hours (86400000) by default after an initial 1 minute (60000) delay
-            scheduleEvent(new VulnDbSyncEvent(), 60000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_VULNDB_MIRROR_CADENCE));
+                    // Creates a new event that executes every 1 hour (3600000) by default after an initial 10 second (10000) delay
+                    scheduleEvent(new PortfolioMetricsUpdateEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_PORTFOLIO_METRICS_UPDATE_CADENCE));
 
-            // Creates a new event that executes every 1 hour (3600000) by default after an initial 10 second (10000) delay
-            scheduleEvent(new PortfolioMetricsUpdateEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_PORTFOLIO_METRICS_UPDATE_CADENCE));
+                    // Creates a new event that executes every 1 hour (3600000) by default after an initial 10 second (10000) delay
+                    scheduleEvent(new VulnerabilityMetricsUpdateEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_VULNERABILITY_METRICS_UPDATE_CADENCE));
 
-            // Creates a new event that executes every 1 hour (3600000) by default after an initial 10 second (10000) delay
-            scheduleEvent(new VulnerabilityMetricsUpdateEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_VULNERABILITY_METRICS_UPDATE_CADENCE));
+                    // Creates a new event that executes every 24 hours (86400000) by default after an initial 6 hour (21600000) delay
+                    scheduleEvent(new PortfolioVulnerabilityAnalysisEvent(), 21600000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_PORTFOLIO_VULNERABILITY_ANALYSIS_CADENCE));
 
-            // Creates a new event that executes every 24 hours (86400000) by default after an initial 6 hour (21600000) delay
-            scheduleEvent(new PortfolioVulnerabilityAnalysisEvent(), 21600000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_PORTFOLIO_VULNERABILITY_ANALYSIS_CADENCE));
+                    // Creates a new event that executes every 24 hours (86400000) by default after an initial 1 hour (3600000) delay
+                    scheduleEvent(new RepositoryMetaEvent(), 3600000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_REPOSITORY_METADATA_FETCH_CADENCE));
 
-            // Creates a new event that executes every 24 hours (86400000) by default after an initial 1 hour (3600000) delay
-            scheduleEvent(new RepositoryMetaEvent(), 3600000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_REPOSITORY_METADATA_FETCH_CADENCE));
+                    // Creates a new event that executes every 6 hours (21600000) by default after an initial 1 hour (3600000) delay
+                    scheduleEvent(new InternalComponentIdentificationEvent(), 3600000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_INTERNAL_COMPONENT_IDENTIFICATION_CADENCE));
 
-            // Creates a new event that executes every 6 hours (21600000) by default after an initial 1 hour (3600000) delay
-            scheduleEvent(new InternalComponentIdentificationEvent(), 3600000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_INTERNAL_COMPONENT_IDENTIFICATION_CADENCE));
+                    // Creates a new event that executes every 72 hours (259200000) by default after an initial 10 second (10000) delay
+                    scheduleEvent(new ClearComponentAnalysisCacheEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE));
 
-            // Creates a new event that executes every 72 hours (259200000) by default after an initial 10 second (10000) delay
-            scheduleEvent(new ClearComponentAnalysisCacheEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE));
+                    // Creates a new event that executes every 24 hours (86400000) by default after an initial 10 second (10000) delay
+                    scheduleEvent(new ComposerAdvisoryMirrorEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_COMPOSER_MIRROR_CADENCE));
+
         }
 
         // Configurable tasks

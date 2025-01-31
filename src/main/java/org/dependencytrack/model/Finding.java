@@ -301,6 +301,12 @@ public class Finding implements Serializable {
             if (alias.getVulnDbId() != null && !alias.getVulnDbId().isBlank()) {
                 map.put("vulnDbId", alias.getVulnDbId());
             }
+            if (alias.getDrupalId() != null && !alias.getDrupalId().isBlank()) {
+                map.put("drupalId", alias.getDrupalId());
+            }
+            if (alias.getComposerId() != null && !alias.getComposerId().isBlank()) {
+                map.put("composerId", alias.getComposerId());
+            }
             uniqueAliases.add(map);
         }
         vulnerability.put("aliases",uniqueAliases);

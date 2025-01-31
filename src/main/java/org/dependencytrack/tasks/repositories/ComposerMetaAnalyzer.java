@@ -181,7 +181,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         return analyzeFromMetadataUrl(meta, component, PACKAGE_META_DATA_PATH_PATTERN_V1);
     }
 
-    private JSONObject getRepoRoot() {
+    public JSONObject getRepoRoot() {
         // Code mimicksed from
         // https://github.com/composer/composer/blob/main/src/Composer/Repository/ComposerRepository.php
         // Retrieve packages.json file, which must be present even for V1 repositories
@@ -203,6 +203,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 if (JsonUtil.isBlankJson(packageJsonString)) {
                     LOGGER.warn("%s: Empty packages.json from %s".formatted(this.repositoryId, packageJsonUrl));
                 } else {
+                    LOGGER.debug("packages.json retrieved from " + packageJsonUrl);
                     repoRoot = new JSONObject(packageJsonString);
                 }
             }
@@ -400,6 +401,41 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             }
         });
         return meta;
+    }
+
+
+    public JSONObject retrieveAdvisories() {
+        JSONObject repoRoot = getRepoRoot();
+        if (repoRoot == null) {
+            return null;
+        }
+
+        if (repoRoot.optJSONObject("security-advisories") == null) {
+            LOGGER.info("No security advisory Api Url found in repository " + baseUrl);
+            return null;
+        }
+
+        String advisoryUrl = repoRoot.getJSONObject("security-advisories").optString("api-url");
+        if (advisoryUrl == null || advisoryUrl.isEmpty()) {
+            LOGGER.info("No security advisory Api Url found in repository " + baseUrl);
+            return null;
+        }
+        LOGGER.debug("Retrieving Composert Security Advisories from " + advisoryUrl);
+        // No incremental updates yet
+        String advisoryJsonUrl = UriBuilder.fromUri(advisoryUrl).queryParam("updatedSince", 100).build().toString();
+        try (CloseableHttpResponse response = processHttpRequest(advisoryJsonUrl)) {
+            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                LOGGER.error("An error was encountered retrieving advisories with HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
+                return null;
+            } else {
+                String responseString = EntityUtils.toString(response.getEntity());
+                // LOGGER.debug("response from composer repository: \n" + responseString);
+                return new JSONObject(responseString);
+            }
+        } catch (IOException ex) {
+            LOGGER.error("Exception while executing Http client request", ex);
+        }
+        return null;
     }
 
     private static String stripLeadingV(String s) {

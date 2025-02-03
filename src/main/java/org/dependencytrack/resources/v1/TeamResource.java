@@ -287,7 +287,7 @@ public class TeamResource extends AlpineResource {
     }
 
     @POST
-    @Path("/key/{apikey}")
+    @Path("/key/{publicId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Regenerates an API key by removing the specified key, generating a new one and returning its value",
@@ -304,10 +304,10 @@ public class TeamResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response regenerateApiKey(
-            @Parameter(description = "The API key to regenerate", required = true)
-            @PathParam("apikey") String apikey) {
+            @Parameter(description = "The public ID for the API key to regenerate", required = true)
+            @PathParam("publicId") String publicId) {
         try (QueryManager qm = new QueryManager()) {
-            ApiKey apiKey = qm.getApiKey(apikey);
+            ApiKey apiKey = qm.getApiKeyByPublicId(publicId);
             if (apiKey != null) {
                 apiKey = qm.regenerateApiKey(apiKey);
                 return Response.ok(apiKey).build();
@@ -318,7 +318,7 @@ public class TeamResource extends AlpineResource {
     }
 
     @POST
-    @Path("/key/{key}/comment")
+    @Path("/key/{publicId}/comment")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -335,13 +335,15 @@ public class TeamResource extends AlpineResource {
             @ApiResponse(responseCode = "404", description = "The API key could not be found")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    public Response updateApiKeyComment(@PathParam("key") final String key,
-                                        final String comment) {
+    public Response updateApiKeyComment(
+            @Parameter(description = "The public ID for the API key to comment on", required = true)
+            @PathParam("publicId") final String publicId,
+            final String comment) {
         try (final var qm = new QueryManager()) {
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
 
             return qm.callInTransaction(() -> {
-                final ApiKey apiKey = qm.getApiKey(key);
+                final ApiKey apiKey = qm.getApiKeyByPublicId(publicId);
                 if (apiKey == null) {
                     return Response
                             .status(Response.Status.NOT_FOUND)
@@ -356,7 +358,7 @@ public class TeamResource extends AlpineResource {
     }
 
     @DELETE
-    @Path("/key/{apikey}")
+    @Path("/key/{publicId}")
     @Operation(
             summary = "Deletes the specified API key",
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
@@ -368,10 +370,10 @@ public class TeamResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response deleteApiKey(
-            @Parameter(description = "The API key to delete", required = true)
-            @PathParam("apikey") String apikey) {
+            @Parameter(description = "The public ID for the API key to delete", required = true)
+            @PathParam("publicId") String publicId) {
         try (QueryManager qm = new QueryManager()) {
-            final ApiKey apiKey = qm.getApiKey(apikey);
+            final ApiKey apiKey = qm.getApiKeyByPublicId(publicId);
             if (apiKey != null) {
                 qm.delete(apiKey);
                 return Response.status(Response.Status.NO_CONTENT).build();
@@ -400,7 +402,7 @@ public class TeamResource extends AlpineResource {
         if (Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
             try (var qm = new QueryManager()) {
                 if (isApiKey()) {
-                    final var apiKey = qm.getApiKey(((ApiKey)getPrincipal()).getKey());
+                    final var apiKey = (ApiKey)getPrincipal();
                     final var team = apiKey.getTeams().stream().findFirst();
                     if (team.isPresent()) {
                         return Response.ok(new TeamSelfResponse(team.get())).build();

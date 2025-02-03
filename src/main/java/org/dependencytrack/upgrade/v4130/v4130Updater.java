@@ -53,16 +53,16 @@ public class v4130Updater extends AbstractUpgradeItem {
         WHERE "ID" = ?
         """);
 
-        DbUtil.executeUpdate(connection, "ALTER TABLE \"COMPONENT\" ADD \"PUBLIC_ID\" VARCHAR(10) NOT NULL");
+        DbUtil.executeUpdate(connection, "ALTER TABLE \"APIKEY\" ADD \"PUBLIC_ID\" VARCHAR(10) NOT NULL");
         // The JDBC type "BOOLEAN" is mapped to the type TINYINT(1) for MySQL, BIT for SQL Server. and BOOLEAN for H2 and PostgreSQL.
         if (DbUtil.isMysql()) {
-            DbUtil.executeUpdate(connection, "ALTER TABLE \"COMPONENT\" ADD \"IS_LEGACY\" TINYINT(1) NOT NULL DEFAULT 0");
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"APIKEY\" ADD \"IS_LEGACY\" TINYINT(1) NOT NULL DEFAULT 0");
             ps.setInt(3, 1);
         } else if (DbUtil.isMssql()) { // Really, Microsoft? You're being weird.
-            DbUtil.executeUpdate(connection, "ALTER TABLE \"COMPONENT\" ADD \"IS_LEGACY\" BIT NOT NULL DEFAULT 0");
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"APIKEY\" ADD \"IS_LEGACY\" BIT NOT NULL DEFAULT 0");
             ps.setInt(3, 1);
         } else {
-            DbUtil.executeUpdate(connection, "ALTER TABLE \"COMPONENT\" ADD \"IS_LEGACY\" BOOLEAN NOT NULL DEFAULT False");
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"APIKEY\" ADD \"IS_LEGACY\" BOOLEAN NOT NULL DEFAULT False");
             ps.setBoolean(3, true);
         }
 
@@ -83,15 +83,14 @@ public class v4130Updater extends AbstractUpgradeItem {
                     }
                     final MessageDigest digest = MessageDigest.getInstance("SHA3-256");
                     id = rs.getInt("id");
-                    hashedKey = HexFormat.of().formatHex(digest.digest(ApiKey.getOnlyKeyAsBytes(clearKey)));
-                    publicId = ApiKey.getPublicId(clearKey);
+                    hashedKey = HexFormat.of().formatHex(digest.digest(ApiKey.getOnlyKeyAsBytes(clearKey, true)));
+                    publicId = ApiKey.getPublicId(clearKey, true);
 
                     ps.setString(1, hashedKey);
                     ps.setString(2, publicId);
                     ps.setInt(4, id);
 
                     ps.executeUpdate();
-
                 }
             }
         }

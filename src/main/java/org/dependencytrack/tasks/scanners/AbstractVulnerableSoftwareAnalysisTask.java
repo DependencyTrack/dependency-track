@@ -117,6 +117,29 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * Ported from Dependency-Check v5.2.1
      */
     private static boolean compareVersions(VulnerableSoftware vs, String targetVersion) {
+        // Modified from original by @nscuro.
+        // Special cases for CPE matching of ANY (*) and NA (*) versions.
+        // These don't make sense to use for version range comparison and
+        // can be dealt with upfront based on the matching documentation:
+        // https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf
+        if ("*".equals(targetVersion)) {
+            // | No. | Source A-V     | Target A-V | Relation |
+            // | :-- | :------------- | :--------- | :------- |
+            // | 1   | ANY            | ANY        | EQUAL    |
+            // | 5   | NA             | ANY        | SUBSET   |
+            // | 13  | i              | ANY        | SUBSET   |
+            // | 15  | m + wild cards | ANY        | SUBSET   |
+            return true;
+        } else if ("-".equals(targetVersion)) {
+            // | No. | Source A-V     | Target A-V | Relation |
+            // | :-- | :------------- | :--------- | :------- |
+            // | 2   | ANY            | NA         | SUPERSET |
+            // | 6   | NA             | NA         | EQUAL    |
+            // | 12  | i              | NA         | DISJOINT |
+            // | 16  | m + wild cards | NA         | DISJOINT |
+            return "*".equals(vs.getVersion()) || "-".equals(vs.getVersion());
+        }
+
         //if any of the four conditions will be evaluated - then true;
         boolean result = (vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty())
                 || (vs.getVersionStartExcluding() != null && !vs.getVersionStartExcluding().isEmpty())

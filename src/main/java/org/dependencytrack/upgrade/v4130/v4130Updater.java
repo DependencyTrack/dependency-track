@@ -53,16 +53,9 @@ public class v4130Updater extends AbstractUpgradeItem {
         WHERE "ID" = ?
         """);
 
-        DbUtil.executeUpdate(connection, "ALTER TABLE \"APIKEY\" ADD \"PUBLIC_ID\" VARCHAR(10) NOT NULL");
-        // The JDBC type "BOOLEAN" is mapped to the type TINYINT(1) for MySQL, BIT for SQL Server. and BOOLEAN for H2 and PostgreSQL.
-        if (DbUtil.isMysql()) {
-            DbUtil.executeUpdate(connection, "ALTER TABLE \"APIKEY\" ADD \"IS_LEGACY\" TINYINT(1) NOT NULL DEFAULT 0");
-            ps.setInt(3, 1);
-        } else if (DbUtil.isMssql()) { // Really, Microsoft? You're being weird.
-            DbUtil.executeUpdate(connection, "ALTER TABLE \"APIKEY\" ADD \"IS_LEGACY\" BIT NOT NULL DEFAULT 0");
+        if (DbUtil.isMysql() || DbUtil.isMssql()) {
             ps.setInt(3, 1);
         } else {
-            DbUtil.executeUpdate(connection, "ALTER TABLE \"APIKEY\" ADD \"IS_LEGACY\" BOOLEAN NOT NULL DEFAULT False");
             ps.setBoolean(3, true);
         }
 

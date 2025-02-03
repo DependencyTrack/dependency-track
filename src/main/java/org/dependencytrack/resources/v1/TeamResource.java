@@ -310,6 +310,8 @@ public class TeamResource extends AlpineResource {
             ApiKey apiKey = qm.getApiKeyByPublicId(publicId);
             if (apiKey != null) {
                 apiKey = qm.regenerateApiKey(apiKey);
+                apiKey.setLegacy(false);
+                qm.persist(apiKey);
                 return Response.ok(apiKey).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The API key could not be found.").build();

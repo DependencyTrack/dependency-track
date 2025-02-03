@@ -387,7 +387,16 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 // Scenario:  "vendor" of source is i, "product" of source is ANY, "vendor" of target is ANY, "product" of target is i
                 //            We consider mixed SUBSET and SUPERSET relations in "vendor" and "product" attributes to be ambiguous and treat them as no-match
                 // Table No.: 3, 13
-                {"cpe:2.3:a:pascom_cloud_phone_system:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:*:util-linux-setarch:2.37.4:*:*:*:*:*:*:*"}
+                {"cpe:2.3:a:pascom_cloud_phone_system:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:*:util-linux-setarch:2.37.4:*:*:*:*:*:*:*"},
+                // ---
+                // Issue:     https://github.com/DependencyTrack/dependency-track/issues/4609
+                // Scenario:  "version" of source and target are ANY -> EQUAL.
+                //            A version range is available but doesn't make sense to use since the target version is already ANY.
+                // Table No.: 1
+                {"cpe:2.3:a:zlib:zlib:*:*:*:*:*:*:*:*", withRange().havingStartIncluding("1.2.0").havingEndExcluding("1.2.9"), MATCHES, "cpe:2.3:a:zlib:zlib:*:*:*:*:*:*:*:*"},
+                // Scenario:  Same as above, but "version" of target is NA -> SUPERSET.
+                // Table No.: 2
+                {"cpe:2.3:a:zlib:zlib:*:*:*:*:*:*:*:*", withRange().havingStartIncluding("1.2.0").havingEndExcluding("1.2.9"), MATCHES, "cpe:2.3:a:zlib:zlib:-:*:*:*:*:*:*:*"}
         });
     }
 

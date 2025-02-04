@@ -446,7 +446,7 @@ public class FindingResourceTest extends ResourceTest {
             qm.persist(aclToggle);
         }
         Response response = jersey.target(V1_FINDING).request()
-                .header(X_API_KEY, apiKey.getKey())
+                .header(X_API_KEY, apiKey.getClearTextKey())
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));
@@ -581,7 +581,7 @@ public class FindingResourceTest extends ResourceTest {
             qm.persist(aclToggle);
         }
         Response response = jersey.target(V1_FINDING + "/grouped").request()
-                .header(X_API_KEY, apiKey.getKey())
+                .header(X_API_KEY, apiKey.getClearTextKey())
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));

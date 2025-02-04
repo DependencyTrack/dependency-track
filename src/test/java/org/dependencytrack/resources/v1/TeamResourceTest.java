@@ -115,7 +115,7 @@ public class TeamResourceTest extends ResourceTest {
         String body = getPlainTextBody(response);
         Assert.assertEquals("The team could not be found.", body);
     }
-    
+
     @Test
     public void getTeamSelfTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
@@ -318,13 +318,13 @@ public class TeamResourceTest extends ResourceTest {
         Team team = qm.createTeam("My Team");
         ApiKey apiKey = qm.createApiKey(team);
         Assert.assertEquals(1, team.getApiKeys().size());
-        Response response = jersey.target(V1_TEAM + "/key/" + apiKey).request()
-                .header(X_API_KEY, apiKey)
+        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getPublicId()).request()
+                .header(X_API_KEY, apiKey.getClearTextKey())
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
-        Assert.assertNotNull(json.getString("key"));
+        Assert.assertNotNull(json.getString("clearTextKey"));
         Assert.assertEquals(1, team.getApiKeys().size());
     }
 
@@ -344,8 +344,8 @@ public class TeamResourceTest extends ResourceTest {
         Team team = qm.createTeam("My Team");
         ApiKey apiKey = qm.createApiKey(team);
         Assert.assertEquals(1, team.getApiKeys().size());
-        Response response = jersey.target(V1_TEAM + "/key/" + apiKey).request()
-                .header(X_API_KEY, apiKey)
+        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getPublicId()).request()
+                .header(X_API_KEY, apiKey.getClearTextKey())
                 .delete();
         Assert.assertEquals(204, response.getStatus(), 0);
     }
@@ -370,20 +370,22 @@ public class TeamResourceTest extends ResourceTest {
         assertThat(apiKey.getLastUsed()).isNull();
         assertThat(apiKey.getComment()).isNull();
 
-        final Response response = jersey.target("%s/key/%s/comment".formatted(V1_TEAM, apiKey.getKey())).request()
+        final Response response = jersey.target("%s/key/%s/comment".formatted(V1_TEAM, apiKey.getPublicId())).request()
                 .header(X_API_KEY, this.apiKey)
                 .post(Entity.entity("Some comment 123", MediaType.TEXT_PLAIN));
 
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response))
-                .withMatcher("key", equalTo(apiKey.getKey()))
+                .withMatcher("publicId", equalTo(apiKey.getPublicId()))
                 .withMatcher("maskedKey", equalTo(apiKey.getMaskedKey()))
                 .isEqualTo("""
                         {
-                          "key": "${json-unit.matches:key}",
+                          "publicId": "${json-unit.matches:publicId}",
+                          "clearTextKey":null,
                           "maskedKey": "${json-unit.matches:maskedKey}",
                           "created": "${json-unit.any-number}",
                           "lastUsed": null,
+                          "legacy":false,
                           "comment": "Some comment 123"
                         }
                         """);

@@ -130,7 +130,7 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
         }
 
         // Debian/Ubuntu specific
-        if(this.ecosystem.getName()=="deb") {
+        if(this.ecosystem.getName().equals("deb")) {
             // When no epoch is given, use default epoch 0
             if (!version.contains(":")) {
                version = "0:" + version;

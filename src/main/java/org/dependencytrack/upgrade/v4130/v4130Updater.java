@@ -45,7 +45,7 @@ public class v4130Updater extends AbstractUpgradeItem {
     }
 
     private void migrateToHashedApiKey(final Connection connection) throws Exception {
-        LOGGER.error("Store API keys in hashed format!");
+        LOGGER.info("Store API keys in hashed format!");
 
         final var ps = connection.prepareStatement("""
         UPDATE "APIKEY"

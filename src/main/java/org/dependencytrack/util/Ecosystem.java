@@ -36,7 +36,7 @@ public class Ecosystem {
      * Constructor for a Ecosystem with three partial lists, each sorting from low priority to high priority
      *
      * @param pre_elements List with regexes with priorities lower than EndOfString
-     * @param ignore_elements Regexes with priority same as EndOfString
+     * @param ignore_element Regexes with priority same as EndOfString
      * @param post_elements List with regexes with priorities higher than EndOfString
      */
     public Ecosystem(String name, List<String> pre_elements, String ignore_element, List<String> post_elements) {

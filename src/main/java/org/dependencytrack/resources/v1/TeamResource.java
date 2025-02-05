@@ -36,6 +36,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
@@ -287,7 +288,7 @@ public class TeamResource extends AlpineResource {
     }
 
     @POST
-    @Path("/key/{publicId}")
+    @Path("/key/{publicIdOrKey}")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Regenerates an API key by removing the specified key, generating a new one and returning its value",
@@ -304,10 +305,16 @@ public class TeamResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response regenerateApiKey(
-            @Parameter(description = "The public ID for the API key to regenerate", required = true)
-            @PathParam("publicId") String publicId) {
+            @Parameter(description = "The public ID for the API key or for Legacy the complete Key to regenerate", required = true)
+            @PathParam("publicIdOrKey") String publicIdOrKey) {
         try (QueryManager qm = new QueryManager()) {
-            ApiKey apiKey = qm.getApiKeyByPublicId(publicId);
+            boolean isLegacy = publicIdOrKey.length() == ApiKey.LEGACY_FULL_KEY_LENGTH;
+            ApiKey apiKey;
+            if (publicIdOrKey.length() == ApiKey.FULL_KEY_LENGTH || isLegacy) {
+                 apiKey = qm.getApiKeyByPublicId(ApiKey.getPublicId(publicIdOrKey, isLegacy));
+            } else {
+                 apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+            }
             if (apiKey != null) {
                 apiKey = qm.regenerateApiKey(apiKey);
                 apiKey.setLegacy(false);
@@ -320,7 +327,7 @@ public class TeamResource extends AlpineResource {
     }
 
     @POST
-    @Path("/key/{publicId}/comment")
+    @Path("/key/{publicIdOrKey}/comment")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -338,14 +345,20 @@ public class TeamResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response updateApiKeyComment(
-            @Parameter(description = "The public ID for the API key to comment on", required = true)
-            @PathParam("publicId") final String publicId,
+            @Parameter(description = "The public ID for the API key or for Legacy the complete Key to comment on", required = true)
+            @PathParam("publicIdOrKey") final String publicIdOrKey,
             final String comment) {
         try (final var qm = new QueryManager()) {
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
 
             return qm.callInTransaction(() -> {
-                final ApiKey apiKey = qm.getApiKeyByPublicId(publicId);
+                boolean isLegacy = publicIdOrKey.length() == ApiKey.LEGACY_FULL_KEY_LENGTH;
+                ApiKey apiKey;
+                if (publicIdOrKey.length() == ApiKey.FULL_KEY_LENGTH || isLegacy) {
+                    apiKey = qm.getApiKeyByPublicId(ApiKey.getPublicId(publicIdOrKey, isLegacy));
+                } else {
+                    apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+                }
                 if (apiKey == null) {
                     return Response
                             .status(Response.Status.NOT_FOUND)
@@ -360,7 +373,7 @@ public class TeamResource extends AlpineResource {
     }
 
     @DELETE
-    @Path("/key/{publicId}")
+    @Path("/key/{publicIdOrKey}")
     @Operation(
             summary = "Deletes the specified API key",
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"
@@ -372,10 +385,16 @@ public class TeamResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response deleteApiKey(
-            @Parameter(description = "The public ID for the API key to delete", required = true)
-            @PathParam("publicId") String publicId) {
+            @Parameter(description = "The public ID for the API key or for Legacy the full Key to delete", required = true)
+            @PathParam("publicIdOrKey") String publicIdOrKey) {
         try (QueryManager qm = new QueryManager()) {
-            final ApiKey apiKey = qm.getApiKeyByPublicId(publicId);
+            boolean isLegacy = publicIdOrKey.length() == ApiKey.LEGACY_FULL_KEY_LENGTH;
+            ApiKey apiKey;
+            if (publicIdOrKey.length() == ApiKey.FULL_KEY_LENGTH || isLegacy) {
+                 apiKey = qm.getApiKeyByPublicId(ApiKey.getPublicId(publicIdOrKey, isLegacy));
+            } else {
+                 apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+            }
             if (apiKey != null) {
                 qm.delete(apiKey);
                 return Response.status(Response.Status.NO_CONTENT).build();

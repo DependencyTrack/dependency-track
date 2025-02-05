@@ -20,6 +20,7 @@ package org.dependencytrack.upgrade.v4130;
 
 import java.security.MessageDigest;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HexFormat;
@@ -47,43 +48,44 @@ public class v4130Updater extends AbstractUpgradeItem {
     private void migrateToHashedApiKey(final Connection connection) throws Exception {
         LOGGER.info("Store API keys in hashed format!");
 
-        final var ps = connection.prepareStatement("""
-        UPDATE "APIKEY"
-        SET "APIKEY" = ?, "PUBLIC_ID" = ?, "IS_LEGACY" = ?
-        WHERE "ID" = ?
-        """);
+         try (final PreparedStatement ps = connection.prepareStatement("""
+                UPDATE "APIKEY"
+                   SET "APIKEY" = ?, "PUBLIC_ID" = ?, "IS_LEGACY" = ?
+                 WHERE "ID" = ?
+                """)) {
 
-        if (DbUtil.isMysql() || DbUtil.isMssql()) {
-            ps.setInt(3, 1);
-        } else {
-            ps.setBoolean(3, true);
-        }
+            if (DbUtil.isMysql() || DbUtil.isMssql()) {
+                ps.setInt(3, 1);
+            } else {
+                ps.setBoolean(3, true);
+            }
 
-        try (final Statement statement = connection.createStatement()) {
-            statement.execute("""
-                SELECT "ID", "APIKEY"
-                FROM "APIKEY"
-            """);
-            try (final ResultSet rs = statement.getResultSet()) {
-                String clearKey;
-                int id;
-                String hashedKey;
-                String publicId;
-                while (rs.next()) {
-                    clearKey = rs.getString("apikey");
-                    if (clearKey.length() != ApiKey.LEGACY_FULL_KEY_LENGTH) {
-                        continue;
+            try (final Statement statement = connection.createStatement()) {
+                statement.execute("""
+                    SELECT "ID", "APIKEY"
+                      FROM "APIKEY"
+                """);
+                try (final ResultSet rs = statement.getResultSet()) {
+                    String clearKey;
+                    int id;
+                    String hashedKey;
+                    String publicId;
+                    while (rs.next()) {
+                        clearKey = rs.getString("apikey");
+                        if (clearKey.length() != ApiKey.LEGACY_FULL_KEY_LENGTH) {
+                            continue;
+                        }
+                        final MessageDigest digest = MessageDigest.getInstance("SHA3-256");
+                        id = rs.getInt("id");
+                        hashedKey = HexFormat.of().formatHex(digest.digest(ApiKey.getOnlyKeyAsBytes(clearKey, true)));
+                        publicId = ApiKey.getPublicId(clearKey, true);
+
+                        ps.setString(1, hashedKey);
+                        ps.setString(2, publicId);
+                        ps.setInt(4, id);
+
+                        ps.executeUpdate();
                     }
-                    final MessageDigest digest = MessageDigest.getInstance("SHA3-256");
-                    id = rs.getInt("id");
-                    hashedKey = HexFormat.of().formatHex(digest.digest(ApiKey.getOnlyKeyAsBytes(clearKey, true)));
-                    publicId = ApiKey.getPublicId(clearKey, true);
-
-                    ps.setString(1, hashedKey);
-                    ps.setString(2, publicId);
-                    ps.setInt(4, id);
-
-                    ps.executeUpdate();
                 }
             }
         }

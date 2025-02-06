@@ -171,9 +171,9 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         }
 
         LOGGER.info("Starting Sonatype OSS Index analysis task");
-        vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
-        if (!event.getComponents().isEmpty()) {
-            analyze(event.getComponents());
+        vulnerabilityAnalysisLevel = event.analysisLevel();
+        if (!event.components().isEmpty()) {
+            analyze(event.components());
         }
         LOGGER.info("Sonatype OSS Index analysis complete");
     }

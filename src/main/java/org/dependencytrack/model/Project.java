@@ -116,6 +116,12 @@ import java.util.UUID;
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
                 @Persistent(name = "uuid")
+        }),
+        @FetchGroup(name = "PROJECT_VULN_ANALYSIS", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "name"),
+                @Persistent(name = "version"),
+                @Persistent(name = "uuid")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -131,7 +137,8 @@ public class Project implements Serializable {
         METADATA,
         METRICS_UPDATE,
         PARENT,
-        PORTFOLIO_METRICS_UPDATE
+        PORTFOLIO_METRICS_UPDATE,
+        PROJECT_VULN_ANALYSIS
     }
 
     @PrimaryKey

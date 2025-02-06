@@ -23,6 +23,7 @@ import org.dependencytrack.event.InternalAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.nvd.ModelConverter;
 import org.junit.Before;
@@ -480,7 +481,8 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
         component.setCpe(targetCpe);
         qm.persist(component);
 
-        new InternalAnalysisTask().inform(new InternalAnalysisEvent(qm.detach(Component.class, component.getId())));
+        new InternalAnalysisTask().inform(new InternalAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         if (expectMatch) {
             assertThat(qm.getAllVulnerabilities(component)).hasSize(1);

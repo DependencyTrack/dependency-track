@@ -33,6 +33,7 @@ import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -225,7 +226,8 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         component.setCpe("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
         component = qm.createComponent(component, false);
 
-        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(component));
+        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
 
@@ -274,7 +276,8 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         component.setCpe("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
         component = qm.createComponent(component, false);
 
-        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(component));
+        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
 
@@ -316,7 +319,8 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         component.setCpe("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
         component = qm.createComponent(component, false);
 
-        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(component));
+        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(1);

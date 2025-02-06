@@ -41,6 +41,7 @@ import jakarta.json.JsonNumber;
 import jakarta.json.JsonObject;
 import java.util.Date;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 /**
@@ -68,8 +69,16 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
     protected boolean isCacheCurrent(Vulnerability.Source source, String targetHost, String target) {
         try (QueryManager qm = new QueryManager()) {
             boolean isCacheCurrent = false;
-            ConfigProperty cacheClearPeriod = qm.getConfigProperty(ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(), ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
-            long cacheValidityPeriod = Long.parseLong(cacheClearPeriod.getPropertyValue());
+            ConfigProperty cacheClearPeriod = qm.getConfigProperty(
+                    SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(),
+                    SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
+            long cacheValidityPeriod;
+            if (cacheClearPeriod != null && cacheClearPeriod.getPropertyValue() != null) {
+                cacheValidityPeriod = Long.parseLong(cacheClearPeriod.getPropertyValue());
+            } else {
+                // Only ever happens in tests, where not all config properties have been populated.
+                cacheValidityPeriod = Long.parseLong(SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getDefaultPropertyValue());
+            }
             ComponentAnalysisCache cac = qm.getComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target);
             if (cac != null) {
                 final Date now = new Date();

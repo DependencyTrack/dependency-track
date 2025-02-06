@@ -18,7 +18,9 @@
  */
 package org.dependencytrack.event;
 
+import alpine.event.framework.Event;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 
 import java.util.List;
 
@@ -28,16 +30,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.6.0
  */
-public class VulnDbAnalysisEvent extends VulnerabilityAnalysisEvent {
-
-    public VulnDbAnalysisEvent() { }
-
-    public VulnDbAnalysisEvent(final Component component) {
-        super(component);
-    }
-
-    public VulnDbAnalysisEvent(final List<Component> components) {
-        super(components);
-    }
-
+public record VulnDbAnalysisEvent(
+        List<Component> components,
+        VulnerabilityAnalysisLevel analysisLevel) implements Event {
 }

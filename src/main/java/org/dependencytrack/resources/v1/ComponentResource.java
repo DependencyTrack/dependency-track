@@ -37,10 +37,10 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.event.ComponentVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
-import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.License;
@@ -366,7 +366,7 @@ public class ComponentResource extends AlpineResource {
 
             component = qm.createComponent(component, true);
             Event.dispatch(
-                new VulnerabilityAnalysisEvent(component)
+                new ComponentVulnerabilityAnalysisEvent(component)
                 // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
                 // as both might be needed in policy evaluation
                 .onSuccess(new RepositoryMetaEvent(List.of(component)))
@@ -475,7 +475,7 @@ public class ComponentResource extends AlpineResource {
 
                 component = qm.updateComponent(component, true);
                 Event.dispatch(
-                    new VulnerabilityAnalysisEvent(component)
+                    new ComponentVulnerabilityAnalysisEvent(component)
                     // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
 // as both might be needed in policy evaluation
                     .onSuccess(new RepositoryMetaEvent(List.of(component)))

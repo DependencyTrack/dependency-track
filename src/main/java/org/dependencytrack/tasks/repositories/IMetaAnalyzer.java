@@ -165,7 +165,6 @@ public interface IMetaAnalyzer {
 
             @Override
             public void setRepositoryUsernameAndPassword(String username, String password) {
-
             }
 
             @Override

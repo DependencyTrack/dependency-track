@@ -1,0 +1,244 @@
+{
+    "advisories": {
+      "drupal/permissions_by_term": [
+        {
+          "advisoryId": "SA-CONTRIB-2017-082",
+          "packageName": "drupal/permissions_by_term",
+          "title": "Permissions by Term - Moderately critical - Access bypass - SA-CONTRIB-2017-082",
+          "link": "https://www.drupal.org/sa-contrib-2017-082",
+          "cve": null,
+          "affectedVersions": "\u003C1.35.0",
+          "reportedAt": "2017-11-08 17:16:30",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Permissions by Term - Moderately critical - Access bypass - SA-CONTRIB-2017-082",
+              "remoteId": "SA-CONTRIB-2017-082"
+            }
+          ]
+        },
+        {
+          "advisoryId": "SA-CONTRIB-2019-068",
+          "packageName": "drupal/permissions_by_term",
+          "title": "Permissions by Term - Moderately critical - Access bypass - SA-CONTRIB-2019-068",
+          "link": "https://www.drupal.org/sa-contrib-2019-068",
+          "cve": null,
+          "affectedVersions": "\u003C2.11.0",
+          "reportedAt": "2019-09-25 14:43:49",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Permissions by Term - Moderately critical - Access bypass - SA-CONTRIB-2019-068",
+              "remoteId": "SA-CONTRIB-2019-068"
+            }
+          ]
+        },
+        {
+          "advisoryId": "SA-CONTRIB-2019-095",
+          "packageName": "drupal/permissions_by_term",
+          "title": "Permissions by Term - Moderately critical - Access bypass - SA-CONTRIB-2019-095",
+          "link": "https://www.drupal.org/sa-contrib-2019-095",
+          "cve": null,
+          "affectedVersions": "\u003C2.0.0",
+          "reportedAt": "2019-12-11 18:59:46",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Permissions by Term - Moderately critical - Access bypass - SA-CONTRIB-2019-095",
+              "remoteId": "SA-CONTRIB-2019-095"
+            }
+          ]
+        },
+        {
+          "advisoryId": "SA-CONTRIB-2022-055",
+          "packageName": "drupal/permissions_by_term",
+          "title": "Permissions by Term - Moderately critical - Access bypass - SA-CONTRIB-2022-055",
+          "link": "https://www.drupal.org/sa-contrib-2022-055",
+          "cve": null,
+          "affectedVersions": "\u003C3.1.19",
+          "reportedAt": "2022-09-07 17:04:31",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Permissions by Term - Moderately critical - Access bypass - SA-CONTRIB-2022-055",
+              "remoteId": "SA-CONTRIB-2022-055"
+            }
+          ]
+        },
+        {
+          "advisoryId": "SA-CONTRIB-2022-056",
+          "packageName": "drupal/permissions_by_term",
+          "title": "Permissions by Term - Moderately critical - Access bypass - SA-CONTRIB-2022-056",
+          "link": "https://www.drupal.org/sa-contrib-2022-056",
+          "cve": null,
+          "affectedVersions": "\u003C3.1.19",
+          "reportedAt": "2022-09-07 17:06:06",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Permissions by Term - Moderately critical - Access bypass - SA-CONTRIB-2022-056",
+              "remoteId": "SA-CONTRIB-2022-056"
+            }
+          ]
+        }
+      ],
+      "drupal/config_perms": [
+        {
+          "advisoryId": "SA-CONTRIB-2017-083",
+          "packageName": "drupal/config_perms",
+          "title": "Custom Permissions - Moderately critical - Access bypass - SA-CONTRIB-2017-083",
+          "link": "https://www.drupal.org/sa-contrib-2017-083",
+          "cve": null,
+          "affectedVersions": "\u003C1.1.0",
+          "reportedAt": "2017-11-08 17:22:08",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Custom Permissions - Moderately critical - Access bypass - SA-CONTRIB-2017-083",
+              "remoteId": "SA-CONTRIB-2017-083"
+            }
+          ]
+        },
+        {
+          "advisoryId": "SA-CONTRIB-2019-055",
+          "packageName": "drupal/config_perms",
+          "title": "Custom Permissions - Critical - Access bypass - SA-CONTRIB-2019-055",
+          "link": "https://www.drupal.org/sa-contrib-2019-055",
+          "cve": null,
+          "affectedVersions": "\u003C1.2.0",
+          "reportedAt": "2019-07-10 16:30:00",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Custom Permissions - Critical - Access bypass - SA-CONTRIB-2019-055",
+              "remoteId": "SA-CONTRIB-2019-055"
+            }
+          ]
+        }
+      ],
+      "drupal/config_update": [
+        {
+          "advisoryId": "SA-CONTRIB-2017-091",
+          "packageName": "drupal/config_update",
+          "title": "Configuration Update Manager - Moderately critical - Cross Site Request Forgery (CSRF) - SA-CONTRIB-2017-091",
+          "link": "https://www.drupal.org/sa-contrib-2017-091",
+          "cve": null,
+          "affectedVersions": "\u003C1.5",
+          "reportedAt": "2017-12-06 18:44:03",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Configuration Update Manager - Moderately critical - Cross Site Request Forgery (CSRF) - SA-CONTRIB-2017-091",
+              "remoteId": "SA-CONTRIB-2017-091"
+            }
+          ]
+        }
+      ],
+      "drupal/link_click_count": [
+        {
+          "advisoryId": "SA-CONTRIB-2017-094",
+          "packageName": "drupal/link_click_count",
+          "title": "Link Click Count - Critical - Unsupported - SA-CONTRIB-2017-094",
+          "link": "https://www.drupal.org/sa-contrib-2017-094",
+          "cve": null,
+          "affectedVersions": "*",
+          "reportedAt": "2017-12-20 14:12:47",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Link Click Count - Critical - Unsupported - SA-CONTRIB-2017-094",
+              "remoteId": "SA-CONTRIB-2017-094"
+            }
+          ]
+        }
+      ],
+      "drupal/stacks": [
+        {
+          "advisoryId": "SA-CONTRIB-2018-001",
+          "packageName": "drupal/stacks",
+          "title": "Stacks - Critical - Arbitrary PHP code execution - SA-CONTRIB-2018-001",
+          "link": "https://www.drupal.org/sa-contrib-2018-001",
+          "cve": null,
+          "affectedVersions": "\u003C1.1.0",
+          "reportedAt": "2018-01-10 17:57:53",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Stacks - Critical - Arbitrary PHP code execution - SA-CONTRIB-2018-001",
+              "remoteId": "SA-CONTRIB-2018-001"
+            }
+          ]
+        }
+      ],
+      "drupal/node_view_permissions": [
+        {
+          "advisoryId": "SA-CONTRIB-2018-002",
+          "packageName": "drupal/node_view_permissions",
+          "title": "Node View Permissions - Moderately critical - Access Bypass - SA-CONTRIB-2018-002",
+          "link": "https://www.drupal.org/sa-contrib-2018-002",
+          "cve": null,
+          "affectedVersions": "\u003C1.1.0",
+          "reportedAt": "2018-01-10 18:02:19",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Node View Permissions - Moderately critical - Access Bypass - SA-CONTRIB-2018-002",
+              "remoteId": "SA-CONTRIB-2018-002"
+            }
+          ]
+        }
+      ],
+      "drupal/entity_ref_tab_formatter": [
+        {
+          "advisoryId": "SA-CONTRIB-2018-008",
+          "packageName": "drupal/entity_ref_tab_formatter",
+          "title": "Entity Reference Tab / Accordion Formatter - Moderately critical - Cross Site Scripting - SA-CONTRIB-2018-008",
+          "link": "https://www.drupal.org/sa-contrib-2018-008",
+          "cve": null,
+          "affectedVersions": "\u003C1.3.0",
+          "reportedAt": "2018-02-07 18:45:12",
+          "composerRepository": "http://packages.drupal.org/8/",
+          "sources": [
+            {
+              "name": "Entity Reference Tab / Accordion Formatter - Moderately critical - Cross Site Scripting - SA-CONTRIB-2018-008",
+              "remoteId": "SA-CONTRIB-2018-008"
+            }
+          ]
+        }
+      ],
+      "drupal/core": [
+        {
+          "advisoryId": "SA-CORE-2018-001",
+          "packageName": "drupal/core",
+          "title": "Drupal core - Critical - Multiple Vulnerabilities  - SA-CORE-2018-001",
+          "link": "https://www.drupal.org/sa-core-2018-001",
+          "cve": null,
+          "affectedVersions": "\u003E=7.0 \u003C7.57 || \u003E= 8.0.0 \u003C8.4.5",
+          "reportedAt": "2018-02-21 17:10:55",
+          "composerRepository": "https://packagist.org/",
+          "sources": [
+            {
+              "name": "Drupal core - Critical - Multiple Vulnerabilities  - SA-CORE-2018-001",
+              "remoteId": "SA-CORE-2018-001"
+            }
+          ]
+        },
+        {
+          "advisoryId": "SA-CORE-2018-002",
+          "packageName": "drupal/core",
+          "title": "Drupal core - Highly critical - Remote Code Execution  - SA-CORE-2018-002",
+          "link": "https://www.drupal.org/sa-core-2018-002",
+          "cve": "CVE-2018-7600",
+          "affectedVersions": "\u003E=7.0 \u003C7.58",
+          "reportedAt": "2018-03-28 18:14:10",
+          "composerRepository": "https://packagist.org/",
+          "sources": [
+            {
+              "name": "Drupal core - Highly critical - Remote Code Execution  - SA-CORE-2018-002",
+              "remoteId": "SA-CORE-2018-002"
+            }
+          ]
+        }
+      ]
+    }
+}

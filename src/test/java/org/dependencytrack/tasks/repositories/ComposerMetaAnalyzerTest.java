@@ -774,7 +774,7 @@ public class ComposerMetaAnalyzerTest {
                 Assert.assertNull(metaModel.getLatestVersion());
         }
 
-        private static File getRepoResourceFile(String repo, String filename) throws Exception {
+        public static File getRepoResourceFile(String repo, String filename) throws Exception {
                 String filenameResource = String.format(
                                 "unit/tasks/repositories/https---%s-%s.json",
                                 repo,
@@ -782,7 +782,7 @@ public class ComposerMetaAnalyzerTest {
                 return getFileResource(filenameResource);
         }
 
-        private static File getPackageResourceFile(String repo, String namespace, String name) throws Exception {
+        public static File getPackageResourceFile(String repo, String namespace, String name) throws Exception {
                 String filename = String.format(
                                 "unit/tasks/repositories/https---%s-%s-%s.json",
                                 repo,
@@ -791,18 +791,19 @@ public class ComposerMetaAnalyzerTest {
                 return getFileResource(filename);
         }
 
-        private static File getFileResource(String filename) throws Exception {
+        public static File getFileResource(String filename) throws Exception {
                 return new File(
                                 Thread.currentThread().getContextClassLoader()
                                                 .getResource(filename)
                                                 .toURI());
         }
 
-        private static byte[] getTestData(File file) throws Exception {
+        public static byte[] getTestData(File file) throws Exception {
                 final FileInputStream fileStream = new FileInputStream(file);
                 byte[] data = new byte[(int) file.length()];
                 fileStream.read(data);
                 fileStream.close();
                 return data;
         }
+
 }

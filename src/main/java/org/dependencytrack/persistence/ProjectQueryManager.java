@@ -182,6 +182,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return a List of Projects
      */
     @Override
+    @Deprecated(forRemoval = true, since = "4.12.4")
     public List<Project> getAllProjects() {
         return getAllProjects(false);
     }
@@ -192,6 +193,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return a List of Projects
      */
     @Override
+    @Deprecated(forRemoval = true, since = "4.12.4")
     public List<Project> getAllProjects(boolean excludeInactive) {
         final Query<Project> query = pm.newQuery(Project.class);
         if (excludeInactive) {

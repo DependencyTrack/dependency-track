@@ -111,10 +111,10 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 }
             }
             final var event = (VulnDbAnalysisEvent) e;
-            vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
+            vulnerabilityAnalysisLevel = event.analysisLevel();
             LOGGER.debug("Starting VulnDB analysis task");
-            if (!event.getComponents().isEmpty()) {
-                analyze(event.getComponents());
+            if (!event.components().isEmpty()) {
+                analyze(event.components());
             }
             LOGGER.debug("VulnDB analysis complete");
         }

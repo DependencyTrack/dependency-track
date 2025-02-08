@@ -30,10 +30,10 @@ import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.validation.ValidSpdxExpression;
+import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
-import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 
 import jakarta.json.JsonObject;
 import jakarta.validation.constraints.NotBlank;
@@ -82,6 +82,16 @@ import java.util.UUID;
         @FetchGroup(name = "BOM_UPLOAD_PROCESSING", members = {
                 @Persistent(name = "properties")
         }),
+        @FetchGroup(name = "COMPONENT_VULN_ANALYSIS", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "group"),
+                @Persistent(name = "name"),
+                @Persistent(name = "version"),
+                @Persistent(name = "cpe"),
+                @Persistent(name = "purl"),
+                @Persistent(name = "purlCoordinates"),
+                @Persistent(name = "uuid")
+        }),
         @FetchGroup(name = "INTERNAL_IDENTIFICATION", members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "group"),
@@ -110,6 +120,7 @@ public class Component implements Serializable {
      */
     public enum FetchGroup {
         ALL,
+        COMPONENT_VULN_ANALYSIS,
         BOM_UPLOAD_PROCESSING,
         INTERNAL_IDENTIFICATION,
         METRICS_UPDATE,

@@ -167,25 +167,25 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             return false;
         }
         if (result && vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty()) {
-            final ComponentVersion endExcluding = new ComponentVersion(vs.getVersionEndExcluding());
+            final ComponentVersion endExcluding = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), vs.getVersionEndExcluding());
             result = endExcluding.compareTo(target) > 0;
             LOGGER.debug("Version compare for ecosystem %s: (%s > %s) == %b"
                     .formatted(ecosystem, vs.getVersionEndExcluding(), targetVersion, result));
         }
         if (result && vs.getVersionStartExcluding() != null && !vs.getVersionStartExcluding().isEmpty()) {
-            final ComponentVersion startExcluding = new ComponentVersion(vs.getVersionStartExcluding());
+            final ComponentVersion startExcluding = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), vs.getVersionStartExcluding());
             result = startExcluding.compareTo(target) < 0;
             LOGGER.debug("Version compare for ecosystem %s: (%s < %s) == %b"
                     .formatted(ecosystem, vs.getVersionStartExcluding(), targetVersion, result));
         }
         if (result && vs.getVersionEndIncluding() != null && !vs.getVersionEndIncluding().isEmpty()) {
-            final ComponentVersion endIncluding = new ComponentVersion(vs.getVersionEndIncluding());
+            final ComponentVersion endIncluding = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), vs.getVersionEndIncluding());
             result &= endIncluding.compareTo(target) >= 0;
             LOGGER.debug("Version compare for ecosystem %s: (%s >= %s) == %b"
                     .formatted(ecosystem, vs.getVersionEndIncluding(), targetVersion, result));
         }
         if (result && vs.getVersionStartIncluding() != null && !vs.getVersionStartIncluding().isEmpty()) {
-            final ComponentVersion startIncluding = new ComponentVersion(vs.getVersionStartIncluding());
+            final ComponentVersion startIncluding = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), vs.getVersionStartIncluding());
             result &= startIncluding.compareTo(target) <= 0;
             LOGGER.debug("Version compare for ecosystem %s: (%s <= %s) == %b"
                     .formatted(ecosystem, vs.getVersionStartIncluding(), targetVersion, result));

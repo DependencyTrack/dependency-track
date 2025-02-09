@@ -30,8 +30,8 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
+import org.dependencytrack.event.ProjectVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
-import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
@@ -106,7 +106,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     public void setUp() {
         EventService.getInstance().subscribe(IndexEvent.class, EventSubscriber.class);
         EventService.getInstance().subscribe(RepositoryMetaEvent.class, EventSubscriber.class);
-        EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, EventSubscriber.class);
+        EventService.getInstance().subscribe(ProjectVulnerabilityAnalysisEvent.class, EventSubscriber.class);
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
 
         // Enable processing of CycloneDX BOMs
@@ -135,7 +135,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     @Test
     public void informTest() throws Exception {
-        EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
+        EventService.getInstance().subscribe(ProjectVulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EventService.getInstance().subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
 
         for (final License license : new SpdxLicenseDetailParser().getLicenseDefinitions()) {
@@ -465,7 +465,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                     assertThat(indexEvent.getIndexableClass()).isEqualTo(Project.class);
                     assertThat(indexEvent.getAction()).isEqualTo(IndexEvent.Action.UPDATE);
                 },
-                event -> assertThat(event).isInstanceOf(VulnerabilityAnalysisEvent.class),
+                event -> assertThat(event).isInstanceOf(ProjectVulnerabilityAnalysisEvent.class),
                 event -> assertThat(event).isInstanceOf(RepositoryMetaEvent.class)
         );
     }

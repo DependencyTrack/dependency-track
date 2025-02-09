@@ -34,8 +34,8 @@ import org.datanucleus.store.query.QueryNotUniqueException;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
 import org.dependencytrack.event.PolicyEvaluationEvent;
+import org.dependencytrack.event.ProjectVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
-import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.Bom;
@@ -50,6 +50,7 @@ import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -772,7 +773,8 @@ public class BomUploadProcessingTask implements Subscriber {
     }
 
     private static Event createVulnAnalysisEvent(final Context ctx, final List<Component> components) {
-        final var event = new VulnerabilityAnalysisEvent(components).project(ctx.project);
+        final var event = new ProjectVulnerabilityAnalysisEvent(
+                ctx.project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
         event.setChainIdentifier(ctx.token);
         event.onSuccess(new PolicyEvaluationEvent(components).project(ctx.project));
 

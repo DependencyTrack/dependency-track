@@ -37,6 +37,7 @@ import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.junit.After;
@@ -278,7 +279,8 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new TrivyAnalysisTask().inform(new TrivyAnalysisEvent(component));
+        new TrivyAnalysisTask().inform(new TrivyAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).satisfiesExactly(vuln -> {
@@ -379,7 +381,8 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new TrivyAnalysisTask().inform(new TrivyAnalysisEvent(component));
+        new TrivyAnalysisTask().inform(new TrivyAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).isEmpty();
@@ -414,7 +417,8 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new TrivyAnalysisTask().inform(new TrivyAnalysisEvent(List.of(component)));
+        new TrivyAnalysisTask().inform(new TrivyAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(0);

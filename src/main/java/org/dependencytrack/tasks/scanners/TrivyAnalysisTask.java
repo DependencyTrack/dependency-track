@@ -156,10 +156,10 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
             shouldIgnoreUnfixed = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED);
         }
 
-        vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
+        vulnerabilityAnalysisLevel = event.analysisLevel();
         LOGGER.info("Starting Trivy vulnerability analysis task");
-        if (!event.getComponents().isEmpty()) {
-            analyze(event.getComponents());
+        if (!event.components().isEmpty()) {
+            analyze(event.components());
         }
         LOGGER.info("Trivy vulnerability analysis complete");
     }
@@ -508,7 +508,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
             final ConfigProperty property = qm.getConfigProperty(
                     SCANNER_TRIVY_BASE_URL.getGroupName(),
                     SCANNER_TRIVY_BASE_URL.getPropertyName());
-            if (property == null) {
+            if (property == null || property.getPropertyValue() == null) {
                 return Optional.empty();
             }
 

@@ -380,16 +380,6 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects();
     }
 
-    @Deprecated(forRemoval = true, since = "4.12.4")
-    public List<Project> getAllProjects() {
-        return getProjectQueryManager().getAllProjects();
-    }
-
-    @Deprecated(forRemoval = true, since = "4.12.4")
-    public List<Project> getAllProjects(boolean excludeInactive) {
-        return getProjectQueryManager().getAllProjects(excludeInactive);
-    }
-
     public PaginatedResult getProjects(final String name, final boolean excludeInactive, final boolean onlyRoot, final Team notAssignedToTeam) {
         return getProjectQueryManager().getProjects(name, excludeInactive, onlyRoot, notAssignedToTeam);
     }

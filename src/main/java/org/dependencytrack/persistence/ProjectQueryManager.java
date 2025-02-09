@@ -177,33 +177,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * Returns a list of all projects.
-     * This method if designed NOT to provide paginated results.
-     * @return a List of Projects
-     */
-    @Override
-    @Deprecated(forRemoval = true, since = "4.12.4")
-    public List<Project> getAllProjects() {
-        return getAllProjects(false);
-    }
-
-    /**
-     * Returns a list of all projects.
-     * This method if designed NOT to provide paginated results.
-     * @return a List of Projects
-     */
-    @Override
-    @Deprecated(forRemoval = true, since = "4.12.4")
-    public List<Project> getAllProjects(boolean excludeInactive) {
-        final Query<Project> query = pm.newQuery(Project.class);
-        if (excludeInactive) {
-            query.setFilter("active");
-        }
-        query.setOrdering("id asc");
-        return query.executeList();
-    }
-
-    /**
      * Returns a list of projects by their name.
      * @param name the name of the Projects (required)
      * @return a List of Project objects

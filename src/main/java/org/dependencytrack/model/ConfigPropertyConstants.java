@@ -18,12 +18,11 @@
  */
 package org.dependencytrack.model;
 
-import java.util.Arrays;
-
-import org.apache.commons.lang3.SystemUtils;
-
 import alpine.model.IConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
+import org.apache.commons.lang3.SystemUtils;
+
+import java.util.Arrays;
 
 public enum ConfigPropertyConstants {
 
@@ -95,6 +94,7 @@ public enum ConfigPropertyConstants {
     DEFECTDOJO_URL("integrations", "defectdojo.url", null, PropertyType.URL, "Base URL to DefectDojo"),
     DEFECTDOJO_API_KEY("integrations", "defectdojo.apiKey", null, PropertyType.STRING, "API Key for DefectDojo"),
     KENNA_ENABLED("integrations", "kenna.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Kenna Security integration"),
+    KENNA_API_URL("integrations", "kenna.api.url", "https://api.kennasecurity.com", PropertyType.STRING, "Kenna Security API URL"),
     KENNA_SYNC_CADENCE("integrations", "kenna.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Kenna Security"),
     KENNA_TOKEN("integrations", "kenna.token", null, PropertyType.ENCRYPTEDSTRING, "The token to use when authenticating to Kenna Security"),
     KENNA_CONNECTOR_ID("integrations", "kenna.connector.id", null, PropertyType.STRING, "The Kenna Security connector identifier to upload to"),

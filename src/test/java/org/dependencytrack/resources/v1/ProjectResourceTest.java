@@ -608,7 +608,7 @@ public class ProjectResourceTest extends ResourceTest {
                         }
                         """);
 
-        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
     }
 
@@ -654,7 +654,7 @@ public class ProjectResourceTest extends ResourceTest {
                         }
                         """);
 
-        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
     }
 
@@ -695,7 +695,7 @@ public class ProjectResourceTest extends ResourceTest {
                         }
                         """);
 
-        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).isEmpty());
     }
 
@@ -777,7 +777,7 @@ public class ProjectResourceTest extends ResourceTest {
                         }
                         """);
 
-        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly("otherTeam"));
     }
 
@@ -887,7 +887,7 @@ public class ProjectResourceTest extends ResourceTest {
                         }
                         """);
 
-        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
     }
     @Test

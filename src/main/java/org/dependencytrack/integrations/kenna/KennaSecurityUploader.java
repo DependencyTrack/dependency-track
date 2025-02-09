@@ -51,6 +51,7 @@ import java.util.List;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
+import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_API_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_TOKEN;
@@ -59,8 +60,6 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
 
     private static final Logger LOGGER = Logger.getLogger(KennaSecurityUploader.class);
     private static final String ASSET_EXTID_PROPERTY = "kenna.asset.external_id";
-    private static final String API_ROOT = "https://api.kennasecurity.com";
-    private static final String CONNECTOR_UPLOAD_URL = API_ROOT + "/connectors/%s/data_file";
 
     private String connectorId;
 
@@ -123,10 +122,11 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
     @Override
     public void upload(final InputStream payload) {
         LOGGER.debug("Uploading payload to KennaSecurity");
+        final ConfigProperty apiUrlProperty = qm.getConfigProperty(KENNA_API_URL.getGroupName(), KENNA_API_URL.getPropertyName());
         final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
         try {
             final String token = DebugDataEncryption.decryptAsString(tokenProperty.getPropertyValue());
-            HttpPost request = new HttpPost(String.format(CONNECTOR_UPLOAD_URL, connectorId));
+            HttpPost request = new HttpPost("%s/connectors/%s/data_file".formatted(apiUrlProperty.getPropertyValue(), connectorId));
             request.addHeader("X-Risk-Token", token);
             request.addHeader("accept", "application/json");
             List<NameValuePair> nameValuePairList = new ArrayList<>();

@@ -295,6 +295,14 @@ public class Project implements Serializable {
     @Column(name = "LAST_RISKSCORE", allowsNull = "true") // New column, must allow nulls on existing databases))
     private Double lastInheritedRiskScore;
 
+    /**
+     * Convenience field which will contain the date of the last vulnerability analysis of the {@link Bom} components
+     */
+    @Persistent
+    @Column(name = "LAST_VULNERABILITY_ANALYSIS", allowsNull = "true")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    private Date lastVulnerabilityAnalysis;
+
     @Persistent
     @Column(name = "ACTIVE", defaultValue = "true")
     @JsonSerialize(nullsUsing = BooleanDefaultTrueSerializer.class)
@@ -542,6 +550,14 @@ public class Project implements Serializable {
 
     public void setLastBomImportFormat(String lastBomImportFormat) {
         this.lastBomImportFormat = lastBomImportFormat;
+    }
+
+    public Date getLastVulnerabilityAnalysis() {
+        return lastVulnerabilityAnalysis;
+    }
+
+    public void setLastVulnerabilityAnalysis(Date lastVulnerabilityAnalysis) {
+        this.lastVulnerabilityAnalysis = lastVulnerabilityAnalysis;
     }
 
     public Double getLastInheritedRiskScore() {

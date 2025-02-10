@@ -18,6 +18,36 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
+import alpine.event.framework.LoggableSubscriber;
+import alpine.model.ConfigProperty;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.dependencytrack.common.HttpClientPool;
+import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.event.OsvMirrorEvent;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.parser.osv.OsvAdvisoryParser;
+import org.dependencytrack.parser.osv.model.OsvAdvisory;
+import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
+import org.dependencytrack.persistence.QueryManager;
+import org.json.JSONObject;
+import org.slf4j.MDC;
+import us.springett.cvss.Cvss;
+import us.springett.cvss.Score;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,42 +66,13 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.dependencytrack.common.HttpClientPool;
-import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.event.OsvMirrorEvent;
-import org.dependencytrack.model.ConfigPropertyConstants;
+import static org.dependencytrack.common.MdcKeys.MDC_VULN_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
-import org.dependencytrack.model.Cwe;
-import org.dependencytrack.model.Severity;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerabilityAlias;
-import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.parser.osv.OsvAdvisoryParser;
-import org.dependencytrack.parser.osv.model.OsvAdvisory;
-import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
-import org.dependencytrack.persistence.QueryManager;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
-import org.json.JSONObject;
-
-import com.github.packageurl.MalformedPackageURLException;
-import com.github.packageurl.PackageURL;
-
-import alpine.common.logging.Logger;
-import alpine.event.framework.Event;
-import alpine.event.framework.LoggableSubscriber;
-import alpine.model.ConfigProperty;
-import us.springett.cvss.Cvss;
-import us.springett.cvss.Score;
 
 public class OsvDownloadTask implements LoggableSubscriber {
 
@@ -114,7 +115,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20")
                             + "/all.zip";
                     HttpUriRequest request = new HttpGet(url);
-                    try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                    try (var ignoredMdcOsvEcosystem = MDC.putCloseable("osvEcosystem", ecosystem);
+                         final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                         final StatusLine status = response.getStatusLine();
                         if (status.getStatusCode() == HttpStatus.SC_OK) {
                             try (InputStream in = response.getEntity().getContent();
@@ -147,9 +149,16 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 out.append(line);
             }
             JSONObject json = new JSONObject(out.toString());
-            final OsvAdvisory osvAdvisory = parser.parse(json);
-            if (osvAdvisory != null) {
-                updateDatasource(osvAdvisory);
+            String advisoryId = json.optString("id");
+            try (var ignoredMdcVulnId = MDC.putCloseable(MDC_VULN_ID, advisoryId)) {
+                try {
+                    final OsvAdvisory osvAdvisory = parser.parse(json);
+                    if (osvAdvisory != null) {
+                        updateDatasource(osvAdvisory);
+                    }
+                } catch (RuntimeException e) {
+                    LOGGER.error("Failed to process advisory", e);
+                }
             }
             zipEntry = zipIn.getNextEntry();
             reader = new BufferedReader(new InputStreamReader(zipIn));

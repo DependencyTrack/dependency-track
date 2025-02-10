@@ -270,14 +270,22 @@ public class OsvDownloadTask implements LoggableSubscriber {
         // derive from database_specific cvss v3 vector if available
         if(advisory.getCvssV3Vector() != null) {
             Cvss cvss = Cvss.fromVector(advisory.getCvssV3Vector());
-            Score score = cvss.calculateScore();
-            return normalizedCvssV3Score(score.getBaseScore());
+            if (cvss != null) {
+                Score score = cvss.calculateScore();
+                return normalizedCvssV3Score(score.getBaseScore());
+            } else {
+                LOGGER.warn("Unable to determine severity from CVSSv3 vector: " + advisory.getCvssV3Vector());
+            }
         }
         // derive from database_specific cvss v2 vector if available
         if (advisory.getCvssV2Vector() != null) {
             Cvss cvss = Cvss.fromVector(advisory.getCvssV2Vector());
-            Score score = cvss.calculateScore();
-            return normalizedCvssV2Score(score.getBaseScore());
+            if (cvss != null) {
+                Score score = cvss.calculateScore();
+                return normalizedCvssV2Score(score.getBaseScore());
+            } else {
+                LOGGER.warn("Unable to determine severity from CVSSv2 vector: " + advisory.getCvssV2Vector());
+            }
         }
         // get database_specific severity string if available
         if (advisory.getSeverity() != null) {

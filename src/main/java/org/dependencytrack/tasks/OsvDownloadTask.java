@@ -44,6 +44,7 @@ import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
 import org.json.JSONObject;
+import org.slf4j.MDC;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 
@@ -65,6 +66,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static org.dependencytrack.common.MdcKeys.MDC_VULN_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
@@ -113,7 +115,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20")
                             + "/all.zip";
                     HttpUriRequest request = new HttpGet(url);
-                    try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                    try (var ignoredMdcOsvEcosystem = MDC.putCloseable("osvEcosystem", ecosystem);
+                         final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                         final StatusLine status = response.getStatusLine();
                         if (status.getStatusCode() == HttpStatus.SC_OK) {
                             try (InputStream in = response.getEntity().getContent();
@@ -146,9 +149,16 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 out.append(line);
             }
             JSONObject json = new JSONObject(out.toString());
-            final OsvAdvisory osvAdvisory = parser.parse(json);
-            if (osvAdvisory != null) {
-                updateDatasource(osvAdvisory);
+            String advisoryId = json.optString("id");
+            try (var ignoredMdcVulnId = MDC.putCloseable(MDC_VULN_ID, advisoryId)) {
+                try {
+                    final OsvAdvisory osvAdvisory = parser.parse(json);
+                    if (osvAdvisory != null) {
+                        updateDatasource(osvAdvisory);
+                    }
+                } catch (RuntimeException e) {
+                    LOGGER.error("Failed to process advisory", e);
+                }
             }
             zipEntry = zipIn.getNextEntry();
             reader = new BufferedReader(new InputStreamReader(zipIn));

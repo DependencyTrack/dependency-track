@@ -19,6 +19,10 @@ Firefox extensions can be used to quickly use the Swagger UI Console.
 
 ![Swagger UI Console](/images/screenshots/swagger-ui-console.png)
 
-Prior to using the REST APIs, an API Key must be generated. By default, creating a team will NOT create an API key. A team may have multiple keys.
+Prior to using the REST APIs, an API Key must be generated. By default, creating a team will NOT create an API key. A team may have multiple keys. With the release of version 4.13, API Keys will be stored in a hashed format in the database, making them invisible after their initial creation.
 
 ![Teams - API Key](/images/screenshots/teams.png)
+
+When you create a new API Key, a popup window will display the Key.
+
+![Teams - New API Key](/images/screenshots/new-apiKey.png)

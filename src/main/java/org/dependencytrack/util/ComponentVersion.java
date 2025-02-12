@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.util;
 
+import alpine.common.logging.Logger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -209,6 +210,12 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
     public int compareTo(ComponentVersion version) {
         if (version == null) {
             return 1;
+        }
+
+        if(!this.ecosystem.getName().equals(version.ecosystem.getName())) {
+            Logger.getLogger(getClass()).warn("Comparing versions of ecosystem %s and ecosystem %s: This will led to wrong results"
+                    .formatted(this.ecosystem.getName(), version.ecosystem.getName()));
+
         }
 
         int result_code = 0;

@@ -732,6 +732,9 @@
                 <artifactId>jetty-ee10-maven-plugin</artifactId>
                 <version>${plugin.jetty.version}</version>
                 <configuration>
+                    <systemProperties>
+                        <dev.mode.enabled>true</dev.mode.enabled>
+                    </systemProperties>
                     <webApp>
                         <!-- Disable classpath scanning. -->
                         <containerIncludeJarPattern>^$</containerIncludeJarPattern>
@@ -794,6 +797,9 @@
                         <artifactId>jetty-ee10-maven-plugin</artifactId>
                         <version>${plugin.jetty.version}</version>
                         <configuration>
+                            <systemProperties>
+                                <dev.mode.enabled>true</dev.mode.enabled>
+                            </systemProperties>
                             <webApp>
                                 <!-- Disable classpath scanning. -->
                                 <containerIncludeJarPattern>^$</containerIncludeJarPattern>

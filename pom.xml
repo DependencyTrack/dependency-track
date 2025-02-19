@@ -153,6 +153,24 @@
         </repository>
     </repositories>
 
+    <dependencyManagement>
+        <dependencies>
+            <!--
+              Resolve CVE-2024-57699 (https://github.com/advisories/GHSA-pq2g-wx69-c263).
+              Highly unlikely to be exploitable in DT or Alpine, but we're bumping the
+              version anyway since the update is low-risk and reduces scanner noise.
+
+              TODO: Remove this when bumping Alpine to >= 3.2.0, which includes a version
+               of com.nimbusds:oauth2-oidc-sdk pulling in a newer json-smart version, too.
+            -->
+            <dependency>
+                <groupId>net.minidev</groupId>
+                <artifactId>json-smart</artifactId>
+                <version>2.5.2</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <!-- Alpine -->
         <dependency>

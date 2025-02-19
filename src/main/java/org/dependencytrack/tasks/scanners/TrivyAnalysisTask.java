@@ -67,11 +67,13 @@ import trivy.proto.scanner.v1.ScanResponse;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Objects.requireNonNullElseGet;
 import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_INITIAL_DURATION_MS;
 import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_MAX_DURATION_MS;
 import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_MULTIPLIER;
@@ -251,8 +253,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                             }
                         }
 
-                        for (final ComponentProperty property : component.getProperties()) {
-
+                        for (final ComponentProperty property : requireNonNullElseGet(component.getProperties(), Collections::<ComponentProperty>emptyList)) {
                             if (property.getPropertyName().equals("trivy:SrcName")) {
                                 srcName = property.getPropertyValue();
                             } else if (property.getPropertyName().equals("trivy:SrcVersion")) {
@@ -333,6 +334,12 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
     @Override
     public boolean shouldAnalyze(final PackageURL packageUrl) {
+        if (packageUrl == null) {
+            // Components of classifier OPERATING_SYSTEM can "survive"
+            // the #isCapable call, despite not having a package URL.
+            return true;
+        }
+
         return getApiBaseUrl()
                 .map(baseUrl -> !isCacheCurrent(Vulnerability.Source.TRIVY, apiBaseUrl, packageUrl.getCoordinates()))
                 .orElse(false);

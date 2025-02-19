@@ -43,6 +43,7 @@ import org.dependencytrack.tasks.NistMirrorTask;
 import org.dependencytrack.tasks.OsvDownloadTask;
 import org.dependencytrack.tasks.PolicyEvaluationTask;
 import org.dependencytrack.tasks.TaskScheduler;
+import org.dependencytrack.tasks.TelemetrySubmissionTask;
 import org.dependencytrack.tasks.VexUploadProcessingTask;
 import org.dependencytrack.tasks.VulnDbSyncTask;
 import org.dependencytrack.tasks.VulnerabilityAnalysisTask;
@@ -112,6 +113,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
         EVENT_SERVICE.subscribe(NistApiMirrorEvent.class, NistApiMirrorTask.class);
         EVENT_SERVICE.subscribe(EpssMirrorEvent.class, EpssMirrorTask.class);
+        EVENT_SERVICE.subscribe(TelemetrySubmissionEvent.class, TelemetrySubmissionTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
 
@@ -148,6 +150,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(NistMirrorTask.class);
         EVENT_SERVICE.unsubscribe(NistApiMirrorTask.class);
         EVENT_SERVICE.unsubscribe(EpssMirrorTask.class);
+        EVENT_SERVICE.unsubscribe(TelemetrySubmissionTask.class);
         EVENT_SERVICE.shutdown(DRAIN_TIMEOUT_DURATION);
 
         EVENT_SERVICE_ST.unsubscribe(IndexTask.class);

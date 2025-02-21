@@ -76,7 +76,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
             } else {
                 request.addHeader("Authorization", "Bearer " + credentials.password);
             }
-        } else if (getToken(config) != null) {
+        } else if (getToken(config) != null && !getToken(config).isEmpty() && getTokenHeader(config) != null && !getTokenHeader(config).isEmpty()) {
             request.addHeader(getTokenHeader(config), getToken(config));
         }
 

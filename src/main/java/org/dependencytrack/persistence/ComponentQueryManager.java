@@ -167,7 +167,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 " SELECT FROM org.dependencytrack.model.RepositoryMetaComponent m " +
                 " WHERE m.name == this.name " +
                 " && (m.namespace == this.group || (m.namespace == null && this.group == null)) " +
-                " && m.latestVersion != this.version " +
+                " && (m.latestVersion != this.version || m.isDeprecated)" +
                 " && this.purl.matches('pkg:' + m.repositoryType.toString().toLowerCase() + '/%') " +
                 " ).isEmpty()";
         }
@@ -579,6 +579,8 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                     if (repoMetaComponent != null) {
                         RepositoryMetaComponent transientRepoMetaComponent = new RepositoryMetaComponent();
                         transientRepoMetaComponent.setLatestVersion(repoMetaComponent.getLatestVersion());
+                        transientRepoMetaComponent.setDeprecated(repoMetaComponent.isDeprecated());
+                        transientRepoMetaComponent.setDeprecationMessage(repoMetaComponent.getDeprecationMessage());
                         transientComponent.setRepositoryMeta(transientRepoMetaComponent);
                     }
                 }

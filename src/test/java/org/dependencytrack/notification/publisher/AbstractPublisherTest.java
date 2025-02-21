@@ -20,6 +20,7 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import io.pebbletemplates.pebble.error.ParserException;
 import org.apache.commons.io.IOUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
@@ -39,7 +40,6 @@ import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
-import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.junit.Test;
 
@@ -54,6 +54,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 public abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCapableTest {
@@ -229,6 +230,24 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
+    @Test
+    public void testInformWithTemplateInclude() throws Exception {
+        final var notification = new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.ANALYZER)
+                .title(NotificationConstants.Title.NOTIFICATION_TEST)
+                .level(NotificationLevel.ERROR)
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC));
+
+        final JsonObject config = Json.createObjectBuilder(createConfig())
+                .add(Publisher.CONFIG_TEMPLATE_KEY, "{% include '/some/path' %}")
+                .build();
+
+        assertThatExceptionOfType(ParserException.class)
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, config))
+                .withMessage("Unexpected tag name \"include\" ({% include '/some/path' %}:1)");
+    }
+
     private static Component createComponent(final Project project) {
         final var component = new Component();
         component.setProject(project);
@@ -287,7 +306,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         return analysis;
     }
 
-    private JsonObject createConfig() throws Exception {
+    JsonObject createConfig() throws Exception {
         return Json.createObjectBuilder()
                 .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
                 .add(Publisher.CONFIG_TEMPLATE_KEY, IOUtils.resourceToString(publisher.getPublisherTemplateFile(), UTF_8))

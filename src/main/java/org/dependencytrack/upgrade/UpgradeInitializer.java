@@ -38,8 +38,15 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 public class UpgradeInitializer implements ServletContextListener {
@@ -52,16 +59,29 @@ public class UpgradeInitializer implements ServletContextListener {
     @Override
     public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Initializing upgrade framework");
-        try {
-            final UpgradeMetaProcessor ump = new UpgradeMetaProcessor();
+        final var preUpgradeHooks = new ArrayList<PreUpgradeHook>();
+        try (final UpgradeMetaProcessor ump = new UpgradeMetaProcessor()) {
             final VersionComparator currentVersion = ump.getSchemaVersion();
-            ump.close();
             if (currentVersion != null && currentVersion.isOlderThan(new VersionComparator("4.0.0"))) {
                 LOGGER.error("Unable to upgrade Dependency-Track versions prior to v4.0.0. Please refer to documentation for migration details. Halting.");
+                ump.close();
                 Runtime.getRuntime().halt(-1);
             }
+
+            ServiceLoader.load(PreUpgradeHook.class).stream()
+                    .map(ServiceLoader.Provider::get)
+                    .sorted(Comparator.comparingInt(PreUpgradeHook::priority))
+                    .filter(hook -> hook.shouldExecute(ump))
+                    .forEach(preUpgradeHooks::add);
         } catch (UpgradeException e) {
             LOGGER.error("An error occurred determining database schema version. Unable to continue.", e);
+            Runtime.getRuntime().halt(-1);
+        }
+
+        try {
+            executePreUpgradeHooks(preUpgradeHooks);
+        } catch (RuntimeException e) {
+            LOGGER.error("Failed to execute pre-upgrade hooks", e);
             Runtime.getRuntime().halt(-1);
         }
 
@@ -119,6 +139,33 @@ public class UpgradeInitializer implements ServletContextListener {
         dnProps.put(PropertyNames.PROPERTY_SCHEMA_GENERATE_DATABASE_MODE, "create");
         dnProps.put(PropertyNames.PROPERTY_QUERY_JDOQL_ALLOWALL, "true");
         return (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(dnProps, "Alpine");
+    }
+
+    private void executePreUpgradeHooks(final List<PreUpgradeHook> hooks) {
+        if (hooks.isEmpty()) {
+            return;
+        }
+
+        final String dbUrl = Config.getInstance().getProperty(Config.AlpineKey.DATABASE_URL);
+        final String dbUser = Config.getInstance().getProperty(Config.AlpineKey.DATABASE_USERNAME);
+        final String dbPassword = Config.getInstance().getPropertyOrFile(Config.AlpineKey.DATABASE_PASSWORD);
+        try (final Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword)) {
+            connection.setAutoCommit(false);
+
+            for (final PreUpgradeHook hook : hooks) {
+                LOGGER.info("Executing pre-upgrade hook: " + hook.getClass().getName());
+                try {
+                    hook.execute(connection);
+                    connection.commit();
+                } catch (Exception e) {
+                    throw new IllegalStateException("Failed to execute pre-upgrade hook: " + hook.getClass().getName(), e);
+                } finally {
+                    connection.rollback();
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to create database connection", e);
+        }
     }
 
 }

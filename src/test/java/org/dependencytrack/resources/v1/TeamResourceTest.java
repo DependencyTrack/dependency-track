@@ -319,13 +319,20 @@ public class TeamResourceTest extends ResourceTest {
         ApiKey apiKey = qm.createApiKey(team);
         Assert.assertEquals(1, team.getApiKeys().size());
         Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getPublicId()).request()
-                .header(X_API_KEY, apiKey.getClearTextKey())
+                .header(X_API_KEY, apiKey.getKey())
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
-        JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertNotNull(json.getString("clearTextKey"));
-        Assert.assertEquals(1, team.getApiKeys().size());
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("publicId", equalTo(apiKey.getPublicId()))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "created": "${json-unit.any-number}",
+                          "publicId": "${json-unit.matches:publicId}",
+                          "key": "${json-unit.regex}^odt_[0-9a-zA-Z]{8}_[0-9a-zA-Z]{32}$",
+                          "legacy": false,
+                          "maskedKey": "${json-unit.regex}^odt_[0-9a-zA-Z]{8}\\\\*{32}$"
+                        }
+                        """);
     }
 
     @Test
@@ -333,14 +340,21 @@ public class TeamResourceTest extends ResourceTest {
         Team team = qm.createTeam("My Team");
         ApiKey apiKey = qm.createApiKey(team);
         Assert.assertEquals(1, team.getApiKeys().size());
-        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getClearTextKey()).request()
-                .header(X_API_KEY, apiKey.getClearTextKey())
+        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getKey()).request()
+                .header(X_API_KEY, apiKey.getKey())
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
-        JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertNotNull(json.getString("clearTextKey"));
-        Assert.assertEquals(1, team.getApiKeys().size());
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("publicId", equalTo(apiKey.getPublicId()))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "created": "${json-unit.any-number}",
+                          "publicId": "${json-unit.matches:publicId}",
+                          "key": "${json-unit.regex}^odt_[0-9a-zA-Z]{8}_[0-9a-zA-Z]{32}$",
+                          "legacy": false,
+                          "maskedKey": "${json-unit.regex}^odt_[0-9a-zA-Z]{8}\\\\*{32}$"
+                        }
+                        """);
     }
 
     @Test
@@ -360,7 +374,7 @@ public class TeamResourceTest extends ResourceTest {
         ApiKey apiKey = qm.createApiKey(team);
         Assert.assertEquals(1, team.getApiKeys().size());
         Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getPublicId()).request()
-                .header(X_API_KEY, apiKey.getClearTextKey())
+                .header(X_API_KEY, apiKey.getKey())
                 .delete();
         Assert.assertEquals(204, response.getStatus(), 0);
     }
@@ -370,8 +384,8 @@ public class TeamResourceTest extends ResourceTest {
         Team team = qm.createTeam("My Team");
         ApiKey apiKey = qm.createApiKey(team);
         Assert.assertEquals(1, team.getApiKeys().size());
-        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getClearTextKey()).request()
-                .header(X_API_KEY, apiKey.getClearTextKey())
+        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getKey()).request()
+                .header(X_API_KEY, apiKey.getKey())
                 .delete();
         Assert.assertEquals(204, response.getStatus(), 0);
     }
@@ -407,11 +421,9 @@ public class TeamResourceTest extends ResourceTest {
                 .isEqualTo("""
                         {
                           "publicId": "${json-unit.matches:publicId}",
-                          "clearTextKey":null,
                           "maskedKey": "${json-unit.matches:maskedKey}",
                           "created": "${json-unit.any-number}",
-                          "lastUsed": null,
-                          "legacy":false,
+                          "legacy": false,
                           "comment": "Some comment 123"
                         }
                         """);
@@ -426,7 +438,7 @@ public class TeamResourceTest extends ResourceTest {
         assertThat(apiKey.getLastUsed()).isNull();
         assertThat(apiKey.getComment()).isNull();
 
-        final Response response = jersey.target("%s/key/%s/comment".formatted(V1_TEAM, apiKey.getClearTextKey())).request()
+        final Response response = jersey.target("%s/key/%s/comment".formatted(V1_TEAM, apiKey.getKey())).request()
                 .header(X_API_KEY, this.apiKey)
                 .post(Entity.entity("Some comment 123", MediaType.TEXT_PLAIN));
 
@@ -434,14 +446,12 @@ public class TeamResourceTest extends ResourceTest {
         assertThatJson(getPlainTextBody(response))
                 .withMatcher("publicId", equalTo(apiKey.getPublicId()))
                 .withMatcher("maskedKey", equalTo(apiKey.getMaskedKey()))
-                .isEqualTo("""
+                .isEqualTo(/* language=JSON */ """
                         {
                           "publicId": "${json-unit.matches:publicId}",
-                          "clearTextKey":null,
                           "maskedKey": "${json-unit.matches:maskedKey}",
                           "created": "${json-unit.any-number}",
-                          "lastUsed": null,
-                          "legacy":false,
+                          "legacy": false,
                           "comment": "Some comment 123"
                         }
                         """);

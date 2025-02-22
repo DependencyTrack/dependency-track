@@ -16,28 +16,21 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.upgrade.v4130;
+package org.dependencytrack.upgrade;
 
-import alpine.persistence.AlpineQueryManager;
-import alpine.server.upgrade.AbstractUpgradeItem;
+import alpine.server.upgrade.UpgradeMetaProcessor;
 
 import java.sql.Connection;
 
-public class v4130Updater extends AbstractUpgradeItem {
+/**
+ * @since 4.13.0
+ */
+public interface PreUpgradeHook {
 
-    @Override
-    public String getSchemaVersion() {
-        return "4.13.0";
-    }
+    int priority();
 
-    @Override
-    public boolean shouldUpgrade(final AlpineQueryManager qm, final Connection connection) {
-        return false; // Revised upgrade logic moved to v4130_1Updater.
-    }
+    boolean shouldExecute(final UpgradeMetaProcessor upgradeProcessor);
 
-    @Override
-    public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
-        // Revised upgrade logic moved to v4130_1Updater.
-    }
+    void execute(final Connection connection) throws Exception;
 
 }

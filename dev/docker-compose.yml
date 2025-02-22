@@ -19,6 +19,9 @@ name: "dependency-track"
 services:
   apiserver:
     image: dependencytrack/apiserver:snapshot
+    environment:
+      # Speed up password hashing for faster initial login (default is 14 rounds).
+      ALPINE_BCRYPT_ROUNDS: "4"
     ports:
     - "127.0.0.1:8080:8080"
     volumes:

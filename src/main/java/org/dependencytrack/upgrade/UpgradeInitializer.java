@@ -81,8 +81,8 @@ public class UpgradeInitializer implements ServletContextListener {
                 final UpgradeExecutor executor = new UpgradeExecutor(qm);
                 try {
                     executor.executeUpgrades(UpgradeItems.getUpgradeItems());
-                } catch (UpgradeException e) {
-                    LOGGER.error("An error occurred performing upgrade processing. " + e.getMessage());
+                } catch (UpgradeException | RuntimeException e) {
+                    throw new IllegalStateException("An error occurred performing upgrade processing", e);
                 }
             }
         }

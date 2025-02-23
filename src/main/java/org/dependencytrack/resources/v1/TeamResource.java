@@ -23,6 +23,8 @@ import alpine.common.logging.Logger;
 import alpine.model.ApiKey;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
+import alpine.security.ApiKeyDecoder;
+import alpine.security.InvalidApiKeyFormatException;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,7 +38,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
@@ -58,8 +59,6 @@ import jakarta.ws.rs.core.Response;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
 
 /**
  * JAX-RS resources for processing teams.
@@ -308,12 +307,14 @@ public class TeamResource extends AlpineResource {
             @Parameter(description = "The public ID for the API key or for Legacy the complete Key to regenerate", required = true)
             @PathParam("publicIdOrKey") String publicIdOrKey) {
         try (QueryManager qm = new QueryManager()) {
-            boolean isLegacy = publicIdOrKey.length() == ApiKey.LEGACY_FULL_KEY_LENGTH;
-            ApiKey apiKey;
-            if (publicIdOrKey.length() == ApiKey.FULL_KEY_LENGTH || isLegacy) {
-                 apiKey = qm.getApiKeyByPublicId(ApiKey.getPublicId(publicIdOrKey, isLegacy));
-            } else {
-                 apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+            ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+            if (apiKey == null) {
+                try {
+                    final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
+                    apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
+                } catch (InvalidApiKeyFormatException e) {
+                    LOGGER.debug("Failed to decode value as API key", e);
+                }
             }
             if (apiKey != null) {
                 apiKey = qm.regenerateApiKey(apiKey);
@@ -349,15 +350,15 @@ public class TeamResource extends AlpineResource {
             @PathParam("publicIdOrKey") final String publicIdOrKey,
             final String comment) {
         try (final var qm = new QueryManager()) {
-            qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
-
             return qm.callInTransaction(() -> {
-                boolean isLegacy = publicIdOrKey.length() == ApiKey.LEGACY_FULL_KEY_LENGTH;
-                ApiKey apiKey;
-                if (publicIdOrKey.length() == ApiKey.FULL_KEY_LENGTH || isLegacy) {
-                    apiKey = qm.getApiKeyByPublicId(ApiKey.getPublicId(publicIdOrKey, isLegacy));
-                } else {
-                    apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+                ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+                if (apiKey == null) {
+                    try {
+                        final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
+                        apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
+                    } catch (InvalidApiKeyFormatException e) {
+                        LOGGER.debug("Failed to decode value as API key", e);
+                    }
                 }
                 if (apiKey == null) {
                     return Response
@@ -388,12 +389,14 @@ public class TeamResource extends AlpineResource {
             @Parameter(description = "The public ID for the API key or for Legacy the full Key to delete", required = true)
             @PathParam("publicIdOrKey") String publicIdOrKey) {
         try (QueryManager qm = new QueryManager()) {
-            boolean isLegacy = publicIdOrKey.length() == ApiKey.LEGACY_FULL_KEY_LENGTH;
-            ApiKey apiKey;
-            if (publicIdOrKey.length() == ApiKey.FULL_KEY_LENGTH || isLegacy) {
-                 apiKey = qm.getApiKeyByPublicId(ApiKey.getPublicId(publicIdOrKey, isLegacy));
-            } else {
-                 apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+            ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
+            if (apiKey == null) {
+                try {
+                    final ApiKey deocdedApiKey = ApiKeyDecoder.decode(publicIdOrKey);
+                    apiKey = qm.getApiKeyByPublicId(deocdedApiKey.getPublicId());
+                } catch (InvalidApiKeyFormatException e) {
+                    LOGGER.debug("Failed to decode value as API key", e);
+                }
             }
             if (apiKey != null) {
                 qm.delete(apiKey);

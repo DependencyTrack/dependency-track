@@ -22,15 +22,22 @@ import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.extension.core.DisallowExtensionCustomizerBuilder;
 
 import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.List;
 
 public class ConsolePublisher implements Publisher {
 
     private static final Logger LOGGER = Logger.getLogger(ConsolePublisher.class);
-    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
+    private static final PebbleEngine ENGINE = new PebbleEngine.Builder()
+            .registerExtensionCustomizer(new DisallowExtensionCustomizerBuilder()
+                    .disallowedTokenParserTags(List.of("include"))
+                    .build())
+            .newLineTrimming(false)
+            .build();
 
     public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
         final String content;

@@ -506,6 +506,32 @@
           "flow": "inbound"
         }
       ]
+    },
+    {
+      "bom-ref": "service:org.dependencytrack.metrics",
+      "provider": {
+        "name": "OWASP"
+      },
+      "group": "org.dependencytrack",
+      "name": "metrics",
+      "description": "Dependency-Track telemetry service.",
+      "endpoints": [
+        "https://metrics.dependencytrack.org"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ],
+      "externalReferences": [
+        {
+          "url": "https://docs.dependencytrack.org/getting-started/telemetry/",
+          "type": "documentation"
+        }
+      ]
     }
   ]
 }

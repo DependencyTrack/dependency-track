@@ -21,12 +21,15 @@ package org.dependencytrack.parser.cyclonedx.util;
 import alpine.common.logging.Logger;
 import alpine.model.IConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
+
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
+
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
@@ -76,9 +79,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNullElse;
+
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
+import org.dependencytrack.model.MetadataProperty;
 import static org.dependencytrack.util.PurlUtil.silentPurlCoordinatesOnly;
 
 public class ModelConverter {
@@ -97,6 +102,7 @@ public class ModelConverter {
         }
 
         final var projectMetadata = new ProjectMetadata();
+        projectMetadata.setProperties(convertCdxProperties(cdxMetadata.getProperties()));
         projectMetadata.setAuthors(convertCdxContacts(cdxMetadata.getAuthors()));
         projectMetadata.setSupplier(convert(cdxMetadata.getSupplier()));
 
@@ -488,6 +494,27 @@ public class ModelConverter {
         return cdxContacts.stream().map(ModelConverter::convert).toList();
     }
 
+
+    public static List<MetadataProperty> convertCdxProperties(final List<org.cyclonedx.model.Property> cdxProperties) {
+        if (cdxProperties == null) {
+            return null;
+        }
+
+        return cdxProperties.stream().map(ModelConverter::convert).toList();
+    }
+
+
+    private static MetadataProperty convert(final org.cyclonedx.model.Property cdxProperty) {
+        if (cdxProperty == null) {
+            return null;
+        }
+
+        final var property = new MetadataProperty();
+        property.setName(StringUtils.trimToNull(cdxProperty.getName()));
+        property.setValue(StringUtils.trimToNull(cdxProperty.getValue()));
+        return property;
+    }
+
     private static OrganizationalContact convert(final org.cyclonedx.model.OrganizationalContact cdxContact) {
         if (cdxContact == null) {
             return null;
@@ -508,6 +535,14 @@ public class ModelConverter {
         return dtContacts.stream().map(ModelConverter::convert).toList();
     }
 
+    private static List<org.cyclonedx.model.Property> convertMetadataProperties(final List<MetadataProperty> dtProperties) {
+        if (dtProperties == null) {
+            return null;
+        }
+
+        return dtProperties.stream().map(ModelConverter::convert).toList();
+    }
+
     private static org.cyclonedx.model.OrganizationalEntity convert(final OrganizationalEntity dtEntity) {
         if (dtEntity == null) {
             return null;
@@ -523,6 +558,18 @@ public class ModelConverter {
         }
 
         return cdxEntity;
+    }
+
+    private static org.cyclonedx.model.Property convert(final MetadataProperty dtProperty) {
+        if (dtProperty == null) {
+            return null;
+        }
+
+        final var cdxProperty = new org.cyclonedx.model.Property();
+        cdxProperty.setName(StringUtils.trimToNull(dtProperty.getName()));
+        cdxProperty.setValue(StringUtils.trimToNull(dtProperty.getValue()));
+
+        return cdxProperty;
     }
 
     private static org.cyclonedx.model.OrganizationalContact convert(final OrganizationalContact dtContact) {
@@ -756,6 +803,7 @@ public class ModelConverter {
             if (project.getMetadata() != null) {
                 metadata.setAuthors(convertContacts(project.getMetadata().getAuthors()));
                 metadata.setSupplier(convert(project.getMetadata().getSupplier()));
+                metadata.setProperties(convertMetadataProperties(project.getMetadata().getProperties()));
             }
         }
         return metadata;

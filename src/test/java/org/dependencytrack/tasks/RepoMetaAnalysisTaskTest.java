@@ -90,6 +90,8 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "junit", "junit");
         qm.getPersistenceManager().refresh(metaComponent);
         assertThat(metaComponent.getLatestVersion()).isEqualTo("4.13.2");
+        assertThat(metaComponent.isDeprecated()).isFalse();
+        assertThat(metaComponent.getDeprecationMessage()).isNull();
     }
 
     @Test
@@ -136,6 +138,8 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test1", "test1");
         qm.getPersistenceManager().refresh(metaComponent);
         assertThat(metaComponent.getLatestVersion()).isEqualTo("1.7.0");
+        assertThat(metaComponent.isDeprecated()).isFalse();
+        assertThat(metaComponent.getDeprecationMessage()).isNull();
     }
 
     @Test
@@ -182,6 +186,8 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test2", "test2");
         qm.getPersistenceManager().refresh(metaComponent);
         assertThat(metaComponent.getLatestVersion()).isEqualTo("4.13.2");
+        assertThat(metaComponent.isDeprecated()).isFalse();
+        assertThat(metaComponent.getDeprecationMessage()).isNull();
     }
 
     @Test
@@ -228,5 +234,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test3", "test3");
         qm.getPersistenceManager().refresh(metaComponent);
         assertThat(metaComponent.getLatestVersion()).isEqualTo("4.13.2");
+        assertThat(metaComponent.isDeprecated()).isFalse();
+        assertThat(metaComponent.getDeprecationMessage()).isNull();
     }
 }

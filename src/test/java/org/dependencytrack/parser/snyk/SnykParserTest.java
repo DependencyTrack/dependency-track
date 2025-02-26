@@ -55,7 +55,23 @@ public class SnykParserTest extends PersistenceCapableTest {
         final JSONObject jsonObject = new JSONObject(jsonString);
         JSONArray ranges = jsonObject.optJSONArray("range0");
         String purl = "pkg:npm/bootstrap-table@1.20.0";
-        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges);
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, false);
+        Assert.assertNotNull(vulnerableSoftwares);
+        Assert.assertEquals(1, vulnerableSoftwares.size());
+
+        VulnerableSoftware vs = vulnerableSoftwares.get(0);
+        Assert.assertEquals("2.13.0", vs.getVersionStartIncluding());
+        Assert.assertEquals("2.13.2.1", vs.getVersionEndExcluding());
+    }
+
+    @Test
+    public void testParseVersionRanges_v3() throws IOException {
+
+        String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
+        final JSONObject jsonObject = new JSONObject(jsonString);
+        JSONArray ranges = jsonObject.optJSONArray("range0_v3");
+        String purl = "pkg:npm/bootstrap-table@1.20.0";
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, true);
         Assert.assertNotNull(vulnerableSoftwares);
         Assert.assertEquals(1, vulnerableSoftwares.size());
 
@@ -71,7 +87,19 @@ public class SnykParserTest extends PersistenceCapableTest {
         final JSONObject jsonObject = new JSONObject(jsonString);
         JSONArray ranges = jsonObject.optJSONArray("range2");
         String purl = "pkg:npm/bootstrap-table@1.20.0";
-        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges);
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, false);
+        Assert.assertNotNull(vulnerableSoftwares);
+        Assert.assertEquals(0, vulnerableSoftwares.size());
+    }
+
+    @Test
+    public void testParseVersionRangesStar_v3() throws IOException {
+
+        String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
+        final JSONObject jsonObject = new JSONObject(jsonString);
+        JSONArray ranges = jsonObject.optJSONArray("range2_v3");
+        String purl = "pkg:npm/bootstrap-table@1.20.0";
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, true);
         Assert.assertNotNull(vulnerableSoftwares);
         Assert.assertEquals(0, vulnerableSoftwares.size());
     }
@@ -83,7 +111,19 @@ public class SnykParserTest extends PersistenceCapableTest {
         final JSONObject jsonObject = new JSONObject(jsonString);
         JSONArray ranges = jsonObject.optJSONArray("range1");
         String purl = "pkg:npm/bootstrap-table@1.20.0";
-        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges);
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, false);
+        Assert.assertNotNull(vulnerableSoftwares);
+        Assert.assertEquals(0, vulnerableSoftwares.size());
+    }
+
+    @Test
+    public void testParseVersionIndefiniteRanges_v3() throws IOException {
+
+        String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
+        final JSONObject jsonObject = new JSONObject(jsonString);
+        JSONArray ranges = jsonObject.optJSONArray("range1_v3");
+        String purl = "pkg:npm/bootstrap-table@1.20.0";
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, true);
         Assert.assertNotNull(vulnerableSoftwares);
         Assert.assertEquals(0, vulnerableSoftwares.size());
     }

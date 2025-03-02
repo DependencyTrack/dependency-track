@@ -18,19 +18,34 @@
  */
 package org.dependencytrack.model;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURLBuilder;
+
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+
+import org.dependencytrack.util.JsonUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class ComponentTest {
-
+    private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+    
     @Test
     public void testId() {
         Component component = new Component();
@@ -228,5 +243,40 @@ public class ComponentTest {
         component.setName("product");
         component.setVersion("1.0");
         Assert.assertEquals("acme : product : 1.0", component.toString());
+    }
+
+    @Test
+    public void testValidEmptyValues() throws JsonProcessingException {
+        // test for all the String fields validated during update component
+        String[] fields = { "version", "group", "description", "license", "licenseExpression", "licenseUrl", "filename",
+                "cpe", "swidTagId", "copyright", "md5", "sha1", "sha256", "sha512", "sha3_256", "sha3_512" };
+
+        JsonObjectBuilder componentBuilder = Json.createObjectBuilder();
+        for (String field : fields) {
+            JsonUtil.add(componentBuilder, field, "");
+        }
+        String json = componentBuilder.build().toString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        Component component = mapper.readValue(json, Component.class);
+
+        Set<ConstraintViolation<Component>> violations = null;
+        for (String field : fields) {
+            violations = validator.validateProperty(component, field);
+            assertTrue(violations.isEmpty());
+        }
+    }
+
+    @Test
+    public void testInvalidEmptyName() throws JsonProcessingException {
+        JsonObjectBuilder componentBuilder = Json.createObjectBuilder();
+        componentBuilder.add("name", "");
+        String json = componentBuilder.build().toString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        Component component = mapper.readValue(json, Component.class);
+
+        Set<ConstraintViolation<Component>> violations = validator.validateProperty(component, "name");
+        assertFalse(violations.isEmpty());
     }
 }

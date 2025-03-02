@@ -24,11 +24,13 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateVolumeResponse;
 import com.github.dockerjava.api.model.Bind;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.TrivyAnalysisEvent;
+import org.dependencytrack.event.ProjectVulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.tasks.VulnerabilityAnalysisTask;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -43,7 +45,6 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_API_TOKEN;
@@ -156,8 +157,9 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         componentA.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0");
         qm.persist(componentA);
 
-        final var analysisEvent = new TrivyAnalysisEvent(List.of(componentA));
-        new TrivyAnalysisTask().inform(analysisEvent);
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(componentA)).anySatisfy(vuln -> {
             assertThat(vuln.getVulnId()).isEqualTo("CVE-2022-40152");
@@ -246,13 +248,14 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         component.setPurl("pkg:deb/ubuntu/libc6@2.35-0ubuntu3.4?arch=amd64&distro=ubuntu-22.04");
         qm.persist(component);
 
-        final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
-        new TrivyAnalysisTask().inform(analysisEvent);
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(component)).isEmpty();
     }
 
-     /**
+    /**
      * This test documents the case where Trivy is able to correlate a package with vulnerabilities
      * when additional properties provided. When including libc6 in an SBOM,
      * Trivy adds metadata to the component, which among other things includes alternative package names.
@@ -326,8 +329,9 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         qm.createComponentProperty(component, "aquasecurity", "trivy:PkgType", "ubuntu", IConfigProperty.PropertyType.STRING, null);
 
 
-        final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
-        new TrivyAnalysisTask().inform(analysisEvent);
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(component)).anySatisfy(vuln -> {
             assertThat(vuln.getVulnId()).isEqualTo("CVE-2016-20013");
@@ -346,7 +350,7 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         });
     }
 
-     /**
+    /**
      * This test documents the case where Trivy generates a sbom and operative system is not entirely on distro qualifier.
      * <p>
      * Here's an excerpt of the properties included:
@@ -417,8 +421,9 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         qm.createComponentProperty(component, "aquasecurity", "trivy:SrcName", "git", IConfigProperty.PropertyType.STRING, null);
         qm.createComponentProperty(component, "aquasecurity", "trivy:SrcVersion", "2.43.0-r0", IConfigProperty.PropertyType.STRING, null);
 
-        final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
-        new TrivyAnalysisTask().inform(analysisEvent);
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(component)).anySatisfy(vuln -> {
             assertThat(vuln.getVulnId()).isEqualTo("CVE-2024-32002");
@@ -436,4 +441,26 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
             assertThat(vuln.getReferences()).isNotBlank();
         });
     }
+
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/4376
+    public void testWithGoPackage() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("golang/github.com/nats-io/nkeys");
+        component.setVersion("0.4.4");
+        component.setClassifier(Classifier.LIBRARY);
+        component.setPurl("pkg:golang/github.com/nats-io/nkeys@0.4.4");
+        qm.persist(component);
+
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
+
+        assertThat(qm.getAllVulnerabilities(component)).hasSizeGreaterThanOrEqualTo(1);
+    }
+
 }

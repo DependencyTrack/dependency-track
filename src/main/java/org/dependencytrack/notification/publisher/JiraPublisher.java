@@ -21,7 +21,6 @@ package org.dependencytrack.notification.publisher;
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
-import io.pebbletemplates.pebble.PebbleEngine;
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DebugDataEncryption;
@@ -42,7 +41,6 @@ import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_USERNAME;
 public class JiraPublisher extends AbstractWebhookPublisher implements Publisher {
 
     private static final Logger LOGGER = Logger.getLogger(JiraPublisher.class);
-    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
 
     private String jiraProjectKey;
     private String jiraTicketType;
@@ -67,11 +65,6 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
         }
 
         publish(ctx, getTemplate(config), notification, config);
-    }
-
-    @Override
-    public PebbleEngine getTemplateEngine() {
-        return ENGINE;
     }
 
     @Override

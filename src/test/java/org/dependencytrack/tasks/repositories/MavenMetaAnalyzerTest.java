@@ -54,4 +54,5 @@ public class MavenMetaAnalyzerTest {
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }
+
 }

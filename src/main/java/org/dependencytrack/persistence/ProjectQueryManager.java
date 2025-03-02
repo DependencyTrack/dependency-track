@@ -27,7 +27,9 @@ import alpine.model.UserPrincipal;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
+import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
+import alpine.server.util.DbUtil;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -37,6 +39,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.event.ProjectMetricsUpdateEvent;
+import org.dependencytrack.exception.ProjectOperationException;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.Classifier;
@@ -45,6 +49,7 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
@@ -64,6 +69,8 @@ import javax.jdo.metadata.TypeMetadata;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,6 +79,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
 final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
@@ -161,31 +174,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     @Override
     public PaginatedResult getProjects() {
         return getProjects(false);
-    }
-
-    /**
-     * Returns a list of all projects.
-     * This method if designed NOT to provide paginated results.
-     * @return a List of Projects
-     */
-    @Override
-    public List<Project> getAllProjects() {
-        return getAllProjects(false);
-    }
-
-    /**
-     * Returns a list of all projects.
-     * This method if designed NOT to provide paginated results.
-     * @return a List of Projects
-     */
-    @Override
-    public List<Project> getAllProjects(boolean excludeInactive) {
-        final Query<Project> query = pm.newQuery(Project.class);
-        if (excludeInactive) {
-            query.setFilter("active == true || active == null");
-        }
-        query.setOrdering("id asc");
-        return query.executeList();
     }
 
     /**
@@ -473,9 +461,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (project.getParent() != null && !Boolean.TRUE.equals(project.getParent().isActive())){
             throw new IllegalArgumentException("An inactive Parent cannot be selected as parent");
         }
-        if (project.isActive() == null) {
-            project.setActive(Boolean.TRUE);
-        }
         final Project oldLatestProject = project.isLatest() ? getLatestProjectVersion(project.getName()) : null;
         final Project result = callInTransaction(() -> {
             // Remove isLatest flag from current latest project version, if the new project will be the latest
@@ -516,6 +501,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     @Override
     public Project updateProject(Project transientProject, boolean commitIndex) {
         final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
+
+        Project oldParent = project.getParent();
+        boolean scheduleProjectMetricsUpdate = this.needScheduleProjectMetricsUpdate(project, transientProject);
+        boolean scheduleParentMetricsUpdate = this.needScheduleParentMetricsUpdate(transientProject, scheduleProjectMetricsUpdate);
+        boolean scheduleOldParentMetricsUpdate = this.needScheduleOldParentMetricsUpdate(oldParent, transientProject);
+
         project.setAuthors(transientProject.getAuthors());
         project.setPublisher(transientProject.getPublisher());
         project.setManufacturer(transientProject.getManufacturer());
@@ -529,6 +520,16 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         project.setPurl(transientProject.getPurl());
         project.setSwidTagId(transientProject.getSwidTagId());
         project.setExternalReferences(transientProject.getExternalReferences());
+
+        // prevent illegal states of collection projects (must not contain components or services)
+        if(transientProject.getCollectionLogic() != null
+                && !project.getCollectionLogic().equals(transientProject.getCollectionLogic())) {
+            if(!transientProject.getCollectionLogic().equals(ProjectCollectionLogic.NONE)
+                    && (hasComponents(project) || hasServiceComponents(project))) {
+                throw new IllegalArgumentException("Project cannot be made a collection project while it has components or services!");
+            }
+            project.setCollectionLogic(transientProject.getCollectionLogic());
+        }
 
         if (Boolean.TRUE.equals(project.isActive()) && !Boolean.TRUE.equals(transientProject.isActive()) && hasActiveChild(project)){
             throw new IllegalArgumentException("Project cannot be set to inactive if active children are present.");
@@ -570,6 +571,17 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             final List<Tag> resolvedTags = resolveTags(transientProject.getTags());
             bind(project, resolvedTags);
 
+            // Set collection tag only if selected collectionLogic requires it. Clear it otherwise.
+            if(transientProject.getCollectionLogic().equals(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN_WITH_TAG) &&
+                    transientProject.getCollectionTag() != null) {
+                final List<Tag> resolvedCollectionTags = resolveTags(Collections.singletonList(
+                        transientProject.getCollectionTag()
+                ));
+                project.setCollectionTag(resolvedCollectionTags.get(0));
+            } else {
+                project.setCollectionTag(null);
+            }
+
             return persist(project);
         });
 
@@ -579,7 +591,51 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, Project.class);
+
+        this.scheduleMetricsUpdates(project, oldParent, scheduleProjectMetricsUpdate, scheduleParentMetricsUpdate, scheduleOldParentMetricsUpdate);
+
         return result;
+    }
+
+    /**
+     * if collection logic changes or collection tag changes or version changes we need to re-calculate the project's metrics in the end
+     */
+    private boolean needScheduleProjectMetricsUpdate(Project project, Project transientProject) {
+        return project.getCollectionLogic() != transientProject.getCollectionLogic()
+                || (transientProject.getCollectionTag() != null && !transientProject.getCollectionTag().equals(project.getCollectionTag()));
+    }
+
+    /**
+     * if parent is collection schedule an update, unless this project itself is scheduled already since that will trigger a parent update, too
+     */
+    private boolean needScheduleParentMetricsUpdate(Project transientProject, boolean scheduleProjectMetricsUpdate) {
+        return !scheduleProjectMetricsUpdate
+                && transientProject.getParent() != null
+                && transientProject.getParent().getCollectionLogic() != ProjectCollectionLogic.NONE;
+    }
+
+    /**
+     * if project gets a new parent and old parent was collection, we need to update old parent's metrics
+     */
+    private boolean needScheduleOldParentMetricsUpdate(Project oldParent, Project transientProject) {
+        return oldParent != transientProject.getParent()
+                && oldParent != null
+                && oldParent.getCollectionLogic() != ProjectCollectionLogic.NONE;
+    }
+
+    /**
+     * Schedules metrics updates for the project itself, the new parent and/or the old parent, as necessary.
+     */
+    private void scheduleMetricsUpdates(Project project, Project oldParent, boolean scheduleProjectMetricsUpdate, boolean scheduleParentMetricsUpdate, boolean scheduleOldParentMetricsUpdate) {
+        if(scheduleProjectMetricsUpdate) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(project.getUuid()));
+        }
+        if(scheduleParentMetricsUpdate) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(project.getParent().getUuid()));
+        }
+        if(scheduleOldParentMetricsUpdate) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(oldParent.getUuid()));
+        }
     }
 
     @Override
@@ -625,6 +681,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setDescription(source.getDescription());
             project.setVersion(newVersion);
             project.setClassifier(source.getClassifier());
+            project.setCollectionLogic(source.getCollectionLogic());
+            project.setCollectionTag(source.getCollectionTag());
             project.setActive(source.isActive());
             project.setIsLatest(makeCloneLatest);
             project.setCpe(source.getCpe());
@@ -711,7 +769,19 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 String directDependencies = project.getDirectDependencies();
                 for (final UUID sourceComponentUuid : projectDirectDepsSourceComponentUuids) {
                     final UUID clonedComponentUuid = clonedComponentUuidBySourceComponentUuid.get(sourceComponentUuid);
-                    directDependencies = directDependencies.replace(sourceComponentUuid.toString(), clonedComponentUuid.toString());
+                    if (clonedComponentUuid != null) {
+                        directDependencies = directDependencies.replace(
+                                sourceComponentUuid.toString(), clonedComponentUuid.toString());
+                    } else {
+                        // NB: This may happen when the source project itself is a clone,
+                        // and it was cloned before DT v4.12.0.
+                        // https://github.com/DependencyTrack/dependency-track/pull/4171
+                        LOGGER.warn("""
+                                The source project's directDependencies refer to a component with UUID \
+                                %s, which does not exist in the project. The cloned project's dependency graph \
+                                may be broken as a result. A BOM upload will resolve the issue.\
+                                """.formatted(sourceComponentUuid));
+                    }
                 }
 
                 project.setDirectDependencies(directDependencies);
@@ -724,7 +794,16 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 String directDependencies = component.getDirectDependencies();
                 for (final UUID sourceComponentUuid : sourceComponentUuids) {
                     final UUID clonedComponentUuid = clonedComponentUuidBySourceComponentUuid.get(sourceComponentUuid);
-                    directDependencies = directDependencies.replace(sourceComponentUuid.toString(), clonedComponentUuid.toString());
+                    if (clonedComponentUuid != null) {
+                        directDependencies = directDependencies.replace(
+                                sourceComponentUuid.toString(), clonedComponentUuid.toString());
+                    } else {
+                        LOGGER.warn("""
+                                The directDependencies of component %s refer to a component with UUID \
+                                %s, which does not exist in the source project. The cloned project's dependency graph \
+                                may be broken as a result. A BOM upload will resolve the issue.\
+                                """.formatted(component, sourceComponentUuid));
+                    }
                 }
 
                 component.setDirectDependencies(directDependencies);
@@ -799,6 +878,11 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, clonedProject));
         commitSearchIndex(true, Project.class);
+
+        if(clonedProject.getParent() != null && clonedProject.getParent().getCollectionLogic() != ProjectCollectionLogic.NONE) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(clonedProject.getParent().getUuid()));
+        }
+
         return clonedProject;
     }
 
@@ -833,6 +917,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     @Override
     public void recursivelyDelete(final Project project, final boolean commitIndex) {
+        Project parent = project.getParent();
+
         if (project.getChildren() != null) {
             for (final Project child: project.getChildren()) {
                 recursivelyDelete(child, false);
@@ -862,6 +948,351 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         delete(getAllBoms(project));
         delete(project.getChildren());
         delete(project);
+
+        // if project had a parent we need to re-calculate parents metrics to update collection projects
+        if(commitIndex && parent != null && parent.getCollectionLogic() != ProjectCollectionLogic.NONE) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(parent.getUuid()));
+        }
+    }
+
+    /**
+     * Deletes a list of Projects (identified by their UUIDs) and all objects dependent on them.
+     * @param uuids the UUIDs of the Projects to delete
+     *
+     * NB: if ON DELETE rules had been set up, this would be as simple as "delete from project where ..."
+     */
+    @Override
+    public void deleteProjectsByUUIDs(Collection<UUID> uuids) {
+        final var errorByUUID = new HashMap<String, String>();
+
+        final Query<Project> projectsQuery = this.getObjectsByUuidsQuery(Project.class, uuids.stream().toList());
+        List<Project> projects = projectsQuery.executeList();
+
+        for (UUID uuid: uuids) {
+            if (projects.stream().map(Project::getUuid).noneMatch(uuid::equals)) {
+                errorByUUID.put(uuid.toString(), "Project not found");
+            }
+        }
+
+        Set<Long> accessibleProjectIds = new HashSet<>();
+        for (Project project: projects) {
+            if (!hasAccess(principal, project)) {
+                errorByUUID.put(String.valueOf(project.getUuid()), "Access denied to project");
+            } else {
+                accessibleProjectIds.add(project.getId());
+            }
+        }
+
+        if (!errorByUUID.isEmpty()) {
+            throw ProjectOperationException.forDeletion(errorByUUID);
+        }
+
+        Long[] projectIDsArray = accessibleProjectIds.toArray(Long[]::new);
+        String commaSeparatedProjectIDs = accessibleProjectIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+        var queryParameter = DbUtil.isMssql() ? commaSeparatedProjectIDs : projectIDsArray;
+        String inExpression = DbUtil.isMssql() ? "IN(SELECT value FROM STRING_SPLIT(?, ','))" : "= ANY(?)";
+
+        runInTransaction(() -> {
+            try (var ignored = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+                Query<?> sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "PROJECTMETRICS" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                    DELETE FROM "DEPENDENCYMETRICS" WHERE "PROJECT_ID" = ANY(?);
+                    """.replaceAll(Pattern.quote("= ANY(?)"), inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                    DELETE FROM "FINDINGATTRIBUTION" WHERE "PROJECT_ID" = ANY(?);
+                    """.replaceAll(Pattern.quote("= ANY(?)"), inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "COMPONENTS_VULNERABILITIES" WHERE "COMPONENT_ID" IN (
+                        SELECT "ID" FROM "COMPONENT" WHERE "PROJECT_ID" = ANY(?)
+                    );
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "ANALYSISCOMMENT" WHERE "ANALYSIS_ID" IN (
+                        SELECT "ID" FROM "ANALYSIS" WHERE "PROJECT_ID" = ANY(?)
+                    );
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                    DELETE FROM "ANALYSIS" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                    DELETE FROM "COMPONENT_PROPERTY" WHERE "COMPONENT_ID" IN (
+                        SELECT "ID" FROM "COMPONENT" WHERE "PROJECT_ID" = ANY(?)
+                    );
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                // Deletion with CTEs does not work with H2, but verified on Postgres and MS SQL Server
+                if (!DbUtil.isH2()) {
+                    if (DbUtil.isPostgreSQL()) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH RECURSIVE c_family("ID", "PARENT_COMPONENT_ID") AS (
+                                SELECT "COMPONENT"."ID", "PARENT_COMPONENT_ID"
+                                FROM "COMPONENT"
+                                JOIN "PROJECT" ON "PROJECT_ID" = "PROJECT"."ID"
+                                WHERE "PROJECT"."ID" = ANY(?)
+                                UNION ALL
+                                SELECT "COMPONENT"."ID", "COMPONENT"."PARENT_COMPONENT_ID"
+                                FROM c_family, "COMPONENT"
+                                WHERE "COMPONENT"."ID" = c_family."PARENT_COMPONENT_ID"
+                            )
+                            DELETE FROM "COMPONENT"
+                              WHERE "ID" IN (SELECT "ID" FROM c_family);
+                            """
+                        );
+                    }
+                    if (DbUtil.isMssql()) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH c_family AS (
+                                SELECT COMPONENT.ID, COMPONENT.PARENT_COMPONENT_ID
+                                FROM COMPONENT
+                                JOIN PROJECT ON COMPONENT.PROJECT_ID = PROJECT.ID
+                                WHERE PROJECT.ID IN (SELECT value FROM STRING_SPLIT(?, ','))
+                                UNION ALL
+                                SELECT COMPONENT.ID, COMPONENT.PARENT_COMPONENT_ID
+                                FROM COMPONENT
+                                INNER JOIN c_family ON COMPONENT.ID = c_family.PARENT_COMPONENT_ID
+                            )
+                            DELETE FROM COMPONENT
+                            WHERE ID IN (SELECT ID FROM c_family);
+                            """
+                        );
+                    }
+                    executeAndCloseWithArray(sqlQuery, queryParameter);
+                }
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                    DELETE FROM "COMPONENT" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "BOM" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "PROJECT_METADATA" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "PROJECT_PROPERTY" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "PROJECTS_TAGS" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "NOTIFICATIONRULE_PROJECTS" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                if (!DbUtil.isH2()) {
+                    if (DbUtil.isPostgreSQL()) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH v_ids AS (
+                                SELECT "VIOLATIONANALYSIS"."ID"
+                                FROM "VIOLATIONANALYSIS"
+                                JOIN "PROJECT" ON "PROJECT_ID" = "PROJECT"."ID"
+                                WHERE "PROJECT"."ID" = ANY(?)
+                            )
+                            DELETE FROM "VIOLATIONANALYSISCOMMENT"
+                            USING v_ids
+                            WHERE "VIOLATIONANALYSIS_ID" = v_ids."ID";
+                            """
+                        );
+                    }
+                    if (DbUtil.isMssql()) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH v_ids AS (
+                                SELECT VIOLATIONANALYSIS.ID
+                                FROM VIOLATIONANALYSIS
+                                JOIN PROJECT ON PROJECT_ID = PROJECT.ID
+                                WHERE PROJECT.ID IN (SELECT value FROM STRING_SPLIT(?, ','))
+                            )
+                            DELETE VAC
+                            FROM VIOLATIONANALYSISCOMMENT AS VAC
+                            JOIN v_ids ON VAC.VIOLATIONANALYSIS_ID = v_ids.ID;
+                            """);
+                    }
+                    executeAndCloseWithArray(sqlQuery, queryParameter);
+                }
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "VIOLATIONANALYSIS" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "POLICYVIOLATION" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "POLICY_PROJECTS" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "PROJECT_ACCESS_TEAMS" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "VEX" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                if (!DbUtil.isH2()) {
+                    if (DbUtil.isPostgreSQL()) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH sc_cte AS (
+                              SELECT "SERVICECOMPONENT"."ID" FROM "SERVICECOMPONENT"
+                              JOIN "PROJECT" ON "SERVICECOMPONENT"."PROJECT_ID" = "PROJECT"."ID"
+                              WHERE "PROJECT"."ID" = ANY(?)
+                            )
+                            DELETE FROM "SERVICECOMPONENTS_VULNERABILITIES"
+                            USING sc_cte
+                            WHERE "SERVICECOMPONENTS_VULNERABILITIES"."SERVICECOMPONENT_ID" = sc_cte."ID";
+                            """
+                        );
+                    }
+                    if (DbUtil.isMssql()) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH sc_cte AS (
+                                SELECT SERVICECOMPONENT.ID
+                                FROM SERVICECOMPONENT
+                                JOIN PROJECT ON SERVICECOMPONENT.PROJECT_ID = PROJECT.ID
+                                WHERE PROJECT.ID IN (SELECT value FROM STRING_SPLIT(?, ','))
+                            )
+                            DELETE SVCV
+                            FROM SERVICECOMPONENTS_VULNERABILITIES AS SVCV
+                            JOIN sc_cte ON SVCV.SERVICECOMPONENT_ID = sc_cte.ID;
+                            """
+                        );
+                    }
+                    executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                    if (DbUtil.isPostgreSQL()) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH RECURSIVE sc_family("ID", "PARENT_SERVICECOMPONENT_ID") AS (
+                                SELECT "SERVICECOMPONENT"."ID", "PARENT_SERVICECOMPONENT_ID"
+                                FROM "SERVICECOMPONENT"
+                                JOIN "PROJECT" ON "PROJECT"."ID" = "SERVICECOMPONENT"."PROJECT_ID"
+                                WHERE "PROJECT"."ID" = ANY(?)
+                              UNION ALL
+                                SELECT "SERVICECOMPONENT"."ID", "SERVICECOMPONENT"."PARENT_SERVICECOMPONENT_ID"
+                                FROM sc_family, "SERVICECOMPONENT"
+                                WHERE "SERVICECOMPONENT"."ID" = sc_family."PARENT_SERVICECOMPONENT_ID"
+                            )
+                            DELETE FROM "SERVICECOMPONENT"
+                              WHERE "ID" = ANY(SELECT "ID" FROM sc_family);
+                            """);
+                    }
+                    if (DbUtil.isMssql()) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                                WITH sc_family AS (
+                                   SELECT
+                                       SERVICECOMPONENT.ID,
+                                       SERVICECOMPONENT.PARENT_SERVICECOMPONENT_ID
+                                   FROM SERVICECOMPONENT
+                                   JOIN PROJECT ON PROJECT.ID = SERVICECOMPONENT.PROJECT_ID
+                                   WHERE PROJECT.ID IN (SELECT value FROM STRING_SPLIT(?, ','))
+                                   UNION ALL
+                                   SELECT
+                                       SERVICECOMPONENT.ID,
+                                       SERVICECOMPONENT.PARENT_SERVICECOMPONENT_ID
+                                   FROM SERVICECOMPONENT
+                                   INNER JOIN sc_family ON SERVICECOMPONENT.ID = sc_family.PARENT_SERVICECOMPONENT_ID
+                               )
+                               DELETE FROM SERVICECOMPONENT
+                               WHERE ID IN (SELECT ID FROM sc_family);
+                            """
+                        );
+                    }
+                    executeAndCloseWithArray(sqlQuery, queryParameter);
+
+                    if (DbUtil.isPostgreSQL()) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                            WITH RECURSIVE p_family("ID", "PARENT_PROJECT_ID") AS (
+                                SELECT "PROJECT"."ID", "PARENT_PROJECT_ID"
+                                FROM "PROJECT"
+                                WHERE "PROJECT"."ID" = ANY(?)
+                              UNION ALL
+                                SELECT "PROJECT"."ID", "PROJECT"."PARENT_PROJECT_ID"
+                                FROM p_family, "PROJECT"
+                                WHERE "PROJECT"."ID" = p_family."PARENT_PROJECT_ID"
+                            )
+                            DELETE FROM "PROJECT"
+                              WHERE "ID" = ANY(SELECT "ID" FROM p_family);
+                            """
+                        );
+                    }
+                    if (DbUtil.isMssql()) {
+                        sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                              WITH p_family AS (
+                                  SELECT
+                                      PROJECT.ID,
+                                      PROJECT.PARENT_PROJECT_ID
+                                  FROM PROJECT
+                                  WHERE PROJECT.ID IN (SELECT value FROM STRING_SPLIT(?, ','))
+                                  UNION ALL
+                                  SELECT
+                                      PROJECT.ID,
+                                      PROJECT.PARENT_PROJECT_ID
+                                  FROM PROJECT
+                                  INNER JOIN p_family ON PROJECT.ID = p_family.PARENT_PROJECT_ID
+                              )
+                              DELETE FROM PROJECT
+                              WHERE ID IN (SELECT ID FROM p_family);
+                            """
+                        );
+                    }
+                    executeAndCloseWithArray(sqlQuery, queryParameter);
+                }
+
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                    DELETE FROM "PROJECT" WHERE "ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+            }
+        });
     }
 
     /**
@@ -916,30 +1347,58 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * @since 4.12.3
+     */
+    @Override
+    public boolean bind(final Project project, final Collection<Tag> tags, final boolean keepExisting) {
+        assertPersistent(project, "project must be persistent");
+        assertPersistentAll(tags, "tags must be persistent");
+
+        return callInTransaction(() -> {
+            boolean modified = false;
+
+            if (project.getTags() == null) {
+                project.setTags(new ArrayList<>());
+            }
+
+            if (!keepExisting) {
+                for (final Tag existingTag : project.getTags()) {
+                    if (!tags.contains(existingTag)) {
+                        project.getTags().remove(existingTag);
+                        if (existingTag.getProjects() != null) {
+                            existingTag.getProjects().remove(project);
+                        }
+                        modified = true;
+                    }
+                }
+            }
+
+            for (final Tag tag : tags) {
+                if (!project.getTags().contains(tag)) {
+                    project.getTags().add(tag);
+
+                    if (tag.getProjects() == null) {
+                        tag.setProjects(new ArrayList<>(List.of(project)));
+                    } else if (!tag.getProjects().contains(project)) {
+                        tag.getProjects().add(project);
+                    }
+
+                    modified = true;
+                }
+            }
+
+            return modified;
+        });
+    }
+
+    /**
      * Binds the two objects together in a corresponding join table.
      * @param project a Project object
      * @param tags a List of Tag objects
      */
     @Override
-    public void bind(Project project, List<Tag> tags) {
-        runInTransaction(() -> {
-            final Query<Tag> query = pm.newQuery(Tag.class, "projects.contains(:project)");
-            query.setParameters(project);
-            final List<Tag> currentProjectTags = executeAndCloseList(query);
-
-            for (final Tag tag : currentProjectTags) {
-                if (!tags.contains(tag)) {
-                    tag.getProjects().remove(project);
-                }
-            }
-            project.setTags(tags);
-            for (final Tag tag : tags) {
-                final List<Project> projects = tag.getProjects();
-                if (!projects.contains(project)) {
-                    projects.add(project);
-                }
-            }
-        });
+    public void bind(final Project project, final List<Tag> tags) {
+        bind(project, tags, /* keepExisting */ false);
     }
 
     /**

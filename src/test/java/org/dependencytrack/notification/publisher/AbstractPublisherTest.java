@@ -20,7 +20,7 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-
+import io.pebbletemplates.pebble.error.ParserException;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.io.IOUtils;
 import org.dependencytrack.PersistenceCapableTest;
@@ -29,9 +29,11 @@ import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.Policy.ViolationState;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyCondition.Operator;
 import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.PolicyViolation.Type;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
@@ -39,8 +41,6 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
-import org.dependencytrack.model.Policy.ViolationState;
-import org.dependencytrack.model.PolicyViolation.Type;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationDetails;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationOverview;
 import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummary;
@@ -79,6 +79,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 public abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCapableTest {
@@ -263,6 +264,24 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
     }
 
     @Test
+    public void testInformWithTemplateInclude() throws Exception {
+        final var notification = new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.ANALYZER)
+                .title(NotificationConstants.Title.NOTIFICATION_TEST)
+                .level(NotificationLevel.ERROR)
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC));
+
+        final JsonObject config = Json.createObjectBuilder(createConfig())
+                .add(Publisher.CONFIG_TEMPLATE_KEY, "{% include '/some/path' %}")
+                .build();
+
+        assertThatExceptionOfType(ParserException.class)
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, config))
+                .withMessage("Unexpected tag name \"include\" ({% include '/some/path' %}:1)");
+    }
+
+    @Test
     public void testPublishWithScheduledNewVulnerabilitiesNotification() {
         final var project = createProject();
         final var component = createComponent(project);
@@ -426,7 +445,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         final var violation = new PolicyViolation();
         final var violationAnalysis = createViolationAnalysis();
         final var policyCondition = createPolicyCondition();
-        
+
         violation.setUuid(UUID.fromString("bf956a83-6013-4a69-9c76-857e2a8c8e45"));
         violation.setPolicyCondition(policyCondition);
         violation.setType(Type.LICENSE);
@@ -436,7 +455,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         return violation;
     }
 
-    private JsonObject createConfig() throws Exception {
+    JsonObject createConfig() throws Exception {
         return Json.createObjectBuilder()
                 .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
                 .add(Publisher.CONFIG_TEMPLATE_KEY, IOUtils.resourceToString(publisher.getPublisherTemplateFile(), UTF_8))

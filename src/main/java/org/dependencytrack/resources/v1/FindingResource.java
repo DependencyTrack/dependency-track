@@ -40,13 +40,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.text.WordUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.PolicyEvaluationEvent;
+import org.dependencytrack.event.ProjectVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
-import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
@@ -215,7 +216,8 @@ public class FindingResource extends AlpineResource {
 
                   final List<Component> detachedComponents = qm.detach(qm.getAllComponents(project));
                   final Project detachedProject = qm.detach(Project.class, project.getId());
-                  final VulnerabilityAnalysisEvent vae = new VulnerabilityAnalysisEvent(detachedComponents).project(detachedProject);
+                  final var vae = new ProjectVulnerabilityAnalysisEvent(
+                          detachedProject, VulnerabilityAnalysisLevel.ON_DEMAND);
                   // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
                   // as both might be needed in policy evaluation
                   vae.onSuccess(new RepositoryMetaEvent(detachedComponents));

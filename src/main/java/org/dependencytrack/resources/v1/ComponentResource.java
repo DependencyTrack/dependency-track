@@ -37,14 +37,15 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.event.ComponentVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.PolicyEvaluationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
-import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.validation.ValidUuid;
@@ -318,6 +319,9 @@ public class ComponentResource extends AlpineResource {
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
+            if(!project.getCollectionLogic().equals(ProjectCollectionLogic.NONE)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Collection project cannot contain components.").build();
+            }
             if (! qm.hasAccess(super.getPrincipal(), project)) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
@@ -366,11 +370,11 @@ public class ComponentResource extends AlpineResource {
 
             component = qm.createComponent(component, true);
             Event.dispatch(
-                new VulnerabilityAnalysisEvent(component)
+                new ComponentVulnerabilityAnalysisEvent(component)
                 // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
                 // as both might be needed in policy evaluation
                 .onSuccess(new RepositoryMetaEvent(List.of(component)))
-                .onSuccess(new PolicyEvaluationEvent(component))
+                .onSuccess(new PolicyEvaluationEvent(component).project(component.getProject()))
             );
             return Response.status(Response.Status.CREATED).entity(component).build();
         }
@@ -475,11 +479,11 @@ public class ComponentResource extends AlpineResource {
 
                 component = qm.updateComponent(component, true);
                 Event.dispatch(
-                    new VulnerabilityAnalysisEvent(component)
+                    new ComponentVulnerabilityAnalysisEvent(component)
                     // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
 // as both might be needed in policy evaluation
                     .onSuccess(new RepositoryMetaEvent(List.of(component)))
-                    .onSuccess(new PolicyEvaluationEvent(component))
+                    .onSuccess(new PolicyEvaluationEvent(component).project(component.getProject()))
                 );
                 return Response.ok(component).build();
             } else {

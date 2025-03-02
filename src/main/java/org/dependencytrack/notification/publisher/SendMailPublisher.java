@@ -27,15 +27,14 @@ import alpine.notification.Notification;
 import alpine.server.mail.SendMail;
 import alpine.server.mail.SendMailException;
 import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.extension.core.DisallowExtensionCustomizerBuilder;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import org.apache.commons.text.StringEscapeUtils;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DebugDataEncryption;
 
 import jakarta.json.JsonObject;
 import jakarta.json.JsonString;
-
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.Arrays;
@@ -59,7 +58,12 @@ import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_USERN
 public class SendMailPublisher implements Publisher {
 
     private static final Logger LOGGER = Logger.getLogger(SendMailPublisher.class);
-    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
+    private static final PebbleEngine ENGINE = new PebbleEngine.Builder()
+            .registerExtensionCustomizer(new DisallowExtensionCustomizerBuilder()
+                    .disallowedTokenParserTags(List.of("include"))
+                    .build())
+            .newLineTrimming(false)
+            .build();
     private static final String TEXT_HTML_UTF8 = "text/html; charset=UTF-8";
     private static final String TEXT_PLAIN_UTF8 = "text/plain; charset=UTF-8";
 

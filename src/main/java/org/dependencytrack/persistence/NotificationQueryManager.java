@@ -334,21 +334,29 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
     }
 
     /**
-     * @since 4.12.0
+     * @since 4.12.3
      */
     @Override
-    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
+    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags, final boolean keepExisting) {
         assertPersistent(notificationRule, "notificationRule must be persistent");
         assertPersistentAll(tags, "tags must be persistent");
 
         return callInTransaction(() -> {
             boolean modified = false;
 
-            for (final Tag existingTag : notificationRule.getTags()) {
-                if (!tags.contains(existingTag)) {
-                    notificationRule.getTags().remove(existingTag);
-                    existingTag.getNotificationRules().remove(notificationRule);
-                    modified = true;
+            if (notificationRule.getTags() == null) {
+                notificationRule.setTags(new ArrayList<>());
+            }
+
+            if (!keepExisting) {
+                for (final Tag existingTag : notificationRule.getTags()) {
+                    if (!tags.contains(existingTag)) {
+                        notificationRule.getTags().remove(existingTag);
+                        if (existingTag.getNotificationRules() != null) {
+                            existingTag.getNotificationRules().remove(notificationRule);
+                        }
+                        modified = true;
+                    }
                 }
             }
 
@@ -368,6 +376,14 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
 
             return modified;
         });
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
+        return bind(notificationRule, tags, /* keepExisting */ false);
     }
 
 }

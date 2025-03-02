@@ -47,6 +47,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants.Title;
 import org.dependencytrack.notification.NotificationGroup;
@@ -191,7 +192,7 @@ public class BomResource extends AlpineResource {
 
     @GET
     @Path("/cyclonedx/component/{uuid}")
-    @Produces(CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
+    @Produces({CycloneDxMediaType.APPLICATION_CYCLONEDX_XML, CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON})
     @Operation(
             summary = "Returns dependency metadata for a specific component in CycloneDX format",
             description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
@@ -508,6 +509,9 @@ public class BomResource extends AlpineResource {
             if (! qm.hasAccess(super.getPrincipal(), project)) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
+            if(!project.getCollectionLogic().equals(ProjectCollectionLogic.NONE)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("BOM cannot be uploaded to collection project.").build();
+            }
             final byte[] decoded = Base64.getDecoder().decode(encodedBomData);
             try (final ByteArrayInputStream bain = new ByteArrayInputStream(decoded)) {
                 final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(bain).get());
@@ -532,6 +536,9 @@ public class BomResource extends AlpineResource {
             if (project != null) {
                 if (! qm.hasAccess(super.getPrincipal(), project)) {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
+                if(!project.getCollectionLogic().equals(ProjectCollectionLogic.NONE)) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("BOM cannot be uploaded to collection project.").build();
                 }
                 try (InputStream in = bodyPartEntity.getInputStream()) {
                     final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(in).get());

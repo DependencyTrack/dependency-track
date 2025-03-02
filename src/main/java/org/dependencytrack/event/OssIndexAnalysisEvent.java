@@ -18,7 +18,9 @@
  */
 package org.dependencytrack.event;
 
+import alpine.event.framework.Event;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 
 import java.util.List;
 
@@ -28,16 +30,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.2.0
  */
-public class OssIndexAnalysisEvent extends VulnerabilityAnalysisEvent {
-
-    public OssIndexAnalysisEvent() { }
-
-    public OssIndexAnalysisEvent(final Component component) {
-        super(component);
-    }
-
-    public OssIndexAnalysisEvent(final List<Component> components) {
-        super(components);
-    }
-
+public record OssIndexAnalysisEvent(
+        List<Component> components,
+        VulnerabilityAnalysisLevel analysisLevel) implements Event {
 }

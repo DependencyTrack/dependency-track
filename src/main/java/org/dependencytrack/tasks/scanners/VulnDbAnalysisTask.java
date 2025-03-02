@@ -111,10 +111,10 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 }
             }
             final var event = (VulnDbAnalysisEvent) e;
-            vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
+            vulnerabilityAnalysisLevel = event.analysisLevel();
             LOGGER.debug("Starting VulnDB analysis task");
-            if (!event.getComponents().isEmpty()) {
-                analyze(event.getComponents());
+            if (!event.components().isEmpty()) {
+                analyze(event.components());
             }
             LOGGER.debug("VulnDB analysis complete");
         }
@@ -173,13 +173,11 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     private boolean processResults(final Results results, final Component component) {
         try (final QueryManager qm = new QueryManager()) {
             final Component vulnerableComponent = qm.getObjectByUuid(Component.class, component.getUuid()); // Refresh component and attach to current pm.
-            for (org.dependencytrack.parser.vulndb.model.Vulnerability vulnDbVuln : (List<org.dependencytrack.parser.vulndb.model.Vulnerability>) results.getResults()) {
-                Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.VULNDB, String.valueOf(vulnDbVuln.id()));
-                if (vulnerability == null) {
-                    vulnerability = qm.createVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
-                } else {
-                    vulnerability = qm.synchronizeVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
-                }
+            for (org.dependencytrack.parser.vulndb.model.Vulnerability vulnDbVuln :
+                (List<org.dependencytrack.parser.vulndb.model.Vulnerability>) results.getResults()) {
+                // Synchronize the vulnerability, which may create, update, or return null
+                Vulnerability vulnerability = qm.synchronizeVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
+                if (vulnerability == null) continue; // Skip processing if no changes
                 NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, vulnerableComponent, vulnerabilityAnalysisLevel);
                 qm.addVulnerability(vulnerability, vulnerableComponent, this.getAnalyzerIdentity());
                 addVulnerabilityToCache(vulnerableComponent, vulnerability);
@@ -188,5 +186,4 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
             return results.getPage() * PAGE_SIZE < results.getTotal();
         }
     }
-
 }

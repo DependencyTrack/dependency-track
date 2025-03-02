@@ -59,10 +59,10 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
                 return;
             }
             final InternalAnalysisEvent event = (InternalAnalysisEvent)e;
-            vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
+            vulnerabilityAnalysisLevel = event.analysisLevel();
             LOGGER.info("Starting internal analysis task");
-            if (event.getComponents().size() > 0) {
-                analyze(event.getComponents());
+            if (!event.components().isEmpty()) {
+                analyze(event.components());
             }
             LOGGER.info("Internal analysis complete");
         }

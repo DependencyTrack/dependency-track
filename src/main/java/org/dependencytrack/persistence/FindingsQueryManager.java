@@ -357,8 +357,10 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
                 .forEach(metaComponent -> {
                     final var search = new RepositoryMetaComponentSearch(metaComponent.getRepositoryType(), metaComponent.getNamespace(), metaComponent.getName());
                     final List<Finding> affectedFindings = findingsByMetaComponentSearch.get(search);
-                    for (final Finding finding : affectedFindings) {
-                        finding.getComponent().put("latestVersion", metaComponent.getLatestVersion());
+                    if (affectedFindings != null) {
+                        for (final Finding finding : affectedFindings) {
+                            finding.getComponent().put("latestVersion", metaComponent.getLatestVersion());
+                        }
                     }
                 });
 

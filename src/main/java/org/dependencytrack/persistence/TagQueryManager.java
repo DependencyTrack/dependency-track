@@ -459,14 +459,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             final List<Project> projects = executeAndCloseList(projectsQuery);
 
             for (final Project project : projects) {
-                if (project.getTags() == null || project.getTags().isEmpty()) {
-                    project.setTags(List.of(tag));
-                    continue;
-                }
-
-                if (!project.getTags().contains(tag)) {
-                    project.getTags().add(tag);
-                }
+                bind(project, List.of(tag), /* keepExisting */ true);
             }
         });
     }
@@ -569,7 +562,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             final List<Policy> policies = executeAndCloseList(policiesQuery);
 
             for (final Policy policy : policies) {
-                bind(policy, List.of(tag));
+                bind(policy, List.of(tag), /* keepExisting */ true);
             }
         });
     }
@@ -694,7 +687,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             final List<NotificationRule> notificationRules = executeAndCloseList(notificationRulesQuery);
 
             for (final NotificationRule notificationRule : notificationRules) {
-                bind(notificationRule, List.of(tag));
+                bind(notificationRule, List.of(tag), /* keepExisting */ true);
             }
         });
     }

@@ -8,15 +8,10 @@ order: 10
 Dependency-Track supports badges in Scalable Vector Graphics (SVG) format. Support for badges is configurable on a team
 basis via permission or globally for unauthenticated access.
 
-> **Deprecation Notice**
-> 
-> Unauthenticated access to badges as a global configuration is deprecated and slated for removal in Dependency-Track
-> v4.13.
-
 To enable badges for a team, activate the permission `VIEW_BADGES`. To deactivate badges, remove the permission. To 
-retrieve a badge, use a team's API key either in the badge API header `X-API-Key` or in the URI parameter `apiKey`.
+retrieve a badge, use a team's API key either in the badge API header `X-Api-Key` or in the URI parameter `apiKey`.
 
-As a legacy feature, badges can also be accessed without authentication. On new Dependency-Track installations, this is
+As an alternative, badges can also be accessed without authentication. On new Dependency-Track installations, this is
 disabled by default. On Dependency-Track installations updated from &leq; v4.11, where (unauthenticated) badge support 
 was enabled, badges will remain accessible for unauthenticated requests. If this is disabled, badges will be accessible
 for authenticated and authorized requests.
@@ -24,6 +19,14 @@ for authenticated and authorized requests.
 > Enabling unauthenticated access to badges will provide vulnerability and policy violation metric information to
 > unauthenticated users. Any anonymous user with network access to Dependency-Track and knowledge of a projects
 > information will be able to view the SVG badge.
+> 
+> It is however offered as an alternative in case publishing badge URLs containing an API key raises security concerns
+> or compliance issues with your Dependency-Track installation.
+> Be aware of the following risks that go with publishing API keys, even if scoped entirely to badges:
+> * a developer could accidentally commit and push the wrong API key in the Dependency-Track badge URL, e.g. in their 
+>   project's README.md, and thus publish a secret API key, creating a security incident 
+> * contradicts common compliance rules to never publish secrets like API keys, raising the complexity of a 
+>   technological environment.
 
 Dependency-Track ships with a default team "_Badge Viewers_" dedicated to badges that already has the necessary
 permission and an API key.
@@ -32,7 +35,7 @@ permission and an API key.
 > for the badge request should have minimal scope to prevent unintended access beyond that badge. Ideally, the API
 > key belongs to a single-purpose team, having just the `VIEW_BADGES` permission, with only one API key and access to 
 > only the projects/project versions whose badges are displayed at one site--the latter requiring _Portfolio Access 
-> Control_. 
+> Control_.
 
 In all following examples, replace `{name}`, `{version}`, `{uuid}`, and `{apiKey}` with their respective values. For
 brevity, the examples use the URI query parameter as the method of authentication, however, they also work with

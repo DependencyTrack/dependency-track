@@ -5,6 +5,7 @@
       {
         "vulndb_id": 1,
         "title": "test title",
+        "vulndb_last_modified": "2021-12-20T21:34:04Z",
         "classifications": [
           {
             "id": 1,
@@ -107,6 +108,7 @@
       {
         "vulndb_id": 2,
         "title": "test title",
+        "vulndb_last_modified": "2021-12-20T21:34:04Z",
         "classifications": [
           {
             "id": 1,

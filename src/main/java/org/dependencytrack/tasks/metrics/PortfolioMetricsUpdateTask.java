@@ -22,6 +22,7 @@ import alpine.common.logging.Logger;
 import alpine.common.util.SystemUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import alpine.persistence.ScopedCustomization;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.dependencytrack.event.CallbackEvent;
 import org.dependencytrack.event.PortfolioMetricsUpdateEvent;
@@ -68,11 +69,11 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
             final PersistenceManager pm = qm.getPersistenceManager();
 
             LOGGER.debug("Fetching first " + BATCH_SIZE + " projects");
-            List<Project> activeProjects = fetchNextActiveProjectsPage(pm, null);
+            List<Project> activeProjects = fetchNextActiveProjectsBatch(pm, null);
 
             while (!activeProjects.isEmpty()) {
-                final long firstId = activeProjects.get(0).getId();
-                final long lastId = activeProjects.get(activeProjects.size() - 1).getId();
+                final long firstId = activeProjects.getFirst().getId();
+                final long lastId = activeProjects.getLast().getId();
                 final int batchCount = activeProjects.size();
 
                 final var countDownLatch = new CountDownLatch(batchCount);
@@ -113,7 +114,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                     counters.medium += metrics.getMedium();
                     counters.low += metrics.getLow();
                     counters.unassigned += metrics.getUnassigned();
-                    counters.vulnerabilities += metrics.getVulnerabilities();
+                    counters.vulnerabilities += Math.toIntExact(metrics.getVulnerabilities());
 
                     counters.findingsTotal += metrics.getFindingsTotal();
                     counters.findingsAudited += metrics.getFindingsAudited();
@@ -145,8 +146,13 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                     counters.policyViolationsOperationalUnaudited += metrics.getPolicyViolationsOperationalUnaudited();
                 }
 
+                // Remove projects and project metrics from the L1 cache
+                // to prevent it from growing too large.
+                pm.evictAll(false, Project.class);
+                pm.evictAll(false, ProjectMetrics.class);
+
                 LOGGER.debug("Fetching next " + BATCH_SIZE + " projects");
-                activeProjects = fetchNextActiveProjectsPage(pm, lastId);
+                activeProjects = fetchNextActiveProjectsBatch(pm, lastId);
             }
 
             qm.runInTransaction(() -> {
@@ -166,18 +172,27 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                 DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
     }
 
-    private List<Project> fetchNextActiveProjectsPage(final PersistenceManager pm, final Long lastId) throws Exception {
-        try (final Query<Project> query = pm.newQuery(Project.class)) {
-            if (lastId == null) {
-                query.setFilter("(active == null || active == true)");
-            } else {
-                query.setFilter("(active == null || active == true) && id < :lastId");
-                query.setParameters(lastId);
-            }
-            query.setOrdering("id DESC");
-            query.range(0, BATCH_SIZE);
-            query.getFetchPlan().setGroup(Project.FetchGroup.METRICS_UPDATE.name());
+    private List<Project> fetchNextActiveProjectsBatch(final PersistenceManager pm, final Long lastId) {
+        final Query<Project> query = pm.newQuery(Project.class);
+        // exclude collection projects since their numbers are included in other projects and would wrongly influence portfolio metrics.
+        if (lastId == null) {
+            query.setFilter("active && (collectionLogic == null || collectionLogic == 'NONE')");
+        } else {
+            query.setFilter("""
+                    active \
+                    && (collectionLogic == null || collectionLogic == 'NONE') \
+                    && id < :lastId""");
+            query.setParameters(lastId);
+        }
+        query.setOrdering("id DESC");
+        query.range(0, BATCH_SIZE);
+
+        // NB: Set fetch group on PM level to avoid fields of the default fetch group from being loaded.
+        try (var ignoredPersistenceCustomization = new ScopedCustomization(pm)
+                .withFetchGroup(Project.FetchGroup.PORTFOLIO_METRICS_UPDATE.name())) {
             return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
         }
     }
 

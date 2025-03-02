@@ -1,0 +1,14 @@
+{
+  "packages": [],
+  "includes": {
+      "include\/all$375c50aec65940bda6dd478ca38dc2062f755dd5.json": {
+          "sha1": "375c50aec65940bda6dd478ca38dc2062f755dd5"
+      }
+  },
+  "metadata-url": "\/repository\/p2\/%package%.json",
+  "available-packages": [
+      "io\/captain-hook",
+      "io\/composer-git-hooks-standard",
+      "io\/composer-patches"
+  ]
+}

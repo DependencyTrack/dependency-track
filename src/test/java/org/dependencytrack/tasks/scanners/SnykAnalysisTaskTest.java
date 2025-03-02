@@ -37,6 +37,7 @@ import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -293,7 +294,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new SnykAnalysisTask().inform(new SnykAnalysisEvent(component));
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(1);
@@ -474,7 +476,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new SnykAnalysisTask().inform(new SnykAnalysisEvent(component));
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(1);
@@ -525,7 +528,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@6.4.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new SnykAnalysisTask().inform(new SnykAnalysisEvent(component));
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(0);
@@ -590,7 +594,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new SnykAnalysisTask().inform(new SnykAnalysisEvent(List.of(component)));
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(0);
@@ -622,7 +627,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new SnykAnalysisTask().inform(new SnykAnalysisEvent(List.of(component)));
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(0);
@@ -649,7 +655,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new SnykAnalysisTask().inform(new SnykAnalysisEvent(List.of(component)));
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(0);
@@ -684,7 +691,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new SnykAnalysisTask().inform(new SnykAnalysisEvent(component));
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(1);
@@ -734,7 +742,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new SnykAnalysisTask().inform(new SnykAnalysisEvent(component));
+        new SnykAnalysisTask().inform(
+                new SnykAnalysisEvent(List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() > 0, Duration.ofSeconds(5));
         assertThat(NOTIFICATIONS).anySatisfy(notification -> {
@@ -777,7 +786,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
             components.add(qm.createComponent(component, false));
         }
 
-        new SnykAnalysisTask().inform(new SnykAnalysisEvent(components));
+        new SnykAnalysisTask().inform(
+                new SnykAnalysisEvent(components, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         mockServer.verify(request().withHeader("Authorization", "token token1"), VerificationTimes.exactly(20));
         mockServer.verify(request().withHeader("Authorization", "token token2"), VerificationTimes.exactly(20));
@@ -807,7 +817,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
         component = qm.createComponent(component, false);
 
-        new SnykAnalysisTask().inform(new SnykAnalysisEvent(component));
+        new SnykAnalysisTask().inform(
+                new SnykAnalysisEvent(List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         mockServer.verify(
                 request().withHeader("User-Agent", ManagedHttpClientFactory.getUserAgent()),

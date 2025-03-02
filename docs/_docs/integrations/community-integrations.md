@@ -29,5 +29,5 @@ to make custom tools and integrations. Many tools that integrate with Dependency
 |[Github action OWASP Dependency Track Check](https://github.com/marketplace/actions/owasp-dependency-track-check)| [Quobis](https://www.quobis.com/)|
 |[Dependency-Track Backstage plugin](https://github.com/TRIMM/plugin-dependencytrack)| [TRIMM](https://www.trimm.nl/)|
 | [dependency-track-exporter](https://github.com/jetstack/dependency-track-exporter) | [Jetstack](https://jetstack.io) |
-| [Azure DevOps Extension](https://marketplace.visualstudio.com/items?itemName=GSoft.dependency-track-vsts) | [GSoft](https://www.gsoft.com/) |
-
+| [Azure DevOps Extension](https://marketplace.visualstudio.com/items?itemName=eshaar-me.vss-dependency-track-integration) | |
+| [SecObserve](https://github.com/MaibornWolff/SecObserve) | [MaibornWolff](https://www.maibornwolff.de/en/) |

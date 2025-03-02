@@ -44,6 +44,7 @@ import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
 import org.json.JSONObject;
+import org.slf4j.MDC;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 
@@ -65,6 +66,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static org.dependencytrack.common.MdcKeys.MDC_VULN_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
@@ -113,7 +115,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20")
                             + "/all.zip";
                     HttpUriRequest request = new HttpGet(url);
-                    try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                    try (var ignoredMdcOsvEcosystem = MDC.putCloseable("osvEcosystem", ecosystem);
+                         final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                         final StatusLine status = response.getStatusLine();
                         if (status.getStatusCode() == HttpStatus.SC_OK) {
                             try (InputStream in = response.getEntity().getContent();
@@ -146,9 +149,16 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 out.append(line);
             }
             JSONObject json = new JSONObject(out.toString());
-            final OsvAdvisory osvAdvisory = parser.parse(json);
-            if (osvAdvisory != null) {
-                updateDatasource(osvAdvisory);
+            String advisoryId = json.optString("id");
+            try (var ignoredMdcVulnId = MDC.putCloseable(MDC_VULN_ID, advisoryId)) {
+                try {
+                    final OsvAdvisory osvAdvisory = parser.parse(json);
+                    if (osvAdvisory != null) {
+                        updateDatasource(osvAdvisory);
+                    }
+                } catch (RuntimeException e) {
+                    LOGGER.error("Failed to process advisory", e);
+                }
             }
             zipEntry = zipIn.getNextEntry();
             reader = new BufferedReader(new InputStreamReader(zipIn));
@@ -174,6 +184,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
             Vulnerability synchronizedVulnerability = existingVulnerability;
             if (shouldUpdateExistingVulnerability(existingVulnerability, vulnerabilitySource, vulnAuthoritativeSourceEnabled)) {
                synchronizedVulnerability  = qm.synchronizeVulnerability(vulnerability, false);
+               if (synchronizedVulnerability == null) return; // Exit if nothing to update
             }
 
             if (aliasSyncEnabled && advisory.getAliases() != null) {
@@ -268,14 +279,22 @@ public class OsvDownloadTask implements LoggableSubscriber {
         // derive from database_specific cvss v3 vector if available
         if(advisory.getCvssV3Vector() != null) {
             Cvss cvss = Cvss.fromVector(advisory.getCvssV3Vector());
-            Score score = cvss.calculateScore();
-            return normalizedCvssV3Score(score.getBaseScore());
+            if (cvss != null) {
+                Score score = cvss.calculateScore();
+                return normalizedCvssV3Score(score.getBaseScore());
+            } else {
+                LOGGER.warn("Unable to determine severity from CVSSv3 vector: " + advisory.getCvssV3Vector());
+            }
         }
         // derive from database_specific cvss v2 vector if available
         if (advisory.getCvssV2Vector() != null) {
             Cvss cvss = Cvss.fromVector(advisory.getCvssV2Vector());
-            Score score = cvss.calculateScore();
-            return normalizedCvssV2Score(score.getBaseScore());
+            if (cvss != null) {
+                Score score = cvss.calculateScore();
+                return normalizedCvssV2Score(score.getBaseScore());
+            } else {
+                LOGGER.warn("Unable to determine severity from CVSSv2 vector: " + advisory.getCvssV2Vector());
+            }
         }
         // get database_specific severity string if available
         if (advisory.getSeverity() != null) {
@@ -334,7 +353,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
         final String versionEndIncluding = affectedPackage.getUpperVersionRangeIncluding();
 
         VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
-                versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
+                purl.getVersion(), versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
         if (vs != null) {
             return vs;
         }

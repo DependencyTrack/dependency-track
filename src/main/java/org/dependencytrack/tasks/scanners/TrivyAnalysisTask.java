@@ -67,11 +67,13 @@ import trivy.proto.scanner.v1.ScanResponse;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Objects.requireNonNullElseGet;
 import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_INITIAL_DURATION_MS;
 import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_MAX_DURATION_MS;
 import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_MULTIPLIER;
@@ -156,10 +158,10 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
             shouldIgnoreUnfixed = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED);
         }
 
-        vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
+        vulnerabilityAnalysisLevel = event.analysisLevel();
         LOGGER.info("Starting Trivy vulnerability analysis task");
-        if (!event.getComponents().isEmpty()) {
-            analyze(event.getComponents());
+        if (!event.components().isEmpty()) {
+            analyze(event.components());
         }
         LOGGER.info("Trivy vulnerability analysis complete");
     }
@@ -204,7 +206,11 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                 var name = component.getPurl().getName();
 
                 if (component.getPurl().getNamespace() != null) {
-                    name = component.getPurl().getNamespace() + ":" + name;
+                    if (PackageURL.StandardTypes.GOLANG.equals(component.getPurl().getType())) {
+                        name = component.getPurl().getNamespace() + "/" + name;
+                    } else {
+                        name = component.getPurl().getNamespace() + ":" + name;
+                    }
                 }
 
                 if (!PurlType.UNKNOWN.getAppType().equals(appType)) {
@@ -247,8 +253,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
                             }
                         }
 
-                        for (final ComponentProperty property : component.getProperties()) {
-
+                        for (final ComponentProperty property : requireNonNullElseGet(component.getProperties(), Collections::<ComponentProperty>emptyList)) {
                             if (property.getPropertyName().equals("trivy:SrcName")) {
                                 srcName = property.getPropertyValue();
                             } else if (property.getPropertyName().equals("trivy:SrcVersion")) {
@@ -329,6 +334,12 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
 
     @Override
     public boolean shouldAnalyze(final PackageURL packageUrl) {
+        if (packageUrl == null) {
+            // Components of classifier OPERATING_SYSTEM can "survive"
+            // the #isCapable call, despite not having a package URL.
+            return true;
+        }
+
         return getApiBaseUrl()
                 .map(baseUrl -> !isCacheCurrent(Vulnerability.Source.TRIVY, apiBaseUrl, packageUrl.getCoordinates()))
                 .orElse(false);
@@ -504,7 +515,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Cach
             final ConfigProperty property = qm.getConfigProperty(
                     SCANNER_TRIVY_BASE_URL.getGroupName(),
                     SCANNER_TRIVY_BASE_URL.getPropertyName());
-            if (property == null) {
+            if (property == null || property.getPropertyValue() == null) {
                 return Optional.empty();
             }
 

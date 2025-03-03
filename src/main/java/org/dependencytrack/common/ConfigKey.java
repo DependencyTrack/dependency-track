@@ -40,7 +40,8 @@ public enum ConfigKey implements Config.Key {
     REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_LOCK_BUCKETS("repo.meta.analyzer.cacheStampedeBlocker.lock.buckets", 1000),
     REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_MAX_ATTEMPTS("repo.meta.analyzer.cacheStampedeBlocker.max.attempts", 10),
     SYSTEM_REQUIREMENT_CHECK_ENABLED("system.requirement.check.enabled", true),
-    ALPINE_WORKER_POOL_DRAIN_TIMEOUT_DURATION("alpine.worker.pool.drain.timeout.duration", "PT5S");
+    ALPINE_WORKER_POOL_DRAIN_TIMEOUT_DURATION("alpine.worker.pool.drain.timeout.duration", "PT5S"),
+    TELEMETRY_SUBMISSION_ENABLED_DEFAULT("telemetry.submission.enabled.default", true);
 
     private final String propertyName;
     private final Object defaultValue;

@@ -238,7 +238,7 @@ public final class ModelConverter {
         // is a good example of this as it contains application CPEs describing various versions
         // of Adobe Flash player, but also contains CPEs for all versions of Windows, macOS, and
         // Linux.
-        if (node.getOperator() != Node.Operator.AND) {
+        if (node.getOperator() == Node.Operator.AND) {
             // Re-group `CpeMatch`es by CPE part to determine which are against applications,
             // and which against operating systems. When matches are present for both of them,
             // only use the ones for applications.

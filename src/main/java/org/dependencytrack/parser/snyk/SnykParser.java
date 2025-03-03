@@ -102,6 +102,7 @@ public class SnykParser {
             }
             final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));
             synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+            if (synchronizedVulnerability == null) return vulnerability;
             qm.persist(vsList);
             qm.updateAffectedVersionAttributions(synchronizedVulnerability, vsList, Vulnerability.Source.SNYK);
             vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.SNYK);
@@ -302,7 +303,7 @@ public class SnykParser {
             
             //check for a numeric definite version range
             if ((versionStartIncluding != null && versionEndIncluding != null) || (versionStartIncluding != null && versionEndExcluding != null) || (versionStartExcluding != null && versionEndIncluding != null) || (versionStartExcluding != null && versionEndExcluding != null)) {
-                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), packageURL.getVersion(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
                 if (vs == null) {
                     vs = new VulnerableSoftware();
                     vs.setVulnerable(true);

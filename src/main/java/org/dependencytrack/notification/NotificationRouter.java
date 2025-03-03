@@ -274,7 +274,7 @@ public class NotificationRouter implements Subscriber {
             }
 
             if (isLimitedToTags) {
-                final Predicate<Project> tagMatchPredicate = project -> (project.isActive() == null || project.isActive())
+                final Predicate<Project> tagMatchPredicate = project -> project.isActive()
                         && project.getTags() != null
                         && project.getTags().stream().anyMatch(rule.getTags()::contains);
 
@@ -340,7 +340,7 @@ public class NotificationRouter implements Subscriber {
             return false;
         }
         for (Project child : parent.getChildren()) {
-            final boolean isChildActive = child.isActive() == null || child.isActive();
+            final boolean isChildActive = child.isActive();
             if ((child.getUuid().equals(uuid) && isChildActive) || isChild) {
                 return true;
             }

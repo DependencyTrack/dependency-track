@@ -19,6 +19,8 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.extension.core.DisallowExtensionCustomizerBuilder;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -31,8 +33,16 @@ import org.slf4j.LoggerFactory;
 
 import jakarta.json.JsonObject;
 import java.io.IOException;
+import java.util.List;
 
 public abstract class AbstractWebhookPublisher implements Publisher {
+
+    private static final PebbleEngine DEFAULT_PEBBLE_ENGINE = new PebbleEngine.Builder()
+            .registerExtensionCustomizer(new DisallowExtensionCustomizerBuilder()
+                    .disallowedTokenParserTags(List.of("include"))
+                    .build())
+            .defaultEscapingStrategy("json")
+            .build();
 
     public void publish(final PublishContext ctx, final PebbleTemplate template, final Notification notification, final JsonObject config) {
         final Logger logger = LoggerFactory.getLogger(getClass());
@@ -76,7 +86,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
             } else {
                 request.addHeader("Authorization", "Bearer " + credentials.password);
             }
-        } else if (getToken(config) != null) {
+        } else if (getToken(config) != null && !getToken(config).isEmpty() && getTokenHeader(config) != null && !getTokenHeader(config).isEmpty()) {
             request.addHeader(getTokenHeader(config), getToken(config));
         }
 
@@ -99,6 +109,11 @@ public abstract class AbstractWebhookPublisher implements Publisher {
         } catch (IOException ex) {
             handleRequestException(ctx, logger, ex);
         }
+    }
+
+    @Override
+    public PebbleEngine getTemplateEngine() {
+        return DEFAULT_PEBBLE_ENGINE;
     }
 
     protected String getDestinationUrl(final JsonObject config) {

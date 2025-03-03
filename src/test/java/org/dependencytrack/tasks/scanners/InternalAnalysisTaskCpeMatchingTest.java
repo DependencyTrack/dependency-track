@@ -23,6 +23,7 @@ import org.dependencytrack.event.InternalAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.nvd.ModelConverter;
 import org.junit.Before;
@@ -387,7 +388,16 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
                 // Scenario:  "vendor" of source is i, "product" of source is ANY, "vendor" of target is ANY, "product" of target is i
                 //            We consider mixed SUBSET and SUPERSET relations in "vendor" and "product" attributes to be ambiguous and treat them as no-match
                 // Table No.: 3, 13
-                {"cpe:2.3:a:pascom_cloud_phone_system:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:*:util-linux-setarch:2.37.4:*:*:*:*:*:*:*"}
+                {"cpe:2.3:a:pascom_cloud_phone_system:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:*:util-linux-setarch:2.37.4:*:*:*:*:*:*:*"},
+                // ---
+                // Issue:     https://github.com/DependencyTrack/dependency-track/issues/4609
+                // Scenario:  "version" of source and target are ANY -> EQUAL.
+                //            A version range is available but doesn't make sense to use since the target version is already ANY.
+                // Table No.: 1
+                {"cpe:2.3:a:zlib:zlib:*:*:*:*:*:*:*:*", withRange().havingStartIncluding("1.2.0").havingEndExcluding("1.2.9"), MATCHES, "cpe:2.3:a:zlib:zlib:*:*:*:*:*:*:*:*"},
+                // Scenario:  Same as above, but "version" of target is NA -> SUPERSET.
+                // Table No.: 2
+                {"cpe:2.3:a:zlib:zlib:*:*:*:*:*:*:*:*", withRange().havingStartIncluding("1.2.0").havingEndExcluding("1.2.9"), MATCHES, "cpe:2.3:a:zlib:zlib:-:*:*:*:*:*:*:*"}
         });
     }
 
@@ -471,7 +481,8 @@ public class InternalAnalysisTaskCpeMatchingTest extends PersistenceCapableTest 
         component.setCpe(targetCpe);
         qm.persist(component);
 
-        new InternalAnalysisTask().inform(new InternalAnalysisEvent(qm.detach(Component.class, component.getId())));
+        new InternalAnalysisTask().inform(new InternalAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         if (expectMatch) {
             assertThat(qm.getAllVulnerabilities(component)).hasSize(1);

@@ -34,10 +34,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
 
 public class DefectDojoUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 
@@ -45,6 +45,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     private static final String ENGAGEMENTID_PROPERTY = "defectdojo.engagementId";
     private static final String REIMPORT_PROPERTY = "defectdojo.reimport";
     private static final String DO_NOT_REACTIVATE_PROPERTY = "defectdojo.doNotReactivate";
+    private static final String VERIFIED_PROPERTY = "defectdojo.verified";
 
 
     public boolean isReimportConfigured(final Project project) {
@@ -62,6 +63,16 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
             return Boolean.parseBoolean(reactivate.getPropertyValue());
         } else {
             return false;
+        }
+    }
+
+    public boolean isVerifiedConfigured(final Project project) {
+        final ProjectProperty verified = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), VERIFIED_PROPERTY);
+        if (verified != null) {
+            return Boolean.parseBoolean(verified.getPropertyValue());
+        } else {
+            // Defaults to true for backward compatibility with old behavior where "verified" was always true
+            return true;
         }
     }
 
@@ -99,6 +110,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         final ConfigProperty apiKey = qm.getConfigProperty(DEFECTDOJO_API_KEY.getGroupName(), DEFECTDOJO_API_KEY.getPropertyName());
         final boolean globalReimportEnabled = qm.isEnabled(DEFECTDOJO_REIMPORT_ENABLED);
         final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
+        final boolean verifyFindings = isVerifiedConfigured(project);
         try {
             final DefectDojoClient client = new DefectDojoClient(this, URI.create(defectDojoUrl.getPropertyValue()).toURL());
             if (isReimportConfigured(project) || globalReimportEnabled) {
@@ -106,12 +118,12 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                 final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds);
                 LOGGER.debug("Found existing test Id: " + testId);
                 if (testId.equals("")) {
-                    client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);
+                    client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, verifyFindings);
                 } else {
-                    client.reimportDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, testId, isDoNotReactivateConfigured(project));
+                    client.reimportDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, testId, isDoNotReactivateConfigured(project), verifyFindings);
                 }
             } else {
-                client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);
+                client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, verifyFindings);
             }
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to DefectDojo", e);

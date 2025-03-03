@@ -26,6 +26,8 @@ import alpine.model.Team;
 import alpine.server.auth.JsonWebToken;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.cyclonedx.model.ExternalReference.Type;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
@@ -47,8 +49,10 @@ import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.resources.v1.exception.ProjectOperationExceptionMapper;
 import org.dependencytrack.tasks.CloneProjectTask;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.hamcrest.CoreMatchers;
@@ -87,7 +91,8 @@ public class ProjectResourceTest extends ResourceTest {
     public static JerseyTestRule jersey = new JerseyTestRule(
             new ResourceConfig(ProjectResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFilter.class));
+                    .register(AuthenticationFilter.class)
+                    .register(ProjectOperationExceptionMapper.class));
 
     @After
     @Override
@@ -318,7 +323,7 @@ public class ProjectResourceTest extends ResourceTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .withMatcher("parentUuid", equalTo(parentProject.getUuid().toString()))
                 .withMatcher("childUuid", equalTo(childProject.getUuid().toString()))
-                .isEqualTo("""
+                .isEqualTo(/* language=JSON */ """
                         {
                           "name": "acme-app",
                           "version": "1.0.0",
@@ -334,9 +339,11 @@ public class ProjectResourceTest extends ResourceTest {
                               "version": "1.0.0",
                               "uuid": "${json-unit.matches:childUuid}",
                               "active": true,
-                              "isLatest":false
+                              "isLatest":false,
+                              "collectionLogic":"NONE"
                             }
                           ],
+                          "collectionLogic":"NONE",
                           "properties": [],
                           "tags": [],
                           "active": true,
@@ -344,7 +351,8 @@ public class ProjectResourceTest extends ResourceTest {
                           "versions": [
                             {
                               "uuid": "${json-unit.matches:projectUuid}",
-                              "version": "1.0.0"
+                              "version": "1.0.0",
+                              "active": true
                             }
                           ]
                         }
@@ -466,14 +474,21 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void createProjectTest(){
-        Project project = new Project();
-        project.setName("Acme Example");
-        project.setVersion("1.0");
-        project.setDescription("Test project");
         Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header(X_API_KEY, apiKey)
-                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .put(Entity.json("""
+                        {
+                          "name": "Acme Example",
+                          "version": "1.0",
+                          "description": "Test project",
+                          "tags": [
+                            {
+                              "name": "foo"
+                            }
+                          ]
+                        }
+                        """));
         Assert.assertEquals(201, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
@@ -482,6 +497,8 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertEquals("Test project", json.getString("description"));
         Assert.assertTrue(json.getBoolean("active"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        assertThat(json.getJsonArray("tags").getValuesAs(JsonObject.class)).satisfiesExactly(
+                jsonObject -> assertThat(jsonObject.getString("name")).isEqualTo("foo"));
     }
 
     @Test
@@ -590,6 +607,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -598,7 +616,7 @@ public class ProjectResourceTest extends ResourceTest {
                         }
                         """);
 
-        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
     }
 
@@ -636,6 +654,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -644,7 +663,7 @@ public class ProjectResourceTest extends ResourceTest {
                         }
                         """);
 
-        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
     }
 
@@ -677,6 +696,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -685,7 +705,7 @@ public class ProjectResourceTest extends ResourceTest {
                         }
                         """);
 
-        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).isEmpty());
     }
 
@@ -737,7 +757,7 @@ public class ProjectResourceTest extends ResourceTest {
 
         final String userJwt = new JsonWebToken().createToken(testUser);
 
-        final Team otherTeam = qm.createTeam("otherTeam", false);
+        final Team otherTeam = qm.createTeam("otherTeam");
 
         final Response response = jersey.target(V1_PROJECT)
                 .request()
@@ -759,6 +779,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -767,7 +788,7 @@ public class ProjectResourceTest extends ResourceTest {
                         }
                         """);
 
-        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly("otherTeam"));
     }
 
@@ -869,6 +890,7 @@ public class ProjectResourceTest extends ResourceTest {
                           "uuid": "${json-unit.any-string}",
                           "name": "acme-app",
                           "classifier": "APPLICATION",
+                          "collectionLogic":"NONE",
                           "children": [],
                           "properties": [],
                           "tags": [],
@@ -877,7 +899,7 @@ public class ProjectResourceTest extends ResourceTest {
                         }
                         """);
 
-        assertThat(qm.getAllProjects()).satisfiesExactly(project ->
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
     }
     @Test
@@ -1012,20 +1034,25 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void updateProjectTestIsActiveEqualsNull() {
-        Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
-        project.setDescription("Test project");
-        project.setActive(null);
-        Assert.assertNull(project.isActive());
-        Response response = jersey.target(V1_PROJECT)
+        final Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        final Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header(X_API_KEY, apiKey)
-                .post(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "ABC",
+                          "version": "1.0",
+                          "description": "Test project"
+                        }
+                        """.formatted(project.getUuid())));
         Assert.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
         Assert.assertEquals("ABC", json.getString("name"));
         Assert.assertEquals("1.0", json.getString("version"));
         Assert.assertEquals("Test project", json.getString("description"));
+        Assert.assertTrue(json.getBoolean("active"));
     }
 
     @Test
@@ -1209,6 +1236,60 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    public void updateProjectToCollectionProjectWhenHavingComponentsTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "acme-app",
+                          "collectionLogic": "AGGREGATE_DIRECT_CHILDREN"
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(409);
+        assertThat(getPlainTextBody(response)).isEqualTo("""
+                Project cannot be made a collection project while it has \
+                components or services!""");
+    }
+
+    @Test
+    public void updateProjectToCollectionProjectWhenHavingServicesTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var service = new ServiceComponent();
+        service.setProject(project);
+        service.setName("some-service");
+        qm.persist(service);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "acme-app",
+                          "collectionLogic": "AGGREGATE_DIRECT_CHILDREN"
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(409);
+        assertThat(getPlainTextBody(response)).isEqualTo("""
+                Project cannot be made a collection project while it has \
+                components or services!""");
+    }
+
+    @Test
     public void deleteProjectTest() {
         Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Response response = jersey.target(V1_PROJECT + "/" + project.getUuid().toString())
@@ -1226,6 +1307,110 @@ public class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(404, response.getStatus(), 0);
+    }
+
+    List<UUID> createProjects(int size, boolean accessible) {
+        List<UUID> projectUUIDs = new ArrayList<>();
+        for (int i=0; i<size; i++) {
+            Project project = qm.createProject("ABC", null, String.valueOf(i)+".0", null, null, null, true, false);
+            if (accessible) {
+                project.setAccessTeams(List.of(team));
+            }
+            projectUUIDs.add(project.getUuid());
+            qm.persist(project);
+        }
+        return projectUUIDs;
+    }
+
+    @Test
+    public void batchDeleteProjectsTest() throws JsonProcessingException {
+        // Enable portfolio access control.
+        qm.createConfigProperty(
+            ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+            ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+            "true",
+            ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+            null
+        );
+
+        List<UUID> uuidsOfAccessibleProjects = createProjects(9, true);
+        List<UUID> uuidsOfInaccessibleProjects = createProjects(1, false);
+
+        // Delete only accessible projects
+        Response response = jersey.target(V1_PROJECT + "/batchDelete")
+            .request()
+            .header(X_API_KEY, apiKey)
+            .post(Entity.json(uuidsOfAccessibleProjects));
+        Assert.assertEquals(204, response.getStatus(), 0);
+
+        // Try to delete them again (they should now be gone)
+        response = jersey.target(V1_PROJECT + "/batchDelete")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .post(Entity.json(uuidsOfAccessibleProjects));
+        Assert.assertEquals(400, response.getStatus(), 0);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        Map<String, String> expectedErrors = uuidsOfAccessibleProjects.stream()
+                .collect(Collectors.toMap(UUID::toString, uuid -> "Project not found"));
+        ObjectMapper objectMapper = new ObjectMapper();
+        String expectedErrorsJson = objectMapper.writeValueAsString(expectedErrors);
+        assertThatJson(
+                getPlainTextBody(response)
+        ).isEqualTo("""
+                {
+                  "status": 400,
+                  "title": "Project operation failed",
+                  "detail": "One or more projects could not be deleted",
+                  "errors": %s
+                }
+                """.formatted(expectedErrorsJson)
+        );
+
+        // Delete only inaccessible projects
+        response = jersey.target(V1_PROJECT + "/batchDelete")
+            .request()
+            .header(X_API_KEY, apiKey)
+            .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+            .post(Entity.json(uuidsOfInaccessibleProjects));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(
+                getPlainTextBody(response)
+        ).isEqualTo("""
+                {
+                  "status": 400,
+                  "title": "Project operation failed",
+                  "detail": "One or more projects could not be deleted",
+                  "errors": {
+                    "%": "Access denied to project"
+                  }
+                }
+                """.replaceAll("%", uuidsOfInaccessibleProjects.getFirst().toString()));
+
+        // Delete mixed accessible + inaccessible projects
+        List<UUID> uuidsOfMixedProjects = new ArrayList<>();
+        uuidsOfAccessibleProjects = createProjects(9, true);
+        uuidsOfMixedProjects.addAll(uuidsOfAccessibleProjects);
+        uuidsOfMixedProjects.addAll(uuidsOfInaccessibleProjects);
+        response = jersey.target(V1_PROJECT + "/batchDelete")
+            .request()
+            .header(X_API_KEY, apiKey)
+            .post(Entity.json(uuidsOfMixedProjects));
+        Assert.assertEquals(400, response.getStatus(), 0);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        expectedErrors = uuidsOfInaccessibleProjects.stream()
+                .collect(Collectors.toMap(UUID::toString, uuid -> "Access denied to project"));
+        expectedErrorsJson = objectMapper.writeValueAsString(expectedErrors);
+        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        {
+          "status": 400,
+          "title": "Project operation failed",
+          "detail": "One or more projects could not be deleted",
+          "errors": %s
+        }
+        """.formatted(expectedErrorsJson));
+
     }
 
     @Test
@@ -1378,7 +1563,8 @@ public class ProjectResourceTest extends ResourceTest {
                           ],
                           "active": false,
                           "isLatest":false,
-                          "children": []
+                          "children": [],
+                          "collectionLogic":"NONE"
                         }
                         """);
     }
@@ -1451,7 +1637,8 @@ public class ProjectResourceTest extends ResourceTest {
                           "properties": [],
                           "tags": [],
                           "active": true,
-                          "isLatest":false
+                          "isLatest":false,
+                          "collectionLogic":"NONE"
                         }
                         """);
 
@@ -1728,6 +1915,7 @@ public class ProjectResourceTest extends ResourceTest {
         componentA.setProject(project);
         componentA.setName("acme-lib-a");
         componentA.setVersion("2.0.0");
+        componentA.setSwidTagId("swidTagId");
         componentA.setSupplier(componentSupplier);
         qm.persist(componentA);
 
@@ -1797,7 +1985,8 @@ public class ProjectResourceTest extends ResourceTest {
                                         "objectType": "COMPONENT",
                                         "uuid": "${json-unit.matches:notSourceComponentUuid}",
                                         "name": "acme-lib-a",
-                                        "version": "2.0.0"
+                                        "version": "2.0.0",
+                                        "swidTagId":"swidTagId"
                                       }
                                     ]
                                     """);
@@ -1827,6 +2016,7 @@ public class ProjectResourceTest extends ResourceTest {
                                 assertThat(clonedComponent.getUuid()).isNotEqualTo(componentA.getUuid());
                                 assertThat(clonedComponent.getName()).isEqualTo("acme-lib-a");
                                 assertThat(clonedComponent.getVersion()).isEqualTo("2.0.0");
+                                assertThat(clonedComponent.getSwidTagId()).isEqualTo("swidTagId");
                                 assertThat(clonedComponent.getSupplier()).isNotNull();
                                 assertThat(clonedComponent.getSupplier().getName()).isEqualTo("componentSupplier");
                                 assertThatJson(clonedComponent.getDirectDependencies())
@@ -1967,6 +2157,51 @@ public class ProjectResourceTest extends ResourceTest {
                 });
     }
 
+    @Test // https://github.com/DependencyTrack/dependency-track/issues/4413
+    public void cloneProjectWithBrokenDependencyGraphTest() {
+        EventService.getInstance().subscribe(CloneProjectEvent.class, CloneProjectTask.class);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setDirectDependencies("[{\"uuid\":\"d6b6f140-f547-4fe2-a98c-f4942ad51f86\"}]");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        component.setDirectDependencies("[{\"uuid\":\"61503628-d2a2-447b-b99c-701b9d492cbd\"}]");
+        qm.persist(component);
+
+        final Response response = jersey.target("%s/clone".formatted(V1_PROJECT)).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "project": "%s",
+                          "version": "1.1.0",
+                          "includeComponents": true,
+                          "includeServices": true
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        await("Cloning completion")
+                .atMost(Duration.ofSeconds(15))
+                .pollInterval(Duration.ofMillis(50))
+                .untilAsserted(() -> {
+                    final Project clonedProject = qm.getProject("acme-app", "1.1.0");
+                    assertThat(clonedProject).isNotNull();
+                });
+
+        final Project clonedProject = qm.getProject("acme-app", "1.1.0");
+        assertThat(clonedProject.getDirectDependencies()).isEqualTo(
+                "[{\"uuid\":\"d6b6f140-f547-4fe2-a98c-f4942ad51f86\"}]");
+
+        assertThat(qm.getAllComponents(clonedProject).getFirst().getDirectDependencies()).isEqualTo(
+                "[{\"uuid\":\"61503628-d2a2-447b-b99c-701b9d492cbd\"}]");
+    }
+
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3883
     public void issue3883RegressionTest() {
         Response response = jersey.target(V1_PROJECT)
@@ -2014,13 +2249,15 @@ public class ProjectResourceTest extends ResourceTest {
                       "classifier": "APPLICATION",
                       "uuid": "${json-unit.any-string}",
                       "active": true,
-                      "isLatest":false
+                      "isLatest":false,
+                      "collectionLogic":"NONE"
                     }
                   ],
                   "properties": [],
                   "tags": [],
                   "active": true,
                   "isLatest":false,
+                  "collectionLogic":"NONE",
                   "versions": [
                     {
                       "uuid": "${json-unit.any-string}",
@@ -2052,6 +2289,7 @@ public class ProjectResourceTest extends ResourceTest {
                   "tags": [],
                   "active": true,
                   "isLatest":false,
+                  "collectionLogic":"NONE",
                   "versions": [
                     {
                       "uuid": "${json-unit.any-string}",

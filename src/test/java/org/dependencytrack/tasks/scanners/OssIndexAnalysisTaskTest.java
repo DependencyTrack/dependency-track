@@ -12,6 +12,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -153,7 +154,8 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1");
         qm.persist(component);
 
-        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(component)));
+        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).satisfiesExactly(
@@ -224,7 +226,8 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1");
         qm.persist(component);
 
-        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(component)));
+        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
 
         wireMock.verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -274,7 +277,8 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1");
         qm.persist(component);
 
-        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(component)));
+        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
 
         wireMock.verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
                 .withHeader("Content-Type", equalTo("application/json"))

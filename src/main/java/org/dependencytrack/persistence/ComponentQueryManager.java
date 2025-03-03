@@ -166,7 +166,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 " && !("+
                 " SELECT FROM org.dependencytrack.model.RepositoryMetaComponent m " +
                 " WHERE m.name == this.name " +
-                " && m.namespace == this.group " +
+                " && (m.namespace == this.group || (m.namespace == null && this.group == null)) " +
                 " && m.latestVersion != this.version " +
                 " && this.purl.matches('pkg:' + m.repositoryType.toString().toLowerCase() + '/%') " +
                 " ).isEmpty()";
@@ -370,6 +370,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setCpe(sourceComponent.getCpe());
         component.setPurl(sourceComponent.getPurl());
         component.setPurlCoordinates(sourceComponent.getPurlCoordinates());
+        component.setSwidTagId(sourceComponent.getSwidTagId());
         component.setInternal(sourceComponent.isInternal());
         component.setDescription(sourceComponent.getDescription());
         component.setCopyright(sourceComponent.getCopyright());
@@ -460,55 +461,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
-     * Returns a component by matching its identity information.
-     * <p>
-     * Note that this method employs a stricter matching logic than {@link #matchIdentity(ComponentIdentity)}.
-     * For example, if {@code purl} of the given {@link ComponentIdentity} is {@code null},
-     * this method will use a query that explicitly checks for the {@code purl} column to be {@code null}.
-     * Whereas other methods will simply not include {@code purl} in the query in such cases.
-     *
-     * @param project the Project the component is a dependency of
-     * @param cid     the identity values of the component
-     * @return a Component object, or null if not found
-     * @since 4.11.0
-     */
-    public Component matchSingleIdentityExact(final Project project, final ComponentIdentity cid) {
-        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildExactComponentIdentityQuery(project, cid);
-        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getKey());
-        query.setNamedParameters(queryFilterParamsPair.getRight());
-        try {
-            return query.executeUnique();
-        } finally {
-            query.closeAll();
-        }
-    }
-
-    /**
-     * Returns the first component matching a given {@link ComponentIdentity} in a {@link Project}.
-     *
-     * @param project the Project the component is a dependency of
-     * @param cid     the identity values of the component
-     * @return a Component object, or null if not found
-     * @since 4.11.0
-     */
-    public Component matchFirstIdentityExact(final Project project, final ComponentIdentity cid) {
-        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildExactComponentIdentityQuery(project, cid);
-        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getKey());
-        query.setNamedParameters(queryFilterParamsPair.getRight());
-        query.setRange(0, 1);
-        try {
-            final List<Component> result = query.executeList();
-            if (result.isEmpty()) {
-                return null;
-            }
-
-            return result.get(0);
-        } finally {
-            query.closeAll();
-        }
-    }
-
-    /**
      * Returns a list of components by matching its identity information.
      * @param project the Project the component is a dependency of
      * @param cid the identity values of the component
@@ -594,87 +546,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         final String filter = "project == :project && (%s)".formatted(String.join(" || ", filterParts));
         params.put("project", project);
         return Pair.of(filter, params);
-    }
-
-    private static Pair<String, Map<String, Object>> buildExactComponentIdentityQuery(final Project project, final ComponentIdentity cid) {
-        var filterParts = new ArrayList<String>();
-        final var params = new HashMap<String, Object>();
-
-        if (cid.getPurl() != null) {
-            filterParts.add("(purl != null && purl == :purl)");
-            params.put("purl", cid.getPurl().canonicalize());
-        } else {
-            filterParts.add("purl == null");
-        }
-
-        if (cid.getCpe() != null) {
-            filterParts.add("(cpe != null && cpe == :cpe)");
-            params.put("cpe", cid.getCpe());
-        } else {
-            filterParts.add("cpe == null");
-        }
-
-        if (cid.getSwidTagId() != null) {
-            filterParts.add("(swidTagId != null && swidTagId == :swidTagId)");
-            params.put("swidTagId", cid.getSwidTagId());
-        } else {
-            filterParts.add("swidTagId == null");
-        }
-
-        var coordinatesFilter = "(";
-        if (cid.getGroup() != null) {
-            coordinatesFilter += "group == :group";
-            params.put("group", cid.getGroup());
-        } else {
-            coordinatesFilter += "group == null";
-        }
-        coordinatesFilter += " && name == :name";
-        params.put("name", cid.getName());
-        if (cid.getVersion() != null) {
-            coordinatesFilter += " && version == :version";
-            params.put("version", cid.getVersion());
-        } else {
-            coordinatesFilter += " && version == null";
-        }
-        coordinatesFilter += ")";
-        filterParts.add(coordinatesFilter);
-
-        final var filter = "project == :project && (" + String.join(" && ", filterParts) + ")";
-        params.put("project", project);
-
-        return Pair.of(filter, params);
-    }
-
-    /**
-     * Intelligently adds dependencies for components that are not already a dependency
-     * of the specified project and removes the dependency relationship for components
-     * that are not in the list of specified components.
-     * @param project the project to bind components to
-     * @param existingProjectComponents the complete list of existing dependent components
-     * @param components the complete list of components that should be dependencies of the project
-     */
-    public void reconcileComponents(Project project, List<Component> existingProjectComponents, List<Component> components) {
-        // Removes components as dependencies to the project for all
-        // components not included in the list provided
-        List<Component> markedForDeletion = new ArrayList<>();
-        for (final Component existingComponent: existingProjectComponents) {
-            boolean keep = false;
-            for (final Component component: components) {
-                if (component.getId() == existingComponent.getId()) {
-                    keep = true;
-                    break;
-                }
-            }
-            if (!keep) {
-                markedForDeletion.add(existingComponent);
-            }
-        }
-        if (!markedForDeletion.isEmpty()) {
-            for (Component c: markedForDeletion) {
-                this.recursivelyDelete(c, false);
-            }
-            //this.delete(markedForDeletion);
-        }
     }
 
     public Map<String, Component> getDependencyGraphForComponents(Project project, List<Component> components) {
@@ -835,6 +706,18 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         }
     }
 
+    @Override
+    public boolean hasComponents(final Project project) {
+        final Query<Component> query = pm.newQuery(Component.class, "project == :project");
+        query.setParameters(project);
+        query.setResult("count(this)");
+        try {
+            return query.executeResultUnique(Long.class) > 0;
+        } finally {
+            query.closeAll();
+        }
+    }
+
     public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {
         assertPersistent(component, "component must be persistent");
 
@@ -844,7 +727,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             //   counter-intuitive to some users, who might expect their manual changes to persist.
             //   If we want to support that, we need a way to track which properties were added and / or
             //   modified manually.
-            if (component.getProperties() != null) {
+            if (component.getProperties() != null && !component.getProperties().isEmpty()) {
                 pm.deletePersistentAll(component.getProperties());
             }
 

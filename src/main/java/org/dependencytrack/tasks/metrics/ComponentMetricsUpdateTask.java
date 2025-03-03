@@ -21,6 +21,7 @@ package org.dependencytrack.tasks.metrics;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import alpine.persistence.ScopedCustomization;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.dependencytrack.event.ComponentMetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
@@ -176,21 +177,26 @@ public class ComponentMetricsUpdateTask implements Subscriber {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<Vulnerability> getVulnerabilities(final PersistenceManager pm, final Component component) throws Exception {
+    private static List<Vulnerability> getVulnerabilities(final PersistenceManager pm, final Component component) {
         // Using the JDO single-string syntax here because we need to pass the parameter
         // of the outer query (the component) to the sub-query. For some reason that does
         // not work with the declarative JDO API.
-        try (final Query<?> query = pm.newQuery(Query.JDOQL, """
+        final Query<?> query = pm.newQuery(Query.JDOQL, """
                 SELECT FROM org.dependencytrack.model.Vulnerability
                 WHERE this.components.contains(:component)
                     && (SELECT FROM org.dependencytrack.model.Analysis a
                         WHERE a.component == :component
                             && a.vulnerability == this
                             && a.suppressed == true).isEmpty()
-                """)) {
-            query.setParameters(component);
-            query.getFetchPlan().setGroup(Vulnerability.FetchGroup.METRICS_UPDATE.name());
+                """);
+        query.setParameters(component);
+
+        // NB: Set fetch group on PM level to avoid fields of the default fetch group from being loaded.
+        try (var ignoredPersistenceCustomization = new ScopedCustomization(pm)
+                .withFetchGroup(Vulnerability.FetchGroup.METRICS_UPDATE.name())) {
             return List.copyOf((List<Vulnerability>) query.executeList());
+        } finally {
+            query.closeAll();
         }
     }
 

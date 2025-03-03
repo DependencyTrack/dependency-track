@@ -18,6 +18,15 @@
  */
 package org.dependencytrack.parser.vulndb;
 
+import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.parser.vulndb.model.ApiObject;
 import org.dependencytrack.parser.vulndb.model.Author;
@@ -39,15 +48,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 /*
  * Model class needed by VulnDBAnalysis task. Class brought over from the vulndb-data-mirror repo:
@@ -329,6 +329,7 @@ public class VulnDbParser {
                         StringUtils.trimToNull(object.optString("short_description", (String) null)),
                         StringUtils.trimToNull(object.optString("description", (String) null)),
                         StringUtils.trimToNull(object.optString("solution", (String) null)),
+                        StringUtils.trimToNull(object.optString("vulndb_last_modified", (String) null)),
                         StringUtils.trimToNull(object.optString("manual_notes", (String) null)),
                         StringUtils.trimToNull(object.optString("t_description", (String) null)),
                         StringUtils.trimToNull(object.optString("solution_date", (String) null)),

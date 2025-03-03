@@ -26,10 +26,12 @@ import com.github.packageurl.PackageURL;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -119,6 +121,50 @@ public class ComponentResourceTest extends ResourceTest {
         return project;
     }
 
+    /**
+     * Generate a project with ungrouped dependencies
+     * @return A project with 10 dependencies: <ul>
+     * <li>7 outdated dependencies</li>
+     * <li>3 recent dependencies</li></ul>
+     * @throws MalformedPackageURLException
+     */
+    private Project prepareProjectUngroupedComponents() throws MalformedPackageURLException {
+        final Project project = qm.createProject("Ungrouped Application", null, null, null, null, null, true, false);
+        final List<String> directDepencencies = new ArrayList<>();
+        // Generate 10 dependencies
+        for (int i = 0; i < 10; i++) {
+            Component component = new Component();
+            component.setProject(project);
+            component.setName("component-name-"+i);
+            component.setVersion(String.valueOf(i)+".0");
+            component.setPurl(new PackageURL(RepositoryType.PYPI.toString(), null, "component-name-"+i , String.valueOf(i)+".0", null, null));
+            component = qm.createComponent(component, false);
+            // direct depencencies
+            if (i < 4) {
+                // 4 direct depencencies, 6 transitive depencencies
+                directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
+            }
+            // Recent & Outdated
+            if ((i < 7)) {
+                final var metaComponent = new RepositoryMetaComponent();
+                metaComponent.setRepositoryType(RepositoryType.PYPI);
+                metaComponent.setName("component-name-"+i);
+                metaComponent.setLatestVersion(String.valueOf(i+1)+".0");
+                metaComponent.setLastCheck(new Date());
+                qm.persist(metaComponent);
+            } else {
+                final var metaComponent = new RepositoryMetaComponent();
+                metaComponent.setRepositoryType(RepositoryType.PYPI);
+                metaComponent.setName("component-name-"+i);
+                metaComponent.setLatestVersion(String.valueOf(i)+".0");
+                metaComponent.setLastCheck(new Date());
+                qm.persist(metaComponent);
+            }
+        }
+        project.setDirectDependencies("[" + String.join(",", directDepencencies.toArray(new String[0])) + "]");
+        return project;
+    }
+
     @Test
     public void getOutdatedComponentsTest() throws MalformedPackageURLException {
         final Project project = prepareProject();
@@ -137,6 +183,23 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getUngroupedOutdatedComponentsTest() throws MalformedPackageURLException {
+        final Project project = prepareProjectUngroupedComponents();
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyOutdated", true)
+                .queryParam("onlyDirect", false)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("7"); // 7 outdated dependencies, direct and transitive
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(7);
+    }
+
+    @Test
     public void getOutdatedDirectComponentsTest() throws MalformedPackageURLException {
         final Project project = prepareProject();
 
@@ -151,6 +214,23 @@ public class ComponentResourceTest extends ResourceTest {
 
         final JsonArray json = parseJsonArray(response);
         assertThat(json).hasSize(75);
+    }
+
+    @Test
+    public void getUngroupedOutdatedDirectComponentsTest() throws MalformedPackageURLException {
+        final Project project = prepareProjectUngroupedComponents();
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyOutdated", true)
+                .queryParam("onlyDirect", true)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4"); // 4 outdated direct dependencies
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(4);
     }
 
     @Test
@@ -508,6 +588,7 @@ public class ComponentResourceTest extends ResourceTest {
         component.setName("My Component");
         component.setVersion("1.0");
         component.setAuthor("SampleAuthor");
+        component.setClassifier(Classifier.APPLICATION);
         Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(component, MediaType.APPLICATION_JSON));
@@ -518,6 +599,7 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertEquals("SampleAuthor" ,json.getJsonArray("authors").getJsonObject(0).getString("name"));
         Assert.assertEquals("SampleAuthor", json.getString("author"));
         Assert.assertEquals("1.0", json.getString("version"));
+        Assert.assertEquals("APPLICATION", json.getString("classifier"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
     }
 
@@ -528,6 +610,7 @@ public class ComponentResourceTest extends ResourceTest {
         component.setProject(project);
         component.setName("My Component");
         component.setVersion("1.0");
+        component.setClassifier(Classifier.APPLICATION);
         component.setSha1("640ab2bae07bedc4c163f679a746f7ab7fb5d1fa".toUpperCase());
         component.setSha256("532eaabd9574880dbf76b9b8cc00832c20a6ec113d682299550d7a6e0f345e25".toUpperCase());
         component.setSha3_256("c0a5cca43b8aa79eb50e3464bc839dd6fd414fae0ddf928ca23dcebf8a8b8dd0".toUpperCase());
@@ -544,6 +627,7 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals("My Component", json.getString("name"));
         Assert.assertEquals("1.0", json.getString("version"));
+        Assert.assertEquals("APPLICATION", json.getString("classifier"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
         Assert.assertEquals(component.getSha1(), json.getString("sha1"));
         Assert.assertEquals(component.getSha256(), json.getString("sha256"));
@@ -553,6 +637,23 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertEquals(component.getSha512(), json.getString("sha512"));
         Assert.assertEquals(component.getSha3_512(), json.getString("sha3_512"));
         Assert.assertEquals(component.getMd5(), json.getString("md5"));
+    }
+
+    @Test
+    public void createComponentCollectionProjectTest() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        // make project a collection project
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.updateProject(project, false);
+
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(component, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
     }
 
     @Test
@@ -574,6 +675,7 @@ public class ComponentResourceTest extends ResourceTest {
         externalReference.setType(org.cyclonedx.model.ExternalReference.Type.WEBSITE);
         externalReference.setUrl("test.com");
         jsonComponent.setExternalReferences(List.of(externalReference));
+        jsonComponent.setClassifier(Classifier.APPLICATION);
 
         Response response = jersey.target(V1_COMPONENT).request()
                 .header(X_API_KEY, apiKey)
@@ -626,6 +728,7 @@ public class ComponentResourceTest extends ResourceTest {
                           "uuid": "%s",
                           "name": "acme-lib",
                           "version": "1.0.0",
+                          "classifier":"APPLICATION",
                           "licenseExpression": "(invalid"
                         }
                         """.formatted(component.getUuid()), MediaType.APPLICATION_JSON_TYPE));

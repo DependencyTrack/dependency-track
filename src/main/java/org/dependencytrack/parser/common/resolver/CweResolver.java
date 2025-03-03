@@ -129,22 +129,21 @@ public class CweResolver {
             return new PaginatedResult().objects(cwes).total(CweDictionary.DICTIONARY.size());
         }
 
-        int pos = 0;
+        int pos = 0, count = 0;
         final var cwes = new ArrayList<Cwe>();
         for (final Map.Entry<Integer, String> dictEntry : CweDictionary.DICTIONARY.entrySet()) {
-            if (pagination.getOffset() > pos) {
-                continue;
+            if (pos >= pagination.getOffset() && count < pagination.getLimit()) {
+                final var cwe = new Cwe();
+                cwe.setCweId(dictEntry.getKey());
+                cwe.setName(dictEntry.getValue());
+                cwes.add(cwe);
+                count++;
             }
-            if (pagination.getLimit() <= pos) {
-                break;
-            }
-
-            final var cwe = new Cwe();
-            cwe.setCweId(dictEntry.getKey());
-            cwe.setName(dictEntry.getValue());
-            cwes.add(cwe);
 
             pos++;
+            if (count >= pagination.getLimit()) {
+                break;
+            }
         }
 
         return new PaginatedResult().objects(cwes).total(CweDictionary.DICTIONARY.size());

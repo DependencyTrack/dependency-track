@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.Config;
 import alpine.model.About;
+import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
@@ -414,7 +415,8 @@ public class FindingResourceTest extends ResourceTest {
         Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Project p1_child = qm.createProject("Acme Example", null, "1.0", null, p1, null, true, false);
         Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
-        Team team = qm.createTeam("Team Acme", true);
+        Team team = qm.createTeam("Team Acme");
+        ApiKey apiKey = qm.createApiKey(team);
         p1.addAccessTeam(team);
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
@@ -444,7 +446,7 @@ public class FindingResourceTest extends ResourceTest {
             qm.persist(aclToggle);
         }
         Response response = jersey.target(V1_FINDING).request()
-                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .header(X_API_KEY, apiKey.getKey())
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));
@@ -546,7 +548,8 @@ public class FindingResourceTest extends ResourceTest {
         Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Project p1_child = qm.createProject("Acme Example", null, "1.0", null, p1, null, true, false);
         Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
-        Team team = qm.createTeam("Team Acme", true);
+        Team team = qm.createTeam("Team Acme");
+        ApiKey apiKey = qm.createApiKey(team);
         p1.addAccessTeam(team);
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
@@ -578,7 +581,7 @@ public class FindingResourceTest extends ResourceTest {
             qm.persist(aclToggle);
         }
         Response response = jersey.target(V1_FINDING + "/grouped").request()
-                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .header(X_API_KEY, apiKey.getKey())
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));

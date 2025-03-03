@@ -24,7 +24,7 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -85,48 +85,46 @@
         <maven.compiler.target>21</maven.compiler.target>
 
         <!-- Dependency Versions -->
-        <frontend.version>4.12.0</frontend.version>
+        <frontend.version>4.12.6</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.2.2</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
-        <lib.checkstyle.version>10.18.1</lib.checkstyle.version>
-        <lib.aws-advanced-jdbc-wrapper.version>2.5.1</lib.aws-advanced-jdbc-wrapper.version>
-        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.21.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
-        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.20.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
-        <lib.cloud-sql-postgres-socket-factory.version>1.20.1</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.checkstyle.version>10.20.2</lib.checkstyle.version>
+        <lib.aws-advanced-jdbc-wrapper.version>2.5.4</lib.aws-advanced-jdbc-wrapper.version>
+        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.23.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
+        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.21.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.21.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.27.1</lib.commons-compress.version>
-        <lib.commons-text.version>1.12.0</lib.commons-text.version>
+        <lib.commons-text.version>1.13.0</lib.commons-text.version>
         <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>9.1.0</lib.cyclonedx-java.version>
         <lib.jakarta-validation.version>3.0.2</lib.jakarta-validation.version>
-        <lib.greenmail.version>2.1.0</lib.greenmail.version>
+        <lib.greenmail.version>2.1.3</lib.greenmail.version>
         <lib.jackson.version>2.18.0</lib.jackson.version>
         <lib.jackson-databind.version>2.18.0</lib.jackson-databind.version>
-        <lib.json-java.version>20240303</lib.json-java.version>
-        <lib.json-unit.version>3.4.1</lib.json-unit.version>
+        <lib.json-java.version>20250107</lib.json-java.version>
+        <lib.json-unit.version>4.1.0</lib.json-unit.version>
         <lib.junit.version>4.13.2</lib.junit.version>
         <lib.lucene.version>8.11.4</lib.lucene.version>
         <lib.maven-artifact.version>3.9.9</lib.maven-artifact.version>
         <lib.mockserver-netty.version>5.15.0</lib.mockserver-netty.version>
-        <lib.open-vulnerability-clients.version>7.0.0</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>7.2.2</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
-        <lib.pebble.version>3.2.2</lib.pebble.version>
-        <lib.protobuf-java.version>4.28.3</lib.protobuf-java.version>
+        <lib.pebble.version>3.2.3</lib.pebble.version>
+        <lib.protobuf-java.version>4.29.3</lib.protobuf-java.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
-        <lib.swagger.version>2.2.25</lib.swagger.version>
         <lib.swagger-parser.version>2.1.22</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
-        <lib.testcontainers.version>1.20.3</lib.testcontainers.version>
+        <lib.testcontainers.version>1.20.5</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
         <lib.woodstox.version>7.0.0</lib.woodstox.version>
-        <lib.junit.version>4.13.2</lib.junit.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
-        <lib.httpclient5.version>5.4</lib.httpclient5.version>
-        <lib.log4j-over-slf4j.version>2.0.16</lib.log4j-over-slf4j.version>
+        <lib.httpclient5.version>5.4.2</lib.httpclient5.version>
+        <lib.log4j-over-slf4j.version>2.0.17</lib.log4j-over-slf4j.version>
         <lib.org-kohsuke-github-api.version>1.323</lib.org-kohsuke-github-api.version>
         <lib.com-asahaf-javacron.version>1.4.0</lib.com-asahaf-javacron.version>
         <!-- JDBC Drivers -->
@@ -135,7 +133,7 @@
         <lib.jdbc-driver.postgresql.version>42.7.4</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.jetty.version>12.0.14</plugin.jetty.version>
+        <plugin.jetty.version>12.0.16</plugin.jetty.version>
         <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
@@ -156,6 +154,24 @@
             </snapshots>
         </repository>
     </repositories>
+
+    <dependencyManagement>
+        <dependencies>
+            <!--
+              Resolve CVE-2024-57699 (https://github.com/advisories/GHSA-pq2g-wx69-c263).
+              Highly unlikely to be exploitable in DT or Alpine, but we're bumping the
+              version anyway since the update is low-risk and reduces scanner noise.
+
+              TODO: Remove this when bumping Alpine to >= 3.2.0, which includes a version
+               of com.nimbusds:oauth2-oidc-sdk pulling in a newer json-smart version, too.
+            -->
+            <dependency>
+                <groupId>net.minidev</groupId>
+                <artifactId>json-smart</artifactId>
+                <version>2.5.2</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Alpine -->
@@ -223,7 +239,7 @@
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
-            <version>${lib.jakarta-validation.version}</version> 
+            <version>${lib.jakarta-validation.version}</version>
         </dependency>
 
         <dependency>
@@ -568,7 +584,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.6.0</version>
                 <configuration>
                     <configLocation>${project.basedir}/.checkstyle.xml</configLocation>
                     <includeResources>false</includeResources>
@@ -748,6 +764,9 @@
                 <artifactId>jetty-ee10-maven-plugin</artifactId>
                 <version>${plugin.jetty.version}</version>
                 <configuration>
+                    <systemProperties>
+                        <dev.mode.enabled>true</dev.mode.enabled>
+                    </systemProperties>
                     <webApp>
                         <!-- Disable classpath scanning. -->
                         <containerIncludeJarPattern>^$</containerIncludeJarPattern>
@@ -767,7 +786,7 @@
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-clean-plugin</artifactId>
-                            <version>3.4.0</version>
+                            <version>3.4.1</version>
                             <configuration>
                                 <excludeDefaultDirectories>true</excludeDefaultDirectories>
                                 <filesets>
@@ -810,6 +829,9 @@
                         <artifactId>jetty-ee10-maven-plugin</artifactId>
                         <version>${plugin.jetty.version}</version>
                         <configuration>
+                            <systemProperties>
+                                <dev.mode.enabled>true</dev.mode.enabled>
+                            </systemProperties>
                             <webApp>
                                 <!-- Disable classpath scanning. -->
                                 <containerIncludeJarPattern>^$</containerIncludeJarPattern>

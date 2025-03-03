@@ -124,7 +124,7 @@ public class ScheduledNotificationFactory {
             return false;
         }
         for (Project child : parent.getChildren()) {
-            final boolean isChildActive = child.isActive() == null || child.isActive();
+            final boolean isChildActive = child.isActive();
             if ((child.getUuid().equals(uuid) && isChildActive) || isChild) {
                 return true;
             }

@@ -22,6 +22,7 @@ import alpine.common.validation.RegexSequence;
 import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.server.json.TrimmedStringDeserializer;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -61,7 +62,7 @@ import java.util.UUID;
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NotificationRule implements Serializable {
+public class NotificationRule implements Rule, Serializable {
 
     private static final long serialVersionUID = 2534439091019367263L;
 

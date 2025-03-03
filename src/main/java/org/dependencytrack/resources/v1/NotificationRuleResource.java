@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.common.logging.Logger;
 import alpine.model.Team;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
@@ -72,8 +71,6 @@ import java.util.List;
 })
 public class NotificationRuleResource extends AlpineResource {
 
-    private static final Logger LOGGER = Logger.getLogger(NotificationRuleResource.class);
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -112,7 +109,7 @@ public class NotificationRuleResource extends AlpineResource {
                     content = @Content(schema = @Schema(implementation = NotificationRule.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "The UUID of the notification publisher could not be found")
+            @ApiResponse(responseCode = "404", description = "The UUID of the notification rule could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response createNotificationRule(NotificationRule jsonRule) {
@@ -127,7 +124,7 @@ public class NotificationRuleResource extends AlpineResource {
                 publisher =qm.getObjectByUuid(NotificationPublisher.class, jsonRule.getPublisher().getUuid());
             }
             if (publisher == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification publisher could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification rule could not be found.").build();
             }
             final NotificationRule rule = qm.createNotificationRule(
                     StringUtils.trimToNull(jsonRule.getName()),

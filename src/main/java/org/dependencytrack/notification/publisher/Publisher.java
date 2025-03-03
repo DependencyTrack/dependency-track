@@ -34,6 +34,8 @@ import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
+import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
+import org.dependencytrack.notification.vo.ScheduledPolicyViolationsIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.persistence.QueryManager;
@@ -128,6 +130,12 @@ public interface Publisher {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final PolicyViolationIdentified subject) {
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                } else if (notification.getSubject() instanceof final ScheduledNewVulnerabilitiesIdentified subject) {
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                } else if (notification.getSubject() instanceof final ScheduledPolicyViolationsIdentified subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 }

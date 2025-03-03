@@ -177,7 +177,8 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                       "analysis": {
                                         "isSuppressed": false
                                       },
-                                      "matrix": "${json-unit.any-string}"
+                                      "matrix": "${json-unit.any-string}",
+                                      "projectUuid": "${json-unit.any-string}"
                                     }
                                   ]
                                 }
@@ -425,7 +426,8 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                       "analysis": {
                                         "isSuppressed": false
                                       },
-                                      "matrix": "${json-unit.any-string}"
+                                      "matrix": "${json-unit.any-string}",
+                                      "projectUuid": "${json-unit.any-string}"
                                     }
                                   ]
                                 }

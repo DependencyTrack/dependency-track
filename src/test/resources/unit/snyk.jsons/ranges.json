@@ -4,11 +4,23 @@
     "[2.13.0, 2.13.2.1)",
     "<1.20.2"
   ],
+  "range0_v3": [
+    { "resource_path": "[, 2.12.6.1)" },
+    { "resource_path": "[2.13.0, 2.13.2.1)" },
+    { "resource_path": "<1.20.2" }
+  ],
   "range1": [
     "[, 2.12.6.1)",
     "<1.20.2"
   ],
+  "range1_v3": [
+    { "resource_path": "[, 2.12.6.1)" },
+    { "resource_path": "<1.20.2" }
+  ],
   "range2": [
     "*"
+  ],
+  "range2_v3": [
+    { "resource_path": "*" }
   ]
 }

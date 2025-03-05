@@ -18,8 +18,9 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
+import java.util.Date;
+import java.util.List;
+
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Repository;
@@ -33,13 +34,13 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.Date;
-import java.util.List;
 
 public class RepositoryResourceTest extends ResourceTest {
 
@@ -173,7 +174,7 @@ public class RepositoryResourceTest extends ResourceTest {
 
 
     @Test
-    public void createRepositoryTest() {
+    public void createRepositoryTestWithBasicAuth() {
         Repository repository = new Repository();
         repository.setAuthenticationRequired(true);
         repository.setEnabled(true);
@@ -200,6 +201,40 @@ public class RepositoryResourceTest extends ResourceTest {
         Assert.assertTrue(json.getJsonObject(13).getInt("resolutionOrder") > 0);
         Assert.assertTrue(json.getJsonObject(13).getBoolean("authenticationRequired"));
         Assert.assertEquals("testuser", json.getJsonObject(13).getString("username"));
+        Assert.assertTrue(json.getJsonObject(13).getBoolean("enabled"));
+    }
+
+    @Test
+    public void createRepositoryTestWithBearerAuth() {
+        //Password field gets ignored during json serialization, so create the json ourselves
+        String repo = """
+            {
+                "identifier":"test2",
+                "url":"https://www.foobar2.com",
+                "internal":true,
+                "authenticationRequired":true,
+                "password":"letoken",
+                "enabled":true,
+                "type":"MAVEN"
+            }
+        """;
+
+        Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                .put(Entity.entity(repo, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus());
+
+        response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(18), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(18, json.size());
+        Assert.assertEquals("MAVEN", json.getJsonObject(13).getString("type"));
+        Assert.assertEquals("test2", json.getJsonObject(13).getString("identifier"));
+        Assert.assertEquals("https://www.foobar2.com", json.getJsonObject(13).getString("url"));
+        Assert.assertTrue(json.getJsonObject(13).getInt("resolutionOrder") > 0);
+        Assert.assertTrue(json.getJsonObject(13).getBoolean("authenticationRequired"));
+        Assert.assertFalse(json.getJsonObject(13).containsKey("username"));
         Assert.assertTrue(json.getJsonObject(13).getBoolean("enabled"));
     }
 
@@ -262,7 +297,6 @@ public class RepositoryResourceTest extends ResourceTest {
         Assert.assertTrue(json.getJsonObject(13).getInt("resolutionOrder") > 0);
         Assert.assertFalse(json.getJsonObject(13).getBoolean("authenticationRequired"));
         Assert.assertTrue(json.getJsonObject(13).getBoolean("enabled"));
-
     }
 
     @Test
@@ -298,6 +332,5 @@ public class RepositoryResourceTest extends ResourceTest {
                 }
             }
         }
-
     }
 }

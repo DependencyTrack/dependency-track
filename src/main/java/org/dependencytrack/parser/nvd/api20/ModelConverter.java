@@ -179,6 +179,7 @@ public final class ModelConverter {
         final List<CpeMatch> cpeMatches = extractCpeMatches(cveId, configurations);
         return cpeMatches.stream()
                 .map(cpeMatch -> convertCpeMatch(cveId, cpeMatch))
+                .filter(Objects::nonNull)
                 .filter(distinctIgnoringDatastoreIdentity())
                 .collect(Collectors.toList());
     }
@@ -283,10 +284,10 @@ public final class ModelConverter {
 
             return vs;
         } catch (CpeParsingException e) {
-            LOGGER.warn("Failed to parse CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId));
+            LOGGER.warn("Failed to parse CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId), e);
             return null;
         } catch (CpeEncodingException e) {
-            LOGGER.warn("Failed to encode CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId));
+            LOGGER.warn("Failed to encode CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId), e);
             return null;
         }
     }

@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
@@ -110,6 +109,9 @@ import java.util.UUID;
         @FetchGroup(name = "PARENT", members = {
                 @Persistent(name = "parent")
         }),
+        @FetchGroup(name = "PROJECT_TAGS", members = {
+                @Persistent(name = "tags")
+        }),
         @FetchGroup(name = "PROJECT_VULN_ANALYSIS", members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "name"),
@@ -130,6 +132,7 @@ public class Project implements Serializable {
         METADATA,
         METRICS_UPDATE,
         PARENT,
+        PROJECT_TAGS,
         PROJECT_VULN_ANALYSIS
     }
 

@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.notification.publisher.Publisher.CONFIG_TEMPLATE_KEY;
 import static org.dependencytrack.notification.publisher.Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY;
+import static org.dependencytrack.util.PersistenceUtil.isPersistent;
 
 public class NotificationRouter implements Subscriber {
 
@@ -208,31 +209,31 @@ public class NotificationRouter implements Subscriber {
 
             if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
-                limitToProject(ctx, rules, result, notification, subject.getComponent().getProject());
+                limitToProject(qm, ctx, rules, result, notification, subject.getComponent().getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final NewVulnerableDependency subject) {
-                limitToProject(ctx, rules, result, notification, subject.getComponent().getProject());
+                limitToProject(qm, ctx, rules, result, notification, subject.getComponent().getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final BomConsumedOrProcessed subject) {
-                limitToProject(ctx, rules, result, notification, subject.getProject());
+                limitToProject(qm, ctx, rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final BomProcessingFailed subject) {
-                limitToProject(ctx, rules, result, notification, subject.getProject());
+                limitToProject(qm, ctx, rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final BomValidationFailed subject) {
-                limitToProject(ctx, rules, result, notification, subject.getProject());
+                limitToProject(qm, ctx, rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final VexConsumedOrProcessed subject) {
-                limitToProject(ctx, rules, result, notification, subject.getProject());
+                limitToProject(qm, ctx, rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final PolicyViolationIdentified subject) {
-                limitToProject(ctx, rules, result, notification, subject.getProject());
+                limitToProject(qm, ctx, rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final AnalysisDecisionChange subject) {
-                limitToProject(ctx, rules, result, notification, subject.getProject());
+                limitToProject(qm, ctx, rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final ViolationAnalysisDecisionChange subject) {
-                limitToProject(ctx, rules, result, notification, subject.getComponent().getProject());
+                limitToProject(qm, ctx, rules, result, notification, subject.getComponent().getProject());
             } else {
                 for (final NotificationRule rule : result) {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
@@ -250,11 +251,12 @@ public class NotificationRouter implements Subscriber {
      * also match projects affected by the vulnerability.
      */
     private void limitToProject(
+            final QueryManager qm,
             final PublishContext ctx,
             final List<NotificationRule> applicableRules,
             final List<NotificationRule> rules,
             final Notification notification,
-            final Project limitToProject
+            Project limitToProject
     ) {
         requireNonNull(limitToProject, "limitToProject must not be null");
 
@@ -274,6 +276,34 @@ public class NotificationRouter implements Subscriber {
             }
 
             if (isLimitedToTags) {
+                // Project must be in persistent state in order for tag evaluation to work:
+                //   * tags field must be loaded, which oftentimes it won't be at this point.
+                //   * Traversing project hierarchies (if isNotifyChildren is enabled) doesn't work on detached objects.
+                if (!isPersistent(limitToProject)) {
+                    LOGGER.debug("Refreshing project %s from datastore".formatted(limitToProject.getUuid()));
+
+                    final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
+                    query.setFilter("uuid == :uuid");
+                    query.setParameters(limitToProject.getUuid());
+                    query.getFetchPlan().addGroup(Project.FetchGroup.PROJECT_TAGS.name());
+
+                    final Project persistentProject;
+                    try {
+                        persistentProject = query.executeUnique();
+                    } finally {
+                        query.closeAll();
+                    }
+
+                    if (persistentProject == null) {
+                        throw new IllegalStateException("""
+                                Project %s had to be refreshed from the datastore in order for tags \
+                                to be loaded, but the project no longer exists\
+                                """.formatted(limitToProject.getUuid()));
+                    }
+
+                    limitToProject = persistentProject;
+                }
+
                 final Predicate<Project> tagMatchPredicate = project -> project.isActive()
                         && project.getTags() != null
                         && project.getTags().stream().anyMatch(rule.getTags()::contains);

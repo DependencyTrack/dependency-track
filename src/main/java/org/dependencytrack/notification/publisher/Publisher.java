@@ -134,10 +134,14 @@ public interface Publisher {
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final ScheduledNewVulnerabilitiesIdentified subject) {
                     context.put("subject", subject);
-                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                    // NB: Pass no subjectJson to avoid the serialization overhead of
+                    // potentially very large object graphs in the subject.
+                    // Templates are expected to work on subject exclusively.
                 } else if (notification.getSubject() instanceof final ScheduledPolicyViolationsIdentified subject) {
                     context.put("subject", subject);
-                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                    // NB: Pass no subjectJson to avoid the serialization overhead of
+                    // potentially very large object graphs in the subject.
+                    // Templates are expected to work on subject exclusively.
                 }
             } else if  (NotificationScope.SYSTEM.name().equals(notification.getScope())) {
                 if (notification.getSubject() instanceof final UserPrincipal subject) {

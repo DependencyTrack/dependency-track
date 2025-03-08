@@ -16,16 +16,24 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.model.scheduled.vulnerabilities;
+package org.dependencytrack.notification.vo;
 
-import java.util.List;
-import java.util.Map;
+import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
-import org.dependencytrack.model.Project;
+import java.util.Date;
 
-/* 
- * Part of the ScheduledNewVulnerabilitiesIdentified Template Models.
- * Contains packed summarized informations about the new vulnerabilities identified, grouped by the affected projects.
+/**
+ * @since 4.13.0
  */
-public record VulnerabilityDetails(Map<Project, List<VulnerabilityDetailsInfo>> affectedProjectFindings) {
+public record ProjectFinding(
+        Component component,
+        Vulnerability vulnerability,
+        AnalyzerIdentity analyzerIdentity,
+        Date attributedOn,
+        String referenceUrl,
+        AnalysisState analysisState,
+        boolean isSuppressed) {
 }

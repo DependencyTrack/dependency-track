@@ -16,21 +16,29 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.util;
+package org.dependencytrack.model.validation;
 
-import java.util.Date;
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-/* 
- * Helper class for scheduled notifications to provide more human-friendly output in the templates.
- * This class is mainly used to provide default values for null objects, which may be common in the Finding objects
- * used in the scheduled notification for new vulnerabilities.
+/**
+ * @since 4.13.0
  */
-public class ScheduledUtil {
-    public static String getValueOrEmptyIfNull(Object value) {
-        return value == null ? "" : value.toString();
-    }
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Constraint(validatedBy = CronExpressionValidator.class)
+public @interface ValidCronExpression {
 
-    public static String getDateOrUnknownIfNull(Date date) {
-        return date == null ? "Unknown" : DateUtil.toISO8601(date);
-    }
+    String message() default "The cron expression must be a valid";
+
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
+
 }

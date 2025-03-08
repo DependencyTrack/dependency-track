@@ -21,7 +21,6 @@ package org.dependencytrack.notification.publisher;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import io.pebbletemplates.pebble.error.ParserException;
-import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.io.IOUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
@@ -41,15 +40,6 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
-import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationDetails;
-import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationOverview;
-import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummary;
-import org.dependencytrack.model.scheduled.policyviolations.PolicyViolationSummaryInfo;
-import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityDetails;
-import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityDetailsInfo;
-import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilityOverview;
-import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilitySummary;
-import org.dependencytrack.model.scheduled.vulnerabilities.VulnerabilitySummaryInfo;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -59,8 +49,11 @@ import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.notification.vo.ProjectFinding;
+import org.dependencytrack.notification.vo.ProjectPolicyViolation;
 import org.dependencytrack.notification.vo.ScheduledNewVulnerabilitiesIdentified;
 import org.dependencytrack.notification.vo.ScheduledPolicyViolationsIdentified;
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Test;
 
 import jakarta.json.Json;
@@ -71,8 +64,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
-import java.util.EnumMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -85,18 +76,10 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 public abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCapableTest {
 
     final DefaultNotificationPublishers publisher;
-    final DefaultNotificationPublishers scheduledPublisher;
     final T publisherInstance;
-
-    AbstractPublisherTest(final DefaultNotificationPublishers publisher, final DefaultNotificationPublishers scheduledPublisher, final T publisherInstance) {
-        this.publisher = publisher;
-        this.scheduledPublisher = scheduledPublisher;
-        this.publisherInstance = publisherInstance;
-    }
 
     AbstractPublisherTest(final DefaultNotificationPublishers publisher, final T publisherInstance) {
         this.publisher = publisher;
-        this.scheduledPublisher = DefaultNotificationPublishers.SCHEDULED_EMAIL;
         this.publisherInstance = publisherInstance;
     }
 
@@ -286,31 +269,12 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
-        final Map<Severity, Integer> mapVulnBySev = new EnumMap<>(Severity.class);
-        final Map<Project, VulnerabilitySummaryInfo> mapVulnSummInfos = new LinkedHashMap<>();
-        final Map<Project, List<VulnerabilityDetailsInfo>> mapVulnDetailInfos = new LinkedHashMap<>();
 
-        mapVulnBySev.put(Severity.CRITICAL, 1);
-        mapVulnSummInfos.put(project, new VulnerabilitySummaryInfo(mapVulnBySev, mapVulnBySev, new LinkedMap<>()));
-        mapVulnDetailInfos.put(project, List.of(new VulnerabilityDetailsInfo(
-                component.getUuid().toString(),
-                component.getName(),
-                component.getVersion(),
-                component.getGroup(),
-                vuln.getSource(),
-                vuln.getVulnId(),
-                vuln.getSeverity().name(),
-                "analyzer",
-                "http://example.com",
-                "Thu Jan 01 18:31:06 GMT 1970", // Thu Jan 01 18:31:06 GMT 1970
-                AnalysisState.EXPLOITABLE.name(),
-                false)));
+        final var findingsByProject = Map.of(project, List.of(new ProjectFinding(
+                component, vuln, AnalyzerIdentity.INTERNAL_ANALYZER, Date.from(Instant.ofEpochSecond(66666, 666)),
+                "", AnalysisState.FALSE_POSITIVE, true)));
 
-        final var subject = new ScheduledNewVulnerabilitiesIdentified(
-            new VulnerabilityOverview(1, 1, mapVulnBySev, 1, 0),
-            new VulnerabilitySummary(mapVulnSummInfos),
-            new VulnerabilityDetails(mapVulnDetailInfos)
-        );
+        final var subject = ScheduledNewVulnerabilitiesIdentified.of(findingsByProject, 666);
 
         final var notification = new Notification()
                 .scope(NotificationScope.PORTFOLIO)
@@ -322,38 +286,30 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createScheduledConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
     @Test
     public void testPublishWithScheduledNewPolicyViolationsNotification() {
-        final var project = createProject();
         final var violation = createPolicyViolation();
-        final Map<PolicyViolation.Type, Integer> mapPolViolBySev = new EnumMap<>(PolicyViolation.Type.class);
-        final Map<Project, PolicyViolationSummaryInfo> mapPolViolSummInfos = new LinkedHashMap<>();
-        final Map<Project, List<PolicyViolation>> mapPolViolDetailInfos = new LinkedHashMap<>();
 
-        mapPolViolBySev.put(PolicyViolation.Type.LICENSE, 1);
-        mapPolViolSummInfos.put(project, new PolicyViolationSummaryInfo(mapPolViolBySev, mapPolViolBySev, new LinkedMap<>()));
-        mapPolViolDetailInfos.put(project, List.of(violation));
+        final var violationsByProject = Map.of(violation.getProject(), List.of(new ProjectPolicyViolation(
+                violation.getComponent(), violation.getPolicyCondition(), violation.getType(), violation.getTimestamp(),
+                violation.getAnalysis().getAnalysisState(), violation.getAnalysis().isSuppressed())));
 
-        final var subject = new ScheduledPolicyViolationsIdentified(
-            new PolicyViolationOverview(1, 1, mapPolViolBySev, 1, 0),
-            new PolicyViolationSummary(mapPolViolSummInfos),
-            new PolicyViolationDetails(mapPolViolDetailInfos)
-        );
+        final var subject = ScheduledPolicyViolationsIdentified.of(violationsByProject, 666);
 
         final var notification = new Notification()
                 .scope(NotificationScope.PORTFOLIO)
                 .group(NotificationGroup.POLICY_VIOLATION)
                 .level(NotificationLevel.INFORMATIONAL)
-                .title(NotificationConstants.Title.NEW_POLICY_VIOLATION)
+                .title(NotificationConstants.Title.POLICY_VIOLATION)
                 .content("")
                 .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createScheduledConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
     private static Component createComponent(final Project project) {
@@ -459,14 +415,6 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         return Json.createObjectBuilder()
                 .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
                 .add(Publisher.CONFIG_TEMPLATE_KEY, IOUtils.resourceToString(publisher.getPublisherTemplateFile(), UTF_8))
-                .addAll(extraConfig())
-                .build();
-    }
-
-    private JsonObject createScheduledConfig() throws Exception {
-        return Json.createObjectBuilder()
-                .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
-                .add(Publisher.CONFIG_TEMPLATE_KEY, IOUtils.resourceToString(scheduledPublisher.getPublisherTemplateFile(), UTF_8))
                 .addAll(extraConfig())
                 .build();
     }

@@ -37,6 +37,7 @@ import org.dependencytrack.notification.vo.BomValidationFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
+import org.dependencytrack.notification.vo.ScheduledNotificationSubject;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.persistence.QueryManager;
@@ -186,6 +187,20 @@ public class NotificationRouter implements Subscriber {
 
         try (QueryManager qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
+
+            // Scheduled notifications are created based on specific rules already,
+            // and require no more rule resolution.
+            if (notification.getSubject() instanceof final ScheduledNotificationSubject subject) {
+                final var rule = qm.getObjectById(NotificationRule.class, subject.getRuleId());
+                if (rule == null) {
+                    LOGGER.warn("Notification rule with ID %d does not exist".formatted(subject.getRuleId()));
+                    return rules;
+                }
+
+                rules.add(rule);
+                return rules;
+            }
+
             final Query<NotificationRule> query = pm.newQuery(NotificationRule.class);
             pm.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
             final StringBuilder sb = new StringBuilder();

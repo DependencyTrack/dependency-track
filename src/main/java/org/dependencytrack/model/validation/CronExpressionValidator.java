@@ -16,29 +16,32 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.tasks;
+package org.dependencytrack.model.validation;
 
-import java.util.concurrent.FutureTask;
+import com.asahaf.javacron.InvalidExpressionException;
+import com.asahaf.javacron.Schedule;
 
-import alpine.common.logging.Logger;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
-public class ActionOnDoneFutureTask extends FutureTask<Void> {
-    private static final Logger LOGGER = Logger.getLogger(ActionOnDoneFutureTask.class);
-    private final Runnable action;
-
-    public ActionOnDoneFutureTask(Runnable runnable, Runnable actionOnDone) {
-        super(runnable, null);
-        this.action = actionOnDone;
-    }
+/**
+ * @since 4.13.0
+ */
+public class CronExpressionValidator implements ConstraintValidator<ValidCronExpression, String> {
 
     @Override
-    protected void done() {
-        super.done();
+    public boolean isValid(final String value, final ConstraintValidatorContext context) {
+        if (value == null) {
+            // null-ness is expected to be validated using @NotNull
+            return true;
+        }
+
         try {
-            this.action.run();
-        } catch (Exception e) {
-            // just catch and log, do not interfere with completion
-            LOGGER.warn(e.toString());
+            Schedule.create(value);
+            return true;
+        } catch (InvalidExpressionException e) {
+            return false;
         }
     }
+
 }

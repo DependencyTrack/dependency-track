@@ -16,19 +16,22 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.model.scheduled.vulnerabilities;
+package org.dependencytrack.event;
 
-import java.util.Map;
-import org.dependencytrack.model.Severity;
+import alpine.event.framework.SingletonCapableEvent;
 
-/* 
- * Part of the ScheduledNewVulnerabilitiesIdentified Template Models.
- * Contains several key metrics to provide an overview of the new vulnerabilities identified.
+import java.util.UUID;
+
+/**
+ * @since 4.13.0
  */
-public record VulnerabilityOverview(
-        Integer affectedProjectsCount,
-        Integer newVulnerabilitiesCount,
-        Map<Severity, Integer> newVulnerabilitiesBySeverity,
-        Integer affectedComponentsCount,
-        Integer suppressedNewVulnerabilitiesCount) {
+public class ScheduledNotificationDispatchEvent extends SingletonCapableEvent {
+
+    private static final UUID CHAIN_IDENTIFIER = UUID.fromString("bce9cfc2-b885-4fc5-aa8b-0cb61e5f997e");
+
+    public ScheduledNotificationDispatchEvent() {
+        setChainIdentifier(CHAIN_IDENTIFIER);
+        setSingleton(true);
+    }
+
 }

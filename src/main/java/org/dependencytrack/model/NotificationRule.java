@@ -22,12 +22,15 @@ import alpine.common.validation.RegexSequence;
 import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.server.json.TrimmedStringDeserializer;
-
+import com.asahaf.javacron.InvalidExpressionException;
+import com.asahaf.javacron.Schedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.collections4.CollectionUtils;
+import org.dependencytrack.model.validation.ValidCronExpression;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 
@@ -48,10 +51,13 @@ import javax.jdo.annotations.Unique;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Defines a Model class for notification configurations.
@@ -62,7 +68,7 @@ import java.util.UUID;
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NotificationRule implements Rule, Serializable {
+public class NotificationRule implements Serializable {
 
     private static final long serialVersionUID = 2534439091019367263L;
 
@@ -148,6 +154,46 @@ public class NotificationRule implements Rule, Serializable {
     @Column(name = "PUBLISHER_CONFIG", jdbcType = "CLOB")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String publisherConfig;
+
+    /**
+     * @since 4.13.0
+     */
+    @Persistent
+    @Column(name = "TRIGGER_TYPE", allowsNull = "false", defaultValue = "EVENT")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+    private NotificationTriggerType triggerType;
+
+    /**
+     * @since 4.13.0
+     */
+    @Persistent
+    @Column(name = "SCHEDULE_LAST_FIRED_AT")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+    private Date scheduleLastFiredAt;
+
+    /**
+     * @since 4.13.0
+     */
+    @Persistent
+    @Column(name = "SCHEDULE_NEXT_DUE_AT")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+    private Date scheduleNextDueAt;
+
+    /**
+     * @since 4.13.0
+     */
+    @Persistent
+    @Column(name = "SCHEDULE_CRON")
+    @ValidCronExpression
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    private String scheduleCron;
+
+    /**
+     * @since 4.13.0
+     */
+    @Persistent
+    @Column(name = "SCHEDULE_SKIP_UNCHANGED")
+    private Boolean scheduleSkipUnchanged;
 
     @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
     @Unique(name = "NOTIFICATIONRULE_UUID_IDX")
@@ -289,6 +335,76 @@ public class NotificationRule implements Rule, Serializable {
         this.publisherConfig = publisherConfig;
     }
 
+    public NotificationTriggerType getTriggerType() {
+        return triggerType;
+    }
+
+    public void setTriggerType(final NotificationTriggerType triggerType) {
+        if (this.triggerType != null && this.triggerType != triggerType) {
+            throw new IllegalStateException("Trigger type can not be changed");
+        }
+        this.triggerType = triggerType;
+    }
+
+    public Date getScheduleLastFiredAt() {
+        return scheduleLastFiredAt;
+    }
+
+    public void setScheduleLastFiredAt(final Date scheduleLastFiredAt) {
+        requireTriggerType(
+                NotificationTriggerType.SCHEDULE,
+                "scheduleLastFiredAt can not be set for rule with trigger type " + this.triggerType);
+        this.scheduleLastFiredAt = scheduleLastFiredAt;
+    }
+
+    public Date getScheduleNextDueAt() {
+        return scheduleNextDueAt;
+    }
+
+    public void setScheduleNextDueAt(final Date scheduleNextDueAt) {
+        requireTriggerType(
+                NotificationTriggerType.SCHEDULE,
+                "scheduleNextDueAt can not be set for rule with trigger type " + this.triggerType);
+        this.scheduleNextDueAt = scheduleNextDueAt;
+    }
+
+    public void updateScheduleNextDueAt() {
+        requireTriggerType(
+                NotificationTriggerType.SCHEDULE,
+                "scheduleNextDueAt can not be set for rule with trigger type " + this.triggerType);
+        requireNonNull(this.scheduleCron, "scheduleCron must not be null");
+        requireNonNull(this.scheduleLastFiredAt, "scheduleLastFiredAt must not be null");
+
+        try {
+            final var schedule = Schedule.create(this.scheduleCron);
+            this.scheduleNextDueAt = schedule.next(this.scheduleLastFiredAt);
+        } catch (InvalidExpressionException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public String getScheduleCron() {
+        return scheduleCron;
+    }
+
+    public void setScheduleCron(final String scheduleCron) {
+        requireTriggerType(
+                NotificationTriggerType.SCHEDULE,
+                "scheduleCron can not be set for rule with trigger type " + this.triggerType);
+        this.scheduleCron = scheduleCron;
+    }
+
+    public Boolean isScheduleSkipUnchanged() {
+        return scheduleSkipUnchanged;
+    }
+
+    public void setScheduleSkipUnchanged(final Boolean scheduleSkipUnchanged) {
+        requireTriggerType(
+                NotificationTriggerType.SCHEDULE,
+                "scheduleSkipUnchanged can not be set for rule with trigger type " + this.triggerType);
+        this.scheduleSkipUnchanged = scheduleSkipUnchanged;
+    }
+
     @NotNull
     public UUID getUuid() {
         return uuid;
@@ -297,4 +413,11 @@ public class NotificationRule implements Rule, Serializable {
     public void setUuid(@NotNull UUID uuid) {
         this.uuid = uuid;
     }
+
+    private void requireTriggerType(final NotificationTriggerType triggerType, final String message) {
+        if (this.triggerType != triggerType) {
+            throw new IllegalStateException(message);
+        }
+    }
+
 }

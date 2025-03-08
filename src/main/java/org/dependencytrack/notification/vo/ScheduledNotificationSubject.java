@@ -16,15 +16,18 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.model.scheduled.vulnerabilities;
+package org.dependencytrack.notification.vo;
 
-import java.util.Map;
+import org.dependencytrack.model.NotificationRule;
 
-import org.dependencytrack.model.Project;
-
-/* 
- * Part of the ScheduledNewVulnerabilitiesIdentified Template Models.
- * Contains packed summarized informations about the identified new vulnerabilities, grouped by the affected projects.
+/**
+ * @since 4.13.0
  */
-public record VulnerabilitySummary(Map<Project, VulnerabilitySummaryInfo> affectedProjectSummaries) {
+public interface ScheduledNotificationSubject {
+
+    /**
+     * @return ID of the {@link NotificationRule} for which this subject was created.
+     */
+    long getRuleId();
+
 }

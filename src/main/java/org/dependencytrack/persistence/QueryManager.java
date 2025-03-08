@@ -56,6 +56,7 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.NotificationTriggerType;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -63,11 +64,9 @@ import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.ProjectProperty;
-import org.dependencytrack.model.PublishTrigger;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.model.ScheduledNotificationRule;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vex;
@@ -80,7 +79,6 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
@@ -91,7 +89,6 @@ import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -717,16 +714,8 @@ public class QueryManager extends AlpineQueryManager {
         return getPolicyQueryManager().getAllPolicyViolations(project);
     }
 
-    public Map<Project, List<PolicyViolation>> getNewPolicyViolationsForProjectsSince(ZonedDateTime zonedDateTime, List<Long> projectIds){
-        return getPolicyQueryManager().getNewPolicyViolationsForProjectsSince(zonedDateTime, projectIds);
-    }
-
     public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
         return getPolicyQueryManager().getPolicyViolations(project, includeSuppressed);
-    }
-
-    public PaginatedResult getPolicyViolationsSince(final Project project, boolean includeSuppressed, ZonedDateTime sinceOccurred) {
-        return getPolicyQueryManager().getPolicyViolations(project, includeSuppressed, sinceOccurred);
     }
 
     public PaginatedResult getPolicyViolations(final Component component, boolean includeSuppressed) {
@@ -735,10 +724,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getPolicyViolations(boolean includeSuppressed, boolean showInactive, Map<String, String> filters) {
         return getPolicyQueryManager().getPolicyViolations(includeSuppressed, showInactive, filters);
-    }
-
-    public List<PolicyViolation> getAllPolicyViolationsSince(boolean includeSuppressed, ZonedDateTime sinceOccurred) {
-        return getPolicyQueryManager().getAllPolicyViolations(includeSuppressed, sinceOccurred);
     }
 
     public ViolationAnalysis getViolationAnalysis(Component component, PolicyViolation policyViolation) {
@@ -824,10 +809,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public Vulnerability getVulnerabilityByVulnId(Vulnerability.Source source, String vulnId, boolean includeVulnerableSoftware) {
         return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
-    }
-
-    public Map<Project, List<Vulnerability>> getNewVulnerabilitiesForProjectsSince(ZonedDateTime zonedDateTime, List<Long> projectIds){
-        return getVulnerabilityQueryManager().getNewVulnerabilitiesForProjectsSince(zonedDateTime, projectIds);
     }
 
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {
@@ -1146,14 +1127,6 @@ public class QueryManager extends AlpineQueryManager {
         return getFindingsQueryManager().getFindings(project, includeSuppressed);
     }
 
-    public List<Finding> getFindingsSince(Project project, boolean includeSuppressed, ZonedDateTime sinceAttributedOn) {
-        return getFindingsQueryManager().getFindings(project, includeSuppressed, sinceAttributedOn);
-    }
-
-    public List<Finding> getAllFindingsSince(boolean includeSuppressed, ZonedDateTime sinceAttributedOn) {
-        return getFindingsQueryManager().getFindings(includeSuppressed, sinceAttributedOn);
-    }
-
     public PaginatedResult getAllFindings(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
         return getFindingsSearchQueryManager().getAllFindings(filters, showSuppressed, showInactive);
     }
@@ -1254,40 +1227,59 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().createNotificationRule(name, scope, level, publisher);
     }
 
+    public NotificationRule createScheduledNotificationRule(
+            final String name,
+            final NotificationScope scope,
+            final NotificationLevel level,
+            final NotificationPublisher publisher) {
+        return getNotificationQueryManager().createScheduledNotificationRule(name, scope, level, publisher);
+    }
+
     public NotificationRule updateNotificationRule(NotificationRule transientRule) {
         return getNotificationQueryManager().updateNotificationRule(transientRule);
     }
 
-    public PaginatedResult getNotificationRules() {
-        return getNotificationQueryManager().getNotificationRules();
+    public PaginatedResult getNotificationRules(final NotificationTriggerType triggerTypeFilter) {
+        return getNotificationQueryManager().getNotificationRules(triggerTypeFilter);
+    }
+
+    public List<NotificationRule> getDueScheduledNotificationRules() {
+        return getNotificationQueryManager().getDueScheduledNotificationRules();
+    }
+
+    public List<Project> getProjectsForNotificationById(final Collection<Long> ids) {
+        return getNotificationQueryManager().getProjectsForNotificationById(ids);
+    }
+
+    public List<Component> getComponentsForNotificationById(final Collection<Long> ids) {
+        return getNotificationQueryManager().getComponentsForNotificationById(ids);
+    }
+
+    public List<PolicyCondition> getPolicyConditionsForNotificationById(final Collection<Long> ids) {
+        return getNotificationQueryManager().getPolicyConditionsForNotificationById(ids);
+    }
+
+    public List<Vulnerability> getVulnerabilitiesForNotificationById(final Collection<Long> ids) {
+        return getNotificationQueryManager().getVulnerabilitiesForNotificationById(ids);
     }
 
     public List<NotificationPublisher> getAllNotificationPublishers() {
         return getNotificationQueryManager().getAllNotificationPublishers();
     }
 
-    public List<NotificationPublisher> getAllNotificationPublishersOfType(PublishTrigger trigger) {
-        return getNotificationQueryManager().getAllNotificationPublishersOfType(trigger);
-    }
-
     public NotificationPublisher getNotificationPublisher(final String name) {
         return getNotificationQueryManager().getNotificationPublisher(name);
     }
 
-    public NotificationPublisher getDefaultNotificationPublisher(final DefaultNotificationPublishers defaultPublisher) {
-        return getNotificationQueryManager().getDefaultNotificationPublisher(defaultPublisher);
+    public NotificationPublisher getDefaultNotificationPublisher(final Class<? extends Publisher> clazz) {
+        return getNotificationQueryManager().getDefaultNotificationPublisher(clazz);
     }
 
     public NotificationPublisher createNotificationPublisher(final String name, final String description,
                                                              final Class<? extends Publisher> publisherClass, final String templateContent,
                                                              final String templateMimeType, final boolean defaultPublisher) {
-        return createNotificationPublisher(name, description, publisherClass, templateContent, templateMimeType, defaultPublisher, false);
-    }
-
-    public NotificationPublisher createNotificationPublisher(final String name, final String description,
-                                                             final Class<? extends Publisher> publisherClass, final String templateContent,
-                                                             final String templateMimeType, final boolean defaultPublisher, final boolean publishScheduled) {
-        return getNotificationQueryManager().createNotificationPublisher(name, description, publisherClass, templateContent, templateMimeType, defaultPublisher, publishScheduled);
+        return getNotificationQueryManager().createNotificationPublisher(
+                name, description, publisherClass, templateContent, templateMimeType, defaultPublisher);
     }
 
     public NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
@@ -1304,22 +1296,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public void removeTeamFromNotificationRules(final Team team) {
         getNotificationQueryManager().removeTeamFromNotificationRules(team);
-    }
-
-    public ScheduledNotificationRule createScheduledNotificationRule(String name, NotificationScope scope, NotificationPublisher publisher) {
-        return getNotificationQueryManager().createScheduledNotificationRule(name, scope, publisher);
-    }
-
-    public ScheduledNotificationRule updateScheduledNotificationRule(ScheduledNotificationRule transientRule) {
-        return getNotificationQueryManager().updateScheduledNotificationRule(transientRule);
-    }
-
-    public ScheduledNotificationRule updateScheduledNotificationRuleLastExecutionTimeToNowUtc(ScheduledNotificationRule transientRule) {
-        return getNotificationQueryManager().updateScheduledNotificationRuleLastExecutionTimeToNowUtc(transientRule);
-    }
-
-    public PaginatedResult getScheduledNotificationRules() {
-        return getNotificationQueryManager().getScheduledNotificationRules();
     }
 
     /**

@@ -52,7 +52,6 @@ import java.util.UUID;
                 @Persistent(name = "template"),
                 @Persistent(name = "templateMimeType"),
                 @Persistent(name = "defaultPublisher"),
-                @Persistent(name = "publishScheduled"),
                 @Persistent(name = "uuid"),
         })
 })
@@ -108,10 +107,6 @@ public class NotificationPublisher implements Serializable {
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "DEFAULT_PUBLISHER")
     private boolean defaultPublisher;
-
-    @Persistent(defaultFetchGroup = "true")
-    @Column(name = "PUBLISH_SCHEDULED")
-    private boolean publishScheduled;
 
     @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
     @Unique(name = "NOTIFICATIONPUBLISHER_UUID_IDX")
@@ -176,14 +171,6 @@ public class NotificationPublisher implements Serializable {
 
     public void setDefaultPublisher(boolean defaultPublisher) {
         this.defaultPublisher = defaultPublisher;
-    }
-
-    public boolean isPublishScheduled(){
-        return publishScheduled;
-    }
-
-    public void setPublishScheduled(boolean publishScheduled){
-        this.publishScheduled = publishScheduled;
     }
 
     @NotNull

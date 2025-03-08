@@ -48,7 +48,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
                     withUser("username", "password"));
 
     public SendMailPublisherTest() {
-        super(DefaultNotificationPublishers.EMAIL, DefaultNotificationPublishers.SCHEDULED_EMAIL, new SendMailPublisher());
+        super(DefaultNotificationPublishers.EMAIL, new SendMailPublisher());
     }
 
     @Before

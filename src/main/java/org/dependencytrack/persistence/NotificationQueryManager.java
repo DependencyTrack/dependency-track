@@ -21,27 +21,28 @@ package org.dependencytrack.persistence;
 import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
+import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
-
-import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Component;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.NotificationTriggerType;
+import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.PublishTrigger;
-import org.dependencytrack.model.ScheduledNotificationRule;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.Publisher;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
@@ -81,6 +82,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
             rule.setScope(scope);
             rule.setNotificationLevel(level);
             rule.setPublisher(publisher);
+            rule.setTriggerType(NotificationTriggerType.EVENT);
             rule.setEnabled(true);
             rule.setNotifyChildren(true);
             rule.setLogSuccessfulPublish(false);
@@ -89,25 +91,25 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
     }
 
     /**
-     * Creates a new ScheduledNotificationRule.
-     * @param name the name of the rule
-     * @param scope the scope
-     * @param level the level
-     * @param publisher the publisher
-     * @return a new ScheduledNotificationRule
+     * @since 4.13.0
      */
-    public ScheduledNotificationRule createScheduledNotificationRule(String name, NotificationScope scope, NotificationPublisher publisher) {
-        final ScheduledNotificationRule rule = new ScheduledNotificationRule();
+    @Override
+    public NotificationRule createScheduledNotificationRule(
+            final String name,
+            final NotificationScope scope,
+            final NotificationLevel level,
+            final NotificationPublisher publisher) {
+        final var rule = new NotificationRule();
         rule.setName(name);
         rule.setScope(scope);
-        rule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        rule.setNotificationLevel(level);
         rule.setPublisher(publisher);
-        rule.setEnabled(true);
-        rule.setNotifyChildren(true);
-        rule.setLogSuccessfulPublish(false);
-        rule.setCronConfig(ConfigPropertyConstants.NOTIFICATION_CRON_DEFAULT_EXPRESSION.getDefaultPropertyValue());
-        rule.setLastExecutionTime(ZonedDateTime.now(ZoneOffset.UTC));
-        rule.setPublishOnlyWithUpdates(false);
+        rule.setTriggerType(NotificationTriggerType.SCHEDULE);
+        rule.setEnabled(false);
+        rule.setScheduleCron("0 * * * *");
+        rule.setScheduleLastFiredAt(new Date());
+        rule.setScheduleSkipUnchanged(false);
+        rule.updateScheduleNextDueAt();
         return persist(rule);
     }
 
@@ -118,7 +120,24 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      */
     public NotificationRule updateNotificationRule(NotificationRule transientRule) {
         return callInTransaction(() -> {
-            final NotificationRule rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
+            final var rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
+            if (transientRule.getTriggerType() != null
+                && rule.getTriggerType() != transientRule.getTriggerType()) {
+                throw new IllegalArgumentException("Trigger type can not be changed");
+            }
+
+            if (rule.getTriggerType() == NotificationTriggerType.SCHEDULE) {
+                if (transientRule.getNotifyOn().stream().anyMatch(
+                        group -> group != NotificationGroup.NEW_VULNERABILITY && group != NotificationGroup.POLICY_VIOLATION)) {
+                    throw new IllegalArgumentException("Only %s and %s notifications can be sent on schedule".formatted(
+                            NotificationGroup.NEW_VULNERABILITY, NotificationGroup.POLICY_VIOLATION));
+                }
+
+                rule.setScheduleCron(transientRule.getScheduleCron());
+                rule.setScheduleSkipUnchanged(transientRule.isScheduleSkipUnchanged());
+                rule.updateScheduleNextDueAt();
+            }
+
             rule.setName(transientRule.getName());
             rule.setEnabled(transientRule.isEnabled());
             rule.setNotifyChildren(transientRule.isNotifyChildren());
@@ -127,66 +146,37 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
             rule.setPublisherConfig(transientRule.getPublisherConfig());
             rule.setNotifyOn(transientRule.getNotifyOn());
             bind(rule, resolveTags(transientRule.getTags()));
-            return persist(rule);
+            return rule;
         });
-    }
-    
-    /**
-     * Updated an existing ScheduledNotificationRule.
-     * @param transientRule the rule to update
-     * @return a ScheduledNotificationRule
-     */
-    public ScheduledNotificationRule updateScheduledNotificationRule(ScheduledNotificationRule transientRule) {
-        final ScheduledNotificationRule rule = getObjectByUuid(ScheduledNotificationRule.class, transientRule.getUuid());
-        rule.setName(transientRule.getName());
-        rule.setEnabled(transientRule.isEnabled());
-        rule.setNotifyChildren(transientRule.isNotifyChildren());
-        rule.setLogSuccessfulPublish(transientRule.isLogSuccessfulPublish());
-        rule.setPublisherConfig(transientRule.getPublisherConfig());
-        rule.setNotifyOn(transientRule.getNotifyOn());
-        rule.setCronConfig(transientRule.getCronConfig());
-        rule.setPublishOnlyWithUpdates(transientRule.getPublishOnlyWithUpdates());
-        return persist(rule);
-    }
-
-    public ScheduledNotificationRule updateScheduledNotificationRuleLastExecutionTimeToNowUtc(ScheduledNotificationRule transientRule) {
-        final ScheduledNotificationRule rule = getObjectByUuid(ScheduledNotificationRule.class, transientRule.getUuid());
-        rule.setLastExecutionTime(ZonedDateTime.now(ZoneOffset.UTC));
-        return persist(rule);
     }
 
     /**
      * Returns a paginated list of all notification rules.
+     *
+     * @param triggerTypeFilter The {@link NotificationTriggerType} to filter by.
      * @return a paginated list of NotificationRules
      */
-    public PaginatedResult getNotificationRules() {
+    public PaginatedResult getNotificationRules(final NotificationTriggerType triggerTypeFilter) {
+        final var filterParts = new ArrayList<String>();
+        final var filterParams = new HashMap<String, Object>();
+
+        if (triggerTypeFilter != null) {
+            filterParts.add("triggerType == :triggerType");
+            filterParams.put("triggerType", triggerTypeFilter);
+        }
+        if (this.filter != null) {
+            filterParts.add("name.toLowerCase().matches(:name) || publisher.name.toLowerCase().matches(:name)");
+            filterParams.put("name", ".*" + filter.toLowerCase() + ".*");
+        }
+
         final Query<NotificationRule> query = pm.newQuery(NotificationRule.class);
-        if (orderBy == null) {
+        if (!filterParts.isEmpty()) {
+            query.setFilter(String.join(" && ", filterParts));
+        }
+        if (this.orderBy == null) {
             query.setOrdering("name asc");
         }
-        if (filter != null) {
-            query.setFilter("name.toLowerCase().matches(:name) || publisher.name.toLowerCase().matches(:name)");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, filterString);
-        }
-        return execute(query);
-    }
-    
-    /**
-     * Returns a paginated list of all scheduled notification rules.
-     * @return a paginated list of ScheduledNotificationRules
-     */
-    public PaginatedResult getScheduledNotificationRules() {
-        final Query<ScheduledNotificationRule> query = pm.newQuery(ScheduledNotificationRule.class);
-        if (orderBy == null) {
-            query.setOrdering("name asc");
-        }
-        if (filter != null) {
-            query.setFilter("name.toLowerCase().matches(:name) || publisher.name.toLowerCase().matches(:name)");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, filterString);
-        }
-        return execute(query);
+        return execute(query, filterParams);
     }
 
     /**
@@ -195,31 +185,10 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @return list of all NotificationPublisher objects
      */
     public List<NotificationPublisher> getAllNotificationPublishers() {
-        return getAllNotificationPublishersOfType(PublishTrigger.ALL);
-    }
-
-    /**
-     * Retrieves all NotificationPublishers matching the corresponding trigger type.
-     * This methoid is designed NOT to provide paginated results.
-     * @param trigger
-     * @return list of all matching NotificationPublisher objects
-     */
-    public List<NotificationPublisher> getAllNotificationPublishersOfType(PublishTrigger trigger) {
         final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class);
         query.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
         query.setOrdering("name asc");
-        switch (trigger) {
-            case SCHEDULE:
-                query.setFilter("publishScheduled == :publishScheduled");
-                query.setParameters(true);
-                return List.copyOf(query.executeList());
-            case EVENT:
-                query.setFilter("publishScheduled == :publishScheduled || publishScheduled == null");
-                query.setParameters(false);
-                return List.copyOf(query.executeList());
-            default:
-                return List.copyOf(query.executeList());
-        }
+        return executeAndCloseList(query);
     }
 
     /**
@@ -238,8 +207,8 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @param clazz The Class of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    public NotificationPublisher getDefaultNotificationPublisher(final DefaultNotificationPublishers defaultPublisher) {
-        return getDefaultNotificationPublisher(defaultPublisher.getPublisherName(), defaultPublisher.getPublisherClass().getCanonicalName());
+    public NotificationPublisher getDefaultNotificationPublisher(final Class<? extends Publisher> clazz) {
+        return getDefaultNotificationPublisher(clazz.getCanonicalName());
     }
 
     /**
@@ -247,11 +216,11 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @param clazz The Class of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    private NotificationPublisher getDefaultNotificationPublisher(final String publisherName, final String clazz) {
-        final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class, "name == :name && publisherClass == :publisherClass && defaultPublisher == true");
+    private NotificationPublisher getDefaultNotificationPublisher(final String clazz) {
+        final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class, "publisherClass == :publisherClass && defaultPublisher == true");
         query.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
         query.setRange(0, 1);
-        return singleResult(query.execute(publisherName, clazz));
+        return singleResult(query.execute(clazz));
     }
 
     /**
@@ -261,8 +230,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      */
     public NotificationPublisher createNotificationPublisher(final String name, final String description,
                                                              final Class<? extends Publisher> publisherClass, final String templateContent,
-                                                             final String templateMimeType, final boolean defaultPublisher, final boolean publishScheduled) {
-        pm.currentTransaction().begin();
+                                                             final String templateMimeType, final boolean defaultPublisher) {
         final NotificationPublisher publisher = new NotificationPublisher();
         publisher.setName(name);
         publisher.setDescription(description);
@@ -270,11 +238,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         publisher.setTemplate(templateContent);
         publisher.setTemplateMimeType(templateMimeType);
         publisher.setDefaultPublisher(defaultPublisher);
-        publisher.setPublishScheduled(publishScheduled);
-        pm.makePersistent(publisher);
-        pm.currentTransaction().commit();
-        pm.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
-        return getObjectById(NotificationPublisher.class, publisher.getId());
+        return persist(publisher);
     }
 
     /**
@@ -286,7 +250,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         if (transientPublisher.getId() > 0) {
             publisher = getObjectById(NotificationPublisher.class, transientPublisher.getId());
         } else if (transientPublisher.isDefaultPublisher()) {
-            publisher = getDefaultNotificationPublisher(transientPublisher.getName(), transientPublisher.getPublisherClass());
+            publisher = getDefaultNotificationPublisher(transientPublisher.getPublisherClass());
         }
         if (publisher != null) {
             publisher.setName(transientPublisher.getName());
@@ -384,6 +348,74 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
     @Override
     public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
         return bind(notificationRule, tags, /* keepExisting */ false);
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    public List<NotificationRule> getDueScheduledNotificationRules() {
+        final Query<NotificationRule> query = pm.newQuery(NotificationRule.class);
+        query.setFilter("triggerType == :triggerType && scheduleNextDueAt < :now && enabled");
+        query.setNamedParameters(Map.ofEntries(
+                Map.entry("triggerType", NotificationTriggerType.SCHEDULE),
+                Map.entry("now", new Date())));
+        return executeAndCloseList(query);
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    public List<Project> getProjectsForNotificationById(final Collection<Long> ids) {
+        final Query<Project> query = pm.newQuery(Project.class);
+        query.setFilter(":ids.contains(id)");
+        query.setParameters(ids);
+
+        try (var ignored = new ScopedCustomization(pm)
+                .withFetchGroup(Project.FetchGroup.NOTIFICATION.name())) {
+            return executeAndCloseList(query);
+        }
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    public List<Component> getComponentsForNotificationById(final Collection<Long> ids) {
+        final Query<Component> query = pm.newQuery(Component.class);
+        query.setFilter(":ids.contains(id)");
+        query.setParameters(ids);
+
+        try (var ignored = new ScopedCustomization(pm)
+                .withFetchGroup(Component.FetchGroup.NOTIFICATION.name())) {
+            return executeAndCloseList(query);
+        }
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    public List<PolicyCondition> getPolicyConditionsForNotificationById(final Collection<Long> ids) {
+        final Query<PolicyCondition> query = pm.newQuery(PolicyCondition.class);
+        query.setFilter(":ids.contains(id)");
+        query.setParameters(ids);
+
+        try (var ignored = new ScopedCustomization(pm)
+                .withFetchGroup(PolicyCondition.FetchGroup.NOTIFICATION.name())) {
+            return executeAndCloseList(query);
+        }
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    public List<Vulnerability> getVulnerabilitiesForNotificationById(final Collection<Long> ids) {
+        final Query<Vulnerability> query = pm.newQuery(Vulnerability.class);
+        query.setFilter(":ids.contains(id)");
+        query.setParameters(ids);
+
+        try (var ignored = new ScopedCustomization(pm)
+                .withFetchGroup(Vulnerability.FetchGroup.NOTIFICATION.name())) {
+            return executeAndCloseList(query);
+        }
     }
 
 }

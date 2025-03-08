@@ -16,17 +16,23 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.model.scheduled.policyviolations;
+package org.dependencytrack.notification.vo;
 
-import java.util.List;
-import java.util.Map;
-
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
-import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ViolationAnalysisState;
 
-/* 
- * Part of the ScheduledPolicyViolationsIdentified Template Models.
- * Contains all detailed policy violations, grouped by the affected projects.
+import java.util.Date;
+
+/**
+ * @since 4.13.0
  */
-public record PolicyViolationDetails(Map<Project, List<PolicyViolation>> affectedProjectViolations) {
+public record ProjectPolicyViolation(
+        Component component,
+        PolicyCondition policyCondition,
+        PolicyViolation.Type violationType,
+        Date timestamp,
+        ViolationAnalysisState analysisState,
+        boolean isSuppressed) {
 }

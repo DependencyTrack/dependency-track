@@ -16,15 +16,21 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.model.scheduled.policyviolations;
+package org.dependencytrack.model;
 
-import java.util.Map;
-
-import org.dependencytrack.model.Project;
-
-/* 
- * Part of the ScheduledPolicyViolationsIdentified Template Models.
- * Contains packed summarized informations about the identified policy violations, grouped by the affected projects.
+/**
+ * @since 4.13.0
  */
-public record PolicyViolationSummary(Map<Project, PolicyViolationSummaryInfo> affectedProjectSummaries) {
+public enum NotificationTriggerType {
+
+    /**
+     * The notification is triggered ad-hoc through an event emitted by the system.
+     */
+    EVENT,
+
+    /**
+     * The notification is triggered on schedule.
+     */
+    SCHEDULE
+
 }

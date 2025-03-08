@@ -72,13 +72,6 @@ public class NotificationPublisherTest {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setDefaultPublisher(true);
         Assert.assertTrue(publisher.isDefaultPublisher());
-    } 
-
-    @Test
-    public void testPublishScheduled() {
-        NotificationPublisher publisher = new NotificationPublisher();
-        publisher.setPublishScheduled(true);
-        Assert.assertTrue(publisher.isPublishScheduled());
     }
 
     @Test

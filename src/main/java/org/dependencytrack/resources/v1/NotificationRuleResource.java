@@ -37,12 +37,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.NotificationTriggerType;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+import org.dependencytrack.resources.v1.vo.CreateScheduledNotificationRuleRequest;
 
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
@@ -53,6 +55,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
@@ -88,9 +91,11 @@ public class NotificationRuleResource extends AlpineResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
-    public Response getAllNotificationRules() {
+    public Response getAllNotificationRules(
+            @Parameter(description = "The notification trigger type to filter on")
+            @QueryParam("triggerType") final NotificationTriggerType triggerTypeFilter) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = qm.getNotificationRules();
+            final PaginatedResult result = qm.getNotificationRules(triggerTypeFilter);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
@@ -121,7 +126,7 @@ public class NotificationRuleResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             NotificationPublisher publisher = null;
             if (jsonRule.getPublisher() != null) {
-                publisher =qm.getObjectByUuid(NotificationPublisher.class, jsonRule.getPublisher().getUuid());
+                publisher = qm.getObjectByUuid(NotificationPublisher.class, jsonRule.getPublisher().getUuid());
             }
             if (publisher == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification rule could not be found.").build();
@@ -133,6 +138,58 @@ public class NotificationRuleResource extends AlpineResource {
                     publisher
             );
             return Response.status(Response.Status.CREATED).entity(rule).build();
+        }
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    @PUT
+    @Path("/scheduled")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Creates a new scheduled notification rule",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created notification rule",
+                    content = @Content(schema = @Schema(implementation = NotificationRule.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the notification rule could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response createScheduledNotificationRule(final CreateScheduledNotificationRuleRequest request) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(request, "name"),
+                validator.validateProperty(request, "scope"),
+                validator.validateProperty(request, "notificationLevel"),
+                validator.validateProperty(request, "publisher"));
+
+        try (final var qm = new QueryManager()) {
+            NotificationPublisher publisher = null;
+            if (request.publisher() != null) {
+                publisher = qm.getObjectByUuid(NotificationPublisher.class, request.publisher().uuid());
+            }
+            if (publisher == null) {
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity("The UUID of the notification rule could not be found.")
+                        .build();
+            }
+            final NotificationRule rule = qm.createScheduledNotificationRule(
+                    StringUtils.trimToNull(request.name()),
+                    request.scope(),
+                    request.notificationLevel(),
+                    publisher);
+            return Response
+                    .status(Response.Status.CREATED)
+                    .entity(rule)
+                    .build();
         }
     }
 
@@ -157,7 +214,8 @@ public class NotificationRuleResource extends AlpineResource {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonRule, "name"),
-                validator.validateProperty(jsonRule, "publisherConfig")
+                validator.validateProperty(jsonRule, "publisherConfig"),
+                validator.validateProperty(jsonRule, "scheduleCron")
         );
 
         try (QueryManager qm = new QueryManager()) {

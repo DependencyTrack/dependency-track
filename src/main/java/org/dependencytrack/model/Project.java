@@ -112,6 +112,9 @@ import java.util.UUID;
         @FetchGroup(name = "PARENT", members = {
                 @Persistent(name = "parent")
         }),
+        @FetchGroup(name = "PROJECT_TAGS", members = {
+                @Persistent(name = "tags")
+        }),
         @FetchGroup(name = "PORTFOLIO_METRICS_UPDATE", members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
@@ -138,6 +141,7 @@ public class Project implements Serializable {
         METRICS_UPDATE,
         PARENT,
         PORTFOLIO_METRICS_UPDATE,
+        PROJECT_TAGS,
         PROJECT_VULN_ANALYSIS
     }
 

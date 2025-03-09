@@ -1454,6 +1454,175 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
+    public void uploadBomUpdateTagsOfExistingProjectWithoutTagsTest() {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PORTFOLIO_MANAGEMENT);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final String encodedBom = Base64.getEncoder().encodeToString("""
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1
+                }
+                """.getBytes());
+
+        final Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "projectTags": [
+                            {
+                              "name": "foo"
+                            },
+                            {
+                              "name": "bar"
+                            }
+                          ],
+                          "bom": "%s"
+                        }
+                        """.formatted(encodedBom)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(project.getTags()).satisfiesExactlyInAnyOrder(
+                tag -> assertThat(tag.getName()).isEqualTo("foo"),
+                tag -> assertThat(tag.getName()).isEqualTo("bar"));
+    }
+
+    @Test
+    public void uploadBomUpdateTagsOfExistingProjectWithTagsTest() {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PORTFOLIO_MANAGEMENT);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        qm.bind(project, List.of(
+                qm.createTag("foo"),
+                qm.createTag("bar")));
+
+        final String encodedBom = Base64.getEncoder().encodeToString("""
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1
+                }
+                """.getBytes());
+
+        final Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "projectTags": [
+                            {
+                              "name": "foo"
+                            },
+                            {
+                              "name": "baz"
+                            }
+                          ],
+                          "bom": "%s"
+                        }
+                        """.formatted(encodedBom)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(project.getTags()).satisfiesExactlyInAnyOrder(
+                tag -> assertThat(tag.getName()).isEqualTo("foo"),
+                tag -> assertThat(tag.getName()).isEqualTo("baz"));
+    }
+
+    @Test
+    public void uploadBomNoUpdateTagsOfExistingProjectWithTagsTest() {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PORTFOLIO_MANAGEMENT);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        qm.bind(project, List.of(
+                qm.createTag("foo"),
+                qm.createTag("bar")));
+
+        final String encodedBom = Base64.getEncoder().encodeToString("""
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1
+                }
+                """.getBytes());
+
+        final Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "bom": "%s"
+                        }
+                        """.formatted(encodedBom)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(project.getTags()).satisfiesExactlyInAnyOrder(
+                tag -> assertThat(tag.getName()).isEqualTo("foo"),
+                tag -> assertThat(tag.getName()).isEqualTo("bar"));
+    }
+
+    @Test
+    public void uploadBomNoUpdateTagsOfExistingProjectWithTagsWithoutPortfolioManagementPermissionTest() {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        qm.bind(project, List.of(
+                qm.createTag("foo"),
+                qm.createTag("bar")));
+
+        final String encodedBom = Base64.getEncoder().encodeToString("""
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.5",
+                  "version": 1
+                }
+                """.getBytes());
+
+        final Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "projectTags": [
+                            {
+                              "name": "baz"
+                            }
+                          ],
+                          "bom": "%s"
+                        }
+                        """.formatted(encodedBom)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(project.getTags()).satisfiesExactlyInAnyOrder(
+                tag -> assertThat(tag.getName()).isEqualTo("foo"),
+                tag -> assertThat(tag.getName()).isEqualTo("bar"));
+    }
+
+    @Test
     public void validateCycloneDxBomWithMultipleNamespacesTest() throws Exception {
         byte[] bom = resourceToByteArray("/unit/bom-issue4008.xml");
         assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(bom));

@@ -46,8 +46,8 @@ import org.dependencytrack.model.BomValidationMode;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ProjectCollectionLogic;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants.Title;
 import org.dependencytrack.notification.NotificationGroup;
@@ -92,8 +92,10 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
@@ -295,7 +297,7 @@ public class BomResource extends AlpineResource {
             );
             try (QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, request.getProject());
-                return process(qm, project, request.getBom());
+                return process(qm, project, request.getBom(), request.getProjectTags());
             }
         } else { // additional behavior added in v3.1.0
             failOnValidationError(
@@ -348,7 +350,7 @@ public class BomResource extends AlpineResource {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }
                 }
-                return process(qm, project, request.getBom());
+                return process(qm, project, request.getBom(), request.getProjectTags());
             }
         }
     }
@@ -406,10 +408,14 @@ public class BomResource extends AlpineResource {
             @DefaultValue("false") @FormDataParam("isLatest") boolean isLatest,
             @Parameter(schema = @Schema(type = "string")) @FormDataParam("bom") final List<FormDataBodyPart> artifactParts
     ) {
+        final List<org.dependencytrack.model.Tag> requestTags = (projectTags != null && !projectTags.isBlank())
+                ? Arrays.stream(projectTags.split(",")).map(String::trim).filter(not(String::isEmpty)).map(Tag::new).toList()
+                : null;
+
         if (projectUuid != null) { // behavior in v3.0.0
             try (QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, projectUuid);
-                return process(qm, project, artifactParts);
+                return process(qm, project, artifactParts, requestTags);
             }
         } else { // additional behavior added in v3.1.0
             try (QueryManager qm = new QueryManager()) {
@@ -444,17 +450,14 @@ public class BomResource extends AlpineResource {
                                         .build();
                             }
                         }
-                        final List<org.dependencytrack.model.Tag> tags = (projectTags != null && !projectTags.isBlank())
-                                ? Arrays.stream(projectTags.split(",")).map(String::trim).filter(not(String::isEmpty)).map(Tag::new).toList()
-                                : null;
-                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, tags, parent, null, true, isLatest, true);
+                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent, null, true, isLatest, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }
                 }
-                return process(qm, project, artifactParts);
+                return process(qm, project, artifactParts, requestTags);
             }
         }
     }
@@ -504,7 +507,7 @@ public class BomResource extends AlpineResource {
     /**
      * Common logic that processes a BOM given a project and encoded payload.
      */
-    private Response process(QueryManager qm, Project project, String encodedBomData) {
+    private Response process(QueryManager qm, Project project, String encodedBomData, List<Tag> requestTags) {
         if (project != null) {
             if (! qm.hasAccess(super.getPrincipal(), project)) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
@@ -512,6 +515,7 @@ public class BomResource extends AlpineResource {
             if(!project.getCollectionLogic().equals(ProjectCollectionLogic.NONE)) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("BOM cannot be uploaded to collection project.").build();
             }
+            maybeBindTags(qm, project, requestTags);
             final byte[] decoded = Base64.getDecoder().decode(encodedBomData);
             try (final ByteArrayInputStream bain = new ByteArrayInputStream(decoded)) {
                 final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(bain).get());
@@ -530,7 +534,7 @@ public class BomResource extends AlpineResource {
     /**
      * Common logic that processes a BOM given a project and list of multi-party form objects containing decoded payloads.
      */
-    private Response process(QueryManager qm, Project project, List<FormDataBodyPart> artifactParts) {
+    private Response process(QueryManager qm, Project project, List<FormDataBodyPart> artifactParts, List<Tag> requestTags) {
         for (final FormDataBodyPart artifactPart: artifactParts) {
             final BodyPartEntity bodyPartEntity = (BodyPartEntity) artifactPart.getEntity();
             if (project != null) {
@@ -540,6 +544,7 @@ public class BomResource extends AlpineResource {
                 if(!project.getCollectionLogic().equals(ProjectCollectionLogic.NONE)) {
                     return Response.status(Response.Status.BAD_REQUEST).entity("BOM cannot be uploaded to collection project.").build();
                 }
+                maybeBindTags(qm, project, requestTags);
                 try (InputStream in = bodyPartEntity.getInputStream()) {
                     final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(in).get());
                     validate(content, project);
@@ -645,6 +650,36 @@ public class BomResource extends AlpineResource {
             return (validationMode == BomValidationMode.ENABLED_FOR_TAGS && doTagsMatch)
                     || (validationMode == BomValidationMode.DISABLED_FOR_TAGS && !doTagsMatch);
         }
+    }
+
+    private void maybeBindTags(final QueryManager qm, final Project project, final List<Tag> tags) {
+        if (tags == null) {
+            return;
+        }
+
+        // If the principal has the PROJECT_CREATION_UPLOAD permission,
+        // and a new project was created as part of this upload,
+        // the project might already have the requested tags.
+        final Set<String> existingTagNames = project.getTags() != null
+                ? project.getTags().stream().map(Tag::getName).collect(Collectors.toSet())
+                : Collections.emptySet();
+        final Set<String> requestTagNames = tags.stream().map(Tag::getName).collect(Collectors.toSet());
+
+        if (!Objects.equals(existingTagNames, requestTagNames)
+            && !hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT)) {
+            // Most CI integrations will use API keys with PROJECT_CREATION_UPLOAD permission,
+            // but not PORTFOLIO_MANAGEMENT permission. They will not send different upload requests
+            // though, after a project was first created. Failing the request would break those
+            // integrations. Log a warning instead.
+            LOGGER.warn("""
+                    Project tags were provided as part of the BOM upload request, \
+                    but the authenticated principal is missing the %s permission; \
+                    Tags will not be modified""".formatted(Permissions.Constants.PORTFOLIO_MANAGEMENT));
+            return;
+        }
+
+        final List<Tag> resolvedTags = qm.resolveTags(tags);
+        qm.bind(project, resolvedTags);
     }
 
     private static void dispatchBomValidationFailedNotification(final Project project, final String bom, final List<String> errors, final Bom.Format bomFormat) {

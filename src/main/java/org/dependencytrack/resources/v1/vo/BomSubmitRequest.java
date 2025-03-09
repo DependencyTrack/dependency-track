@@ -18,13 +18,13 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
-import org.dependencytrack.model.Tag;
 import alpine.common.validation.RegexSequence;
 import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.model.Tag;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -122,7 +122,9 @@ public final class BomSubmitRequest {
         return projectVersion;
     }
 
-    @Schema(description = "Overwrite project tags")
+    @Schema(description = """
+            Overwrite project tags. Modifying the tags of an existing \
+            project requires the PORTFOLIO_MANAGEMENT permission.""")
     public List<Tag> getProjectTags() {
         return projectTags;
     }

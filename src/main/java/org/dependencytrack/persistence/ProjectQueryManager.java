@@ -45,6 +45,7 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.PolicyViolation;
@@ -745,6 +746,24 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 if (sourceComponents != null) {
                     for (final Component sourceComponent : sourceComponents) {
                         final Component clonedComponent = cloneComponent(sourceComponent, project, false);
+
+                        if (sourceComponent.getProperties() != null && !sourceComponent.getProperties().isEmpty()) {
+                            final var clonedProperties = new ArrayList<ComponentProperty>(sourceComponent.getProperties().size());
+                            for (final ComponentProperty sourceProperty : sourceComponent.getProperties()) {
+                                final ComponentProperty clonedProperty = new ComponentProperty();
+                                clonedProperty.setComponent(clonedComponent);
+                                clonedProperty.setPropertyType(sourceProperty.getPropertyType());
+                                clonedProperty.setGroupName(sourceProperty.getGroupName());
+                                clonedProperty.setPropertyName(sourceProperty.getPropertyName());
+                                clonedProperty.setPropertyValue(sourceProperty.getPropertyValue());
+                                clonedProperty.setDescription(sourceProperty.getDescription());
+                                clonedProperties.add(clonedProperty);
+                            }
+
+                            persist(clonedProperties);
+                            clonedComponent.setProperties(clonedProperties);
+                        }
+
                         // Add vulnerabilties and finding attribution from the source component to the cloned component
                         for (Vulnerability vuln : sourceComponent.getVulnerabilities()) {
                             final FindingAttribution sourceAttribution = this.getFindingAttribution(vuln, sourceComponent);

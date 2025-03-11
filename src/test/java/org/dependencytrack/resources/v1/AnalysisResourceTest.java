@@ -352,11 +352,24 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
-        assertThat(responseJson.getJsonArray("analysisComments")).hasSize(2);
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(0))
+        final var comments = responseJson.getJsonArray("analysisComments");
+        assertThat(comments).hasSize(6);
+        assertThat(comments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: NOT_SET → NOT_AFFECTED"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(1))
+        assertThat(comments.getJsonObject(1))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Justification: NOT_SET → CODE_NOT_REACHABLE"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(comments.getJsonObject(2))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Vendor Response: NOT_SET → WILL_NOT_FIX"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(comments.getJsonObject(3))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Details: Analysis details here"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(comments.getJsonObject(4))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppressed"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(comments.getJsonObject(5))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
@@ -412,11 +425,24 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
-        assertThat(responseJson.getJsonArray("analysisComments")).hasSize(2);
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(0))
+        final var comments = responseJson.getJsonArray("analysisComments");
+        assertThat(comments).hasSize(6);
+        assertThat(comments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: NOT_SET → NOT_AFFECTED"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
-        assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(1))
+        assertThat(comments.getJsonObject(1))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Justification: NOT_SET → CODE_NOT_REACHABLE"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
+        assertThat(comments.getJsonObject(2))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Vendor Response: NOT_SET → WILL_NOT_FIX"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
+        assertThat(comments.getJsonObject(3))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Details: Analysis details here"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
+        assertThat(comments.getJsonObject(4))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppressed"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
+        assertThat(comments.getJsonObject(5))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
@@ -471,16 +497,14 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getJsonArray("analysisComments")).isEmpty();
         assertThat(responseJson.getBoolean("isSuppressed")).isFalse();
 
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification projectNotification = NOTIFICATIONS.poll();
         assertThat(projectNotification).isNotNull();
-        final Notification notification = NOTIFICATIONS.poll();
-        assertThat(notification).isNotNull();
-        assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
-        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
-        assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET, project));
-        assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+        assertThat(projectNotification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+        assertThat(projectNotification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name());
+        assertThat(projectNotification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
+        assertThat(projectNotification.getTitle()).isEqualTo(NotificationConstants.Title.PROJECT_CREATED, project);
+        assertThat(projectNotification.getContent()).isEqualTo("Acme Example was created");
     }
 
     @Test
@@ -581,7 +605,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability = qm.createVulnerability(vulnerability, false);
 
         final Analysis analysis = qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED,
-                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true);
+                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.CAN_NOT_FIX, "Analysis details here", true);
         qm.makeAnalysisComment(analysis, "Analysis comment here", "Jane Doe");
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
@@ -603,7 +627,10 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
 
         final JsonArray analysisComments = responseJson.getJsonArray("analysisComments");
-        assertThat(analysisComments).hasSize(1);
+        assertThat(analysisComments).hasSize(2);
+        assertThat(analysisComments.getJsonObject(0))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Jane Doe"));
         assertThat(analysisComments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Jane Doe"));

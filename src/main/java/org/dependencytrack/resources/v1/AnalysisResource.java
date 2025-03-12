@@ -175,7 +175,7 @@ public class AnalysisResource extends AlpineResource {
                 commenter = principal.getUsername();
             } else if (getPrincipal() instanceof ApiKey apiKey) {
                 List<Team> teams = apiKey.getTeams();
-                List<String> teamNames = new ArrayList<String>();
+                List<String> teamNames = new ArrayList<>();
                 teams.forEach(team -> teamNames.add(team.getName()));
                 commenter = String.join(", ", teamNames);
             }

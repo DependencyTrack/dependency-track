@@ -194,15 +194,9 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
         // to null will wipe them. That is not the expected behavior when an AnalysisRequest
         // has some fields unset (so they're null). If fields are not set, there shouldn't
         // be any modifications to the existing data.
-        if (analysisState != null) {
-            analysis.setAnalysisState(analysisState);
-        }
-        if (analysisJustification != null) {
-            analysis.setAnalysisJustification(analysisJustification);
-        }
-        if (analysisResponse != null) {
-            analysis.setAnalysisResponse(analysisResponse);
-        }
+        analysis.setAnalysisState(analysisState);
+        analysis.setAnalysisJustification(analysisJustification);
+        analysis.setAnalysisResponse(analysisResponse);
         if (analysisDetails != null) {
             analysis.setAnalysisDetails(analysisDetails);
         }
@@ -256,7 +250,6 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      * @param project the project to retrieve findings for
      * @return a List of Finding objects
      */
-    @SuppressWarnings("unchecked")
     public List<Finding> getFindings(Project project) {
         return getFindings(project, false);
     }

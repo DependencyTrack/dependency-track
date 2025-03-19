@@ -540,6 +540,37 @@ public class TagResourceTest extends ResourceTest {
     }
 
     @Test
+    public void createTagsTest() {
+        initializeWithPermissions(Permissions.TAG_MANAGEMENT);
+
+        final Response response = jersey.target(V1_TAG)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.PUT, Entity.json(List.of("foo")));
+        assertThat(response.getStatus()).isEqualTo(201);
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getTagByName("foo")).isNotNull();
+    }
+
+    @Test
+    public void createTagsWithExistingTest() {
+        initializeWithPermissions(Permissions.TAG_MANAGEMENT);
+
+        qm.createTag("foo");
+
+        final Response response = jersey.target(V1_TAG)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method(HttpMethod.PUT, Entity.json(List.of("foo", "bar")));
+        assertThat(response.getStatus()).isEqualTo(201);
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getTagByName("foo")).isNotNull();
+        assertThat(qm.getTagByName("bar")).isNotNull();
+    }
+
+    @Test
     public void getTaggedProjectsTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 

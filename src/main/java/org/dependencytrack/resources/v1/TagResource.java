@@ -53,6 +53,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -144,6 +145,31 @@ public class TagResource extends AlpineResource {
         }
 
         return Response.noContent().build();
+    }
+
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Creates one or more tags.",
+            description = "<p>Requires permission <strong>TAG_MANAGEMENT</strong></p>\n"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Tags created successfully."
+            )
+    })
+    @PermissionRequired(Permissions.Constants.TAG_MANAGEMENT)
+    public Response createTags(
+            @Parameter(description = "Names of the tags to create")
+            @Size(min = 1, max = 100) final Set<@NotBlank String> tagNames
+    ) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            qm.createTags(List.copyOf(tagNames));
+        }
+
+        return Response.noContent().status(Response.Status.CREATED).build();
     }
 
     @GET

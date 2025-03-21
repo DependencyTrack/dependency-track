@@ -18,19 +18,21 @@
  */
 package org.dependencytrack.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serializable;
+import java.util.Date;
 
-import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
-import java.io.Serializable;
-import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Tracks third-party metadata about component groups from external repositories
@@ -80,6 +82,21 @@ public class RepositoryMetaComponent implements Serializable {
     @Column(name = "LATEST_VERSION", allowsNull = "false")
     @NotNull
     private String latestVersion;
+
+    /**
+     * Whether the component is deprecated or not.
+     */
+    @Persistent
+    @Column(name = "IS_DEPRECATED", allowsNull = "false", defaultValue="false")
+    @NotNull
+    private boolean isDeprecated; // Added in 4.13.0
+
+    /**
+     * Whether the component is deprecated or not.
+     */
+    @Persistent
+    @Column(name = "DEPRECATION_MESSAGE", allowsNull = "true")
+    private String deprecationMessage; // Added in 4.13.0
 
     /**
      * The optional date when the component was last published.
@@ -138,6 +155,22 @@ public class RepositoryMetaComponent implements Serializable {
 
     public void setLatestVersion(String latestVersion) {
         this.latestVersion = latestVersion;
+    }
+
+    public boolean isDeprecated() {
+        return isDeprecated;
+    }
+
+    public void setDeprecated(boolean deprecated) {
+        isDeprecated = deprecated;
+    }
+
+    public String getDeprecationMessage() {
+        return deprecationMessage;
+    }
+
+    public void setDeprecationMessage(String deprecationMessage) {
+        this.deprecationMessage = deprecationMessage;
     }
 
     public Date getPublished() {

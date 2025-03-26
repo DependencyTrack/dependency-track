@@ -24,8 +24,11 @@ import alpine.notification.NotificationService;
 import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import alpine.security.crypto.DataEncryption;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.Timestamps;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
@@ -71,6 +74,8 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_AP
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_SCAN_LIBRARY;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_SCAN_OS;
 
 public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
 
@@ -111,6 +116,20 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
                 "false",
                 SCANNER_TRIVY_IGNORE_UNFIXED.getPropertyType(),
                 SCANNER_TRIVY_IGNORE_UNFIXED.getDescription()
+        );
+        qm.createConfigProperty(
+                SCANNER_TRIVY_SCAN_LIBRARY.getGroupName(),
+                SCANNER_TRIVY_SCAN_LIBRARY.getPropertyName(),
+                "true",
+                SCANNER_TRIVY_SCAN_LIBRARY.getPropertyType(),
+                SCANNER_TRIVY_SCAN_LIBRARY.getDescription()
+        );
+        qm.createConfigProperty(
+                SCANNER_TRIVY_SCAN_OS.getGroupName(),
+                SCANNER_TRIVY_SCAN_OS.getPropertyName(),
+                "false",
+                SCANNER_TRIVY_SCAN_OS.getPropertyType(),
+                SCANNER_TRIVY_SCAN_OS.getDescription()
         );
         qm.createConfigProperty(
                 SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(),
@@ -423,6 +442,54 @@ public class TrivyAnalysisTaskTest extends PersistenceCapableTest {
         wireMock.verify(exactly(1), postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
         wireMock.verify(exactly(0), postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));
         wireMock.verify(exactly(0), postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs")));
+    }
+
+    @Test
+    public void testAnalyzeRespectsConfiguredScanningOption() throws InvalidProtocolBufferException {
+        wireMock.stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/protobuf")));
+
+        wireMock.stubFor(post(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/protobuf")
+                        .withBody(ScanResponse.newBuilder()
+                                .addResults(Result.newBuilder()
+                                        .setClass_("lang-pkgs")
+                                        .setTarget("java")
+                                        .setType("jar")
+                                        .build())
+                                .build()
+                                .toByteArray())));
+
+        wireMock.stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")));
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.fasterxml.woodstox");
+        component.setName("woodstox-core");
+        component.setVersion("5.0.0");
+        component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
+        component = qm.createComponent(component, false);
+
+        new TrivyAnalysisTask().inform(new TrivyAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
+
+        wireMock.verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));
+        var request = WireMock.findAll(postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan"))).get(0);
+        var scanRequest = trivy.proto.scanner.v1.ScanRequest.parseFrom(request.getBody());
+
+        assertThat(scanRequest.getOptions().getPkgTypesCount()).isEqualTo(1);
+        assertThat(scanRequest.getOptions().getPkgTypes(0)).isEqualTo("library");
     }
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();

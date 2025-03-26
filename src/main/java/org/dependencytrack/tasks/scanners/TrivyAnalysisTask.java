@@ -123,6 +123,8 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
     private String apiBaseUrl;
     private String apiToken;
     private boolean shouldIgnoreUnfixed;
+    private boolean shouldScanLibrary;
+    private boolean shouldScanOs;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     @Override
@@ -156,6 +158,8 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
             }
 
             shouldIgnoreUnfixed = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED);
+            shouldScanLibrary = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_SCAN_LIBRARY);
+            shouldScanOs = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_SCAN_OS);
         }
 
         vulnerabilityAnalysisLevel = event.analysisLevel();
@@ -418,13 +422,19 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
 
 
     private ScanResponse scanBlob(final PutBlobRequest putBlobRequest) {
+        final var scanOptionsBuilder = ScanOptions.newBuilder().addScanners("vuln");
+        if (shouldScanLibrary) {
+            scanOptionsBuilder.addPkgTypes("library");
+        }
+        if (shouldScanOs) {
+            scanOptionsBuilder.addPkgTypes("os");
+        }
+
         final var scanRequest = trivy.proto.scanner.v1.ScanRequest.newBuilder()
                 .setTarget(putBlobRequest.getDiffId())
                 .setArtifactId(putBlobRequest.getDiffId())
                 .addBlobIds(putBlobRequest.getDiffId())
-                .setOptions(ScanOptions.newBuilder()
-                        .addAllPkgTypes(List.of("os", "library"))
-                        .addScanners("vuln"))
+                .setOptions(scanOptionsBuilder)
                 .build();
 
         final HttpUriRequest request = buildRequest(

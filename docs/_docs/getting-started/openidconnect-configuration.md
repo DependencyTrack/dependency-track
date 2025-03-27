@@ -68,7 +68,7 @@ For a complete overview of available configuration options for both API server a
 > gitlab.com currently does not set the required CORS headers, see GitLab issue [#209259](https://gitlab.com/gitlab-org/gitlab/-/issues/209259).  
 > For on-premise installations, this could be fixed by setting the required headers via reverse proxy.
 
-#### Azure Active Directory
+#### Microsoft Entra ID
 
 | API server                                                                                     | Frontend                                                                                |
 | :--------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------- |
@@ -80,7 +80,7 @@ For a complete overview of available configuration options for both API server a
 | alpine.oidc.teams.claim=groups                                                                 |                                                                                         |
 | alpine.oidc.team.synchronization=true                                                          |                                                                                         |
 
-OIDC integration with Azure Active Directory requires you to register Dependency-Track as an app in your tenant, see [Azure Active Directory app registration](#azure-active-directory-app-registration).
+OIDC integration with Microsoft Entra ID requires you to register Dependency-Track as an app in your tenant, see [Microsoft Entra ID app registration](#microsoft-entra-id-app-registration).
 
 The `alpine.oidc.client.id` contains the Application ID of the app registration, and the `alpine.oidc.issuer` contains the Directory (tenant) ID.
 
@@ -279,16 +279,16 @@ The following steps demonstrate how to setup OpenID Connect with OneLogin.
 
 6.  Use the _OpenID_ button on the login page to sign in with a OneLogin user that is member of at least one of the configured groups. Navigating to _Administration -> Access Management -> OpenID Connect Users_ should now reveal that the user has been automatically provisioned and team memberships have been synchronized
 
-### Azure Active Directory app registration
+### Microsoft Entra ID app registration
 
-The following steps demonstrate how to setup OpenID Connect with Azure Active Directory.
+The following steps demonstrate how to setup OpenID Connect with Microsoft Entra ID.
 
 > This guide assumes that:
 >
 > - the Dependency-Track frontend has been deployed to `https://dependencytrack.example.com`
-> - an Azure Active Directory tenant has been created
+> - an Microsoft Entra ID tenant has been created
 
-1. Add an app registration for Dependency-Track to your Azure AD tenant:
+1. Add an app registration for Dependency-Track to your Microsoft Entra ID tenant:
 
    - Name: `Dependency-Track`
    - Supported account types: `Accounts in this organizational directory only`
@@ -302,9 +302,10 @@ The following steps demonstrate how to setup OpenID Connect with Azure Active Di
 3. Under Token configuration:
    
    - Click Add groups claim
-   - Select the group types you'd like to include
-     - If you are unsure, start by trying all options
-     - If you are in a large organization and have users with lots of groups, you may want to choice only `Groups assigned to the application` to avoid SSO issues. See #2150
+   - Select the appropriate group types to include in the token:
+     - If you are testing in a personal environment, you may enable Security Groups.
+     - For corporate environments, where users may belong to thousands of groups, it is recommended to choice only `Groups assigned to the application`. This prevents exceeding the token's size limit, which could lead to authentication failures.
+   - Recommended setting for production: Select `Groups assigned to the application` to ensure optimal performance and avoid Single Sign-On (SSO) issues. See #2150 for more details.
  
 4. Under API permissions, add the following Microsoft Graph API permissions:
    - OpenId permissions -> email

@@ -18,17 +18,6 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.common.logging.Logger;
-import alpine.persistence.PaginatedResult;
-import alpine.resources.AlpineRequest;
-import alpine.security.crypto.DataEncryption;
-import org.apache.commons.lang3.StringUtils;
-import org.dependencytrack.model.Repository;
-import org.dependencytrack.model.RepositoryMetaComponent;
-import org.dependencytrack.model.RepositoryType;
-
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +25,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+
+import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.model.Repository;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
+
+import alpine.common.logging.Logger;
+import alpine.persistence.PaginatedResult;
+import alpine.resources.AlpineRequest;
+import alpine.security.crypto.DataEncryption;
 
 public class RepositoryQueryManager extends QueryManager implements IQueryManager {
     private static final Logger LOGGER = Logger.getLogger(RepositoryQueryManager.class);
@@ -241,6 +243,8 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
             metaComponent.setNamespace(transientRepositoryMetaComponent.getNamespace());
             metaComponent.setLastCheck(transientRepositoryMetaComponent.getLastCheck());
             metaComponent.setLatestVersion(transientRepositoryMetaComponent.getLatestVersion());
+            metaComponent.setDeprecated(transientRepositoryMetaComponent.isDeprecated());
+            metaComponent.setDeprecationMessage(transientRepositoryMetaComponent.getDeprecationMessage());
             metaComponent.setName(transientRepositoryMetaComponent.getName());
             metaComponent.setPublished(transientRepositoryMetaComponent.getPublished());
             return persist(metaComponent);

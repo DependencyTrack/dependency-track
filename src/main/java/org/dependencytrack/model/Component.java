@@ -104,6 +104,17 @@ import java.util.UUID;
                 @Persistent(name = "lastInheritedRiskScore"),
                 @Persistent(name = "uuid")
         }),
+        @FetchGroup(name = "NOTIFICATION", members = {
+                @Persistent(name = "group"),
+                @Persistent(name = "name"),
+                @Persistent(name = "version"),
+                @Persistent(name = "md5"),
+                @Persistent(name = "sha1"),
+                @Persistent(name = "sha256"),
+                @Persistent(name = "sha512"),
+                @Persistent(name = "purl"),
+                @Persistent(name = "uuid")
+        }),
         @FetchGroup(name = "REPO_META_ANALYSIS", members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "purl"),
@@ -124,6 +135,7 @@ public class Component implements Serializable {
         BOM_UPLOAD_PROCESSING,
         INTERNAL_IDENTIFICATION,
         METRICS_UPDATE,
+        NOTIFICATION,
         REPO_META_ANALYSIS
     }
 

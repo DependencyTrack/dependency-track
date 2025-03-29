@@ -72,7 +72,7 @@ public class NotificationPublisherTest {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setDefaultPublisher(true);
         Assert.assertTrue(publisher.isDefaultPublisher());
-    } 
+    }
 
     @Test
     public void testUuid() {

@@ -458,11 +458,13 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
             // or create an attribution if it doesn't exist already.
             for (final VulnerableSoftware oldVs : vsListToKeep) {
                 boolean hasAttribution = false;
-                for (final AffectedVersionAttribution attribution : oldVs.getAffectedVersionAttributions()) {
-                    if (attribution.getSource() == source) {
-                        attribution.setLastSeen(attributionDate);
-                        hasAttribution = true;
-                        break;
+                if (oldVs.getAffectedVersionAttributions() != null) {
+                    for (final AffectedVersionAttribution attribution : oldVs.getAffectedVersionAttributions()) {
+                        if (attribution.getSource() == source) {
+                            attribution.setLastSeen(attributionDate);
+                            hasAttribution = true;
+                            break;
+                        }
                     }
                 }
 

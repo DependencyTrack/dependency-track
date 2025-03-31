@@ -20,7 +20,6 @@ package org.dependencytrack.integrations.defectdojo;
 
 import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -56,13 +55,14 @@ public class DefectDojoClient {
         this.baseURL = baseURL;
     }
 
-    public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final Boolean verifyFindings) {
+    public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final Boolean verifyFindings, final String testTitle) {
         LOGGER.debug("Uploading Dependency-Track findings to DefectDojo");
         HttpPost request = new HttpPost(baseURL + "/api/v2/import-scan/");
         InputStreamBody inputStreamBody = new InputStreamBody(findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json");
         request.addHeader("accept", "application/json");
         request.addHeader("Authorization", "Token " + token);
-        HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                 .addPart("file", inputStreamBody)
                 .addPart("engagement", new StringBody(engagementId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_type", new StringBody("Dependency Track Finding Packaging Format (FPF) Export", ContentType.MULTIPART_FORM_DATA))
@@ -71,11 +71,11 @@ public class DefectDojoClient {
                 .addPart("minimum_severity", new StringBody("Info", ContentType.MULTIPART_FORM_DATA))
                 .addPart("close_old_findings", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
                 .addPart("push_to_jira", new StringBody("false", ContentType.MULTIPART_FORM_DATA))
-                .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA))
-                .build();
-        request.setEntity(data);
-
-
+                .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA));
+        if(testTitle != null) {
+            builder.addPart("test_title", new StringBody(testTitle, ContentType.MULTIPART_FORM_DATA));
+        }
+        request.setEntity(builder.build());
         try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
                 LOGGER.debug("Successfully uploaded findings to DefectDojo");
@@ -136,12 +136,13 @@ public class DefectDojoClient {
         return new ArrayList<>();
     }
 
-    // Given the engagement id and scan type, search for existing test id
-    public String getDojoTestId(final String engagementID, final ArrayList<String> dojoTests) {
+    // Given the engagement id, scan type and optional test title, search for existing test id
+    public String getDojoTestId(final String engagementID, final ArrayList<String> dojoTests, String testTitle) {
         for (final String dojoTestJson : dojoTests) {
             JSONObject dojoTest = new JSONObject(dojoTestJson);
             if (dojoTest.optString("engagement").equals(engagementID) &&
-                    dojoTest.optString("scan_type").equals("Dependency Track Finding Packaging Format (FPF) Export")) {
+                    dojoTest.optString("scan_type").equals("Dependency Track Finding Packaging Format (FPF) Export") &&
+                    (testTitle == null || dojoTest.optString("title").equals(testTitle))) {
                 return dojoTest.optString("id");
             }
         }
@@ -163,13 +164,14 @@ public class DefectDojoClient {
      * A Reimport will reuse (overwrite) the existing test, instead of create a new test.
      * The Successfully reimport will also  increase the reimport counter by 1.
      */
-    public void reimportDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final String testId, final Boolean doNotReactivate, final Boolean verifyFindings) {
+    public void reimportDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final String testId, final Boolean doNotReactivate, final Boolean verifyFindings, final String testTitle) {
         LOGGER.debug("Re-reimport Dependency-Track findings to DefectDojo per Engagement");
         HttpPost request = new HttpPost(baseURL + "/api/v2/reimport-scan/");
         request.addHeader("accept", "application/json");
         request.addHeader("Authorization", "Token " + token);
         InputStreamBody inputStreamBody = new InputStreamBody(findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json");
-        HttpEntity fileData = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                 .addPart("file", inputStreamBody)
                 .addPart("engagement", new StringBody(engagementId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_type", new StringBody("Dependency Track Finding Packaging Format (FPF) Export", ContentType.MULTIPART_FORM_DATA))
@@ -182,7 +184,10 @@ public class DefectDojoClient {
                 .addPart("test", new StringBody(testId, ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA))
                 .build();
-        request.setEntity(fileData);
+        if(testTitle != null) {
+            builder.addPart("test_title", new StringBody(testTitle, ContentType.MULTIPART_FORM_DATA));
+        }
+        request.setEntity(builder.build());
         try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
                 LOGGER.debug("Successfully reimport findings to DefectDojo");

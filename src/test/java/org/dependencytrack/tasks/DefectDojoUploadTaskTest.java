@@ -185,6 +185,138 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void testUploadWithTestName() {
+        qm.createConfigProperty(
+                DEFECTDOJO_ENABLED.getGroupName(),
+                DEFECTDOJO_ENABLED.getPropertyName(),
+                "true",
+                DEFECTDOJO_ENABLED.getPropertyType(),
+                null
+        );
+        qm.createConfigProperty(
+                DEFECTDOJO_URL.getGroupName(),
+                DEFECTDOJO_URL.getPropertyName(),
+                wireMockRule.baseUrl(),
+                DEFECTDOJO_URL.getPropertyType(),
+                null
+        );
+        qm.createConfigProperty(
+                DEFECTDOJO_API_KEY.getGroupName(),
+                DEFECTDOJO_API_KEY.getPropertyName(),
+                "dojoApiKey",
+                DEFECTDOJO_API_KEY.getPropertyType(),
+                null
+        );
+        qm.createConfigProperty(
+                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
+                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
+                DEFECTDOJO_REIMPORT_ENABLED.getDefaultPropertyValue(),
+                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
+                null
+        );
+
+        stubFor(post(urlPathEqualTo("/api/v2/import-scan/"))
+                .willReturn(aResponse()
+                        .withStatus(201)));
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.2.3");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-123");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+
+        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
+                "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(project, "integrations", "defectdojo.testTitle",
+                "configured name of test", IConfigProperty.PropertyType.STRING, null);
+
+        new DefectDojoUploadTask().inform(new DefectDojoUploadEventAbstract());
+
+        verify(postRequestedFor(urlPathEqualTo("/api/v2/import-scan/"))
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("engagement")
+                        .withBody(equalTo("666")))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("scan_type")
+                        .withBody(equalTo("Dependency Track Finding Packaging Format (FPF) Export")))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("verified")
+                        .withBody(equalTo("true")))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("minimum_severity")
+                        .withBody(equalTo("Info")))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("close_old_findings")
+                        .withBody(equalTo("true")))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("push_to_jira")
+                        .withBody(equalTo("false")))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("scan_date")
+                        .withBody(matching("\\d{4}-\\d{2}-\\d{2}")))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("test_title")
+                        .withBody(equalTo("configured name of test")))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("file")
+                        .withBody(equalToJson("""
+                                {
+                                  "version": "1.2",
+                                  "meta": {
+                                    "application": "Dependency-Track",
+                                    "version": "${json-unit.any-string}",
+                                    "timestamp": "${json-unit.any-string}"
+                                  },
+                                  "project": {
+                                    "uuid": "${json-unit.any-string}",
+                                    "name": "acme-app",
+                                    "version": "1.0.0"
+                                  },
+                                  "findings": [
+                                    {
+                                      "component": {
+                                        "uuid": "${json-unit.any-string}",
+                                        "name": "acme-lib",
+                                        "version": "1.2.3",
+                                        "project": "${json-unit.any-string}"
+                                      },
+                                      "attribution": {
+                                        "analyzerIdentity": "INTERNAL_ANALYZER",
+                                        "attributedOn": "${json-unit.any-string}"
+                                      },
+                                      "vulnerability": {
+                                        "uuid": "${json-unit.any-string}",
+                                        "vulnId": "INT-123",
+                                        "source": "INTERNAL",
+                                        "aliases": [],
+                                        "severity": "HIGH",
+                                        "severityRank": 1
+                                      },
+                                      "analysis": {
+                                        "isSuppressed": false
+                                      },
+                                      "matrix": "${json-unit.any-string}"
+                                    }
+                                  ]
+                                }
+                                """, true, false))));
+    }
+
+    @Test
     public void testUploadWithGlobalReimport() {
         qm.createConfigProperty(
                 DEFECTDOJO_ENABLED.getGroupName(),
@@ -534,6 +666,133 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/reimport-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("file")
+                        .withBody(equalToJson("""
+                                {
+                                  "version": "1.2",
+                                  "meta": {
+                                    "application": "Dependency-Track",
+                                    "version": "${json-unit.any-string}",
+                                    "timestamp": "${json-unit.any-string}"
+                                  },
+                                  "project": {
+                                    "uuid": "${json-unit.any-string}",
+                                    "name": "acme-app",
+                                    "version": "1.0.0"
+                                  },
+                                  "findings": []
+                                }
+                                """, true, false))));
+    }
+
+    @Test
+    public void testUploadWithProjectLevelReimportAndTestName() {
+        qm.createConfigProperty(
+                DEFECTDOJO_ENABLED.getGroupName(),
+                DEFECTDOJO_ENABLED.getPropertyName(),
+                "true",
+                DEFECTDOJO_ENABLED.getPropertyType(),
+                null
+        );
+        qm.createConfigProperty(
+                DEFECTDOJO_URL.getGroupName(),
+                DEFECTDOJO_URL.getPropertyName(),
+                wireMockRule.baseUrl(),
+                DEFECTDOJO_URL.getPropertyType(),
+                null
+        );
+        qm.createConfigProperty(
+                DEFECTDOJO_API_KEY.getGroupName(),
+                DEFECTDOJO_API_KEY.getPropertyName(),
+                "dojoApiKey",
+                DEFECTDOJO_API_KEY.getPropertyType(),
+                null
+        );
+        qm.createConfigProperty(
+                DEFECTDOJO_REIMPORT_ENABLED.getGroupName(),
+                DEFECTDOJO_REIMPORT_ENABLED.getPropertyName(),
+                "false",
+                DEFECTDOJO_REIMPORT_ENABLED.getPropertyType(),
+                null
+        );
+
+        stubFor(get(urlPathEqualTo("/api/v2/tests/"))
+                .withQueryParam("engagement", equalTo("666"))
+                .withQueryParam("limit", equalTo("100"))
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .withBody("""
+                                {
+                                   "count": 1,
+                                   "next": null,
+                                   "previous": null,
+                                   "results": [
+                                     {
+                                       "id": 1,
+                                       "tags": [],
+                                       "test_type_name": "Dependency Track Finding Packaging Format (FPF) Export",
+                                       "finding_groups": [],
+                                       "scan_type": "Dependency Track Finding Packaging Format (FPF) Export",
+                                       "title": "configured name of test",
+                                       "description": null,
+                                       "target_start": "2023-04-29T00:00:00Z",
+                                       "target_end": "2023-04-29T21:39:21.513481Z",
+                                       "estimated_time": null,
+                                       "actual_time": null,
+                                       "percent_complete": 100,
+                                       "updated": "2023-04-29T21:39:21.617857Z",
+                                       "created": "2023-04-29T21:39:21.516206Z",
+                                       "version": "",
+                                       "build_id": "",
+                                       "commit_hash": "",
+                                       "branch_tag": "",
+                                       "engagement": 666,
+                                       "lead": 1,
+                                       "test_type": 63,
+                                       "environment": 7,
+                                       "api_scan_configuration": null,
+                                       "notes": [],
+                                       "files": []
+                                     }
+                                   ],
+                                   "prefetch": {}
+                                 }
+                                """)));
+
+        stubFor(post(urlPathEqualTo("/api/v2/reimport-scan/"))
+                .willReturn(aResponse()
+                        .withStatus(201)));
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.2.3");
+        qm.persist(component);
+
+        qm.createProjectProperty(project, "integrations", "defectdojo.engagementId",
+                "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(project, "integrations", "defectdojo.reimport",
+                "true", IConfigProperty.PropertyType.BOOLEAN, null);
+        qm.createProjectProperty(project, "integrations", "defectdojo.testTitle",
+                "configured name of test", IConfigProperty.PropertyType.STRING, null);
+
+        new DefectDojoUploadTask().inform(new DefectDojoUploadEventAbstract());
+
+        verify(1, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
+
+        verify(postRequestedFor(urlPathEqualTo("/api/v2/reimport-scan/"))
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
+                .withAnyRequestBodyPart(aMultipart()
+                        .withName("test_title")
+                        .withBody(equalTo("configured name of test")))
                 .withAnyRequestBodyPart(aMultipart()
                         .withName("file")
                         .withBody(equalToJson("""

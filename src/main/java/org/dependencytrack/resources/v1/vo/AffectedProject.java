@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -40,15 +40,15 @@ public class AffectedProject {
 
     private final boolean active;
 
-    private final List<UUID> affectedComponentUuids;
+    private final Set<UUID> affectedComponentUuids;
 
-    public AffectedProject(UUID uuid, boolean dependencyGraphAvailable, String name, String version, boolean active, List<UUID> affectedComponentUuids) {
+    public AffectedProject(UUID uuid, boolean dependencyGraphAvailable, String name, String version, boolean active, Set<UUID> affectedComponentUuids) {
         this.uuid = uuid;
         this.dependencyGraphAvailable = dependencyGraphAvailable;
         this.name = name;
         this.version = version;
         this.active = active;
-        this.affectedComponentUuids = affectedComponentUuids == null ? new ArrayList<>() : affectedComponentUuids;
+        this.affectedComponentUuids = affectedComponentUuids == null ? new HashSet<>() : affectedComponentUuids;
     }
 
     public UUID getUuid() {
@@ -70,7 +70,7 @@ public class AffectedProject {
         return active;
     }
 
-    public List<UUID> getAffectedComponentUuids() {
+    public Set<UUID> getAffectedComponentUuids() {
         return affectedComponentUuids;
     }
 }

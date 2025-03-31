@@ -50,6 +50,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_API_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_SCAN_LIBRARY;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_SCAN_OS;
 import static org.testcontainers.containers.wait.strategy.Wait.forLogMessage;
 
 @RunWith(Parameterized.class)
@@ -120,6 +122,20 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
                 DataEncryption.encryptAsString("TrivyToken"),
                 SCANNER_TRIVY_API_TOKEN.getPropertyType(),
                 SCANNER_TRIVY_API_TOKEN.getDescription()
+        );
+        qm.createConfigProperty(
+                SCANNER_TRIVY_SCAN_LIBRARY.getGroupName(),
+                SCANNER_TRIVY_SCAN_LIBRARY.getPropertyName(),
+                SCANNER_TRIVY_SCAN_LIBRARY.getDefaultPropertyValue(),
+                SCANNER_TRIVY_SCAN_LIBRARY.getPropertyType(),
+                SCANNER_TRIVY_SCAN_LIBRARY.getDescription()
+        );
+        qm.createConfigProperty(
+                SCANNER_TRIVY_SCAN_OS.getGroupName(),
+                SCANNER_TRIVY_SCAN_OS.getPropertyName(),
+                SCANNER_TRIVY_SCAN_OS.getDefaultPropertyValue(),
+                SCANNER_TRIVY_SCAN_OS.getPropertyType(),
+                SCANNER_TRIVY_SCAN_OS.getDescription()
         );
     }
 

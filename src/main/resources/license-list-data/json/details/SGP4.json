@@ -1,16 +1,16 @@
 {
   "isDeprecatedLicenseId": false,
   "licenseText": "There is no license associated with the code and you may use it for any purpose—personal or commercial—as you wish. We ask only that you include citations in your documentation and source code to show the source of the code and provide links to the main page, to facilitate communications regarding any questions on the theory or source code.\n",
-  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eSGP4 Permission Notice\u003c\u003cendOptional\u003e\u003e\n\nThere is no license associated with the code and you may use it for any purpose—personal or commercial—as you wish. We ask only that you include citations in your documentation and source code to show the source of the code and provide links to the main page, to facilitate communications regarding any questions on the theory or source code.\n\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eSGP4 Permission Notice\u003c\u003cendOptional\u003e\u003e\nThere is no license associated with the code and you may use it for any purpose—personal or commercial—as you wish. We ask only that you include citations in your documentation and source code to show the source of the code and provide links to the main page, to facilitate communications regarding any questions on the theory or source code.\n\n",
   "name": "SGP4 Permission Notice",
   "licenseId": "SGP4",
   "crossRef": [
     {
-      "match": "false",
+      "match": "true",
       "url": "https://celestrak.org/publications/AIAA/2006-6753/faq.php",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:38:24Z",
+      "timestamp": "2024-12-30T17:54:53Z",
       "isWayBackLink": false,
       "order": 0
     }

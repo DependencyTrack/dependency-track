@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "(C) Copyright 1984 by Third Eye Software, Inc.\n\nThird Eye Software, Inc. grants reproduction and use rights to\nall parties, PROVIDED that this comment is maintained in the copy.\n\nThird Eye makes no claims about the applicability of this\nsymbol table to a particular use.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"(C) Copyright 1984 by Third Eye Software, Inc.  \";match\u003d\".{0,5000}\"\u003e\u003e\nThird Eye Software, Inc. grants reproduction and use rights to all parties, PROVIDED that this comment is maintained in the copy.\n\nThird Eye makes no claims about the applicability of this symbol table to a particular use.\n\n",
+  "name": "ThirdEye License",
+  "licenseComments": "This is a variant to MIPS license with extra paragraph.",
+  "comment": "This is a variant to MIPS license with extra paragraph.",
+  "licenseId": "ThirdEye",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://sourceware.org/cgit/binutils-gdb/tree/include/coff/symconst.h#n11",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:58:04Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://sourceware.org/cgit/binutils-gdb/tree/include/coff/symconst.h#n11"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003e\n            (C) Copyright 1984 by Third Eye Software, Inc.\n         \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            Third Eye Software, Inc. grants reproduction and use rights to\n            all parties, PROVIDED that this comment is maintained in the copy.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Third Eye makes no claims about the applicability of this\n            symbol table to a particular use.\n         \u003c/p\u003e\n\n      "
+}

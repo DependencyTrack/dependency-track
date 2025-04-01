@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "As a special exception, you have permission to link this library\nwith the CGAL library (http://www.cgal.org) and distribute executables,\nas long as you follow the requirements of the GNU GPL in regard to\nall of the software in the executable aside from CGAL.\n",
+  "name": "CGAL Linking Exception",
+  "seeAlso": [
+    "https://github.com/openscad/openscad/blob/openscad-2021.01/COPYING#L3",
+    "https://github.com/floriankirsch/OpenCSG/blob/opencsg-1-4-2-release/license.txt#L3"
+  ],
+  "licenseExceptionId": "CGAL-linking-exception",
+  "licenseExceptionTemplate": "As a special exception, you have permission to link this \u003c\u003cvar;name\u003d\"program\";original\u003d\"program\";match\u003d\"program|library\"\u003e\u003e with the CGAL library\u003c\u003cbeginOptional\u003e\u003e (http://www.cgal.org)\u003c\u003cendOptional\u003e\u003e and distribute executables, as long as you follow the requirements of the GNU GPL in regard to all of the software in the executable aside from CGAL.\n\n",
+  "exceptionTextHtml": "\n      \u003cp\u003e\n         As a special exception, you have permission to link this\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern program|library\"\u003e program\u003c/span\u003e\u003c/var\u003e with the CGAL library \n         \u003cvar class\u003d\"optional-license-text\"\u003e (http://www.cgal.org)\u003c/var\u003e and distribute executables, as\n         long as you follow the requirements of the GNU GPL in regard\n         to all of the software in the executable aside from CGAL.\n      \u003c/p\u003e\n\n   "
+}

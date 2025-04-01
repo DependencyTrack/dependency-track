@@ -4,6 +4,7 @@
   "standardLicenseTemplate": "insert GPL v2 license text here\n\nFont Exception\n\nAs a special exception, if you create a document which uses this font, and embed this font or unaltered portions of this font into the document, this font does not by itself cause the resulting document to be covered by the GNU General Public License. This exception does not however invalidate any other reasons why the document might be covered by the GNU General Public License. If you modify this font, you may extend this exception to your version of the font, but you are not obligated to do so. If you do not wish to do so, delete this exception statement from your version.\n\n",
   "name": "GNU General Public License v2.0 w/Font exception",
   "licenseComments": "DEPRECATED: Use license expression including main license, \"WITH\" operator, and identifier: Font-exception-2.0",
+  "comment": "DEPRECATED: Use license expression including main license, \"WITH\" operator, and identifier: Font-exception-2.0",
   "licenseId": "GPL-2.0-with-font-exception",
   "crossRef": [
     {
@@ -11,7 +12,7 @@
       "url": "https://www.gnu.org/licenses/gpl-faq.html#FontException",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:47:24Z",
+      "timestamp": "2024-12-30T18:02:58Z",
       "isWayBackLink": false,
       "order": 0
     }

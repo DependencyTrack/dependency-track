@@ -22,7 +22,7 @@ import jakarta.annotation.Generated;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Generated(value = "From dictionary version 4.14")
+@Generated(value = "From dictionary version 4.16")
 public final class CweDictionary {
 
     public static final Map<Integer, String> DICTIONARY = new LinkedHashMap<>();
@@ -1453,6 +1453,9 @@ public final class CweDictionary {
         DICTIONARY.put(1423, "Exposure of Sensitive Information caused by Shared Microarchitectural Predictor State that Influences Transient Execution");
         DICTIONARY.put(1424, "Weaknesses Addressed by ISA/IEC 62443 Requirements");
         DICTIONARY.put(1425, "Weaknesses in the 2023 CWE Top 25 Most Dangerous Software Weaknesses");
+        DICTIONARY.put(1426, "Improper Validation of Generative AI Output");
+        DICTIONARY.put(1427, "Improper Neutralization of Input Used for LLM Prompting");
+        DICTIONARY.put(1430, "Weaknesses in the 2024 CWE Top 25 Most Dangerous Software Weaknesses");
         DICTIONARY.put(2000, "Comprehensive CWE Dictionary");
         }
 

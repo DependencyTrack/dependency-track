@@ -49,7 +49,7 @@ public class CweResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(1426), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(1429), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
         Assert.assertEquals(100, json.size());
@@ -69,7 +69,7 @@ public class CweResourceTest extends ResourceTest {
                     .header(X_API_KEY, apiKey)
                     .get();
             assertThat(response.getStatus()).isEqualTo(200);
-            assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1426");
+            assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1429");
 
             final JsonArray cwesPage = parseJsonArray(response);
             assertThat(cwesPage).hasSizeLessThanOrEqualTo(100);

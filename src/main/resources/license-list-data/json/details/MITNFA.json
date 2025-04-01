@@ -6,11 +6,11 @@
   "licenseId": "MITNFA",
   "crossRef": [
     {
-      "match": "false",
+      "match": "true",
       "url": "https://fedoraproject.org/wiki/Licensing/MITNFA",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:50:13Z",
+      "timestamp": "2024-12-30T18:04:07Z",
       "isWayBackLink": false,
       "order": 0
     }

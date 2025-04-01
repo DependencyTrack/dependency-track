@@ -4,14 +4,15 @@
   "standardLicenseTemplate": "This software is copyrighted. Unlimited copying and redistribution of this package and/or its individual files are permitted as long as there are no modifications. Modifications, and redistribution of modifications, are also permitted, but only if the resulting package and/or files are renamed.\n\n",
   "name": "Knuth CTAN License",
   "licenseComments": "This license is very similar to Wsuipa.",
+  "comment": "This license is very similar to Wsuipa.",
   "licenseId": "Knuth-CTAN",
   "crossRef": [
     {
-      "match": "false",
+      "match": "true",
       "url": "https://ctan.org/license/knuth",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:35:14Z",
+      "timestamp": "2024-12-30T18:01:45Z",
       "isWayBackLink": false,
       "order": 0
     }

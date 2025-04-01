@@ -4,6 +4,7 @@
   "standardLicenseTemplate": "Permission is granted to make and distribute verbatim copies of this manual provided the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this manual under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.\n\nSince the Linux kernel and libraries are constantly changing, this manual page may be incorrect or out-of-date. The author(s) assume no responsibility for errors or omissions, or for damages resulting from the use of the information contained herein.\n\nFormatted or processed versions of this manual, if unaccompanied by the source, must acknowledge the copyright and authors of this work.\n\n",
   "name": "Linux man-pages Copyleft Variant",
   "licenseComments": "This is the same as Linux-man-pages-copyleft but omits the last sentence of the third paragraph.",
+  "comment": "This is the same as Linux-man-pages-copyleft but omits the last sentence of the third paragraph.",
   "licenseId": "Linux-man-pages-copyleft-var",
   "crossRef": [
     {
@@ -11,7 +12,7 @@
       "url": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man2/set_mempolicy.2#n5",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2024-08-19T17:36:32Z",
+      "timestamp": "2024-12-30T18:01:10Z",
       "isWayBackLink": false,
       "order": 0
     }

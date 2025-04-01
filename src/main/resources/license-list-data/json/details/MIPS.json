@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 1992, 1991, 1990 MIPS Computer Systems, Inc.\nMIPS Computer Systems, Inc. grants reproduction and use\nrights to all parties, PROVIDED that this comment is\nmaintained in the copy.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 1992, 1991, 1990 MIPS Computer Systems, Inc.\";match\u003d\".{0,5000}\"\u003e\u003e MIPS Computer Systems, Inc. grants reproduction and use rights to all parties, PROVIDED that this comment is maintained in the copy.\n\n",
+  "name": "MIPS License",
+  "licenseComments": "This is shorter version of ThirdEye license.",
+  "comment": "This is shorter version of ThirdEye license.",
+  "licenseId": "MIPS",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://sourceware.org/cgit/binutils-gdb/tree/include/coff/sym.h#n11",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:03:00Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://sourceware.org/cgit/binutils-gdb/tree/include/coff/sym.h#n11"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (c) 1992, 1991, 1990 MIPS Computer Systems, Inc.\n            \u003c/span\u003e\u003c/var\u003e\n            MIPS Computer Systems, Inc. grants reproduction and use\n            rights to all parties, PROVIDED that this comment is\n            maintained in the copy.\n         \u003c/p\u003e\n\n      "
+}

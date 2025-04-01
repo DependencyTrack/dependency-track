@@ -4,6 +4,7 @@
   "standardLicenseTemplate": "Permission to use, copy, modify, distribute, and sell this software and its documentation for any purpose is hereby granted without fee, provided that this permission notice appear in supporting documentation. This permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n",
   "name": "Historical Permission Notice and Disclaimer - sell xserver variant with MIT disclaimer",
   "licenseComments": "This is similar to HPND-sell-variant-MIT-disclaimer but it omits the copyright notice reproduction obligation.",
+  "comment": "This is similar to HPND-sell-variant-MIT-disclaimer but it omits the copyright notice reproduction obligation.",
   "licenseId": "HPND-sell-MIT-disclaimer-xserver",
   "crossRef": [
     {
@@ -11,7 +12,7 @@
       "url": "https://gitlab.freedesktop.org/xorg/xserver/-/blob/master/COPYING?ref_type\u003dheads#L1781",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:36:10Z",
+      "timestamp": "2024-12-30T18:05:44Z",
       "isWayBackLink": false,
       "order": 0
     }

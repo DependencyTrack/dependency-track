@@ -6,11 +6,11 @@
   "licenseId": "OML",
   "crossRef": [
     {
-      "match": "false",
+      "match": "true",
       "url": "https://fedoraproject.org/wiki/Licensing/Open_Market_License",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:44:25Z",
+      "timestamp": "2024-12-30T18:00:34Z",
       "isWayBackLink": false,
       "order": 0
     }

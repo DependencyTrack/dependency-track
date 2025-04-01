@@ -6,11 +6,11 @@
   "licenseId": "mplus",
   "crossRef": [
     {
-      "match": "false",
+      "match": "true",
       "url": "https://fedoraproject.org/wiki/Licensing:Mplus?rd\u003dLicensing/mplus",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:46:23Z",
+      "timestamp": "2024-12-30T17:55:09Z",
       "isWayBackLink": false,
       "order": 0
     }

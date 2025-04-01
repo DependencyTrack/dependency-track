@@ -1,0 +1,35 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "No Copyright\n\nThis work has been identified as being free of known restrictions under\ncopyright law, including all related and neighboring rights.\n\n\nYou can copy, modify, distribute and perform the work, even for commercial\npurposes, all without asking permission. See Other Information below.\n\nOther Information\n\nThe work may not be free of known copyright restrictions in all jurisdictions .\n\nPersons may have other rights in or related to the work, such as patent or\ntrademark rights, and others may have rights in how the work is used, such as\npublicity or privacy rights.\n\nIn some jurisdictions moral rights of the author may persist beyond the term of\ncopyright. These rights may include the right to be identified as the author\nand the right to object to derogatory treatments.\n\nUnless expressly stated otherwise, the person who identified the work makes no\nwarranties about the work, and disclaims liability for all uses of the work, to\nthe fullest extent permitted by applicable law.\n\nWhen using or citing the work, you should not imply endorsement by the author\nor the person who identified the work.\n",
+  "standardLicenseTemplate": "No Copyright\n\nThis work has been identified as being free of known restrictions under copyright law, including all related and neighboring rights.\n\nYou can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission. See Other Information below.\n\nOther Information\n\nThe work may not be free of known copyright restrictions in all jurisdictions.\n\nPersons may have other rights in or related to the work, such as patent or trademark rights, and others may have rights in how the work is used, such as publicity or privacy rights.\n\nIn some jurisdictions moral rights of the author may persist beyond the term of copyright. These rights may include the right to be identified as the author and the right to object to derogatory treatments.\n\nUnless expressly stated otherwise, the person who identified the work makes no warranties about the work, and disclaims liability for all uses of the work, to the fullest extent permitted by applicable law.\n\nWhen using or citing the work, you should not imply endorsement by the author or the person who identified the work.\n\n",
+  "name": "Creative    Commons Public Domain Mark 1.0 Universal",
+  "licenseComments": "As per Creative Commons, this is intended to provide a standard way to mark works that are no longer restricted by copyright to be marked as such in a standard and simple way. See https://creativecommons.org/public-domain/pdm/ for more information.",
+  "comment": "As per Creative Commons, this is intended to provide a standard way to mark works that are no longer restricted by copyright to be marked as such in a standard and simple way. See https://creativecommons.org/public-domain/pdm/ for more information.",
+  "licenseId": "CC-PDM-1.0",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://creativecommons.org/share-your-work/cclicenses/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:03:22Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:03:22Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://creativecommons.org/publicdomain/mark/1.0/",
+    "https://creativecommons.org/share-your-work/cclicenses/"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            No Copyright\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            This work has been identified as being free of known restrictions\n            under copyright law, including all related and neighboring rights.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            You can copy, modify, distribute and perform the\n            work, even for commercial purposes, all without\n            asking permission. See Other Information below.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Other Information\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            The work may not be free of known copyright\n            restrictions in all jurisdictions.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Persons may have other rights in or related to the work, such\n            as patent or trademark rights, and others may have rights in\n            how the work is used, such as publicity or privacy rights.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            In some jurisdictions moral rights of the author may\n            persist beyond the term of copyright. These rights\n            may include the right to be identified as the author\n            and the right to object to derogatory treatments.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Unless expressly stated otherwise, the person who\n            identified the work makes no warranties about the\n            work, and disclaims liability for all uses of the work,\n            to the fullest extent permitted by applicable law.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            When using or citing the work, you should not imply endorsement\n            by the author or the person who identified the work.\n         \u003c/p\u003e\n\n      "
+}

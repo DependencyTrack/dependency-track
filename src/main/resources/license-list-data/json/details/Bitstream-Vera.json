@@ -6,22 +6,22 @@
   "licenseId": "Bitstream-Vera",
   "crossRef": [
     {
-      "match": "false",
-      "url": "https://docubrain.com/sites/default/files/licenses/bitstream-vera.html",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-08-19T17:40:11Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "N/A",
       "url": "https://web.archive.org/web/20080207013128/http://www.gnome.org/fonts/",
       "isValid": false,
       "isLive": false,
-      "timestamp": "2024-08-19T17:40:11Z",
+      "timestamp": "2024-12-30T17:56:07Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "true",
+      "url": "https://docubrain.com/sites/default/files/licenses/bitstream-vera.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:56:07Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

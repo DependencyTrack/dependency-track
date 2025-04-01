@@ -7,11 +7,11 @@
   "licenseId": "FSFAP",
   "crossRef": [
     {
-      "match": "false",
+      "match": "true",
       "url": "https://www.gnu.org/prep/maintain/html_node/License-Notices-for-Other-Files.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:42:14Z",
+      "timestamp": "2024-12-30T17:55:19Z",
       "isWayBackLink": false,
       "order": 0
     }
@@ -20,5 +20,5 @@
     "https://www.gnu.org/prep/maintain/html_node/License-Notices-for-Other-Files.html"
   ],
   "isOsiApproved": false,
-  "licenseTextHtml": "\n      \u003cp\u003eCopying and distribution of this file, with or without\n         modification, are permitted in any medium without royalty\n         provided the copyright notice and this notice are preserved.\n         This file is offered as-is, without \u003cvar class\u003d\"replaceable-license-text\"\u003e any warranty\u003c/var\u003e.\u003c/p\u003e\n\n    "
+  "licenseTextHtml": "\n      \u003cp\u003eCopying and distribution of this file, with or without\n         modification, are permitted in any medium without royalty\n         provided the copyright notice and this notice are preserved.\n         This file is offered as-is, without \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern warranty of any kind|any warranty\"\u003e any warranty\u003c/span\u003e\u003c/var\u003e.\u003c/p\u003e\n\n    "
 }

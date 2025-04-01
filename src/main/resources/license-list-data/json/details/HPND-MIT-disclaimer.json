@@ -1,17 +1,18 @@
 {
   "isDeprecatedLicenseId": false,
   "licenseText": "        LICENSE\n        \u003d\u003d\u003d\u003d\u003d\u003d\u003d\n \nPermission to use, copy, modify, and distribute this software and its\ndocumentation for any purpose and without fee is hereby granted, provided\nthat the original copyright notices appear in all copies and that both\ncopyright notice and this permission notice appear in supporting\ndocumentation, and that the name of the author not be used in advertising\nor publicity pertaining to distribution of the software without specific\nprior written permission.\n \nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL\nTHE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\nFROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER\nDEALINGS IN THE SOFTWARE.\n",
-  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eLICENSE\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\n\u003c\u003cendOptional\u003e\u003e\n\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose and without fee is hereby granted, provided that the original copyright notices appear in all copies and that both copyright notice and this permission notice appear in supporting documentation, and that the name of the author not be used in advertising or publicity pertaining to distribution of the software without specific prior written permission.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eLICENSE\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\n\u003c\u003cendOptional\u003e\u003e\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose and without fee is hereby granted, provided that the original copyright notices appear in all copies and that both copyright notice and this permission notice appear in supporting documentation, and that the name of the author not be used in advertising or publicity pertaining to distribution of the software without specific prior written permission.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n",
   "name": "Historical Permission Notice and Disclaimer with MIT disclaimer",
   "licenseComments": "This is essentially HPND with the disclaimer from MIT license.",
+  "comment": "This is essentially HPND with the disclaimer from MIT license.",
   "licenseId": "HPND-MIT-disclaimer",
   "crossRef": [
     {
-      "match": "false",
+      "match": "true",
       "url": "https://metacpan.org/release/NLNETLABS/Net-DNS-SEC-1.22/source/LICENSE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:48:27Z",
+      "timestamp": "2024-12-30T18:00:31Z",
       "isWayBackLink": false,
       "order": 0
     }

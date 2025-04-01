@@ -6,11 +6,11 @@
   "licenseId": "Baekmuk",
   "crossRef": [
     {
-      "match": "false",
+      "match": "true",
       "url": "https://fedoraproject.org/wiki/Licensing:Baekmuk?rd\u003dLicensing/Baekmuk",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:40:33Z",
+      "timestamp": "2024-12-30T18:00:05Z",
       "isWayBackLink": false,
       "order": 0
     }

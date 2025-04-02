@@ -913,6 +913,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if(clonedProject.getParent() != null && clonedProject.getParent().getCollectionLogic() != ProjectCollectionLogic.NONE) {
             Event.dispatch(new ProjectMetricsUpdateEvent(clonedProject.getParent().getUuid()));
         }
+        Event.dispatch(new ProjectMetricsUpdateEvent(clonedProject.getUuid()));
 
         return clonedProject;
     }

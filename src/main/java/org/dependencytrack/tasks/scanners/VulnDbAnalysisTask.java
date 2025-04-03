@@ -176,8 +176,12 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
             for (org.dependencytrack.parser.vulndb.model.Vulnerability vulnDbVuln :
                 (List<org.dependencytrack.parser.vulndb.model.Vulnerability>) results.getResults()) {
                 // Synchronize the vulnerability, which may create, update, or return null
-                Vulnerability vulnerability = qm.synchronizeVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
-                if (vulnerability == null) continue; // Skip processing if no changes
+                final Vulnerability convertedVuln = ModelConverter.convert(qm, vulnDbVuln);
+                Vulnerability vulnerability = qm.synchronizeVulnerability(convertedVuln, false);
+                if (vulnerability == null) {
+                    // Vulnerability already exists but is unchanged.
+                    vulnerability = qm.getVulnerabilityByVulnId(convertedVuln.getSource(), convertedVuln.getVulnId());
+                }
                 NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, vulnerableComponent, vulnerabilityAnalysisLevel);
                 qm.addVulnerability(vulnerability, vulnerableComponent, this.getAnalyzerIdentity());
                 addVulnerabilityToCache(vulnerableComponent, vulnerability);

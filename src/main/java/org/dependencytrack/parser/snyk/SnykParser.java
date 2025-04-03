@@ -110,7 +110,10 @@ public class SnykParser {
             }
             final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));
             synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-            if (synchronizedVulnerability == null) return vulnerability;
+            if (synchronizedVulnerability == null) {
+                // Vulnerability already exists but is unchanged.
+                return qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
+            }
             qm.persist(vsList);
             qm.updateAffectedVersionAttributions(synchronizedVulnerability, vsList, Vulnerability.Source.SNYK);
             vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.SNYK);

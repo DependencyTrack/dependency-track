@@ -321,6 +321,123 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Override
+    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
+        super.testPublishWithScheduledNewVulnerabilitiesNotification();
+
+        assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerabilities Summary");
+            assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
+            final MimeMultipart content = (MimeMultipart) message.getContent();
+            assertThat(content.getCount()).isEqualTo(1);
+            assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
+            assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringWhitespace("""
+                    New Vulnerabilities Summary
+                    
+                    --------------------------------------------------------------------------------
+                    
+                    Overview:
+                    - New Vulnerabilities: 1 (Suppressed: 1)
+                    - Affected Projects:   1
+                    - Affected Components: 1
+                    - Since:               1970-01-01T00:01:06Z
+                    
+                    --------------------------------------------------------------------------------
+                    
+                    Project Summaries:
+                    
+                    - Project: [projectName : projectVersion]
+                      Project URL: /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
+                    
+                      + New Vulnerabilities Of Severity MEDIUM: 1 (Suppressed: 0)
+                    
+                    --------------------------------------------------------------------------------
+                    
+                    Vulnerability Details:
+                    
+                    - Project: [projectName : projectVersion]
+                      Project URL: /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
+                    
+                      + Vulnerability ID:       INT-001
+                        Vulnerability Source:   INTERNAL
+                        Vulnerability Severity: MEDIUM
+                        Vulnerability URL:      /vulnerability/?source=INTERNAL&vulnId=INT-001
+                        Component:              componentName : componentVersion
+                        Component URL:          /component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6
+                        Timestamp:              1970-01-01T18:31:06Z
+                        Analysis State:         FALSE_POSITIVE
+                        Suppressed:             true
+                    
+                    --------------------------------------------------------------------------------
+                    
+                    Identified 1 new vulnerabilities across 1 projects and 1 components since 1970-01-01T00:01:06Z, of which 1 are suppressed.
+                    
+                    --------------------------------------------------------------------------------
+                    
+                    1970-01-01T18:31:06.000000666
+                    """);
+        });
+    }
+
+    @Override
+    public void testPublishWithScheduledNewPolicyViolationsNotification() {
+        super.testPublishWithScheduledNewPolicyViolationsNotification();
+
+        assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Policy Violations Summary");
+            assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
+            final MimeMultipart content = (MimeMultipart) message.getContent();
+            assertThat(content.getCount()).isEqualTo(1);
+            assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
+
+            assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringWhitespace("""
+                    New Policy Violations Summary
+                    
+                    --------------------------------------------------------------------------------
+                    
+                    Overview:
+                    - New Violations:      1 (Suppressed: 0)
+                      - Of Type LICENSE: 1
+                    - Affected Projects:   1
+                    - Affected Components: 1
+                    - Since:               1970-01-01T00:01:06Z
+                    
+                    --------------------------------------------------------------------------------
+                    
+                    Project Summaries:
+                    
+                    - Project: [projectName : projectVersion]
+                      Project URL: /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
+                    
+                      + New Violations Of Type LICENSE: 1 (Suppressed: 0)
+                    
+                    --------------------------------------------------------------------------------
+                    
+                    Violation Details:
+                    
+                    - Project: [projectName : projectVersion]
+                      Project URL: /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
+                    
+                      + Policy:                policyName
+                        Policy Condition:      AGE NUMERIC_EQUAL P666D
+                        Policy Violation Type: LICENSE
+                        Component:             componentName : componentVersion
+                        Component URL:         /component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6
+                        Timestamp:             1970-01-01T18:31:06Z
+                        Analysis State:        APPROVED
+                        Suppressed:            false
+                    
+                    --------------------------------------------------------------------------------
+                    
+                    Identified 1 new policy violations across 1 project and 1 components since 1970-01-01T00:01:06Z, of which 0 are suppressed.
+                    
+                    --------------------------------------------------------------------------------
+                    
+                    1970-01-01T18:31:06.000000666
+                    """);
+        });
+    }
+
+    @Override
     public void testInformWithNewVulnerableDependencyNotification() {
         super.testInformWithNewVulnerableDependencyNotification();
 

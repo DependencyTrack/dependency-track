@@ -1,4 +1,10 @@
-{{ notification.title }}
+{#- @pebvariable name="notification" type="alpine.notification.Notification" #}
+{#- @pebvariable name="subject" type="Object" #}
+{#- @pebvariable name="timestamp" type="String" #}
+{#- @pebvariable name="baseUrl" type="String" #}
+{#- @pebvariable name="newViolationsSummarySubject" type="org.dependencytrack.notification.vo.NewPolicyViolationsSummary" #}
+{#- @pebvariable name="newVulnsSummarySubject" type="org.dependencytrack.notification.vo.NewVulnerabilitiesSummary" #}
+{{- notification.title }}
 
 --------------------------------------------------------------------------------
 {% if notification.group == "NEW_VULNERABILITY" %}
@@ -106,11 +112,96 @@ Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}
 Description:       {{ subject.project.description }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "NEW_POLICY_VIOLATIONS_SUMMARY" %}
+{% set newViolationsSummarySubject = subject -%}
+Overview:
+- New Violations:      {{ newViolationsSummarySubject.overview.totalNewViolationsCount }} (Suppressed: {{ newViolationsSummarySubject.overview.suppressedNewViolationsCount }})
+{%- for newViolationsCountByType in newViolationsSummarySubject.overview.newViolationsCountByType %}
+  - Of Type {{ newViolationsCountByType.key.name }}: {{ newViolationsCountByType.value }}
+{%- endfor %}
+- Affected Projects:   {{ newViolationsSummarySubject.overview.affectedProjectsCount }}
+- Affected Components: {{ newViolationsSummarySubject.overview.affectedComponentsCount }}
+- Since:               {{ newViolationsSummarySubject.since | date("yyyy-MM-dd'T'HH:mm:ssX", timeZone="UTC") }}
+
+{% if newViolationsSummarySubject.summary.projectSummaries is not empty -%}
+--------------------------------------------------------------------------------
+
+Project Summaries:
+{% for summaryByProject in newViolationsSummarySubject.summary.projectSummaries %}
+- Project: [{{ summaryByProject.key.name }} : {{ summaryByProject.key.version }}]
+  Project URL: {{ baseUrl }}/projects/{{ summaryByProject.key.uuid }}
+{% for entry in summaryByProject.value.totalNewViolationsCountByType %}
+  + New Violations Of Type {{ entry.key.name }}: {{ entry.value }} (Suppressed: {{ summaryByProject.value.suppressedNewViolationsCountByType.get(entry.key) | default(0) }})
+{%- endfor %}
+{% endfor %}
+{%- endif %}
+{% if newViolationsSummarySubject.details.violationsByProject is not empty -%}
+--------------------------------------------------------------------------------
+
+Violation Details:
+{% for violationsByProject in newViolationsSummarySubject.details.violationsByProject %}
+- Project: [{{ violationsByProject.key.name }} : {{ violationsByProject.key.version }}]
+  Project URL: {{ baseUrl }}/projects/{{ violationsByProject.key.uuid }}
+{% for violation in violationsByProject.value %}
+  + Policy:                {{ violation.policyCondition.policy.name }}
+    Policy Condition:      {{ violation.policyCondition.subject }} {{ violation.policyCondition.operator }} {{ violation.policyCondition.value | trim | abbreviate(64) }}
+    Policy Violation Type: {{ violation.type }}
+    Component:             {{ violation.component }}
+    Component URL:         {{ baseUrl }}/component/?uuid={{ violation.component.uuid }}
+    Timestamp:             {{ violation.timestamp | date("yyyy-MM-dd'T'HH:mm:ssX", timeZone="UTC") }}
+    Analysis State:        {{ violation.analysisState | default("-") }}
+    Suppressed:            {{ violation.suppressed }}
+{% endfor -%}
+{% endfor -%}
+{% endif %}
+{% elseif notification.group == "NEW_VULNERABILITIES_SUMMARY" %}
+{% set newVulnsSummarySubject = subject -%}
+Overview:
+- New Vulnerabilities: {{ newVulnsSummarySubject.overview.totalNewVulnerabilitiesCount }} (Suppressed: {{ newVulnsSummarySubject.overview.suppressedNewVulnerabilitiesCount }})
+{% for newVulnsCountBySeverity in newVulnsSummarySubject.overview.newVulnerabilitiesCountBySeverity %}
+  - Of Severity {{ newVulnsCountBySeverity.key.name }}: {{ newVulnsCountBySeverity.value }}
+{%- endfor -%}
+- Affected Projects:   {{ newVulnsSummarySubject.overview.affectedProjectsCount }}
+- Affected Components: {{ newVulnsSummarySubject.overview.affectedComponentsCount }}
+- Since:               {{ newVulnsSummarySubject.since | date("yyyy-MM-dd'T'HH:mm:ssX", timeZone="UTC") }}
+
+{% if newVulnsSummarySubject.summary.projectSummaries is not empty -%}
+--------------------------------------------------------------------------------
+
+Project Summaries:
+{% for summaryByProject in newVulnsSummarySubject.summary.projectSummaries %}
+- Project: [{{ summaryByProject.key.name }} : {{ summaryByProject.key.version }}]
+  Project URL: {{ baseUrl }}/projects/{{ summaryByProject.key.uuid }}
+{% for entry in summaryByProject.value.totalNewVulnerabilitiesCountBySeverity %}
+  + New Vulnerabilities Of Severity {{ entry.key.name }}: {{ entry.value }} (Suppressed: {{ summaryByProject.value.suppressedNewVulnerabilitiesBySeverity.get(entry.key) | default(0) }})
+{%- endfor %}
+{% endfor %}
+{%- endif %}
+{% if newVulnsSummarySubject.details.findingsByProject is not empty -%}
+--------------------------------------------------------------------------------
+
+Vulnerability Details:
+{% for findingsByProject in newVulnsSummarySubject.details.findingsByProject %}
+- Project: [{{ findingsByProject.key.name }} : {{ findingsByProject.key.version }}]
+  Project URL: {{ baseUrl }}/projects/{{ findingsByProject.key.uuid }}
+{% for finding in findingsByProject.value %}
+  + Vulnerability ID:       {{ finding.vulnerability.vulnId }}
+    Vulnerability Source:   {{ finding.vulnerability.source }}
+    Vulnerability Severity: {{ finding.vulnerability.severity }}
+    Vulnerability URL:      {{ baseUrl }}/vulnerability/?source={{ finding.vulnerability.source }}&vulnId={{ finding.vulnerability.vulnId }}
+    Component:              {{ finding.component }}
+    Component URL:          {{ baseUrl }}/component/?uuid={{ finding.component.uuid }}
+    Timestamp:              {{ finding.attributedOn | date("yyyy-MM-dd'T'HH:mm:ssX", timeZone="UTC") }}
+    Analysis State:         {{ finding.analysisState | default("-") }}
+    Suppressed:             {{ finding.suppressed }}
+{% endfor -%}
+{% endfor -%}
+{% endif %}
 {% else %}
 Level:     {{ notification.level }}
 Scope:     {{ notification.scope }}
 Group:     {{ notification.group }}
-{% endif %}
+{% endif -%}
 --------------------------------------------------------------------------------
 
 {{ notification.content }}

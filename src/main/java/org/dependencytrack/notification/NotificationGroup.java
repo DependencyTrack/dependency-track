@@ -18,33 +18,48 @@
  */
 package org.dependencytrack.notification;
 
+import org.dependencytrack.model.NotificationTriggerType;
+
 public enum NotificationGroup {
 
     // System Groups
-    CONFIGURATION,
-    DATASOURCE_MIRRORING,
-    REPOSITORY,
-    INTEGRATION,
-    INDEXING_SERVICE,
-    FILE_SYSTEM,
-    ANALYZER,
+    CONFIGURATION(NotificationTriggerType.EVENT),
+    DATASOURCE_MIRRORING(NotificationTriggerType.EVENT),
+    REPOSITORY(NotificationTriggerType.EVENT),
+    INTEGRATION(NotificationTriggerType.EVENT),
+    INDEXING_SERVICE(NotificationTriggerType.EVENT),
+    FILE_SYSTEM(NotificationTriggerType.EVENT),
+    ANALYZER(NotificationTriggerType.EVENT),
 
     // Portfolio Groups
-    NEW_VULNERABILITY,
-    NEW_VULNERABLE_DEPENDENCY,
+    NEW_VULNERABILITY(NotificationTriggerType.EVENT),
+    NEW_VULNERABILITIES_SUMMARY(NotificationTriggerType.SCHEDULE),
+    NEW_VULNERABLE_DEPENDENCY(NotificationTriggerType.EVENT),
     //NEW_OUTDATED_COMPONENT,
     //FIXED_VULNERABILITY,
     //FIXED_OUTDATED,
     //GLOBAL_AUDIT_CHANGE,
-    PROJECT_AUDIT_CHANGE,
-    BOM_CONSUMED,
-    BOM_PROCESSED,
-    BOM_PROCESSING_FAILED,
-    BOM_VALIDATION_FAILED,
-    VEX_CONSUMED,
-    VEX_PROCESSED,
-    POLICY_VIOLATION,
-    PROJECT_CREATED,
-    USER_CREATED,
-    USER_DELETED
+    PROJECT_AUDIT_CHANGE(NotificationTriggerType.EVENT),
+    BOM_CONSUMED(NotificationTriggerType.EVENT),
+    BOM_PROCESSED(NotificationTriggerType.EVENT),
+    BOM_PROCESSING_FAILED(NotificationTriggerType.EVENT),
+    BOM_VALIDATION_FAILED(NotificationTriggerType.EVENT),
+    VEX_CONSUMED(NotificationTriggerType.EVENT),
+    VEX_PROCESSED(NotificationTriggerType.EVENT),
+    POLICY_VIOLATION(NotificationTriggerType.EVENT),
+    NEW_POLICY_VIOLATIONS_SUMMARY(NotificationTriggerType.SCHEDULE),
+    PROJECT_CREATED(NotificationTriggerType.EVENT),
+    USER_CREATED(NotificationTriggerType.EVENT),
+    USER_DELETED(NotificationTriggerType.EVENT);
+
+    private final NotificationTriggerType supportedTriggerType;
+
+    NotificationGroup(final NotificationTriggerType supportedTriggerType) {
+        this.supportedTriggerType = supportedTriggerType;
+    }
+
+    public NotificationTriggerType getSupportedTriggerType() {
+        return supportedTriggerType;
+    }
+
 }

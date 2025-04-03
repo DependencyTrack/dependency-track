@@ -847,4 +847,97 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         """)));
     }
 
+    @Override
+    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
+        super.testPublishWithScheduledNewVulnerabilitiesNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson(/* language=JSON */ """
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "NEW_VULNERABILITIES_SUMMARY"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*INFORMATIONAL*  |  *PORTFOLIO*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "New Vulnerabilities Summary",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "Identified 1 new vulnerabilities across 1 projects and 1 components since 1970-01-01T00:01:06Z, of which 1 are suppressed.",
+                                "type": "plain_text"
+                              }
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testPublishWithScheduledNewPolicyViolationsNotification() {
+        super.testPublishWithScheduledNewPolicyViolationsNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson(/* language=JSON */ """
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "NEW_POLICY_VIOLATIONS_SUMMARY"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*INFORMATIONAL*  |  *PORTFOLIO*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "New Policy Violations Summary",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "Identified 1 new policy violations across 1 project and 1 components since 1970-01-01T00:01:06Z, of which 0 are suppressed.",
+                                "type": "plain_text"
+                              }
+                            }
+                          ]
+                        }
+                        """)));
+    }
 }

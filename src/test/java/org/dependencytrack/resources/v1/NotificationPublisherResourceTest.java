@@ -30,12 +30,14 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.NotificationTriggerType;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.publisher.SlackPublisher;
+import org.dependencytrack.notification.publisher.WebhookPublisher;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
@@ -50,11 +52,15 @@ import jakarta.ws.rs.core.Form;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
@@ -380,6 +386,38 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     }
 
     @Test
+    public void testScheduledNotificationRuleTest() {
+        final var notificationPublisher = qm.getDefaultNotificationPublisher(WebhookPublisher.class);
+        final NotificationRule rule = qm.createScheduledNotificationRule(
+                "rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, notificationPublisher);
+        rule.setNotifyOn(
+                Arrays.stream(NotificationGroup.values())
+                        .filter(group -> group.getSupportedTriggerType() == NotificationTriggerType.SCHEDULE)
+                        .collect(Collectors.toSet()));
+
+        final var wireMock = new WireMockServer(options().dynamicPort());
+        wireMock.start();
+        try {
+            rule.setPublisherConfig("{\"destination\":\"%s\"}".formatted(wireMock.baseUrl()));
+
+            wireMock.stubFor(WireMock.post(WireMock.anyUrl())
+                    .willReturn(aResponse()
+                            .withStatus(200)));
+
+            final Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + rule.getUuid()).request()
+                    .header(X_API_KEY, apiKey)
+                    .post(Entity.entity("", MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+            assertThat(response.getStatus()).isEqualTo(200);
+
+            await("Notification Delivery")
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(() -> wireMock.verify(rule.getNotifyOn().size(), anyRequestedFor(anyUrl())));
+        } finally {
+            wireMock.stop();
+        }
+    }
+
+    @Test
     public void testNotificationRuleJiraTest() throws Exception {
         new DefaultObjectGenerator().loadDefaultNotificationPublishers();
 
@@ -399,6 +437,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         notificationRule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
         notificationRule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
         notificationRule.setScope(NotificationScope.PORTFOLIO);
+        notificationRule.setTriggerType(NotificationTriggerType.EVENT);
         qm.persist(notificationRule);
 
         final var wireMock = new WireMockServer(options().dynamicPort());

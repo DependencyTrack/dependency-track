@@ -21,11 +21,17 @@ package org.dependencytrack.persistence;
 import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
+import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
+import org.dependencytrack.model.Component;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.NotificationTriggerType;
+import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 
@@ -33,7 +39,10 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
@@ -73,11 +82,35 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
             rule.setScope(scope);
             rule.setNotificationLevel(level);
             rule.setPublisher(publisher);
+            rule.setTriggerType(NotificationTriggerType.EVENT);
             rule.setEnabled(true);
             rule.setNotifyChildren(true);
             rule.setLogSuccessfulPublish(false);
             return persist(rule);
         });
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    @Override
+    public NotificationRule createScheduledNotificationRule(
+            final String name,
+            final NotificationScope scope,
+            final NotificationLevel level,
+            final NotificationPublisher publisher) {
+        final var rule = new NotificationRule();
+        rule.setName(name);
+        rule.setScope(scope);
+        rule.setNotificationLevel(level);
+        rule.setPublisher(publisher);
+        rule.setTriggerType(NotificationTriggerType.SCHEDULE);
+        rule.setEnabled(false);
+        rule.setScheduleCron("0 * * * *");
+        rule.setScheduleLastTriggeredAt(new Date());
+        rule.setScheduleSkipUnchanged(false);
+        rule.updateScheduleNextTriggerAt();
+        return persist(rule);
     }
 
     /**
@@ -87,7 +120,36 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      */
     public NotificationRule updateNotificationRule(NotificationRule transientRule) {
         return callInTransaction(() -> {
-            final NotificationRule rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
+            final var rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
+            if (transientRule.getTriggerType() != null
+                && rule.getTriggerType() != transientRule.getTriggerType()) {
+                throw new IllegalArgumentException("Trigger type can not be changed");
+            }
+
+            if (rule.getTriggerType() == NotificationTriggerType.SCHEDULE) {
+                final List<NotificationGroup> invalidGroups = transientRule.getNotifyOn().stream()
+                        .filter(group -> group.getSupportedTriggerType() != NotificationTriggerType.SCHEDULE)
+                        .toList();
+                if (!invalidGroups.isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Groups %s are not supported for trigger type %s".formatted(
+                                    invalidGroups, rule.getTriggerType()));
+                }
+
+                rule.setScheduleCron(transientRule.getScheduleCron());
+                rule.setScheduleSkipUnchanged(transientRule.isScheduleSkipUnchanged());
+                rule.updateScheduleNextTriggerAt();
+            } else if (rule.getTriggerType() == NotificationTriggerType.EVENT) {
+                final List<NotificationGroup> invalidGroups = transientRule.getNotifyOn().stream()
+                        .filter(group -> group.getSupportedTriggerType() != NotificationTriggerType.EVENT)
+                        .toList();
+                if (!invalidGroups.isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Groups %s are not supported for trigger type %s".formatted(
+                                    invalidGroups, rule.getTriggerType()));
+                }
+            }
+
             rule.setName(transientRule.getName());
             rule.setEnabled(transientRule.isEnabled());
             rule.setNotifyChildren(transientRule.isNotifyChildren());
@@ -96,25 +158,37 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
             rule.setPublisherConfig(transientRule.getPublisherConfig());
             rule.setNotifyOn(transientRule.getNotifyOn());
             bind(rule, resolveTags(transientRule.getTags()));
-            return persist(rule);
+            return rule;
         });
     }
 
     /**
      * Returns a paginated list of all notification rules.
+     *
+     * @param triggerTypeFilter The {@link NotificationTriggerType} to filter by.
      * @return a paginated list of NotificationRules
      */
-    public PaginatedResult getNotificationRules() {
+    public PaginatedResult getNotificationRules(final NotificationTriggerType triggerTypeFilter) {
+        final var filterParts = new ArrayList<String>();
+        final var filterParams = new HashMap<String, Object>();
+
+        if (triggerTypeFilter != null) {
+            filterParts.add("triggerType == :triggerType");
+            filterParams.put("triggerType", triggerTypeFilter);
+        }
+        if (this.filter != null) {
+            filterParts.add("name.toLowerCase().matches(:name) || publisher.name.toLowerCase().matches(:name)");
+            filterParams.put("name", ".*" + filter.toLowerCase() + ".*");
+        }
+
         final Query<NotificationRule> query = pm.newQuery(NotificationRule.class);
-        if (orderBy == null) {
+        if (!filterParts.isEmpty()) {
+            query.setFilter(String.join(" && ", filterParts));
+        }
+        if (this.orderBy == null) {
             query.setOrdering("name asc");
         }
-        if (filter != null) {
-            query.setFilter("name.toLowerCase().matches(:name) || publisher.name.toLowerCase().matches(:name)");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, filterString);
-        }
-        return execute(query);
+        return execute(query, filterParams);
     }
 
     /**
@@ -289,6 +363,74 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
     @Override
     public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
         return bind(notificationRule, tags, /* keepExisting */ false);
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    public List<NotificationRule> getDueScheduledNotificationRules() {
+        final Query<NotificationRule> query = pm.newQuery(NotificationRule.class);
+        query.setFilter("triggerType == :triggerType && scheduleNextTriggerAt < :now && enabled");
+        query.setNamedParameters(Map.ofEntries(
+                Map.entry("triggerType", NotificationTriggerType.SCHEDULE),
+                Map.entry("now", new Date())));
+        return executeAndCloseList(query);
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    public List<Project> getProjectsForNotificationById(final Collection<Long> ids) {
+        final Query<Project> query = pm.newQuery(Project.class);
+        query.setFilter(":ids.contains(id)");
+        query.setParameters(ids);
+
+        try (var ignored = new ScopedCustomization(pm)
+                .withFetchGroup(Project.FetchGroup.NOTIFICATION.name())) {
+            return executeAndCloseList(query);
+        }
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    public List<Component> getComponentsForNotificationById(final Collection<Long> ids) {
+        final Query<Component> query = pm.newQuery(Component.class);
+        query.setFilter(":ids.contains(id)");
+        query.setParameters(ids);
+
+        try (var ignored = new ScopedCustomization(pm)
+                .withFetchGroup(Component.FetchGroup.NOTIFICATION.name())) {
+            return executeAndCloseList(query);
+        }
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    public List<PolicyCondition> getPolicyConditionsForNotificationById(final Collection<Long> ids) {
+        final Query<PolicyCondition> query = pm.newQuery(PolicyCondition.class);
+        query.setFilter(":ids.contains(id)");
+        query.setParameters(ids);
+
+        try (var ignored = new ScopedCustomization(pm)
+                .withFetchGroup(PolicyCondition.FetchGroup.NOTIFICATION.name())) {
+            return executeAndCloseList(query);
+        }
+    }
+
+    /**
+     * @since 4.13.0
+     */
+    public List<Vulnerability> getVulnerabilitiesForNotificationById(final Collection<Long> ids) {
+        final Query<Vulnerability> query = pm.newQuery(Vulnerability.class);
+        query.setFilter(":ids.contains(id)");
+        query.setParameters(ids);
+
+        try (var ignored = new ScopedCustomization(pm)
+                .withFetchGroup(Vulnerability.FetchGroup.NOTIFICATION.name())) {
+            return executeAndCloseList(query);
+        }
     }
 
 }

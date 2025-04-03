@@ -32,29 +32,46 @@ Notification levels behave identical to logging levels:
 * Configuring a rule for level WARNING will match notifications of level WARNING and ERROR
 * Configuring a rule for level ERROR will match notifications of level ERROR
 
+## Triggers
+
+Notifications may be triggered via one of two ways:
+
+| Trigger  | Description                                                 |
+|:---------|:------------------------------------------------------------|
+| Event    | An event is emitted by the system under certain conditions. |
+| Schedule | The notification is sent based on a planned schedule.       |
+
+This differentiation is new as of v4.13.0. In older versions, all notifications were triggered by events.
+
+* Notifications triggered by events are ideal for near real-time automation, and integrations into chat platforms.
+* Notifications triggered on schedule are typically used to communicate high-level summaries,
+and are thus a better fit for reporting purposes.
+
 ## Groups
 
 Each scope contains a set of notification groups that can be subscribed to. Some groups contain notifications of
 multiple levels, while others can only ever have a single level.
 
-| Scope     | Group                     | Level(s)      | Description                                                                                                                       |
-|-----------|---------------------------|---------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| SYSTEM    | ANALYZER                  | (Any)         | Notifications generated as a result of interacting with an external source of vulnerability intelligence                          |
-| SYSTEM    | DATASOURCE_MIRRORING      | (Any)         | Notifications generated when performing mirroring of one of the supported datasources such as the NVD                             |
-| SYSTEM    | INDEXING_SERVICE          | (Any)         | Notifications generated as a result of performing maintenance on Dependency-Tracks internal index used for global searching       |
-| SYSTEM    | FILE_SYSTEM               | (Any)         | Notifications generated as a result of a file system operation. These are typically only generated on error conditions            |
-| SYSTEM    | REPOSITORY                | (Any)         | Notifications generated as a result of interacting with one of the supported repositories such as Maven Central, RubyGems, or NPM |
-| SYSTEM    | USER_CREATED                | INFORMATIONAL         | Notifications generated as a result of a user creation |
-| SYSTEM    | USER_DELETED                | INFORMATIONAL         | Notifications generated as a result of a user deletion |
-| PORTFOLIO | NEW_VULNERABILITY         | INFORMATIONAL | Notifications generated whenever a new vulnerability is identified                                                                |
-| PORTFOLIO | NEW_VULNERABLE_DEPENDENCY | INFORMATIONAL | Notifications generated as a result of a vulnerable component becoming a dependency of a project                                  |
-| PORTFOLIO | GLOBAL_AUDIT_CHANGE       | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global)              |
-| PORTFOLIO | PROJECT_AUDIT_CHANGE      | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                         |
-| PORTFOLIO | BOM_CONSUMED              | INFORMATIONAL | Notifications generated whenever a supported BOM is ingested and identified                                                       |
-| PORTFOLIO | BOM_PROCESSED             | INFORMATIONAL | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
-| PORTFOLIO | BOM_PROCESSING_FAILED     | ERROR         | Notifications generated whenever a BOM upload process fails                                                                       |
-| PORTFOLIO | BOM_VALIDATION_FAILED     | ERROR         | Notifications generated whenever an invalid BOM is uploaded                                                                       |
-| PORTFOLIO | POLICY_VIOLATION          | INFORMATIONAL | Notifications generated whenever a policy violation is identified                                                                 |
+| Scope     | Group                         | Trigger  | Level(s)      | Description                                                                                                                       |
+|-----------|-------------------------------|----------|---------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| SYSTEM    | ANALYZER                      | Event    | (Any)         | Notifications generated as a result of interacting with an external source of vulnerability intelligence                          |
+| SYSTEM    | DATASOURCE_MIRRORING          | Event    | (Any)         | Notifications generated when performing mirroring of one of the supported datasources such as the NVD                             |
+| SYSTEM    | INDEXING_SERVICE              | Event    | (Any)         | Notifications generated as a result of performing maintenance on Dependency-Tracks internal index used for global searching       |
+| SYSTEM    | FILE_SYSTEM                   | Event    | (Any)         | Notifications generated as a result of a file system operation. These are typically only generated on error conditions            |
+| SYSTEM    | REPOSITORY                    | Event    | (Any)         | Notifications generated as a result of interacting with one of the supported repositories such as Maven Central, RubyGems, or NPM |
+| SYSTEM    | USER_CREATED                  | Event    | INFORMATIONAL | Notifications generated as a result of a user creation                                                                            |
+| SYSTEM    | USER_DELETED                  | Event    | INFORMATIONAL | Notifications generated as a result of a user deletion                                                                            |
+| PORTFOLIO | NEW_VULNERABILITY             | Event    | INFORMATIONAL | Notifications generated whenever a new vulnerability is identified                                                                |
+| PORTFOLIO | NEW_VULNERABILITIES_SUMMARY   | Schedule | INFORMATIONAL | Summaries of new vulnerabilities identified in a set of projects                                                                  |
+| PORTFOLIO | NEW_VULNERABLE_DEPENDENCY     | Event    | INFORMATIONAL | Notifications generated as a result of a vulnerable component becoming a dependency of a project                                  |
+| PORTFOLIO | GLOBAL_AUDIT_CHANGE           | Event    | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global)              |
+| PORTFOLIO | PROJECT_AUDIT_CHANGE          | Event    | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                         |
+| PORTFOLIO | BOM_CONSUMED                  | Event    | INFORMATIONAL | Notifications generated whenever a supported BOM is ingested and identified                                                       |
+| PORTFOLIO | BOM_PROCESSED                 | Event    | INFORMATIONAL | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
+| PORTFOLIO | BOM_PROCESSING_FAILED         | Event    | ERROR         | Notifications generated whenever a BOM upload process fails                                                                       |
+| PORTFOLIO | BOM_VALIDATION_FAILED         | Event    | ERROR         | Notifications generated whenever an invalid BOM is uploaded                                                                       |
+| PORTFOLIO | POLICY_VIOLATION              | Event    | INFORMATIONAL | Notifications generated whenever a policy violation is identified                                                                 |
+| PORTFOLIO | NEW_POLICY_VIOLATIONS_SUMMARY | Schedule | INFORMATIONAL | Summary of new policy violations identified in a set of projects                                                                  |
 
 ## Configuring Publishers
 
@@ -159,6 +176,125 @@ This type of notification will always contain:
 ```
 
 > The `cwe` field is deprecated and will be removed in a later version. Please use `cwes` instead.
+
+#### NEW_VULNERABILITIES_SUMMARY
+
+A summary of new vulnerabilities identified in a set of projects. "New" in this context refers to vulnerabilities
+identified *since the notification was last triggered*. For example, if the notification is scheduled to trigger
+every day at 8AM (cron expression: `0 8 * * *`) it will always contain newly identified vulnerabilities since
+the last day at 8AM.
+
+Note that this notification can not be configured to cover the entire portfolio, but only a limited set of
+projects. This limitation exists to prevent payloads from growing too large.
+
+```json
+{
+  "notification": {
+    "level": "INFORMATIONAL",
+    "scope": "PORTFOLIO",
+    "group": "NEW_VULNERABILITIES_SUMMARY",
+    "timestamp": "1970-01-01T18:31:06.000000666",
+    "title": "New Vulnerabilities Summary",
+    "content": "Identified 1 new vulnerabilities across 1 projects and 1 components since 1970-01-01T00:01:06Z, of which 1 are suppressed.",
+    "subject": {
+      "overview": {
+        "affectedProjectsCount": 1,
+        "affectedComponentsCount": 1,
+        "newVulnerabilitiesCount": 0,
+        "newVulnerabilitiesCountBySeverity": {},
+        "suppressedNewVulnerabilitiesCount": 1,
+        "totalNewVulnerabilitiesCount": 1
+      },
+      "summary": {
+        "projectSummaries": [
+          {
+            "project": {
+              "uuid": "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+              "name": "projectName",
+              "version": "projectVersion",
+              "description": "projectDescription",
+              "purl": "pkg:maven/org.acme/projectName@projectVersion",
+              "tags": "tag1,tag2"
+            },
+            "summary": {
+              "newVulnerabilitiesCountBySeverity": {},
+              "suppressedNewVulnerabilitiesCountBySeverity": {
+                "MEDIUM": 1
+              },
+              "totalNewVulnerabilitiesCountBySeverity": {
+                "MEDIUM": 1
+              }
+            }
+          }
+        ]
+      },
+      "details": {
+        "findingsByProject": [
+          {
+            "project": {
+              "uuid": "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+              "name": "projectName",
+              "version": "projectVersion",
+              "description": "projectDescription",
+              "purl": "pkg:maven/org.acme/projectName@projectVersion",
+              "tags": "tag1,tag2"
+            },
+            "findings": [
+              {
+                "component": {
+                  "uuid": "94f87321-a5d1-4c2f-b2fe-95165debebc6",
+                  "name": "componentName",
+                  "version": "componentVersion"
+                },
+                "vulnerability": {
+                  "uuid": "bccec5d5-ec21-4958-b3e8-22a7a866a05a",
+                  "vulnId": "INT-001",
+                  "source": "INTERNAL",
+                  "aliases": [
+                    {
+                      "source": "OSV",
+                      "vulnId": "OSV-001"
+                    }
+                  ],
+                  "title": "vulnerabilityTitle",
+                  "subtitle": "vulnerabilitySubTitle",
+                  "description": "vulnerabilityDescription",
+                  "recommendation": "vulnerabilityRecommendation",
+                  "cvssv2": 5.5,
+                  "cvssv3": 6.6,
+                  "owaspRRLikelihood": 1.1,
+                  "owaspRRTechnicalImpact": 2.2,
+                  "owaspRRBusinessImpact": 3.3,
+                  "severity": "MEDIUM",
+                  "cwe": {
+                    "cweId": 666,
+                    "name": "Operation on Resource in Wrong Phase of Lifetime"
+                  },
+                  "cwes": [
+                    {
+                      "cweId": 666,
+                      "name": "Operation on Resource in Wrong Phase of Lifetime"
+                    },
+                    {
+                      "cweId": 777,
+                      "name": "Regular Expression without Anchors"
+                    }
+                  ]
+                },
+                "analyzer": "INTERNAL_ANALYZER",
+                "attributedOn": "1970-01-01T18:31:06Z",
+                "suppressed": true,
+                "analysisState": "FALSE_POSITIVE"
+              }
+            ]
+          }
+        ]
+      },
+      "since": "1970-01-01T00:01:06Z"
+    }
+  }
+}
+```
 
 #### NEW_VULNERABLE_DEPENDENCY
 This type of notification will always contain:
@@ -368,6 +504,101 @@ This type of notification will always contain:
 }
 ```
 
+#### NEW_POLICY_VIOLATIONS_SUMMARY
+
+A summary of new policy violations identified in a set of projects. "New" in this context refers to violations
+identified *since the notification was last triggered*. For example, if the notification is scheduled to trigger
+every day at 8AM (cron expression: `0 8 * * *`) it will always contain newly identified violations since
+the last day at 8AM.
+
+Note that this notification can not be configured to cover the entire portfolio, but only a limited set of
+projects. This limitation exists to prevent payloads from growing too large.
+
+```json
+{
+  "notification": {
+    "level": "INFORMATIONAL",
+    "scope": "PORTFOLIO",
+    "group": "NEW_POLICY_VIOLATIONS_SUMMARY",
+    "timestamp": "1970-01-01T18:31:06.000000666",
+    "title": "New Policy Violations Summary",
+    "content": "Identified 1 new policy violations across 1 project and 1 components since 1970-01-01T00:01:06Z, of which 0 are suppressed.",
+    "subject": {
+      "overview": {
+        "affectedProjectsCount": 1,
+        "affectedComponentsCount": 1,
+        "newViolationsCount": 1,
+        "suppressedNewViolationsCount": 0,
+        "totalNewViolationsCount": 1
+      },
+      "summary": {
+        "projectSummaries": [
+          {
+            "project": {
+              "uuid": "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+              "name": "projectName",
+              "version": "projectVersion",
+              "description": "projectDescription",
+              "purl": "pkg:maven/org.acme/projectName@projectVersion",
+              "tags": "tag1,tag2"
+            },
+            "summary": {
+              "newViolationsCountByType": {
+                "LICENSE": 1
+              },
+              "suppressedNewViolationsCountByType": {},
+              "totalNewViolationsCountByType": {
+                "LICENSE": 1
+              }
+            }
+          }
+        ]
+      },
+      "details": {
+        "violationsByProject": [
+          {
+            "project": {
+              "uuid": "c9c9539a-e381-4b36-ac52-6a7ab83b2c95",
+              "name": "projectName",
+              "version": "projectVersion",
+              "description": "projectDescription",
+              "purl": "pkg:maven/org.acme/projectName@projectVersion",
+              "tags": "tag1,tag2"
+            },
+            "violations": [
+              {
+                "uuid": "924eaf86-454d-49f5-96c0-71d9008ac614",
+                "component": {
+                  "uuid": "94f87321-a5d1-4c2f-b2fe-95165debebc6",
+                  "name": "componentName",
+                  "version": "componentVersion"
+                },
+                "policyCondition": {
+                  "uuid": "b029fce3-96f2-4c4a-9049-61070e9b6ea6",
+                  "subject": "AGE",
+                  "operator": "NUMERIC_EQUAL",
+                  "value": "P666D",
+                  "policy": {
+                    "uuid": "8d2f1ec1-3625-48c6-97c4-2a7553c7a376",
+                    "name": "policyName",
+                    "violationState": "INFO"
+                  }
+                },
+                "type": "LICENSE",
+                "timestamp": "1970-01-01T18:31:06Z",
+                "suppressed": false,
+                "analysisState": "APPROVED"
+              }
+            ]
+          }
+        ]
+      },
+      "since": "1970-01-01T00:01:06Z"
+    }
+  }
+}
+```
+
 #### USER_CREATED
 
 ```json
@@ -488,6 +719,54 @@ only for a parent project, and have its children inherit the notification config
 by enabling the *Include active children of projects* option in the *Limit To* section.
 Both *Limit to projects* and *Limit to tags* are inherited.
 
+## Configuring Scheduled Notifications
+
+To create a scheduled notification, select the trigger type *Schedule* when creating an alert:
+
+![](/images/screenshots/notifications-create-scheduled.png)
+
+> As of v4.13.0, only the *Email* and *Outbound Webhook* publishers are capable of utilizing the full
+> content of scheduled notifications. Messenger publishers such as Slack are more likely to reject large
+> payloads, which is why their support for this feature was deprioritized. In the meantime, user may
+> [create their own publisher](#creation-of-publisher), and taylor it to their needs and constraints.
+
+The interval at which scheduled notifications are triggered is configured using [cron] expressions.
+
+A cron expression is generally structured as follows:
+
+```
+* * * * *
+| | | | |
+| | | | day of the week (0-6, [Sunday to Saturday])
+| | | month of the year (1-12)
+| | day of the month (1-31)
+| hour of the day (0-23)
+minute of the hour (0-59)
+```
+
+Where the wildcard `*` simply means *any*. For example, `* * * * *` means *every minute*.
+
+Dependency-Track will check for notifications with due schedules *every minute*, and process all of them *serially*.  
+This means that notifications will almost never arrive exactly on the minute, but rather with a slight delay of a few minutes.
+
+* The default interval of newly created scheduled notifications is *hourly*.
+* Expressions are evaluated in the UTC timezone, which means that "every day at 8AM" refers to 8AM UTC.
+* Consider using tools such as [crontab guru] to construct an expression.
+
+For every scheduled notification rule, Dependency-Track will take note of when it was last triggered successfully.  
+The next planned trigger is calculated based on the configured cron expression, and the timestamp of the last successful trigger.
+
+Both the last successful, and the next planned trigger timestamp can be viewed in a notification rule's configuration panel.
+
+To further reduce the noise produced by the system, users can opt into skipping the publishing of a notification,  
+if no new data has been identified since the last time it triggered.
+
+Certain notification groups may require the alert to be limited to specific projects.  
+This is to protect the system from generating payloads that are too resource intensive to compute,  
+or too large for receiving systems to accept.
+
+![](/images/screenshots/notifications-configure-scheduled.png)
+
 ## Outbound Webhooks
 With outbound webhooks, notifications and all of their relevant details can be delivered via HTTP to an endpoint
 configured through Dependency-Track's notification settings.
@@ -529,3 +808,6 @@ services like [Request Bin](https://pipedream.com/requestbin) can be used to man
 * Observe the Request Bin output for any incoming requests
 
 If requests make it to the Bin, the problem is not in Dependency-Track.
+
+[cron]: https://en.wikipedia.org/wiki/Cron
+[crontab guru]: https://crontab.guru/

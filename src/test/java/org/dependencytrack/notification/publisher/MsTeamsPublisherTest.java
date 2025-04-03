@@ -382,4 +382,79 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         """)));
     }
 
+    @Override
+    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
+        super.testPublishWithScheduledNewVulnerabilitiesNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson(/* language=JSON */ """
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "New Vulnerabilities Summary",
+                          "title": "New Vulnerabilities Summary",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Level",
+                                  "value": "INFORMATIONAL"
+                                },
+                                {
+                                  "name": "Scope",
+                                  "value": "PORTFOLIO"
+                                },
+                                {
+                                  "name": "Group",
+                                  "value": "NEW_VULNERABILITIES_SUMMARY"
+                                }
+                              ],
+                              "text": "Identified 1 new vulnerabilities across 1 projects and 1 components since 1970-01-01T00:01:06Z, of which 1 are suppressed."
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Override
+    public void testPublishWithScheduledNewPolicyViolationsNotification() {
+        super.testPublishWithScheduledNewPolicyViolationsNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson(/* language=JSON */ """
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "New Policy Violations Summary",
+                          "title": "New Policy Violations Summary",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Level",
+                                  "value": "INFORMATIONAL"
+                                },
+                                {
+                                  "name": "Scope",
+                                  "value": "PORTFOLIO"
+                                },
+                                {
+                                  "name": "Group",
+                                  "value": "NEW_POLICY_VIOLATIONS_SUMMARY"
+                                }
+                              ],
+                              "text": "Identified 1 new policy violations across 1 project and 1 components since 1970-01-01T00:01:06Z, of which 0 are suppressed."
+                            }
+                          ]
+                        }
+                        """)));
+    }
 }

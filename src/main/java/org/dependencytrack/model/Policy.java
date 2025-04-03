@@ -30,6 +30,8 @@ import jakarta.validation.constraints.Size;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
+import javax.jdo.annotations.FetchGroup;
+import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
@@ -50,6 +52,13 @@ import java.util.UUID;
  * @since 4.0.0
  */
 @PersistenceCapable
+@FetchGroups(value = {
+        @FetchGroup(name = "NOTIFICATION", members = {
+                @Persistent(name = "name"),
+                @Persistent(name = "violationState"),
+                @Persistent(name = "uuid")
+        })
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Policy implements Serializable {
@@ -63,6 +72,10 @@ public class Policy implements Serializable {
         INFO,
         WARN,
         FAIL
+    }
+
+    public enum FetchGroup {
+        NOTIFICATION
     }
 
     @PrimaryKey

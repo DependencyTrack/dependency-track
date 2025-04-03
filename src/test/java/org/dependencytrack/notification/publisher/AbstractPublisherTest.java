@@ -27,9 +27,17 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.Policy.ViolationState;
+import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyCondition.Operator;
+import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.PolicyViolation.Type;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.ViolationAnalysis;
+import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.notification.NotificationConstants;
@@ -39,17 +47,26 @@ import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.BomValidationFailed;
+import org.dependencytrack.notification.vo.NewPolicyViolationsSummary;
+import org.dependencytrack.notification.vo.NewVulnerabilitiesSummary;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.notification.vo.ProjectFinding;
+import org.dependencytrack.notification.vo.ProjectPolicyViolation;
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+import org.dependencytrack.util.NotificationUtil;
 import org.junit.Test;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -248,6 +265,59 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .withMessage("Unexpected tag name \"include\" ({% include '/some/path' %}:1)");
     }
 
+    @Test
+    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var vuln = createVulnerability();
+
+        final var findingsByProject = Map.of(project, List.of(new ProjectFinding(
+                component, vuln, AnalyzerIdentity.INTERNAL_ANALYZER, Date.from(Instant.ofEpochSecond(66666, 666)),
+                "", AnalysisState.FALSE_POSITIVE, true)));
+
+        final var subject = NewVulnerabilitiesSummary.of(findingsByProject, new Date(66666), 666);
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.NEW_VULNERABILITIES_SUMMARY)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.NEW_VULNERABILITIES_SUMMARY)
+                .content(NotificationUtil.generateNotificationContent(subject))
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+    }
+
+    @Test
+    public void testPublishWithScheduledNewPolicyViolationsNotification() {
+        final var violation = createPolicyViolation();
+
+        final var violationsByProject = Map.of(violation.getProject(), List.of(new ProjectPolicyViolation(
+                UUID.fromString("924eaf86-454d-49f5-96c0-71d9008ac614"),
+                violation.getComponent(),
+                violation.getPolicyCondition(),
+                violation.getType(),
+                violation.getTimestamp(),
+                violation.getAnalysis().getAnalysisState(),
+                violation.getAnalysis().isSuppressed())));
+
+        final var subject = NewPolicyViolationsSummary.of(violationsByProject, new Date(66666), 666);
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.NEW_POLICY_VIOLATIONS_SUMMARY)
+                .content(NotificationUtil.generateNotificationContent(subject))
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+    }
+
     private static Component createComponent(final Project project) {
         final var component = new Component();
         component.setProject(project);
@@ -304,6 +374,48 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         analysis.setAnalysisState(AnalysisState.FALSE_POSITIVE);
         analysis.setSuppressed(true);
         return analysis;
+    }
+
+    private static Policy createPolicy() {
+        final var policy = new Policy();
+        policy.setUuid(UUID.fromString("8d2f1ec1-3625-48c6-97c4-2a7553c7a376"));
+        policy.setViolationState(ViolationState.INFO);
+        policy.setName("policyName");
+        return policy;
+    }
+
+    private static ViolationAnalysis createViolationAnalysis() {
+        final var violationAnalysis = new ViolationAnalysis();
+        violationAnalysis.setViolationAnalysisState(ViolationAnalysisState.APPROVED);
+        violationAnalysis.setSuppressed(false);
+        return violationAnalysis;
+    }
+
+    private static PolicyCondition createPolicyCondition() {
+        final var policy = createPolicy();
+        final var policyCondition = new PolicyCondition();
+        policyCondition.setUuid(UUID.fromString("b029fce3-96f2-4c4a-9049-61070e9b6ea6"));
+        policyCondition.setPolicy(policy);
+        policyCondition.setSubject(PolicyCondition.Subject.AGE);
+        policyCondition.setOperator(Operator.NUMERIC_EQUAL);
+        policyCondition.setValue("P666D");
+        return policyCondition;
+    }
+
+    private static PolicyViolation createPolicyViolation() {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var violation = new PolicyViolation();
+        final var violationAnalysis = createViolationAnalysis();
+        final var policyCondition = createPolicyCondition();
+
+        violation.setUuid(UUID.fromString("bf956a83-6013-4a69-9c76-857e2a8c8e45"));
+        violation.setPolicyCondition(policyCondition);
+        violation.setType(Type.LICENSE);
+        violation.setComponent(component);
+        violation.setTimestamp(Date.from(Instant.ofEpochSecond(66666, 666))); // Thu Jan 01 18:31:06 GMT 1970
+        violation.setAnalysis(violationAnalysis);
+        return violation;
     }
 
     JsonObject createConfig() throws Exception {

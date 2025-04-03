@@ -56,7 +56,9 @@ public class JerseyTestRule extends ExternalResource {
 
             @Override
             protected DeploymentContext configureDeployment() {
-                return ServletDeploymentContext.forServlet(new ServletContainer(resourceConfig)).build();
+                return ServletDeploymentContext.forServlet(new ServletContainer(
+                        // Ensure exception mappers are registered.
+                        resourceConfig.packages("org.dependencytrack.resources.v1.exception"))).build();
             }
 
         };

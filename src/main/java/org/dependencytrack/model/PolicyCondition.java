@@ -28,6 +28,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.FetchGroup;
+import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -43,6 +45,15 @@ import java.util.UUID;
  * @since 4.0.0
  */
 @PersistenceCapable
+@FetchGroups(value = {
+        @FetchGroup(name = "NOTIFICATION", members = {
+                @Persistent(name = "policy"),
+                @Persistent(name = "subject"),
+                @Persistent(name = "operator"),
+                @Persistent(name = "value"),
+                @Persistent(name = "uuid")
+        })
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PolicyCondition implements Serializable {
@@ -80,6 +91,10 @@ public class PolicyCondition implements Serializable {
         VULNERABILITY_ID,
         VERSION_DISTANCE,
         EPSS
+    }
+
+    public enum FetchGroup {
+        NOTIFICATION
     }
 
     @PrimaryKey

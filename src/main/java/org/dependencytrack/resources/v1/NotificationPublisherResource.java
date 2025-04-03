@@ -369,7 +369,7 @@ public class NotificationPublisherResource extends AlpineResource {
                         .title(group)
                         .content("Rule configuration test")
                         .level(rule.getNotificationLevel())
-                        .subject(NotificationUtil.generateSubject(group.toString()));
+                        .subject(NotificationUtil.generateSubject(rule, group));
 
                 publisher.inform(PublishContext.from(notification), notification, config);
             }

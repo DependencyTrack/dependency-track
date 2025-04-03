@@ -40,6 +40,7 @@ public class NotificationConstants {
         public static final String ANALYZER_ERROR = "Analyzer Error";
         public static final String INTEGRATION_ERROR = "Integration Error";
         public static final String NEW_VULNERABILITY = "New Vulnerability Identified";
+        public static final String NEW_VULNERABILITIES_SUMMARY = "New Vulnerabilities Summary";
         public static final String NEW_VULNERABLE_DEPENDENCY = "Vulnerable Dependency Introduced";
         public static final String ANALYSIS_DECISION_EXPLOITABLE = "Analysis Decision: Exploitable";
         public static final String ANALYSIS_DECISION_IN_TRIAGE = "Analysis Decision: In Triage";
@@ -55,6 +56,7 @@ public class NotificationConstants {
         public static final String VIOLATIONANALYSIS_DECISION_SUPPRESSED = "Violation Analysis Decision: Violation Suppressed";
         public static final String VIOLATIONANALYSIS_DECISION_UNSUPPRESSED = "Violation Analysis Decision: Violation UnSuppressed";
         public static final String POLICY_VIOLATION = "Policy Violation";
+        public static final String NEW_POLICY_VIOLATIONS_SUMMARY = "New Policy Violations Summary";
         public static final String BOM_CONSUMED = "Bill of Materials Consumed";
         public static final String BOM_PROCESSED = "Bill of Materials Processed";
         public static final String BOM_PROCESSING_FAILED = "Bill of Materials Processing Failed";

@@ -24,6 +24,8 @@ import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
+import org.dependencytrack.notification.vo.NewPolicyViolationsSummary;
+import org.dependencytrack.notification.vo.NewVulnerabilitiesSummary;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -101,6 +103,10 @@ public record PublishContext(String notificationGroup, String notificationLevel,
             notificationSubjects.put(SUBJECT_VULNERABILITY, Vulnerability.convert(subject.getVulnerability()));
         } else if (notification.getSubject() instanceof final VexConsumedOrProcessed subject) {
             notificationSubjects.put(SUBJECT_PROJECT, Project.convert(subject.getProject()));
+        } else if (notification.getSubject() instanceof final NewVulnerabilitiesSummary subject) {
+            notificationSubjects.put(SUBJECT_PROJECTS, subject.summary().projectSummaries().keySet().stream().map(Project::convert).toList());
+        } else if (notification.getSubject() instanceof final NewPolicyViolationsSummary subject) {
+            notificationSubjects.put(SUBJECT_PROJECTS, subject.summary().projectSummaries().keySet().stream().map(Project::convert).toList());
         }
 
         return new PublishContext(notification.getGroup(), Optional.ofNullable(notification.getLevel()).map(Enum::name).orElse(null),

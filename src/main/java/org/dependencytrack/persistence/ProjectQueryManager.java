@@ -965,7 +965,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         delete(project.getMetadata());
         delete(project.getProperties());
         delete(getAllBoms(project));
-        delete(project.getChildren());
         delete(project);
 
         // if project had a parent we need to re-calculate parents metrics to update collection projects

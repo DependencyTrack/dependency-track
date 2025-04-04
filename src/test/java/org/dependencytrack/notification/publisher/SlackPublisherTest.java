@@ -19,7 +19,8 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.model.ConfigProperty;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import org.junit.jupiter.api.Test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -28,15 +29,15 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL;
 
-public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublisher> {
+class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublisher> {
 
     public SlackPublisherTest() {
         super(DefaultNotificationPublishers.SLACK, new SlackPublisher());
     }
 
     @Override
-    public void testInformWithBomConsumedNotification() {
-        super.testInformWithBomConsumedNotification();
+    public void testInformWithBomConsumedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomConsumedNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -82,8 +83,8 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
-    public void testInformWithBomProcessingFailedNotification() {
-        super.testInformWithBomProcessingFailedNotification();
+    public void testInformWithBomProcessingFailedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomProcessingFailedNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -129,8 +130,8 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
-    public void testInformWithBomValidationFailedNotification() {
-        super.testInformWithBomValidationFailedNotification();
+    public void testInformWithBomValidationFailedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomValidationFailedNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -183,8 +184,8 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
-    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
-        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -230,8 +231,8 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
-    public void testInformWithDataSourceMirroringNotification() {
-        super.testInformWithDataSourceMirroringNotification();
+    public void testInformWithDataSourceMirroringNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithDataSourceMirroringNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -277,8 +278,8 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
-    public void testInformWithNewVulnerabilityNotification() {
-        super.testInformWithNewVulnerabilityNotification();
+    public void testInformWithNewVulnerabilityNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithNewVulnerabilityNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -374,8 +375,8 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
-    public void testInformWithNewVulnerableDependencyNotification() {
-        super.testInformWithNewVulnerableDependencyNotification();
+    public void testInformWithNewVulnerableDependencyNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithNewVulnerableDependencyNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -455,8 +456,8 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
-    public void testInformWithProjectAuditChangeNotification() {
-        super.testInformWithProjectAuditChangeNotification();
+    public void testInformWithProjectAuditChangeNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithProjectAuditChangeNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -591,7 +592,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Test
-    public void testInformWithNewVulnerabilityNotificationWithoutBaseUrl() {
+    void testInformWithNewVulnerabilityNotificationWithoutBaseUrl(WireMockRuntimeInfo wmRuntimeInfo) {
         final ConfigProperty baseUrlProperty = qm.getConfigProperty(
                 GENERAL_BASE_URL.getGroupName(),
                 GENERAL_BASE_URL.getPropertyName()
@@ -599,7 +600,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
         baseUrlProperty.setPropertyValue(null);
         qm.persist(baseUrlProperty);
 
-        super.testInformWithNewVulnerabilityNotification();
+        super.testInformWithNewVulnerabilityNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -672,7 +673,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Test
-    public void testInformWithNewVulnerableDependencyNotificationWithoutBaseUrl() {
+    void testInformWithNewVulnerableDependencyNotificationWithoutBaseUrl(WireMockRuntimeInfo wmRuntimeInfo) {
         final ConfigProperty baseUrlProperty = qm.getConfigProperty(
                 GENERAL_BASE_URL.getGroupName(),
                 GENERAL_BASE_URL.getPropertyName()
@@ -680,7 +681,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
         baseUrlProperty.setPropertyValue(null);
         qm.persist(baseUrlProperty);
 
-        super.testInformWithNewVulnerableDependencyNotification();
+        super.testInformWithNewVulnerableDependencyNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -737,7 +738,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Test
-    public void testInformWithProjectAuditChangeNotificationWithoutBaseUrl() {
+    void testInformWithProjectAuditChangeNotificationWithoutBaseUrl(WireMockRuntimeInfo wmRuntimeInfo) {
         final ConfigProperty baseUrlProperty = qm.getConfigProperty(
                 GENERAL_BASE_URL.getGroupName(),
                 GENERAL_BASE_URL.getPropertyName()
@@ -745,7 +746,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
         baseUrlProperty.setPropertyValue(null);
         qm.persist(baseUrlProperty);
 
-        super.testInformWithProjectAuditChangeNotification();
+        super.testInformWithProjectAuditChangeNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -848,8 +849,8 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
-    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
-        super.testPublishWithScheduledNewVulnerabilitiesNotification();
+    public void testPublishWithScheduledNewVulnerabilitiesNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testPublishWithScheduledNewVulnerabilitiesNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -895,8 +896,8 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Override
-    public void testPublishWithScheduledNewPolicyViolationsNotification() {
-        super.testPublishWithScheduledNewPolicyViolationsNotification();
+    public void testPublishWithScheduledNewPolicyViolationsNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testPublishWithScheduledNewPolicyViolationsNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))

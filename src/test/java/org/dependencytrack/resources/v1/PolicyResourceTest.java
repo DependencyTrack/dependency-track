@@ -22,7 +22,12 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import org.dependencytrack.JerseyTestRule;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
@@ -31,30 +36,25 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.util.Date;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PolicyResourceTest extends ResourceTest {
+class PolicyResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(PolicyResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(PolicyResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
     @Test
-    public void getPoliciesTest() {
+    void getPoliciesTest() {
         for (int i = 0; i < 1000; i++) {
             qm.createPolicy("policy" + i, Policy.Operator.ANY, Policy.ViolationState.INFO);
         }
@@ -74,7 +74,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getPolicyByUuidTest() {
+    void getPolicyByUuidTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
 
         final Response response = jersey.target(V1_POLICY + "/" + policy.getUuid())
@@ -91,7 +91,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createPolicyTest() {
+    void createPolicyTest() {
         final Policy policy = new Policy();
         policy.setName("policy");
         policy.setOperator(Policy.Operator.ANY);
@@ -114,7 +114,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createPolicySpecifyOperatorAndViolationStateTest() {
+    void createPolicySpecifyOperatorAndViolationStateTest() {
         final Policy policy = new Policy();
         policy.setName("policy");
         policy.setOperator(Policy.Operator.ALL);
@@ -137,7 +137,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createPolicyUseDefaultValueTest() {
+    void createPolicyUseDefaultValueTest() {
         final Policy policy = new Policy();
         policy.setName("policy");
 
@@ -158,7 +158,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updatePolicyTest() {
+    void updatePolicyTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
 
         policy.setViolationState(Policy.ViolationState.FAIL);
@@ -179,7 +179,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void deletePolicyTest() {
+    void deletePolicyTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
 
         final Response response = jersey.target(V1_POLICY + "/" + policy.getUuid())
@@ -195,7 +195,7 @@ public class PolicyResourceTest extends ResourceTest {
      * This test verifies that associated conditions and violations get deleted as well when deleting a Policy.
      */
     @Test
-    public void deletePolicyCascadingTest() {
+    void deletePolicyCascadingTest() {
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
         Component component = new Component();
@@ -225,7 +225,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void addProjectToPolicyTest() {
+    void addProjectToPolicyTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -242,7 +242,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void addProjectToPolicyProjectAlreadyAddedTest() {
+    void addProjectToPolicyProjectAlreadyAddedTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -258,7 +258,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void removeProjectFromPolicyTest() {
+    void removeProjectFromPolicyTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -274,7 +274,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void removeProjectFromPolicyProjectAlreadyRemovedTest() {
+    void removeProjectFromPolicyProjectAlreadyRemovedTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -287,7 +287,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void addTagToPolicyTest() {
+    void addTagToPolicyTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         final Tag tag = qm.createTag("Policy Tag");
 
@@ -304,7 +304,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void addTagToPolicyTagAlreadyAddedTest() {
+    void addTagToPolicyTagAlreadyAddedTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         final Tag tag = qm.createTag("Policy Tag");
 
@@ -319,7 +319,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void removeTagFromPolicyTest() {
+    void removeTagFromPolicyTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         final Tag tag = qm.createTag("Policy Tag");
 
@@ -334,7 +334,7 @@ public class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void removeTagFromPolicyTagDoesNotExistTest() {
+    void removeTagFromPolicyTagDoesNotExistTest() {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         final Tag tag = qm.createTag("Policy Tag");
 

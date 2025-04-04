@@ -21,26 +21,26 @@ package org.dependencytrack;
 import alpine.Config;
 import alpine.server.persistence.PersistenceManagerFactory;
 import org.dependencytrack.persistence.QueryManager;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 public abstract class PersistenceCapableTest {
 
     protected QueryManager qm;
 
-    @BeforeClass
-    public static void init() {
+    @BeforeAll
+    static void init() {
         Config.enableUnitTests();
     }
 
-    @Before
-    public void before() throws Exception {
+    @BeforeEach
+    final void initQueryManager() throws Exception {
         this.qm = new QueryManager();
     }
 
-    @After
-    public void after() {
+    @AfterEach
+    final void tearDownQueryManager() {
         // PersistenceManager will refuse to close when there's an active transaction
         // that was neither committed nor rolled back. Unfortunately some areas of the
         // code base can leave such a broken state behind if they run into unexpected

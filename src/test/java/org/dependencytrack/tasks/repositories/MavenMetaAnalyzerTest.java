@@ -21,26 +21,26 @@ package org.dependencytrack.tasks.repositories;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class MavenMetaAnalyzerTest {
+class MavenMetaAnalyzerTest {
 
     @Test
-    public void testAnalyzer() throws Exception {
+    void testAnalyzer() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:maven/junit/junit@4.12"));
 
         MavenMetaAnalyzer analyzer = new MavenMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.MAVEN, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.MAVEN, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertNotNull(metaModel.getPublishedTimestamp());
     }
 
     @Test
-    public void testAnalyzerForScalaComponent() throws Exception {
+    void testAnalyzerForScalaComponent() throws Exception {
         Component component = new Component();
 
         // Scala packages differ from others in that their name always includes the version of
@@ -48,11 +48,11 @@ public class MavenMetaAnalyzerTest {
         component.setPurl(new PackageURL("pkg:maven/com.typesafe.akka/akka-actor_2.13@2.5.23"));
 
         MavenMetaAnalyzer analyzer = new MavenMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.MAVEN, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.MAVEN, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertNotNull(metaModel.getPublishedTimestamp());
     }
 
 }

@@ -20,20 +20,20 @@ package org.dependencytrack.notification;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationService;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 
 import static org.mockito.Mockito.mock;
 
-public class NotificationSubsystemInitializerTest {
+class NotificationSubsystemInitializerTest {
 
     @Test
-    public void testInitialization() {
+    void testInitialization() {
         NotificationSubsystemInitializer listener = new NotificationSubsystemInitializer();
         listener.contextInitialized(new ServletContextEvent(mock(ServletContext.class)));
-        Assert.assertTrue(NotificationService.getInstance().hasSubscriptions(new Notification()));
+        Assertions.assertTrue(NotificationService.getInstance().hasSubscriptions(new Notification()));
     }
 }

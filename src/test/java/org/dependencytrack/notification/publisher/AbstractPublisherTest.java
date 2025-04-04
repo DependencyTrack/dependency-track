@@ -20,7 +20,12 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.pebbletemplates.pebble.error.ParserException;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import org.apache.commons.io.IOUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
@@ -55,11 +60,8 @@ import org.dependencytrack.notification.vo.ProjectFinding;
 import org.dependencytrack.notification.vo.ProjectPolicyViolation;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.dependencytrack.util.NotificationUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -74,7 +76,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
-public abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCapableTest {
+@WireMockTest
+abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCapableTest {
 
     final DefaultNotificationPublishers publisher;
     final T publisherInstance;
@@ -85,7 +88,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
     }
 
     @Test
-    public void testInformWithBomConsumedNotification() {
+    public void testInformWithBomConsumedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
         final var subject = new BomConsumedOrProcessed(createProject(), "bomContent", Bom.Format.CYCLONEDX, "1.5");
 
         final var notification = new Notification()
@@ -98,11 +101,11 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     @Test
-    public void testInformWithBomProcessingFailedNotification() {
+    public void testInformWithBomProcessingFailedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
         final var subject = new BomProcessingFailed(createProject(), "bomContent", "cause", Bom.Format.CYCLONEDX, "1.5");
 
         final var notification = new Notification()
@@ -115,11 +118,11 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     @Test
-    public void testInformWithBomValidationFailedNotification() {
+    public void testInformWithBomValidationFailedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
         final var errorsSample = List.of(
             "$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference");
         final var subject = new BomValidationFailed(createProject(), "bomContent", errorsSample, Bom.Format.CYCLONEDX);
@@ -134,11 +137,11 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3197
-    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
+    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject(WireMockRuntimeInfo wmRuntimeInfo) {
         final var subject = new BomProcessingFailed(createProject(), "bomContent", "cause", Bom.Format.CYCLONEDX, null);
 
         final var notification = new Notification()
@@ -151,11 +154,11 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     @Test
-    public void testInformWithDataSourceMirroringNotification() {
+    public void testInformWithDataSourceMirroringNotification(WireMockRuntimeInfo wmRuntimeInfo) {
         final var notification = new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.DATASOURCE_MIRRORING)
@@ -165,11 +168,11 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC));
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     @Test
-    public void testInformWithNewVulnerabilityNotification() {
+    public void testInformWithNewVulnerabilityNotification(WireMockRuntimeInfo wmRuntimeInfo) {
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
@@ -187,11 +190,11 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     @Test
-    public void testInformWithNewVulnerableDependencyNotification() {
+    public void testInformWithNewVulnerableDependencyNotification(WireMockRuntimeInfo wmRuntimeInfo) {
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
@@ -208,11 +211,11 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     @Test
-    public void testInformWithProjectAuditChangeNotification() {
+    public void testInformWithProjectAuditChangeNotification(WireMockRuntimeInfo wmRuntimeInfo) {
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
@@ -230,11 +233,11 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     @Test
-    public void testInformWithEscapedData() {
+    public void testInformWithEscapedData(WireMockRuntimeInfo wmRuntimeInfo) {
         final var notification = new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.ANALYZER)
@@ -244,11 +247,11 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC));
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     @Test
-    public void testInformWithTemplateInclude() throws Exception {
+    public void testInformWithTemplateInclude(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         final var notification = new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.ANALYZER)
@@ -256,7 +259,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .level(NotificationLevel.ERROR)
                 .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC));
 
-        final JsonObject config = Json.createObjectBuilder(createConfig())
+        final JsonObject config = Json.createObjectBuilder(createConfig(wmRuntimeInfo))
                 .add(Publisher.CONFIG_TEMPLATE_KEY, "{% include '/some/path' %}")
                 .build();
 
@@ -266,7 +269,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
     }
 
     @Test
-    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
+    public void testPublishWithScheduledNewVulnerabilitiesNotification(WireMockRuntimeInfo wmRuntimeInfo) {
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
@@ -287,11 +290,11 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     @Test
-    public void testPublishWithScheduledNewPolicyViolationsNotification() {
+    public void testPublishWithScheduledNewPolicyViolationsNotification(WireMockRuntimeInfo wmRuntimeInfo) {
         final var violation = createPolicyViolation();
 
         final var violationsByProject = Map.of(violation.getProject(), List.of(new ProjectPolicyViolation(
@@ -315,7 +318,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .subject(subject);
 
         assertThatNoException()
-                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(wmRuntimeInfo)));
     }
 
     private static Component createComponent(final Project project) {
@@ -418,15 +421,15 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         return violation;
     }
 
-    JsonObject createConfig() throws Exception {
+    JsonObject createConfig(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         return Json.createObjectBuilder()
                 .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
                 .add(Publisher.CONFIG_TEMPLATE_KEY, IOUtils.resourceToString(publisher.getPublisherTemplateFile(), UTF_8))
-                .addAll(extraConfig())
+                .addAll(extraConfig(wmRuntimeInfo))
                 .build();
     }
 
-    JsonObjectBuilder extraConfig() {
+    JsonObjectBuilder extraConfig(WireMockRuntimeInfo wmRuntimeInfo) {
         return Json.createObjectBuilder();
     }
 

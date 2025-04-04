@@ -21,31 +21,31 @@ package org.dependencytrack.search;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.search.document.ProjectDocument;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-public class ProjectIndexerTest extends PersistenceCapableTest {
+class ProjectIndexerTest extends PersistenceCapableTest {
 
     @Test
-    public void getSearchFieldsTest() {
+    void getSearchFieldsTest() {
         String[] fields = ProjectIndexer.getInstance().getSearchFields();
-        Assert.assertEquals(5, fields.length);
-        Assert.assertEquals("uuid", fields[0]);
-        Assert.assertEquals("name", fields[1]);
-        Assert.assertEquals("version", fields[2]);
-        Assert.assertEquals("properties", fields[3]);
-        Assert.assertEquals("description", fields[4]);
+        Assertions.assertEquals(5, fields.length);
+        Assertions.assertEquals("uuid", fields[0]);
+        Assertions.assertEquals("name", fields[1]);
+        Assertions.assertEquals("version", fields[2]);
+        Assertions.assertEquals("properties", fields[3]);
+        Assertions.assertEquals("description", fields[4]);
     }
 
     @Test
-    public void getIndexTypeTest() {
-        Assert.assertEquals(IndexManager.IndexType.PROJECT, ProjectIndexer.getInstance().getIndexType());
+    void getIndexTypeTest() {
+        Assertions.assertEquals(IndexManager.IndexType.PROJECT, ProjectIndexer.getInstance().getIndexType());
     }
 
     @Test
-    public void addTest() {
+    void addTest() {
         Project p = new Project();
         p.setUuid(UUID.randomUUID());
         p.setName("Acme Application");
@@ -54,12 +54,12 @@ public class ProjectIndexerTest extends PersistenceCapableTest {
         ProjectIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
         SearchResult result = searchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
-        Assert.assertEquals(1, result.getResults().size());
-        Assert.assertEquals(1, result.getResults().get("project").size());
+        Assertions.assertEquals(1, result.getResults().size());
+        Assertions.assertEquals(1, result.getResults().get("project").size());
     }
 
     @Test
-    public void removeTest() {
+    void removeTest() {
         Project p = new Project();
         p.setUuid(UUID.randomUUID());
         p.setName("Acme Application");
@@ -70,12 +70,12 @@ public class ProjectIndexerTest extends PersistenceCapableTest {
         ProjectIndexer.getInstance().remove(new ProjectDocument(p));
         ProjectIndexer.getInstance().commit();
         SearchResult result = searchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
-        Assert.assertEquals(1, result.getResults().size());
-        Assert.assertEquals(0, result.getResults().get("project").size());
+        Assertions.assertEquals(1, result.getResults().size());
+        Assertions.assertEquals(0, result.getResults().get("project").size());
     }
 
     @Test
-    public void reindexTest() {
+    void reindexTest() {
         ProjectIndexer.getInstance().reindex();
     }
 }

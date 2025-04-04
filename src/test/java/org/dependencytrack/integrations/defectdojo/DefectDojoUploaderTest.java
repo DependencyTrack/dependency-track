@@ -21,22 +21,22 @@ package org.dependencytrack.integrations.defectdojo;
 import alpine.model.IConfigProperty;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
 
-public class DefectDojoUploaderTest extends PersistenceCapableTest {
+class DefectDojoUploaderTest extends PersistenceCapableTest {
 
     @Test
-    public void testIntegrationMetadata() {
+    void testIntegrationMetadata() {
         DefectDojoUploader extension = new DefectDojoUploader();
-        Assert.assertEquals("DefectDojo", extension.name());
-        Assert.assertEquals("Pushes Dependency-Track findings to DefectDojo", extension.description());
+        Assertions.assertEquals("DefectDojo", extension.name());
+        Assertions.assertEquals("Pushes Dependency-Track findings to DefectDojo", extension.description());
     }
 
     @Test
-    public void testIntegrationEnabledCases() {
+    void testIntegrationEnabledCases() {
         qm.createConfigProperty(
                 DEFECTDOJO_ENABLED.getGroupName(),
                 DEFECTDOJO_ENABLED.getPropertyName(),
@@ -55,17 +55,17 @@ public class DefectDojoUploaderTest extends PersistenceCapableTest {
         );
         DefectDojoUploader extension = new DefectDojoUploader();
         extension.setQueryManager(qm);
-        Assert.assertTrue(extension.isEnabled());
-        Assert.assertTrue(extension.isProjectConfigured(project));
+        Assertions.assertTrue(extension.isEnabled());
+        Assertions.assertTrue(extension.isProjectConfigured(project));
     }
 
     @Test
-    public void testIntegrationDisabledCases() {
+    void testIntegrationDisabledCases() {
         Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
         DefectDojoUploader extension = new DefectDojoUploader();
         extension.setQueryManager(qm);
-        Assert.assertFalse(extension.isEnabled());
-        Assert.assertFalse(extension.isProjectConfigured(project));
+        Assertions.assertFalse(extension.isEnabled());
+        Assertions.assertFalse(extension.isProjectConfigured(project));
     }
 
 }

@@ -18,14 +18,14 @@
  */
 package org.dependencytrack.event;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class VulnDbSyncEventTest {
+class VulnDbSyncEventTest {
 
     @Test
-    public void testDefaultConstructor() {
+    void testDefaultConstructor() {
         VulnDbSyncEvent event = new VulnDbSyncEvent();
-        Assert.assertNotNull(event);
+        Assertions.assertNotNull(event);
     }
 }

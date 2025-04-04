@@ -24,32 +24,28 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-@RunWith(JUnitParamsRunner.class)
-public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
+class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
 
     private PolicyEvaluator evaluator;
 
-    @Before
+    @BeforeEach
     public void initEvaluator() {
         evaluator = new LicenseGroupPolicyEvaluator();
         evaluator.setQueryManager(qm);
     }
 
     @Test
-    public void hasMatch() {
+    void hasMatch() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -67,12 +63,12 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
     }
 
-    @Test
-    @Parameters(method = "forbiddenListTestcases")
-    public void spdxExpressionForbiddenList(String expression, Integer expectedViolations) {
+    @ParameterizedTest
+    @MethodSource("forbiddenListTestcases")
+    void spdxExpressionForbiddenList(String expression, Integer expectedViolations) {
         {
             License license = new License();
             license.setName("MIT License");
@@ -101,10 +97,10 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setLicenseExpression(expression);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(expectedViolations.intValue(), violations.size());
+        Assertions.assertEquals(expectedViolations.intValue(), violations.size());
     }
     
-    private Object[] forbiddenListTestcases() {
+    private static Object[] forbiddenListTestcases() {
         return new Object[] {
             // nonexistent license means it is not on the negative list
             new Object[] { "Apache-2.0 OR NonexistentLicense", 0 },
@@ -117,9 +113,9 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         };
     }
 
-    @Test
-    @Parameters(method = "allowListTestcases")
-    public void spdxExpressionAllowList(String licenseName, Integer expectedViolations) {
+    @ParameterizedTest
+    @MethodSource("allowListTestcases")
+    void spdxExpressionAllowList(String licenseName, Integer expectedViolations) {
         {
             License license = new License();
             license.setName("MIT License");
@@ -150,10 +146,10 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setLicenseExpression(licenseName);
         List<PolicyConditionViolation> violations = evaluator.evaluate(_policy, component);
-        Assert.assertEquals("Error for: " + licenseName, expectedViolations.intValue(), violations.size());
+        Assertions.assertEquals(expectedViolations.intValue(), violations.size(), "Error for: " + licenseName);
     }
     
-    private Object[] allowListTestcases() {
+    private static Object[] allowListTestcases() {
         return new Object[] {
             // Nonexistent license is not in positive list, violation
             //new Object[] { "NonexistentLicense", 1},
@@ -169,7 +165,7 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void noMatch() {
+    void noMatch() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -186,11 +182,11 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void unknownLicenseViolateWhitelist() {
+    void unknownLicenseViolateWhitelist() {
         LicenseGroup lg = qm.createLicenseGroup("Test License Group");
         lg = qm.persist(lg);
         lg = qm.detach(LicenseGroup.class, lg.getId());
@@ -202,11 +198,11 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setResolvedLicense(null);
 
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
     }
 
     @Test
-    public void wrongSubject() {
+    void wrongSubject() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -222,11 +218,11 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void wrongOperator() {
+    void wrongOperator() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -242,11 +238,11 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void licenseGroupDoesNotExist() {
+    void licenseGroupDoesNotExist() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -259,7 +255,7 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
 }

@@ -18,20 +18,20 @@
  */
 package org.dependencytrack.integrations;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class IntegrationPointTest {
+class IntegrationPointTest {
 
     @Test
-    public final void integrationPointMetadataTest() {
+    final void integrationPointMetadataTest() {
         IntegrationPoint integrationPoint = mock(IntegrationPoint.class);
         when(integrationPoint.name()).thenReturn("Acme Endpoint");
         when(integrationPoint.description()).thenReturn("An example endpoint");
-        Assert.assertEquals("Acme Endpoint", integrationPoint.name());
-        Assert.assertEquals("An example endpoint", integrationPoint.description());
+        Assertions.assertEquals("Acme Endpoint", integrationPoint.name());
+        Assertions.assertEquals("An example endpoint", integrationPoint.description());
     }
 }

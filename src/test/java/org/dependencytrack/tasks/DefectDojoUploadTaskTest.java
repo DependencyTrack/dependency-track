@@ -19,7 +19,9 @@
 package org.dependencytrack.tasks;
 
 import alpine.model.IConfigProperty;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import jakarta.ws.rs.core.MediaType;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.DefectDojoUploadEventAbstract;
@@ -28,11 +30,9 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-
-import jakarta.ws.rs.core.MediaType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aMultipart;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -46,19 +46,22 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
 
-public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
+@WireMockTest
+class DefectDojoUploadTaskTest extends PersistenceCapableTest {
+    private WireMockRuntimeInfo wmRuntimeInfo;
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+    @BeforeEach
+    void setUp(WireMockRuntimeInfo wmRuntimeInfo) {
+        this.wmRuntimeInfo = wmRuntimeInfo;
+    }
 
     @Test
-    public void testUpload() {
+    void testUpload() {
         qm.createConfigProperty(
                 DEFECTDOJO_ENABLED.getGroupName(),
                 DEFECTDOJO_ENABLED.getPropertyName(),
@@ -69,7 +72,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
-                wireMockRule.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
                 null
         );
@@ -185,7 +188,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUploadWithTestName() {
+    void testUploadWithTestName() {
         qm.createConfigProperty(
                 DEFECTDOJO_ENABLED.getGroupName(),
                 DEFECTDOJO_ENABLED.getPropertyName(),
@@ -196,7 +199,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
-                wireMockRule.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
                 null
         );
@@ -317,7 +320,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUploadWithGlobalReimport() {
+    void testUploadWithGlobalReimport() {
         qm.createConfigProperty(
                 DEFECTDOJO_ENABLED.getGroupName(),
                 DEFECTDOJO_ENABLED.getPropertyName(),
@@ -328,7 +331,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
-                wireMockRule.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
                 null
         );
@@ -416,7 +419,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                   ],
                                   "prefetch": {}
                                 }
-                                """.formatted(wireMockRule.baseUrl()))));
+                                """.formatted(wmRuntimeInfo.getHttpBaseUrl()))));
 
         stubFor(get(urlPathEqualTo("/api/v2/tests/"))
                 .withQueryParam("engagement", equalTo("666"))
@@ -461,7 +464,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                    ],
                                    "prefetch": {}
                                  }
-                                """.formatted(wireMockRule.baseUrl()))));
+                                """.formatted(wmRuntimeInfo.getHttpBaseUrl()))));
 
         stubFor(post(urlPathEqualTo("/api/v2/reimport-scan/"))
                 .willReturn(aResponse()
@@ -565,7 +568,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUploadWithProjectLevelReimport() {
+    void testUploadWithProjectLevelReimport() {
         qm.createConfigProperty(
                 DEFECTDOJO_ENABLED.getGroupName(),
                 DEFECTDOJO_ENABLED.getPropertyName(),
@@ -576,7 +579,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
-                wireMockRule.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
                 null
         );
@@ -687,7 +690,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUploadWithProjectLevelReimportAndTestName() {
+    void testUploadWithProjectLevelReimportAndTestName() {
         qm.createConfigProperty(
                 DEFECTDOJO_ENABLED.getGroupName(),
                 DEFECTDOJO_ENABLED.getPropertyName(),
@@ -698,7 +701,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
-                wireMockRule.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
                 null
         );
@@ -814,7 +817,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUploadWithReimportAndNoExistingTest() {
+    void testUploadWithReimportAndNoExistingTest() {
         qm.createConfigProperty(
                 DEFECTDOJO_ENABLED.getGroupName(),
                 DEFECTDOJO_ENABLED.getPropertyName(),
@@ -825,7 +828,7 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 DEFECTDOJO_URL.getGroupName(),
                 DEFECTDOJO_URL.getPropertyName(),
-                wireMockRule.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 DEFECTDOJO_URL.getPropertyType(),
                 null
         );
@@ -912,8 +915,8 @@ public class DefectDojoUploadTaskTest extends PersistenceCapableTest {
      * for instructions on how to set it up.
      */
     @Test
-    @Ignore
-    public void testUploadIntegration() {
+    @Disabled
+    void testUploadIntegration() {
         final var baseUrl = "http://localhost:8080";
         final var apiKey = "";
         final var engagementId = "";

@@ -21,7 +21,10 @@ package org.dependencytrack.resources.v1;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import com.fasterxml.jackson.core.StreamReadConstraints;
-import org.dependencytrack.JerseyTestRule;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.AnalysisResponse;
@@ -38,13 +41,11 @@ import org.dependencytrack.resources.v1.exception.JsonMappingExceptionMapper;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -57,18 +58,18 @@ import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_T
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
 import static org.hamcrest.CoreMatchers.equalTo;
 
-public class VexResourceTest extends ResourceTest {
+class VexResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(VexResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(VexResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)
                     .register(MultiPartFeature.class)
                     .register(JsonMappingExceptionMapper.class));
 
     @Test
-    public void exportProjectAsCycloneDxTest() {
+    void exportProjectAsCycloneDxTest() {
         var vulnA = new Vulnerability();
         vulnA.setVulnId("INT-001");
         vulnA.setSource(Vulnerability.Source.INTERNAL);
@@ -220,7 +221,7 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
-    public void exportVexWithSameVulnAnalysisValidJsonTest() {
+    void exportVexWithSameVulnAnalysisValidJsonTest() {
         var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
@@ -317,7 +318,7 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
-    public void exportVexWithDifferentVulnAnalysisValidJsonTest() {
+    void exportVexWithDifferentVulnAnalysisValidJsonTest() {
         var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
@@ -441,7 +442,7 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadVexInvalidJsonTest() {
+    void uploadVexInvalidJsonTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -497,7 +498,7 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadVexInvalidXmlTest() {
+    void uploadVexInvalidXmlTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -550,7 +551,7 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadVexWithValidationModeDisabledTest() {
+    void uploadVexWithValidationModeDisabledTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -595,7 +596,7 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadVexWithValidationModeEnabledForTagsTest() {
+    void uploadVexWithValidationModeEnabledForTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -662,7 +663,7 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadVexWithValidationModeDisabledForTagsTest() {
+    void uploadVexWithValidationModeDisabledForTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -729,7 +730,7 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadVexTooLargeViaPutTest() {
+    void uploadVexTooLargeViaPutTest() {
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
@@ -758,7 +759,7 @@ public class VexResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadVexCollectionProjectTest() {
+    void uploadVexCollectionProjectTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
@@ -791,10 +792,10 @@ public class VexResourceTest extends ResourceTest {
                           "vex": "%s"
                         }
                         """.formatted(encodedVex), MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("VEX cannot be uploaded to collection project.", body);
+        Assertions.assertEquals("VEX cannot be uploaded to collection project.", body);
     }
 
 }

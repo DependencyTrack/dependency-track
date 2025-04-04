@@ -27,7 +27,12 @@ import alpine.model.Team;
 import alpine.server.auth.JsonWebToken;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import org.dependencytrack.JerseyTestRule;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -35,15 +40,9 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,13 +52,13 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
-public class TeamResourceTest extends ResourceTest {
+class TeamResourceTest extends ResourceTest {
     private String jwt;
     private Team userNotPartof;
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(TeamResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(TeamResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
@@ -79,136 +78,136 @@ public class TeamResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getTeamsTest() {
+    void getTeamsTest() {
         for (int i=0; i<1000; i++) {
             qm.createTeam("Team " + i);
         }
         Response response = jersey.target(V1_TEAM).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(1001), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(String.valueOf(1001), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(1001, json.size()); // There's already a built-in team in ResourceTest
-        Assert.assertEquals("Team 0", json.getJsonObject(0).getString("name"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(1001, json.size()); // There's already a built-in team in ResourceTest
+        Assertions.assertEquals("Team 0", json.getJsonObject(0).getString("name"));
     }
 
     @Test
-    public void getTeamTest() {
+    void getTeamTest() {
         Team team = qm.createTeam("ABC");
         Response response = jersey.target(V1_TEAM + "/" + team.getUuid())
                 .request().header(X_API_KEY, apiKey).get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("ABC", json.getString("name"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("ABC", json.getString("name"));
     }
 
     @Test
-    public void getTeamByInvalidUuidTest() {
+    void getTeamByInvalidUuidTest() {
         Response response = jersey.target(V1_TEAM + "/" + UUID.randomUUID())
                 .request().header(X_API_KEY, apiKey).get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The team could not be found.", body);
+        Assertions.assertEquals("The team could not be found.", body);
     }
 
     @Test
-    public void getTeamSelfTest() {
+    void getTeamSelfTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         var response = jersey.target(V1_TEAM + "/self").request().header(X_API_KEY, apiKey).get(Response.class);
-        Assert.assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
         final var json = parseJsonObject(response);
-        Assert.assertEquals(team.getName(), json.getString("name"));
-        Assert.assertEquals(team.getUuid().toString(), json.getString("uuid"));
+        Assertions.assertEquals(team.getName(), json.getString("name"));
+        Assertions.assertEquals(team.getUuid().toString(), json.getString("uuid"));
         final var permissions = json.getJsonArray("permissions");
-        Assert.assertEquals(2, permissions.size());
-        Assert.assertEquals(Permissions.BOM_UPLOAD.toString(), permissions.get(0).asJsonObject().getString("name"));
-        Assert.assertEquals(Permissions.PROJECT_CREATION_UPLOAD.toString(), permissions.get(1).asJsonObject().getString("name"));
+        Assertions.assertEquals(2, permissions.size());
+        Assertions.assertEquals(Permissions.BOM_UPLOAD.toString(), permissions.get(0).asJsonObject().getString("name"));
+        Assertions.assertEquals(Permissions.PROJECT_CREATION_UPLOAD.toString(), permissions.get(1).asJsonObject().getString("name"));
 
         // missing api-key
         response = jersey.target(V1_TEAM + "/self").request().get(Response.class);
-        Assert.assertEquals(401, response.getStatus());
+        Assertions.assertEquals(401, response.getStatus());
 
         // wrong api-key
         response = jersey.target(V1_TEAM + "/self").request().header(X_API_KEY, "5ce9b8a5-5f18-4c1f-9eda-1611b83e8915").get(Response.class);
-        Assert.assertEquals(401, response.getStatus());
+        Assertions.assertEquals(401, response.getStatus());
 
         // not an api-key
         final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
         final String jwt = new JsonWebToken().createToken(testUser);
         response = jersey.target(V1_TEAM + "/self").request().header("Authorization", "Bearer " + jwt).get(Response.class);
-        Assert.assertEquals(400, response.getStatus());
+        Assertions.assertEquals(400, response.getStatus());
     }
 
     @Test
-    public void createTeamTest() {
+    void createTeamTest() {
         Team team = new Team();
         team.setName("My Team");
         Response response = jersey.target(V1_TEAM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(team, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(201, response.getStatus(), 0);
+        Assertions.assertEquals(201, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("My Team", json.getString("name"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
-        Assert.assertTrue(json.getJsonArray("apiKeys").isEmpty());
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("My Team", json.getString("name"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        Assertions.assertTrue(json.getJsonArray("apiKeys").isEmpty());
     }
 
     @Test
-    public void updateTeamTest() {
+    void updateTeamTest() {
         Team team = qm.createTeam("My Team");
         team.setName("My New Teams Name");
         Response response = jersey.target(V1_TEAM).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(team, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("My New Teams Name", json.getString("name"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("My New Teams Name", json.getString("name"));
     }
 
     @Test
-    public void updateTeamEmptyNameTest() {
+    void updateTeamEmptyNameTest() {
         Team team = qm.createTeam("My Team");
         team.setName(" ");
         Response response = jersey.target(V1_TEAM).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(team, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertEquals(400, response.getStatus(), 0);
     }
 
     @Test
-    public void updateTeamInvalidTest() {
+    void updateTeamInvalidTest() {
         Team team = new Team();
         team.setName("My Team");
         team.setUuid(UUID.randomUUID());
         Response response = jersey.target(V1_TEAM).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(team, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The team could not be found.", body);
+        Assertions.assertEquals("The team could not be found.", body);
     }
 
     @Test
-    public void deleteTeamTest() {
+    void deleteTeamTest() {
         Team team = qm.createTeam("My Team");
         Response response = jersey.target(V1_TEAM).request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(team, MediaType.APPLICATION_JSON)); // HACK
         // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
-        Assert.assertEquals(204, response.getStatus(), 0);
+        Assertions.assertEquals(204, response.getStatus(), 0);
     }
 
     @Test
-    public void deleteTeamWithAclTest() {
+    void deleteTeamWithAclTest() {
         Team team = qm.createTeam("My Team");
         ConfigProperty aclToogle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
         if (aclToogle == null) {
@@ -225,50 +224,50 @@ public class TeamResourceTest extends ResourceTest {
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(team, MediaType.APPLICATION_JSON)); // HACK
         // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
-        Assert.assertEquals(204, response.getStatus(), 0);
+        Assertions.assertEquals(204, response.getStatus(), 0);
     }
 
     @Test
-    public void getVisibleAdminTeams() {
+    void getVisibleAdminTeams() {
         setUpUser(true);
         Response response = jersey.target(V1_TEAM + "/visible")
                 .request()
                 .header("Authorization", "Bearer " + jwt)
                 .get();
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonArray teams = parseJsonArray(response);
-        Assert.assertEquals(2, teams.size());
-        Assert.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
-        Assert.assertEquals(userNotPartof.getUuid().toString(), teams.get(1).asJsonObject().getString("uuid"));
+        Assertions.assertEquals(2, teams.size());
+        Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        Assertions.assertEquals(userNotPartof.getUuid().toString(), teams.get(1).asJsonObject().getString("uuid"));
     }
 
     @Test
-    public void getVisibleNotAdminTeams() {
+    void getVisibleNotAdminTeams() {
         setUpUser(false);
         Response response = jersey.target(V1_TEAM + "/visible")
                 .request()
                 .header("Authorization", "Bearer " + jwt)
                 .get();
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonArray teams = parseJsonArray(response);
-        Assert.assertEquals(1, teams.size());
-        Assert.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        Assertions.assertEquals(1, teams.size());
+        Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test
-    public void getVisibleNotAdminApiKeyTeams() {
+    void getVisibleNotAdminApiKeyTeams() {
         Response response = jersey.target(V1_TEAM + "/visible")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonArray teams = parseJsonArray(response);
-        Assert.assertEquals(1, teams.size());
-        Assert.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        Assertions.assertEquals(1, teams.size());
+        Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test
-    public void getVisibleAdminApiKeyTeams() {
+    void getVisibleAdminApiKeyTeams() {
         userNotPartof = qm.createTeam("UserNotPartof");
         final var generator = new DefaultObjectGenerator();
         generator.loadDefaultPermissions();
@@ -281,47 +280,47 @@ public class TeamResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonArray teams = parseJsonArray(response);
-        Assert.assertEquals(2, teams.size());
-        Assert.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
-        Assert.assertEquals(userNotPartof.getUuid().toString(), teams.get(1).asJsonObject().getString("uuid"));
+        Assertions.assertEquals(2, teams.size());
+        Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        Assertions.assertEquals(userNotPartof.getUuid().toString(), teams.get(1).asJsonObject().getString("uuid"));
     }
 
     @Test
-    public void generateApiKeyTest() {
+    void generateApiKeyTest() {
         Team team = qm.createTeam("My Team");
-        Assert.assertEquals(0, team.getApiKeys().size());
+        Assertions.assertEquals(0, team.getApiKeys().size());
         Response response = jersey.target(V1_TEAM + "/" + team.getUuid().toString() + "/key").request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
                 .put(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(201, response.getStatus(), 0);
+        Assertions.assertEquals(201, response.getStatus(), 0);
         team = qm.getTeams().get(0);
-        Assert.assertEquals(1, team.getApiKeys().size());
+        Assertions.assertEquals(1, team.getApiKeys().size());
     }
 
     @Test
-    public void generateApiKeyInvalidTest() {
+    void generateApiKeyInvalidTest() {
         Response response = jersey.target(V1_TEAM + "/" + UUID.randomUUID().toString() + "/key").request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
                 .put(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The team could not be found.", body);
+        Assertions.assertEquals("The team could not be found.", body);
     }
 
     @Test
-    public void regenerateApiKeyTest() {
+    void regenerateApiKeyTest() {
         Team team = qm.createTeam("My Team");
         ApiKey apiKey = qm.createApiKey(team);
-        Assert.assertEquals(1, team.getApiKeys().size());
+        Assertions.assertEquals(1, team.getApiKeys().size());
         Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getPublicId()).request()
                 .header(X_API_KEY, apiKey.getKey())
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         assertThatJson(getPlainTextBody(response))
                 .withMatcher("publicId", equalTo(apiKey.getPublicId()))
                 .isEqualTo(/* language=JSON */ """
@@ -336,14 +335,14 @@ public class TeamResourceTest extends ResourceTest {
     }
 
     @Test
-    public void regenerateApiKeyLegacyTest() {
+    void regenerateApiKeyLegacyTest() {
         Team team = qm.createTeam("My Team");
         ApiKey apiKey = qm.createApiKey(team);
-        Assert.assertEquals(1, team.getApiKeys().size());
+        Assertions.assertEquals(1, team.getApiKeys().size());
         Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getKey()).request()
                 .header(X_API_KEY, apiKey.getKey())
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         assertThatJson(getPlainTextBody(response))
                 .withMatcher("publicId", equalTo(apiKey.getPublicId()))
                 .isEqualTo(/* language=JSON */ """
@@ -358,51 +357,51 @@ public class TeamResourceTest extends ResourceTest {
     }
 
     @Test
-    public void regenerateApiKeyInvalidTest() {
+    void regenerateApiKeyInvalidTest() {
         Response response = jersey.target(V1_TEAM + "/key/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The API key could not be found.", body);
+        Assertions.assertEquals("The API key could not be found.", body);
     }
 
     @Test
-    public void deleteApiKeyTest() {
+    void deleteApiKeyTest() {
         Team team = qm.createTeam("My Team");
         ApiKey apiKey = qm.createApiKey(team);
-        Assert.assertEquals(1, team.getApiKeys().size());
+        Assertions.assertEquals(1, team.getApiKeys().size());
         Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getPublicId()).request()
                 .header(X_API_KEY, apiKey.getKey())
                 .delete();
-        Assert.assertEquals(204, response.getStatus(), 0);
+        Assertions.assertEquals(204, response.getStatus(), 0);
     }
 
     @Test
-    public void deleteApiKeyLegacyTest() {
+    void deleteApiKeyLegacyTest() {
         Team team = qm.createTeam("My Team");
         ApiKey apiKey = qm.createApiKey(team);
-        Assert.assertEquals(1, team.getApiKeys().size());
+        Assertions.assertEquals(1, team.getApiKeys().size());
         Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getKey()).request()
                 .header(X_API_KEY, apiKey.getKey())
                 .delete();
-        Assert.assertEquals(204, response.getStatus(), 0);
+        Assertions.assertEquals(204, response.getStatus(), 0);
     }
 
     @Test
-    public void deleteApiKeyInvalidTest() {
+    void deleteApiKeyInvalidTest() {
         Response response = jersey.target(V1_TEAM + "/key/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The API key could not be found.", body);
+        Assertions.assertEquals("The API key could not be found.", body);
     }
 
     @Test
-    public void updateApiKeyCommentTest() {
+    void updateApiKeyCommentTest() {
         final Team team = qm.createTeam("foo");
         final ApiKey apiKey = qm.createApiKey(team);
 
@@ -430,7 +429,7 @@ public class TeamResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateApiKeyCommentLegacyTest() {
+    void updateApiKeyCommentLegacyTest() {
         final Team team = qm.createTeam("foo");
         final ApiKey apiKey = qm.createApiKey(team);
 
@@ -458,7 +457,7 @@ public class TeamResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateApiKeyCommentNotFoundTest() {
+    void updateApiKeyCommentNotFoundTest() {
         final Response response = jersey.target("%s/key/does-not-exist/comment".formatted(V1_TEAM)).request()
                 .header(X_API_KEY, this.apiKey)
                 .post(Entity.entity("Some comment 123", MediaType.TEXT_PLAIN));

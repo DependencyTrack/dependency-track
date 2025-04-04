@@ -18,32 +18,32 @@
  */
 package org.dependencytrack.exception;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class ParseExceptionTest {
+class ParseExceptionTest {
 
     @Test
-    public void testMessageConstructor() {
+    void testMessageConstructor() {
         ParseException ex = new ParseException("An error occurred");
-        Assert.assertEquals("An error occurred", ex.getMessage());
+        Assertions.assertEquals("An error occurred", ex.getMessage());
     }
 
     @Test
-    public void testThrowableConstructor() {
+    void testThrowableConstructor() {
         IOException e = new IOException("Filed to open file");
         ParseException ex = new ParseException(e);
-        Assert.assertNotNull(ex.getMessage());
-        Assert.assertEquals(e, ex.getCause());
+        Assertions.assertNotNull(ex.getMessage());
+        Assertions.assertEquals(e, ex.getCause());
     }
 
     @Test
-    public void testMessageThrowableConstructor() {
+    void testMessageThrowableConstructor() {
         IOException e = new IOException("Filed to open file");
         ParseException ex = new ParseException("Oops", e);
-        Assert.assertEquals("Oops", ex.getMessage());
-        Assert.assertEquals(e, ex.getCause());
+        Assertions.assertEquals("Oops", ex.getMessage());
+        Assertions.assertEquals(e, ex.getCause());
     }
 }

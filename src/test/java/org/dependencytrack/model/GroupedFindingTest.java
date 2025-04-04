@@ -20,14 +20,14 @@ package org.dependencytrack.model;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
 
-public class GroupedFindingTest extends PersistenceCapableTest {
+class GroupedFindingTest extends PersistenceCapableTest {
 
     private final Date published = new Date();
     private final GroupedFinding groupedFinding = new GroupedFinding("vuln-source", "vuln-vulnId", "vuln-title",
@@ -35,21 +35,21 @@ public class GroupedFindingTest extends PersistenceCapableTest {
 
 
     @Test
-    public void testVulnerability() {
+    void testVulnerability() {
         Map<String, Object> map = groupedFinding.getVulnerability();
-        Assert.assertEquals("vuln-source", map.get("source"));
-        Assert.assertEquals("vuln-vulnId", map.get("vulnId"));
-        Assert.assertEquals("vuln-title", map.get("title"));
-        Assert.assertEquals(Severity.HIGH, map.get("severity"));
-        Assert.assertEquals(published, map.get("published"));
-        Assert.assertEquals(BigDecimal.valueOf(8.5), map.get("cvssV2BaseScore"));
-        Assert.assertEquals(BigDecimal.valueOf(8.4), map.get("cvssV3BaseScore"));
-        Assert.assertEquals(3, map.get("affectedProjectCount"));
+        Assertions.assertEquals("vuln-source", map.get("source"));
+        Assertions.assertEquals("vuln-vulnId", map.get("vulnId"));
+        Assertions.assertEquals("vuln-title", map.get("title"));
+        Assertions.assertEquals(Severity.HIGH, map.get("severity"));
+        Assertions.assertEquals(published, map.get("published"));
+        Assertions.assertEquals(BigDecimal.valueOf(8.5), map.get("cvssV2BaseScore"));
+        Assertions.assertEquals(BigDecimal.valueOf(8.4), map.get("cvssV3BaseScore"));
+        Assertions.assertEquals(3, map.get("affectedProjectCount"));
     }
 
     @Test
-    public void testAttribution() {
+    void testAttribution() {
         Map<String, Object> map = groupedFinding.getAttribution();
-        Assert.assertEquals(AnalyzerIdentity.INTERNAL_ANALYZER, map.get("analyzerIdentity"));
+        Assertions.assertEquals(AnalyzerIdentity.INTERNAL_ANALYZER, map.get("analyzerIdentity"));
     }
 }

@@ -23,8 +23,13 @@ import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.http.HttpStatus;
-import org.dependencytrack.JerseyTestRule;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
@@ -35,38 +40,32 @@ import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ComponentResourceTest extends ResourceTest {
+class ComponentResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(ComponentResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(ComponentResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
     @Test
-    public void getComponentsDefaultRequestTest() {
+    void getComponentsDefaultRequestTest() {
         Response response = jersey.target(V1_COMPONENT).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(405, response.getStatus()); // No longer prohibited in DT 4.0+
+        Assertions.assertEquals(405, response.getStatus()); // No longer prohibited in DT 4.0+
     }
 
     /**
@@ -166,7 +165,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getOutdatedComponentsTest() throws MalformedPackageURLException {
+    void getOutdatedComponentsTest() throws MalformedPackageURLException {
         final Project project = prepareProject();
 
         final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
@@ -183,7 +182,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getUngroupedOutdatedComponentsTest() throws MalformedPackageURLException {
+    void getUngroupedOutdatedComponentsTest() throws MalformedPackageURLException {
         final Project project = prepareProjectUngroupedComponents();
 
         final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
@@ -200,7 +199,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getOutdatedDirectComponentsTest() throws MalformedPackageURLException {
+    void getOutdatedDirectComponentsTest() throws MalformedPackageURLException {
         final Project project = prepareProject();
 
         final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
@@ -217,7 +216,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getUngroupedOutdatedDirectComponentsTest() throws MalformedPackageURLException {
+    void getUngroupedOutdatedDirectComponentsTest() throws MalformedPackageURLException {
         final Project project = prepareProjectUngroupedComponents();
 
         final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
@@ -234,7 +233,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getAllComponentsTest() throws MalformedPackageURLException {
+    void getAllComponentsTest() throws MalformedPackageURLException {
         final Project project = prepareProject();
 
         final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
@@ -249,7 +248,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getAllDirectComponentsTest() throws MalformedPackageURLException {
+    void getAllDirectComponentsTest() throws MalformedPackageURLException {
         final Project project = prepareProject();
 
         final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
@@ -265,7 +264,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentsByNameTest() throws MalformedPackageURLException {
+    void getComponentsByNameTest() throws MalformedPackageURLException {
         final Project project = prepareProject();
 
         final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
@@ -281,7 +280,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentsByGroupTest() throws MalformedPackageURLException {
+    void getComponentsByGroupTest() throws MalformedPackageURLException {
         final Project project = prepareProject();
 
         final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
@@ -297,7 +296,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentByUuidTest() {
+    void getComponentByUuidTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -305,25 +304,25 @@ public class ComponentResourceTest extends ResourceTest {
         component = qm.createComponent(component, false);
         Response response = jersey.target(V1_COMPONENT + "/" + component.getUuid())
                 .request().header(X_API_KEY, apiKey).get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("ABC", json.getString("name"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("ABC", json.getString("name"));
     }
 
     @Test
-    public void getComponentByInvalidUuidTest() {
+    void getComponentByInvalidUuidTest() {
         Response response = jersey.target(V1_COMPONENT + "/" + UUID.randomUUID())
                 .request().header(X_API_KEY, apiKey).get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The component could not be found.", body);
+        Assertions.assertEquals("The component could not be found.", body);
     }
 
     @Test
-    public void getComponentByUuidWithRepositoryMetaDataTest() {
+    void getComponentByUuidWithRepositoryMetaDataTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -341,20 +340,20 @@ public class ComponentResourceTest extends ResourceTest {
         Response response = jersey.target(V1_COMPONENT + "/" + component.getUuid())
                 .queryParam("includeRepositoryMetaData", true)
                 .request().header(X_API_KEY, apiKey).get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("ABC", json.getString("name"));
-        Assert.assertEquals("MAVEN", json.getJsonObject("repositoryMeta").getString("repositoryType"));
-        Assert.assertEquals("org.acme", json.getJsonObject("repositoryMeta").getString("namespace"));
-        Assert.assertEquals("abc", json.getJsonObject("repositoryMeta").getString("name"));
-        Assert.assertEquals("2.0.0", json.getJsonObject("repositoryMeta").getString("latestVersion"));
-        Assert.assertEquals(lastCheck.getTime(), json.getJsonObject("repositoryMeta").getJsonNumber("lastCheck").longValue());
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("ABC", json.getString("name"));
+        Assertions.assertEquals("MAVEN", json.getJsonObject("repositoryMeta").getString("repositoryType"));
+        Assertions.assertEquals("org.acme", json.getJsonObject("repositoryMeta").getString("namespace"));
+        Assertions.assertEquals("abc", json.getJsonObject("repositoryMeta").getString("name"));
+        Assertions.assertEquals("2.0.0", json.getJsonObject("repositoryMeta").getString("latestVersion"));
+        Assertions.assertEquals(lastCheck.getTime(), json.getJsonObject("repositoryMeta").getJsonNumber("lastCheck").longValue());
     }
 
     @Test
-    public void getComponentByIdentityWithCoordinatesTest() {
+    void getComponentByIdentityWithCoordinatesTest() {
         final Project projectA = qm.createProject("projectA", null, "1.0", null, null, null, true, false);
         var componentA = new Component();
         componentA.setProject(projectA);
@@ -394,7 +393,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentByIdentityWithPurlTest() {
+    void getComponentByIdentityWithPurlTest() {
         final Project projectA = qm.createProject("projectA", null, "1.0", null, null, null, true, false);
         var componentA = new Component();
         componentA.setProject(projectA);
@@ -432,7 +431,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentByIdentityWithCpeTest() {
+    void getComponentByIdentityWithCpeTest() {
         final Project projectA = qm.createProject("projectA", null, "1.0", null, null, null, true, false);
         var componentA = new Component();
         componentA.setProject(projectA);
@@ -470,7 +469,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentByIdentityWithProjectTest() {
+    void getComponentByIdentityWithProjectTest() {
         final Project projectA = qm.createProject("projectA", null, "1.0", null, null, null, true, false);
         var componentA = new Component();
         componentA.setProject(projectA);
@@ -507,7 +506,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentByIdentityWithProjectWhenProjectDoesNotExistTest() {
+    void getComponentByIdentityWithProjectWhenProjectDoesNotExistTest() {
         final Response response = jersey.target(V1_COMPONENT + "/identity")
                 .queryParam("purl", "pkg:maven/group/name@version")
                 .queryParam("project", UUID.randomUUID())
@@ -520,7 +519,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentByHashTest() {
+    void getComponentByHashTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -529,23 +528,23 @@ public class ComponentResourceTest extends ResourceTest {
         component = qm.createComponent(component, false);
         Response response = jersey.target(V1_COMPONENT + "/hash/" + component.getSha1())
                 .request().header(X_API_KEY, apiKey).get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(response.getHeaderString(TOTAL_COUNT_HEADER), "1");
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(response.getHeaderString(TOTAL_COUNT_HEADER), "1");
         JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("ABC", json.getJsonObject(0).getString("name"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("ABC", json.getJsonObject(0).getString("name"));
     }
 
     @Test
-    public void getComponentByInvalidHashTest() {
+    void getComponentByInvalidHashTest() {
         Response response = jersey.target(V1_COMPONENT + "/hash/c5a8829aa3da800216b933e265dd0b97eb6f9341")
                 .request().header(X_API_KEY, apiKey).get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(response.getHeaderString(TOTAL_COUNT_HEADER), "0");
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(response.getHeaderString(TOTAL_COUNT_HEADER), "0");
     }
 
     @Test
-    public void getComponentByHashWithAclTest() {
+    void getComponentByHashWithAclTest() {
         // Enable portfolio access control.
         qm.createConfigProperty(
                 ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
@@ -581,7 +580,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createComponentTest() {
+    void createComponentTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -592,19 +591,19 @@ public class ComponentResourceTest extends ResourceTest {
         Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(component, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(201, response.getStatus(), 0);
+        Assertions.assertEquals(201, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("My Component", json.getString("name"));
-        Assert.assertEquals("SampleAuthor" ,json.getJsonArray("authors").getJsonObject(0).getString("name"));
-        Assert.assertEquals("SampleAuthor", json.getString("author"));
-        Assert.assertEquals("1.0", json.getString("version"));
-        Assert.assertEquals("APPLICATION", json.getString("classifier"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("My Component", json.getString("name"));
+        Assertions.assertEquals("SampleAuthor" ,json.getJsonArray("authors").getJsonObject(0).getString("name"));
+        Assertions.assertEquals("SampleAuthor", json.getString("author"));
+        Assertions.assertEquals("1.0", json.getString("version"));
+        Assertions.assertEquals("APPLICATION", json.getString("classifier"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
     }
 
     @Test
-    public void createComponentUpperCaseHashTest() {
+    void createComponentUpperCaseHashTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -622,25 +621,25 @@ public class ComponentResourceTest extends ResourceTest {
         Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(component, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(201, response.getStatus(), 0);
+        Assertions.assertEquals(201, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("My Component", json.getString("name"));
-        Assert.assertEquals("1.0", json.getString("version"));
-        Assert.assertEquals("APPLICATION", json.getString("classifier"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
-        Assert.assertEquals(component.getSha1(), json.getString("sha1"));
-        Assert.assertEquals(component.getSha256(), json.getString("sha256"));
-        Assert.assertEquals(component.getSha3_256(), json.getString("sha3_256"));
-        Assert.assertEquals(component.getSha384(), json.getString("sha384"));
-        Assert.assertEquals(component.getSha3_384(), json.getString("sha3_384"));
-        Assert.assertEquals(component.getSha512(), json.getString("sha512"));
-        Assert.assertEquals(component.getSha3_512(), json.getString("sha3_512"));
-        Assert.assertEquals(component.getMd5(), json.getString("md5"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("My Component", json.getString("name"));
+        Assertions.assertEquals("1.0", json.getString("version"));
+        Assertions.assertEquals("APPLICATION", json.getString("classifier"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        Assertions.assertEquals(component.getSha1(), json.getString("sha1"));
+        Assertions.assertEquals(component.getSha256(), json.getString("sha256"));
+        Assertions.assertEquals(component.getSha3_256(), json.getString("sha3_256"));
+        Assertions.assertEquals(component.getSha384(), json.getString("sha384"));
+        Assertions.assertEquals(component.getSha3_384(), json.getString("sha3_384"));
+        Assertions.assertEquals(component.getSha512(), json.getString("sha512"));
+        Assertions.assertEquals(component.getSha3_512(), json.getString("sha3_512"));
+        Assertions.assertEquals(component.getMd5(), json.getString("md5"));
     }
 
     @Test
-    public void createComponentCollectionProjectTest() {
+    void createComponentCollectionProjectTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         // make project a collection project
         project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
@@ -653,11 +652,11 @@ public class ComponentResourceTest extends ResourceTest {
         Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(component, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertEquals(400, response.getStatus(), 0);
     }
 
     @Test
-    public void updateComponentTest() {
+    void updateComponentTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -680,17 +679,17 @@ public class ComponentResourceTest extends ResourceTest {
         Response response = jersey.target(V1_COMPONENT).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(jsonComponent, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("My Component", json.getString("name"));
-        Assert.assertEquals("1.0", json.getString("version"));
-        Assert.assertEquals("Test component", json.getString("description"));
-        Assert.assertEquals(1, json.getJsonArray("externalReferences").size());
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("My Component", json.getString("name"));
+        Assertions.assertEquals("1.0", json.getString("version"));
+        Assertions.assertEquals("Test component", json.getString("description"));
+        Assertions.assertEquals(1, json.getJsonArray("externalReferences").size());
     }
 
     @Test
-    public void updateComponentEmptyNameTest() {
+    void updateComponentEmptyNameTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -701,11 +700,11 @@ public class ComponentResourceTest extends ResourceTest {
         Response response = jersey.target(V1_COMPONENT).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(component, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertEquals(400, response.getStatus(), 0);
     }
 
     @Test
-    public void updateComponentInvalidLicenseExpressionTest() {
+    void updateComponentInvalidLicenseExpressionTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -748,7 +747,7 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void deleteComponentTest() {
+    void deleteComponentTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -757,11 +756,11 @@ public class ComponentResourceTest extends ResourceTest {
         component = qm.createComponent(component, false);
         Response response = jersey.target(V1_COMPONENT + "/" + component.getUuid().toString())
                 .request().header(X_API_KEY, apiKey).delete();
-        Assert.assertEquals(204, response.getStatus(), 0);
+        Assertions.assertEquals(204, response.getStatus(), 0);
     }
 
     @Test
-    public void deleteComponentInvalidUuidTest() {
+    void deleteComponentInvalidUuidTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -770,18 +769,18 @@ public class ComponentResourceTest extends ResourceTest {
         qm.createComponent(component, false);
         Response response = jersey.target(V1_COMPONENT + "/" + UUID.randomUUID())
                 .request().header(X_API_KEY, apiKey).delete();
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test
-    public void internalComponentIdentificationTest() {
+    void internalComponentIdentificationTest() {
         Response response = jersey.target(V1_COMPONENT + "/internal/identify")
                 .request().header(X_API_KEY, apiKey).get();
-        Assert.assertEquals(204, response.getStatus(), 0);
+        Assertions.assertEquals(204, response.getStatus(), 0);
     }
 
     @Test
-    public void getDependencyGraphForComponentTest() {
+    void getDependencyGraphForComponentTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
         Component component1 = new Component();
@@ -829,20 +828,20 @@ public class ComponentResourceTest extends ResourceTest {
         Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component1_1_1.getUuid())
                 .request().header(X_API_KEY, apiKey).get();
         JsonObject json = parseJsonObject(response);
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
 
-        Assert.assertTrue(json.get(component1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
-        Assert.assertTrue(json.get(component1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(json.get(component1_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(json.get(component2.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(json.get(component2_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(json.get(component2_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assertions.assertTrue(json.get(component1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assertions.assertTrue(json.get(component1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assertions.assertFalse(json.get(component1_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assertions.assertFalse(json.get(component2.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assertions.assertFalse(json.get(component2_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assertions.assertFalse(json.get(component2_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
         Component finalComponent2_1_1_1 = component2_1_1_1;
-        Assert.assertThrows(NullPointerException.class, () -> json.get(finalComponent2_1_1_1.getUuid().toString()).asJsonObject().asJsonObject());
+        Assertions.assertThrows(NullPointerException.class, () -> json.get(finalComponent2_1_1_1.getUuid().toString()).asJsonObject().asJsonObject());
     }
 
     @Test
-    public void getDependencyGraphForComponentTestWithRepositoryMetaData() {
+    void getDependencyGraphForComponentTestWithRepositoryMetaData() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
         Component component1 = new Component();
@@ -895,18 +894,18 @@ public class ComponentResourceTest extends ResourceTest {
         Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component1_1_1.getUuid())
                 .request().header(X_API_KEY, apiKey).get();
         JsonObject json = parseJsonObject(response);
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
 
-        Assert.assertTrue(json.get(component1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
-        Assert.assertEquals("2.0.0", json.get(component1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
-        Assert.assertTrue(json.get(component1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
-        Assert.assertEquals("3.0.0", json.get(component1_1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
-        Assert.assertFalse(json.get(component1_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
-        Assert.assertEquals("4.0.0", json.get(component1_1_1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
+        Assertions.assertTrue(json.get(component1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assertions.assertEquals("2.0.0", json.get(component1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
+        Assertions.assertTrue(json.get(component1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assertions.assertEquals("3.0.0", json.get(component1_1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
+        Assertions.assertFalse(json.get(component1_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assertions.assertEquals("4.0.0", json.get(component1_1_1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
     }
 
     @Test
-    public void getDependencyGraphForComponentInvalidProjectUuidTest() {
+    void getDependencyGraphForComponentInvalidProjectUuidTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -915,19 +914,19 @@ public class ComponentResourceTest extends ResourceTest {
         component = qm.createComponent(component, false);
         Response response = jersey.target(V1_COMPONENT + "/project/" + UUID.randomUUID() + "/dependencyGraph/" + component.getUuid())
                 .request().header(X_API_KEY, apiKey).get();
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test
-    public void getDependencyGraphForComponentInvalidComponentUuidTest() {
+    void getDependencyGraphForComponentInvalidComponentUuidTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + UUID.randomUUID())
                 .request().header(X_API_KEY, apiKey).get();
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test
-    public void getDependencyGraphForComponentNoDependencyGraphTest() {
+    void getDependencyGraphForComponentNoDependencyGraphTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
@@ -937,12 +936,12 @@ public class ComponentResourceTest extends ResourceTest {
         Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component.getUuid())
                 .request().header(X_API_KEY, apiKey).get();
         JsonObject json = parseJsonObject(response);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(0, json.size());
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(0, json.size());
     }
 
     @Test
-    public void getDependencyGraphForComponentIsNotComponentOfProject() {
+    void getDependencyGraphForComponentIsNotComponentOfProject() {
         Project projectWithComponent = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(projectWithComponent);
@@ -954,13 +953,13 @@ public class ComponentResourceTest extends ResourceTest {
         Response responseWithComponent = jersey.target(V1_COMPONENT + "/project/" + projectWithComponent.getUuid() + "/dependencyGraph/" + component.getUuid())
                 .request().header(X_API_KEY, apiKey).get();
         JsonObject jsonWithComponent = parseJsonObject(responseWithComponent);
-        Assert.assertEquals(200, responseWithComponent.getStatus(), 0);
-        Assert.assertEquals(1, jsonWithComponent.size());
+        Assertions.assertEquals(200, responseWithComponent.getStatus(), 0);
+        Assertions.assertEquals(1, jsonWithComponent.size());
         Response responseWithoutComponent = jersey.target(V1_COMPONENT + "/project/" + projectWithoutComponent.getUuid() + "/dependencyGraph/" + component.getUuid())
                 .request().header(X_API_KEY, apiKey).get();
         JsonObject jsonWithoutComponent = parseJsonObject(responseWithoutComponent);
-        Assert.assertEquals(200, responseWithoutComponent.getStatus(), 0);
-        Assert.assertEquals(0, jsonWithoutComponent.size());
+        Assertions.assertEquals(200, responseWithoutComponent.getStatus(), 0);
+        Assertions.assertEquals(0, jsonWithoutComponent.size());
     }
 
 }

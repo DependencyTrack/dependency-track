@@ -43,13 +43,12 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -64,7 +63,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-public class PolicyEngineTest extends PersistenceCapableTest {
+class PolicyEngineTest extends PersistenceCapableTest {
 
     public static class NotificationSubscriber implements Subscriber {
 
@@ -77,28 +76,28 @@ public class PolicyEngineTest extends PersistenceCapableTest {
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() {
         NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
     }
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    public void setup() throws Exception {
         NOTIFICATIONS.clear();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         NOTIFICATIONS.clear();
     }
 
     @Test
-    public void hasTagMatchPolicyLimitedToTag() {
+    void hasTagMatchPolicyLimitedToTag() {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         Tag commonTag = qm.createTag("Tag 1");
@@ -118,11 +117,11 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
         PolicyEngine policyEngine = new PolicyEngine();
         List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
     }
 
     @Test
-    public void noTagMatchPolicyLimitedToTag() {
+    void noTagMatchPolicyLimitedToTag() {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         qm.bind(policy, List.of(qm.createTag("Tag 1")));
@@ -141,11 +140,11 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
         PolicyEngine policyEngine = new PolicyEngine();
         List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void hasPolicyAssignedToParentProject() {
+    void hasPolicyAssignedToParentProject() {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         policy.setIncludeChildren(true);
@@ -169,11 +168,11 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
         PolicyEngine policyEngine = new PolicyEngine();
         List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
     }
 
     @Test
-    public void noPolicyAssignedToParentProject() {
+    void noPolicyAssignedToParentProject() {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         Project parent = qm.createProject("Parent", null, "1", null, null, null, true, false);
@@ -196,11 +195,11 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
         PolicyEngine policyEngine = new PolicyEngine();
         List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void policyForLatestTriggersOnLatestVersion() {
+    void policyForLatestTriggersOnLatestVersion() {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO, true);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         Project project = qm.createProject("My Project", null, "1", null, null,
@@ -219,11 +218,11 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
         PolicyEngine policyEngine = new PolicyEngine();
         List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
     }
 
     @Test
-    public void policyForLatestTriggersNotOnNotLatestVersion() {
+    void policyForLatestTriggersNotOnNotLatestVersion() {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO, true);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         Project project = qm.createProject("My Project", null, "1", null, null,
@@ -242,11 +241,11 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
         PolicyEngine policyEngine = new PolicyEngine();
         List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void determineViolationTypeTest() {
+    void determineViolationTypeTest() {
         PolicyCondition policyCondition = new PolicyCondition();
         policyCondition.setSubject(null);
         PolicyEngine policyEngine = new PolicyEngine();
@@ -254,7 +253,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void issue1924() {
+    void issue1924() {
         Policy policy = qm.createPolicy("Policy 1924", Operator.ALL, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         qm.createPolicyCondition(policy, Subject.PACKAGE_URL, PolicyCondition.Operator.NO_MATCH, "pkg:deb");
@@ -301,20 +300,20 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
         PolicyEngine policyEngine = new PolicyEngine();
         List<PolicyViolation> violations = policyEngine.evaluate(components);
-        Assert.assertEquals(3, violations.size());
+        Assertions.assertEquals(3, violations.size());
         PolicyViolation policyViolation = violations.get(0);
-        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
-        Assert.assertEquals(Subject.SEVERITY, policyViolation.getPolicyCondition().getSubject());
+        Assertions.assertEquals("Log4J", policyViolation.getComponent().getName());
+        Assertions.assertEquals(Subject.SEVERITY, policyViolation.getPolicyCondition().getSubject());
         policyViolation = violations.get(1);
-        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
-        Assert.assertEquals(Subject.SEVERITY, policyViolation.getPolicyCondition().getSubject());
+        Assertions.assertEquals("Log4J", policyViolation.getComponent().getName());
+        Assertions.assertEquals(Subject.SEVERITY, policyViolation.getPolicyCondition().getSubject());
         policyViolation = violations.get(2);
-        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
-        Assert.assertEquals(Subject.PACKAGE_URL, policyViolation.getPolicyCondition().getSubject());
+        Assertions.assertEquals("Log4J", policyViolation.getComponent().getName());
+        Assertions.assertEquals(Subject.PACKAGE_URL, policyViolation.getPolicyCondition().getSubject());
     }
 
     @Test
-    public void issue2455() {
+    void issue2455() {
         Policy policy = qm.createPolicy("Policy 1924", Operator.ALL, ViolationState.INFO);
 
         License license = new License();
@@ -360,17 +359,17 @@ public class PolicyEngineTest extends PersistenceCapableTest {
 
         PolicyEngine policyEngine = new PolicyEngine();
         List<PolicyViolation> violations = policyEngine.evaluate(components);
-        Assert.assertEquals(2, violations.size());
+        Assertions.assertEquals(2, violations.size());
         PolicyViolation policyViolation = violations.get(0);
-        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
-        Assert.assertEquals(Subject.LICENSE_GROUP, policyViolation.getPolicyCondition().getSubject());
+        Assertions.assertEquals("Log4J", policyViolation.getComponent().getName());
+        Assertions.assertEquals(Subject.LICENSE_GROUP, policyViolation.getPolicyCondition().getSubject());
         policyViolation = violations.get(1);
-        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
-        Assert.assertEquals(Subject.LICENSE_GROUP, policyViolation.getPolicyCondition().getSubject());
+        Assertions.assertEquals("Log4J", policyViolation.getComponent().getName());
+        Assertions.assertEquals(Subject.LICENSE_GROUP, policyViolation.getPolicyCondition().getSubject());
     }
 
     @Test
-    public void notificationTest() {
+    void notificationTest() {
         final var policy = qm.createPolicy("Test", Operator.ANY, ViolationState.FAIL);
 
         // Create a policy condition that matches on any coordinates.
@@ -433,7 +432,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void violationReconciliationTest() {
+    void violationReconciliationTest() {
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
@@ -471,7 +470,7 @@ public class PolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void violationReconciliationWithDuplicatesTest() {
+    void violationReconciliationWithDuplicatesTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);

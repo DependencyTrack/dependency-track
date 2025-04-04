@@ -19,12 +19,9 @@
 package org.dependencytrack.resources.v1.exception;
 
 import net.javacrumbs.jsonunit.core.Option;
-import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.ClassRule;
-import org.junit.Test;
 
 import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.GET;
@@ -34,19 +31,22 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ConstraintViolationExceptionMapperTest extends ResourceTest {
+class ConstraintViolationExceptionMapperTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(TestResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(TestResource.class)
                     .register(ConstraintViolationExceptionMapper.class));
 
     @Test
-    public void test() {
+    void test() {
         final Response response = jersey.target("/not-a-uuid")
                 .queryParam("foo", "666")
                 .request()

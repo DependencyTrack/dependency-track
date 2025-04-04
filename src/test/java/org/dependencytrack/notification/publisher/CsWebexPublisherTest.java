@@ -24,9 +24,9 @@ import org.apache.http.HttpHeaders;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 
@@ -37,22 +37,22 @@ import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class CsWebexPublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
+class CsWebexPublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
 
     private static ClientAndServer mockServer;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         mockServer = startClientAndServer(1080);
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         mockServer.stop();
     }
 
     @Test
-    public void testPublish() throws IOException {
+    void testPublish() throws IOException {
         new MockServerClient("localhost", 1080)
                 .when(
                         request()

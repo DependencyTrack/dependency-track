@@ -20,17 +20,17 @@ package org.dependencytrack.parser.vulndb;
 
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.vulndb.model.Results;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class VulnDbParserTest {
+class VulnDbParserTest {
 
     @Test
-    public void test() throws Exception {
+    void test() throws Exception {
         String filePath = "src/test/resources/unit/vulndb.jsons/vulnerabilities_0.json";
         File file = new File(filePath);
         final VulnDbParser parser = new VulnDbParser();

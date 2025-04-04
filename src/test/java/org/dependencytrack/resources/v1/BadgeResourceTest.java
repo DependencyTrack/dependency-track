@@ -20,17 +20,18 @@ package org.dependencytrack.resources.v1;
 
 import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
-import org.dependencytrack.JerseyTestRule;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.ws.rs.core.Response;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
@@ -41,21 +42,20 @@ import java.util.UUID;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BADGE_ENABLED;
 
-public class BadgeResourceTest extends ResourceTest {
+class BadgeResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(BadgeResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(BadgeResource.class)
                     .register(ApiFilter.class));
 
-    @Override
+    @BeforeEach
     public void before() throws Exception {
-        super.before();
         qm.createConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName(), "false", IConfigProperty.PropertyType.BOOLEAN, "Unauthenticated access to badge enabled");
     }
 
     @Test
-    public void projectVulnerabilitiesByUuidTest() {
+    void projectVulnerabilitiesByUuidTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
@@ -63,70 +63,70 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectVulnerabilitiesByUuidWithHeaderAuthenticationTest() {
+    void projectVulnerabilitiesByUuidWithHeaderAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/vulns/project/" + project.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectVulnerabilitiesByUuidMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
+    void projectVulnerabilitiesByUuidMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
         enableUnauthenticatedBadgeAccess();
 
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/vulns/project/" + project.getUuid()).request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectVulnerabilitiesByUuidProjectNotFoundTest() {
+    void projectVulnerabilitiesByUuidProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         Response response = jersey.target(V1_BADGE + "/vulns/project/" + UUID.randomUUID())
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test
-    public void projectVulnerabilitiesByUuidMissingAuthenticationTest() {
+    void projectVulnerabilitiesByUuidMissingAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/vulns/project/" + project.getUuid()).request()
                 .get(Response.class);
-        Assert.assertEquals(401, response.getStatus(), 0);
+        Assertions.assertEquals(401, response.getStatus(), 0);
     }
 
     @Test
-    public void projectVulnerabilitiesByUuidMissingPermissionTest() {
+    void projectVulnerabilitiesByUuidMissingPermissionTest() {
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/vulns/project/" + project.getUuid())
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     @Test
-    public void projectVulnerabilitiesByUuidWithAclAccessTest() {
+    void projectVulnerabilitiesByUuidWithAclAccessTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -147,13 +147,13 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectVulnerabilitiesByUuidWithAclAccessWithHeaderAuthenticationTest() {
+    void projectVulnerabilitiesByUuidWithAclAccessWithHeaderAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -173,13 +173,13 @@ public class BadgeResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BADGE + "/vulns/project/" + project.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectVulnerabilitiesByUuidWithAclNoAccessTest() {
+    void projectVulnerabilitiesByUuidWithAclNoAccessTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -199,11 +199,11 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     @Test
-    public void projectVulnerabilitiesByNameAndVersionTest() {
+    void projectVulnerabilitiesByNameAndVersionTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
@@ -211,26 +211,26 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectVulnerabilitiesByNameAndVersionWithHeaderAuthenticationTest() {
+    void projectVulnerabilitiesByNameAndVersionWithHeaderAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
         enableUnauthenticatedBadgeAccess();
 
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example/1.0.0").request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectVulnerabilitiesByNameAndVersionMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
+    void projectVulnerabilitiesByNameAndVersionMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
@@ -238,24 +238,24 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectVulnerabilitiesByNameAndVersionProjectNotFoundTest() {
+    void projectVulnerabilitiesByNameAndVersionProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         Response response = jersey.target(V1_BADGE + "/vulns/project/ProjectNameDoesNotExist/1.0.0")
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test
-    public void projectVulnerabilitiesByNameAndVersionVersionNotFoundTest() {
+    void projectVulnerabilitiesByNameAndVersionVersionNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
@@ -263,31 +263,31 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test
-    public void projectVulnerabilitiesByNameAndVersionMissingAuthenticationTest() {
+    void projectVulnerabilitiesByNameAndVersionMissingAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example/1.0.0").request()
                 .get(Response.class);
-        Assert.assertEquals(401, response.getStatus(), 0);
+        Assertions.assertEquals(401, response.getStatus(), 0);
     }
 
     @Test
-    public void projectVulnerabilitiesByNameAndVersionMissingPermissionTest() {
+    void projectVulnerabilitiesByNameAndVersionMissingPermissionTest() {
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example/1.0.0")
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     @Test
-    public void projectVulnerabilitiesByNameAndVersionWithAclAccessTest() {
+    void projectVulnerabilitiesByNameAndVersionWithAclAccessTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -308,13 +308,13 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectVulnerabilitiesByNameAndVersionWithAclAccessWithHeaderAuthenticationTest() {
+    void projectVulnerabilitiesByNameAndVersionWithAclAccessWithHeaderAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -334,13 +334,13 @@ public class BadgeResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BADGE + "/vulns/project/Acme%20Example/1.0.0").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectVulnerabilitiesByNameAndVersionWithAclNoAccessTest() {
+    void projectVulnerabilitiesByNameAndVersionWithAclNoAccessTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -360,11 +360,11 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     @Test
-    public void projectPolicyViolationsByUuidTest() {
+    void projectPolicyViolationsByUuidTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
@@ -372,26 +372,26 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectPolicyViolationsByUuidWithHeaderAuthenticationTest() {
+    void projectPolicyViolationsByUuidWithHeaderAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/violations/project/" + project.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectPolicyViolationsByUuidMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
+    void projectPolicyViolationsByUuidMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
         enableUnauthenticatedBadgeAccess();
 
@@ -399,44 +399,44 @@ public class BadgeResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BADGE + "/violations/project/" + project.getUuid())
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectPolicyViolationsByUuidProjectNotFoundTest() {
+    void projectPolicyViolationsByUuidProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         Response response = jersey.target(V1_BADGE + "/violations/project/" + UUID.randomUUID())
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test
-    public void projectPolicyViolationsByUuidMissingAuthenticationTest() {
+    void projectPolicyViolationsByUuidMissingAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/violations/project/" + project.getUuid()).request()
                 .get(Response.class);
-        Assert.assertEquals(401, response.getStatus(), 0);
+        Assertions.assertEquals(401, response.getStatus(), 0);
     }
 
     @Test
-    public void projectPolicyViolationsByUuidMissingPermissionTest() {
+    void projectPolicyViolationsByUuidMissingPermissionTest() {
         Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/violations/project/" + project.getUuid())
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     @Test
-    public void projectPolicyViolationsByUuidWithAclAccessTest() {
+    void projectPolicyViolationsByUuidWithAclAccessTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -457,13 +457,13 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectPolicyViolationsByUuidWithAclAccessWithHeaderAuthenticationTest() {
+    void projectPolicyViolationsByUuidWithAclAccessWithHeaderAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -483,13 +483,13 @@ public class BadgeResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BADGE + "/violations/project/" + project.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectPolicyViolationsByUuidWithAclNoAccessTest() {
+    void projectPolicyViolationsByUuidWithAclNoAccessTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -509,11 +509,11 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     @Test
-    public void projectPolicyViolationsByNameAndVersionTest() {
+    void projectPolicyViolationsByNameAndVersionTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
@@ -521,26 +521,26 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectPolicyViolationsByNameAndVersionWithHeaderAuthenticationTest() {
+    void projectPolicyViolationsByNameAndVersionWithHeaderAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectPolicyViolationsByNameAndVersionMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
+    void projectPolicyViolationsByNameAndVersionMissingAuthenticationWithUnauthenticatedAccessEnabledTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
         enableUnauthenticatedBadgeAccess();
 
@@ -548,24 +548,24 @@ public class BadgeResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0")
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectPolicyViolationsByNameAndVersionProjectNotFoundTest() {
+    void projectPolicyViolationsByNameAndVersionProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         Response response = jersey.target(V1_BADGE + "/violations/project/ProjectNameDoesNotExist/1.0.0")
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test
-    public void projectPolicyViolationsByNameAndVersionVersionNotFoundTest() {
+    void projectPolicyViolationsByNameAndVersionVersionNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
@@ -573,31 +573,31 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test
-    public void projectPolicyViolationsByNameAndVersionMissingAuthenticationTest() {
+    void projectPolicyViolationsByNameAndVersionMissingAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0").request()
                 .get(Response.class);
-        Assert.assertEquals(401, response.getStatus(), 0);
+        Assertions.assertEquals(401, response.getStatus(), 0);
     }
 
     @Test
-    public void projectPolicyViolationsByNameAndVersionMissingPermissionTest() {
+    void projectPolicyViolationsByNameAndVersionMissingPermissionTest() {
         qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
         Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0")
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     @Test
-    public void projectPolicyViolationsByNameAndVersionWithAclAccessTest() {
+    void projectPolicyViolationsByNameAndVersionWithAclAccessTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -616,13 +616,13 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectPolicyViolationsByNameAndVersionWithAclAccessWithHeaderAuthenticationTest() {
+    void projectPolicyViolationsByNameAndVersionWithAclAccessWithHeaderAuthenticationTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -640,13 +640,13 @@ public class BadgeResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
-        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assertions.assertTrue(isLikelySvg(getPlainTextBody(response)));
     }
 
     @Test
-    public void projectPolicyViolationsByNameAndVersionWithAclNoAccessTest() {
+    void projectPolicyViolationsByNameAndVersionWithAclNoAccessTest() {
         initializeWithPermissions(Permissions.VIEW_BADGES);
 
         qm.createConfigProperty(
@@ -666,7 +666,7 @@ public class BadgeResourceTest extends ResourceTest {
                 .queryParam(API_KEY, apiKey)
                 .request()
                 .get(Response.class);
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     private boolean isLikelySvg(String body) {

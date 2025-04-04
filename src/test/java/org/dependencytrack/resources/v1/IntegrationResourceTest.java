@@ -21,31 +21,31 @@ package org.dependencytrack.resources.v1;
 import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import org.dependencytrack.JerseyTestRule;
-import org.dependencytrack.ResourceTest;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import jakarta.json.JsonArray;
 import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
+import org.dependencytrack.ResourceTest;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 
-public class IntegrationResourceTest extends ResourceTest {
+class IntegrationResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(IntegrationResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(IntegrationResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
-    @Before
+
+
+    @BeforeEach
     public void before() throws Exception {
-        super.before();
         qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(),
                 "Maven;npm;Maven",
@@ -59,23 +59,23 @@ public class IntegrationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getEcosystemsTest() {
+    void getEcosystemsTest() {
         Response response = jersey.target(V1_OSV_ECOSYSTEM).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertFalse(json.isEmpty());
+        Assertions.assertNotNull(json);
+        Assertions.assertFalse(json.isEmpty());
         var total = json.size();
 
         response = jersey.target(V1_OSV_ECOSYSTEM + "/inactive").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(total-2, json.size());
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(total-2, json.size());
     }
 }

@@ -19,11 +19,10 @@
 package org.dependencytrack.parser.cyclonedx;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -43,39 +42,38 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
-@RunWith(JUnitParamsRunner.class)
-public class CycloneDxValidatorTest {
+class CycloneDxValidatorTest {
 
     private CycloneDxValidator validator;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         validator = new CycloneDxValidator();
     }
 
     @Test
-    public void testValidateWithEmptyBytes() {
+    void testValidateWithEmptyBytes() {
         assertThatExceptionOfType(InvalidBomException.class)
                 .isThrownBy(() -> validator.validate("".getBytes()))
                 .withMessage("BOM is neither valid JSON nor XML");
     }
 
     @Test
-    public void testValidateWithEmptyJson() {
+    void testValidateWithEmptyJson() {
         assertThatExceptionOfType(InvalidBomException.class)
                 .isThrownBy(() -> validator.validate("{}".getBytes()))
                 .withMessage("Unable to determine schema version from JSON");
     }
 
     @Test
-    public void testValidateWithEmptyXml() {
+    void testValidateWithEmptyXml() {
         assertThatExceptionOfType(InvalidBomException.class)
                 .isThrownBy(() -> validator.validate("<bom></bom>".getBytes()))
                 .withMessage("Unable to determine schema version from XML namespaces []");
     }
 
     @Test
-    public void testValidateJsonWithoutSpecVersion() {
+    void testValidateJsonWithoutSpecVersion() {
         assertThatExceptionOfType(InvalidBomException.class)
                 .isThrownBy(() -> validator.validate("""
                         {
@@ -86,7 +84,7 @@ public class CycloneDxValidatorTest {
     }
 
     @Test
-    public void testValidateJsonWithUnsupportedSpecVersion() {
+    void testValidateJsonWithUnsupportedSpecVersion() {
         assertThatExceptionOfType(InvalidBomException.class)
                 .isThrownBy(() -> validator.validate("""
                         {
@@ -98,7 +96,7 @@ public class CycloneDxValidatorTest {
     }
 
     @Test
-    public void testValidateJsonWithUnknownSpecVersion() {
+    void testValidateJsonWithUnknownSpecVersion() {
         assertThatExceptionOfType(InvalidBomException.class)
                 .isThrownBy(() -> validator.validate("""
                         {
@@ -110,7 +108,7 @@ public class CycloneDxValidatorTest {
     }
 
     @Test
-    public void testValidateXmlWithoutNamespace() {
+    void testValidateXmlWithoutNamespace() {
         assertThatExceptionOfType(InvalidBomException.class)
                 .isThrownBy(() -> validator.validate("""
                         <bom>
@@ -121,7 +119,7 @@ public class CycloneDxValidatorTest {
     }
 
     @Test
-    public void testValidateXmlWithoutNamespace2() {
+    void testValidateXmlWithoutNamespace2() {
         assertThatExceptionOfType(InvalidBomException.class)
                 .isThrownBy(() -> validator.validate("""
                         <bom xmlns="http://cyclonedx.org/schema/bom/666">
@@ -132,7 +130,7 @@ public class CycloneDxValidatorTest {
     }
 
     @Test
-    public void testValidateJsonWithInvalidComponentType() {
+    void testValidateJsonWithInvalidComponentType() {
         assertThatExceptionOfType(InvalidBomException.class)
                 .isThrownBy(() -> validator.validate("""
                         {
@@ -158,7 +156,7 @@ public class CycloneDxValidatorTest {
     }
 
     @Test
-    public void testValidateXmlWithInvalidComponentType() {
+    void testValidateXmlWithInvalidComponentType() {
         assertThatExceptionOfType(InvalidBomException.class)
                 .isThrownBy(() -> validator.validate("""
                         <?xml version="1.0"?>
@@ -183,8 +181,9 @@ public class CycloneDxValidatorTest {
                                 valid with respect to its type, 'classification'.""");
     }
 
-    @Test // https://github.com/DependencyTrack/dependency-track/issues/3696
-    public void testValidateJsonWithSpecVersionAtTheBottom() {
+    @Test
+        // https://github.com/DependencyTrack/dependency-track/issues/3696
+    void testValidateJsonWithSpecVersionAtTheBottom() {
         assertThatNoException()
                 .isThrownBy(() -> validator.validate("""
                         {
@@ -197,7 +196,7 @@ public class CycloneDxValidatorTest {
     }
 
     @SuppressWarnings("unused")
-    private Object[] testValidateWithValidBomParameters() throws Exception {
+    private static Object[] testValidateWithValidBomParameters() throws Exception {
         final PathMatcher pathMatcherJson = FileSystems.getDefault().getPathMatcher("glob:**/valid-bom-*.json");
         final PathMatcher pathMatcherXml = FileSystems.getDefault().getPathMatcher("glob:**/valid-bom-*.xml");
         final var bomFilePaths = new ArrayList<Path>();
@@ -216,16 +215,17 @@ public class CycloneDxValidatorTest {
         return bomFilePaths.stream().sorted().toArray();
     }
 
-    @Test
-    @Parameters(method = "testValidateWithValidBomParameters")
-    public void testValidateWithValidBom(final Path bomFilePath) throws Exception {
+    @ParameterizedTest
+    @MethodSource("testValidateWithValidBomParameters")
+    void testValidateWithValidBom(final Path bomFilePath) throws Exception {
         final byte[] bomBytes = Files.readAllBytes(bomFilePath);
 
         assertThatNoException().isThrownBy(() -> validator.validate(bomBytes));
     }
 
-    @Test // https://github.com/DependencyTrack/dependency-track/issues/3831
-    public void testValidateJsonWithUrlContainingEncodedBrackets() {
+    @Test
+        // https://github.com/DependencyTrack/dependency-track/issues/3831
+    void testValidateJsonWithUrlContainingEncodedBrackets() {
         assertThatNoException()
                 .isThrownBy(() -> validator.validate("""
                         {
@@ -248,7 +248,7 @@ public class CycloneDxValidatorTest {
     }
 
     @Test
-    public void testValidateXmlWithXxeProtection() {
+    void testValidateXmlWithXxeProtection() {
         final var wireMock = new WireMockServer(options().dynamicPort());
         wireMock.start();
 

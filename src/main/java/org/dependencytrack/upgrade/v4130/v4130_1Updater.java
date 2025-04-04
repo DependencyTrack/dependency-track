@@ -71,6 +71,7 @@ public class v4130_1Updater extends AbstractUpgradeItem {
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
         migrateToHashedApiKey(connection);
+        changeJdbcTypeOfConfigPropertyValueColumn(connection);
     }
 
     private void migrateToHashedApiKey(final Connection connection) throws Exception {
@@ -171,6 +172,28 @@ public class v4130_1Updater extends AbstractUpgradeItem {
         try (final Statement statement = connection.createStatement()) {
             statement.execute("ALTER TABLE \"APIKEY\" DROP CONSTRAINT \"APIKEY_IDX\"");
             statement.execute("ALTER TABLE \"APIKEY\" DROP COLUMN \"APIKEY\"");
+        }
+    }
+
+    private void changeJdbcTypeOfConfigPropertyValueColumn(final Connection connection) throws Exception {
+        // Required to support https://github.com/stevespringett/Alpine/pull/722.
+        // The JDBC type "CLOB" is mapped to the type CLOB for H2, MEDIUMTEXT for MySQL, and TEXT for PostgreSQL and SQL Server.
+        LOGGER.info("Changing JDBC type of \"CONFIGPROPERTY\".\"PROPERTYVALUE\" from VARCHAR to CLOB");
+        if (DbUtil.isH2()) {
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"CONFIGPROPERTY\" ADD \"PROPERTYVALUE_V48\" CLOB");
+        } else if (DbUtil.isMysql()) {
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"CONFIGPROPERTY\" ADD \"PROPERTYVALUE_V48\" MEDIUMTEXT");
+        } else {
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"CONFIGPROPERTY\" ADD \"PROPERTYVALUE_V48\" TEXT");
+        }
+        DbUtil.executeUpdate(connection, "UPDATE \"CONFIGPROPERTY\" SET \"PROPERTYVALUE_V48\" = \"PROPERTYVALUE\"");
+        DbUtil.executeUpdate(connection, "ALTER TABLE \"CONFIGPROPERTY\" DROP COLUMN \"PROPERTYVALUE\"");
+        if (DbUtil.isMssql()) { // Really, Microsoft? You're being weird.
+            DbUtil.executeUpdate(connection, "EXEC sp_rename 'CONFIGPROPERTY.PROPERTYVALUE_V48', 'PROPERTYVALUE', 'COLUMN'");
+        } else if (DbUtil.isMysql()) { // MySQL < 8.0 does not support RENAME COLUMN and needs a special treatment.
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"CONFIGPROPERTY\" CHANGE \"PROPERTYVALUE_V48\" \"PROPERTYVALUE\" MEDIUMTEXT");
+        } else {
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"CONFIGPROPERTY\" RENAME COLUMN \"PROPERTYVALUE_V48\" TO \"PROPERTYVALUE\"");
         }
     }
 

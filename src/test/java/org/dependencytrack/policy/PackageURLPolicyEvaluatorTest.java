@@ -75,6 +75,15 @@ public class PackageURLPolicyEvaluatorTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void noPurlPresent() throws Exception {
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.NOT_PRESENT, "NOT_PRESENT");
+        Component component = new Component();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+    }
+
+    @Test
     public void wrongSubject() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, "pkg:generic/acme/example-component@1.0");

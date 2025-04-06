@@ -63,9 +63,7 @@ public class UpgradeInitializer implements ServletContextListener {
         try (final UpgradeMetaProcessor ump = new UpgradeMetaProcessor()) {
             final VersionComparator currentVersion = ump.getSchemaVersion();
             if (currentVersion != null && currentVersion.isOlderThan(new VersionComparator("4.0.0"))) {
-                LOGGER.error("Unable to upgrade Dependency-Track versions prior to v4.0.0. Please refer to documentation for migration details. Halting.");
-                ump.close();
-                Runtime.getRuntime().halt(-1);
+                throw new IllegalStateException("Unable to upgrade Dependency-Track versions prior to v4.0.0. Please refer to documentation for migration details. Halting.");
             }
 
             ServiceLoader.load(PreUpgradeHook.class).stream()
@@ -74,15 +72,13 @@ public class UpgradeInitializer implements ServletContextListener {
                     .filter(hook -> hook.shouldExecute(ump))
                     .forEach(preUpgradeHooks::add);
         } catch (UpgradeException e) {
-            LOGGER.error("An error occurred determining database schema version. Unable to continue.", e);
-            Runtime.getRuntime().halt(-1);
+            throw new IllegalStateException("An error occurred determining database schema version. Unable to continue.", e);
         }
 
         try {
             executePreUpgradeHooks(preUpgradeHooks);
         } catch (RuntimeException e) {
-            LOGGER.error("Failed to execute pre-upgrade hooks", e);
-            Runtime.getRuntime().halt(-1);
+            throw new IllegalStateException("Failed to execute pre-upgrade hooks", e);
         }
 
         try (final JDOPersistenceManagerFactory pmf = createPersistenceManagerFactory()) {

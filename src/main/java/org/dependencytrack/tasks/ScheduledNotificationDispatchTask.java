@@ -389,7 +389,7 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
             final Date sinceAttributedOn) {
         final var projectIdCondition = new StringJoiner(" OR ", "(", ")");
         final var queryParams = new HashMap<String, Object>(projectIds.size() + 1);
-        queryParams.put("sinceAttributedOn", sinceAttributedOn);
+        queryParams.put("sinceAttributedOn", new java.sql.Timestamp(sinceAttributedOn.getTime()));
 
         int projectIdIndex = 0;
         for (final Long projectId : projectIds) {

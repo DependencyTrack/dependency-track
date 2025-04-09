@@ -34,10 +34,12 @@ import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junitpioneer.jupiter.DefaultLocale;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DefaultLocale("en-US")
 class ConstraintViolationExceptionMapperTest extends ResourceTest {
 
     @RegisterExtension

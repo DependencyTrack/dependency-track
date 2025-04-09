@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junitpioneer.jupiter.DefaultLocale;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
 import static org.hamcrest.CoreMatchers.equalTo;
 
+@DefaultLocale("en-US")
 class TagResourceTest extends ResourceTest {
 
     @RegisterExtension

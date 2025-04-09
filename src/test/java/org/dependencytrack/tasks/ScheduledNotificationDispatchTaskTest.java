@@ -42,9 +42,9 @@ import org.dependencytrack.notification.publisher.WebhookPublisher;
 import org.dependencytrack.notification.vo.NewPolicyViolationsSummary;
 import org.dependencytrack.notification.vo.NewVulnerabilitiesSummary;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -61,7 +61,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 
-public class ScheduledNotificationDispatchTaskTest extends PersistenceCapableTest {
+class ScheduledNotificationDispatchTaskTest extends PersistenceCapableTest {
 
     public static class NotificationSubscriber implements Subscriber {
 
@@ -75,25 +75,19 @@ public class ScheduledNotificationDispatchTaskTest extends PersistenceCapableTes
     private static final Queue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
     private static final Subscription SUBSCRIPTION = new Subscription(NotificationSubscriber.class);
 
-    @Before
-    @Override
+    @BeforeEach
     public void before() throws Exception {
-        super.before();
-
         NotificationService.getInstance().subscribe(SUBSCRIPTION);
     }
 
-    @After
-    @Override
+    @AfterEach
     public void after() {
         NotificationService.getInstance().unsubscribe(SUBSCRIPTION);
         NOTIFICATIONS.clear();
-
-        super.after();
     }
 
     @Test
-    public void shouldDispatchNewVulnNotification() {
+    void shouldDispatchNewVulnNotification() {
         final Instant ruleLastFiredAt = Instant.now().minus(10, ChronoUnit.MINUTES);
         final Instant beforeRuleLastFiredAt = ruleLastFiredAt.minus(5, ChronoUnit.MINUTES);
         final Instant afterRuleLastFiredAt = ruleLastFiredAt.plus(5, ChronoUnit.MINUTES);
@@ -307,7 +301,7 @@ public class ScheduledNotificationDispatchTaskTest extends PersistenceCapableTes
     }
 
     @Test
-    public void shouldDispatchPolicyViolationNotificationWhenNotLimitedToProjects() {
+    void shouldDispatchPolicyViolationNotificationWhenNotLimitedToProjects() {
         final Instant ruleLastFiredAt = Instant.now().minus(10, ChronoUnit.MINUTES);
         final Instant beforeRuleLastFiredAt = ruleLastFiredAt.minus(5, ChronoUnit.MINUTES);
         final Instant afterRuleLastFiredAt = ruleLastFiredAt.plus(5, ChronoUnit.MINUTES);

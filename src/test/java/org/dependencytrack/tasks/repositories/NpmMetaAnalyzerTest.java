@@ -19,40 +19,37 @@
 package org.dependencytrack.tasks.repositories;
 
 import com.github.packageurl.PackageURL;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class NpmMetaAnalyzerTest {
-
-    @Rule
-    public final WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+@WireMockTest
+class NpmMetaAnalyzerTest {
 
     @Test
-    public void testAnalyzer() throws Exception {
+    void testAnalyzer() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:npm/qunit@2.7.0"));
 
         NpmMetaAnalyzer analyzer = new NpmMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.NPM, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.NPM, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        //Assert.assertNotNull(metaModel.getPublishedTimestamp()); // todo: not yet supported
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        //Assertions.assertNotNull(metaModel.getPublishedTimestamp()); // todo: not yet supported
     }
 
     @Test
-    public void testWithScopedPackage() {
+    void testWithScopedPackage(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlPathEqualTo("/-/package/%40angular%2Fcli/dist-tags"))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -78,7 +75,7 @@ public class NpmMetaAnalyzerTest {
         component.setPurl("pkg:npm/%40angular/cli@17.1.1");
 
         final var analyzer = new NpmMetaAnalyzer();
-        analyzer.setRepositoryBaseUrl(wireMockRule.baseUrl());
+        analyzer.setRepositoryBaseUrl(wmRuntimeInfo.getHttpBaseUrl());
 
         assertThat(analyzer.isApplicable(component)).isTrue();
 
@@ -87,8 +84,9 @@ public class NpmMetaAnalyzerTest {
         assertThat(metaModel.getLatestVersion()).isEqualTo("17.1.2");
     }
 
-    @Test // https://github.com/DependencyTrack/dependency-track/pull/3357#issuecomment-1928690246
-    public void testWithSpecialCharactersInPackageName() {
+    @Test
+        // https://github.com/DependencyTrack/dependency-track/pull/3357#issuecomment-1928690246
+    void testWithSpecialCharactersInPackageName(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlPathEqualTo("/-/package/jquery%20joyride%20plugin%20/dist-tags"))
                 .willReturn(aResponse()
                         .withStatus(404)
@@ -100,7 +98,7 @@ public class NpmMetaAnalyzerTest {
         component.setPurl("pkg:npm/jquery%20joyride%20plugin%20@2.1");
 
         final var analyzer = new NpmMetaAnalyzer();
-        analyzer.setRepositoryBaseUrl(wireMockRule.baseUrl());
+        analyzer.setRepositoryBaseUrl(wmRuntimeInfo.getHttpBaseUrl());
 
         assertThat(analyzer.isApplicable(component)).isTrue();
 

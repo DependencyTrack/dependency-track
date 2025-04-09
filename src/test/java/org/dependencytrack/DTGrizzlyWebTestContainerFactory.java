@@ -10,12 +10,10 @@ import org.glassfish.jersey.test.spi.TestContainerFactory;
 
 import java.net.URI;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Custom factory needed to instantiate a TestContainer allowing body payload for DELETE method.
- *
- * @See org.dependencytrack.DTGrizzlyWebTestContainer
  */
 public class DTGrizzlyWebTestContainerFactory implements TestContainerFactory {
     @Override

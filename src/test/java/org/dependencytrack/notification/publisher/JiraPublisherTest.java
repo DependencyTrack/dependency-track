@@ -20,10 +20,10 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
-import org.junit.Before;
-import org.junit.Test;
-
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import jakarta.json.JsonObjectBuilder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
@@ -34,20 +34,18 @@ import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_PASSWORD;
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_USERNAME;
 
-public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublisher> {
+class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublisher> {
 
     public JiraPublisherTest() {
         super(DefaultNotificationPublishers.JIRA, new JiraPublisher());
     }
 
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-
+    @BeforeEach
+    public void setUp(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         qm.createConfigProperty(
                 JIRA_URL.getGroupName(),
                 JIRA_URL.getPropertyName(),
-                wireMock.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 JIRA_URL.getPropertyType(),
                 JIRA_URL.getDescription()
         );
@@ -68,8 +66,8 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Override
-    public void testInformWithBomConsumedNotification() {
-        super.testInformWithBomConsumedNotification();
+    public void testInformWithBomConsumedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomConsumedNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -91,8 +89,8 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Override
-    public void testInformWithBomProcessingFailedNotification() {
-        super.testInformWithBomProcessingFailedNotification();
+    public void testInformWithBomProcessingFailedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomProcessingFailedNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -114,8 +112,8 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Override
-    public void testInformWithBomValidationFailedNotification() {
-        super.testInformWithBomValidationFailedNotification();
+    public void testInformWithBomValidationFailedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomValidationFailedNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -137,8 +135,8 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Override
-    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
-        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject(wmRuntimeInfo);
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -160,8 +158,8 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Override
-    public void testInformWithDataSourceMirroringNotification() {
-        super.testInformWithDataSourceMirroringNotification();
+    public void testInformWithDataSourceMirroringNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithDataSourceMirroringNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -183,8 +181,8 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Override
-    public void testInformWithNewVulnerabilityNotification() {
-        super.testInformWithNewVulnerabilityNotification();
+    public void testInformWithNewVulnerabilityNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithNewVulnerabilityNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -206,8 +204,8 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Override
-    public void testInformWithNewVulnerableDependencyNotification() {
-        super.testInformWithNewVulnerableDependencyNotification();
+    public void testInformWithNewVulnerableDependencyNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithNewVulnerableDependencyNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -229,8 +227,8 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Override
-    public void testInformWithProjectAuditChangeNotification() {
-        super.testInformWithProjectAuditChangeNotification();
+    public void testInformWithProjectAuditChangeNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithProjectAuditChangeNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -252,7 +250,7 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Test
-    public void testPublishWithBearerToken() throws Exception {
+    void testPublishWithBearerToken(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         final ConfigProperty usernameProperty = qm.getConfigProperty(JIRA_USERNAME.getGroupName(), JIRA_USERNAME.getPropertyName());
         usernameProperty.setPropertyValue(null);
         qm.persist(usernameProperty);
@@ -261,7 +259,7 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
         passwordProperty.setPropertyValue(DataEncryption.encryptAsString("jiraToken"));
         qm.persist(passwordProperty);
 
-        super.testInformWithBomConsumedNotification();
+        super.testInformWithBomConsumedNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Bearer jiraToken"))
@@ -283,8 +281,8 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Override
-    public JsonObjectBuilder extraConfig() {
-        return super.extraConfig()
+    public JsonObjectBuilder extraConfig(WireMockRuntimeInfo wmRuntimeInfo) {
+        return super.extraConfig(wmRuntimeInfo)
                 .add(Publisher.CONFIG_DESTINATION, "PROJECT")
                 .add("jiraTicketType", "Task");
     }

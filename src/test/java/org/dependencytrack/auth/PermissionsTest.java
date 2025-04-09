@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.auth;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static org.dependencytrack.auth.Permissions.Constants.ACCESS_MANAGEMENT;
 import static org.dependencytrack.auth.Permissions.Constants.BOM_UPLOAD;
@@ -35,42 +35,42 @@ import static org.dependencytrack.auth.Permissions.Constants.VIEW_VULNERABILITY;
 import static org.dependencytrack.auth.Permissions.Constants.VULNERABILITY_ANALYSIS;
 import static org.dependencytrack.auth.Permissions.Constants.VULNERABILITY_MANAGEMENT;
 import static org.dependencytrack.auth.Permissions.Constants.VIEW_BADGES;
-public class PermissionsTest {
+class PermissionsTest {
 
     @Test
-    public void testPermissionEnums() {
-        Assert.assertEquals(14, Permissions.values().length);
-        Assert.assertEquals("BOM_UPLOAD", Permissions.BOM_UPLOAD.name());
-        Assert.assertEquals("VIEW_PORTFOLIO", Permissions.VIEW_PORTFOLIO.name());
-        Assert.assertEquals("PORTFOLIO_MANAGEMENT", Permissions.PORTFOLIO_MANAGEMENT.name());
-        Assert.assertEquals("VIEW_VULNERABILITY", Permissions.VIEW_VULNERABILITY.name());
-        Assert.assertEquals("VULNERABILITY_ANALYSIS", Permissions.VULNERABILITY_ANALYSIS.name());
-        Assert.assertEquals("VIEW_POLICY_VIOLATION", Permissions.VIEW_POLICY_VIOLATION.name());
-        Assert.assertEquals("VULNERABILITY_MANAGEMENT", Permissions.VULNERABILITY_MANAGEMENT.name());
-        Assert.assertEquals("POLICY_VIOLATION_ANALYSIS", Permissions.POLICY_VIOLATION_ANALYSIS.name());
-        Assert.assertEquals("ACCESS_MANAGEMENT", Permissions.ACCESS_MANAGEMENT.name());
-        Assert.assertEquals("SYSTEM_CONFIGURATION", Permissions.SYSTEM_CONFIGURATION.name());
-        Assert.assertEquals("PROJECT_CREATION_UPLOAD", Permissions.PROJECT_CREATION_UPLOAD.name());
-        Assert.assertEquals("POLICY_MANAGEMENT", Permissions.POLICY_MANAGEMENT.name());
-        Assert.assertEquals("TAG_MANAGEMENT", Permissions.TAG_MANAGEMENT.name());
-        Assert.assertEquals("VIEW_BADGES", Permissions.VIEW_BADGES.name());
+    void testPermissionEnums() {
+        Assertions.assertEquals(14, Permissions.values().length);
+        Assertions.assertEquals("BOM_UPLOAD", Permissions.BOM_UPLOAD.name());
+        Assertions.assertEquals("VIEW_PORTFOLIO", Permissions.VIEW_PORTFOLIO.name());
+        Assertions.assertEquals("PORTFOLIO_MANAGEMENT", Permissions.PORTFOLIO_MANAGEMENT.name());
+        Assertions.assertEquals("VIEW_VULNERABILITY", Permissions.VIEW_VULNERABILITY.name());
+        Assertions.assertEquals("VULNERABILITY_ANALYSIS", Permissions.VULNERABILITY_ANALYSIS.name());
+        Assertions.assertEquals("VIEW_POLICY_VIOLATION", Permissions.VIEW_POLICY_VIOLATION.name());
+        Assertions.assertEquals("VULNERABILITY_MANAGEMENT", Permissions.VULNERABILITY_MANAGEMENT.name());
+        Assertions.assertEquals("POLICY_VIOLATION_ANALYSIS", Permissions.POLICY_VIOLATION_ANALYSIS.name());
+        Assertions.assertEquals("ACCESS_MANAGEMENT", Permissions.ACCESS_MANAGEMENT.name());
+        Assertions.assertEquals("SYSTEM_CONFIGURATION", Permissions.SYSTEM_CONFIGURATION.name());
+        Assertions.assertEquals("PROJECT_CREATION_UPLOAD", Permissions.PROJECT_CREATION_UPLOAD.name());
+        Assertions.assertEquals("POLICY_MANAGEMENT", Permissions.POLICY_MANAGEMENT.name());
+        Assertions.assertEquals("TAG_MANAGEMENT", Permissions.TAG_MANAGEMENT.name());
+        Assertions.assertEquals("VIEW_BADGES", Permissions.VIEW_BADGES.name());
     }
 
     @Test
-    public void testPermissionConstants() {
-        Assert.assertEquals("BOM_UPLOAD", BOM_UPLOAD);
-        Assert.assertEquals("VIEW_PORTFOLIO", VIEW_PORTFOLIO);
-        Assert.assertEquals("PORTFOLIO_MANAGEMENT", PORTFOLIO_MANAGEMENT);
-        Assert.assertEquals("VIEW_VULNERABILITY", VIEW_VULNERABILITY);
-        Assert.assertEquals("VULNERABILITY_ANALYSIS", VULNERABILITY_ANALYSIS);
-        Assert.assertEquals("VIEW_POLICY_VIOLATION", VIEW_POLICY_VIOLATION);
-        Assert.assertEquals("VULNERABILITY_MANAGEMENT", VULNERABILITY_MANAGEMENT);
-        Assert.assertEquals("POLICY_VIOLATION_ANALYSIS", POLICY_VIOLATION_ANALYSIS);
-        Assert.assertEquals("ACCESS_MANAGEMENT", ACCESS_MANAGEMENT);
-        Assert.assertEquals("SYSTEM_CONFIGURATION", SYSTEM_CONFIGURATION);
-        Assert.assertEquals("PROJECT_CREATION_UPLOAD", PROJECT_CREATION_UPLOAD);
-        Assert.assertEquals("POLICY_MANAGEMENT", POLICY_MANAGEMENT);
-        Assert.assertEquals("TAG_MANAGEMENT", TAG_MANAGEMENT);
-        Assert.assertEquals("VIEW_BADGES", VIEW_BADGES);
+    void testPermissionConstants() {
+        Assertions.assertEquals("BOM_UPLOAD", BOM_UPLOAD);
+        Assertions.assertEquals("VIEW_PORTFOLIO", VIEW_PORTFOLIO);
+        Assertions.assertEquals("PORTFOLIO_MANAGEMENT", PORTFOLIO_MANAGEMENT);
+        Assertions.assertEquals("VIEW_VULNERABILITY", VIEW_VULNERABILITY);
+        Assertions.assertEquals("VULNERABILITY_ANALYSIS", VULNERABILITY_ANALYSIS);
+        Assertions.assertEquals("VIEW_POLICY_VIOLATION", VIEW_POLICY_VIOLATION);
+        Assertions.assertEquals("VULNERABILITY_MANAGEMENT", VULNERABILITY_MANAGEMENT);
+        Assertions.assertEquals("POLICY_VIOLATION_ANALYSIS", POLICY_VIOLATION_ANALYSIS);
+        Assertions.assertEquals("ACCESS_MANAGEMENT", ACCESS_MANAGEMENT);
+        Assertions.assertEquals("SYSTEM_CONFIGURATION", SYSTEM_CONFIGURATION);
+        Assertions.assertEquals("PROJECT_CREATION_UPLOAD", PROJECT_CREATION_UPLOAD);
+        Assertions.assertEquals("POLICY_MANAGEMENT", POLICY_MANAGEMENT);
+        Assertions.assertEquals("TAG_MANAGEMENT", TAG_MANAGEMENT);
+        Assertions.assertEquals("VIEW_BADGES", VIEW_BADGES);
     }
 }

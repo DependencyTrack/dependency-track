@@ -26,8 +26,14 @@ import alpine.notification.Subscription;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import net.jcip.annotations.NotThreadSafe;
-import org.dependencytrack.JerseyTestRule;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
@@ -46,18 +52,12 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest;
 import org.dependencytrack.util.NotificationUtil;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.time.Duration;
 import java.util.Date;
 import java.util.UUID;
@@ -67,11 +67,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
 @NotThreadSafe
-public class ViolationAnalysisResourceTest extends ResourceTest {
+class ViolationAnalysisResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(ViolationAnalysisResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(ViolationAnalysisResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)
                     .register(AuthorizationFilter.class));
@@ -87,25 +87,23 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() {
         NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
     }
 
-    @After
-    @Override
-    public void after() throws Exception {
+    @AfterEach
+    public void after() {
         NOTIFICATIONS.clear();
-        super.after();
     }
 
     @Test
-    public void retrieveAnalysisTest() {
+    void retrieveAnalysisTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -153,7 +151,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveAnalysisUnauthorizedTest() {
+    void retrieveAnalysisUnauthorizedTest() {
         final Response response = jersey.target(V1_VIOLATION_ANALYSIS)
                 .queryParam("component", UUID.randomUUID())
                 .queryParam("policyViolation", UUID.randomUUID())
@@ -165,7 +163,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveAnalysisComponentNotFoundTest() {
+    void retrieveAnalysisComponentNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Response response = jersey.target(V1_VIOLATION_ANALYSIS)
@@ -180,7 +178,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveAnalysisViolationNotFoundTest() {
+    void retrieveAnalysisViolationNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -203,7 +201,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisCreateNewTest() throws Exception {
+    void updateAnalysisCreateNewTest() throws Exception {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -260,7 +258,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisCreateNewWithEmptyRequestTest() throws Exception {
+    void updateAnalysisCreateNewWithEmptyRequestTest() throws Exception {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -310,7 +308,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUpdateExistingTest() throws Exception {
+    void updateAnalysisUpdateExistingTest() throws Exception {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -378,7 +376,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUpdateExistingNoChangesTest() throws Exception{
+    void updateAnalysisUpdateExistingNoChangesTest() throws Exception{
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -426,7 +424,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUpdateExistingWithEmptyRequestTest() throws Exception {
+    void updateAnalysisUpdateExistingWithEmptyRequestTest() throws Exception {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -486,7 +484,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUnauthorizedTest() {
+    void updateAnalysisUnauthorizedTest() {
         final var request = new ViolationAnalysisRequest(UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), ViolationAnalysisState.REJECTED, "Some comment", false);
 
@@ -499,7 +497,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisComponentNotFoundTest() {
+    void updateAnalysisComponentNotFoundTest() {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final var request = new ViolationAnalysisRequest(UUID.randomUUID().toString(),
@@ -515,7 +513,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisViolationNotFoundTest() {
+    void updateAnalysisViolationNotFoundTest() {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);

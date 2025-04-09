@@ -19,8 +19,8 @@
 package org.dependencytrack.servlet;
 
 import org.dependencytrack.servlets.NvdMirrorServlet;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
@@ -31,11 +31,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class NvdMirrorServletTest {
+class NvdMirrorServletTest {
 
     private NvdMirrorServlet servlet;
 
-    @Before
+    @BeforeEach
     public void before() throws ServletException {
         final ServletConfig servletConfig = mock(ServletConfig.class);
         final ServletContext servletContext = mock(ServletContext.class);
@@ -45,7 +45,7 @@ public class NvdMirrorServletTest {
     }
 
     @Test
-    public void doGet() throws Exception {
+    void doGet() throws Exception {
         final HttpServletRequest request =  mock(HttpServletRequest.class);
         HttpServletResponse response =  mock(HttpServletResponse.class);
         when(request.getMethod()).thenReturn("http");

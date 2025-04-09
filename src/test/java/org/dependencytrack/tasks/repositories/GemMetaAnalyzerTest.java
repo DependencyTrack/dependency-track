@@ -21,21 +21,21 @@ package org.dependencytrack.tasks.repositories;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class GemMetaAnalyzerTest {
+class GemMetaAnalyzerTest {
 
     @Test
-    public void testAnalyzer() throws Exception {
+    void testAnalyzer() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:gem/test-unit@3.2.0"));
 
         GemMetaAnalyzer analyzer = new GemMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.GEM, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.GEM, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        //Assert.assertNotNull(metaModel.getPublishedTimestamp()); // todo: not yet supported
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        //Assertions.assertNotNull(metaModel.getPublishedTimestamp()); // todo: not yet supported
     }
 }

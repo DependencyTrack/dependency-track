@@ -28,9 +28,15 @@ import alpine.server.auth.JsonWebToken;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import net.jcip.annotations.NotThreadSafe;
 import org.apache.http.HttpStatus;
-import org.dependencytrack.JerseyTestRule;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Analysis;
@@ -47,18 +53,12 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
 import org.dependencytrack.util.NotificationUtil;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -68,11 +68,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
 @NotThreadSafe
-public class AnalysisResourceTest extends ResourceTest {
+class AnalysisResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(AnalysisResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(AnalysisResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)
                     .register(AuthorizationFilter.class));
@@ -88,25 +88,23 @@ public class AnalysisResourceTest extends ResourceTest {
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() {
         NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
     }
 
-    @After
-    @Override
+    @AfterEach
     public void after() throws Exception {
         NOTIFICATIONS.clear();
-        super.after();
     }
 
     @Test
-    public void retrieveAnalysisTest() {
+    void retrieveAnalysisTest() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -152,7 +150,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveAnalysisWithoutExistingAnalysisTest() {
+    void retrieveAnalysisWithoutExistingAnalysisTest() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -183,7 +181,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void noAnalysisExists() {
+    void noAnalysisExists() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
@@ -211,7 +209,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveAnalysisWithProjectNotFoundTest() {
+    void retrieveAnalysisWithProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -242,7 +240,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveAnalysisWithComponentNotFoundTest() {
+    void retrieveAnalysisWithComponentNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -273,7 +271,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveAnalysisWithVulnerabilityNotFoundTest() {
+    void retrieveAnalysisWithVulnerabilityNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -304,7 +302,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveAnalysisUnauthorizedTest() {
+    void retrieveAnalysisUnauthorizedTest() {
         final Response response = jersey.target(V1_ANALYSIS)
                 .queryParam("project", UUID.randomUUID())
                 .queryParam("component", UUID.randomUUID())
@@ -317,7 +315,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisCreateNewTest() throws Exception {
+    void updateAnalysisCreateNewTest() throws Exception {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -387,7 +385,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisCreateNewWithUserTest() throws Exception {
+    void updateAnalysisCreateNewWithUserTest() throws Exception {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
         ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
         String jwt = new JsonWebToken().createToken(testUser);
@@ -460,7 +458,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisCreateNewWithEmptyRequestTest() throws Exception {
+    void updateAnalysisCreateNewWithEmptyRequestTest() throws Exception {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -508,7 +506,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUpdateExistingTest() throws Exception {
+    void updateAnalysisUpdateExistingTest() throws Exception {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -586,7 +584,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisWithNoChangesTest() throws Exception{
+    void updateAnalysisWithNoChangesTest() throws Exception{
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -639,7 +637,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUpdateExistingWithEmptyRequestTest() throws Exception {
+    void updateAnalysisUpdateExistingWithEmptyRequestTest() throws Exception {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -706,7 +704,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisWithProjectNotFoundTest() {
+    void updateAnalysisWithProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -738,7 +736,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisWithComponentNotFoundTest() {
+    void updateAnalysisWithComponentNotFoundTest() {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -770,7 +768,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisWithVulnerabilityNotFoundTest() {
+    void updateAnalysisWithVulnerabilityNotFoundTest() {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -806,7 +804,7 @@ public class AnalysisResourceTest extends ResourceTest {
     // Performing an analysis with those request fields set in >= 4.4.0 then resulted in NPEs,
     // see https://github.com/DependencyTrack/dependency-track/issues/1409
     @Test
-    public void updateAnalysisIssue1409Test() throws InterruptedException {
+    void updateAnalysisIssue1409Test() throws InterruptedException {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -876,7 +874,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUnauthorizedTest() {
+    void updateAnalysisUnauthorizedTest() {
         final var analysisRequest = new AnalysisRequest(UUID.randomUUID().toString(), UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
                 AnalysisResponse.UPDATE, "Analysis details here", "Analysis comment here", false);

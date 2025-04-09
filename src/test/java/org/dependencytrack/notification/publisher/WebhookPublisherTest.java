@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.notification.publisher;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
@@ -31,8 +33,8 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
-    public void testInformWithBomConsumedNotification() {
-        super.testInformWithBomConsumedNotification();
+    public void testInformWithBomConsumedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomConsumedNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -66,8 +68,8 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
-    public void testInformWithBomProcessingFailedNotification() {
-        super.testInformWithBomProcessingFailedNotification();
+    public void testInformWithBomProcessingFailedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomProcessingFailedNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -102,8 +104,8 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
-    public void testInformWithBomValidationFailedNotification() {
-        super.testInformWithBomValidationFailedNotification();
+    public void testInformWithBomValidationFailedNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomValidationFailedNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -137,8 +139,8 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
-    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
-        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -173,8 +175,8 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
-    public void testInformWithDataSourceMirroringNotification() {
-        super.testInformWithDataSourceMirroringNotification();
+    public void testInformWithDataSourceMirroringNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithDataSourceMirroringNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -194,8 +196,8 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
-    public void testInformWithNewVulnerabilityNotification() {
-        super.testInformWithNewVulnerabilityNotification();
+    public void testInformWithNewVulnerabilityNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithNewVulnerabilityNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -267,8 +269,8 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
-    public void testInformWithNewVulnerableDependencyNotification() {
-        super.testInformWithNewVulnerableDependencyNotification();
+    public void testInformWithNewVulnerableDependencyNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithNewVulnerableDependencyNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -339,8 +341,8 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
-    public void testInformWithProjectAuditChangeNotification() {
-        super.testInformWithProjectAuditChangeNotification();
+    public void testInformWithProjectAuditChangeNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testInformWithProjectAuditChangeNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -418,8 +420,8 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
-    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
-        super.testPublishWithScheduledNewVulnerabilitiesNotification();
+    public void testPublishWithScheduledNewVulnerabilitiesNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testPublishWithScheduledNewVulnerabilitiesNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -534,8 +536,8 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
     }
 
     @Override
-    public void testPublishWithScheduledNewPolicyViolationsNotification() {
-        super.testPublishWithScheduledNewPolicyViolationsNotification();
+    public void testPublishWithScheduledNewPolicyViolationsNotification(WireMockRuntimeInfo wmRuntimeInfo) {
+        super.testPublishWithScheduledNewPolicyViolationsNotification(wmRuntimeInfo);
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))

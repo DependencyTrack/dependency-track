@@ -45,6 +45,7 @@ import org.junit.jupiter.api.Test;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junitpioneer.jupiter.DefaultLocale;
 
 import java.util.Base64;
 import java.util.Collections;
@@ -58,6 +59,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_T
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
 import static org.hamcrest.CoreMatchers.equalTo;
 
+@DefaultLocale("en-US")
 class VexResourceTest extends ResourceTest {
 
     @RegisterExtension

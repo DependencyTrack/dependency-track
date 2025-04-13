@@ -1,1 +1,2 @@
 org.dependencytrack.upgrade.v4130.v4130PreUpgradeHook
+org.dependencytrack.upgrade.v4131.TagDeduplicationPreUpgradeHook

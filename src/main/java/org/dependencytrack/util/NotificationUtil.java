@@ -83,6 +83,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -273,16 +274,12 @@ public final class NotificationUtil {
         if (project.getPurl() != null) {
             projectBuilder.add("purl", project.getPurl().canonicalize());
         }
-        if (project.getTags() != null && project.getTags().size() > 0) {
-            final StringBuilder sb = new StringBuilder();
-            for (final Tag tag: project.getTags()) {
-                sb.append(tag.getName()).append(",");
-            }
-            String tags = sb.toString();
-            if (tags.endsWith(",")) {
-                tags = tags.substring(0, tags.length()-1);
-            }
-            JsonUtil.add(projectBuilder, "tags", tags);
+        if (project.getTags() != null && !project.getTags().isEmpty()) {
+            JsonUtil.add(projectBuilder, "tags",
+                    project.getTags().stream()
+                            .map(Tag::getName)
+                            .sorted()
+                            .collect(Collectors.joining(",")));
         }
         return projectBuilder.build();
     }

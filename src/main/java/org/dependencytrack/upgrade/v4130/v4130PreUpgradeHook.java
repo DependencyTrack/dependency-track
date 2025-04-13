@@ -41,7 +41,7 @@ public class v4130PreUpgradeHook implements PreUpgradeHook {
     private static final Logger LOGGER = Logger.getLogger(v4130PreUpgradeHook.class);
 
     @Override
-    public int priority() {
+    public int order() {
         return 1;
     }
 

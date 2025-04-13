@@ -1069,7 +1069,7 @@ public class ProjectResourceTest extends ResourceTest {
             var t = new Tag();
             t.setName(name);
             return t;
-        }).collect(Collectors.toList()));
+        }).collect(Collectors.toSet()));
 
         // update the 1st time and add another tag
         var response = jersey.target(V1_PROJECT)
@@ -1101,7 +1101,7 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertEquals("tag3", jsonTags.get(2).asJsonObject().getString("name"));
 
         // and finally delete one of the tags
-        jsonProject.getTags().remove(0);
+        jsonProject.getTags().removeIf(tag -> "tag1".equals(tag.getName()));
         response = jersey.target(V1_PROJECT)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1504,7 +1504,7 @@ public class ProjectResourceTest extends ResourceTest {
             var t = new Tag();
             t.setName(name);
             return t;
-        }).collect(Collectors.toUnmodifiableList()));
+        }).collect(Collectors.toSet()));
         final var jsonProjectManufacturerContact = new OrganizationalContact();
         jsonProjectManufacturerContact.setName("newManufacturerContactName");
         final var jsonProjectManufacturer = new OrganizationalEntity();

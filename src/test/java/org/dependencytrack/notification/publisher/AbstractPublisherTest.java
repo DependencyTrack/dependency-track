@@ -339,7 +339,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
         project.setVersion("projectVersion");
         project.setDescription("projectDescription");
         project.setPurl("pkg:maven/org.acme/projectName@projectVersion");
-        project.setTags(List.of(projectTag1, projectTag2));
+        project.setTags(Set.of(projectTag1, projectTag2));
         return project;
     }
 

@@ -21,8 +21,8 @@ package org.dependencytrack.model;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TagTest { 
 
@@ -42,23 +42,23 @@ public class TagTest {
 
     @Test
     public void testProjects() {
-        List<Project> projects = new ArrayList<>();
+        Set<Project> projects = new HashSet<>();
         Project project = new Project();
         projects.add(project);
         Tag tag = new Tag();
         tag.setProjects(projects);
         Assert.assertEquals(1, tag.getProjects().size());
-        Assert.assertEquals(project, tag.getProjects().get(0));
+        Assert.assertEquals(project, tag.getProjects().iterator().next());
     } 
 
     @Test
     public void testEquals() {
         Tag t1 = new Tag();
-        t1.setId(111L);
+        t1.setName("foo");
         Tag t2 = new Tag();
-        t2.setId(222L);
+        t2.setName("bar");
         Tag t3 = new Tag();
-        t3.setId(111L);
+        t3.setName("foo");
         Assert.assertFalse(t1.equals(t2));
         Assert.assertTrue(t1.equals(t3));
     }

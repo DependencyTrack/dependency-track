@@ -66,9 +66,16 @@ public class UpgradeInitializer implements ServletContextListener {
                 throw new IllegalStateException("Unable to upgrade Dependency-Track versions prior to v4.0.0. Please refer to documentation for migration details. Halting.");
             }
 
+            final var ordersSeen = new HashSet<Integer>();
             ServiceLoader.load(PreUpgradeHook.class).stream()
                     .map(ServiceLoader.Provider::get)
-                    .sorted(Comparator.comparingInt(PreUpgradeHook::priority))
+                    .sorted(Comparator.comparingInt(PreUpgradeHook::order))
+                    .peek(hook -> {
+                        if (!ordersSeen.add(hook.order())) {
+                            throw new IllegalStateException(
+                                    "Multiple pre-upgrade hooks registered with order %d".formatted(hook.order()));
+                        }
+                    })
                     .filter(hook -> hook.shouldExecute(ump))
                     .forEach(preUpgradeHooks::add);
         } catch (UpgradeException e) {
@@ -78,6 +85,7 @@ public class UpgradeInitializer implements ServletContextListener {
         try {
             executePreUpgradeHooks(preUpgradeHooks);
         } catch (RuntimeException e) {
+            LOGGER.error("Failed to execute pre-upgrade hooks", e);
             throw new IllegalStateException("Failed to execute pre-upgrade hooks", e);
         }
 

@@ -17,7 +17,8 @@
 services:
   apiserver:
     depends_on:
-    - postgres
+      postgres:
+        condition: service_healthy
     environment:
       ALPINE_DATABASE_MODE: "external"
       ALPINE_DATABASE_URL: "jdbc:postgresql://postgres:5432/dtrack"

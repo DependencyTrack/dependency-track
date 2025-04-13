@@ -44,6 +44,7 @@ class UpgradeItems {
         UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4123.v4123Updater.class);
         UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4130.v4130Updater.class);
         UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4130.v4130_1Updater.class);
+        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4131.v4131Updater.class);
     }
 
     static List<Class<? extends UpgradeItem>> getUpgradeItems() {

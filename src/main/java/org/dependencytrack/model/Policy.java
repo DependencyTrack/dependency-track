@@ -43,6 +43,7 @@ import javax.jdo.annotations.Unique;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -134,10 +135,9 @@ public class Policy implements Serializable {
      * A list of zero-to-n tags
      */
     @Persistent(table = "POLICY_TAGS", defaultFetchGroup = "true", mappedBy = "policies")
-    @Join(column = "POLICY_ID")
+    @Join(column = "POLICY_ID", primaryKey = "POLICY_TAGS_PK")
     @Element(column = "TAG_ID")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
-    private List<Tag> tags;
+    private Set<Tag> tags;
 
     /**
      * The unique identifier of the object.
@@ -218,11 +218,11 @@ public class Policy implements Serializable {
         return (projects == null || projects.size() == 0) && (tags == null || tags.size() == 0);
     }
 
-    public List<Tag> getTags() {
+    public Set<Tag> getTags() {
         return tags;
     }
 
-    public void setTags(List<Tag> tags) {
+    public void setTags(Set<Tag> tags) {
         this.tags = tags;
     }
 

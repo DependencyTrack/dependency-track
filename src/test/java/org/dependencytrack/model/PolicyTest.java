@@ -22,7 +22,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class PolicyTest {
 
@@ -78,13 +80,13 @@ public class PolicyTest {
 
     @Test
     public void testTags() {
-        List<Tag> tags = new ArrayList<>();
+        Set<Tag> tags = new HashSet<>();
         Tag tag = new Tag();
         tags.add(tag);
         Policy policy = new Policy();
         policy.setTags(tags);
         Assert.assertEquals(1, policy.getTags().size());
-        Assert.assertEquals(tag, policy.getTags().get(0));
+        Assert.assertEquals(tag, policy.getTags().iterator().next());
     }
 
     @Test

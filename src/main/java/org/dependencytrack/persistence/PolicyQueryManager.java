@@ -842,7 +842,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             boolean modified = false;
 
             if (policy.getTags() == null) {
-                policy.setTags(new ArrayList<>());
+                policy.setTags(new HashSet<>());
             }
 
             if (!keepExisting) {
@@ -862,8 +862,8 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
                     policy.getTags().add(tag);
 
                     if (tag.getPolicies() == null) {
-                        tag.setPolicies(new ArrayList<>(List.of(policy)));
-                    } else if (!tag.getPolicies().contains(policy)) {
+                        tag.setPolicies(new HashSet<>(Set.of(policy)));
+                    } else {
                         tag.getPolicies().add(policy);
                     }
 

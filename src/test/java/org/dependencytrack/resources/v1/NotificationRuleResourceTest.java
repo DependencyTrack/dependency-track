@@ -23,6 +23,7 @@ import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.NotificationPublisher;
@@ -277,6 +278,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
                         """.formatted(rule.getUuid()), MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response))
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
                 .withMatcher("ruleUuid", equalTo(rule.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {

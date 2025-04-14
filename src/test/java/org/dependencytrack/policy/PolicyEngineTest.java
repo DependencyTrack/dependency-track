@@ -75,15 +75,16 @@ class PolicyEngineTest extends PersistenceCapableTest {
     }
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
+    private static final Subscription SUBSCRIBER = new Subscription(NotificationSubscriber.class);
 
     @BeforeAll
     public static void setUpClass() {
-        NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
+        NotificationService.getInstance().subscribe(SUBSCRIBER);
     }
 
     @AfterAll
     public static void tearDownClass() {
-        NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
+        NotificationService.getInstance().unsubscribe(SUBSCRIBER);
     }
 
     @BeforeEach

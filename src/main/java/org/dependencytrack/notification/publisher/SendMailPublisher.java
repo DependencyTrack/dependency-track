@@ -19,10 +19,6 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.common.logging.Logger;
-import alpine.model.LdapUser;
-import alpine.model.ManagedUser;
-import alpine.model.OidcUser;
-import alpine.model.Team;
 import alpine.notification.Notification;
 import alpine.server.mail.SendMail;
 import alpine.server.mail.SendMailException;
@@ -38,12 +34,10 @@ import jakarta.json.JsonString;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_PREFIX;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_ENABLED;
@@ -65,21 +59,13 @@ public class SendMailPublisher implements Publisher {
             .newLineTrimming(false)
             .build();
 
+    @Override
     public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
         if (config == null) {
             LOGGER.warn("No configuration found; Skipping notification (%s)".formatted(ctx));
             return;
         }
-        final String[] destinations = parseDestination(config);
-        sendNotification(ctx, notification, config, destinations);
-    }
-
-    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config, List<Team> teams) {
-        if (config == null) {
-            LOGGER.warn("No configuration found. Skipping notification. (%s)".formatted(ctx));
-            return;
-        }
-        final String[] destinations = parseDestination(config, teams);
+        final String[] destinations = getDestinations(config, ctx.ruleId());
         sendNotification(ctx, notification, config, destinations);
     }
 
@@ -150,7 +136,7 @@ public class SendMailPublisher implements Publisher {
                     .from(smtpFrom)
                     .to(destinations)
                     .subject(emailSubjectPrefix + " " + notification.getTitle())
-                    .body(mimeType == MediaType.TEXT_HTML ? StringEscapeUtils.escapeHtml4(unescapedContent): unescapedContent)
+                    .body(MediaType.TEXT_HTML.equals(mimeType) ? StringEscapeUtils.escapeHtml4(unescapedContent) : unescapedContent)
                     .bodyMimeType(mimeType)
                     .host(smtpHostname)
                     .port(smtpPort)
@@ -177,31 +163,20 @@ public class SendMailPublisher implements Publisher {
         return ENGINE;
     }
 
-    static String[] parseDestination(final JsonObject config) {
-        JsonString destinationString = config.getJsonString("destination");
-        if ((destinationString == null) || destinationString.getString().isEmpty()) {
-          return null;
-        }
-        return destinationString.getString().split(",");
-    }
+    static String[] getDestinations(final JsonObject config, final long ruleId) {
+        final var emails = new HashSet<String>();
 
-    static String[] parseDestination(final JsonObject config, final List<Team> teams) {
-        String[] destination = teams.stream().flatMap(
-                team -> Stream.of(
-                                Optional.ofNullable(config.getJsonString("destination"))
-                                        .map(JsonString::getString)
-                                        .stream()
-                                        .flatMap(dest -> Arrays.stream(dest.split(",")))
-                                        .filter(Predicate.not(String::isEmpty)),
-                                Optional.ofNullable(team.getManagedUsers()).orElseGet(Collections::emptyList).stream().map(ManagedUser::getEmail).filter(Objects::nonNull),
-                                Optional.ofNullable(team.getLdapUsers()).orElseGet(Collections::emptyList).stream().map(LdapUser::getEmail).filter(Objects::nonNull),
-                                Optional.ofNullable(team.getOidcUsers()).orElseGet(Collections::emptyList).stream().map(OidcUser::getEmail).filter(Objects::nonNull)
-                        )
-                        .reduce(Stream::concat)
-                        .orElseGet(Stream::empty)
-                )
-                .distinct()
-                .toArray(String[]::new);
-        return destination.length == 0 ? null : destination;
+        Optional.ofNullable(config.getJsonString("destination"))
+                .map(JsonString::getString)
+                .stream()
+                .flatMap(dest -> Arrays.stream(dest.split(",")))
+                .filter(Predicate.not(String::isEmpty))
+                .forEach(emails::add);
+
+        try (final var qm = new QueryManager()) {
+            emails.addAll(qm.getTeamMemberEmailsForNotificationRule(ruleId));
+        }
+
+        return emails.isEmpty() ? null : emails.toArray(new String[0]);
     }
 }

@@ -1263,6 +1263,10 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().getVulnerabilitiesForNotificationById(ids);
     }
 
+    public Set<String> getTeamMemberEmailsForNotificationRule(final long ruleId) {
+        return getNotificationQueryManager().getTeamMemberEmailsForNotificationRule(ruleId);
+    }
+
     public List<NotificationPublisher> getAllNotificationPublishers() {
         return getNotificationQueryManager().getAllNotificationPublishers();
     }

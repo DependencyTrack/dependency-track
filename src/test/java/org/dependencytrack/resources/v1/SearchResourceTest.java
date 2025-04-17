@@ -23,32 +23,32 @@ import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import org.dependencytrack.JerseyTestRule;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.search.IndexManager;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.core.Response;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-public class SearchResourceTest extends ResourceTest {
+class SearchResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(SearchResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(SearchResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
@@ -63,109 +63,104 @@ public class SearchResourceTest extends ResourceTest {
 
     }
 
-    @Before
-    @Override
+    @BeforeEach
     public void before() throws Exception {
-        super.before();
-
         SingleThreadedEventService.getInstance().subscribe(IndexEvent.class, EventSubscriber.class);
     }
 
-    @After
-    @Override
-    public void after() throws Exception {
+    @AfterEach
+    public void after() {
         SingleThreadedEventService.getInstance().unsubscribe(EventSubscriber.class);
         EVENTS.clear();
-        super.after();
     }
 
     @Test
-    public void searchTest() {
+    void searchTest() {
         Response response = jersey.target(V1_SEARCH).queryParam("query", "tomcat").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
+        Assertions.assertNotNull(json);
     }
 
     @Test
-    public void searchProjectTest() {
+    void searchProjectTest() {
         Response response = jersey.target(V1_SEARCH + "/project").queryParam("query", "acme").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
+        Assertions.assertNotNull(json);
     }
 
     @Test
-    public void searchComponentTest() {
+    void searchComponentTest() {
         Response response = jersey.target(V1_SEARCH + "/component").queryParam("query", "bootstrap").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
+        Assertions.assertNotNull(json);
     }
 
     @Test
-    public void searchServiceComponentTest() {
+    void searchServiceComponentTest() {
         Response response = jersey.target(V1_SEARCH + "/service").queryParam("query", "stock-ticker").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
+        Assertions.assertNotNull(json);
     }
 
     @Test
-    public void searchLicenseTest() {
+    void searchLicenseTest() {
         Response response = jersey.target(V1_SEARCH + "/license").queryParam("query", "Apache").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
+        Assertions.assertNotNull(json);
     }
 
     @Test
-    public void searchVulnerabilityTest() {
+    void searchVulnerabilityTest() {
         Response response = jersey.target(V1_SEARCH + "/vulnerability").queryParam("query", "CVE-2020").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
+        Assertions.assertNotNull(json);
     }
 
     @Test
-    public void reindexWithBadIndexTypes() {
+    void reindexWithBadIndexTypes() {
         Response response = jersey.target(V1_SEARCH + "/reindex").queryParam("type", "BAD_TYPE_1", "BAD_TYPE_2").request()
                 .header(X_API_KEY, apiKey)
                 .post(null, Response.class);
-        Assert.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertEquals(400, response.getStatus(), 0);
         String body = getPlainTextBody(response);
-        Assert.assertEquals("No valid index type was provided", body);
+        Assertions.assertEquals("No valid index type was provided", body);
         assertThat(EVENTS).isEmpty();
     }
 
     @Test
-    public void reindexWithMixedIndexTypes() {
+    void reindexWithMixedIndexTypes() {
         Response response = jersey.target(V1_SEARCH + "/reindex").queryParam("type", "BAD_TYPE_1", IndexManager.IndexType.VULNERABILITY.name(), IndexManager.IndexType.LICENSE).request()
                 .header(X_API_KEY, apiKey)
                 .post(null, Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
+        Assertions.assertNotNull(json);
         String token = json.getString("token");
-        Assert.assertNotNull(token);
+        Assertions.assertNotNull(token);
 
         await("Index event dispatch")
                 .atMost(Duration.ofSeconds(5))

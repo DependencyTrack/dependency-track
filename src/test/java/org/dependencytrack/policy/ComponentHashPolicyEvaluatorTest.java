@@ -30,23 +30,23 @@ package org.dependencytrack.policy;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class ComponentHashPolicyEvaluatorTest {
+class ComponentHashPolicyEvaluatorTest {
 
     private ComponentHashPolicyEvaluator evaluator;
 
-    @Before
+    @BeforeEach
     public void initEvaluator() {
         evaluator = new ComponentHashPolicyEvaluator();
     }
 
     @Test
-    public void testIsConditionWithMatch() {
+    void testIsConditionWithMatch() {
         String hashJson = "{ 'algorithm': 'SHA-1', 'value': 'da39a3ee5e6b4b0d3255bfef95601890afd80709' }";
         Policy policy = new Policy();
         policy.setOperator(Policy.Operator.ANY);
@@ -62,11 +62,11 @@ public class ComponentHashPolicyEvaluatorTest {
         component.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
 
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size()); // No violation expected
+        Assertions.assertEquals(1, violations.size()); // No violation expected
     }
 
     @Test
-    public void testIsConditionNoMatch() {
+    void testIsConditionNoMatch() {
         String hashJson = "{ 'algorithm': 'SHA-1', 'value': 'da39a3ee5e6b4b0d3255bfef95601890afd80709' }";
         Policy policy = new Policy();
         policy.setOperator(Policy.Operator.ANY);
@@ -82,11 +82,11 @@ public class ComponentHashPolicyEvaluatorTest {
         component.setSha1("abcdef1234567890abcdef1234567890abcdef12");
 
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size()); //  Violation expected
+        Assertions.assertEquals(0, violations.size()); //  Violation expected
     }
 
     @Test
-    public void testIsNotConditionWithMatch() {
+    void testIsNotConditionWithMatch() {
         String hashJson = "{ 'algorithm': 'SHA-1', 'value': 'da39a3ee5e6b4b0d3255bfef95601890afd80709' }";
         Policy policy = new Policy();
         policy.setOperator(Policy.Operator.ANY);
@@ -102,11 +102,11 @@ public class ComponentHashPolicyEvaluatorTest {
         component.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
 
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size()); //  Violation expected
+        Assertions.assertEquals(0, violations.size()); //  Violation expected
     }
 
     @Test
-    public void testIsNotConditionNoMatch() {
+    void testIsNotConditionNoMatch() {
         String hashJson = "{ 'algorithm': 'SHA-1', 'value': 'da39a3ee5e6b4b0d3255bfef95601890afd80709' }";
         Policy policy = new Policy();
         policy.setOperator(Policy.Operator.ANY);
@@ -122,6 +122,6 @@ public class ComponentHashPolicyEvaluatorTest {
         component.setSha1("abcdef1234567890abcdef1234567890abcdef12");
 
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size()); // No violation expected
+        Assertions.assertEquals(1, violations.size()); // No violation expected
     }
 }

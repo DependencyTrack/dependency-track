@@ -18,14 +18,14 @@
  */
 package org.dependencytrack.event;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class NistMirrorEventTest {
+class NistMirrorEventTest {
 
     @Test
-    public void testDefaultConstructor() {
+    void testDefaultConstructor() {
         NistMirrorEvent event = new NistMirrorEvent();
-        Assert.assertNotNull(event);
+        Assertions.assertNotNull(event);
     }
 }

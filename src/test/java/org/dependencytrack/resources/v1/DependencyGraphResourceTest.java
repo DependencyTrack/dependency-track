@@ -21,9 +21,11 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import jakarta.json.JsonArray;
+import jakarta.ws.rs.core.Response;
 import net.javacrumbs.jsonunit.core.Option;
 import org.apache.http.HttpStatus;
-import org.dependencytrack.JerseyTestRule;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -33,11 +35,9 @@ import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.ServiceComponent;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.json.JSONArray;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.json.JsonArray;
-import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -47,16 +47,16 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
-public class DependencyGraphResourceTest extends ResourceTest {
+class DependencyGraphResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(DependencyGraphResource.class)
+    @RegisterExtension
+    public JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(DependencyGraphResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
     @Test
-    public void getComponentsAndServicesByComponentUuidTests() {
+    void getComponentsAndServicesByComponentUuidTests() {
         final int nbIteration = 100;
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -110,7 +110,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentsAndServicesByComponentUuidWithRepositoryMetaTests() {
+    void getComponentsAndServicesByComponentUuidWithRepositoryMetaTests() {
         final int nbIteration = 100;
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -192,7 +192,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentsAndServicesByProjectUuidTests() {
+    void getComponentsAndServicesByProjectUuidTests() {
         final int nbIteration = 100;
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -240,7 +240,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentsAndServicesByProjectUuidWithRepositoryMetaTests() {
+    void getComponentsAndServicesByProjectUuidWithRepositoryMetaTests() {
         final int nbIteration = 100;
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -316,7 +316,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentsAndServicesByProjectUuidWithComponentsWithoutPurlTest() {
+    void getComponentsAndServicesByProjectUuidWithComponentsWithoutPurlTest() {
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");

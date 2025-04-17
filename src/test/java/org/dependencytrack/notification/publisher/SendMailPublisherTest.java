@@ -7,21 +7,21 @@ import alpine.model.Team;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.security.crypto.DataEncryption;
-import com.icegreen.greenmail.junit4.GreenMailRule;
+import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetup;
-import org.dependencytrack.notification.NotificationConstants;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMultipart;
+import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -40,10 +40,10 @@ import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SSLTL
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_TRUSTCERT;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_USERNAME;
 
-public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
+class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
 
-    @Rule
-    public final GreenMailRule greenMail = new GreenMailRule(ServerSetup.SMTP.dynamicPort())
+    @RegisterExtension
+    public static final GreenMailExtension greenMail = new GreenMailExtension(ServerSetup.SMTP.dynamicPort())
             .withConfiguration(aConfig().
                     withUser("username", "password"));
 
@@ -51,7 +51,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         super(DefaultNotificationPublishers.EMAIL, new SendMailPublisher());
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         qm.createConfigProperty(
                 EMAIL_SMTP_ENABLED.getGroupName(),
@@ -118,9 +118,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         );
     }
 
-    @Override
+    @Test
     public void testInformWithBomConsumedNotification() {
-        super.testInformWithBomConsumedNotification();
+        super.baseTestInformWithBomConsumedNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Consumed");
@@ -149,9 +149,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithBomProcessingFailedNotification() {
-        super.testInformWithBomProcessingFailedNotification();
+        super.baseTestInformWithBomProcessingFailedNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Processing Failed");
@@ -185,9 +185,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithBomValidationFailedNotification() {
-        super.testInformWithBomValidationFailedNotification();
+        super.baseTestInformWithBomValidationFailedNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Validation Failed");
@@ -217,9 +217,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
-        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+        super.baseTestInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Processing Failed");
@@ -253,9 +253,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithDataSourceMirroringNotification() {
-        super.testInformWithDataSourceMirroringNotification();
+        super.baseTestInformWithDataSourceMirroringNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] GitHub Advisory Mirroring");
@@ -283,9 +283,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithNewVulnerabilityNotification() {
-        super.testInformWithNewVulnerabilityNotification();
+        super.baseTestInformWithNewVulnerabilityNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified");
@@ -320,9 +320,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testPublishWithScheduledNewVulnerabilitiesNotification() {
-        super.testPublishWithScheduledNewVulnerabilitiesNotification();
+        super.baseTestPublishWithScheduledNewVulnerabilitiesNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerabilities Summary");
@@ -378,9 +378,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testPublishWithScheduledNewPolicyViolationsNotification() {
-        super.testPublishWithScheduledNewPolicyViolationsNotification();
+        super.baseTestPublishWithScheduledNewPolicyViolationsNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Policy Violations Summary");
@@ -437,9 +437,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithNewVulnerableDependencyNotification() {
-        super.testInformWithNewVulnerableDependencyNotification();
+        super.baseTestInformWithNewVulnerableDependencyNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Vulnerable Dependency Introduced");
@@ -479,9 +479,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithProjectAuditChangeNotification() {
-        super.testInformWithProjectAuditChangeNotification();
+        super.baseTestInformWithProjectAuditChangeNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Analysis Decision: Finding Suppressed");
@@ -520,9 +520,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithEscapedData() {
-        super.testInformWithEscapedData();
+        super.baseTestInformWithEscapedData();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Notification Test");
@@ -551,6 +551,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         
     }
 
+    @Test
     @Override
     public void testInformWithTemplateInclude() throws Exception {
         final var notification = new Notification()
@@ -584,32 +585,32 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testSingleDestination() {
+    void testSingleDestination() {
         JsonObject config = configWithDestination("john@doe.com");
-        Assert.assertArrayEquals(new String[]{"john@doe.com"}, SendMailPublisher.parseDestination(config));
+        Assertions.assertArrayEquals(new String[]{"john@doe.com"}, SendMailPublisher.parseDestination(config));
     }
 
 
     @Test
-    public void testMultipleDestinations() {
+    void testMultipleDestinations() {
         JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
-        Assert.assertArrayEquals(new String[]{"john@doe.com", "steve@jobs.org"},
+        Assertions.assertArrayEquals(new String[]{"john@doe.com", "steve@jobs.org"},
                 SendMailPublisher.parseDestination(config));
     }
 
     @Test
-    public void testNullDestination() {
-        Assert.assertArrayEquals(null, SendMailPublisher.parseDestination(Json.createObjectBuilder().build()));
+    void testNullDestination() {
+        Assertions.assertArrayEquals(null, SendMailPublisher.parseDestination(Json.createObjectBuilder().build()));
     }
 
     @Test
-    public void testEmptyDestinations() {
+    void testEmptyDestinations() {
         JsonObject config = configWithDestination("");
-        Assert.assertArrayEquals(null, SendMailPublisher.parseDestination(config));
+        Assertions.assertArrayEquals(null, SendMailPublisher.parseDestination(config));
     }
 
     @Test
-    public void testSingleTeamAsDestination() {
+    void testSingleTeamAsDestination() {
         JsonObject config = configWithDestination("");
 
         ManagedUser managedUser = new ManagedUser();
@@ -637,11 +638,11 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         team.setOidcUsers(oidcUsers);
         teams.add(team);
 
-        Assert.assertArrayEquals(new String[]{"managedUser@Test.com", "ldapUser@Test.com", "oidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
+        Assertions.assertArrayEquals(new String[]{"managedUser@Test.com", "ldapUser@Test.com", "oidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testMultipleTeamsAsDestination() {
+    void testMultipleTeamsAsDestination() {
         JsonObject config = configWithDestination("");
 
         ManagedUser managedUser1 = new ManagedUser();
@@ -693,12 +694,12 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         team2.setOidcUsers(oidcUsers2);
         teams.add(team2);
 
-        Assert.assertArrayEquals(new String[]{"managedUser@Test.com", "ldapUser@Test.com", "oidcUser@Test.com", "anotherManagedUser@Test.com",
+        Assertions.assertArrayEquals(new String[]{"managedUser@Test.com", "ldapUser@Test.com", "oidcUser@Test.com", "anotherManagedUser@Test.com",
                 "anotherLdapUser@Test.com", "anotherOidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testDuplicateTeamAsDestination() {
+    void testDuplicateTeamAsDestination() {
         JsonObject config = configWithDestination("");
 
         ManagedUser managedUser1 = new ManagedUser();
@@ -751,12 +752,12 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         team2.setOidcUsers(oidcUsers2);
         teams.add(team2);
 
-        Assert.assertArrayEquals(new String[]{"managedUser@Test.com", "ldapUser@Test.com", "oidcUser@Test.com", "anotherManagedUser@Test.com",
+        Assertions.assertArrayEquals(new String[]{"managedUser@Test.com", "ldapUser@Test.com", "oidcUser@Test.com", "anotherManagedUser@Test.com",
                 "anotherLdapUser@Test.com", "anotherOidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testDuplicateUserAsDestination() {
+    void testDuplicateUserAsDestination() {
         JsonObject config = configWithDestination("");
 
         ManagedUser managedUser = new ManagedUser();
@@ -785,27 +786,27 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         teams.add(team);
         teams.add(team);
 
-        Assert.assertArrayEquals(new String[]{"managedUser@Test.com", "ldapUser@Test.com", "oidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
+        Assertions.assertArrayEquals(new String[]{"managedUser@Test.com", "ldapUser@Test.com", "oidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testEmptyTeamAsDestination() {
+    void testEmptyTeamAsDestination() {
         JsonObject config = configWithDestination("");
         List<Team> teams = new ArrayList<>();
         Team team = new Team();
         teams.add(team);
-        Assert.assertArrayEquals(null, SendMailPublisher.parseDestination(config, teams));
+        Assertions.assertArrayEquals(null, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testEmptyTeamsAsDestination() {
+    void testEmptyTeamsAsDestination() {
         JsonObject config = configWithDestination("");
         List<Team> teams = new ArrayList<>();
-        Assert.assertArrayEquals(null, SendMailPublisher.parseDestination(config, teams));
+        Assertions.assertArrayEquals(null, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testEmptyUserEmailsAsDestination() {
+    void testEmptyUserEmailsAsDestination() {
         JsonObject config = configWithDestination("");
         ManagedUser managedUser = new ManagedUser();
         managedUser.setUsername("ManagedUserTest");
@@ -829,11 +830,11 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         team.setOidcUsers(oidcUsers);
         teams.add(team);
 
-        Assert.assertArrayEquals(null, SendMailPublisher.parseDestination(config, teams));
+        Assertions.assertArrayEquals(null, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testConfigDestinationAndTeamAsDestination() {
+    void testConfigDestinationAndTeamAsDestination() {
         JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
         ManagedUser managedUser = new ManagedUser();
         managedUser.setUsername("ManagedUserTest");
@@ -860,11 +861,11 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         team.setOidcUsers(oidcUsers);
         teams.add(team);
 
-        Assert.assertArrayEquals(new String[]{"john@doe.com", "steve@jobs.org", "managedUser@Test.com", "ldapUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
+        Assertions.assertArrayEquals(new String[]{"john@doe.com", "steve@jobs.org", "managedUser@Test.com", "ldapUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testNullConfigDestinationAndTeamsDestination() {
+    void testNullConfigDestinationAndTeamsDestination() {
         JsonObject config = Json.createObjectBuilder().build();
         ManagedUser managedUser = new ManagedUser();
         managedUser.setUsername("ManagedUserTest");
@@ -891,11 +892,11 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         team.setOidcUsers(oidcUsers);
         teams.add(team);
 
-        Assert.assertArrayEquals(new String[]{"managedUser@Test.com", "ldapUser@Test.com", "john@doe.com"}, SendMailPublisher.parseDestination(config, teams));
+        Assertions.assertArrayEquals(new String[]{"managedUser@Test.com", "ldapUser@Test.com", "john@doe.com"}, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testEmptyManagedUsersAsDestination() {
+    void testEmptyManagedUsersAsDestination() {
         JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
 
         LdapUser ldapUser = new LdapUser();
@@ -916,11 +917,11 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         team.setOidcUsers(oidcUsers);
         teams.add(team);
 
-        Assert.assertArrayEquals(new String[]{"john@doe.com", "steve@jobs.org", "ldapUser@Test.com", "oidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
+        Assertions.assertArrayEquals(new String[]{"john@doe.com", "steve@jobs.org", "ldapUser@Test.com", "oidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testEmptyLdapUsersAsDestination() {
+    void testEmptyLdapUsersAsDestination() {
         JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
         ManagedUser managedUser = new ManagedUser();
         managedUser.setUsername("ManagedUserTest");
@@ -940,11 +941,11 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         team.setOidcUsers(oidcUsers);
         teams.add(team);
 
-        Assert.assertArrayEquals(new String[]{"john@doe.com", "steve@jobs.org", "managedUser@Test.com", "oidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
+        Assertions.assertArrayEquals(new String[]{"john@doe.com", "steve@jobs.org", "managedUser@Test.com", "oidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
     }
 
     @Test
-    public void testEmptyOidcUsersAsDestination() {
+    void testEmptyOidcUsersAsDestination() {
         JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
         ManagedUser managedUser = new ManagedUser();
         managedUser.setUsername("ManagedUserTest");
@@ -964,6 +965,6 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         team.setLdapUsers(ldapUsers);
         teams.add(team);
 
-        Assert.assertArrayEquals(new String[]{"john@doe.com", "steve@jobs.org", "managedUser@Test.com", "ldapUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
+        Assertions.assertArrayEquals(new String[]{"john@doe.com", "steve@jobs.org", "managedUser@Test.com", "ldapUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
     }
 }

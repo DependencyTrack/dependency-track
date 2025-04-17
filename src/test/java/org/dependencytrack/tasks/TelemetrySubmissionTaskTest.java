@@ -19,11 +19,12 @@
 package org.dependencytrack.tasks;
 
 import alpine.model.ConfigProperty;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.TelemetrySubmissionEvent;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -34,21 +35,26 @@ import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.TELEMETRY_LAST_SUBMISSION_DATA;
 import static org.dependencytrack.model.ConfigPropertyConstants.TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS;
 import static org.dependencytrack.model.ConfigPropertyConstants.TELEMETRY_SUBMISSION_ENABLED;
 
-public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
+@WireMockTest
+class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
+    private WireMockRuntimeInfo wmRuntimeInfo;
 
-    @Rule
-    public WireMockRule wireMock = new WireMockRule(options().dynamicPort());
+    @BeforeEach
+    void setUp(WireMockRuntimeInfo wmRuntimeInfo) {
+        this.wmRuntimeInfo = wmRuntimeInfo;
+    }
 
     @Test
-    public void shouldSubmitTelemetryDataWhenEnabled() {
+    void shouldSubmitTelemetryDataWhenEnabled() {
         qm.createConfigProperty(
                 TELEMETRY_SUBMISSION_ENABLED.getGroupName(),
                 TELEMETRY_SUBMISSION_ENABLED.getPropertyName(),
@@ -56,13 +62,13 @@ public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
                 TELEMETRY_SUBMISSION_ENABLED.getPropertyType(),
                 TELEMETRY_SUBMISSION_ENABLED.getDescription());
 
-        wireMock.stubFor(post(anyUrl())
+        stubFor(post(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(200)));
 
-        new TelemetrySubmissionTask(wireMock.baseUrl()).inform(new TelemetrySubmissionEvent());
+        new TelemetrySubmissionTask(wmRuntimeInfo.getHttpBaseUrl()).inform(new TelemetrySubmissionEvent());
 
-        wireMock.verify(postRequestedFor(urlPathEqualTo("/"))
+        verify(postRequestedFor(urlPathEqualTo("/"))
                 .withRequestBody(equalToJson("""
                         {
                           "system_id": "${json-unit.any-string}",
@@ -91,7 +97,7 @@ public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldNotSubmitTelemetryDataWhenDisabled() {
+    void shouldNotSubmitTelemetryDataWhenDisabled() {
         qm.createConfigProperty(
                 TELEMETRY_SUBMISSION_ENABLED.getGroupName(),
                 TELEMETRY_SUBMISSION_ENABLED.getPropertyName(),
@@ -99,13 +105,13 @@ public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
                 TELEMETRY_SUBMISSION_ENABLED.getPropertyType(),
                 TELEMETRY_SUBMISSION_ENABLED.getDescription());
 
-        wireMock.stubFor(post(anyUrl())
+        stubFor(post(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(200)));
 
-        new TelemetrySubmissionTask(wireMock.baseUrl()).inform(new TelemetrySubmissionEvent());
+        new TelemetrySubmissionTask(wmRuntimeInfo.getHttpBaseUrl()).inform(new TelemetrySubmissionEvent());
 
-        wireMock.verify(0, anyRequestedFor(anyUrl()));
+        verify(0, anyRequestedFor(anyUrl()));
 
         final ConfigProperty lastSubmittedTimestampProperty = qm.getConfigProperty(
                 TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getGroupName(),
@@ -119,7 +125,7 @@ public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldNotSubmitTelemetryDataWhenLastSubmittedWithinOneDay() {
+    void shouldNotSubmitTelemetryDataWhenLastSubmittedWithinOneDay() {
         qm.createConfigProperty(
                 TELEMETRY_SUBMISSION_ENABLED.getGroupName(),
                 TELEMETRY_SUBMISSION_ENABLED.getPropertyName(),
@@ -136,13 +142,13 @@ public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
                 TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getPropertyType(),
                 TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getDescription());
 
-        wireMock.stubFor(post(anyUrl())
+        stubFor(post(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(200)));
 
-        new TelemetrySubmissionTask(wireMock.baseUrl()).inform(new TelemetrySubmissionEvent());
+        new TelemetrySubmissionTask(wmRuntimeInfo.getHttpBaseUrl()).inform(new TelemetrySubmissionEvent());
 
-        wireMock.verify(0, anyRequestedFor(anyUrl()));
+        verify(0, anyRequestedFor(anyUrl()));
 
         final ConfigProperty lastSubmittedTimestampProperty = qm.getConfigProperty(
                 TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS.getGroupName(),
@@ -156,7 +162,7 @@ public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldFollowRedirect() {
+    void shouldFollowRedirect() {
         qm.createConfigProperty(
                 TELEMETRY_SUBMISSION_ENABLED.getGroupName(),
                 TELEMETRY_SUBMISSION_ENABLED.getPropertyName(),
@@ -164,17 +170,17 @@ public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
                 TELEMETRY_SUBMISSION_ENABLED.getPropertyType(),
                 TELEMETRY_SUBMISSION_ENABLED.getDescription());
 
-        wireMock.stubFor(post(urlPathEqualTo("/"))
+        stubFor(post(urlPathEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(308)
-                        .withHeader("Location", wireMock.url("/foo"))));
-        wireMock.stubFor(post(urlPathEqualTo("/foo"))
+                        .withHeader("Location", wmRuntimeInfo.getHttpBaseUrl() + "/foo")));
+        stubFor(post(urlPathEqualTo("/foo"))
                 .willReturn(aResponse()
                         .withStatus(200)));
 
-        new TelemetrySubmissionTask(wireMock.baseUrl()).inform(new TelemetrySubmissionEvent());
+        new TelemetrySubmissionTask(wmRuntimeInfo.getHttpBaseUrl()).inform(new TelemetrySubmissionEvent());
 
-        wireMock.verify(postRequestedFor(urlPathEqualTo("/"))
+        verify(postRequestedFor(urlPathEqualTo("/"))
                 .withRequestBody(equalToJson("""
                         {
                           "system_id": "${json-unit.any-string}",
@@ -183,7 +189,7 @@ public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
                           "db_version": "${json-unit.any-string}"
                         }
                         """)));
-        wireMock.verify(postRequestedFor(urlPathEqualTo("/foo"))
+        verify(postRequestedFor(urlPathEqualTo("/foo"))
                 .withRequestBody(equalToJson("""
                         {
                           "system_id": "${json-unit.any-string}",
@@ -195,7 +201,7 @@ public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldNotRecordSubmittedTelemetryDataWhenRateLimited() {
+    void shouldNotRecordSubmittedTelemetryDataWhenRateLimited() {
         qm.createConfigProperty(
                 TELEMETRY_SUBMISSION_ENABLED.getGroupName(),
                 TELEMETRY_SUBMISSION_ENABLED.getPropertyName(),
@@ -203,13 +209,13 @@ public class TelemetrySubmissionTaskTest extends PersistenceCapableTest {
                 TELEMETRY_SUBMISSION_ENABLED.getPropertyType(),
                 TELEMETRY_SUBMISSION_ENABLED.getDescription());
 
-        wireMock.stubFor(post(anyUrl())
+        stubFor(post(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(429)));
 
-        new TelemetrySubmissionTask(wireMock.baseUrl()).inform(new TelemetrySubmissionEvent());
+        new TelemetrySubmissionTask(wmRuntimeInfo.getHttpBaseUrl()).inform(new TelemetrySubmissionEvent());
 
-        wireMock.verify(postRequestedFor(urlPathEqualTo("/"))
+        verify(postRequestedFor(urlPathEqualTo("/"))
                 .withRequestBody(equalToJson("""
                         {
                           "system_id": "${json-unit.any-string}",

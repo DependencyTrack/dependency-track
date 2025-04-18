@@ -35,6 +35,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.TagQueryManager;
 import org.dependencytrack.persistence.TagQueryManager.TagListRow;
 import org.dependencytrack.persistence.TagQueryManager.TaggedNotificationRuleRow;
 import org.dependencytrack.persistence.TagQueryManager.TaggedPolicyRow;
@@ -43,6 +44,7 @@ import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.problems.TagOperationProblemDetails;
 import org.dependencytrack.resources.v1.vo.TagListResponseItem;
+import org.dependencytrack.resources.v1.vo.TaggedCollectionProjectListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedNotificationRuleListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedPolicyListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedProjectListResponseItem;
@@ -97,6 +99,7 @@ public class TagResource extends AlpineResource {
                 .map(row -> new TagListResponseItem(
                         row.name(),
                         row.projectCount(),
+                        row.collectionProjectCount(),
                         row.policyCount(),
                         row.notificationRuleCount()
                 ))
@@ -281,6 +284,43 @@ public class TagResource extends AlpineResource {
         }
 
         return Response.noContent().build();
+    }
+
+    @GET
+    @Path("/{name}/collectionProject")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns a list of all collection projects that use the given tag for their collection logic.",
+            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all collection projects that use the given tag for their collection logic",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of collection projects", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = TaggedCollectionProjectListResponseItem.class)))
+            )
+    })
+    @PaginatedApi
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getTaggedCollectionProjects(
+            @Parameter(description = "Name of the tag to get collection projects for", required = true)
+            @PathParam("name") final String tagName
+    ) {
+        // TODO: Should enforce lowercase for tagName once we are sure that
+        //   users don't have any mixed-case tags in their system anymore.
+        //   Will likely need a migration to cleanup existing tags for this.
+
+        final List<TagQueryManager.TaggedCollectionProjectRow> taggedCollectionProjectListRows;
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            taggedCollectionProjectListRows = qm.getTaggedCollectionProjects(tagName);
+        }
+
+        final List<TaggedCollectionProjectListResponseItem> tags = taggedCollectionProjectListRows.stream()
+                .map(row -> new TaggedCollectionProjectListResponseItem(UUID.fromString(row.uuid()), row.name(), row.version()))
+                .toList();
+        final long totalCount = taggedCollectionProjectListRows.isEmpty() ? 0 : taggedCollectionProjectListRows.getFirst().totalCount();
+        return Response.ok(tags).header(TOTAL_COUNT_HEADER, totalCount).build();
     }
 
     @GET

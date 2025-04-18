@@ -26,11 +26,11 @@ import java.util.UUID;
 import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
 /**
- * @since 4.12.0
+ * @since 4.13.1
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record TaggedProjectListResponseItem(
-        @Schema(description = "UUID of the project", requiredMode = REQUIRED) UUID uuid,
-        @Schema(description = "Name of the project", requiredMode = REQUIRED) String name,
-        @Schema(description = "Version of the project") String version) {
+public record TaggedCollectionProjectListResponseItem(
+        @Schema(description = "UUID of the collection project", requiredMode = REQUIRED) UUID uuid,
+        @Schema(description = "Name of the collection project", requiredMode = REQUIRED) String name,
+        @Schema(description = "Version of the collection project") String version) {
 }

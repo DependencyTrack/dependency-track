@@ -1417,6 +1417,10 @@ public class QueryManager extends AlpineQueryManager {
         getTagQueryManager().untagProjects(tagName, projectUuids);
     }
 
+    public List<TagQueryManager.TaggedCollectionProjectRow> getTaggedCollectionProjects(final String tagName) {
+        return getTagQueryManager().getTaggedCollectionProjects(tagName);
+    }
+
     public List<TagQueryManager.TaggedPolicyRow> getTaggedPolicies(final String tagName) {
         return getTagQueryManager().getTaggedPolicies(tagName);
     }

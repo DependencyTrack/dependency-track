@@ -18,15 +18,16 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
-import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.UUID;
+
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
 /**
  * @since 4.12.0
  */
 public record TaggedNotificationRuleListResponseItem(
-        @Parameter(description = "UUID of the notification rule", required = true) UUID uuid,
-        @Parameter(description = "Name of the notification rule", required = true) String name
-) {
+        @Schema(description = "UUID of the notification rule", requiredMode = REQUIRED) UUID uuid,
+        @Schema(description = "Name of the notification rule", requiredMode = REQUIRED) String name) {
 }

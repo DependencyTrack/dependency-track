@@ -18,15 +18,18 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
-import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
 /**
  * @since 4.12.0
  */
 public record TagListResponseItem(
-        @Parameter(description = "Name of the tag", required = true) String name,
-        @Parameter(description = "Number of projects assigned to this tag") long projectCount,
-        @Parameter(description = "Number of policies assigned to this tag") long policyCount,
-        @Parameter(description = "Number of notification rules assigned to this tag") long notificationRuleCount
+        @Schema(description = "Name of the tag", requiredMode = REQUIRED) String name,
+        @Schema(description = "Number of projects assigned to this tag", requiredMode = REQUIRED) long projectCount,
+        @Schema(description = "Number of collection projects assigned to this tag", requiredMode = REQUIRED) long collectionProjectCount,
+        @Schema(description = "Number of policies assigned to this tag", requiredMode = REQUIRED) long policyCount,
+        @Schema(description = "Number of notification rules assigned to this tag", requiredMode = REQUIRED) long notificationRuleCount
 ) {
 }

@@ -99,7 +99,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
     }
 
     protected void handleRequestException(final Logger logger, final Exception e) {
-        logger.error("Request failure", e);
+        logger.error("Request failure for repository URL: " + baseUrl, e);
         e.printStackTrace();
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)

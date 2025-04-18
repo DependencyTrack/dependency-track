@@ -326,7 +326,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
             boolean modified = false;
 
             if (notificationRule.getTags() == null) {
-                notificationRule.setTags(new ArrayList<>());
+                notificationRule.setTags(new HashSet<>());
             }
 
             if (!keepExisting) {
@@ -346,8 +346,8 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
                     notificationRule.getTags().add(tag);
 
                     if (tag.getNotificationRules() == null) {
-                        tag.setNotificationRules(new ArrayList<>(List.of(notificationRule)));
-                    } else if (!tag.getNotificationRules().contains(notificationRule)) {
+                        tag.setNotificationRules(new HashSet<>(List.of(notificationRule)));
+                    } else {
                         tag.getNotificationRules().add(notificationRule);
                     }
 

@@ -678,7 +678,7 @@ public class BomResource extends AlpineResource {
             return;
         }
 
-        final List<Tag> resolvedTags = qm.resolveTags(tags);
+        final Set<Tag> resolvedTags = qm.resolveTags(tags);
         qm.bind(project, resolvedTags);
     }
 

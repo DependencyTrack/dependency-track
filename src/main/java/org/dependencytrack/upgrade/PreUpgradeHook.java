@@ -27,7 +27,12 @@ import java.sql.Connection;
  */
 public interface PreUpgradeHook {
 
-    int priority();
+    /**
+     * @return The order in which the hook shall be executed. Hooks are executed from lowest to highest order.
+     * The order must be unique across all {@link PreUpgradeHook}s to ensure proper execution order,
+     * even when users upgrade from very old version.
+     */
+    int order();
 
     boolean shouldExecute(final UpgradeMetaProcessor upgradeProcessor);
 

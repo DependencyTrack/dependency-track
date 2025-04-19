@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -108,7 +109,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
      * @return the created Tag object(s)
      */
     @Override
-    public List<Tag> createTags(final List<String> names) {
+    public Set<Tag> createTags(final Collection<String> names) {
         final List<Tag> newTags = new ArrayList<>();
         for (final String name: names) {
             final String loweredTrimmedTag = StringUtils.lowerCase(StringUtils.trimToNull(name));
@@ -118,7 +119,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
                 newTags.add(tag);
             }
         }
-        return new ArrayList<>(persist(newTags));
+        return new HashSet<>(persist(newTags));
     }
 
     /**
@@ -126,16 +127,16 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
      * tags by querying the database to retrieve the tag. If the tag does
      * not exist, the tag will be created and returned with other resolved
      * tags.
-     * @param tags a List of Tags to resolve
-     * @return List of resolved Tags
+     * @param tags a Collection of Tags to resolve
+     * @return Set of resolved Tags
      */
     @Override
-    public synchronized List<Tag> resolveTags(final List<Tag> tags) {
+    public synchronized Set<Tag> resolveTags(final Collection<Tag> tags) {
         if (tags == null) {
-            return new ArrayList<>();
+            return new HashSet<>();
         }
-        final List<Tag> resolvedTags = new ArrayList<>();
-        final List<String> unresolvedTags = new ArrayList<>();
+        final Set<Tag> resolvedTags = new HashSet<>();
+        final Set<String> unresolvedTags = new HashSet<>();
         for (final Tag tag: tags) {
             final String trimmedTag = StringUtils.trimToNull(tag.getName());
             if (trimmedTag != null) {
@@ -605,7 +606,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
         if (projects != null && !projects.isEmpty()) {
             tags = projects.stream()
                     .map(Project::getTags)
-                    .flatMap(List::stream)
+                    .flatMap(Set::stream)
                     .distinct();
         } else {
             tags = pm.newQuery(Tag.class).executeList().stream();

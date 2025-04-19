@@ -453,11 +453,11 @@ public class QueryManager extends AlpineQueryManager {
         return getTagQueryManager().createTag(name);
     }
 
-    public List<Tag> createTags(final List<String> names) {
+    public Set<Tag> createTags(final Collection<String> names) {
         return getTagQueryManager().createTags(names);
     }
 
-    public List<Tag> resolveTags(final List<Tag> tags) {
+    public Set<Tag> resolveTags(final Collection<Tag> tags) {
         return getTagQueryManager().resolveTags(tags);
     }
 
@@ -469,7 +469,7 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().createProject(name, description, version, tags, parent, purl, active, isLatest, commitIndex);
     }
 
-    public Project createProject(final Project project, List<Tag> tags, boolean commitIndex) {
+    public Project createProject(final Project project, Collection<Tag> tags, boolean commitIndex) {
         return getProjectQueryManager().createProject(project, tags, commitIndex);
     }
 
@@ -1348,7 +1348,7 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().bind(project, tags, keepExisting);
     }
 
-    public void bind(Project project, List<Tag> tags) {
+    public void bind(Project project, Collection<Tag> tags) {
         getProjectQueryManager().bind(project, tags);
     }
 

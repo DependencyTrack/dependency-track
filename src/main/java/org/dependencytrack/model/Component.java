@@ -122,7 +122,7 @@ import java.util.UUID;
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Index(name = "COMPONENT_COMPOSITE_PROJECT_ID_INDX", members = {"project", "id"})
+@Index(name = "COMPONENT_COMPOSITE_PROJECT_ID_IDX", members = {"project", "id"})
 public class Component implements Serializable {
 
     private static final long serialVersionUID = 6841650046433674702L;

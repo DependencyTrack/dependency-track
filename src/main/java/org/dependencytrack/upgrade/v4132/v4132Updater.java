@@ -58,7 +58,7 @@ public class v4132Updater extends AbstractUpgradeItem {
             LOGGER.info("Creating partial index on 'COMPONENTS_VULNERABILITIES' for (VULNERABILITY_ID, COMPONENT_ID)");
             stmt.execute(/* language=SQL */ """
                     CREATE INDEX IF NOT EXISTS components_vulnerabilities_composite_component_idx
-                      ON public."COMPONENTS_VULNERABILITIES"(VULNERABILITY_ID, COMPONENT_ID);
+                      ON public."COMPONENTS_VULNERABILITIES"("VULNERABILITY_ID", "COMPONENT_ID");
                     """);
         }
     }

@@ -44,6 +44,8 @@ import java.util.List;
 @PersistenceCapable
 @Unique(name="ANALYSIS_COMPOSITE_IDX", members={"project", "component", "vulnerability"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Index(name = "ANALYSIS_COMPOSITE_VULNERABILITY_PROJECT_IDX", members = {"component", "vulnerability", "project"})
+@Index(name = "ANALYSIS_COMPOSITE_VULNERABILITY_PROJECT_SUPPRESSED_IDX", members = {"component", "vulnerability", "project", "suppressed"})
 public class Analysis implements Serializable {
 
     @PrimaryKey

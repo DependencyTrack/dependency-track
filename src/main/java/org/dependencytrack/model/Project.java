@@ -138,6 +138,7 @@ import java.util.UUID;
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Index(name = "PROJECT_ACTIVE_IDX", members = {"project", "active"})
 public class Project implements Serializable {
 
     private static final long serialVersionUID = -7592438796591673355L;

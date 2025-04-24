@@ -43,6 +43,7 @@ import java.util.UUID;
  */
 @PersistenceCapable
 @Index(name = "FINDINGATTRIBUTION_COMPOUND_IDX", members = {"component", "vulnerability"})
+@Index(name = "FINDINGATTRIBUTION_COMPOSITE_VULNERABILITY_ATTRIBUTED_IDX", members = {"component", "vulnerability", "attributedOn"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FindingAttribution implements Serializable {
 

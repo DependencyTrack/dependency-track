@@ -112,6 +112,12 @@ Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}
 Description:       {{ subject.project.description }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+
+Component:         {{ subject.component.name }}
+Component Version: {{ subject.component.version }}
+Component URL:     {{ baseUrl }}/components/{{ subject.component.uuid }}
+
+Violated Policy:   {{ subject.policyViolation.policyCondition.policy.name }}
 {% elseif notification.group == "NEW_POLICY_VIOLATIONS_SUMMARY" %}
 {% set newViolationsSummarySubject = subject -%}
 Overview:

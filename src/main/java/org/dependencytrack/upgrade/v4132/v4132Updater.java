@@ -24,6 +24,7 @@ public class v4132Updater extends AbstractUpgradeItem {
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
         createDependencyMetricsIndex(connection);
         createComponentCompositeProjectIdIndex(connection);
+        createComponentVulnerabilitiesCompositeIndex(connection);
         createProjectMetricsLastOccurrenceIndex(connection);
         createVulnerabilityCompositeSourceVulnIdIndex(connection);
         createFindingAttributionCompositeIndex(connection);
@@ -48,6 +49,16 @@ public class v4132Updater extends AbstractUpgradeItem {
             stmt.execute(/* language=SQL */ """
                     CREATE INDEX IF NOT EXISTS "COMPONENT_COMPOSITE_PROJECT_ID_IDX"
                       ON public."COMPONENT"("PROJECT_ID", "ID" DESC)
+                    """);
+        }
+    }
+
+    private void createComponentVulnerabilitiesCompositeIndex(final Connection connection) throws SQLException {
+        try (final Statement stmt = connection.createStatement()) {
+            LOGGER.info("Creating partial index on 'COMPONENTS_VULNERABILITIES' for (VULNERABILITY_ID, COMPONENT_ID)");
+            stmt.execute(/* language=SQL */ """
+                    CREATE INDEX IF NOT EXISTS components_vulnerabilities_composite_component_idx
+                      ON public."COMPONENTS_VULNERABILITIES"(VULNERABILITY_ID, COMPONENT_ID);
                     """);
         }
     }
@@ -129,6 +140,7 @@ public class v4132Updater extends AbstractUpgradeItem {
                     ANALYZE
                       "DEPENDENCYMETRICS",
                       "COMPONENT",
+                      "COMPONENTS_VULNERABILITIES",
                       "PROJECTMETRICS",
                       "VULNERABILITY",
                       "FINDINGATTRIBUTION",

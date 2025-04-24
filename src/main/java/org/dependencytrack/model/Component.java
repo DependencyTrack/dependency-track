@@ -388,6 +388,7 @@ public class Component implements Serializable {
     @Persistent(table = "COMPONENTS_VULNERABILITIES")
     @Join(column = "COMPONENT_ID")
     @Element(column = "VULNERABILITY_ID")
+    @Index(name = "COMPONENTS_VULNERABILITIES_COMPOSITE_IDX", members = {"vulnerabilities", "component"})
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Vulnerability> vulnerabilities;
 

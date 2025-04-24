@@ -116,7 +116,7 @@
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
         <lib.swagger-parser.version>2.1.25</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
-        <lib.testcontainers.version>1.20.6</lib.testcontainers.version>
+        <lib.testcontainers.version>1.21.0</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
         <lib.woodstox.version>7.0.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>

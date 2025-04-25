@@ -214,6 +214,12 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 assertThat(contact.getPhone()).isEqualTo("123-456-7890");
             });
         });
+        assertThat(project.getMetadata().getProperties()).isNotNull();
+        assertThat(project.getMetadata().getProperties()).hasSize(2);
+        assertThat(project.getMetadata().getProperties().get(0).getName()).isEqualTo("BUILD_SYSTEM");
+        assertThat(project.getMetadata().getProperties().get(0).getValue()).isEqualTo("Maven");
+        assertThat(project.getMetadata().getProperties().get(1).getName()).isEqualTo("LANGUAGE");
+        assertThat(project.getMetadata().getProperties().get(1).getValue()).isEqualTo("Java");
 
         final List<Component> components = qm.getAllComponents(project);
         assertThat(components).hasSize(1);

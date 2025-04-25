@@ -18,12 +18,20 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.common.util.UuidUtil;
-import alpine.model.IConfigProperty;
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
-import com.fasterxml.jackson.core.StreamReadConstraints;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.apache.commons.io.IOUtils.resourceToByteArray;
+import static org.apache.commons.io.IOUtils.resourceToString;
 import org.apache.http.HttpStatus;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -33,6 +41,10 @@ import org.dependencytrack.model.BomValidationMode;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentProperty;
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE;
+import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
+import org.dependencytrack.model.MetadataProperty;
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
@@ -51,34 +63,24 @@ import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import static org.hamcrest.CoreMatchers.equalTo;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.StreamReadConstraints;
+
+import alpine.common.util.UuidUtil;
+import alpine.model.IConfigProperty;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
-import static org.apache.commons.io.IOUtils.resourceToByteArray;
-import static org.apache.commons.io.IOUtils.resourceToString;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
-import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE;
-import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
-import static org.hamcrest.CoreMatchers.equalTo;
 
 public class BomResourceTest extends ResourceTest {
 
@@ -159,6 +161,10 @@ public class BomResourceTest extends ResourceTest {
         projectMetadata.setProject(project);
         projectMetadata.setAuthors(List.of(bomAuthor));
         projectMetadata.setSupplier(bomSupplier);
+        final var metadataProperty = new MetadataProperty();
+        metadataProperty.setName("foo");
+        metadataProperty.setValue("bar");
+        projectMetadata.setProperties(List.of(metadataProperty));
         qm.persist(projectMetadata);
 
         final var componentSupplier = new OrganizationalEntity();
@@ -241,87 +247,93 @@ public class BomResourceTest extends ResourceTest {
                     "metadata": {
                         "timestamp": "${json-unit.any-string}",
                         "authors": [
-                          {
+                        {
                             "name": "bomAuthor"
-                          }
+                        }
                         ],
                         "component": {
-                            "type": "application",
-                            "bom-ref": "${json-unit.matches:projectUuid}",
-                            "author": "SampleAuthor",
-                            "supplier": {
-                              "name": "projectSupplier"
-                            },
-                            "name": "acme-app",
-                            "version": ""
+                        "type": "application",
+                        "bom-ref": "${json-unit.matches:projectUuid}",
+                        "author": "SampleAuthor",
+                        "supplier": {
+                            "name": "projectSupplier"
+                        },
+                        "name": "acme-app",
+                        "version": ""
                         },
                         "manufacture": {
-                          "name": "projectManufacturer"
+                        "name": "projectManufacturer"
                         },
+                        "properties": [
+                        {
+                            "name": "foo",
+                            "value": "bar"
+                        }
+                        ],
                         "supplier": {
-                          "name": "bomSupplier"
+                        "name": "bomSupplier"
                         },
                         "tools": [
-                            {
-                                "vendor": "OWASP",
-                                "name": "Dependency-Track",
-                                "version": "${json-unit.any-string}"
-                            }
+                        {
+                            "vendor": "OWASP",
+                            "name": "Dependency-Track",
+                            "version": "${json-unit.any-string}"
+                        }
                         ]
                     },
                     "components": [
                         {
-                            "type": "library",
-                            "bom-ref": "${json-unit.matches:componentWithoutVulnUuid}",
-                            "supplier": {
-                              "name": "componentSupplier"
-                            },
-                            "name": "acme-lib-a",
-                            "version": "1.0.0",
-                            "properties": [
-                              {
-                                "name": "foo:bar",
-                                "value": "baz"
-                              }
-                            ]
+                        "type": "library",
+                        "bom-ref": "${json-unit.matches:componentWithoutVulnUuid}",
+                        "supplier": {
+                            "name": "componentSupplier"
+                        },
+                        "name": "acme-lib-a",
+                        "version": "1.0.0",
+                        "properties": [
+                            {
+                            "name": "foo:bar",
+                            "value": "baz"
+                            }
+                        ]
                         },
                         {
-                            "type": "library",
-                            "bom-ref": "${json-unit.matches:componentWithVulnUuid}",
-                            "name": "acme-lib-b",
-                            "version": "1.0.0"
+                        "type": "library",
+                        "bom-ref": "${json-unit.matches:componentWithVulnUuid}",
+                        "name": "acme-lib-b",
+                        "version": "1.0.0"
                         },
                         {
-                            "type": "library",
-                            "bom-ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
-                            "name": "acme-lib-c",
-                            "version": "1.0.0"
+                        "type": "library",
+                        "bom-ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
+                        "name": "acme-lib-c",
+                        "version": "1.0.0"
                         }
                     ],
                     "dependencies": [
                         {
-                            "ref": "${json-unit.matches:projectUuid}",
-                            "dependsOn": [
-                                "${json-unit.matches:componentWithoutVulnUuid}",
-                                "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
-                            ]
+                        "ref": "${json-unit.matches:projectUuid}",
+                        "dependsOn": [
+                            "${json-unit.matches:componentWithoutVulnUuid}",
+                            "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
+                        ]
                         },
                         {
-                            "ref": "${json-unit.matches:componentWithoutVulnUuid}",
-                            "dependsOn": [
-                                "${json-unit.matches:componentWithVulnUuid}"
-                            ]
+                        "ref": "${json-unit.matches:componentWithoutVulnUuid}",
+                        "dependsOn": [
+                            "${json-unit.matches:componentWithVulnUuid}"
+                        ]
                         },
                         {
-                            "ref": "${json-unit.matches:componentWithVulnUuid}",
-                            "dependsOn": []
+                        "ref": "${json-unit.matches:componentWithVulnUuid}",
+                        "dependsOn": []
                         },
                         {
-                            "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
-                            "dependsOn": []
+                        "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
+                        "dependsOn": []
                         }
                     ]
-                }
+                    }
                 """));
 
         // Ensure the dependency graph did not get deleted during export.

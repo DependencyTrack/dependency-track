@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OpenApiResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(OpenApiResource.class)
                     .register(ApiFilter.class));
 

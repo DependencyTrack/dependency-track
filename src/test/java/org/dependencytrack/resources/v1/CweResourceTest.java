@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CweResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(CweResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

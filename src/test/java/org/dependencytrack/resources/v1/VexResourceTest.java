@@ -41,9 +41,8 @@ import org.dependencytrack.resources.v1.exception.JsonMappingExceptionMapper;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.jupiter.api.Test;
-
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junitpioneer.jupiter.DefaultLocale;
 
@@ -63,7 +62,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 class VexResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(VexResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)

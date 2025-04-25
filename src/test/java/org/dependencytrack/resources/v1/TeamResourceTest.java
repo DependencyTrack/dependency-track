@@ -57,7 +57,7 @@ class TeamResourceTest extends ResourceTest {
     private Team userNotPartof;
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(TeamResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

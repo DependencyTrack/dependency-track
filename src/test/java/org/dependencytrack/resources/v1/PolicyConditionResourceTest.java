@@ -27,7 +27,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 class PolicyConditionResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(PolicyConditionResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)

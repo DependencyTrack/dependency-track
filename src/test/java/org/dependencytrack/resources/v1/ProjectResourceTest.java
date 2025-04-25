@@ -89,7 +89,7 @@ import static org.hamcrest.Matchers.not;
 class ProjectResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(ProjectResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)

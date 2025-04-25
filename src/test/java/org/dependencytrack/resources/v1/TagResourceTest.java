@@ -21,9 +21,8 @@ import org.dependencytrack.resources.v1.exception.NoSuchElementExceptionMapper;
 import org.dependencytrack.resources.v1.exception.TagOperationFailedExceptionMapper;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.jupiter.api.Test;
-
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junitpioneer.jupiter.DefaultLocale;
 
@@ -41,7 +40,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 class TagResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(TagResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)

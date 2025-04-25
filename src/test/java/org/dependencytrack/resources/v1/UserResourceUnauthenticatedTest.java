@@ -36,7 +36,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 class UserResourceUnauthenticatedTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(UserResource.class)
                     .register(ApiFilter.class));
 

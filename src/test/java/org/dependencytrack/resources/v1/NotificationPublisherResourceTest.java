@@ -76,7 +76,7 @@ import static org.awaitility.Awaitility.await;
 public class NotificationPublisherResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(NotificationPublisherResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

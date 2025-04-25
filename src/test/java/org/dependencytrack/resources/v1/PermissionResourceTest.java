@@ -45,7 +45,7 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 class PermissionResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(PermissionResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

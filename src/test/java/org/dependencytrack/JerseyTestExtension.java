@@ -28,8 +28,8 @@ import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.glassfish.jersey.test.spi.TestContainerException;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.util.function.Supplier;
@@ -37,7 +37,7 @@ import java.util.function.Supplier;
 /**
  * @since 4.11.0
  */
-public class JerseyTestExtension implements BeforeEachCallback, AfterEachCallback {
+public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback {
 
     private final Supplier<ResourceConfig> resourceConfigSupplier;
     private JerseyTest jerseyTest;
@@ -47,7 +47,7 @@ public class JerseyTestExtension implements BeforeEachCallback, AfterEachCallbac
     }
 
     @Override
-    public void beforeEach(ExtensionContext context) throws Exception {
+    public void beforeAll(ExtensionContext context) throws Exception {
         this.jerseyTest = new JerseyTest() {
 
             @Override
@@ -74,12 +74,14 @@ public class JerseyTestExtension implements BeforeEachCallback, AfterEachCallbac
     }
 
     @Override
-    public void afterEach(ExtensionContext context) {
+    public void afterAll(ExtensionContext context) {
         if (jerseyTest != null) {
             try {
                 jerseyTest.tearDown();
             } catch (Exception e) {
                 throw new RuntimeException(e);
+            } finally {
+                jerseyTest = null;
             }
         }
     }

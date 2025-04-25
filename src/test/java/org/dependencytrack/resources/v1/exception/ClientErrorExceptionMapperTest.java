@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ClientErrorExceptionMapperTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(TestResource.class)
                     .register(ClientErrorExceptionMapper.class));
 

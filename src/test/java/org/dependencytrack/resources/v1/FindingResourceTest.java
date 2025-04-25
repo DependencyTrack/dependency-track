@@ -57,7 +57,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 class FindingResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(FindingResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NotSortableExceptionMapperTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(TestResource.class)
                     .register(ApiFilter.class)
                     .register(NotSortableExceptionMapper.class));

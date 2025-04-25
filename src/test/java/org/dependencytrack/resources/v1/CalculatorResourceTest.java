@@ -33,7 +33,7 @@ import us.springett.owasp.riskrating.Level;
 class CalculatorResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(CalculatorResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

@@ -37,7 +37,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
 class IntegrationResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(IntegrationResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

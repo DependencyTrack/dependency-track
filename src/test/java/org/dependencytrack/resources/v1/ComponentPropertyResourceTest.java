@@ -42,7 +42,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 class ComponentPropertyResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(ComponentPropertyResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

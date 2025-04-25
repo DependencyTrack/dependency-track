@@ -70,7 +70,7 @@ import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeou
 class ViolationAnalysisResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(ViolationAnalysisResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)

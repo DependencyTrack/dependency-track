@@ -50,7 +50,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 class DependencyGraphResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(DependencyGraphResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

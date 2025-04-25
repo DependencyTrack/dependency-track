@@ -47,7 +47,7 @@ import static org.awaitility.Awaitility.await;
 class SearchResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(SearchResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

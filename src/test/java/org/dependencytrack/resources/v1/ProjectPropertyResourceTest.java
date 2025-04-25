@@ -41,7 +41,7 @@ import java.util.UUID;
 class ProjectPropertyResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(ProjectPropertyResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

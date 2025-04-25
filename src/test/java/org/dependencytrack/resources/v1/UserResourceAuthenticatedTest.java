@@ -46,7 +46,7 @@ import java.util.UUID;
 class UserResourceAuthenticatedTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(UserResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

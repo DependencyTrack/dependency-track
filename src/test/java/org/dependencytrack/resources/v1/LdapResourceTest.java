@@ -39,7 +39,7 @@ import java.util.UUID;
 class LdapResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(LdapResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

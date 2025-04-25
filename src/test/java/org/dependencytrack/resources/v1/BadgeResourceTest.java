@@ -45,7 +45,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BADGE_EN
 class BadgeResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(BadgeResource.class)
                     .register(ApiFilter.class));
 

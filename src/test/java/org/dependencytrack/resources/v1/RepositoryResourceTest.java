@@ -44,7 +44,7 @@ import java.util.List;
 class RepositoryResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(RepositoryResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

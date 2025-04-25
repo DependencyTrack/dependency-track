@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ConfigPropertyResourceTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(ConfigPropertyResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));

@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OidcResourceUnauthenticatedTest extends ResourceTest {
 
     @RegisterExtension
-    public JerseyTestExtension jersey = new JerseyTestExtension(
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
             () -> new ResourceConfig(OidcResource.class)
                     .register(ApiFilter.class));
 

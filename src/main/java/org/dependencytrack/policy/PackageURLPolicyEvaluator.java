@@ -56,6 +56,10 @@ public class PackageURLPolicyEvaluator extends AbstractPolicyEvaluator {
                 if (Matcher.matches(canonicalPurl, condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
+            } else if(PolicyCondition.Operator.NOT_PRESENT == condition.getOperator()){
+                if(component.getPurl() == null){
+                    violations.add(new PolicyConditionViolation(condition, component));
+                }
             } else if (PolicyCondition.Operator.NO_MATCH == condition.getOperator()) {
                 if (!Matcher.matches(canonicalPurl, condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));

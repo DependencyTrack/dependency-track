@@ -8,22 +8,22 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.security.crypto.DataEncryption;
 import alpine.server.auth.PasswordService;
-import com.icegreen.greenmail.junit4.GreenMailRule;
+import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetup;
-import org.dependencytrack.model.NotificationPublisher;
-import org.dependencytrack.model.NotificationRule;
-import org.dependencytrack.notification.NotificationConstants;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMultipart;
+import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -42,13 +42,13 @@ import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SSLTL
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_TRUSTCERT;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_USERNAME;
 
-public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
+class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
 
     // Hashing is expensive. Do it once and re-use across tests as much as possible.
     protected static final String TEST_USER_PASSWORD_HASH = new String(PasswordService.createHash("testuser".toCharArray()));
 
-    @Rule
-    public final GreenMailRule greenMail = new GreenMailRule(ServerSetup.SMTP.dynamicPort())
+    @RegisterExtension
+    public static final GreenMailExtension greenMail = new GreenMailExtension(ServerSetup.SMTP.dynamicPort())
             .withConfiguration(aConfig().
                     withUser("username", "password"));
 
@@ -56,7 +56,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         super(DefaultNotificationPublishers.EMAIL, new SendMailPublisher());
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         qm.createConfigProperty(
                 EMAIL_SMTP_ENABLED.getGroupName(),
@@ -123,9 +123,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         );
     }
 
-    @Override
+    @Test
     public void testInformWithBomConsumedNotification() {
-        super.testInformWithBomConsumedNotification();
+        super.baseTestInformWithBomConsumedNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Consumed");
@@ -154,9 +154,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithBomProcessingFailedNotification() {
-        super.testInformWithBomProcessingFailedNotification();
+        super.baseTestInformWithBomProcessingFailedNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Processing Failed");
@@ -190,9 +190,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithBomValidationFailedNotification() {
-        super.testInformWithBomValidationFailedNotification();
+        super.baseTestInformWithBomValidationFailedNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Validation Failed");
@@ -222,9 +222,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
-        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+        super.baseTestInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Processing Failed");
@@ -258,9 +258,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithDataSourceMirroringNotification() {
-        super.testInformWithDataSourceMirroringNotification();
+        super.baseTestInformWithDataSourceMirroringNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] GitHub Advisory Mirroring");
@@ -288,9 +288,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithNewVulnerabilityNotification() {
-        super.testInformWithNewVulnerabilityNotification();
+        super.baseTestInformWithNewVulnerabilityNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified");
@@ -325,9 +325,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testPublishWithScheduledNewVulnerabilitiesNotification() {
-        super.testPublishWithScheduledNewVulnerabilitiesNotification();
+        super.baseTestPublishWithScheduledNewVulnerabilitiesNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerabilities Summary");
@@ -383,9 +383,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testPublishWithScheduledNewPolicyViolationsNotification() {
-        super.testPublishWithScheduledNewPolicyViolationsNotification();
+        super.baseTestPublishWithScheduledNewPolicyViolationsNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Policy Violations Summary");
@@ -442,9 +442,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithNewVulnerableDependencyNotification() {
-        super.testInformWithNewVulnerableDependencyNotification();
+        super.baseTestInformWithNewVulnerableDependencyNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Vulnerable Dependency Introduced");
@@ -484,9 +484,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithProjectAuditChangeNotification() {
-        super.testInformWithProjectAuditChangeNotification();
+        super.baseTestInformWithProjectAuditChangeNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Analysis Decision: Finding Suppressed");
@@ -525,9 +525,9 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         });
     }
 
-    @Override
+    @Test
     public void testInformWithEscapedData() {
-        super.testInformWithEscapedData();
+        super.baseTestInformWithEscapedData();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Notification Test");
@@ -556,6 +556,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
         
     }
 
+    @Test
     @Override
     public void testInformWithTemplateInclude() throws Exception {
         final var notification = new Notification()
@@ -589,14 +590,14 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testSingleDestination() {
+    void testSingleDestination() {
         JsonObject config = configWithDestination("john@doe.com");
         assertThat(SendMailPublisher.getDestinations(config, -1L)).containsOnly("john@doe.com");
     }
 
 
     @Test
-    public void testMultipleDestinations() {
+    void testMultipleDestinations() {
         JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
         assertThat(SendMailPublisher.getDestinations(config, -1L))
                 .containsExactlyInAnyOrder("john@doe.com", "steve@jobs.org");
@@ -608,13 +609,13 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testEmptyDestinations() {
+    void testEmptyDestinations() {
         JsonObject config = configWithDestination("");
         assertThat(SendMailPublisher.getDestinations(config, -1L)).isNull();
     }
 
     @Test
-    public void testSingleTeamAsDestination() {
+    void testSingleTeamAsDestination() {
         JsonObject config = configWithDestination("");
 
         ManagedUser managedUser = qm.createManagedUser("ManagedUserTest", TEST_USER_PASSWORD_HASH);
@@ -641,7 +642,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testMultipleTeamsAsDestination() {
+    void testMultipleTeamsAsDestination() {
         JsonObject config = configWithDestination("");
 
         ManagedUser managedUser1 = qm.createManagedUser("ManagedUserTest1", TEST_USER_PASSWORD_HASH);
@@ -689,7 +690,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testDuplicateTeamAsDestination() {
+    void testDuplicateTeamAsDestination() {
         JsonObject config = configWithDestination("");
 
         ManagedUser managedUser1 = qm.createManagedUser("ManagedUserTest1", TEST_USER_PASSWORD_HASH);
@@ -738,7 +739,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testDuplicateUserAsDestination() {
+    void testDuplicateUserAsDestination() {
         JsonObject config = configWithDestination("");
 
         ManagedUser managedUser = qm.createManagedUser("ManagedUserTest", TEST_USER_PASSWORD_HASH);
@@ -766,7 +767,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testEmptyTeamAsDestination() {
+    void testEmptyTeamAsDestination() {
         JsonObject config = configWithDestination("");
         List<Team> teams = new ArrayList<>();
         Team team = qm.createTeam("testTeam");
@@ -777,7 +778,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testEmptyTeamsAsDestination() {
+    void testEmptyTeamsAsDestination() {
         JsonObject config = configWithDestination("");
         List<Team> teams = new ArrayList<>();
         NotificationRule rule = createNotificationRule();
@@ -786,7 +787,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testEmptyUserEmailsAsDestination() {
+    void testEmptyUserEmailsAsDestination() {
         JsonObject config = configWithDestination("");
         ManagedUser managedUser = qm.createManagedUser("ManagedUserTest", TEST_USER_PASSWORD_HASH);
 
@@ -808,7 +809,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testConfigDestinationAndTeamAsDestination() {
+    void testConfigDestinationAndTeamAsDestination() {
         JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
         ManagedUser managedUser = qm.createManagedUser("ManagedUserTest", TEST_USER_PASSWORD_HASH);
         managedUser.setEmail("managedUser@Test.com");
@@ -838,7 +839,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testNullConfigDestinationAndTeamsDestination() {
+    void testNullConfigDestinationAndTeamsDestination() {
         JsonObject config = Json.createObjectBuilder().build();
         ManagedUser managedUser = qm.createManagedUser("ManagedUserTest", TEST_USER_PASSWORD_HASH);
         managedUser.setEmail("managedUser@Test.com");
@@ -864,7 +865,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testEmptyManagedUsersAsDestination() {
+    void testEmptyManagedUsersAsDestination() {
         JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
 
         LdapUser ldapUser = qm.createLdapUser("ldapUserTest");
@@ -891,7 +892,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testEmptyLdapUsersAsDestination() {
+    void testEmptyLdapUsersAsDestination() {
         JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
         ManagedUser managedUser = qm.createManagedUser("ManagedUserTest", TEST_USER_PASSWORD_HASH);
         managedUser.setEmail("managedUser@Test.com");
@@ -917,7 +918,7 @@ public class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublish
     }
 
     @Test
-    public void testEmptyOidcUsersAsDestination() {
+    void testEmptyOidcUsersAsDestination() {
         JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
         ManagedUser managedUser = qm.createManagedUser("ManagedUserTest", TEST_USER_PASSWORD_HASH);
         managedUser.setEmail("managedUser@Test.com");

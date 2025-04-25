@@ -21,18 +21,18 @@ package org.dependencytrack.persistence;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.*;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-public class ProjectQueryManagerTest extends PersistenceCapableTest {
+class ProjectQueryManagerTest extends PersistenceCapableTest {
 
     @Test
-    public void testCloneProjectPreservesVulnerabilityAttributionDate() throws Exception {
+    void testCloneProjectPreservesVulnerabilityAttributionDate() throws Exception {
         Project project = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, true, false);
         Component comp = new Component();
         comp.setId(111L);
@@ -50,15 +50,15 @@ public class ProjectQueryManagerTest extends PersistenceCapableTest {
         Project clonedProject = qm.clone(project.getUuid(), "1.1.0", false, false,
                 true, false, false, false, false, false);
         List<Finding> findings = qm.getFindings(clonedProject);
-        Assert.assertEquals(1, findings.size());
+        Assertions.assertEquals(1, findings.size());
         Finding finding = findings.get(0);
-        Assert.assertNotNull(finding);
-        Assert.assertFalse(finding.getAttribution().isEmpty());
-        Assert.assertEquals(new Date(1708559165229L),finding.getAttribution().get("attributedOn"));
+        Assertions.assertNotNull(finding);
+        Assertions.assertFalse(finding.getAttribution().isEmpty());
+        Assertions.assertEquals(new Date(1708559165229L), finding.getAttribution().get("attributedOn"));
     }
 
     @Test
-    public void testUpdateProjectPreventCollectionProjectWithExistingComponentsTest() {
+    void testUpdateProjectPreventCollectionProjectWithExistingComponentsTest() {
         Project project = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, true, false);
         Component comp = new Component();
         comp.setId(111L);
@@ -78,7 +78,7 @@ public class ProjectQueryManagerTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUpdateProjectPreventCollectionProjectWithExistingServiceTest() {
+    void testUpdateProjectPreventCollectionProjectWithExistingServiceTest() {
         Project project = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, true, false);
         ServiceComponent service = new ServiceComponent();
         service.setName("name");

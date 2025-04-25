@@ -28,14 +28,14 @@ import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class EpssPolicyEvaluatorTest extends PersistenceCapableTest {
+class EpssPolicyEvaluatorTest extends PersistenceCapableTest {
     CwePolicyEvaluator cwePolicyEvaluator = new CwePolicyEvaluator();
 
     @Test
-    public void hasMatch() {
+    void hasMatch() {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.EPSS, PolicyCondition.Operator.NUMERIC_LESS_THAN, "0.99");
         Project project = new Project();
@@ -55,14 +55,14 @@ public class EpssPolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyEvaluator evaluator = new EpssPolicyEvaluator();
         evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component.getId(), violation.getComponent().getId());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component.getId(), violation.getComponent().getId());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void wrongOperator() {
+    void wrongOperator() {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EPSS, PolicyCondition.Operator.MATCHES, "0.99");
         Project project = new Project();
@@ -82,6 +82,6 @@ public class EpssPolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyEvaluator evaluator = new EpssPolicyEvaluator();
         evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 }

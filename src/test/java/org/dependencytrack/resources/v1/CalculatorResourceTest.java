@@ -20,99 +20,98 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import org.dependencytrack.JerseyTestRule;
-import org.dependencytrack.ResourceTest;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-import us.springett.owasp.riskrating.Level;
-
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
+import org.dependencytrack.ResourceTest;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import us.springett.owasp.riskrating.Level;
 
-public class CalculatorResourceTest extends ResourceTest {
+class CalculatorResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(CalculatorResource.class)
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(CalculatorResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
     @Test
-    public void getCvssScoresV3Test() {
+    void getCvssScoresV3Test() {
         Response response = jersey.target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(9.8, json.getJsonNumber("baseScore").doubleValue(), 0);
-        Assert.assertEquals(5.9, json.getJsonNumber("impactSubScore").doubleValue(), 0);
-        Assert.assertEquals(3.9, json.getJsonNumber("exploitabilitySubScore").doubleValue(), 0);
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(9.8, json.getJsonNumber("baseScore").doubleValue(), 0);
+        Assertions.assertEquals(5.9, json.getJsonNumber("impactSubScore").doubleValue(), 0);
+        Assertions.assertEquals(3.9, json.getJsonNumber("exploitabilitySubScore").doubleValue(), 0);
     }
 
     @Test
-    public void getCvssScoresV2Test() {
+    void getCvssScoresV2Test() {
         Response response = jersey.target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "(AV:N/AC:L/Au:N/C:P/I:P/A:P)")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(7.5, json.getJsonNumber("baseScore").doubleValue(), 0);
-        Assert.assertEquals(6.4, json.getJsonNumber("impactSubScore").doubleValue(), 0);
-        Assert.assertEquals(10.0, json.getJsonNumber("exploitabilitySubScore").doubleValue(), 0);
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(7.5, json.getJsonNumber("baseScore").doubleValue(), 0);
+        Assertions.assertEquals(6.4, json.getJsonNumber("impactSubScore").doubleValue(), 0);
+        Assertions.assertEquals(10.0, json.getJsonNumber("exploitabilitySubScore").doubleValue(), 0);
     }
 
     @Test
-    public void getCvssScoresInvalidTest() {
+    void getCvssScoresInvalidTest() {
         Response response = jersey.target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "foobar")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(400, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("An invalid CVSSv2 or CVSSv3 vector submitted.", body);
+        Assertions.assertEquals("An invalid CVSSv2 or CVSSv3 vector submitted.", body);
     }
 
     @Test
-    public void getOwaspRRScoresTest() {
+    void getOwaspRRScoresTest() {
         Response response = jersey.target(V1_CALCULATOR + "/owasp")
                 .queryParam("vector", "SL:1/M:1/O:0/S:2/ED:1/EE:1/A:1/ID:1/LC:2/LI:1/LAV:1/LAC:1/FD:1/RD:1/NC:2/PV:3")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(1.0, json.getJsonNumber("likelihoodScore").doubleValue(), 0);
-        Assert.assertEquals(1.25, json.getJsonNumber("technicalImpactScore").doubleValue(), 0);
-        Assert.assertEquals(1.75, json.getJsonNumber("businessImpactScore").doubleValue(), 0);
-        Assert.assertEquals(Level.LOW.name(), json.getJsonString("likelihood").getString());
-        Assert.assertEquals(Level.LOW.name(), json.getJsonString("technicalImpact").getString());
-        Assert.assertEquals(Level.LOW.name(), json.getJsonString("businessImpact").getString());
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(1.0, json.getJsonNumber("likelihoodScore").doubleValue(), 0);
+        Assertions.assertEquals(1.25, json.getJsonNumber("technicalImpactScore").doubleValue(), 0);
+        Assertions.assertEquals(1.75, json.getJsonNumber("businessImpactScore").doubleValue(), 0);
+        Assertions.assertEquals(Level.LOW.name(), json.getJsonString("likelihood").getString());
+        Assertions.assertEquals(Level.LOW.name(), json.getJsonString("technicalImpact").getString());
+        Assertions.assertEquals(Level.LOW.name(), json.getJsonString("businessImpact").getString());
     }
 
     @Test
-    public void getOwaspScoresInvalidTest() {
+    void getOwaspScoresInvalidTest() {
         Response response = jersey.target(V1_CALCULATOR + "/owasp")
                 .queryParam("vector", "foobar")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(400, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("Provided vector foobar does not match OWASP RR Vector pattern SL:\\d/M:\\d/O:\\d/S:\\d/ED:\\d/EE:\\d/A:\\d/ID:\\d/LC:\\d/LI:\\d/LAV:\\d/LAC:\\d/FD:\\d/RD:\\d/NC:\\d/PV:\\d", body);
+        Assertions.assertEquals("Provided vector foobar does not match OWASP RR Vector pattern SL:\\d/M:\\d/O:\\d/S:\\d/ED:\\d/EE:\\d/A:\\d/ID:\\d/LC:\\d/LI:\\d/LAV:\\d/LAC:\\d/FD:\\d/RD:\\d/NC:\\d/PV:\\d", body);
     }
 }

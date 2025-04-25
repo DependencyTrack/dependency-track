@@ -20,17 +20,17 @@ package org.dependencytrack.persistence.converter;
 
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OrganizationalEntityJsonConverterTest {
+class OrganizationalEntityJsonConverterTest {
 
     @Test
-    public void testConvertToDatastore() {
+    void testConvertToDatastore() {
         final var contact = new OrganizationalContact();
         contact.setName("Foo");
         contact.setEmail("foo@example.com");
@@ -60,7 +60,7 @@ public class OrganizationalEntityJsonConverterTest {
     }
 
     @Test
-    public void testConvertToAttribute() {
+    void testConvertToAttribute() {
         final OrganizationalEntity entity = new OrganizationalEntityJsonConverter().convertToAttribute("""
                 {
                   "name": "foo",
@@ -88,12 +88,12 @@ public class OrganizationalEntityJsonConverterTest {
     }
 
     @Test
-    public void testConvertToDatastoreNull() {
+    void testConvertToDatastoreNull() {
         assertThat(new OrganizationalEntityJsonConverter().convertToDatastore(null)).isNull();
     }
 
     @Test
-    public void testConvertToAttributeNull() {
+    void testConvertToAttributeNull() {
         assertThat(new OrganizationalEntityJsonConverter().convertToAttribute(null)).isNull();
     }
 

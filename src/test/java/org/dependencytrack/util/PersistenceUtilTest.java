@@ -22,8 +22,8 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.util.PersistenceUtil.Diff;
 import org.dependencytrack.util.PersistenceUtil.Differ;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Transaction;
@@ -35,17 +35,17 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.util.PersistenceUtil.assertNonPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
-public class PersistenceUtilTest extends PersistenceCapableTest {
+class PersistenceUtilTest extends PersistenceCapableTest {
 
     private PersistenceManager pm;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         pm = qm.getPersistenceManager();
     }
 
     @Test
-    public void testAssertPersistentTx() {
+    void testAssertPersistentTx() {
         final Transaction trx = pm.currentTransaction();
         try {
             trx.begin();
@@ -62,7 +62,7 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAssertPersistentNonTx() {
+    void testAssertPersistentNonTx() {
         final var project = new Project();
         project.setName("foo");
         pm.makePersistent(project);
@@ -72,14 +72,14 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAssertPersistentWhenTransient() {
+    void testAssertPersistentWhenTransient() {
         final var project = new Project();
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> assertPersistent(project, null));
     }
 
     @Test
-    public void testAssertPersistentWhenDetached() {
+    void testAssertPersistentWhenDetached() {
         final var project = new Project();
         project.setName("foo");
         pm.makePersistent(project);
@@ -89,7 +89,7 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAssertNonPersistentTx() {
+    void testAssertNonPersistentTx() {
         final Transaction trx = pm.currentTransaction();
         try {
             trx.begin();
@@ -106,7 +106,7 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAssertNonPersistentNonTx() {
+    void testAssertNonPersistentNonTx() {
         final var project = new Project();
         project.setName("foo");
         pm.makePersistent(project);
@@ -116,14 +116,14 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAssertNonPersistentWhenTransient() {
+    void testAssertNonPersistentWhenTransient() {
         final var project = new Project();
         assertThatNoException()
                 .isThrownBy(() -> assertNonPersistent(project, null));
     }
 
     @Test
-    public void testAssertNonPersistentWhenDetached() {
+    void testAssertNonPersistentWhenDetached() {
         final var project = new Project();
         project.setName("foo");
         pm.makePersistent(project);
@@ -134,7 +134,7 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
 
 
     @Test
-    public void testDifferWithChanges() {
+    void testDifferWithChanges() {
         final var projectA = new Project();
         projectA.setName("acme-app-a");
         projectA.setVersion("1.0.0");
@@ -157,7 +157,7 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testDifferWithoutChanges() {
+    void testDifferWithoutChanges() {
         final var projectA = new Project();
         projectA.setName("acme-app-a");
         projectA.setVersion("1.0.0");

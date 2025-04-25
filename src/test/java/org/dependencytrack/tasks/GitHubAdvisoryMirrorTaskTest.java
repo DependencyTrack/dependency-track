@@ -33,8 +33,8 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.Vulnerability.Source;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.List;
@@ -45,12 +45,12 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_API_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
 
-public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
+class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
 
     private final ObjectMapper jsonMapper = new JsonMapper()
             .registerModule(new JavaTimeModule());
 
-    @Before
+    @BeforeEach
     public void beforeEach() {
         qm.createConfigProperty(
                 VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getGroupName(),
@@ -73,7 +73,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testProcessAdvisory() throws Exception {
+    void testProcessAdvisory() throws Exception {
         qm.createConfigProperty(
                 VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName(),
@@ -142,7 +142,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testProcessAdvisoryWithAliasSyncDisabled() throws Exception {
+    void testProcessAdvisoryWithAliasSyncDisabled() throws Exception {
         qm.createConfigProperty(
                 VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName(),
@@ -199,7 +199,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testProcessAdvisoryVulnerableVersionRanges() throws Exception {
+    void testProcessAdvisoryVulnerableVersionRanges() throws Exception {
         var vs1 = new VulnerableSoftware();
         vs1.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind");
         vs1.setPurlType("maven");
@@ -348,7 +348,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldNotRetryOnResponseWithCode403() {
+    void shouldNotRetryOnResponseWithCode403() {
         final var httpResponse = new BasicHttpResponse(403);
         final var httpContext = HttpClientContext.create();
 
@@ -358,7 +358,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldRetryOnResponseWithCode429() {
+    void shouldRetryOnResponseWithCode429() {
         final var httpResponse = new BasicHttpResponse(429);
         final var httpContext = HttpClientContext.create();
 
@@ -368,7 +368,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldRetryOnResponseWithCode503() {
+    void shouldRetryOnResponseWithCode503() {
         final var httpResponse = new BasicHttpResponse(503);
         final var httpContext = HttpClientContext.create();
 
@@ -378,7 +378,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldRetryUpToSixAttempts() {
+    void shouldRetryUpToSixAttempts() {
         final var httpResponse = new BasicHttpResponse(503);
         final var httpContext = HttpClientContext.create();
 
@@ -392,7 +392,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldRetryOnResponseWithCode403AndRetryAfterHeader() {
+    void shouldRetryOnResponseWithCode403AndRetryAfterHeader() {
         final var httpResponse = new BasicHttpResponse(403);
         httpResponse.addHeader("retry-after", /* 1min */ 60);
         final var httpContext = HttpClientContext.create();
@@ -403,7 +403,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldRetryOnResponseWithCode429AndRetryAfterHeader() {
+    void shouldRetryOnResponseWithCode429AndRetryAfterHeader() {
         final var httpResponse = new BasicHttpResponse(429);
         httpResponse.addHeader("retry-after", /* 1min */ 60);
         final var httpContext = HttpClientContext.create();
@@ -414,7 +414,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldNotRetryWhenRetryAfterExceedsMaxDelay() {
+    void shouldNotRetryWhenRetryAfterExceedsMaxDelay() {
         final var httpResponse = new BasicHttpResponse(403);
         httpResponse.addHeader("retry-after", /* 3min */ 180);
         final var httpContext = HttpClientContext.create();
@@ -429,7 +429,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldRetryOnResponseWithCode403AndRateLimitHeaders() {
+    void shouldRetryOnResponseWithCode403AndRateLimitHeaders() {
         final var httpResponse = new BasicHttpResponse(403);
         httpResponse.addHeader("x-ratelimit-remaining", 6);
         httpResponse.addHeader("x-ratelimit-limit", 666);
@@ -442,7 +442,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldRetryOnResponseWithCode429AndRateLimitHeaders() {
+    void shouldRetryOnResponseWithCode429AndRateLimitHeaders() {
         final var httpResponse = new BasicHttpResponse(429);
         httpResponse.addHeader("x-ratelimit-remaining", 6);
         httpResponse.addHeader("x-ratelimit-limit", 666);
@@ -455,7 +455,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldRetryWhenLimitResetIsShorterThanMaxDelay() {
+    void shouldRetryWhenLimitResetIsShorterThanMaxDelay() {
         final var httpResponse = new BasicHttpResponse(429);
         httpResponse.addHeader("x-ratelimit-remaining", 0);
         httpResponse.addHeader("x-ratelimit-limit", 666);
@@ -468,7 +468,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldNotRetryWhenLimitResetExceedsMaxDelay() {
+    void shouldNotRetryWhenLimitResetExceedsMaxDelay() {
         final var httpResponse = new BasicHttpResponse(429);
         httpResponse.addHeader("x-ratelimit-remaining", 0);
         httpResponse.addHeader("x-ratelimit-limit", 666);
@@ -481,7 +481,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldUseRetryAfterHeaderForRetryDelay() {
+    void shouldUseRetryAfterHeaderForRetryDelay() {
         final var httpResponse = new BasicHttpResponse(429);
         httpResponse.addHeader("retry-after", /* 1min 6sec */ 66);
         final var httpContext = HttpClientContext.create();
@@ -492,7 +492,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldUseLimitResetHeaderForRetryDelay() {
+    void shouldUseLimitResetHeaderForRetryDelay() {
         final var httpResponse = new BasicHttpResponse(429);
         httpResponse.addHeader("x-ratelimit-remaining", 0);
         httpResponse.addHeader("x-ratelimit-limit", 666);
@@ -505,7 +505,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void shouldUseOneSecondAsDefaultRetryDelay() {
+    void shouldUseOneSecondAsDefaultRetryDelay() {
         final var httpResponse = new BasicHttpResponse(503);
         final var httpContext = HttpClientContext.create();
 

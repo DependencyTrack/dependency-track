@@ -20,14 +20,14 @@ package org.dependencytrack.model;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class FindingAttributionTest extends PersistenceCapableTest {
+class FindingAttributionTest extends PersistenceCapableTest {
 
     @Test
-    public void testReferenceUrlTrimQueryParams() {
+    void testReferenceUrlTrimQueryParams() {
         final var vuln = new Vulnerability();
         vuln.setVulnId("INT-001");
         vuln.setSource(Vulnerability.Source.INTERNAL);
@@ -58,7 +58,7 @@ public class FindingAttributionTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testReferenceUrlTrim() {
+    void testReferenceUrlTrim() {
         final var vuln = new Vulnerability();
         vuln.setVulnId("INT-001");
         vuln.setSource(Vulnerability.Source.INTERNAL);

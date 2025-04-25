@@ -18,23 +18,23 @@
  */
 package org.dependencytrack.event;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-public class FortifySscUploadEventTest {
+class FortifySscUploadEventTest {
 
     @Test
-    public void testDefaultConstructor() {
+    void testDefaultConstructor() {
         FortifySscUploadEventAbstract event = new FortifySscUploadEventAbstract();
-        Assert.assertNull(event.getProjectUuid());
+        Assertions.assertNull(event.getProjectUuid());
     }
 
     @Test
-    public void testProjectConstructor() {
+    void testProjectConstructor() {
         UUID uuid = UUID.randomUUID();
         FortifySscUploadEventAbstract event = new FortifySscUploadEventAbstract(uuid);
-        Assert.assertEquals(uuid, event.getProjectUuid());
+        Assertions.assertEquals(uuid, event.getProjectUuid());
     }
 }

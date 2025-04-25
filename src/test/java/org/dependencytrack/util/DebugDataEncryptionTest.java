@@ -20,7 +20,7 @@ package org.dependencytrack.util;
 
 import alpine.security.crypto.DataEncryption;
 import alpine.security.crypto.KeyManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -29,10 +29,10 @@ import java.security.SecureRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DebugDataEncryptionTest {
+class DebugDataEncryptionTest {
 
     @Test
-    public void testReloadAndRetry() throws Exception {
+    void testReloadAndRetry() throws Exception {
         final Field secretKeyField = KeyManager.class.getDeclaredField("secretKey");
         secretKeyField.setAccessible(true);
 

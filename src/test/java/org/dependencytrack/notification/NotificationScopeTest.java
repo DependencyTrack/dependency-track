@@ -18,14 +18,14 @@
  */
 package org.dependencytrack.notification;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class NotificationScopeTest {
+class NotificationScopeTest {
 
     @Test
-    public void testEnums() {
-        Assert.assertEquals("SYSTEM", NotificationScope.SYSTEM.name());
-        Assert.assertEquals("PORTFOLIO", NotificationScope.PORTFOLIO.name());
+    void testEnums() {
+        Assertions.assertEquals("SYSTEM", NotificationScope.SYSTEM.name());
+        Assertions.assertEquals("PORTFOLIO", NotificationScope.PORTFOLIO.name());
     }
 }

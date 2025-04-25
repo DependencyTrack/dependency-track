@@ -1,7 +1,7 @@
 package org.dependencytrack.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -15,12 +15,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CacheStampedeBlockerTest {
+class CacheStampedeBlockerTest {
 
     private ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 
     @Test
-    public void highConcurrencyScenarioWithSuccessfulCallable() throws ExecutionException, InterruptedException {
+    void highConcurrencyScenarioWithSuccessfulCallable() throws ExecutionException, InterruptedException {
         // Arrange
         CacheStampedeBlocker<String, Integer> cacheStampedeBlocker = new CacheStampedeBlocker<>("testCache", 10, true);
         Map<String, Integer> cache = new HashMap<>();
@@ -44,13 +44,13 @@ public class CacheStampedeBlockerTest {
         // Assert
         for (int i = 0; i < 10_000; i++) {
             Optional<Integer> result = results.get(i).get();
-            Assert.assertTrue(result.isPresent());
-            Assert.assertEquals("Iteration "+i+" failed", Integer.valueOf(1), result.get());
+            Assertions.assertTrue(result.isPresent());
+            Assertions.assertEquals(Integer.valueOf(1), result.get(), "Iteration "+i+" failed");
         }
     }
 
     @Test
-    public void highConcurrencyScenarioWithErroneousCallable() throws ExecutionException, InterruptedException {
+    void highConcurrencyScenarioWithErroneousCallable() throws ExecutionException, InterruptedException {
         // Arrange
         CacheStampedeBlocker<String, Integer> cacheStampedeBlocker = new CacheStampedeBlocker<>("testCache", 10, true);
         Map<String, Integer> cache = new HashMap<>();
@@ -71,12 +71,12 @@ public class CacheStampedeBlockerTest {
         // Assert
         for (int i = 0; i < 100; i++) {
             Optional<Integer> result = results.get(i).get();
-            Assert.assertTrue(result.isEmpty());
+            Assertions.assertTrue(result.isEmpty());
         }
     }
 
     @Test
-    public void retryScenarioWithNonRetryableException() {
+    void retryScenarioWithNonRetryableException() {
         // Arrange
         CacheStampedeBlocker<String, Integer> cacheStampedeBlocker = new CacheStampedeBlocker<>("testCache", 10, true, 3);
 
@@ -89,11 +89,11 @@ public class CacheStampedeBlockerTest {
         });
 
         // Assert
-        Assert.assertEquals(1, counter.get());
+        Assertions.assertEquals(1, counter.get());
     }
 
     @Test
-    public void retryScenarioWithRetryableException() {
+    void retryScenarioWithRetryableException() {
         // Arrange
         CacheStampedeBlocker<String, Integer> cacheStampedeBlocker = new CacheStampedeBlocker<>("testCache", 10, true, 3, Duration.ofMinutes(10).toMillis(), ArithmeticException.class);
 
@@ -106,6 +106,6 @@ public class CacheStampedeBlockerTest {
         });
 
         // Assert
-        Assert.assertEquals(3, counter.get());
+        Assertions.assertEquals(3, counter.get());
     }
 }

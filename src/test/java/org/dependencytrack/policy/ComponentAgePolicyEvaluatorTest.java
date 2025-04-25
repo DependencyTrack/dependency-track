@@ -25,9 +25,9 @@ import org.dependencytrack.model.PolicyCondition.Operator;
 import org.dependencytrack.model.PolicyCondition.Subject;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -38,58 +38,46 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(Parameterized.class)
-public class ComponentAgePolicyEvaluatorTest extends PersistenceCapableTest {
-
-    @Parameterized.Parameters(name = "[{index}] publishedDate={0} operator={1} ageValue={2} shouldViolate={3}")
-    public static Collection<?> testParameters() {
-        return Arrays.asList(new Object[][]{
+class ComponentAgePolicyEvaluatorTest extends PersistenceCapableTest {
+    public static Collection<Arguments> testParameters() {
+        return Arrays.asList(
                 // Component is older by one day.
-                {Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_GREATER_THAN, "P666D", true},
-                {Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "P666D", true},
-                {Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_EQUAL, "P666D", false},
-                {Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_NOT_EQUAL, "P666D", true},
-                {Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "P666D", false},
-                {Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_LESS_THAN, "P666D", false},
+                Arguments.of(Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_GREATER_THAN, "P666D", true),
+                Arguments.of(Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "P666D", true),
+                Arguments.of(Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_EQUAL, "P666D", false),
+                Arguments.of(Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_NOT_EQUAL, "P666D", true),
+                Arguments.of(Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "P666D", false),
+                Arguments.of(Instant.now().minus(Duration.ofDays(667)), Operator.NUMERIC_LESS_THAN, "P666D", false),
                 // Component is newer by one day.
-                {Instant.now().minus(Duration.ofDays(665)), Operator.NUMERIC_GREATER_THAN, "P666D", false},
-                {Instant.now().minus(Duration.ofDays(665)), Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "P666D", false},
-                {Instant.now().minus(Duration.ofDays(665)), Operator.NUMERIC_EQUAL, "P666D", false},
-                {Instant.now().minus(Duration.ofDays(665)), Operator.NUMERIC_NOT_EQUAL, "P666D", true},
-                {Instant.now().minus(Duration.ofDays(665)), Operator.NUMERIC_LESS_THAN, "P666D", true},
+                Arguments.of(Instant.now().minus(Duration.ofDays(665)), Operator.NUMERIC_GREATER_THAN, "P666D", false),
+                Arguments.of(Instant.now().minus(Duration.ofDays(665)), Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "P666D", false),
+                Arguments.of(Instant.now().minus(Duration.ofDays(665)), Operator.NUMERIC_EQUAL, "P666D", false),
+                Arguments.of(Instant.now().minus(Duration.ofDays(665)), Operator.NUMERIC_NOT_EQUAL, "P666D", true),
+                Arguments.of(Instant.now().minus(Duration.ofDays(665)), Operator.NUMERIC_LESS_THAN, "P666D", true),
                 // Component is exactly as old.
-                {Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_GREATER_THAN, "P666D", false},
-                {Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "P666D", true},
-                {Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_EQUAL, "P666D", true},
-                {Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_NOT_EQUAL, "P666D", false},
-                {Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "P666D", true},
-                {Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_LESS_THAN, "P666D", false},
+                Arguments.of(Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_GREATER_THAN, "P666D", false),
+                Arguments.of(Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "P666D", true),
+                Arguments.of(Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_EQUAL, "P666D", true),
+                Arguments.of(Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_NOT_EQUAL, "P666D", false),
+                Arguments.of(Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "P666D", true),
+                Arguments.of(Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_LESS_THAN, "P666D", false),
                 // Unsupported operator.
-                {Instant.now().minus(Duration.ofDays(666)), Operator.MATCHES, "P666D", false},
+                Arguments.of(Instant.now().minus(Duration.ofDays(666)), Operator.MATCHES, "P666D", false),
                 // Negative age period.
-                {Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_EQUAL, "P-666D", false},
+                Arguments.of(Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_EQUAL, "P-666D", false),
                 // Invalid age period format.
-                {Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_EQUAL, "foobar", false},
+                Arguments.of(Instant.now().minus(Duration.ofDays(666)), Operator.NUMERIC_EQUAL, "foobar", false),
                 // No known publish date.
-                {null, Operator.NUMERIC_EQUAL, "P666D", false},
-        });
+                Arguments.of(null, Operator.NUMERIC_EQUAL, "P666D", false)
+        );
     }
 
-    private final Instant publishedDate;
-    private final Operator operator;
-    private final String ageValue;
-    private final boolean shouldViolate;
-
-    public ComponentAgePolicyEvaluatorTest(final Instant publishedDate, final Operator operator,
-                                           final String ageValue, final boolean shouldViolate) {
-        this.publishedDate = publishedDate;
-        this.operator = operator;
-        this.ageValue = ageValue;
-        this.shouldViolate = shouldViolate;
-    }
-
-    @Test
-    public void evaluateTest() {
+    @ParameterizedTest
+    @MethodSource("testParameters")
+    void evaluateTest(final Instant publishedDate,
+                      final Operator operator,
+                      final String ageValue,
+                      final boolean shouldViolate) {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         final var condition = qm.createPolicyCondition(policy, Subject.AGE, operator, ageValue);
 

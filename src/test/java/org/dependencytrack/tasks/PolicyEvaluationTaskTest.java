@@ -7,16 +7,16 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.Project;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PolicyEvaluationTaskTest extends PersistenceCapableTest {
+class PolicyEvaluationTaskTest extends PersistenceCapableTest {
 
     @Test
-    public void testPolicyEvaluationForSingleComponent() {
+    void testPolicyEvaluationForSingleComponent() {
         Project project = new Project();
         project.setName("my-project");
         project.setGroup("com.example");

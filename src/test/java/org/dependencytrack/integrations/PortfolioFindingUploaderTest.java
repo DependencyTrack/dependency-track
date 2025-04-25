@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.integrations;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,10 +27,10 @@ import java.io.InputStream;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class PortfolioFindingUploaderTest {
+class PortfolioFindingUploaderTest {
 
     @Test
-    public final void portfolioFindingMethodsTest() throws IOException {
+    final void portfolioFindingMethodsTest() throws IOException {
         PortfolioFindingUploader uploader = mock(PortfolioFindingUploader.class);
         when(uploader.process()).thenReturn(new InputStream() {
             @Override
@@ -43,7 +43,7 @@ public class PortfolioFindingUploaderTest {
             }
         });
         InputStream in = uploader.process();
-        Assert.assertTrue(in != null && in.available() == 1);
+        Assertions.assertTrue(in != null && in.available() == 1);
         uploader.upload(in);
     }
 }

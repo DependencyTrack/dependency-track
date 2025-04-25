@@ -18,82 +18,82 @@
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PolicyTest {
+class PolicyTest {
 
     @Test
-    public void testId() {
+    void testId() {
         Policy policy = new Policy();
         policy.setId(111L);
-        Assert.assertEquals(111L, policy.getId());
+        Assertions.assertEquals(111L, policy.getId());
     }
 
     @Test
-    public void testName() {
+    void testName() {
         Policy policy = new Policy();
         policy.setName("Banned Components");
-        Assert.assertEquals("Banned Components", policy.getName());
+        Assertions.assertEquals("Banned Components", policy.getName());
     }
 
     @Test
-    public void testOperator() {
+    void testOperator() {
         Policy policy = new Policy();
         policy.setOperator(Policy.Operator.ALL);
-        Assert.assertEquals("ALL", policy.getOperator().name());
+        Assertions.assertEquals("ALL", policy.getOperator().name());
     }
 
     @Test
-    public void testViolationState() {
+    void testViolationState() {
         Policy policy = new Policy();
         policy.setViolationState(Policy.ViolationState.WARN);
-        Assert.assertEquals("WARN", policy.getViolationState().name());
+        Assertions.assertEquals("WARN", policy.getViolationState().name());
     }
 
     @Test
-    public void testPolicyConditions() {
+    void testPolicyConditions() {
         List<PolicyCondition> conditions = new ArrayList<>();
         PolicyCondition condition = new PolicyCondition();
         conditions.add(condition);
         Policy policy = new Policy();
         policy.setPolicyConditions(conditions);
-        Assert.assertEquals(1, policy.getPolicyConditions().size());
-        Assert.assertEquals(condition, policy.getPolicyConditions().get(0));
+        Assertions.assertEquals(1, policy.getPolicyConditions().size());
+        Assertions.assertEquals(condition, policy.getPolicyConditions().get(0));
     }
 
     @Test
-    public void testProjects() {
+    void testProjects() {
         List<Project> projects = new ArrayList<>();
         Project project = new Project();
         projects.add(project);
         Policy policy = new Policy();
         policy.setProjects(projects);
-        Assert.assertEquals(1, policy.getProjects().size());
-        Assert.assertEquals(project, policy.getProjects().get(0));
+        Assertions.assertEquals(1, policy.getProjects().size());
+        Assertions.assertEquals(project, policy.getProjects().get(0));
     }
 
     @Test
-    public void testTags() {
+    void testTags() {
         Set<Tag> tags = new HashSet<>();
         Tag tag = new Tag();
         tags.add(tag);
         Policy policy = new Policy();
         policy.setTags(tags);
-        Assert.assertEquals(1, policy.getTags().size());
-        Assert.assertEquals(tag, policy.getTags().iterator().next());
+        Assertions.assertEquals(1, policy.getTags().size());
+        Assertions.assertEquals(tag, policy.getTags().iterator().next());
     }
 
     @Test
-    public void testIncludeChildren() {
+    void testIncludeChildren() {
         Policy policy = new Policy();
-        Assert.assertFalse(policy.isIncludeChildren());
+        Assertions.assertFalse(policy.isIncludeChildren());
         policy.setIncludeChildren(true);
-        Assert.assertTrue(policy.isIncludeChildren());
+        Assertions.assertTrue(policy.isIncludeChildren());
     }
 }

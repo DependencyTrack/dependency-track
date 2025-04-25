@@ -18,20 +18,20 @@
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class ClassifierTest {
+class ClassifierTest {
 
     @Test
-    public void testEnums() {
-        Assert.assertEquals("APPLICATION", Classifier.APPLICATION.name());
-        Assert.assertEquals("FRAMEWORK", Classifier.FRAMEWORK.name());
-        Assert.assertEquals("LIBRARY", Classifier.LIBRARY.name());
-        Assert.assertEquals("CONTAINER", Classifier.CONTAINER.name());
-        Assert.assertEquals("OPERATING_SYSTEM", Classifier.OPERATING_SYSTEM.name());
-        Assert.assertEquals("DEVICE", Classifier.DEVICE.name());
-        Assert.assertEquals("FIRMWARE", Classifier.FIRMWARE.name());
-        Assert.assertEquals("FILE", Classifier.FILE.name());
+    void testEnums() {
+        Assertions.assertEquals("APPLICATION", Classifier.APPLICATION.name());
+        Assertions.assertEquals("FRAMEWORK", Classifier.FRAMEWORK.name());
+        Assertions.assertEquals("LIBRARY", Classifier.LIBRARY.name());
+        Assertions.assertEquals("CONTAINER", Classifier.CONTAINER.name());
+        Assertions.assertEquals("OPERATING_SYSTEM", Classifier.OPERATING_SYSTEM.name());
+        Assertions.assertEquals("DEVICE", Classifier.DEVICE.name());
+        Assertions.assertEquals("FIRMWARE", Classifier.FIRMWARE.name());
+        Assertions.assertEquals("FILE", Classifier.FILE.name());
     }
 }

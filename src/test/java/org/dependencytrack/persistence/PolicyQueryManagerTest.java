@@ -26,8 +26,9 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
-import org.junit.Test;
-import org.junit.Assert;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -35,10 +36,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PolicyQueryManagerTest extends PersistenceCapableTest {
+class PolicyQueryManagerTest extends PersistenceCapableTest {
 
     @Test
-    public void testRemoveProjectFromPolicies() {
+    void testRemoveProjectFromPolicies() {
         final Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
 
         // Create multiple policies that all reference the project
@@ -56,7 +57,7 @@ public class PolicyQueryManagerTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testclonePolicyViolation() throws Exception{
+    void testclonePolicyViolation() throws Exception{
         PolicyViolation policyViolation = new PolicyViolation();
         policyViolation.setId(1);
 
@@ -90,18 +91,18 @@ public class PolicyQueryManagerTest extends PersistenceCapableTest {
         policyViolation.setAnalysis(violationAnalysis);
 
         PolicyViolation clonedPolicyViolation = qm.clonePolicyViolation(policyViolation, component);
-        Assert.assertEquals(policyViolation.getText(), clonedPolicyViolation.getText());
-        Assert.assertEquals(policyViolation.getType(), clonedPolicyViolation.getType());
-        Assert.assertEquals(policyViolation.getTimestamp(), clonedPolicyViolation.getTimestamp());
-        Assert.assertEquals(policyViolation.getAnalysis().isSuppressed(), clonedPolicyViolation.getAnalysis().isSuppressed());
-        Assert.assertEquals(policyViolation.getAnalysis().getAnalysisState(), clonedPolicyViolation.getAnalysis().getAnalysisState());
-        Assert.assertEquals(policyViolation.getAnalysis().getAnalysisComments().get(0).getComment(), clonedPolicyViolation.getAnalysis().getAnalysisComments().get(0).getComment());
-        Assert.assertEquals(policyViolation.getAnalysis().getAnalysisComments().get(0).getCommenter(), clonedPolicyViolation.getAnalysis().getAnalysisComments().get(0).getCommenter());
-        Assert.assertEquals(policyViolation.getAnalysis().getAnalysisComments().get(0).getTimestamp(), clonedPolicyViolation.getAnalysis().getAnalysisComments().get(0).getTimestamp());
-        Assert.assertEquals(policyViolation.getComponent().getId(), clonedPolicyViolation.getComponent().getId());
-        Assert.assertEquals(policyViolation.getComponent().getName(), clonedPolicyViolation.getComponent().getName());
-        Assert.assertEquals(policyViolation.getComponent().getCopyright(), clonedPolicyViolation.getComponent().getCopyright());
-        Assert.assertEquals(policyViolation.getComponent().getVersion(), clonedPolicyViolation.getComponent().getVersion());
+        Assertions.assertEquals(policyViolation.getText(), clonedPolicyViolation.getText());
+        Assertions.assertEquals(policyViolation.getType(), clonedPolicyViolation.getType());
+        Assertions.assertEquals(policyViolation.getTimestamp(), clonedPolicyViolation.getTimestamp());
+        Assertions.assertEquals(policyViolation.getAnalysis().isSuppressed(), clonedPolicyViolation.getAnalysis().isSuppressed());
+        Assertions.assertEquals(policyViolation.getAnalysis().getAnalysisState(), clonedPolicyViolation.getAnalysis().getAnalysisState());
+        Assertions.assertEquals(policyViolation.getAnalysis().getAnalysisComments().get(0).getComment(), clonedPolicyViolation.getAnalysis().getAnalysisComments().get(0).getComment());
+        Assertions.assertEquals(policyViolation.getAnalysis().getAnalysisComments().get(0).getCommenter(), clonedPolicyViolation.getAnalysis().getAnalysisComments().get(0).getCommenter());
+        Assertions.assertEquals(policyViolation.getAnalysis().getAnalysisComments().get(0).getTimestamp(), clonedPolicyViolation.getAnalysis().getAnalysisComments().get(0).getTimestamp());
+        Assertions.assertEquals(policyViolation.getComponent().getId(), clonedPolicyViolation.getComponent().getId());
+        Assertions.assertEquals(policyViolation.getComponent().getName(), clonedPolicyViolation.getComponent().getName());
+        Assertions.assertEquals(policyViolation.getComponent().getCopyright(), clonedPolicyViolation.getComponent().getCopyright());
+        Assertions.assertEquals(policyViolation.getComponent().getVersion(), clonedPolicyViolation.getComponent().getVersion());
     }
 
 }

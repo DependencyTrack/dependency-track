@@ -19,20 +19,20 @@
 package org.dependencytrack.event;
 
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-public class CloneProjectEventTest {
+class CloneProjectEventTest {
 
     @Test
-    public void testEvent() {
+    void testEvent() {
         UUID uuid = UUID.randomUUID();
         CloneProjectRequest request = new CloneProjectRequest(uuid.toString(), "1.0", true,
                 true, true, true, true, true,
                 true, true, false);
         CloneProjectEvent event = new CloneProjectEvent(request);
-        Assert.assertEquals(request, event.getRequest());
+        Assertions.assertEquals(request, event.getRequest());
     }
 }

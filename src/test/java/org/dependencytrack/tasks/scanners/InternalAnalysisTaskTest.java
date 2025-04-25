@@ -7,7 +7,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.nvd.ModelConverter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
@@ -16,10 +16,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class InternalAnalysisTaskTest extends PersistenceCapableTest {
+class InternalAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
-    public void testIssue1574() {
+    void testIssue1574() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, Collections.emptyList(), false);
@@ -52,7 +52,7 @@ public class InternalAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testExactMatchWithNAUpdate() throws CpeParsingException, CpeEncodingException {
+    void testExactMatchWithNAUpdate() throws CpeParsingException, CpeEncodingException {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, Collections.emptyList(), false);

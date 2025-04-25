@@ -21,17 +21,17 @@ package org.dependencytrack.tasks.metrics;
 import org.dependencytrack.event.ProjectMetricsUpdateEvent;
 import org.dependencytrack.model.*;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
+class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
 
     @Test
-    public void testUpdateMetricsEmpty() {
+    void testUpdateMetricsEmpty() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -75,7 +75,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
     }
 
     @Test
-    public void testUpdateMetricsUnchanged() {
+    void testUpdateMetricsUnchanged() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -96,7 +96,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
     }
 
     @Test
-    public void testUpdateMetricsVulnerabilities() {
+    void testUpdateMetricsVulnerabilities() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -154,7 +154,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
     }
 
     @Test
-    public void testUpdateMetricsPolicyViolations() {
+    void testUpdateMetricsPolicyViolations() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -222,7 +222,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
     }
 
     @Test
-    public void testCollectionLogicChanged() {
+    void testCollectionLogicChanged() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -249,7 +249,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
     }
 
     @Test
-    public void testCollectionProjectMetricsAggregatingAllChildren() {
+    void testCollectionProjectMetricsAggregatingAllChildren() {
         var project = new Project();
         project.setActive(true);
         project.setName("testCollectionProjectMetricsAggregatingAllChildren");
@@ -285,7 +285,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
     }
 
     @Test
-    public void testCollectionProjectMetricsAggregatingTaggedChildren() {
+    void testCollectionProjectMetricsAggregatingTaggedChildren() {
         Tag tag = qm.createTag("prod");
         var project = new Project();
         project.setActive(true);
@@ -328,7 +328,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
     }
 
     @Test
-    public void testCollectionProjectMetricsAggregatingLatestChildren() {
+    void testCollectionProjectMetricsAggregatingLatestChildren() {
         var project = new Project();
         project.setActive(true);
         project.setName("testCollectionProjectMetricsAggregatingAllChildren");

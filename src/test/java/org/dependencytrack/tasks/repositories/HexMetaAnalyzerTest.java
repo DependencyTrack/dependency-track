@@ -21,21 +21,21 @@ package org.dependencytrack.tasks.repositories;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class HexMetaAnalyzerTest {
+class HexMetaAnalyzerTest {
 
     @Test
-    public void testAnalyzer() throws Exception {
+    void testAnalyzer() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:hex/phoenix@1.4.10"));
 
         HexMetaAnalyzer analyzer = new HexMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.HEX, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.HEX, analyzer.supportedRepositoryType());
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertNotNull(metaModel.getPublishedTimestamp());
     }
 }

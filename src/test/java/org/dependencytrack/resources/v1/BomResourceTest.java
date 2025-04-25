@@ -23,8 +23,13 @@ import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import com.fasterxml.jackson.core.StreamReadConstraints;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.http.HttpStatus;
-import org.dependencytrack.JerseyTestRule;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.AnalysisResponse;
@@ -51,15 +56,11 @@ import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junitpioneer.jupiter.DefaultLocale;
 
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -80,18 +81,19 @@ import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_T
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
 import static org.hamcrest.CoreMatchers.equalTo;
 
-public class BomResourceTest extends ResourceTest {
+@DefaultLocale("en-US")
+class BomResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(BomResource.class)
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(BomResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)
                     .register(MultiPartFeature.class)
                     .register(JsonMappingExceptionMapper.class));
 
     @Test
-    public void exportProjectAsCycloneDxTest() {
+    void exportProjectAsCycloneDxTest() {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component c = new Component();
         c.setProject(project);
@@ -101,25 +103,25 @@ public class BomResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertTrue(body.startsWith("{"));
+        Assertions.assertTrue(body.startsWith("{"));
     }
 
     @Test
-    public void exportProjectAsCycloneDxInvalidTest() {
+    void exportProjectAsCycloneDxInvalidTest() {
         Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + UUID.randomUUID()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The project could not be found.", body);
+        Assertions.assertEquals("The project could not be found.", body);
     }
 
     @Test
-    public void exportProjectAsCycloneDxInventoryTest() {
+    void exportProjectAsCycloneDxInventoryTest() {
         var vulnerability = new Vulnerability();
         vulnerability.setVulnId("INT-001");
         vulnerability.setSource(Vulnerability.Source.INTERNAL);
@@ -334,7 +336,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void exportProjectAsCycloneDxLicenseTest() {
+    void exportProjectAsCycloneDxLicenseTest() {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component c = new Component();
         c.setProject(project);
@@ -409,7 +411,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void exportProjectAsCycloneDxInventoryWithVulnerabilitiesTest() {
+    void exportProjectAsCycloneDxInventoryWithVulnerabilitiesTest() {
         var vulnerability = new Vulnerability();
         vulnerability.setVulnId("INT-001");
         vulnerability.setSource(Vulnerability.Source.INTERNAL);
@@ -603,7 +605,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void exportProjectAsCycloneDxVdrTest() {
+    void exportProjectAsCycloneDxVdrTest() {
         var vulnerability = new Vulnerability();
         vulnerability.setVulnId("INT-001");
         vulnerability.setSource(Vulnerability.Source.INTERNAL);
@@ -790,7 +792,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void exportComponentAsCycloneDx() {
+    void exportComponentAsCycloneDx() {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, false, false);
         Component c = new Component();
         c.setProject(project);
@@ -800,25 +802,25 @@ public class BomResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BOM + "/cyclonedx/component/" + component.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertTrue(body.startsWith("{"));
+        Assertions.assertTrue(body.startsWith("{"));
     }
 
     @Test
-    public void exportComponentAsCycloneDxInvalid() {
+    void exportComponentAsCycloneDxInvalid() {
         Response response = jersey.target(V1_BOM + "/cyclonedx/component/" + UUID.randomUUID()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The component could not be found.", body);
+        Assertions.assertEquals("The component could not be found.", body);
     }
 
     @Test
-    public void uploadBomTest() throws Exception {
+    void uploadBomTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
@@ -826,46 +828,46 @@ public class BomResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertNotNull(json.getString("token"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
     }
 
     @Test
-    public void uploadBomInvalidProjectTest() throws Exception {
+    void uploadBomInvalidProjectTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(UUID.randomUUID().toString(), null, null, null, false, false, bomString);
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The project could not be found.", body);
+        Assertions.assertEquals("The project could not be found.", body);
     }
 
     @Test
-    public void uploadBomAutoCreateTest() throws Exception {
+    void uploadBomAutoCreateTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", null, true, false, bomString);
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertNotNull(json.getString("token"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
         Project project = qm.getProject("Acme Example", "1.0");
-        Assert.assertNotNull(project);
+        Assertions.assertNotNull(project);
     }
 
     @Test
-    public void uploadBomAutoCreateWithTagsTest() throws Exception {
+    void uploadBomAutoCreateWithTagsTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         List<Tag> tags = Stream.of("tag1", "tag2").map(name -> {
@@ -878,20 +880,20 @@ public class BomResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertNotNull(json.getString("token"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
         Project project = qm.getProject("Acme Example", "1.0");
-        Assert.assertNotNull(project);
+        Assertions.assertNotNull(project);
         assertThat(project.getTags())
           .extracting(Tag::getName)
           .containsExactlyInAnyOrder("tag1", "tag2");
     }
 
     @Test
-    public void uploadBomAutoCreateWithTagsMultipartTest() throws Exception {
+    void uploadBomAutoCreateWithTagsMultipartTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
 
         final var multiPart = new FormDataMultiPart()
@@ -924,20 +926,20 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomUnauthorizedTest() throws Exception {
+    void uploadBomUnauthorizedTest() throws Exception {
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0",
                 null, true, false, bomString);
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(401, response.getStatus(), 0);
+        Assertions.assertEquals(401, response.getStatus(), 0);
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The principal does not have permission to create project.", body);
+        Assertions.assertEquals("The principal does not have permission to create project.", body);
     }
 
     @Test
-    public void uploadBomAutoCreateLatestWithAclTest() throws Exception {
+    void uploadBomAutoCreateLatestWithAclTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         enablePortfolioAccessControl();
 
@@ -954,14 +956,14 @@ public class BomResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertNotNull(json.getString("token"));
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
     }
 
     @Test
-    public void uploadBomAutoCreateLatestWithAclNoAccessTest() throws Exception {
+    void uploadBomAutoCreateLatestWithAclNoAccessTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         enablePortfolioAccessControl();
 
@@ -977,11 +979,11 @@ public class BomResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     @Test
-    public void uploadBomAutoCreateTestWithParentTest() throws Exception {
+    void uploadBomAutoCreateTestWithParentTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         // Upload parent project
@@ -990,11 +992,11 @@ public class BomResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
+        Assertions.assertNotNull(json);
         Project parent = qm.getProject("Acme Parent", "1.0");
-        Assert.assertNotNull(parent);
+        Assertions.assertNotNull(parent);
         String parentUUID = parent.getUuid().toString();
 
         // Upload first child, search parent by UUID
@@ -1002,15 +1004,15 @@ public class BomResourceTest extends ResourceTest {
         response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertNotNull(json.getString("token"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
         Project child = qm.getProject("Acme Example", "1.0");
-        Assert.assertNotNull(child);
-        Assert.assertNotNull(child.getParent());
-        Assert.assertEquals(parentUUID, child.getParent().getUuid().toString());
+        Assertions.assertNotNull(child);
+        Assertions.assertNotNull(child.getParent());
+        Assertions.assertEquals(parentUUID, child.getParent().getUuid().toString());
 
 
         // Upload second child, search parent by name+ver
@@ -1018,55 +1020,55 @@ public class BomResourceTest extends ResourceTest {
         response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertNotNull(json.getString("token"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
         child = qm.getProject("Acme Example", "2.0");
-        Assert.assertNotNull(child);
-        Assert.assertNotNull(child.getParent());
-        Assert.assertEquals(parentUUID, child.getParent().getUuid().toString());
+        Assertions.assertNotNull(child);
+        Assertions.assertNotNull(child.getParent());
+        Assertions.assertEquals(parentUUID, child.getParent().getUuid().toString());
 
         // Upload third child, specify parent's UUID, name, ver. Name and ver are ignored when UUID is specified.
         request = new BomSubmitRequest(null, "Acme Example", "3.0", null, true, parentUUID, "Non-existent parent", "1.0", false, bomString);
         response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertNotNull(json.getString("token"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
         child = qm.getProject("Acme Example", "3.0");
-        Assert.assertNotNull(child);
-        Assert.assertNotNull(child.getParent());
-        Assert.assertEquals(parentUUID, child.getParent().getUuid().toString());
+        Assertions.assertNotNull(child);
+        Assertions.assertNotNull(child.getParent());
+        Assertions.assertEquals(parentUUID, child.getParent().getUuid().toString());
     }
 
     @Test
-    public void uploadBomInvalidParentTest() throws Exception {
+    void uploadBomInvalidParentTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", null, true, UUID.randomUUID().toString(), null, null, false, bomString);
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The parent component could not be found.", body);
+        Assertions.assertEquals("The parent component could not be found.", body);
 
         request = new BomSubmitRequest(null, "Acme Example", "2.0", null, true, null, "Non-existent parent", null, false, bomString);
         response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
         body = getPlainTextBody(response);
-        Assert.assertEquals("The parent component could not be found.", body);
+        Assertions.assertEquals("The parent component could not be found.", body);
     }
 
     @Test
-    public void uploadBomInvalidJsonTest() {
+    void uploadBomInvalidJsonTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -1122,7 +1124,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomInvalidXmlTest() {
+    void uploadBomInvalidXmlTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -1175,7 +1177,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomWithValidationModeDisabledTest() {
+    void uploadBomWithValidationModeDisabledTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -1220,7 +1222,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomWithValidationModeEnabledForTagsTest() {
+    void uploadBomWithValidationModeEnabledForTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -1287,7 +1289,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomWithValidationModeDisabledForTagsTest() {
+    void uploadBomWithValidationModeDisabledForTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -1354,7 +1356,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomWithValidationTagsInvalidTest() {
+    void uploadBomWithValidationTagsInvalidTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         qm.createConfigProperty(
@@ -1424,7 +1426,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomTooLargeViaPutTest() {
+    void uploadBomTooLargeViaPutTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         final var project = new Project();
@@ -1455,7 +1457,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomUpdateTagsOfExistingProjectWithoutTagsTest() {
+    void uploadBomUpdateTagsOfExistingProjectWithoutTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PORTFOLIO_MANAGEMENT);
 
         final var project = new Project();
@@ -1497,7 +1499,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomUpdateTagsOfExistingProjectWithTagsTest() {
+    void uploadBomUpdateTagsOfExistingProjectWithTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PORTFOLIO_MANAGEMENT);
 
         final var project = new Project();
@@ -1543,7 +1545,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomNoUpdateTagsOfExistingProjectWithTagsTest() {
+    void uploadBomNoUpdateTagsOfExistingProjectWithTagsTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PORTFOLIO_MANAGEMENT);
 
         final var project = new Project();
@@ -1581,7 +1583,7 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void uploadBomNoUpdateTagsOfExistingProjectWithTagsWithoutPortfolioManagementPermissionTest() {
+    void uploadBomNoUpdateTagsOfExistingProjectWithTagsWithoutPortfolioManagementPermissionTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
         final var project = new Project();
@@ -1624,13 +1626,13 @@ public class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    public void validateCycloneDxBomWithMultipleNamespacesTest() throws Exception {
+    void validateCycloneDxBomWithMultipleNamespacesTest() throws Exception {
         byte[] bom = resourceToByteArray("/unit/bom-issue4008.xml");
         assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(bom));
     }
 
     @Test
-    public void uploadBomCollectionProjectTest() throws Exception {
+    void uploadBomCollectionProjectTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
@@ -1643,10 +1645,10 @@ public class BomResourceTest extends ResourceTest {
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("BOM cannot be uploaded to collection project.", body);
+        Assertions.assertEquals("BOM cannot be uploaded to collection project.", body);
     }
 
 }

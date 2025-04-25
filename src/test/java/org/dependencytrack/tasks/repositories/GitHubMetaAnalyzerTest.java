@@ -21,99 +21,104 @@ package org.dependencytrack.tasks.repositories;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-public class GitHubMetaAnalyzerTest {
+// TODO this depends on an external API and will fail if that API doesn't respond fast enough; this especially
+//      happens rather fast when executing tests locally repeatedly
+@Timeout(value = 5, unit = TimeUnit.SECONDS)
+class GitHubMetaAnalyzerTest {
 
     private static final String VERSION_TYPE_PATTERN = "[a-f,0-9]{6,40}";
     @Test
-    public void testAnalyzerRelease() throws Exception {
+    void testAnalyzerRelease() throws Exception {
         final var component = new Component();
         component.setPurl(new PackageURL("pkg:github/CycloneDX/cdxgen@v9.8.9"));
 
         final var analyzer = new GithubMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
 
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertTrue(metaModel.getLatestVersion().startsWith("v"));
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertTrue(metaModel.getLatestVersion().startsWith("v"));
+        Assertions.assertNotNull(metaModel.getPublishedTimestamp());
     }
     @Test
-    public void testAnalyzerLongCommit() throws Exception{
+    void testAnalyzerLongCommit() throws Exception{
         final var component = new Component();
         component.setPurl(new PackageURL("pkg:github/CycloneDX/cdxgen@4359dee1b7bd29ee25bc78e358a1254a0277ee96"));
         Pattern version_pattern = Pattern.compile(VERSION_TYPE_PATTERN);
 
         final var analyzer = new GithubMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
 
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertTrue(version_pattern.matcher(metaModel.getLatestVersion()).find());
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertTrue(version_pattern.matcher(metaModel.getLatestVersion()).find());
+        Assertions.assertNotNull(metaModel.getPublishedTimestamp());
     }
 
     @Test
-    public void testAnalyzerShortCommit() throws Exception{
+    void testAnalyzerShortCommit() throws Exception{
         final var component = new Component();
         component.setPurl(new PackageURL("pkg:github/CycloneDX/cdxgen@4359dee"));
         Pattern version_pattern = Pattern.compile(VERSION_TYPE_PATTERN);
 
         final var analyzer = new GithubMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
 
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertTrue(version_pattern.matcher(metaModel.getLatestVersion()).find());
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertTrue(version_pattern.matcher(metaModel.getLatestVersion()).find());
+        Assertions.assertNotNull(metaModel.getPublishedTimestamp());
     }
 
     @Test
-    public void testAnalyzerNoVersion() throws Exception{
+    void testAnalyzerNoVersion() throws Exception{
         final var component = new Component();
         component.setPurl(new PackageURL("pkg:github/CycloneDX/cdxgen"));
 
         final var analyzer = new GithubMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
 
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertTrue(metaModel.getLatestVersion().startsWith("v"));
-        Assert.assertNull(metaModel.getPublishedTimestamp());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertTrue(metaModel.getLatestVersion().startsWith("v"));
+        Assertions.assertNull(metaModel.getPublishedTimestamp());
     }
     @Test
-    public void testAnalyzerInvalidCommit() throws Exception{
+    void testAnalyzerInvalidCommit() throws Exception{
         final var component = new Component();
         component.setPurl(new PackageURL("pkg:github/CycloneDX/cdxgen@0000000"));
 
         final var analyzer = new GithubMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
 
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertNull(metaModel.getPublishedTimestamp());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertNull(metaModel.getPublishedTimestamp());
     }
 
-        @Test
-    public void testAnalyzerInvalidRelease() throws Exception{
+    @Test
+    void testAnalyzerInvalidRelease() throws Exception {
         final var component = new Component();
         component.setPurl(new PackageURL("pkg:github/CycloneDX/cdxgen@invalid-release"));
 
         final var analyzer = new GithubMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.GITHUB, analyzer.supportedRepositoryType());
 
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertNull(metaModel.getPublishedTimestamp());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertNull(metaModel.getPublishedTimestamp());
     }
 }

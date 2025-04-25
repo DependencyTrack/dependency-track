@@ -18,36 +18,36 @@
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-public class VulnerableSoftwareTest {
+class VulnerableSoftwareTest {
 
     @Test
-    public void testId() {
+    void testId() {
         VulnerableSoftware vs = new VulnerableSoftware();
         vs.setId(111L);
-        Assert.assertEquals(111L, vs.getId());
+        Assertions.assertEquals(111L, vs.getId());
     }
 
     @Test
-    public void testCpe22() {
+    void testCpe22() {
         VulnerableSoftware vs = new VulnerableSoftware();
         vs.setCpe22("cpe:/a:gimp:gimp:2.10.0");
-        Assert.assertEquals("cpe:/a:gimp:gimp:2.10.0", vs.getCpe22());
+        Assertions.assertEquals("cpe:/a:gimp:gimp:2.10.0", vs.getCpe22());
     }
 
     @Test
-    public void testCpe23() {
+    void testCpe23() {
         VulnerableSoftware vs = new VulnerableSoftware();
         vs.setCpe23("cpe:2.3:a:gimp:gimp:2.10.0:*:*:*:*:*:*:*");
-        Assert.assertEquals("cpe:2.3:a:gimp:gimp:2.10.0:*:*:*:*:*:*:*", vs.getCpe23());
+        Assertions.assertEquals("cpe:2.3:a:gimp:gimp:2.10.0:*:*:*:*:*:*:*", vs.getCpe23());
     }
 
     @Test
-    public void testVulnerableSoftwareFields() {
+    void testVulnerableSoftwareFields() {
         VulnerableSoftware vs = new VulnerableSoftware();
         vs.setPart("a");
         vs.setVendor("acme");
@@ -65,29 +65,29 @@ public class VulnerableSoftwareTest {
         vs.setVersionStartExcluding("333");
         vs.setVersionStartIncluding("444");
         vs.setVulnerable(true);
-        Assert.assertEquals("a", vs.getPart());
-        Assert.assertEquals("acme", vs.getVendor());
-        Assert.assertEquals("cool-product", vs.getProduct());
-        Assert.assertEquals("1.1.0", vs.getVersion());
-        Assert.assertEquals("*", vs.getUpdate());
-        Assert.assertEquals("*", vs.getEdition());
-        Assert.assertEquals("*", vs.getLanguage());
-        Assert.assertEquals("*", vs.getSwEdition());
-        Assert.assertEquals("*", vs.getTargetSw());
-        Assert.assertEquals("*", vs.getTargetHw());
-        Assert.assertEquals("*", vs.getOther());
-        Assert.assertEquals("111", vs.getVersionEndExcluding());
-        Assert.assertEquals("222", vs.getVersionEndIncluding());
-        Assert.assertEquals("333", vs.getVersionStartExcluding());
-        Assert.assertEquals("444", vs.getVersionStartIncluding());
-        Assert.assertTrue(vs.isVulnerable());
+        Assertions.assertEquals("a", vs.getPart());
+        Assertions.assertEquals("acme", vs.getVendor());
+        Assertions.assertEquals("cool-product", vs.getProduct());
+        Assertions.assertEquals("1.1.0", vs.getVersion());
+        Assertions.assertEquals("*", vs.getUpdate());
+        Assertions.assertEquals("*", vs.getEdition());
+        Assertions.assertEquals("*", vs.getLanguage());
+        Assertions.assertEquals("*", vs.getSwEdition());
+        Assertions.assertEquals("*", vs.getTargetSw());
+        Assertions.assertEquals("*", vs.getTargetHw());
+        Assertions.assertEquals("*", vs.getOther());
+        Assertions.assertEquals("111", vs.getVersionEndExcluding());
+        Assertions.assertEquals("222", vs.getVersionEndIncluding());
+        Assertions.assertEquals("333", vs.getVersionStartExcluding());
+        Assertions.assertEquals("444", vs.getVersionStartIncluding());
+        Assertions.assertTrue(vs.isVulnerable());
     }
 
     @Test
-    public void testUuid() {
+    void testUuid() {
         UUID uuid = UUID.randomUUID();
         VulnerableSoftware vs = new VulnerableSoftware();
         vs.setUuid(uuid);
-        Assert.assertEquals(uuid.toString(), vs.getUuid().toString());
+        Assertions.assertEquals(uuid.toString(), vs.getUuid().toString());
     }
 }

@@ -19,7 +19,7 @@
 package org.dependencytrack.common;
 
 import alpine.common.util.ProxyConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.net.Proxy;
 import java.net.URI;
@@ -27,10 +27,10 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AlpineHttpProxySelectorTest {
+class AlpineHttpProxySelectorTest {
 
     @Test
-    public void testSelect() {
+    void testSelect() {
         final var proxyConfig = new ProxyConfig();
         proxyConfig.setHost("example.com");
         proxyConfig.setPort(6666);

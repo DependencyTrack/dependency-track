@@ -18,6 +18,7 @@
  */
 package org.dependencytrack;
 
+import jakarta.ws.rs.client.WebTarget;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.grizzly.connector.GrizzlyConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -27,18 +28,26 @@ import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.glassfish.jersey.test.spi.TestContainerException;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
-import jakarta.ws.rs.client.WebTarget;
+import java.util.function.Supplier;
 
 /**
  * @since 4.11.0
  */
-public class JerseyTestRule extends ExternalResource {
+public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback {
 
-    private final JerseyTest jerseyTest;
+    private final Supplier<ResourceConfig> resourceConfigSupplier;
+    private JerseyTest jerseyTest;
 
-    public JerseyTestRule(final ResourceConfig resourceConfig) {
+    public JerseyTestExtension(final Supplier<ResourceConfig> resourceConfigSupplier) {
+        this.resourceConfigSupplier = resourceConfigSupplier;
+    }
+
+    @Override
+    public void beforeAll(ExtensionContext context) throws Exception {
         this.jerseyTest = new JerseyTest() {
 
             @Override
@@ -56,25 +65,24 @@ public class JerseyTestRule extends ExternalResource {
 
             @Override
             protected DeploymentContext configureDeployment() {
-                return ServletDeploymentContext.forServlet(new ServletContainer(
-                        // Ensure exception mappers are registered.
-                        resourceConfig.packages("org.dependencytrack.resources.v1.exception"))).build();
+                return ServletDeploymentContext.forServlet(new ServletContainer(resourceConfigSupplier.get()
+                        .packages("org.dependencytrack.resources.v1.exception"))).build();
             }
 
         };
-    }
-
-    @Override
-    protected void before() throws Throwable {
         jerseyTest.setUp();
     }
 
     @Override
-    protected void after() {
-        try {
-            jerseyTest.tearDown();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    public void afterAll(ExtensionContext context) {
+        if (jerseyTest != null) {
+            try {
+                jerseyTest.tearDown();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            } finally {
+                jerseyTest = null;
+            }
         }
     }
 

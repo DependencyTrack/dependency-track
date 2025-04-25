@@ -18,188 +18,189 @@
  */
 package org.dependencytrack.policy;
 
-import java.util.List;
+import com.github.packageurl.PackageURL;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import com.github.packageurl.PackageURL;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class PackageURLPolicyEvaluatorTest extends PersistenceCapableTest {
+import java.util.List;
+
+class PackageURLPolicyEvaluatorTest extends PersistenceCapableTest {
 
     private PolicyEvaluator evaluator;
 
-    @Before
-    public void initEvaluator() {
+    @BeforeEach
+    public void initEvaluator() throws Exception {
         evaluator = new PackageURLPolicyEvaluator();
         evaluator.setQueryManager(qm);
     }
 
     @Test
-    public void hasMatch() throws Exception {
+    void hasMatch() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, "pkg:generic/acme/example-component@1.0");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/acme/example-component@1.0"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component, violation.getComponent());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component, violation.getComponent());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void hasMatchNullPurl() throws Exception {
+    void hasMatchNullPurl() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.NO_MATCH, ".+");
         Component component = new Component();
         component.setPurl((PackageURL)null);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component, violation.getComponent());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component, violation.getComponent());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void noMatch() throws Exception {
+    void noMatch() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, "pkg:generic/acme/example-component@1.0");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/acme/web-component@6.9"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void wrongSubject() throws Exception {
+    void wrongSubject() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, "pkg:generic/acme/example-component@1.0");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/acme/example-component@1.0"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void wrongOperator() throws Exception {
+    void wrongOperator() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.IS, "pkg:generic/acme/example-component@1.0");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/acme/example-component@1.0"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void issue1925_matches() throws Exception {
+    void issue1925_matches() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, "pkg:generic/acme/example-component@1.0");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/acme/example-component@1.0?type=jar"));
         component.setPurlCoordinates(new PackageURL("pkg:generic/acme/example-component@1.0"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component, violation.getComponent());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component, violation.getComponent());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void issue1925_no_match() throws Exception {
+    void issue1925_no_match() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.NO_MATCH, "pkg:generic/acme/example-component@1.0");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/acme/example-component@1.0?type=jar"));
         component.setPurlCoordinates(new PackageURL("pkg:generic/acme/example-component@1.0"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void issue2144_existing1() throws Exception {
+    void issue2144_existing1() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, "pkg:generic/com/acme/example-component@1.0");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/com/acme/example-component@1.0?type=jar"));
         component.setPurlCoordinates(new PackageURL("pkg:generic/com/acme/example-component@1.0"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component, violation.getComponent());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component, violation.getComponent());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void issue2144_existing2() throws Exception {
+    void issue2144_existing2() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, "/com/acme/");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/com/acme/example-component@1.0?type=jar"));
         component.setPurlCoordinates(new PackageURL("pkg:generic/com/acme/example-component@1.0"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component, violation.getComponent());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component, violation.getComponent());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void issue2144_groupIdWithDotMatchesSlash() throws Exception {
+    void issue2144_groupIdWithDotMatchesSlash() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, "/com.acme/");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/com/acme/example-component@1.0?type=jar"));
         component.setPurlCoordinates(new PackageURL("pkg:generic/com/acme/example-component@1.0"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component, violation.getComponent());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component, violation.getComponent());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void issue2144_wildcard() throws Exception {
+    void issue2144_wildcard() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, ".*com.acme.*");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/com/acme/example-component@1.0?type=jar"));
         component.setPurlCoordinates(new PackageURL("pkg:generic/com/acme/example-component@1.0"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component, violation.getComponent());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component, violation.getComponent());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void issue2144_wildcard2() throws Exception {
+    void issue2144_wildcard2() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, ".*acme.*myCompany.*");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/com/acme/example-component@1.0-myCompanyFix-1?type=jar"));
         component.setPurlCoordinates(new PackageURL("pkg:generic/com/acme/example-component@1.0-myCompanyFix-1"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component, violation.getComponent());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component, violation.getComponent());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void issue2144_wildcard3() throws Exception {
+    void issue2144_wildcard3() throws Exception {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, ".*(a|b|c)cme.*");
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:generic/com/acme/example-component@1.0?type=jar"));
         component.setPurlCoordinates(new PackageURL("pkg:generic/com/acme/example-component@1.0"));
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component, violation.getComponent());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component, violation.getComponent());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 }

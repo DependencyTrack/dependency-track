@@ -30,17 +30,17 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
+class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
 
     @Test
-    public void testUpdateCMetricsEmpty() {
+    void testUpdateCMetricsEmpty() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -85,7 +85,7 @@ public class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdateMetricsUnchanged() {
+    void testUpdateMetricsUnchanged() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -111,7 +111,7 @@ public class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdateMetricsVulnerabilities() {
+    void testUpdateMetricsVulnerabilities() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -182,7 +182,7 @@ public class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdateMetricsPolicyViolations() {
+    void testUpdateMetricsPolicyViolations() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -238,7 +238,7 @@ public class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdateMetricsWithDuplicateAliases() {
+    void testUpdateMetricsWithDuplicateAliases() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);

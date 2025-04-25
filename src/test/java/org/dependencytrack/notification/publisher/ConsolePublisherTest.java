@@ -23,36 +23,36 @@ import alpine.notification.NotificationLevel;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 
-public class ConsolePublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
+class ConsolePublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
 
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
     private final PrintStream originalErr = System.err;
 
-    @Before
+    @BeforeEach
     public void setUpStreams() {
         System.setOut(new PrintStream(outContent));
         System.setErr(new PrintStream(errContent));
     }
 
-    @After
+    @AfterEach
     public void restoreStreams() {
         System.setOut(originalOut);
         System.setErr(originalErr);
     }
 
     @Test
-    public void testOutputStream() throws IOException {
+    void testOutputStream() throws IOException {
         Notification notification = new Notification();
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
@@ -61,11 +61,11 @@ public class ConsolePublisherTest extends PersistenceCapableTest implements Noti
         notification.setContent("This is only a test");
         ConsolePublisher publisher = new ConsolePublisher();
         publisher.inform(PublishContext.from(notification), notification, getConfig(DefaultNotificationPublishers.CONSOLE, ""));
-        Assert.assertTrue(outContent.toString().contains(expectedResult(notification)));
+        Assertions.assertTrue(outContent.toString().contains(expectedResult(notification)));
     }
 
     @Test
-    public void testErrorStream() throws IOException {
+    void testErrorStream() throws IOException {
         Notification notification = new Notification();
         notification.setScope(NotificationScope.SYSTEM.name());
         notification.setGroup(NotificationGroup.FILE_SYSTEM.name());
@@ -74,7 +74,7 @@ public class ConsolePublisherTest extends PersistenceCapableTest implements Noti
         notification.setContent("This is only a test");
         ConsolePublisher publisher = new ConsolePublisher();
         publisher.inform(PublishContext.from(notification), notification, getConfig(DefaultNotificationPublishers.CONSOLE, ""));
-        Assert.assertTrue(errContent.toString().contains(expectedResult(notification)));
+        Assertions.assertTrue(errContent.toString().contains(expectedResult(notification)));
     }
 
     private String expectedResult(Notification notification) {

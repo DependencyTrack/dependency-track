@@ -20,13 +20,13 @@ package org.dependencytrack.integrations;
 
 import alpine.common.logging.Logger;
 import org.dependencytrack.PersistenceCapableTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class AbstractIntegrationPointTest extends PersistenceCapableTest {
+class AbstractIntegrationPointTest extends PersistenceCapableTest {
 
     @Test
-    public void testAbstractMethods() {
+    void testAbstractMethods() {
         AbstractIntegrationPoint extension = Mockito.mock(
                 AbstractIntegrationPoint.class,
                 Mockito.CALLS_REAL_METHODS

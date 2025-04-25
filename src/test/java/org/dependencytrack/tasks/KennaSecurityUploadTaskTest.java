@@ -20,7 +20,8 @@ package org.dependencytrack.tasks;
 
 import alpine.model.IConfigProperty;
 import alpine.security.crypto.DataEncryption;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.model.Component;
@@ -28,8 +29,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aMultipart;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -40,19 +40,15 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_API_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_TOKEN;
 
-public class KennaSecurityUploadTaskTest extends PersistenceCapableTest {
-
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
-
+@WireMockTest
+class KennaSecurityUploadTaskTest extends PersistenceCapableTest {
     @Test
-    public void test() throws Exception {
+    void test(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         qm.createConfigProperty(
                 KENNA_ENABLED.getGroupName(),
                 KENNA_ENABLED.getPropertyName(),
@@ -62,7 +58,7 @@ public class KennaSecurityUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 KENNA_API_URL.getGroupName(),
                 KENNA_API_URL.getPropertyName(),
-                wireMockRule.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 KENNA_API_URL.getPropertyType(),
                 KENNA_API_URL.getDescription());
         qm.createConfigProperty(

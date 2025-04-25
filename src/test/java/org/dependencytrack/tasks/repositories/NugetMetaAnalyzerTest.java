@@ -22,10 +22,10 @@ import com.github.packageurl.PackageURL;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 
@@ -40,22 +40,22 @@ import static org.dependencytrack.tasks.repositories.NugetMetaAnalyzer.SUPPORTED
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class NugetMetaAnalyzerTest {
+class NugetMetaAnalyzerTest {
 
     private static ClientAndServer mockServer;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         mockServer = ClientAndServer.startClientAndServer(1080);
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         mockServer.stop();
     }
 
     @Test
-    public void testAnalyzer() throws Exception {
+    void testAnalyzer() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:nuget/CycloneDX.Core@5.4.0"));
         NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
@@ -63,10 +63,10 @@ public class NugetMetaAnalyzerTest {
         analyzer.setRepositoryBaseUrl("https://api.nuget.org");
         MetaModel metaModel = analyzer.analyze(component);
 
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertNotNull(metaModel.getPublishedTimestamp());
     }
 
 
@@ -75,7 +75,7 @@ public class NugetMetaAnalyzerTest {
     // retrieved from the repository at the time of running. 
     // When it was created, the latest release version was 9.0.0-preview.1.24080.9
     @Test
-    public void testAnalyzerExcludingPreRelease() throws Exception {
+    void testAnalyzerExcludingPreRelease() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:nuget/Microsoft.Extensions.DependencyInjection@8.0.0"));
         NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
@@ -83,11 +83,11 @@ public class NugetMetaAnalyzerTest {
         analyzer.setRepositoryBaseUrl("https://api.nuget.org");
         MetaModel metaModel = analyzer.analyze(component);
 
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
-        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
 
-        Assert.assertFalse(metaModel.getLatestVersion().contains("-"));
+        Assertions.assertFalse(metaModel.getLatestVersion().contains("-"));
     }
 
     // This test is to check if the analyzer is including pre-release versions
@@ -95,7 +95,7 @@ public class NugetMetaAnalyzerTest {
     // retrieved from the repository at the time of running. 
     // When it was created, the latest release version was 9.0.0-preview.1.24080.9
     @Test
-    public void testAnalyzerIncludingPreRelease() throws Exception {
+    void testAnalyzerIncludingPreRelease() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:nuget/Microsoft.Extensions.DependencyInjection@8.0.0-beta.21301.5"));
         NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
@@ -103,15 +103,15 @@ public class NugetMetaAnalyzerTest {
         analyzer.setRepositoryBaseUrl("https://api.nuget.org");
         MetaModel metaModel = analyzer.analyze(component);
 
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
-        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
 
-        Assert.assertFalse(metaModel.getLatestVersion().contains("-"));
+        Assertions.assertFalse(metaModel.getLatestVersion().contains("-"));
     }
 
     @Test
-    public void testAnalyzerWithPrivatePackageRepository() throws Exception {
+    void testAnalyzerWithPrivatePackageRepository() throws Exception {
         String mockIndexResponse = readResourceFileToString("/unit/tasks/repositories/https---localhost-1080-v3-index.json");
         new MockServerClient("localhost", mockServer.getPort())
                 .when(
@@ -164,12 +164,12 @@ public class NugetMetaAnalyzerTest {
         analyzer.setRepositoryUsernameAndPassword(null, "password");
         analyzer.setRepositoryBaseUrl("http://localhost:1080");
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertEquals("5.0.2", metaModel.getLatestVersion());
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assertions.assertEquals("5.0.2", metaModel.getLatestVersion());
+        Assertions.assertNotNull(metaModel.getPublishedTimestamp());
     }
 
     @Test
-    public void testPublishedDateTimeFormat() throws ParseException {
+    void testPublishedDateTimeFormat() throws ParseException {
         Date dateParsed = null;
         for (DateFormat dateFormat : SUPPORTED_DATE_FORMATS) {
             try {
@@ -177,7 +177,7 @@ public class NugetMetaAnalyzerTest {
             } catch (ParseException e) {}
         }
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        Assert.assertEquals(dateFormat.parse("1900-01-01T00:00:00+00:00"), dateParsed);
+        Assertions.assertEquals(dateFormat.parse("1900-01-01T00:00:00+00:00"), dateParsed);
     }
 
     private String readResourceFileToString(String fileName) throws Exception {

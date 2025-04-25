@@ -1,14 +1,11 @@
 package org.dependencytrack.resources.v1.vo;
 
-
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Date;
 import java.time.Instant;
@@ -16,17 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(Suite.class)
-@SuiteClasses(value = {
-        AffectedComponentTest.FromVulnerableSoftwareTest.class,
-        AffectedComponentTest.ToVulnerableSoftwareTest.class
-})
 public class AffectedComponentTest {
 
-    public static class FromVulnerableSoftwareTest {
+    @Nested
+    class FromVulnerableSoftwareTest {
 
         @Test
-        public void shouldMapCpe22ToCpeIdentity() {
+        void shouldMapCpe22ToCpeIdentity() {
             final var vs = new VulnerableSoftware();
             vs.setCpe22("cpe:/a:apache:tomcat:7.0.27");
 
@@ -41,7 +34,7 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldMapCpe23ToCpeIdentity() {
+        void shouldMapCpe23ToCpeIdentity() {
             final var vs = new VulnerableSoftware();
             vs.setCpe23("cpe:2.3:a:apache:tomcat:7.0.27:*:*:*:*:*:*:*");
 
@@ -56,7 +49,7 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldMapPurlToPurlIdentity() {
+        void shouldMapPurlToPurlIdentity() {
             final var vs = new VulnerableSoftware();
             vs.setPurl("pkg:golang/foo/bar@baz?ping=pong#1/2/3");
 
@@ -71,7 +64,7 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldMapPurlToPurlIdentityEvenWhenNoNamespace() {
+        void shouldMapPurlToPurlIdentityEvenWhenNoNamespace() {
             final var vs = new VulnerableSoftware();
             vs.setPurlType(PackageURL.StandardTypes.GOLANG);
             vs.setPurlName("bar");
@@ -85,7 +78,7 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldMapPurlFragmentsToPurlIdentity() {
+        void shouldMapPurlFragmentsToPurlIdentity() {
             final var vs = new VulnerableSoftware();
             vs.setPurlType(PackageURL.StandardTypes.GOLANG);
             vs.setPurlNamespace("foo");
@@ -105,7 +98,7 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldMapMinimalPurlPartsToPurlIdentity() {
+        void shouldMapMinimalPurlPartsToPurlIdentity() {
             final var vs = new VulnerableSoftware();
             vs.setPurlType(PackageURL.StandardTypes.GOLANG);
             vs.setPurlNamespace("foo");
@@ -122,7 +115,7 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldIgnorePurlQualifiersWhenInvalid() {
+        void shouldIgnorePurlQualifiersWhenInvalid() {
             final var vs = new VulnerableSoftware();
             vs.setPurlType(PackageURL.StandardTypes.GOLANG);
             vs.setPurlNamespace("foo");
@@ -142,7 +135,7 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldUseExactVersionWhenAvailable() {
+        void shouldUseExactVersionWhenAvailable() {
             final var vs = new VulnerableSoftware();
             vs.setVersion("foo");
 
@@ -156,7 +149,7 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldUseVersionRangeWhenAvailable() {
+        void shouldUseVersionRangeWhenAvailable() {
             final var vs = new VulnerableSoftware();
             vs.setVersionStartIncluding("foo");
             vs.setVersionStartExcluding("bar");
@@ -173,7 +166,7 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldUseVersionRangeWhenBothRangeAndExactVersionAreAvailable() {
+        void shouldUseVersionRangeWhenBothRangeAndExactVersionAreAvailable() {
             final var vs = new VulnerableSoftware();
             vs.setVersion("*"); // CPEs will have a version wildcard when ranges are defined
             vs.setVersionStartIncluding("foo");
@@ -191,7 +184,7 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldMapAffectedPackageAttribution() {
+        void shouldMapAffectedPackageAttribution() {
             final var vs = new VulnerableSoftware();
             AffectedVersionAttribution ava = new AffectedVersionAttribution();
             ava.setVulnerableSoftware(vs);
@@ -203,7 +196,8 @@ public class AffectedComponentTest {
         }
     }
 
-    public static class ToVulnerableSoftwareTest {
+    @Nested
+    class ToVulnerableSoftwareTest {
 
         @Test
         public void shouldMapCpe22Fields() {

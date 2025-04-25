@@ -21,36 +21,36 @@ package org.dependencytrack.resources.v1;
 import alpine.model.MappedLdapGroup;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import org.dependencytrack.JerseyTestRule;
-import org.dependencytrack.ResourceTest;
-import org.dependencytrack.resources.v1.vo.MappedLdapGroupRequest;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
+import org.dependencytrack.ResourceTest;
+import org.dependencytrack.resources.v1.vo.MappedLdapGroupRequest;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import java.util.UUID;
 
-public class LdapResourceTest extends ResourceTest {
+class LdapResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(LdapResource.class)
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(LdapResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
     @Test
-    public void retrieveLdapGroupsNotEnabledTest() {
+    void retrieveLdapGroupsNotEnabledTest() {
         Response response = jersey.target(V1_LDAP + "/groups").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
     }
 
     //@Test TODO: Add integration test to get back actual LDAP groups from a directory server
@@ -58,64 +58,64 @@ public class LdapResourceTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveLdapGroupsTest() {
+    void retrieveLdapGroupsTest() {
         qm.createMappedLdapGroup(team, "CN=Developers,OU=R&D,O=Acme");
         qm.createMappedLdapGroup(team, "CN=QA,OU=R&D,O=Acme");
         Response response = jersey.target(V1_LDAP + "/team/" + team.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(2, json.size());
-        Assert.assertEquals("CN=Developers,OU=R&D,O=Acme", json.getJsonObject(0).getString("dn"));
-        Assert.assertEquals("CN=QA,OU=R&D,O=Acme", json.getJsonObject(1).getString("dn"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(2, json.size());
+        Assertions.assertEquals("CN=Developers,OU=R&D,O=Acme", json.getJsonObject(0).getString("dn"));
+        Assertions.assertEquals("CN=QA,OU=R&D,O=Acme", json.getJsonObject(1).getString("dn"));
     }
 
     @Test
-    public void addMappingTest() {
+    void addMappingTest() {
         MappedLdapGroupRequest request = new MappedLdapGroupRequest(team.getUuid().toString(), "CN=Administrators,OU=R&D,O=Acme");
         Response response = jersey.target(V1_LDAP + "/mapping").request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("CN=Administrators,OU=R&D,O=Acme", json.getString("dn"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("CN=Administrators,OU=R&D,O=Acme", json.getString("dn"));
     }
 
     @Test
-    public void addMappingInvalidTest() {
+    void addMappingInvalidTest() {
         MappedLdapGroupRequest request = new MappedLdapGroupRequest(UUID.randomUUID().toString(), "CN=Administrators,OU=R&D,O=Acme");
         Response response = jersey.target(V1_LDAP + "/mapping").request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The UUID of the team could not be found.", body);
+        Assertions.assertEquals("The UUID of the team could not be found.", body);
     }
 
     @Test
-    public void deleteMappingTest() {
+    void deleteMappingTest() {
         MappedLdapGroup mapping = qm.createMappedLdapGroup(team, "CN=Finance,OU=R&D,O=Acme");
         Response response = jersey.target(V1_LDAP + "/mapping/" + mapping.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete(Response.class);
-        Assert.assertEquals(204, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(204, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
     }
 
     @Test
-    public void deleteMappingInvalidTest() {
+    void deleteMappingInvalidTest() {
         Response response = jersey.target(V1_LDAP + "/mapping/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The UUID of the mapping could not be found.", body);
+        Assertions.assertEquals("The UUID of the mapping could not be found.", body);
     }
 }

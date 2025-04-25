@@ -337,7 +337,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -410,7 +410,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -479,7 +479,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability = qm.createVulnerability(vulnerability, false);
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), null, null, null, null, null, null);
+                vulnerability.getUuid().toString(), null, null, null, null, null, null, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -532,7 +532,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.EXPLOITABLE, AnalysisJustification.NOT_SET,
-                AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false);
+                AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -610,7 +610,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", null, true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", null, true, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -662,7 +662,7 @@ public class AnalysisResourceTest extends ResourceTest {
         qm.makeAnalysisComment(analysis, "Analysis comment here", "Jane Doe");
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), null, null, null, null, null, null);
+                vulnerability.getUuid().toString(), null, null, null, null, null, null, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -726,7 +726,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
         final var analysisRequest = new AnalysisRequest(UUID.randomUUID().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -758,7 +758,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), UUID.randomUUID().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -790,7 +790,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 UUID.randomUUID().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -828,7 +828,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
-                AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false);
+                AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -879,7 +879,7 @@ public class AnalysisResourceTest extends ResourceTest {
     public void updateAnalysisUnauthorizedTest() {
         final var analysisRequest = new AnalysisRequest(UUID.randomUUID().toString(), UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
-                AnalysisResponse.UPDATE, "Analysis details here", "Analysis comment here", false);
+                AnalysisResponse.UPDATE, "Analysis details here", "Analysis comment here", false, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()

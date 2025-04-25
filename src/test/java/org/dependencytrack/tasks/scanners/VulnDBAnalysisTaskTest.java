@@ -34,11 +34,11 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 
@@ -58,17 +58,17 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_O
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
+class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
 
     private static ClientAndServer mockServer;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
         mockServer = ClientAndServer.startClientAndServer(1080);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         qm.createConfigProperty(SCANNER_VULNDB_ENABLED.getGroupName(),
                 SCANNER_VULNDB_ENABLED.getPropertyName(),
@@ -92,20 +92,20 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
                 "secret");
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         mockServer.reset();
         NOTIFICATIONS.clear();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         mockServer.stop();
         NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
     }
 
     @Test
-    public void testIsCapable() {
+    void testIsCapable() {
         final var asserts = new SoftAssertions();
 
         for (final Map.Entry<String, Boolean> test : Map.of(
@@ -121,7 +121,7 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyzeWithOneIssue() {
+    void testAnalyzeWithOneIssue() {
         mockServer
                 .when(request()
                         .withMethod("GET")
@@ -246,7 +246,7 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyzeWithNoIssue() {
+    void testAnalyzeWithNoIssue() {
         mockServer
                 .when(request()
                         .withMethod("GET")
@@ -294,7 +294,7 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyzeWithCurrentCache() {
+    void testAnalyzeWithCurrentCache() {
         var vuln = new Vulnerability();
         vuln.setVulnId("VULNDB-001");
         vuln.setSource(Vulnerability.Source.VULNDB);

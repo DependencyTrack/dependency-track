@@ -18,14 +18,14 @@
  */
 package org.dependencytrack.tasks;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
@@ -36,20 +36,18 @@ import java.util.zip.GZIPOutputStream;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_FEEDS_URL;
 
-public class NistMirrorTaskTest extends PersistenceCapableTest {
+@WireMockTest
+class NistMirrorTaskTest extends PersistenceCapableTest {
 
-    @Rule
-    public WireMockRule wireMock = new WireMockRule(options().dynamicPort());
-
-    @Before
-    public void setUp() {
+    @BeforeEach
+    public void setUp(WireMockRuntimeInfo wmRuntimeInfo) {
         qm.createConfigProperty(
                 VULNERABILITY_SOURCE_NVD_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_NVD_ENABLED.getPropertyName(),
@@ -60,23 +58,23 @@ public class NistMirrorTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 VULNERABILITY_SOURCE_NVD_FEEDS_URL.getGroupName(),
                 VULNERABILITY_SOURCE_NVD_FEEDS_URL.getPropertyName(),
-                wireMock.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 VULNERABILITY_SOURCE_NVD_FEEDS_URL.getPropertyType(),
                 VULNERABILITY_SOURCE_NVD_FEEDS_URL.getDescription()
         );
     }
 
     @Test
-    public void test() throws Exception {
+    void test() throws Exception {
         final byte[] gzippedFeedFileBytes = gzipResource("/unit/nvd/feed/nvdcve-1.1-2022.json");
 
-        wireMock.stubFor(get(anyUrl())
+        stubFor(get(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(404)));
-        wireMock.stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2022.json.gz"))
+        stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2022.json.gz"))
                 .willReturn(aResponse()
                         .withBody(gzippedFeedFileBytes)));
-        wireMock.stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2022.meta"))
+        stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2022.meta"))
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/feed/nvdcve-1.1-2022.meta"))));
 
@@ -166,13 +164,13 @@ public class NistMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testWithDuplicateCpes() throws Exception {
+    void testWithDuplicateCpes() throws Exception {
         final byte[] gzippedFeedFileBytes = gzipResource("/unit/nvd/feed/nvdcve-1.1-2021_duplicate-cpes.json");
 
-        wireMock.stubFor(get(anyUrl())
+        stubFor(get(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(404)));
-        wireMock.stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2021.json.gz"))
+        stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2021.json.gz"))
                 .willReturn(aResponse()
                         .withBody(gzippedFeedFileBytes)));
 

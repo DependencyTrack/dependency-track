@@ -18,10 +18,10 @@
  */
 package org.dependencytrack.model;
 
+import java.util.Date;
+
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Date;
 
 public class RepositoryMetaComponentTest {
 
@@ -59,6 +59,20 @@ public class RepositoryMetaComponentTest {
         rmc.setLatestVersion("2.0.0");
         Assert.assertEquals("2.0.0", rmc.getLatestVersion());
     } 
+
+    @Test
+    public void testIsDeprecated() {
+        RepositoryMetaComponent rmc = new RepositoryMetaComponent();
+        rmc.setDeprecated(true);
+        Assert.assertTrue(rmc.isDeprecated());
+    }
+    
+    @Test
+    public void testDeprecationMessage() {
+        RepositoryMetaComponent rmc = new RepositoryMetaComponent();
+        rmc.setDeprecationMessage("Deprecated component.");
+        Assert.assertEquals("Deprecated component.", rmc.getDeprecationMessage());
+    }
 
     @Test
     public void testPublished() {

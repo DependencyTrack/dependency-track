@@ -18,8 +18,16 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.resources.AlpineRequest;
-import com.github.packageurl.PackageURL;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
@@ -35,14 +43,9 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.persistence.RepositoryQueryManager.RepositoryMetaComponentSearch;
 import org.dependencytrack.util.PurlUtil;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import com.github.packageurl.PackageURL;
+
+import alpine.resources.AlpineRequest;
 
 public class FindingsQueryManager extends QueryManager implements IQueryManager {
 
@@ -330,6 +333,8 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
                     if (affectedFindings != null) {
                         for (final Finding finding : affectedFindings) {
                             finding.getComponent().put("latestVersion", metaComponent.getLatestVersion());
+                            finding.getComponent().put("isDeprecated", metaComponent.isDeprecated());
+                            finding.getComponent().put("deprecationMessage", metaComponent.getDeprecationMessage());
                         }
                     }
                 });

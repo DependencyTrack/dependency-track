@@ -42,6 +42,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -330,9 +331,11 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
             }
 
             if (!keepExisting) {
-                for (final Tag existingTag : notificationRule.getTags()) {
+                final Iterator<Tag> existingTagsIterator = notificationRule.getTags().iterator();
+                while (existingTagsIterator.hasNext()) {
+                    final Tag existingTag = existingTagsIterator.next();
                     if (!tags.contains(existingTag)) {
-                        notificationRule.getTags().remove(existingTag);
+                        existingTagsIterator.remove();
                         if (existingTag.getNotificationRules() != null) {
                             existingTag.getNotificationRules().remove(notificationRule);
                         }

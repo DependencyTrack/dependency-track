@@ -62,6 +62,7 @@ import org.slf4j.MDC;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -119,6 +120,7 @@ public class BomUploadProcessingTask implements Subscriber {
         private String bomSpecVersion;
         private String bomSerialNumber;
         private Integer bomVersion;
+        private org.cyclonedx.model.Bom cdxBom;
 
         private Context(final UUID token, final Project project, final byte[] bomBytes) {
             this.token = token;
@@ -165,6 +167,7 @@ public class BomUploadProcessingTask implements Subscriber {
             return;
         }
 
+        ctx.cdxBom = cdxBom;
         ctx.bomSpecVersion = cdxBom.getSpecVersion();
         ctx.bomVersion = cdxBom.getVersion();
         if (cdxBom.getSerialNumber() != null) {
@@ -290,6 +293,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 processDependencyGraph(qm, persistentProject, dependencyGraph, persistentComponentsByIdentity, identitiesByBomRef);
 
                 recordBomImport(ctx, qm, persistentProject);
+                getGeneratedBom(ctx, persistentProject);
 
                 processedComponents.addAll(persistentComponentsByIdentity.values());
             });
@@ -561,8 +565,15 @@ public class BomUploadProcessingTask implements Subscriber {
             qm.getPersistenceManager().flush();
         }
 
-
         return persistentServiceByIdentity;
+    }
+
+    private void getGeneratedBom(final Context ctx, final Project project) {
+        org.cyclonedx.model.Metadata metadata = ctx.cdxBom.getMetadata();
+        if (metadata != null && metadata.getTimestamp() != null) {
+            Instant generatedAt = metadata.getTimestamp().toInstant();
+            project.setBomTimestamp(Date.from(generatedAt));
+        }
     }
 
     private void recordBomImport(final Context ctx, final QueryManager qm, final Project project) {

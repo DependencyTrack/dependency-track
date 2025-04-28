@@ -62,14 +62,17 @@ import jakarta.json.JsonReader;
 import javax.jdo.JDOObjectNotFoundException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Date;
+import java.util.TimeZone;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
@@ -1540,6 +1543,25 @@ class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         await("Event Processing Completion")
                 .atMost(Duration.ofSeconds(3))
                 .untilAsserted(() -> assertThat(Event.isEventBeingProcessed(bomUploadEvent.getChainIdentifier())).isFalse());
+    }
+
+    @Test
+    public void bomGeneratedTimestampTest() throws Exception {
+        final var project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
+                resourceToByteArray("/unit/bom-bloated.json"));
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+        qm.getPersistenceManager().evictAll();
+
+        Date bomTimestamp = project.getBomTimestamp();
+        assertThat(bomTimestamp).isNotNull();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String formattedTimestamp = sdf.format(bomTimestamp);
+        assertThat(formattedTimestamp).isNotEqualTo("2023-07-29T21:19:37.324Z");
+        assertThat(formattedTimestamp).isEqualTo("2022-07-29T21:19:37.324Z");
     }
 
 }

@@ -18,14 +18,13 @@
  */
 package org.dependencytrack.parser.osv;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
-import us.springett.cvss.Cvss;
-import us.springett.cvss.Score;
+import org.dependencytrack.util.CvssUtil;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -259,9 +258,9 @@ public class OsvAdvisoryParser {
         if (databaseSpecific != null) {
             String cvssVector = databaseSpecific.optString("cvss", null);
             if (cvssVector != null) {
-                Cvss cvss = Cvss.fromVector(cvssVector);
-                Score score = cvss.calculateScore();
-                severity = String.valueOf(normalizedCvssV3Score(score.getBaseScore()));
+                final var cvss = CvssUtil.parse(cvssVector);
+                final var score = cvss.getBakedScores();
+                severity = String.valueOf(normalizedCvssV3Score(score.getOverallScore()));
             }
         }
 

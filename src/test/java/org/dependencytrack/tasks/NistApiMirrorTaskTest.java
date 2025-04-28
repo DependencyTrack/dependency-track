@@ -102,8 +102,8 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
         assertThat(vuln.getPublished()).isEqualTo("2022-07-01T18:15:08.570Z");
         assertThat(vuln.getUpdated()).isEqualTo("2023-08-08T14:22:24.967Z");
         assertThat(vuln.getCwes()).containsOnly(1333);
-        assertThat(vuln.getCvssV2Vector()).isEqualTo("(AV:N/AC:L/Au:N/C:N/I:N/A:P)");
-        assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L");
+        assertThat(vuln.getCvssV2Vector()).isEqualTo("AV:N/AC:L/Au:N/C:N/I:N/A:P");
+        assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L");
         assertThat(vuln.getSeverity()).isEqualTo(Severity.MEDIUM);
         assertThat(vuln.getVulnerableVersions()).isNull();
         assertThat(vuln.getPatchedVersions()).isNull();

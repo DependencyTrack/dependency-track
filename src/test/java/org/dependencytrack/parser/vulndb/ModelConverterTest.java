@@ -1,5 +1,14 @@
 package org.dependencytrack.parser.vulndb;
 
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.parser.vulndb.model.CvssV3Metric;
+import org.dependencytrack.parser.vulndb.model.Results;
+import org.dependencytrack.persistence.QueryManager;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -7,15 +16,6 @@ import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerabilityAlias;
-import org.dependencytrack.parser.vulndb.model.CvssV3Metric;
-import org.dependencytrack.parser.vulndb.model.Results;
-import org.dependencytrack.persistence.QueryManager;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
@@ -43,7 +43,7 @@ class ModelConverterTest {
         Assertions.assertEquals("1", vulnerability.getVulnId());
         Assertions.assertEquals("test title", vulnerability.getTitle());
         Assertions.assertEquals(Date.from(odt.toInstant()), vulnerability.getUpdated());
-        Assertions.assertEquals("(AV:N/AC:M/Au:N/C:P/I:N/A:N)", vulnerability.getCvssV2Vector());
+        Assertions.assertEquals("AV:N/AC:M/Au:N/C:P/I:N/A:N", vulnerability.getCvssV2Vector());
         Assertions.assertEquals("CVSS:3.0/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:N", vulnerability.getCvssV3Vector());
         Assertions.assertEquals(BigDecimal.valueOf(4.3), vulnerability.getCvssV2BaseScore());
         Assertions.assertEquals(BigDecimal.valueOf(4.3), vulnerability.getCvssV3BaseScore());

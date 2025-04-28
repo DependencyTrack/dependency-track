@@ -96,7 +96,7 @@
         <lib.cpe-parser.version>3.0.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.27.1</lib.commons-compress.version>
         <lib.commons-text.version>1.13.1</lib.commons-text.version>
-        <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
+        <lib.ae-security.version>0.138.0</lib.ae-security.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>10.2.1</lib.cyclonedx-java.version>
         <lib.jakarta-validation.version>3.0.2</lib.jakarta-validation.version>
@@ -173,11 +173,11 @@
             <artifactId>alpine-server</artifactId>
             <version>${lib.alpine.version}</version>
         </dependency>
-        <!-- CVSS Calculator -->
+        <!-- AE Security -->
         <dependency>
-            <groupId>us.springett</groupId>
-            <artifactId>cvss-calculator</artifactId>
-            <version>${lib.cvss-calculator.version}</version>
+            <groupId>org.metaeffekt.core</groupId>
+            <artifactId>ae-security</artifactId>
+            <version>${lib.ae-security.version}</version>
         </dependency>
         <!-- OWASP Risk Rating calculator -->
         <dependency>

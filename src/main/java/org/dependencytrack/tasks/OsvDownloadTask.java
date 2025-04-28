@@ -43,10 +43,9 @@ import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.CvssUtil;
 import org.json.JSONObject;
 import org.slf4j.MDC;
-import us.springett.cvss.Cvss;
-import us.springett.cvss.Score;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -278,20 +277,20 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
         // derive from database_specific cvss v3 vector if available
         if(advisory.getCvssV3Vector() != null) {
-            Cvss cvss = Cvss.fromVector(advisory.getCvssV3Vector());
+            var cvss = CvssUtil.parse(advisory.getCvssV3Vector());
             if (cvss != null) {
-                Score score = cvss.calculateScore();
-                return normalizedCvssV3Score(score.getBaseScore());
+                var score = cvss.getBakedScores();
+                return normalizedCvssV3Score(score.getOverallScore());
             } else {
                 LOGGER.warn("Unable to determine severity from CVSSv3 vector: " + advisory.getCvssV3Vector());
             }
         }
         // derive from database_specific cvss v2 vector if available
         if (advisory.getCvssV2Vector() != null) {
-            Cvss cvss = Cvss.fromVector(advisory.getCvssV2Vector());
+            var cvss = CvssUtil.parse(advisory.getCvssV2Vector());
             if (cvss != null) {
-                Score score = cvss.calculateScore();
-                return normalizedCvssV2Score(score.getBaseScore());
+                var score = cvss.getBakedScores();
+                return normalizedCvssV2Score(score.getOverallScore());
             } else {
                 LOGGER.warn("Unable to determine severity from CVSSv2 vector: " + advisory.getCvssV2Vector());
             }

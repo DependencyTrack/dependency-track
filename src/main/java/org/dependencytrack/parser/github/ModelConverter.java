@@ -22,7 +22,6 @@ import alpine.common.logging.Logger;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURLBuilder;
-import io.github.jeremylong.openvulnerability.client.ghsa.CVSS;
 import io.github.jeremylong.openvulnerability.client.ghsa.CWE;
 import io.github.jeremylong.openvulnerability.client.ghsa.CWEs;
 import io.github.jeremylong.openvulnerability.client.ghsa.Package;
@@ -35,11 +34,9 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.util.CvssUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
-import us.springett.cvss.Cvss;
-import us.springett.cvss.Score;
 
-import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,15 +81,11 @@ public final class ModelConverter {
         vuln.setSeverity(convertSeverity(advisory.getSeverity()));
 
         if (advisory.getCvssSeverities() != null) {
-            final CVSS cvssv3 = advisory.getCvssSeverities().getCvssV3();
+            final var cvssv3 = advisory.getCvssSeverities().getCvssV3();
             if (cvssv3 != null) {
-                final Cvss parsedCvssV3 = Cvss.fromVector(cvssv3.getVectorString());
+                final var parsedCvssV3 = CvssUtil.parse(cvssv3.getVectorString());
                 if (parsedCvssV3 != null) {
-                    final Score calculatedScore = parsedCvssV3.calculateScore();
-                    vuln.setCvssV3Vector(cvssv3.getVectorString());
-                    vuln.setCvssV3BaseScore(BigDecimal.valueOf(calculatedScore.getBaseScore()));
-                    vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(calculatedScore.getExploitabilitySubScore()));
-                    vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(calculatedScore.getImpactSubScore()));
+                    vuln.applyV3Score(parsedCvssV3);
                 }
             }
 

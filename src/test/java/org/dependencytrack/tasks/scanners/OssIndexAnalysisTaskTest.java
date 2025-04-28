@@ -168,7 +168,7 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
                             jackson-databind before 2.13.0 allows a Java StackOverflow exception and denial of service via a large depth of nested objects.
                                                     
                             Sonatype's research suggests that this CVE's details differ from those defined at NVD. See https://ossindex.sonatype.org/vulnerability/CVE-2020-36518 for details""");
-                    assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H");
+                    assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H");
                     assertThat(vuln.getCvssV3BaseScore()).isEqualByComparingTo("7.5");
                     assertThat(vuln.getCvssV3ExploitabilitySubScore()).isNotNull();
                     assertThat(vuln.getCvssV3ImpactSubScore()).isNotNull();

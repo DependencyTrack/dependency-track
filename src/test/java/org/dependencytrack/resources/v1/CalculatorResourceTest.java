@@ -45,7 +45,7 @@ class CalculatorResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus());
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
         Assertions.assertNotNull(json);
@@ -57,11 +57,11 @@ class CalculatorResourceTest extends ResourceTest {
     @Test
     void getCvssScoresV2Test() {
         Response response = jersey.target(V1_CALCULATOR + "/cvss")
-                .queryParam("vector", "(AV:N/AC:L/Au:N/C:P/I:P/A:P)")
+                .queryParam("vector", "AV:N/AC:L/Au:N/C:P/I:P/A:P")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus());
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
         Assertions.assertNotNull(json);
@@ -77,7 +77,7 @@ class CalculatorResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assertions.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertEquals(400, response.getStatus());
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assertions.assertEquals("An invalid CVSSv2 or CVSSv3 vector submitted.", body);

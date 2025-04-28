@@ -107,11 +107,11 @@ class NistMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vuln.getCvssV2BaseScore()).isEqualByComparingTo("2.1");
                     assertThat(vuln.getCvssV2ExploitabilitySubScore()).isEqualByComparingTo("3.9");
                     assertThat(vuln.getCvssV2ImpactSubScore()).isEqualByComparingTo("2.9");
-                    assertThat(vuln.getCvssV2Vector()).isEqualTo("(AV:L/AC:L/Au:N/C:P/I:N/A:N)");
+                    assertThat(vuln.getCvssV2Vector()).isEqualTo("AV:L/AC:L/Au:N/C:P/I:N/A:N");
                     assertThat(vuln.getCvssV3BaseScore()).isEqualByComparingTo("6.5");
                     assertThat(vuln.getCvssV3ExploitabilitySubScore()).isEqualByComparingTo("2.0");
                     assertThat(vuln.getCvssV3ImpactSubScore()).isEqualByComparingTo("4.0");
-                    assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N");
+                    assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N");
                     assertThat(vuln.getSeverity()).isEqualTo(Severity.MEDIUM);
                 },
                 vuln -> {
@@ -131,11 +131,11 @@ class NistMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vuln.getCvssV2BaseScore()).isEqualByComparingTo("2.1");
                     assertThat(vuln.getCvssV2ExploitabilitySubScore()).isEqualByComparingTo("3.9");
                     assertThat(vuln.getCvssV2ImpactSubScore()).isEqualByComparingTo("2.9");
-                    assertThat(vuln.getCvssV2Vector()).isEqualTo("(AV:L/AC:L/Au:N/C:P/I:N/A:N)");
+                    assertThat(vuln.getCvssV2Vector()).isEqualTo("AV:L/AC:L/Au:N/C:P/I:N/A:N");
                     assertThat(vuln.getCvssV3BaseScore()).isEqualByComparingTo("6.5");
                     assertThat(vuln.getCvssV3ExploitabilitySubScore()).isEqualByComparingTo("2.0");
                     assertThat(vuln.getCvssV3ImpactSubScore()).isEqualByComparingTo("4.0");
-                    assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N");
+                    assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N");
                     assertThat(vuln.getSeverity()).isEqualTo(Severity.MEDIUM);
                 },
                 vuln -> {
@@ -153,11 +153,11 @@ class NistMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vuln.getCvssV2BaseScore()).isEqualByComparingTo("7.2");
                     assertThat(vuln.getCvssV2ExploitabilitySubScore()).isEqualByComparingTo("3.9");
                     assertThat(vuln.getCvssV2ImpactSubScore()).isEqualByComparingTo("10.0");
-                    assertThat(vuln.getCvssV2Vector()).isEqualTo("(AV:L/AC:L/Au:N/C:C/I:C/A:C)");
+                    assertThat(vuln.getCvssV2Vector()).isEqualTo("AV:L/AC:L/Au:N/C:C/I:C/A:C");
                     assertThat(vuln.getCvssV3BaseScore()).isEqualByComparingTo("6.8");
                     assertThat(vuln.getCvssV3ExploitabilitySubScore()).isEqualByComparingTo("0.9");
                     assertThat(vuln.getCvssV3ImpactSubScore()).isEqualByComparingTo("5.9");
-                    assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.0/AV:P/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
+                    assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:P/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
                     assertThat(vuln.getSeverity()).isEqualTo(Severity.MEDIUM);
                 }
         );

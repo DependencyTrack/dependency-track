@@ -26,6 +26,7 @@ import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;

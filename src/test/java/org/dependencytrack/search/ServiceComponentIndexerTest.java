@@ -53,7 +53,7 @@ class ServiceComponentIndexerTest extends PersistenceCapableTest {
         s.setName("stock-ticker");
         s.setVersion("1.0.0");
         ServiceComponentIndexer.getInstance().add(new ServiceComponentDocument(s));
-        ServiceComponentIndexer.getInstance().commit();
+        commitIndex();
         SearchManager searchManager = new SearchManager();
         SearchResult result = searchManager.searchIndex(ServiceComponentIndexer.getInstance(), s.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
@@ -68,10 +68,10 @@ class ServiceComponentIndexerTest extends PersistenceCapableTest {
         s.setName("stock-ticker");
         s.setVersion("1.0.0");
         ServiceComponentIndexer.getInstance().add(new ServiceComponentDocument(s));
-        ServiceComponentIndexer.getInstance().commit();
+        commitIndex();
         SearchManager searchManager = new SearchManager();
         ServiceComponentIndexer.getInstance().remove(new ServiceComponentDocument(s));
-        ServiceComponentIndexer.getInstance().commit();
+        commitIndex();
         SearchResult result = searchManager.searchIndex(ServiceComponentIndexer.getInstance(), s.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(0, result.getResults().get("servicecomponent").size());
@@ -80,5 +80,9 @@ class ServiceComponentIndexerTest extends PersistenceCapableTest {
     @Test
     void reindexTest() {
         ServiceComponentIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        IndexManagerTestUtil.commitIndex(ServiceComponentIndexer.getInstance());
     }
 }

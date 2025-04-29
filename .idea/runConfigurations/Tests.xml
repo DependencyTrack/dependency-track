@@ -9,7 +9,6 @@
     <option name="TEST_SEARCH_SCOPE">
       <value defaultName="wholeProject" />
     </option>
-    <fork_mode value="class" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

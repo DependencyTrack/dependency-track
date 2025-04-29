@@ -579,6 +579,42 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         assertThat(greenMail.getReceivedMessages()).isEmpty();
     }
 
+    @Test
+    public void testInformWithNotifySeveritiesMailSent() {
+        super.baseTestInformWithNotifySeveritiesMailSent();
+
+        assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified");
+            assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
+            final MimeMultipart content = (MimeMultipart) message.getContent();
+            assertThat(content.getCount()).isEqualTo(1);
+            assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
+            assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
+                New Vulnerability Identified
+                --------------------------------------------------------------------------------
+                Vulnerability ID:  INT-001
+                Vulnerability URL: /vulnerability/?source=INTERNAL&vulnId=INT-001
+                Severity:          MEDIUM
+                Source:            INTERNAL
+                Component:         componentName : componentVersion
+                Component URL:     /component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6
+                Project:           projectName
+                Version:           projectVersion
+                Description:       projectDescription
+                Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
+                ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+                1970-01-01T18:31:06.000000666
+                """);
+        });
+    }
+
+    @Test
+    public void testInformWithNotifySeveritiesNoMailSent() {
+        super.baseTestInformWithNotifySeveritiesNoMailSent();
+
+        assertThat(greenMail.getReceivedMessages()).isEmpty();
+    }
+
     @Override
     JsonObjectBuilder extraConfig() {
         return super.extraConfig()

@@ -20,10 +20,14 @@ package org.dependencytrack;
 
 import alpine.Config;
 import alpine.server.persistence.PersistenceManagerFactory;
+import org.datanucleus.PropertyNames;
 import org.dependencytrack.persistence.QueryManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+
+import javax.jdo.Query;
+import java.time.Duration;
 
 public abstract class PersistenceCapableTest {
 
@@ -41,8 +45,11 @@ public abstract class PersistenceCapableTest {
     }
 
     @BeforeEach
-    final void initQueryManager() {
+    final void initQueryManager() throws InterruptedException {
         this.qm = new QueryManager();
+        for (int i = 0; i < 5 && qm.getPersistenceManager().isClosed(); ++i) {
+            Thread.sleep(Duration.ofSeconds(1));
+        }
     }
 
     @AfterEach
@@ -56,7 +63,24 @@ public abstract class PersistenceCapableTest {
             qm.getPersistenceManager().currentTransaction().rollback();
         }
 
-        PersistenceManagerFactory.tearDown();
+        try {
+            // Make sure the in-memory H2 database is closed before the next test is run.
+            qm.getPersistenceManager().setProperty(PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL, "true");
+            try(final var q = qm.getPersistenceManager().newQuery(Query.SQL, "SHUTDOWN IMMEDIATELY")) {
+                q.execute();
+            }
+        } catch (Exception e) {
+            // ignored, DB already closed.
+        }
+
+        qm.close();
+        qm = null;
+
+        try {
+            PersistenceManagerFactory.tearDown();
+        } catch (NullPointerException e) {
+            // ignored, may happen if there is no transaction left
+        }
     }
 
 }

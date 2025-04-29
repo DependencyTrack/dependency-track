@@ -318,7 +318,7 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
-    public final void baseTestInformWithNotifySeveritiesMailSent() {
+    public final void baseTestInformWithSeverityThatShouldTriggerNotification() {
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
@@ -335,14 +335,14 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
                 .subject(subject);
 
-        // List that contains a medium severity, so mail should be sent
+        // List contains a medium severity, so mail should be sent
         List<Severity> severities = List.of(Severity.MEDIUM);
 
         assertThatNoException()
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(), severities));
     }
 
-    public final void baseTestInformWithNotifySeveritiesNoMailSent() {
+    public final void baseTestInformWithSeverityThatShouldNotTriggerNotification() {
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
@@ -359,8 +359,8 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
                 .subject(subject);
 
-        // List that does NOT contain a medium severity, so mail should NOT be sent
-        List<Severity> severities = List.of(Severity.CRITICAL);
+        // List does NOT contain a medium severity, so mail should NOT be sent
+        List<Severity> severities = List.of(Severity.LOW);
 
         assertThatNoException()
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(), severities));

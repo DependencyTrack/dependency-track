@@ -580,8 +580,8 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
     }
 
     @Test
-    public void testInformWithNotifySeveritiesMailSent() {
-        super.baseTestInformWithNotifySeveritiesMailSent();
+    public void testInformWithSeverityThatShouldTriggerNotification() {
+        super.baseTestInformWithSeverityThatShouldTriggerNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified");
@@ -609,8 +609,8 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
     }
 
     @Test
-    public void testInformWithNotifySeveritiesNoMailSent() {
-        super.baseTestInformWithNotifySeveritiesNoMailSent();
+    public void testInformWithSeverityThatShouldNotTriggerNotification() {
+        super.baseTestInformWithSeverityThatShouldNotTriggerNotification();
 
         assertThat(greenMail.getReceivedMessages()).isEmpty();
     }

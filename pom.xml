@@ -638,6 +638,7 @@
                             <value>src/test/resources/logging.properties</value>
                         </property>
                     </systemProperties>
+                    <reuseForks>true</reuseForks>
                 </configuration>
             </plugin>
             <plugin>

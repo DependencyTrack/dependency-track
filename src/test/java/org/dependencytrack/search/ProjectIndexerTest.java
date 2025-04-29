@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
+import static org.awaitility.Awaitility.await;
+
 class ProjectIndexerTest extends PersistenceCapableTest {
 
     @Test
@@ -51,11 +53,13 @@ class ProjectIndexerTest extends PersistenceCapableTest {
         p.setName("Acme Application");
         p.setVersion("1.0.0");
         ProjectIndexer.getInstance().add(new ProjectDocument(p));
-        ProjectIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
-        Assertions.assertEquals(1, result.getResults().size());
-        Assertions.assertEquals(1, result.getResults().get("project").size());
+        commitIndex();
+
+        await().untilAsserted(() -> {
+            SearchResult result = SearchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
+            Assertions.assertEquals(1, result.getResults().size());
+            Assertions.assertEquals(1, result.getResults().get("project").size());
+        });
     }
 
     @Test
@@ -65,17 +69,23 @@ class ProjectIndexerTest extends PersistenceCapableTest {
         p.setName("Acme Application");
         p.setVersion("1.0.0");
         ProjectIndexer.getInstance().add(new ProjectDocument(p));
-        ProjectIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
+        commitIndex();
         ProjectIndexer.getInstance().remove(new ProjectDocument(p));
-        ProjectIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
-        Assertions.assertEquals(1, result.getResults().size());
-        Assertions.assertEquals(0, result.getResults().get("project").size());
+        commitIndex();
+
+        await().untilAsserted(() -> {
+            SearchResult result = SearchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
+            Assertions.assertEquals(1, result.getResults().size());
+            Assertions.assertEquals(0, result.getResults().get("project").size());
+        });
     }
 
     @Test
     void reindexTest() {
         ProjectIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        IndexManagerTestUtil.commitIndex(ProjectIndexer.getInstance());
     }
 }

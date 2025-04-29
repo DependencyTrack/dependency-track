@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
+import static org.awaitility.Awaitility.await;
+
 class ServiceComponentIndexerTest extends PersistenceCapableTest {
 
     @Test
@@ -53,11 +55,13 @@ class ServiceComponentIndexerTest extends PersistenceCapableTest {
         s.setName("stock-ticker");
         s.setVersion("1.0.0");
         ServiceComponentIndexer.getInstance().add(new ServiceComponentDocument(s));
-        ServiceComponentIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(ServiceComponentIndexer.getInstance(), s.getUuid().toString(), 10);
-        Assertions.assertEquals(1, result.getResults().size());
-        Assertions.assertEquals(1, result.getResults().get("servicecomponent").size());
+        commitIndex();
+
+        await().untilAsserted(() -> {
+            SearchResult result = SearchManager.searchIndex(ServiceComponentIndexer.getInstance(), s.getUuid().toString(), 10);
+            Assertions.assertEquals(1, result.getResults().size());
+            Assertions.assertEquals(1, result.getResults().get("servicecomponent").size());
+        });
     }
 
     @Test
@@ -68,17 +72,23 @@ class ServiceComponentIndexerTest extends PersistenceCapableTest {
         s.setName("stock-ticker");
         s.setVersion("1.0.0");
         ServiceComponentIndexer.getInstance().add(new ServiceComponentDocument(s));
-        ServiceComponentIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
+        commitIndex();
         ServiceComponentIndexer.getInstance().remove(new ServiceComponentDocument(s));
-        ServiceComponentIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(ServiceComponentIndexer.getInstance(), s.getUuid().toString(), 10);
-        Assertions.assertEquals(1, result.getResults().size());
-        Assertions.assertEquals(0, result.getResults().get("servicecomponent").size());
+        commitIndex();
+
+        await().untilAsserted(() -> {
+            SearchResult result = SearchManager.searchIndex(ServiceComponentIndexer.getInstance(), s.getUuid().toString(), 10);
+            Assertions.assertEquals(1, result.getResults().size());
+            Assertions.assertEquals(0, result.getResults().get("servicecomponent").size());
+        });
     }
 
     @Test
     void reindexTest() {
         ServiceComponentIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        IndexManagerTestUtil.commitIndex(ServiceComponentIndexer.getInstance());
     }
 }

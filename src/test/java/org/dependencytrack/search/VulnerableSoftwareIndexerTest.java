@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
+import static org.awaitility.Awaitility.await;
+
 class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
 
     @Test
@@ -55,11 +57,13 @@ class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         vulnerableSoftware.setProduct("product");
         vulnerableSoftware.setVersion("version");
         VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vulnerableSoftware));
-        VulnerableSoftwareIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getCpe23(), 10);
-        Assertions.assertEquals(1, result.getResults().size());
-        Assertions.assertEquals(1, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
+        commitIndex();
+
+        await().untilAsserted(() -> {
+            SearchResult result = SearchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getCpe23(), 10);
+            Assertions.assertEquals(1, result.getResults().size());
+            Assertions.assertEquals(1, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
+        });
     }
 
     @Test
@@ -72,17 +76,24 @@ class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         vulnerableSoftware.setProduct("product");
         vulnerableSoftware.setVersion("version");
         VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vulnerableSoftware));
-        VulnerableSoftwareIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
+        commitIndex();
+
         VulnerableSoftwareIndexer.getInstance().remove(new VulnerableSoftwareDocument(vulnerableSoftware));
-        VulnerableSoftwareIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getUuid().toString(), 10);
-        Assertions.assertEquals(1, result.getResults().size());
-        Assertions.assertEquals(0, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
+        commitIndex();
+
+        await().untilAsserted(() -> {
+            SearchResult result = SearchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getUuid().toString(), 10);
+            Assertions.assertEquals(1, result.getResults().size());
+            Assertions.assertEquals(0, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
+        });
     }
 
     @Test
     void reindexTest() {
         VulnerableSoftwareIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        IndexManagerTestUtil.commitIndex(VulnerableSoftwareIndexer.getInstance());
     }
 }

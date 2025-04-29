@@ -75,8 +75,7 @@ public class SearchResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response aggregateSearch(@QueryParam("query") String query) {
-        final SearchManager searchManager = new SearchManager();
-        final SearchResult searchResult = searchManager.searchIndices(query, 1000);
+        final SearchResult searchResult = SearchManager.searchIndices(query, 1000);
         return Response.ok(searchResult).build();
     }
 
@@ -97,8 +96,7 @@ public class SearchResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response projectSearch(@QueryParam("query") String query) {
-        final SearchManager searchManager = new SearchManager();
-        final SearchResult searchResult = searchManager.searchProjectIndex(query, 1000);
+        final SearchResult searchResult = SearchManager.searchProjectIndex(query, 1000);
         return Response.ok(searchResult).build();
     }
 
@@ -119,8 +117,7 @@ public class SearchResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response componentSearch(@QueryParam("query") String query) {
-        final SearchManager searchManager = new SearchManager();
-        final SearchResult searchResult = searchManager.searchComponentIndex(query, 1000);
+        final SearchResult searchResult = SearchManager.searchComponentIndex(query, 1000);
         return Response.ok(searchResult).build();
     }
 
@@ -141,8 +138,7 @@ public class SearchResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response serviceSearch(@QueryParam("query") String query) {
-        final SearchManager searchManager = new SearchManager();
-        final SearchResult searchResult = searchManager.searchServiceComponentIndex(query, 1000);
+        final SearchResult searchResult = SearchManager.searchServiceComponentIndex(query, 1000);
         return Response.ok(searchResult).build();
     }
 
@@ -163,8 +159,7 @@ public class SearchResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response licenseSearch(@QueryParam("query") String query) {
-        final SearchManager searchManager = new SearchManager();
-        final SearchResult searchResult = searchManager.searchLicenseIndex(query, 1000);
+        final SearchResult searchResult = SearchManager.searchLicenseIndex(query, 1000);
         return Response.ok(searchResult).build();
     }
 
@@ -185,8 +180,7 @@ public class SearchResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response vulnerabilitySearch(@QueryParam("query") String query) {
-        final SearchManager searchManager = new SearchManager();
-        final SearchResult searchResult = searchManager.searchVulnerabilityIndex(query, 1000);
+        final SearchResult searchResult = SearchManager.searchVulnerabilityIndex(query, 1000);
         return Response.ok(searchResult).build();
     }
 
@@ -212,8 +206,7 @@ public class SearchResource extends AlpineResource {
             final SearchResult searchResult = searchManager.searchIndex(FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp(cpe));
             return Response.ok(searchResult).build();
         } else {
-            final SearchManager searchManager = new SearchManager();
-            final SearchResult searchResult = searchManager.searchVulnerableSoftwareIndex(query, 1000);
+            final SearchResult searchResult = SearchManager.searchVulnerableSoftwareIndex(query, 1000);
             return Response.ok(searchResult).build();
         }
     }
@@ -240,8 +233,7 @@ public class SearchResource extends AlpineResource {
             return Response.status(Response.Status.BAD_REQUEST).entity("No valid index type was provided").build();
         }
         try {
-            final SearchManager searchManager = new SearchManager();
-            String chainIdentifier = searchManager.reindex(type);
+            String chainIdentifier = SearchManager.reindex(type);
             return Response.ok(Collections.singletonMap("token", chainIdentifier)).build();
         } catch (IllegalArgumentException exception) {
             return Response.status(Response.Status.BAD_REQUEST).entity(exception.getMessage()).build();

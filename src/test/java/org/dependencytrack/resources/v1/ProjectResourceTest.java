@@ -273,7 +273,18 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
-        Assertions.assertEquals("ABC", json.getJsonObject(0).getString("name"));
+        Assertions.assertEquals(2, json.size());
+        assertThat(json.size()).isEqualTo(2);
+        assertThat(json).satisfiesExactlyInAnyOrder(
+                item -> {
+                    final var object = (JsonObject) item;
+                    Assertions.assertEquals("ABC", object.getString("name"));
+                },
+                item -> {
+                    final var object = (JsonObject) item;
+                    Assertions.assertEquals("DEF", object.getString("name"));
+                }
+        );
     }
 
     @Test
@@ -290,7 +301,18 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
-        Assertions.assertEquals("DEF", json.getJsonObject(0).getString("name"));
+        Assertions.assertEquals(2, json.size());
+        assertThat(json.size()).isEqualTo(2);
+        assertThat(json).satisfiesExactlyInAnyOrder(
+                item -> {
+                    final var object = (JsonObject) item;
+                    Assertions.assertEquals("ABC", object.getString("name"));
+                },
+                item -> {
+                    final var object = (JsonObject) item;
+                    Assertions.assertEquals("DEF", object.getString("name"));
+                }
+        );
     }
 
     @Test
@@ -432,6 +454,7 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
+        Assertions.assertEquals(1, json.size());
         Assertions.assertEquals("ABC", json.getJsonObject(0).getString("name"));
     }
 
@@ -450,6 +473,7 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
+        Assertions.assertEquals(1, json.size());
         Assertions.assertEquals("ABC", json.getJsonObject(0).getString("name"));
     }
 
@@ -1800,8 +1824,8 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
+        Assertions.assertEquals(1, json.size());
         Assertions.assertEquals("ABC", json.getJsonObject(0).getString("name"));
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> json.getJsonObject(1));
     }
 
     @Test
@@ -1818,8 +1842,11 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
-        Assertions.assertEquals("DEF", json.getJsonObject(0).getString("name"));
-        Assertions.assertEquals("GHI", json.getJsonObject(1).getString("name"));
+
+        assertThat(json).satisfiesExactlyInAnyOrder(
+            item -> assertThat(((JsonObject) item).getString("name")).isEqualTo("DEF"),
+            item -> assertThat(((JsonObject) item).getString("name")).isEqualTo("GHI")
+        );
     }
 
     @Test
@@ -1881,6 +1908,7 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
+        Assertions.assertEquals(1, json.size());
         Assertions.assertEquals("ABC", json.getJsonObject(0).getString("name"));
     }
 

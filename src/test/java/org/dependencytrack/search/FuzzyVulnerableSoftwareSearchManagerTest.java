@@ -57,7 +57,7 @@ class FuzzyVulnerableSoftwareSearchManagerTest {
         vs.setCpe23("cpe:2.3:a:libexpat_project:libexpat:2.2.2:*:*:*:*:*:*:*");
         vs.setProduct("libexpat");
         VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vs));
-        VulnerableSoftwareIndexer.getInstance().commit();
+        commitIndex();
     }
     @AfterAll
     public static void restoreVsIndex() throws IOException {
@@ -115,5 +115,9 @@ class FuzzyVulnerableSoftwareSearchManagerTest {
         "cpe:2.3:a:dell:emc_vnx2_operating_environment:*:*:*:*:*:file:*:*").matches());
         Assertions.assertTrue(pattern.matcher(
                 "cpe:2.3:a:*:file:*:*:*:*:*:file:*:*").matches());
+    }
+
+    private static void commitIndex() {
+        IndexManagerTestUtil.commitIndex(VulnerableSoftwareIndexer.getInstance());
     }
 }

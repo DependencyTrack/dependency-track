@@ -55,10 +55,21 @@ public class TagDeduplicationPreUpgradeHook implements PreUpgradeHook {
 
     @Override
     public void execute(final Connection connection) throws Exception {
+        final boolean hasNotificationRuleTagsTable;
+        try (final ResultSet rs = connection.getMetaData().getTables(null, null, "NOTIFICATIONRULE_TAGS", null)) {
+            hasNotificationRuleTagsTable = rs.next();
+        }
+        if (!hasNotificationRuleTagsTable) {
+            // Happens when directly upgrading from a version older than v4.11.0.
+            LOGGER.info("NOTIFICATIONRULE_TAGS table does not exist yet");
+        }
+
         final Set<TagDuplicateRecord> dupeTagRecords = getDuplicateTags(connection);
         if (!dupeTagRecords.isEmpty()) {
             LOGGER.info("Identified %s duplicate tag records; Updating relationships".formatted(dupeTagRecords.size()));
-            updateTagRelationships(connection, dupeTagRecords, "NOTIFICATIONRULE_TAGS");
+            if (hasNotificationRuleTagsTable) {
+                updateTagRelationships(connection, dupeTagRecords, "NOTIFICATIONRULE_TAGS");
+            }
             updateTagRelationships(connection, dupeTagRecords, "POLICY_TAGS");
             updateTagRelationships(connection, dupeTagRecords, "PROJECTS_TAGS");
             updateCollectionTags(connection, dupeTagRecords);
@@ -69,13 +80,15 @@ public class TagDeduplicationPreUpgradeHook implements PreUpgradeHook {
             LOGGER.info("No duplicate tags found");
         }
 
-        final Set<TagRelationshipRecord> dupeNotificationRuleTagsRecords =
-                getDuplicateTagsRelationshipRecords(connection, "NOTIFICATIONRULE_TAGS", "NOTIFICATIONRULE_ID");
-        if (!dupeNotificationRuleTagsRecords.isEmpty()) {
-            LOGGER.info("De-duplicating %d records in \"NOTIFICATIONRULE_TAGS\" table".formatted(dupeNotificationRuleTagsRecords.size()));
-            deduplicateTagRelationshipRecords(connection, dupeNotificationRuleTagsRecords, "NOTIFICATIONRULE_TAGS", "NOTIFICATIONRULE_ID");
-        } else {
-            LOGGER.info("No duplicate \"NOTIFICATIONRULE_TAGS\" records found");
+        if (hasNotificationRuleTagsTable) {
+            final Set<TagRelationshipRecord> dupeNotificationRuleTagsRecords =
+                    getDuplicateTagsRelationshipRecords(connection, "NOTIFICATIONRULE_TAGS", "NOTIFICATIONRULE_ID");
+            if (!dupeNotificationRuleTagsRecords.isEmpty()) {
+                LOGGER.info("De-duplicating %d records in \"NOTIFICATIONRULE_TAGS\" table".formatted(dupeNotificationRuleTagsRecords.size()));
+                deduplicateTagRelationshipRecords(connection, dupeNotificationRuleTagsRecords, "NOTIFICATIONRULE_TAGS", "NOTIFICATIONRULE_ID");
+            } else {
+                LOGGER.info("No duplicate \"NOTIFICATIONRULE_TAGS\" records found");
+            }
         }
 
         final Set<TagRelationshipRecord> dupePolicyTagsRecords =

@@ -52,8 +52,7 @@ class ProjectIndexerTest extends PersistenceCapableTest {
         p.setVersion("1.0.0");
         ProjectIndexer.getInstance().add(new ProjectDocument(p));
         commitIndex();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
+        SearchResult result = SearchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(1, result.getResults().get("project").size());
     }
@@ -66,10 +65,9 @@ class ProjectIndexerTest extends PersistenceCapableTest {
         p.setVersion("1.0.0");
         ProjectIndexer.getInstance().add(new ProjectDocument(p));
         commitIndex();
-        SearchManager searchManager = new SearchManager();
         ProjectIndexer.getInstance().remove(new ProjectDocument(p));
         commitIndex();
-        SearchResult result = searchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
+        SearchResult result = SearchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(0, result.getResults().get("project").size());
     }

@@ -50,8 +50,7 @@ class LicenseIndexerTest extends PersistenceCapableTest {
         l.setLicenseId("acme-license");
         LicenseIndexer.getInstance().add(new LicenseDocument(l));
         LicenseIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
+        SearchResult result = SearchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(1, result.getResults().get("license").size());
     }
@@ -64,10 +63,9 @@ class LicenseIndexerTest extends PersistenceCapableTest {
         l.setLicenseId("acme-license");
         LicenseIndexer.getInstance().add(new LicenseDocument(l));
         LicenseIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
         LicenseIndexer.getInstance().remove(new LicenseDocument(l));
         LicenseIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
+        SearchResult result = SearchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(0, result.getResults().get("license").size());
     }

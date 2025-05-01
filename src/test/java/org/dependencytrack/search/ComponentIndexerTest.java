@@ -54,8 +54,7 @@ class ComponentIndexerTest extends PersistenceCapableTest {
         c.setVersion("1.0.0");
         ComponentIndexer.getInstance().add(new ComponentDocument(c));
         ComponentIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
+        SearchResult result = SearchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(1, result.getResults().get("component").size());
     }
@@ -69,10 +68,9 @@ class ComponentIndexerTest extends PersistenceCapableTest {
         c.setVersion("1.0.0");
         ComponentIndexer.getInstance().add(new ComponentDocument(c));
         ComponentIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
         ComponentIndexer.getInstance().remove(new ComponentDocument(c));
         ComponentIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
+        SearchResult result = SearchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(0, result.getResults().get("component").size());
     }

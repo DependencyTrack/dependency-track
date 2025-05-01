@@ -63,8 +63,7 @@ class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vulnerableSoftware));
         commitIndex();
 
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getCpe23(), 10);
+        SearchResult result = SearchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getCpe23(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(1, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
     }
@@ -81,11 +80,10 @@ class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vulnerableSoftware));
         commitIndex();
 
-        SearchManager searchManager = new SearchManager();
         VulnerableSoftwareIndexer.getInstance().remove(new VulnerableSoftwareDocument(vulnerableSoftware));
         commitIndex();
 
-        SearchResult result = searchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getUuid().toString(), 10);
+        SearchResult result = SearchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(0, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
     }

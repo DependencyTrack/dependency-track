@@ -38,10 +38,7 @@ public abstract class PersistenceCapableTest {
         Config.enableUnitTests();
 
         // ensure nothing is left open so the database is properly cleaned up between tests
-        System.setProperty(Config.AlpineKey.DATABASE_POOL_TX_MAX_LIFETIME.getPropertyName(), "0");
-        System.setProperty(Config.AlpineKey.DATABASE_POOL_NONTX_MAX_LIFETIME.getPropertyName(), "0");
-        System.setProperty(Config.AlpineKey.DATABASE_POOL_TX_IDLE_TIMEOUT.getPropertyName(), "0");
-        System.setProperty(Config.AlpineKey.DATABASE_POOL_NONTX_IDLE_TIMEOUT.getPropertyName(), "0");
+        System.setProperty(Config.AlpineKey.DATABASE_POOL_ENABLED.getPropertyName(), "false");
     }
 
     @BeforeEach

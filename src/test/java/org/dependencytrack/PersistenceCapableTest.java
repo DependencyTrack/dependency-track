@@ -60,6 +60,16 @@ public abstract class PersistenceCapableTest {
             qm.getPersistenceManager().currentTransaction().rollback();
         }
 
+        // Add a small delay to allow pending operations to complete
+        // FIXME This is a very dumb "solution" and probably only reduces the probability of any connection errors to
+        //       occur. The underlying issue (it seems) is that some resource is not closed properly in time. The error
+        //       is non-deterministic.
+        try {
+            Thread.sleep(Duration.ofMillis(100));
+        } catch (InterruptedException e) {
+            // Ignore
+        }
+
         try {
             // Make sure the in-memory H2 database is closed before the next test is run.
             qm.getPersistenceManager().setProperty(PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL, "true");

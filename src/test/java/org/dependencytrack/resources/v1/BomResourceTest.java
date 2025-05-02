@@ -59,6 +59,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junitpioneer.jupiter.DefaultLocale;
 
 import java.nio.charset.StandardCharsets;
@@ -980,6 +982,59 @@ class BomResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assertions.assertEquals(403, response.getStatus(), 0);
+    }
+
+    @ParameterizedTest
+    @MethodSource("uploadBomIsLatestTestParameters")
+    void uploadBomIsLatestTest(Boolean isLatestProjectVersion, Boolean isLatest, boolean expectedIsLatest) throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        var project = new Project();
+        project.setName("uploadBomIsLatest");
+        project.setVersion("1.0.0");
+        project.setIsLatest(true);
+        qm.persist(project);
+        
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append("{");
+        jsonBuilder.append("\"projectName\": \"uploadBomIsLatest\",");
+        jsonBuilder.append("\"projectVersion\": \"1.0.1\",");
+        jsonBuilder.append("\"autoCreate\": true,");
+        jsonBuilder.append("\"bom\": \"").append(bomString).append("\"");
+        if (isLatestProjectVersion != null) {
+            jsonBuilder.append(",\"isLatestProjectVersion\": ").append(isLatestProjectVersion);
+        }
+        if (isLatest != null) {
+            jsonBuilder.append(",\"isLatest\": ").append(isLatest);
+        }
+        jsonBuilder.append("}");
+        String jsonRequest = jsonBuilder.toString();
+
+        Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(jsonRequest, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        project = qm.getProject("uploadBomIsLatest", "1.0.1");
+        Assertions.assertNotNull(project);
+        Assertions.assertEquals(expectedIsLatest, project.isLatest());
+    }
+
+    private static Object[] uploadBomIsLatestTestParameters() {
+        return new Object[] {
+            new Object[] { true, null, true },
+            new Object[] { true, true, true },
+            new Object[] { true, false, false },
+            new Object[] { false, null, false },
+            new Object[] { false, true, true },
+            new Object[] { false, false, false },
+            new Object[] { null, null, false },
+            new Object[] { null, true, true },
+            new Object[] { null, false, false },
+        };
     }
 
     @Test

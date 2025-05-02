@@ -18,13 +18,19 @@
  */
 package org.dependencytrack.search;
 
+import org.apache.lucene.index.IndexWriter;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.search.document.ProjectDocument;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 class ProjectIndexerTest extends PersistenceCapableTest {
 
@@ -51,7 +57,7 @@ class ProjectIndexerTest extends PersistenceCapableTest {
         p.setName("Acme Application");
         p.setVersion("1.0.0");
         ProjectIndexer.getInstance().add(new ProjectDocument(p));
-        ProjectIndexer.getInstance().commit();
+        commitIndex();
         SearchResult result = SearchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(1, result.getResults().get("project").size());
@@ -64,9 +70,9 @@ class ProjectIndexerTest extends PersistenceCapableTest {
         p.setName("Acme Application");
         p.setVersion("1.0.0");
         ProjectIndexer.getInstance().add(new ProjectDocument(p));
-        ProjectIndexer.getInstance().commit();
+        commitIndex();
         ProjectIndexer.getInstance().remove(new ProjectDocument(p));
-        ProjectIndexer.getInstance().commit();
+        commitIndex();
         SearchResult result = SearchManager.searchIndex(ProjectIndexer.getInstance(), p.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(0, result.getResults().get("project").size());
@@ -75,5 +81,25 @@ class ProjectIndexerTest extends PersistenceCapableTest {
     @Test
     void reindexTest() {
         ProjectIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        ProjectIndexer.getInstance().commit();
+        final IndexWriter indexWriter;
+        try {
+            indexWriter = ProjectIndexer.getInstance().getIndexWriter();
+        } catch (IOException e) {
+            Assertions.fail("Unable to get IndexWriter", e);
+            return;
+        }
+        try {
+            indexWriter.flush();
+        } catch (IOException e) {
+            Assertions.fail("Unable to flush IndexWriter", e);
+            return;
+        }
+        await("Indexer flush")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(indexWriter.hasUncommittedChanges()).isFalse());
     }
 }

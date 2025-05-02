@@ -88,6 +88,11 @@ class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         Assertions.assertEquals(0, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
     }
 
+    @Test
+    void reindexTest() {
+        VulnerableSoftwareIndexer.getInstance().reindex();
+    }
+
     private static void commitIndex() {
         VulnerableSoftwareIndexer.getInstance().commit();
         final IndexWriter indexWriter;
@@ -106,10 +111,5 @@ class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         await("Indexer flush")
                 .atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> assertThat(indexWriter.hasUncommittedChanges()).isFalse());
-    }
-
-    @Test
-    void reindexTest() {
-        VulnerableSoftwareIndexer.getInstance().reindex();
     }
 }

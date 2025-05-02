@@ -331,7 +331,7 @@ public class BomResource extends AlpineResource {
                             }
                         }
                         final String trimmedProjectName = StringUtils.trimToNull(request.getProjectName());
-                        if(request.isLatestProjectVersion()) {
+                        if(request.isLatest()) {
                             final Project oldLatest = qm.getLatestProjectVersion(trimmedProjectName);
                             if(oldLatest != null && !qm.hasAccess(super.getPrincipal(), oldLatest)) {
                                 return Response.status(Response.Status.FORBIDDEN)
@@ -343,7 +343,7 @@ public class BomResource extends AlpineResource {
 
                         project = qm.createProject(trimmedProjectName, null,
                                 StringUtils.trimToNull(request.getProjectVersion()), request.getProjectTags(), parent,
-                                null, true, request.isLatestProjectVersion(), true);
+                                null, true, request.isLatest(), true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
                     } else {

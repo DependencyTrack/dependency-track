@@ -167,7 +167,7 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
 
         // Fetch findings that were attributed since the last notification.
         final List<NewFinding> newFindings = getNewFindingsSince(qm, projectIds, rule.getScheduleLastTriggeredAt());
-        if (Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())) {
+        if (newFindings.isEmpty() && Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())) {
             LOGGER.info("No new findings since rule was last processed at %s".formatted(
                     DateUtil.toISO8601(rule.getScheduleLastTriggeredAt())));
             return null;
@@ -258,7 +258,7 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
 
         final List<NewPolicyViolation> newViolations =
                 getNewPolicyViolationsSince(qm, projectIds, rule.getScheduleLastTriggeredAt());
-        if (Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())) {
+        if (newViolations.isEmpty() && Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())) {
             LOGGER.info("No new policy violations since rule was last processed at %s".formatted(
                     DateUtil.toISO8601(rule.getScheduleLastTriggeredAt())));
             return null;

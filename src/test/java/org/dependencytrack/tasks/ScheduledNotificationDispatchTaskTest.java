@@ -189,6 +189,7 @@ public class ScheduledNotificationDispatchTaskTest extends PersistenceCapableTes
         rule.setScheduleCron("* * * * *"); // Every minute.
         rule.setScheduleLastTriggeredAt(Date.from(ruleLastFiredAt));
         rule.updateScheduleNextTriggerAt();
+        rule.setScheduleSkipUnchanged(true);
         rule.setEnabled(true);
 
         new ScheduledNotificationDispatchTask().inform(new ScheduledNotificationDispatchEvent());
@@ -418,6 +419,7 @@ public class ScheduledNotificationDispatchTaskTest extends PersistenceCapableTes
         rule.setScheduleCron("* * * * *"); // Every minute.
         rule.setScheduleLastTriggeredAt(Date.from(ruleLastFiredAt));
         rule.updateScheduleNextTriggerAt();
+        rule.setScheduleSkipUnchanged(true);
         rule.setEnabled(true);
 
         new ScheduledNotificationDispatchTask().inform(new ScheduledNotificationDispatchEvent());
@@ -546,6 +548,68 @@ public class ScheduledNotificationDispatchTaskTest extends PersistenceCapableTes
                           "ruleId": "${json-unit.matches:ruleId}"
                         }
                         """);
+    }
+
+    @Test
+    public void shouldNotDispatchNotificationWhenNoNewFindingsAndSkipPublishIfUnchangedIsEnabled() {
+        final Instant ruleLastFiredAt = Instant.now().minus(10, ChronoUnit.MINUTES);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var publisher = qm.createNotificationPublisher(
+                "foo", null, WebhookPublisher.class, "template", "templateMimeType", false);
+        final var rule = qm.createScheduledNotificationRule(
+                "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(
+                NotificationGroup.NEW_VULNERABILITIES_SUMMARY,
+                NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY));
+        rule.setProjects(List.of(project));
+        rule.setNotifyChildren(true);
+        rule.setScheduleCron("* * * * *"); // Every minute.
+        rule.setScheduleLastTriggeredAt(Date.from(ruleLastFiredAt));
+        rule.updateScheduleNextTriggerAt();
+        rule.setScheduleSkipUnchanged(true);
+        rule.setEnabled(true);
+
+        new ScheduledNotificationDispatchTask().inform(new ScheduledNotificationDispatchEvent());
+
+        assertThat(NOTIFICATIONS.poll()).isNull();
+    }
+
+    @Test
+    public void shouldDispatchNotificationWhenNoNewFindingsAndSkipPublishIfUnchangedIsDisabled() {
+        final Instant ruleLastFiredAt = Instant.now().minus(10, ChronoUnit.MINUTES);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var publisher = qm.createNotificationPublisher(
+                "foo", null, WebhookPublisher.class, "template", "templateMimeType", false);
+        final var rule = qm.createScheduledNotificationRule(
+                "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(
+                NotificationGroup.NEW_VULNERABILITIES_SUMMARY,
+                NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY));
+        rule.setProjects(List.of(project));
+        rule.setNotifyChildren(true);
+        rule.setScheduleCron("* * * * *"); // Every minute.
+        rule.setScheduleLastTriggeredAt(Date.from(ruleLastFiredAt));
+        rule.updateScheduleNextTriggerAt();
+        rule.setScheduleSkipUnchanged(false);
+        rule.setEnabled(true);
+
+        new ScheduledNotificationDispatchTask().inform(new ScheduledNotificationDispatchEvent());
+
+        await("Notification Dispatch")
+                .atMost(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(NOTIFICATIONS.size()).isEqualTo(2));
+
+        assertThat(NOTIFICATIONS).satisfiesExactlyInAnyOrder(
+                notification -> assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITIES_SUMMARY.name()),
+                notification -> assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY.name()));
     }
 
 }

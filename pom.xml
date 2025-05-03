@@ -135,8 +135,6 @@
         <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
-        <!-- Tool Versions -->
-        <tool.protoc.version>com.google.protobuf:protoc:${lib.protobuf-java.version}</tool.protoc.version>
         <!-- CycloneDX CLI -->
         <cyclonedx-cli.path>cyclonedx</cyclonedx-cli.path>
         <services.bom.merge.skip>true</services.bom.merge.skip>
@@ -594,26 +592,21 @@
                 </dependencies>
             </plugin>
             <plugin>
-                <groupId>com.github.os72</groupId>
-                <artifactId>protoc-jar-maven-plugin</artifactId>
-                <version>${plugin.protoc-jar.version}</version>
+                <groupId>io.github.ascopes</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <protocVersion>${lib.protobuf-java.version}</protocVersion>
+                    <sourceDirectories>
+                        <sourceDirectory>${project.basedir}/src/main/proto</sourceDirectory>
+                    </sourceDirectories>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>protobuf</id>
                         <phase>generate-sources</phase>
                         <goals>
-                            <goal>run</goal>
+                            <goal>generate</goal>
                         </goals>
-                        <configuration>
-                            <includeMavenTypes>direct</includeMavenTypes>
-                            <inputDirectories>
-                                <inputDirectory>src/main/proto</inputDirectory>
-                            </inputDirectories>
-                            <includeDirectories>
-                                <includeDirectory>src/main/proto</includeDirectory>
-                            </includeDirectories>
-                            <protocArtifact>${tool.protoc.version}</protocArtifact>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

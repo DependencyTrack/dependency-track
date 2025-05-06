@@ -40,7 +40,7 @@ import java.util.Date;
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Index(name = "COMPONENT_COMPOSITE_PROJECT_ID_IDX", members = {"project", "id"})
+@Index(name = "PROJECTMETRICS_COMPOSITE_LAST_OCCURRENCE_IDX", members = {"project", "lastOccurrence"})
 public class ProjectMetrics implements Serializable {
 
     private static final long serialVersionUID = 8741534340846353210L;

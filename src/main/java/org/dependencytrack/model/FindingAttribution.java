@@ -25,7 +25,9 @@ import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
 import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Indices;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -42,8 +44,24 @@ import java.util.UUID;
  * @since 4.0.0
  */
 @PersistenceCapable
-@Index(name = "FINDINGATTRIBUTION_COMPOUND_IDX", members = {"component", "vulnerability"})
-@Index(name = "FINDINGATTRIBUTION_COMPOSITE_VULNERABILITY_ATTRIBUTED_IDX", members = {"component", "vulnerability", "attributedOn"})
+@Indices({
+        @Index(
+                name    = "FINDINGATTRIBUTION_COMPOUND_IDX",
+                members = { "component", "vulnerability" }
+        ),
+        @Index(
+                name       = "FINDINGATTRIBUTION_COMPOSITE_VULNERABILITY_ATTRIBUTED_IDX",
+                members    = { "component", "vulnerability", "attributedOn" },
+                extensions = {
+                        @Extension(
+                                vendorName = "datanucleus",
+                                key        = "index-column-ordering",
+                                // first two columns ASC (default), third DESC
+                                value      = "ASC,ASC,DESC"
+                        )
+                }
+        )
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FindingAttribution implements Serializable {
 

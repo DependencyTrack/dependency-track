@@ -26,6 +26,7 @@ import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Indices;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
@@ -45,8 +46,16 @@ import java.util.List;
 @PersistenceCapable
 @Unique(name="ANALYSIS_COMPOSITE_IDX", members={"project", "component", "vulnerability"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Index(name = "ANALYSIS_COMPOSITE_VULNERABILITY_PROJECT_IDX", members = {"component", "vulnerability", "project"})
-@Index(name = "ANALYSIS_COMPOSITE_VULNERABILITY_PROJECT_SUPPRESSED_IDX", members = {"component", "vulnerability", "project", "suppressed"})
+@Indices({
+        @Index(
+                name    = "ANALYSIS_COMPOSITE_VULNERABILITY_PROJECT_IDX",
+                members = { "component", "vulnerability", "project" }
+        ),
+        @Index(
+                name    = "ANALYSIS_COMPOSITE_VULNERABILITY_PROJECT_SUPPRESSED_IDX",
+                members = { "component", "vulnerability", "project", "suppressed" }
+        )
+})
 public class Analysis implements Serializable {
 
     @PrimaryKey

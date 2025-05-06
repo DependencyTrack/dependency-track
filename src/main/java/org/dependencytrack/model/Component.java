@@ -47,6 +47,7 @@ import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
 import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Indices;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
 import javax.jdo.annotations.Order;
@@ -122,7 +123,19 @@ import java.util.UUID;
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Index(name = "COMPONENT_COMPOSITE_PROJECT_ID_IDX", members = {"project", "id"})
+@Indices({
+        @Index(
+                name       = "COMPONENT_COMPOSITE_PROJECT_ID_IDX",
+                members    = { "project", "id" },
+                extensions = {
+                        @Extension(
+                                vendorName = "datanucleus",
+                                key        = "index-column-ordering",
+                                value      = "ASC,DESC"   // project ASC (default), id DESC
+                        )
+                }
+        )
+})
 public class Component implements Serializable {
 
     private static final long serialVersionUID = 6841650046433674702L;

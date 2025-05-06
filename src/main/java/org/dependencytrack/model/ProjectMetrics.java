@@ -24,7 +24,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Indices;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -40,7 +42,19 @@ import java.util.Date;
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Index(name = "PROJECTMETRICS_COMPOSITE_LAST_OCCURRENCE_IDX", members = {"project", "lastOccurrence"})
+@Indices({
+        @Index(
+                name    = "PROJECTMETRICS_COMPOSITE_LAST_OCCURRENCE_IDX",
+                members = { "project", "lastOccurrence" },
+                extensions = {
+                        @Extension(
+                                vendorName = "datanucleus",
+                                key        = "index-column-ordering",
+                                value      = "ASC,DESC"  // project ASC (default), lastOccurrence DESC
+                        )
+                }
+        )
+})
 public class ProjectMetrics implements Serializable {
 
     private static final long serialVersionUID = 8741534340846353210L;

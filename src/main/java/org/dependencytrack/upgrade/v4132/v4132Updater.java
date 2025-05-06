@@ -21,10 +21,13 @@ package org.dependencytrack.upgrade.v4132;
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
+import alpine.server.util.DbUtil;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
 
 public class v4132Updater extends AbstractUpgradeItem {
 
@@ -147,9 +150,10 @@ public class v4132Updater extends AbstractUpgradeItem {
 
     private void analyzeNewIndexes(final Connection connection) throws SQLException {
         try (final Statement stmt = connection.createStatement()) {
-            LOGGER.info("Running ANALYZE on tables with new indexes");
-            stmt.execute(/* language=SQL */ """
-                    ANALYZE
+            if (DbUtil.isPostgreSQL()) {
+                LOGGER.info("Running ANALYZE on tables with new indexes for PostgreSQL");
+                stmt.execute(/* language=SQL */ """
+                        ANALYZE
                       "ANALYSIS",
                       "COMPONENT",
                       "COMPONENTS_VULNERABILITIES",
@@ -159,6 +163,57 @@ public class v4132Updater extends AbstractUpgradeItem {
                       "PROJECTMETRICS",
                       "VULNERABILITY",
                     """);
+            }
+
+            if (DbUtil.isMysql()) {
+                LOGGER.info("Running ANALYZE on tables with new indexes for MySQL");
+                for (String tbl : List.of(
+                        "DEPENDENCYMETRICS",
+                        "COMPONENT",
+                        "COMPONENTS_VULNERABILITIES",
+                        "PROJECTMETRICS",
+                        "VULNERABILITY",
+                        "FINDINGATTRIBUTION",
+                        "ANALYSIS",
+                        "PROJECT")) {
+                    stmt.execute("ANALYZE TABLE `" + tbl + "`");
+                }
+            }
+
+            if (DbUtil.isMssql()) {
+                LOGGER.info("Running updatestats on tables with new indexes for MSSQL");
+                stmt.execute("EXEC sp_updatestats");
+            }
+
+            if (DbUtil.isOracle()) {
+                LOGGER.info("Gathering table stats for Oracle");
+                for (String tbl : Arrays.asList(
+                        "DEPENDENCYMETRICS",
+                        "COMPONENT",
+                        "COMPONENTS_VULNERABILITIES",
+                        "PROJECTMETRICS",
+                        "VULNERABILITY",
+                        "FINDINGATTRIBUTION",
+                        "ANALYSIS",
+                        "PROJECT")) {
+
+                    String plsql =
+                            "BEGIN\n" +
+                                    "  DBMS_STATS.GATHER_TABLE_STATS(\n" +
+                                    "    ownname => USER,\n" +
+                                    "    tabname => '" + tbl + "',\n" +
+                                    "    cascade => TRUE\n" +
+                                    "  );\n" +
+                                    "END;";
+
+                    stmt.execute(plsql);
+                }
+            }
+
+            if (DbUtil.isH2()) {
+                LOGGER.info("Running ANALYZE for H2");
+                stmt.execute("ANALYZE");
+            }
         }
     }
 }

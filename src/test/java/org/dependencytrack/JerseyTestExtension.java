@@ -31,7 +31,9 @@ import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junitpioneer.jupiter.DefaultLocale;
 
+import java.util.Locale;
 import java.util.function.Supplier;
 
 /**
@@ -48,8 +50,14 @@ public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback 
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        this.jerseyTest = new JerseyTest() {
+        final var testClass = context.getRequiredTestClass();
+        final var defaultLocale = testClass.getAnnotation(DefaultLocale.class);
+        if (defaultLocale != null) {
+            final var locale = Locale.forLanguageTag(defaultLocale.value());
+            Locale.setDefault(locale);
+        }
 
+        this.jerseyTest = new JerseyTest() {
             @Override
             protected TestContainerFactory getTestContainerFactory() throws TestContainerException {
                 return new DTGrizzlyWebTestContainerFactory();
@@ -68,7 +76,6 @@ public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback 
                 return ServletDeploymentContext.forServlet(new ServletContainer(resourceConfigSupplier.get()
                         .packages("org.dependencytrack.resources.v1.exception"))).build();
             }
-
         };
         jerseyTest.setUp();
     }

@@ -257,6 +257,11 @@ public class BomResource extends AlpineResource {
                       <strong>PROJECT_CREATION_UPLOAD</strong> permission.
                     </p>
                     <p>
+                       The bom upload replaces all existing components. The analysis decisions are kept for components that were
+                       linked to the project before and are included in the uploaded BOM. Any components previously linked to the project
+                       that are not included in the uploaded BOM will be dropped from the project.
+                    </p>
+                    <p>
                       The BOM will be validated against the CycloneDX schema. If schema validation fails,
                       a response with problem details in RFC 9457 format will be returned. In this case,
                       the response's content type will be <code>application/problem+json</code>.
@@ -368,6 +373,11 @@ public class BomResource extends AlpineResource {
                       the project will be created. In this scenario, the principal making the request will
                       additionally need the <strong>PORTFOLIO_MANAGEMENT</strong> or
                       <strong>PROJECT_CREATION_UPLOAD</strong> permission.
+                    </p>
+                    <p>
+                       The bom upload replaces all existing components. The analysis decisions are kept for components that were
+                       linked to the project before and are included in the uploaded BOM. Any components previously linked to the project
+                       that are not included in the uploaded BOM will be dropped from the project.
                     </p>
                     <p>
                       The BOM will be validated against the CycloneDX schema. If schema validation fails,

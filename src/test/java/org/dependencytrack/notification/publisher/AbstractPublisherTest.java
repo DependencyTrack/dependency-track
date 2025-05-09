@@ -318,6 +318,54 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
+    public final void baseTestInformWithSeverityThatShouldTriggerNotification() {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var vuln = createVulnerability();
+
+        final var subject = new NewVulnerabilityIdentified(vuln, component, Set.of(project),
+                VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.NEW_VULNERABILITY)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.NEW_VULNERABILITY)
+                .content("")
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        // List contains a medium severity, so mail should be sent
+        List<Severity> severities = List.of(Severity.MEDIUM);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(), severities));
+    }
+
+    public final void baseTestInformWithSeverityThatShouldNotTriggerNotification() {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var vuln = createVulnerability();
+
+        final var subject = new NewVulnerabilityIdentified(vuln, component, Set.of(project),
+                VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.NEW_VULNERABILITY)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.NEW_VULNERABILITY)
+                .content("")
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        // List does NOT contain a medium severity, so mail should NOT be sent
+        List<Severity> severities = List.of(Severity.LOW);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig(), severities));
+    }
+
     private static Component createComponent(final Project project) {
         final var component = new Component();
         component.setProject(project);

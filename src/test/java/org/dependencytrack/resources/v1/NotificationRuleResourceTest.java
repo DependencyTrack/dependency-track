@@ -172,6 +172,7 @@ class NotificationRuleResourceTest extends ResourceTest {
                   "tags": [],
                   "teams": [],
                   "notifyOn": [],
+                  "notifySeverities": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO", "UNASSIGNED"],
                   "publisher": {
                     "name": "Slack",
                     "description": "${json-unit.any-string}",
@@ -299,6 +300,7 @@ class NotificationRuleResourceTest extends ResourceTest {
                           ],
                           "teams": [],
                           "notifyOn": [],
+                          "notifySeverities": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO", "UNASSIGNED"],
                           "publisher": {
                             "name": "${json-unit.any-string}",
                             "description": "${json-unit.any-string}",
@@ -347,6 +349,7 @@ class NotificationRuleResourceTest extends ResourceTest {
                           ],
                           "teams": [],
                           "notifyOn": [],
+                          "notifySeverities": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO", "UNASSIGNED"],
                           "publisher": {
                             "name": "${json-unit.any-string}",
                             "description": "${json-unit.any-string}",
@@ -453,6 +456,7 @@ class NotificationRuleResourceTest extends ResourceTest {
                           "tags": [],
                           "teams": [],
                           "notifyOn": ["NEW_VULNERABILITIES_SUMMARY"],
+                          "notifySeverities": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO", "UNASSIGNED"],
                           "triggerType": "SCHEDULE",
                           "scheduleLastTriggeredAt": "${json-unit.matches:unmodifiedScheduleLastTriggeredAt}",
                           "scheduleNextTriggerAt": "${json-unit.matches:modifiedScheduleNextTriggerAt}",
@@ -754,6 +758,7 @@ class NotificationRuleResourceTest extends ResourceTest {
                             }
                           ],
                           "notifyOn": [],
+                          "notifySeverities": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO", "UNASSIGNED"],
                           "publisher": {
                             "name": "foo",
                             "description": "description",

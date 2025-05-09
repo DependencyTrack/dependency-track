@@ -639,6 +639,50 @@ class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    void createComponentWithExternalReferencesTest() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        component.setClassifier(Classifier.APPLICATION);
+
+        ExternalReference ref = new ExternalReference();
+        ref.setType(org.cyclonedx.model.ExternalReference.Type.WEBSITE);
+        ref.setUrl("https://example.com");
+        ref.setComment("Project website");
+
+        ExternalReference ref2 = new ExternalReference();
+        ref2.setType(org.cyclonedx.model.ExternalReference.Type.DOCUMENTATION);
+        ref2.setUrl("https://docs.example.com");
+
+        component.setExternalReferences(List.of(ref, ref2));
+
+        Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(component, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(201, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("My Component", json.getString("name"));
+        Assertions.assertEquals("1.0", json.getString("version"));
+        Assertions.assertEquals("APPLICATION", json.getString("classifier"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+
+        JsonArray externalReferences = json.getJsonArray("externalReferences");
+        Assertions.assertEquals(2, externalReferences.size());
+
+        JsonObject extRef1 = externalReferences.getJsonObject(0);
+        Assertions.assertEquals("website", extRef1.getString("type"));
+        Assertions.assertEquals("https://example.com", extRef1.getString("url"));
+        Assertions.assertEquals("Project website", extRef1.getString("comment"));
+
+        JsonObject extRef2 = externalReferences.getJsonObject(1);
+        Assertions.assertEquals("documentation", extRef2.getString("type"));
+        Assertions.assertEquals("https://docs.example.com", extRef2.getString("url"));
+    }
+
+    @Test
     void createComponentCollectionProjectTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         // make project a collection project

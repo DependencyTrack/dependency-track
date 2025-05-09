@@ -76,6 +76,7 @@ import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -239,6 +240,65 @@ public class BomResource extends AlpineResource {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             }
+        }
+    }
+
+    @DELETE
+    @Path("/project/{uuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Deletes the BOM for a specific project",
+            description = "<p>Requires permission <strong>BOM_DELETE</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "BOM successfully deleted"
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access to the specified project is forbidden"),
+            @ApiResponse(responseCode = "404", description = "The project or BOM could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.BOM_UPLOAD) //Same permission as upload
+    public Response deleteBom(
+            @Parameter(description = "The UUID of the project to delete BOM for", required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
+        try (QueryManager qm = new QueryManager()) {
+            Project project = qm.getObjectByUuid(Project.class, uuid);
+            if (project == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("Project not found").build();
+            }
+            qm.deleteBoms(project);
+            return Response.ok().entity("BOM deleted successfully").build();
+        } catch (Exception e) {
+            LOGGER.error("Error deleting BOM", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error deleting BOM").build();
+        }
+    }
+
+    @GET
+    @Path("/project/{uuid}/boms")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Gets all BOMs for a specific project",
+            description = "<p>Requires permission <strong>BOM_UPLOAD</strong> or similar to access project BOMs</p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "BOMs retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Project not found")
+    })
+    @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
+    public Response getBomsForProject(
+            @Parameter(description = "The UUID of the project to retrieve BOMs for", required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
+
+        try (QueryManager qm = new QueryManager()) {
+            Project project = qm.getObjectByUuid(Project.class, uuid);
+            if (project == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("Project not found").build();
+            }
+            List<Bom> boms = qm.getAllBoms(project);
+            return Response.ok(boms).build();
         }
     }
 

@@ -109,7 +109,7 @@ class PolicyResourceTest extends ResourceTest {
         assertThat(json.getString("name")).isEqualTo("policy");
         assertThat(json.getString("operator")).isEqualTo("ANY");
         assertThat(json.getString("violationState")).isEqualTo("INFO");
-        assertThat(UuidUtil.isValidUUID(json.getString("uuid")));
+        assertThat(UuidUtil.isValidUUID(json.getString("uuid"))).isNotNull();
         assertThat(json.getBoolean("includeChildren")).isEqualTo(false);
     }
 
@@ -195,7 +195,7 @@ class PolicyResourceTest extends ResourceTest {
         assertThat(json.getString("name")).isEqualTo("policy");
         assertThat(json.getString("operator")).isEqualTo("ALL");
         assertThat(json.getString("violationState")).isEqualTo("FAIL");
-        assertThat(UuidUtil.isValidUUID(json.getString("uuid")));
+        assertThat(UuidUtil.isValidUUID(json.getString("uuid"))).isNotNull();
         assertThat(json.getBoolean("includeChildren")).isEqualTo(false);
     }
 
@@ -216,7 +216,7 @@ class PolicyResourceTest extends ResourceTest {
         assertThat(json.getString("name")).isEqualTo("policy");
         assertThat(json.getString("operator")).isEqualTo("ANY");
         assertThat(json.getString("violationState")).isEqualTo("INFO");
-        assertThat(UuidUtil.isValidUUID(json.getString("uuid")));
+        assertThat(UuidUtil.isValidUUID(json.getString("uuid"))).isNotNull();
         assertThat(json.getBoolean("includeChildren")).isEqualTo(false);
     }
 

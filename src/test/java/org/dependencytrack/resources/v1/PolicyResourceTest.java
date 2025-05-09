@@ -114,6 +114,69 @@ class PolicyResourceTest extends ResourceTest {
     }
 
     @Test
+    void createPolicyWithConditionsTest() {
+        final String requestJson = """
+                {
+                  "name": "policyWithConditions",
+                  "operator": "ANY",
+                  "violationState": "INFO",
+                  "policyConditions": [
+                    {
+                      "subject": "SEVERITY",
+                      "operator": "IS",
+                      "value": "HIGH"
+                    },
+                    {
+                      "subject": "PACKAGE_URL",
+                      "operator": "MATCHES",
+                      "value": "pkg:maven/org.example/library"
+                    }
+                  ]
+                }
+                """;
+
+        final Response response = jersey.target(V1_POLICY)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(requestJson, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+        assertThat(json.getString("name")).isEqualTo("policyWithConditions");
+        assertThat(json.getString("operator")).isEqualTo("ANY");
+        assertThat(json.getString("violationState")).isEqualTo("INFO");
+        assertThat(UuidUtil.isValidUUID(json.getString("uuid"))).isNotNull();
+        assertThat(json.getBoolean("includeChildren")).isEqualTo(false);
+
+        final JsonArray conditions = json.getJsonArray("policyConditions");
+        assertThat(conditions).isNotNull();
+        assertThat(conditions.size()).isEqualTo(2);
+
+        boolean foundSeverityCondition = false;
+        boolean foundPackageUrlCondition = false;
+
+        for (int i = 0; i < conditions.size(); i++) {
+            final JsonObject condition = conditions.getJsonObject(i);
+            assertThat(UuidUtil.isValidUUID(condition.getString("uuid"))).isTrue();
+
+            if ("SEVERITY".equals(condition.getString("subject"))) {
+                assertThat(condition.getString("operator")).isEqualTo("IS");
+                assertThat(condition.getString("value")).isEqualTo("HIGH");
+                foundSeverityCondition = true;
+            } else if ("PACKAGE_URL".equals(condition.getString("subject"))) {
+                assertThat(condition.getString("operator")).isEqualTo("MATCHES");
+                assertThat(condition.getString("value")).isEqualTo("pkg:maven/org.example/library");
+                foundPackageUrlCondition = true;
+            }
+        }
+
+        assertThat(foundSeverityCondition).isTrue();
+        assertThat(foundPackageUrlCondition).isTrue();
+    }
+
+    @Test
     void createPolicySpecifyOperatorAndViolationStateTest() {
         final Policy policy = new Policy();
         policy.setName("policy");

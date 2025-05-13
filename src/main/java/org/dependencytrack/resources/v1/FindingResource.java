@@ -123,7 +123,10 @@ public class FindingResource extends AlpineResource {
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     //final long totalCount = qm.getVulnerabilityCount(project, suppressed);
-                    final List<Finding> findings = qm.getFindings(project, suppressed);
+                    List<Finding> findings = qm.getFindings(project, suppressed);
+                    if (source != null) {
+                        findings = findings.stream().filter(finding -> source.name().equals(finding.getVulnerability().get("source"))).collect(Collectors.toList());
+                    }
                     if (acceptHeader != null && acceptHeader.contains(MEDIA_TYPE_SARIF_JSON)) {
                         try {
                             return Response.ok(generateSARIF(findings), MEDIA_TYPE_SARIF_JSON)
@@ -133,10 +136,6 @@ public class FindingResource extends AlpineResource {
                             LOGGER.error(ioException.getMessage(), ioException);
                             return Response.status(Status.INTERNAL_SERVER_ERROR).entity("An error occurred while generating SARIF file").build();
                         }
-                    }
-                    if (source != null) {
-                        final List<Finding> filteredList = findings.stream().filter(finding -> source.name().equals(finding.getVulnerability().get("source"))).collect(Collectors.toList());
-                        return Response.ok(filteredList).header(TOTAL_COUNT_HEADER, filteredList.size()).build();
                     } else {
                         return Response.ok(findings).header(TOTAL_COUNT_HEADER, findings.size()).build();
                     }

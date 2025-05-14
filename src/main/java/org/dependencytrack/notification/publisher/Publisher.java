@@ -26,7 +26,6 @@ import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Severity;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
@@ -48,7 +47,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.time.ZoneId;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public interface Publisher {
@@ -62,30 +60,6 @@ public interface Publisher {
     String CONFIG_TOKEN_HEADER = "tokenHeader";
 
     void inform(final PublishContext ctx, final Notification notification, final JsonObject config);
-
-    // Use severity filtering if configured
-    default void inform(PublishContext ctx,
-                        Notification notification,
-                        JsonObject config,
-                        List<Severity> notifySeverities) {
-
-        if (notification == null || config == null) {
-            return;
-        }
-
-        // Filter out unwanted notifications based on the configured severities
-        if (notifySeverities != null && !notifySeverities.isEmpty()
-            && notification.getSubject() instanceof NewVulnerabilityIdentified vuln) {
-
-            final Severity sev = vuln.getVulnerability().getSeverity();
-            if (sev != null && !notifySeverities.contains(sev)) {
-                return;
-            }
-        }
-
-        // Call the default inform method
-        inform(ctx, notification, config);
-    }
 
     PebbleEngine getTemplateEngine();
 

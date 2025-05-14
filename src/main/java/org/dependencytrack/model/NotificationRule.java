@@ -49,11 +49,13 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.TreeSet;
 import java.util.UUID;
 
@@ -329,32 +331,22 @@ public class NotificationRule implements Serializable {
         this.notifyOn = sb.toString();
     }
 
-    public List<Severity> getNotifySeverities(){
-        List<Severity> result = new ArrayList<>();
-        if (notifySeverities != null) {
-            String[] severities = notifySeverities.split(",");
-            for (String s: severities) {
-                result.add(Severity.valueOf(s.trim()));
-            }
-        } else {
-            return List.of(Severity.values());
+    public List<Severity> getNotifySeverities() {
+        if (notifySeverities == null) {
+            return List.of();           // empty (user did not pick anything)
         }
-        return result;
+        return Arrays.stream(notifySeverities.split(","))
+                .map(String::trim)
+                .map(Severity::valueOf)
+                .collect(Collectors.toList());
     }
 
     public void setNotifySeverities(List<Severity> notifySeverities){
-        if (notifySeverities.isEmpty()){
+        if (notifySeverities == null || notifySeverities.isEmpty()){
             this.notifySeverities = null;
             return;
         }
-        StringBuilder sb = new StringBuilder();
-        for (int i=0; i<notifySeverities.size(); i++) {
-            sb.append(notifySeverities.get(i));
-            if (i+1 < notifySeverities.size()) {
-                sb.append(",");
-            }
-        }
-        this.notifySeverities = sb.toString();
+        this.notifySeverities = notifySeverities.stream().map(Enum::name).collect(Collectors.joining(","));
     }
 
     public NotificationPublisher getPublisher() {

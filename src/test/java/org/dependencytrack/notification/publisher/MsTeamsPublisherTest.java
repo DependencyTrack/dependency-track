@@ -20,7 +20,11 @@ package org.dependencytrack.notification.publisher;
 
 import org.junit.jupiter.api.Test;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 
 public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPublisher> {
 
@@ -378,13 +382,6 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                           ]
                         }
                         """)));
-    }
-
-    @Test
-    public void testInformWithSeverityThatShouldNotTriggerNotification() {
-        super.baseTestInformWithSeverityThatShouldNotTriggerNotification();
-
-        verify(0, postRequestedFor(urlPathEqualTo("/rest/api/2/issue")));
     }
 
     @Test

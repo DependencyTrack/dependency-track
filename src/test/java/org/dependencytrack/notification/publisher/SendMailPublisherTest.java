@@ -17,8 +17,10 @@ import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMultipart;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationRouter;
 import org.dependencytrack.notification.NotificationScope;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -580,8 +582,11 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
     }
 
     @Test
-    public void testInformWithSeverityThatShouldTriggerNotification() {
-        super.baseTestInformWithSeverityThatShouldTriggerNotification();
+    public void testNotificationThatShouldTriggerNotification() {
+        Notification notification = createNotificationWithNotifySeverities(List.of(Severity.MEDIUM));
+
+        NotificationRouter router = new NotificationRouter();
+        router.inform(notification);
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
             assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified");
@@ -609,8 +614,11 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
     }
 
     @Test
-    public void testInformWithSeverityThatShouldNotTriggerNotification() {
-        super.baseTestInformWithSeverityThatShouldNotTriggerNotification();
+    public void testNotificationThatShouldNotTriggerNotification() {
+        Notification notification = createNotificationWithNotifySeverities(List.of(Severity.LOW));
+
+        NotificationRouter router = new NotificationRouter();
+        router.inform(notification);
 
         assertThat(greenMail.getReceivedMessages()).isEmpty();
     }

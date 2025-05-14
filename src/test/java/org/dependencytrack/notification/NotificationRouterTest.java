@@ -28,6 +28,7 @@ import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vex;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
@@ -347,6 +348,85 @@ class NotificationRouterTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testNewVulnerabilityIdentifiedShouldTriggerNotification() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA = qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB = qm.createComponent(componentB, false);
+
+        final NotificationPublisher publisher = createMockPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+        rule.setProjects(List.of(projectA));
+
+        // Set which severities to trigger notification
+        rule.setNotifySeverities(List.of(Severity.HIGH));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new NewVulnerabilityIdentified(null, qm.detach(componentB), Set.of(), null));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
+
+        // Set a high vulnerability that should trigger a notification
+        final Vulnerability highVuln = new Vulnerability();
+        highVuln.setSeverity(Severity.HIGH);
+        notification.setSubject(new NewVulnerabilityIdentified(highVuln, qm.detach(componentA), Set.of(), null));
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    void testNewVulnerabilityIdentifiedShouldNotTriggerNotification() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA = qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB = qm.createComponent(componentB, false);
+
+        final NotificationPublisher publisher = createMockPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+        rule.setProjects(List.of(projectA));
+
+        // Set which severities to trigger notification (CRITICAL and HIGH only)
+        rule.setNotifySeverities(List.of(Severity.CRITICAL, Severity.HIGH));
+
+        // Set a low severity that should NOT trigger a notification
+        final Vulnerability lowVuln = new Vulnerability();
+        lowVuln.setSeverity(Severity.LOW);
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new NewVulnerabilityIdentified(lowVuln, qm.detach(componentB), Set.of(), null));
+
+        final var router = new NotificationRouter();
+
+        // This should not trigger a notification
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
+    }
+
+    @Test
     void testNewVulnerabilityIdentifiedLimitedToProject() {
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
         var componentA = new Component();
@@ -412,6 +492,95 @@ class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(new NewVulnerableDependency(qm.detach(componentA), null));
         assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    void testNewVulnerableDependencyThatShouldTriggerNotification() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA = qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB = qm.createComponent(componentB, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABLE_DEPENDENCY));
+        rule.setProjects(List.of(projectA));
+
+        // Set which severities to trigger notification
+        rule.setNotifySeverities(List.of(Severity.HIGH));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new NewVulnerableDependency(qm.detach(componentB), null));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
+
+        // Set two high vulnerabilities
+        final Vulnerability highVuln1 = new Vulnerability();
+        highVuln1.setSeverity(Severity.HIGH);
+        final Vulnerability highVuln2 = new Vulnerability();
+        highVuln2.setSeverity(Severity.HIGH);
+        List<Vulnerability> vulnerabilities = List.of(highVuln1, highVuln2);
+
+        // Set a new vulnerable dependency that should trigger a notification
+        notification.setSubject(new NewVulnerableDependency(qm.detach(componentA), vulnerabilities));
+        assertThat(router.resolveRules(PublishContext.from(notification), notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    void testNewVulnerableDependencyThatShouldNotTriggerNotification() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA = qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB = qm.createComponent(componentB, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABLE_DEPENDENCY));
+        rule.setProjects(List.of(projectA));
+
+        // Set which severities to trigger notification
+        rule.setNotifySeverities(List.of(Severity.HIGH));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new NewVulnerableDependency(qm.detach(componentB), null));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
+
+        // Set two low vulnerabilities
+        final Vulnerability highVuln1 = new Vulnerability();
+        highVuln1.setSeverity(Severity.LOW);
+        final Vulnerability highVuln2 = new Vulnerability();
+        highVuln2.setSeverity(Severity.LOW);
+        List<Vulnerability> vulnerabilities = List.of(highVuln1, highVuln2);
+
+        // Set a new vulnerable dependency that should trigger a notification
+        notification.setSubject(new NewVulnerableDependency(qm.detach(componentA), vulnerabilities));
+        assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
     }
 
     @Test

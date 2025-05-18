@@ -3,7 +3,9 @@ package org.dependencytrack.tasks.scanners;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
 import com.github.tomakehurst.wiremock.client.BasicCredentials;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import jakarta.json.Json;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.common.ManagedHttpClientFactory;
@@ -13,11 +15,9 @@ import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import jakarta.json.Json;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +28,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
@@ -37,15 +38,15 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_ENABLED;
 
-public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
-
-    @Rule
-    public WireMockRule wireMock = new WireMockRule(options().dynamicPort());
+@WireMockTest
+class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
 
     private OssIndexAnalysisTask analysisTask;
+    private WireMockRuntimeInfo wmRuntimeInfo;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    public void setUp(WireMockRuntimeInfo wmRuntimeInfo) {
+        this.wmRuntimeInfo = wmRuntimeInfo;
         qm.createConfigProperty(
                 SCANNER_OSSINDEX_ENABLED.getGroupName(),
                 SCANNER_OSSINDEX_ENABLED.getPropertyName(),
@@ -61,11 +62,11 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
                 SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getDescription()
         );
 
-        analysisTask = new OssIndexAnalysisTask(wireMock.baseUrl());
+        analysisTask = new OssIndexAnalysisTask(wmRuntimeInfo.getHttpBaseUrl());
     }
 
     @Test
-    public void testIsCapable() {
+    void testIsCapable() {
         final var asserts = new SoftAssertions();
 
         for (final Map.Entry<String, Boolean> test : Map.of(
@@ -82,8 +83,8 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testShouldAnalyzeWhenCacheIsCurrent() throws Exception {
-        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, wireMock.baseUrl(),
+    void testShouldAnalyzeWhenCacheIsCurrent() throws Exception {
+        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, wmRuntimeInfo.getHttpBaseUrl(),
                 Vulnerability.Source.OSSINDEX.name(), "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz", new Date(),
                 Json.createObjectBuilder()
                         .add("vulnIds", Json.createArrayBuilder().add(123))
@@ -95,21 +96,21 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyzeWithRateLimiting() {
-        wireMock.stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+    void testAnalyzeWithRateLimiting() {
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
                 .inScenario("rateLimit")
                 .willReturn(aResponse()
                         .withStatus(429))
                 .willSetStateTo("secondAttempt"));
 
-        wireMock.stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
                 .inScenario("rateLimit")
                 .whenScenarioStateIs("secondAttempt")
                 .willReturn(aResponse()
                         .withStatus(429))
                 .willSetStateTo("thirdAttempt"));
 
-        wireMock.stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
                 .inScenario("rateLimit")
                 .whenScenarioStateIs("thirdAttempt")
                 .willReturn(aResponse()
@@ -179,7 +180,7 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
                 }
         );
 
-        wireMock.verify(exactly(3), postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
+        verify(exactly(3), postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
                 .withRequestBody(equalToJson("""
@@ -192,7 +193,7 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyzeWithAuthentication() throws Exception {
+    void testAnalyzeWithAuthentication() throws Exception {
         qm.createConfigProperty(
                 SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
                 SCANNER_OSSINDEX_API_USERNAME.getPropertyName(),
@@ -208,7 +209,7 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
                 SCANNER_OSSINDEX_API_TOKEN.getDescription()
         );
 
-        wireMock.stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/vnd.ossindex.component-report.v1+json")
@@ -229,7 +230,7 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
         assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
                 List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
 
-        wireMock.verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
+        verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
                 .withBasicAuth(new BasicCredentials("foo", "apiToken"))
@@ -243,7 +244,7 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyzeWithApiTokenDecryptionError() {
+    void testAnalyzeWithApiTokenDecryptionError() {
         qm.createConfigProperty(
                 SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
                 SCANNER_OSSINDEX_API_USERNAME.getPropertyName(),
@@ -259,7 +260,7 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
                 SCANNER_OSSINDEX_API_TOKEN.getDescription()
         );
 
-        wireMock.stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/vnd.ossindex.component-report.v1+json")
@@ -280,7 +281,7 @@ public class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
         assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
                 List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
 
-        wireMock.verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
+        verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
                 .withoutHeader("Authorization")

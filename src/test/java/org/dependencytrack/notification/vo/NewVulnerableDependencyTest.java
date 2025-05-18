@@ -20,23 +20,23 @@ package org.dependencytrack.notification.vo;
 
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class NewVulnerableDependencyTest {
+class NewVulnerableDependencyTest {
 
     @Test
-    public void testVo() {
+    void testVo() {
         Component component = new Component();
         List<Vulnerability> vulns = new ArrayList<>();
         Vulnerability vuln = new Vulnerability();
         vulns.add(vuln);
         NewVulnerableDependency vo = new NewVulnerableDependency(component, vulns);
-        Assert.assertEquals(component, vo.getComponent());
-        Assert.assertEquals(1, vo.getVulnerabilities().size());
-        Assert.assertEquals(vuln, vo.getVulnerabilities().get(0));
+        Assertions.assertEquals(component, vo.getComponent());
+        Assertions.assertEquals(1, vo.getVulnerabilities().size());
+        Assertions.assertEquals(vuln, vo.getVulnerabilities().get(0));
     }
 }

@@ -26,92 +26,90 @@ import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.dependencytrack.JerseyTestRule;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.License;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class LicenseResourceTest extends ResourceTest {
+class LicenseResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(LicenseResource.class)
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(LicenseResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
-    @Before
-    @Override
+    @BeforeEach
     public void before() throws Exception {
-        super.before();
         final var generator = new DefaultObjectGenerator();
         generator.loadDefaultLicenses();
     }
 
     @Test
-    public void getLicensesTest() {
+    void getLicensesTest() {
         Response response = jersey.target(V1_LICENSE).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(757), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(String.valueOf(757), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(100, json.size());
-        Assert.assertNotNull(json.getJsonObject(0).getString("name"));
-        Assert.assertNotNull(json.getJsonObject(0).getString("licenseText"));
-        Assert.assertNotNull(json.getJsonObject(0).getString("licenseComments"));
-        Assert.assertNotNull(json.getJsonObject(0).getString("licenseId"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(100, json.size());
+        Assertions.assertNotNull(json.getJsonObject(0).getString("name"));
+        Assertions.assertNotNull(json.getJsonObject(0).getString("licenseText"));
+        Assertions.assertNotNull(json.getJsonObject(0).getString("licenseComments"));
+        Assertions.assertNotNull(json.getJsonObject(0).getString("licenseId"));
     }
 
     @Test
-    public void getLicensesConciseTest() {
+    void getLicensesConciseTest() {
         Response response = jersey.target(V1_LICENSE + "/concise").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(757, json.size());
-        Assert.assertNotNull(json.getJsonObject(0).getString("name"));
-        Assert.assertNull(json.getJsonObject(0).getString("licenseText", null));
-        Assert.assertNull(json.getJsonObject(0).getString("licenseComments", null));
-        Assert.assertNotNull(json.getJsonObject(0).getString("licenseId"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(757, json.size());
+        Assertions.assertNotNull(json.getJsonObject(0).getString("name"));
+        Assertions.assertNull(json.getJsonObject(0).getString("licenseText", null));
+        Assertions.assertNull(json.getJsonObject(0).getString("licenseComments", null));
+        Assertions.assertNotNull(json.getJsonObject(0).getString("licenseId"));
     }
 
     @Test
-    public void getLicense() {
+    void getLicense() {
         Response response = jersey.target(V1_LICENSE + "/Apache-2.0").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("Apache License 2.0", json.getString("name"));
-        Assert.assertNotNull(json.getString("licenseText", null));
-        Assert.assertNotNull(json.getString("licenseComments", null));
-        Assert.assertNotNull(json.getString("licenseId"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("Apache License 2.0", json.getString("name"));
+        Assertions.assertNotNull(json.getString("licenseText", null));
+        Assertions.assertNotNull(json.getString("licenseComments", null));
+        Assertions.assertNotNull(json.getString("licenseId"));
     }
 
     @Test
-    public void getLicenseInvalid() {
+    void getLicenseInvalid() {
         Response response = jersey.target(V1_LICENSE + "/blah").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The license could not be found.", body);
+        Assertions.assertEquals("The license could not be found.", body);
     }
 
     @Test
-    public void createCustomLicense() {
+    void createCustomLicense() {
         License license = new License();
         license.setName("Acme Example");
         license.setLicenseId("Acme-Example-License");
@@ -119,20 +117,20 @@ public class LicenseResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(license, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(201, response.getStatus(), 0);
+        Assertions.assertEquals(201, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("Acme Example", json.getString("name"));
-        Assert.assertEquals("Acme-Example-License", json.getString("licenseId"));
-        Assert.assertFalse(json.getBoolean("isOsiApproved"));
-        Assert.assertFalse(json.getBoolean("isFsfLibre"));
-        Assert.assertFalse(json.getBoolean("isDeprecatedLicenseId"));
-        Assert.assertTrue(json.getBoolean("isCustomLicense"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("Acme Example", json.getString("name"));
+        Assertions.assertEquals("Acme-Example-License", json.getString("licenseId"));
+        Assertions.assertFalse(json.getBoolean("isOsiApproved"));
+        Assertions.assertFalse(json.getBoolean("isFsfLibre"));
+        Assertions.assertFalse(json.getBoolean("isDeprecatedLicenseId"));
+        Assertions.assertTrue(json.getBoolean("isCustomLicense"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
     }
 
     @Test
-    public void createCustomLicenseDuplicate() {
+    void createCustomLicenseDuplicate() {
         License license = new License();
         license.setName("Apache License 2.0");
         license.setLicenseId("Apache-2.0");
@@ -140,26 +138,26 @@ public class LicenseResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(license, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(409, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(409, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("A license with the specified name already exists.", body);
+        Assertions.assertEquals("A license with the specified name already exists.", body);
     }
 
     @Test
-    public void createCustomLicenseWithoutLicenseId() {
+    void createCustomLicenseWithoutLicenseId() {
         License license = new License();
         license.setName("Acme Example");
         Response response = jersey.target(V1_LICENSE)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(license, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
     }
 
     @Test
-    public void deleteCustomLicense() {
+    void deleteCustomLicense() {
         License license = new License();
         license.setLicenseId("Acme-Example-License");
         license.setName("Acme Example");
@@ -170,12 +168,12 @@ public class LicenseResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(204, response.getStatus(), 0);
-        Assert.assertTrue(license.isCustomLicense());
+        Assertions.assertEquals(204, response.getStatus(), 0);
+        Assertions.assertTrue(license.isCustomLicense());
     }
 
     @Test
-    public void deleteNotCustomLicense() {
+    void deleteNotCustomLicense() {
         License license1 = new License();
         license1.setLicenseId("Acme-Example-License");
         license1.setName("Acme Example");
@@ -185,10 +183,10 @@ public class LicenseResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(409, response.getStatus(), 0);
-        Assert.assertFalse(license2.isCustomLicense());
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(409, response.getStatus(), 0);
+        Assertions.assertFalse(license2.isCustomLicense());
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("Only custom licenses can be deleted.", body);
+        Assertions.assertEquals("Only custom licenses can be deleted.", body);
     }
 }

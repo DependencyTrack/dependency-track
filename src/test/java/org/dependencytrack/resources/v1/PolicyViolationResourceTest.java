@@ -22,8 +22,10 @@ import alpine.model.ConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
-
-import org.dependencytrack.JerseyTestRule;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
@@ -35,29 +37,26 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PolicyViolationResourceTest extends ResourceTest {
+class PolicyViolationResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(PolicyViolationResource.class)
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(PolicyViolationResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)
                     .register(AuthorizationFilter.class));
 
     @Test
-    public void getViolationsTest() {
+    void getViolationsTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -99,7 +98,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsUnauthorizedTest() {
+    void getViolationsUnauthorizedTest() {
         final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -109,7 +108,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByProjectTest() {
+    void getViolationsByProjectTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -181,7 +180,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByProjectIssue2766() {
+    void getViolationsByProjectIssue2766() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project projectA = qm.createProject("acme-app-a", null, "1.0", null, null, null, true, false);
@@ -221,7 +220,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByProjectUnauthorizedTest() {
+    void getViolationsByProjectUnauthorizedTest() {
         final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/project/" + UUID.randomUUID())
                 .request()
@@ -232,7 +231,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByProjectNotFoundTest() {
+    void getViolationsByProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Response response = jersey.target(V1_POLICY_VIOLATION)
@@ -246,7 +245,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByComponentTest() {
+    void getViolationsByComponentTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -288,7 +287,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByComponentUnauthorizedTest() {
+    void getViolationsByComponentUnauthorizedTest() {
         final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/component/" + UUID.randomUUID())
                 .request()
@@ -299,7 +298,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByComponentNotFoundTest() {
+    void getViolationsByComponentNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Response response = jersey.target(V1_POLICY_VIOLATION)
@@ -313,7 +312,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsWithAclEnabledTest() {
+    void getViolationsWithAclEnabledTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project projectA = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -423,7 +422,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsWithArrayFilter() {
+    void getViolationsWithArrayFilter() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
         
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -528,7 +527,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsWithInputFilter() {
+    void getViolationsWithInputFilter() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);

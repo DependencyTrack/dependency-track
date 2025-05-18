@@ -85,12 +85,12 @@
         <maven.compiler.target>21</maven.compiler.target>
 
         <!-- Dependency Versions -->
-        <frontend.version>4.13.0</frontend.version>
+        <frontend.version>4.13.2</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
         <lib.checkstyle.version>10.22.0</lib.checkstyle.version>
-        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.24.2</lib.cloud-sql-connector-jdbc-sqlserver.version>
+        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.25.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
         <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.24.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
         <lib.cloud-sql-postgres-socket-factory.version>1.24.1</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>3.0.0</lib.cpe-parser.version>
@@ -104,25 +104,24 @@
         <lib.jackson.version>2.18.3</lib.jackson.version>
         <lib.jackson-databind.version>2.18.3</lib.jackson-databind.version>
         <lib.json-java.version>20250107</lib.json-java.version>
-        <lib.json-unit.version>4.1.0</lib.json-unit.version>
-        <lib.junit.version>4.13.2</lib.junit.version>
+        <lib.json-unit.version>4.1.1</lib.json-unit.version>
+        <lib.junit.version>5.11.4</lib.junit.version>
         <lib.lucene.version>8.11.4</lib.lucene.version>
         <lib.maven-artifact.version>3.9.9</lib.maven-artifact.version>
         <lib.mockserver-netty.version>5.15.0</lib.mockserver-netty.version>
-        <lib.open-vulnerability-clients.version>7.3.2</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>8.0.0</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>3.2.4</lib.pebble.version>
         <lib.protobuf-java.version>4.30.2</lib.protobuf-java.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
         <lib.swagger-parser.version>2.1.25</lib.swagger-parser.version>
-        <lib.system-rules.version>1.19.0</lib.system-rules.version>
-        <lib.testcontainers.version>1.20.6</lib.testcontainers.version>
+        <lib.junit-pioneer.version>2.3.0</lib.junit-pioneer.version>
+        <lib.testcontainers.version>1.21.0</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
         <lib.woodstox.version>7.0.0</lib.woodstox.version>
-        <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
-        <lib.httpclient5.version>5.4.3</lib.httpclient5.version>
+        <lib.httpclient5.version>5.4.4</lib.httpclient5.version>
         <lib.log4j-over-slf4j.version>2.0.17</lib.log4j-over-slf4j.version>
         <lib.org-kohsuke-github-api.version>1.323</lib.org-kohsuke-github-api.version>
         <lib.com-asahaf-javacron.version>1.4.0</lib.com-asahaf-javacron.version>
@@ -132,12 +131,10 @@
         <lib.jdbc-driver.postgresql.version>42.7.5</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.jetty.version>12.0.19</plugin.jetty.version>
+        <plugin.jetty.version>12.0.21</plugin.jetty.version>
         <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
-        <!-- Tool Versions -->
-        <tool.protoc.version>com.google.protobuf:protoc:${lib.protobuf-java.version}</tool.protoc.version>
         <!-- CycloneDX CLI -->
         <cyclonedx-cli.path>cyclonedx</cyclonedx-cli.path>
         <services.bom.merge.skip>true</services.bom.merge.skip>
@@ -421,15 +418,21 @@
 
         <!-- Test Dependencies -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <version>${lib.junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>pl.pragmatists</groupId>
-            <artifactId>JUnitParams</artifactId>
-            <version>${lib.junit-params.version}</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${lib.junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${lib.junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -437,6 +440,12 @@
             <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
             <version>${lib.jersey.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.connectors</groupId>
@@ -458,9 +467,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.stefanbirkner</groupId>
-            <artifactId>system-rules</artifactId>
-            <version>${lib.system-rules.version}</version>
+            <groupId>org.junit-pioneer</groupId>
+            <artifactId>junit-pioneer</artifactId>
+            <version>${lib.junit-pioneer.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -489,7 +498,7 @@
         </dependency>
         <dependency>
             <groupId>com.icegreen</groupId>
-            <artifactId>greenmail-junit4</artifactId>
+            <artifactId>greenmail-junit5</artifactId>
             <version>${lib.greenmail.version}</version>
             <scope>test</scope>
         </dependency>
@@ -583,26 +592,21 @@
                 </dependencies>
             </plugin>
             <plugin>
-                <groupId>com.github.os72</groupId>
-                <artifactId>protoc-jar-maven-plugin</artifactId>
-                <version>${plugin.protoc-jar.version}</version>
+                <groupId>io.github.ascopes</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <protocVersion>${lib.protobuf-java.version}</protocVersion>
+                    <sourceDirectories>
+                        <sourceDirectory>${project.basedir}/src/main/proto</sourceDirectory>
+                    </sourceDirectories>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>protobuf</id>
                         <phase>generate-sources</phase>
                         <goals>
-                            <goal>run</goal>
+                            <goal>generate</goal>
                         </goals>
-                        <configuration>
-                            <includeMavenTypes>direct</includeMavenTypes>
-                            <inputDirectories>
-                                <inputDirectory>src/main/proto</inputDirectory>
-                            </inputDirectories>
-                            <includeDirectories>
-                                <includeDirectory>src/main/proto</includeDirectory>
-                            </includeDirectories>
-                            <protocArtifact>${tool.protoc.version}</protocArtifact>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -617,13 +621,6 @@
                         </property>
                     </systemProperties>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-junit4</artifactId>
-                        <version>${maven.surefire.plugin.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>

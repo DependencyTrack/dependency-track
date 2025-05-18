@@ -21,51 +21,49 @@ package org.dependencytrack.resources.v1;
 import alpine.model.ManagedUser;
 import alpine.server.auth.PasswordService;
 import alpine.server.filters.ApiFilter;
-import org.dependencytrack.JerseyTestRule;
-import org.dependencytrack.ResourceTest;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Form;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
+import org.dependencytrack.ResourceTest;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class UserResourceUnauthenticatedTest extends ResourceTest {
+class UserResourceUnauthenticatedTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(UserResource.class)
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(UserResource.class)
                     .register(ApiFilter.class));
 
     private ManagedUser testUser;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        super.before();
         testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
         qm.addUserToTeam(testUser, team);
     }
 
     @Test
-    public void validateCredentialsTest() {
+    void validateCredentialsTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
         Response response = jersey.target(V1_USER + "/login").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         String token = getPlainTextBody(response);
-        Assert.assertNotNull(token);
-        //Assert.assertEquals(token, response.getCookies().get("Authorization-Token").getValue());
+        Assertions.assertNotNull(token);
+        //Assertions.assertEquals(token, response.getCookies().get("Authorization-Token").getValue());
     }
 
     @Test
-    public void validateCredentialsSuspendedTest() {
+    void validateCredentialsSuspendedTest() {
         ManagedUser user = qm.getManagedUser("testuser");
         user.setSuspended(true);
         qm.persist(user);
@@ -75,22 +73,22 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         Response response = jersey.target(V1_USER + "/login").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     @Test
-    public void validateCredentialsUnauthorizedTest() {
+    void validateCredentialsUnauthorizedTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "wrong");
         Response response = jersey.target(V1_USER + "/login").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(401, response.getStatus(), 0);
+        Assertions.assertEquals(401, response.getStatus(), 0);
     }
 
     @Test
-    public void validateOidcAccessTokenOidcNotAvailableTest() {
+    void validateOidcAccessTokenOidcNotAvailableTest() {
         final Form form = new Form();
         form.param("accessToken", "accessToken");
 
@@ -98,48 +96,48 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         // OIDC is disabled by default
-        Assert.assertEquals(204, response.getStatus());
+        Assertions.assertEquals(204, response.getStatus());
     }
 
     @Test
-    public void forceChangePasswordTest() {
+    void forceChangePasswordTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "Password1!");
-        Assert.assertTrue(PasswordService.matches("testuser".toCharArray(), testUser));
+        Assertions.assertTrue(PasswordService.matches("testuser".toCharArray(), testUser));
         Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         qm.getPersistenceManager().refresh(testUser);
-        Assert.assertTrue(PasswordService.matches("Password1!".toCharArray(), testUser));
+        Assertions.assertTrue(PasswordService.matches("Password1!".toCharArray(), testUser));
     }
 
     @Test
-    public void forceChangePasswordFlagResetTest() {
+    void forceChangePasswordFlagResetTest() {
         testUser.setForcePasswordChange(true);
         qm.persist(testUser);
         qm.getPersistenceManager().refresh(testUser);
-        Assert.assertTrue(testUser.isForcePasswordChange());
+        Assertions.assertTrue(testUser.isForcePasswordChange());
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "Password1!");
-        Assert.assertTrue(PasswordService.matches("testuser".toCharArray(), testUser));
+        Assertions.assertTrue(PasswordService.matches("testuser".toCharArray(), testUser));
         Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         qm.getPersistenceManager().refresh(testUser);
-        Assert.assertTrue(PasswordService.matches("Password1!".toCharArray(), testUser));
-        Assert.assertFalse(testUser.isForcePasswordChange());
+        Assertions.assertTrue(PasswordService.matches("Password1!".toCharArray(), testUser));
+        Assertions.assertFalse(testUser.isForcePasswordChange());
     }
 
     @Test
-    public void forceChangePasswordMismatchTest() {
+    void forceChangePasswordMismatchTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
@@ -148,14 +146,14 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(406, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(406, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The passwords do not match. Password not changed.", body);
+        Assertions.assertEquals("The passwords do not match. Password not changed.", body);
     }
 
     @Test
-    public void forceChangePasswordUnchangedTest() {
+    void forceChangePasswordUnchangedTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
@@ -164,14 +162,14 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(406, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(406, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("Existing password is the same as new password. Password not changed.", body);
+        Assertions.assertEquals("Existing password is the same as new password. Password not changed.", body);
     }
 
     @Test
-    public void forceChangePasswordSuspendedTest() {
+    void forceChangePasswordSuspendedTest() {
         testUser.setSuspended(true);
         qm.persist(testUser);
         Form form = new Form();
@@ -182,14 +180,14 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(403, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("SUSPENDED", body);
+        Assertions.assertEquals("SUSPENDED", body);
     }
 
     @Test
-    public void forceChangePasswordInvalidCredsTest() {
+    void forceChangePasswordInvalidCredsTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "blah");
@@ -198,9 +196,9 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(401, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(401, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("INVALID_CREDENTIALS", body);
+        Assertions.assertEquals("INVALID_CREDENTIALS", body);
     }
 }

@@ -20,7 +20,12 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.pebbletemplates.pebble.error.ParserException;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import org.apache.commons.io.IOUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
@@ -55,11 +60,9 @@ import org.dependencytrack.notification.vo.ProjectFinding;
 import org.dependencytrack.notification.vo.ProjectPolicyViolation;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.dependencytrack.util.NotificationUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -74,18 +77,24 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
-public abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCapableTest {
+@WireMockTest
+abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCapableTest {
 
     final DefaultNotificationPublishers publisher;
     final T publisherInstance;
+    WireMockRuntimeInfo wmRuntimeInfo;
 
     AbstractPublisherTest(final DefaultNotificationPublishers publisher, final T publisherInstance) {
         this.publisher = publisher;
         this.publisherInstance = publisherInstance;
     }
 
-    @Test
-    public void testInformWithBomConsumedNotification() {
+    @BeforeEach
+    final void initWmRuntimeInfo(WireMockRuntimeInfo wmRuntimeInfo) {
+        this.wmRuntimeInfo = wmRuntimeInfo;
+    }
+
+    public final void baseTestInformWithBomConsumedNotification() {
         final var subject = new BomConsumedOrProcessed(createProject(), "bomContent", Bom.Format.CYCLONEDX, "1.5");
 
         final var notification = new Notification()
@@ -101,8 +110,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
-    @Test
-    public void testInformWithBomProcessingFailedNotification() {
+    public final void baseTestInformWithBomProcessingFailedNotification() {
         final var subject = new BomProcessingFailed(createProject(), "bomContent", "cause", Bom.Format.CYCLONEDX, "1.5");
 
         final var notification = new Notification()
@@ -118,8 +126,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
-    @Test
-    public void testInformWithBomValidationFailedNotification() {
+    public final void baseTestInformWithBomValidationFailedNotification() {
         final var errorsSample = List.of(
             "$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference");
         final var subject = new BomValidationFailed(createProject(), "bomContent", errorsSample, Bom.Format.CYCLONEDX);
@@ -137,8 +144,8 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
-    @Test // https://github.com/DependencyTrack/dependency-track/issues/3197
-    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
+    // https://github.com/DependencyTrack/dependency-track/issues/3197
+    public final void baseTestInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
         final var subject = new BomProcessingFailed(createProject(), "bomContent", "cause", Bom.Format.CYCLONEDX, null);
 
         final var notification = new Notification()
@@ -154,8 +161,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
-    @Test
-    public void testInformWithDataSourceMirroringNotification() {
+    public final void baseTestInformWithDataSourceMirroringNotification() {
         final var notification = new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.DATASOURCE_MIRRORING)
@@ -168,8 +174,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
-    @Test
-    public void testInformWithNewVulnerabilityNotification() {
+    public final void baseTestInformWithNewVulnerabilityNotification() {
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
@@ -190,8 +195,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
-    @Test
-    public void testInformWithNewVulnerableDependencyNotification() {
+    public final void baseTestInformWithNewVulnerableDependencyNotification() {
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
@@ -211,8 +215,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
-    @Test
-    public void testInformWithProjectAuditChangeNotification() {
+    public final void baseTestInformWithProjectAuditChangeNotification() {
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
@@ -233,8 +236,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
-    @Test
-    public void testInformWithEscapedData() {
+    public final void baseTestInformWithEscapedData() {
         final var notification = new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.ANALYZER)
@@ -265,8 +267,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .withMessage("Unexpected tag name \"include\" ({% include '/some/path' %}:1)");
     }
 
-    @Test
-    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
+    public final void baseTestPublishWithScheduledNewVulnerabilitiesNotification() {
         final var project = createProject();
         final var component = createComponent(project);
         final var vuln = createVulnerability();
@@ -290,8 +291,7 @@ public abstract class AbstractPublisherTest<T extends Publisher> extends Persist
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
-    @Test
-    public void testPublishWithScheduledNewPolicyViolationsNotification() {
+    public final void baseTestPublishWithScheduledNewPolicyViolationsNotification() {
         final var violation = createPolicyViolation();
 
         final var violationsByProject = Map.of(violation.getProject(), List.of(new ProjectPolicyViolation(

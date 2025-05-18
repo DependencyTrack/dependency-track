@@ -75,6 +75,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -912,6 +913,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if(clonedProject.getParent() != null && clonedProject.getParent().getCollectionLogic() != ProjectCollectionLogic.NONE) {
             Event.dispatch(new ProjectMetricsUpdateEvent(clonedProject.getParent().getUuid()));
         }
+        Event.dispatch(new ProjectMetricsUpdateEvent(clonedProject.getUuid()));
 
         return clonedProject;
     }
@@ -1392,9 +1394,11 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             }
 
             if (!keepExisting) {
-                for (final Tag existingTag : project.getTags()) {
+                final Iterator<Tag> existingTagsIterator = project.getTags().iterator();
+                while (existingTagsIterator.hasNext()) {
+                    final Tag existingTag = existingTagsIterator.next();
                     if (!tags.contains(existingTag)) {
-                        project.getTags().remove(existingTag);
+                        existingTagsIterator.remove();
                         if (existingTag.getProjects() != null) {
                             existingTag.getProjects().remove(project);
                         }

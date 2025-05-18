@@ -3,7 +3,9 @@ package org.dependencytrack.resources.v1;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
-import org.dependencytrack.JerseyTestRule;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Policy;
@@ -11,11 +13,9 @@ import org.dependencytrack.model.Policy.Operator;
 import org.dependencytrack.model.Policy.ViolationState;
 import org.dependencytrack.model.PolicyCondition;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import javax.jdo.JDOObjectNotFoundException;
 import java.util.UUID;
 
@@ -24,17 +24,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hamcrest.CoreMatchers.equalTo;
 
-public class PolicyConditionResourceTest extends ResourceTest {
+class PolicyConditionResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(PolicyConditionResource.class)
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(PolicyConditionResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class)
                     .register(AuthorizationFilter.class));
 
     @Test
-    public void testCreateCondition() {
+    void testCreateCondition() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
 
         final var policy = new Policy();
@@ -65,7 +65,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
     }
 
     @Test
-    public void testCreateConditionWhenPolicyDoesNotExist() {
+    void testCreateConditionWhenPolicyDoesNotExist() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
 
         final Response response = jersey.target("%s/cec42e01-62a7-4c86-9b8f-cd6650be2888/condition".formatted(V1_POLICY))
@@ -83,7 +83,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
     }
 
     @Test
-    public void testCreateConditionWhenUnauthorized() {
+    void testCreateConditionWhenUnauthorized() {
         final Response response = jersey.target("%s/cec42e01-62a7-4c86-9b8f-cd6650be2888/condition".formatted(V1_POLICY))
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -98,7 +98,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
     }
 
     @Test
-    public void testUpdateCondition() {
+    void testUpdateCondition() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
 
         final var policy = new Policy();
@@ -139,7 +139,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
     }
 
     @Test
-    public void testUpdateConditionWhenConditionDoesNotExist() {
+    void testUpdateConditionWhenConditionDoesNotExist() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
 
         final Response response = jersey.target("%s/condition".formatted(V1_POLICY))
@@ -158,7 +158,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
     }
 
     @Test
-    public void testUpdateConditionWhenUnauthorized() {
+    void testUpdateConditionWhenUnauthorized() {
         final Response response = jersey.target("%s/condition".formatted(V1_POLICY))
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -174,7 +174,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
     }
 
     @Test
-    public void testDeleteCondition() {
+    void testDeleteCondition() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
 
         final var policy = new Policy();
@@ -203,7 +203,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
     }
 
     @Test
-    public void testDeleteConditionWhenConditionDoesNotExist() {
+    void testDeleteConditionWhenConditionDoesNotExist() {
         initializeWithPermissions(Permissions.POLICY_MANAGEMENT);
 
         final Response response = jersey.target("%s/condition/%s".formatted(V1_POLICY, UUID.randomUUID()))
@@ -215,7 +215,7 @@ public class PolicyConditionResourceTest extends ResourceTest {
     }
 
     @Test
-    public void testDeleteConditionWhenUnauthorized() {
+    void testDeleteConditionWhenUnauthorized() {
         final Response response = jersey.target("%s/condition/%s".formatted(V1_POLICY, UUID.randomUUID()))
                 .request()
                 .header(X_API_KEY, apiKey)

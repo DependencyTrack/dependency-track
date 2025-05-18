@@ -25,17 +25,17 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class CwePolicyEvaluatorTest extends PersistenceCapableTest {
+class CwePolicyEvaluatorTest extends PersistenceCapableTest {
 
     CwePolicyEvaluator cwePolicyEvaluator = new CwePolicyEvaluator();
 
     @Test
-    public void hasMatch() {
+    void hasMatch() {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.CWE, PolicyCondition.Operator.CONTAINS_ANY, "CWE-123");
         Project project = new Project();
@@ -55,14 +55,14 @@ public class CwePolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyEvaluator evaluator = new CwePolicyEvaluator();
         evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component.getId(), violation.getComponent().getId());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component.getId(), violation.getComponent().getId());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void noMatch() {
+    void noMatch() {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.CWE, PolicyCondition.Operator.CONTAINS_ALL, "CWE-123, CWE-567");
         Project project = new Project();
@@ -82,18 +82,18 @@ public class CwePolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyEvaluator evaluator = new CpePolicyEvaluator();
         evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void testMatchesMethod() {
+    void testMatchesMethod() {
         List<Integer> cwes = List.of(123, 456, 789);
-        Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ANY, cwes, "CWE-123, CWE-999"));
-        Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ANY, cwes, "CWE-123"));
-        Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, "CWE-123, CWE-456"));
-        Assert.assertFalse(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, "CWE-123, CWE-456, CWE-999"));
-        Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ANY, cwes, "*"));
-        Assert.assertFalse(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, " , "));
-        Assert.assertFalse(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, " "));
+        Assertions.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ANY, cwes, "CWE-123, CWE-999"));
+        Assertions.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ANY, cwes, "CWE-123"));
+        Assertions.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, "CWE-123, CWE-456"));
+        Assertions.assertFalse(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, "CWE-123, CWE-456, CWE-999"));
+        Assertions.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ANY, cwes, "*"));
+        Assertions.assertFalse(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, " , "));
+        Assertions.assertFalse(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, " "));
     }
 }

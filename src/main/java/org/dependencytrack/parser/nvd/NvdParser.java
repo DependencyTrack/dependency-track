@@ -32,8 +32,9 @@ import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.util.CvssUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
-import us.springett.cvss.Cvss;
+import org.metaeffekt.core.security.cvss.v2.Cvss2;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 import us.springett.parsers.cpe.values.Part;
@@ -266,29 +267,29 @@ public final class NvdParser {
     }
 
     private void parseCveImpact(final ObjectNode cveItem, final Vulnerability vuln) {
-        final var imp0 = (ObjectNode) cveItem.get("impact");
-        final var imp1 = (ObjectNode) imp0.get("baseMetricV2");
-        if (imp1 != null) {
-            final var imp2 = (ObjectNode) imp1.get("cvssV2");
-            if (imp2 != null) {
-                final Cvss cvss = Cvss.fromVector(imp2.get("vectorString").asText());
-                vuln.setCvssV2Vector(cvss.getVector()); // normalize the vector but use the scores from the feed
-                vuln.setCvssV2BaseScore(BigDecimal.valueOf(imp2.get("baseScore").asDouble()));
+        final var impact = (ObjectNode) cveItem.get("impact");
+        final var baseMetricV2 = (ObjectNode) impact.get("baseMetricV2");
+        if (baseMetricV2 != null) {
+            final var cvssV2 = (ObjectNode) baseMetricV2.get("cvssV2");
+            if (cvssV2 != null) {
+                final var cvss = new Cvss2(cvssV2.get("vectorString").asText());
+                vuln.setCvssV2Vector(cvss.toString()); // normalize the vector but use the scores from the feed
+                vuln.setCvssV2BaseScore(BigDecimal.valueOf(cvssV2.get("baseScore").asDouble()));
             }
-            vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(imp1.get("exploitabilityScore").asDouble()));
-            vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(imp1.get("impactScore").asDouble()));
+            vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(baseMetricV2.get("exploitabilityScore").asDouble()));
+            vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(baseMetricV2.get("impactScore").asDouble()));
         }
 
-        final var imp3 = (ObjectNode) imp0.get("baseMetricV3");
-        if (imp3 != null) {
-            final var imp4 = (ObjectNode) imp3.get("cvssV3");
-            if (imp4 != null) {
-                final Cvss cvss = Cvss.fromVector(imp4.get("vectorString").asText());
-                vuln.setCvssV3Vector(cvss.getVector()); // normalize the vector but use the scores from the feed
-                vuln.setCvssV3BaseScore(BigDecimal.valueOf(imp4.get("baseScore").asDouble()));
+        final var baseMetricV3 = (ObjectNode) impact.get("baseMetricV3");
+        if (baseMetricV3 != null) {
+            final var cvssV3 = (ObjectNode) baseMetricV3.get("cvssV3");
+            if (cvssV3 != null) {
+                final var cvss = CvssUtil.parse(cvssV3.get("vectorString").asText());
+                vuln.setCvssV3Vector(cvss.toString()); // normalize the vector but use the scores from the feed
+                vuln.setCvssV3BaseScore(BigDecimal.valueOf(cvssV3.get("baseScore").asDouble()));
             }
-            vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(imp3.get("exploitabilityScore").asDouble()));
-            vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(imp3.get("impactScore").asDouble()));
+            vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(baseMetricV3.get("exploitabilityScore").asDouble()));
+            vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(baseMetricV3.get("impactScore").asDouble()));
         }
 
         vuln.setSeverity(VulnerabilityUtil.getSeverity(

@@ -28,17 +28,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import us.springett.cvss.Cvss;
-import us.springett.cvss.Score;
-import us.springett.owasp.riskrating.MissingFactorException;
-import us.springett.owasp.riskrating.OwaspRiskRating;
-
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.dependencytrack.util.CvssUtil;
+import us.springett.owasp.riskrating.MissingFactorException;
+import us.springett.owasp.riskrating.OwaspRiskRating;
 
 /**
  * JAX-RS resources for processing severity calculations.
@@ -53,6 +51,13 @@ import jakarta.ws.rs.core.Response;
         @SecurityRequirement(name = "BearerAuth")
 })
 public class CalculatorResource extends AlpineResource {
+    public record Score(double baseScore,
+                        double impactSubScore,
+                        double exploitabilitySubScore,
+                        double temporalScore,
+                        double environmentalScore,
+                        double modifiedImpactSubScore) {
+    }
 
     @GET
     @Path("/cvss")
@@ -64,19 +69,27 @@ public class CalculatorResource extends AlpineResource {
                     description = "The calculated scores",
                     content = @Content(schema = @Schema(implementation = Score.class))
             ),
+            @ApiResponse(responseCode = "400", description = "Invalid or incomplete CVSS vector"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getCvssScores(
             @Parameter(description = "A valid CVSSv2 or CVSSv3 vector", required = true)
             @QueryParam("vector") String vector) {
-        try {
-            final Cvss cvss = Cvss.fromVector(vector);
-            final Score score = cvss.calculateScore();
-            return Response.ok(score).build();
-        } catch (NullPointerException e) {
-            final String invalidVector = "An invalid CVSSv2 or CVSSv3 vector submitted.";
+        final String invalidVector = "An invalid CVSSv2 or CVSSv3 vector submitted.";
+
+        final var cvss = CvssUtil.parse(vector);
+        if (cvss == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(invalidVector).build();
         }
+        final var score = cvss.getBakedScores();
+        final var result = new Score(
+                score.getBaseScore(),
+                score.getImpactScore(),
+                score.getExploitabilityScore(),
+                score.getTemporalScore(),
+                score.getEnvironmentalScore(),
+                score.getAdjustedImpactScore());
+        return Response.ok(result).build();
     }
 
     @GET

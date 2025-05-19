@@ -7,6 +7,12 @@ order:
 
 Frequently asked questions about Dependency Track functionality that may not be covered by the documentation. If you don't find an answer here, try reaching out to the Slack [channel](https://owasp.slack.com/archives/C6R3R32H4) related to dependency track.
 
+
+#### Which domains must I allow in my firewall?
+
+See [Which external services does Dependency-Track contact?](outbound-connections.md)
+
+
 #### Dependency Check and Dependency Track Comparison
 
 This topic is heavily explained in the [Dependency Check Comparison](./../odt-odc-comparison/) to Dependency Track.

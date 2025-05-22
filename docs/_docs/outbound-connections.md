@@ -13,6 +13,3 @@ allow egress to the endpoints listed in _services.bom.json_.**
 | ------------------------------------ | ---------------- |
 | [`services.bom.json`](https://github.com/DependencyTrack/dependency-track/blob/master/services.bom.json) | Source-of-truth JSON maintained in-repo |
 | Release SBOM (e.g. [`bom.json` for v4.12.0](https://github.com/DependencyTrack/dependency-track/releases/download/4.12.0/bom.json)) | `services.bom.json` merged into the full build SBOM |
-
-**Tip** You can disable individual analyzers in `application.yml`
-to prevent calls you don’t need in air-gapped environments.

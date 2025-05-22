@@ -18,13 +18,19 @@
  */
 package org.dependencytrack.search;
 
+import org.apache.lucene.index.IndexWriter;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.License;
 import org.dependencytrack.search.document.LicenseDocument;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 class LicenseIndexerTest extends PersistenceCapableTest {
 
@@ -49,9 +55,8 @@ class LicenseIndexerTest extends PersistenceCapableTest {
         l.setName("Acme License");
         l.setLicenseId("acme-license");
         LicenseIndexer.getInstance().add(new LicenseDocument(l));
-        LicenseIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
+        commitIndex();
+        SearchResult result = SearchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(1, result.getResults().get("license").size());
     }
@@ -63,11 +68,10 @@ class LicenseIndexerTest extends PersistenceCapableTest {
         l.setName("Acme License");
         l.setLicenseId("acme-license");
         LicenseIndexer.getInstance().add(new LicenseDocument(l));
-        LicenseIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
+        commitIndex();
         LicenseIndexer.getInstance().remove(new LicenseDocument(l));
-        LicenseIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
+        commitIndex();
+        SearchResult result = SearchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(0, result.getResults().get("license").size());
     }
@@ -75,5 +79,25 @@ class LicenseIndexerTest extends PersistenceCapableTest {
     @Test
     void reindexTest() {
         LicenseIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        LicenseIndexer.getInstance().commit();
+        final IndexWriter indexWriter;
+        try {
+            indexWriter = LicenseIndexer.getInstance().getIndexWriter();
+        } catch (IOException e) {
+            Assertions.fail("Unable to get IndexWriter", e);
+            return;
+        }
+        try {
+            indexWriter.flush();
+        } catch (IOException e) {
+            Assertions.fail("Unable to flush IndexWriter", e);
+            return;
+        }
+        await("Indexer flush")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(indexWriter.hasUncommittedChanges()).isFalse());
     }
 }

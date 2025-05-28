@@ -72,7 +72,7 @@ public class AttributedOnPolicyEvaluatorTest extends PersistenceCapableTest {
         });
     }
 
-    @Parameterized.Parameter(0)
+    @Parameterized.Parameter()
     public int daysAgo;
 
     @Parameterized.Parameter(1)

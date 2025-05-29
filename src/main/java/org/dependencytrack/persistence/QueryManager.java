@@ -89,6 +89,7 @@ import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -1103,8 +1104,8 @@ public class QueryManager extends AlpineQueryManager {
 
     public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
                                  AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
-                                 String analysisDetails, Boolean isSuppressed) {
-        return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse, analysisDetails, isSuppressed);
+                                 String analysisDetails, Boolean isSuppressed, LocalDate suppressionExpiration) {
+        return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse, analysisDetails, isSuppressed, suppressionExpiration);
     }
 
     public AnalysisComment makeAnalysisComment(Analysis analysis, String comment, String commenter) {

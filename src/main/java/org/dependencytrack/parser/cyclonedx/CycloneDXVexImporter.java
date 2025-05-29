@@ -148,7 +148,7 @@ public class CycloneDXVexImporter {
         AnalysisResponse analysisResponse = null;
         boolean suppress = false;
         if (analysis == null) {
-            analysis = qm.makeAnalysis(component, refreshedVuln, AnalysisState.NOT_SET, null, null, null, null);
+            analysis = qm.makeAnalysis(component, refreshedVuln, AnalysisState.NOT_SET, null, null, null, null, null);
         }
         if (cdxVuln.getAnalysis().getState() != null) {
             analysisState = ModelConverter.convertCdxVulnAnalysisStateToDtAnalysisState(cdxVuln.getAnalysis().getState());
@@ -169,6 +169,6 @@ public class CycloneDXVexImporter {
                 AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, analysisResponse, COMMENTER);
             }
         }
-        qm.makeAnalysis(component, refreshedVuln, analysisState, analysisJustification, analysisResponse, analysisDetails, suppress);
+        qm.makeAnalysis(component, refreshedVuln, analysisState, analysisJustification, analysisResponse, analysisDetails, suppress, null);
     }
 }

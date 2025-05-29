@@ -1959,7 +1959,7 @@ class ProjectResourceTest extends ResourceTest {
 
         qm.addVulnerability(vuln, componentA, AnalyzerIdentity.INTERNAL_ANALYZER);
         final Analysis analysis = qm.makeAnalysis(componentA, vuln, AnalysisState.NOT_AFFECTED,
-                AnalysisJustification.REQUIRES_ENVIRONMENT, AnalysisResponse.WILL_NOT_FIX, "details", false);
+                AnalysisJustification.REQUIRES_ENVIRONMENT, AnalysisResponse.WILL_NOT_FIX, "details", false, null);
         qm.makeAnalysisComment(analysis, "comment", "commenter");
 
         final Response response = jersey.target("%s/clone".formatted(V1_PROJECT)).request()

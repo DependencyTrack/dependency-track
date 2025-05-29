@@ -37,6 +37,7 @@ import org.dependencytrack.util.PurlUtil;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -182,7 +183,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      */
     public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
                                  AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
-                                 String analysisDetails, Boolean isSuppressed) {
+                                 String analysisDetails, Boolean isSuppressed, LocalDate suppressionExpiration) {
         Analysis analysis = getAnalysis(component, vulnerability);
         if (analysis == null) {
             analysis = new Analysis();
@@ -209,7 +210,9 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
         if (isSuppressed != null) {
             analysis.setSuppressed(isSuppressed);
         }
-
+        if(suppressionExpiration != null){
+            analysis.setSuppressionExpiration(suppressionExpiration);
+        }
         analysis = persist(analysis);
         return getAnalysis(analysis.getComponent(), analysis.getVulnerability());
     }

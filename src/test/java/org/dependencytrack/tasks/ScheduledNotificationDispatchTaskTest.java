@@ -128,7 +128,7 @@ class ScheduledNotificationDispatchTaskTest extends PersistenceCapableTest {
                 null,
                 null,
                 Date.from(afterRuleLastFiredAt));
-        qm.makeAnalysis(parentProjectComponent, vulnB, AnalysisState.FALSE_POSITIVE, null, null, null, true);
+        qm.makeAnalysis(parentProjectComponent, vulnB, AnalysisState.FALSE_POSITIVE, null, null, null, true, null);
 
         // Create a child project affected by vulnA and vulnB, where:
         //   * vulnA was attributed BEFORE the rule's last firing

@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -32,6 +33,7 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -95,6 +97,13 @@ public class Analysis implements Serializable {
     @Column(name = "SUPPRESSED")
     @JsonProperty(value = "isSuppressed")
     private boolean suppressed;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "SUPPRESSION_EXPIRATION", jdbcType = "DATE", allowsNull = "true")
+    @JsonProperty("suppressionExpiration")
+    private LocalDate suppressionExpiration;
+
 
     public long getId() {
         return id;
@@ -171,5 +180,13 @@ public class Analysis implements Serializable {
 
     public void setSuppressed(boolean suppressed) {
         this.suppressed = suppressed;
+    }
+
+    public LocalDate getSuppressionExpiration() {
+        return suppressionExpiration;
+    }
+
+    public void setSuppressionExpiration(LocalDate suppressionExpiration) {
+        this.suppressionExpiration = suppressionExpiration;
     }
 }

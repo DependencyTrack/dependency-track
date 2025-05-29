@@ -154,7 +154,8 @@ public class AnalysisResource extends AlpineResource {
                 validator.validateProperty(request, "analysisJustification"),
                 validator.validateProperty(request, "analysisResponse"),
                 validator.validateProperty(request, "analysisDetails"),
-                validator.validateProperty(request, "comment")
+                validator.validateProperty(request, "comment"),
+                validator.validateProperty(request, "suppressionExpiration")
         );
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, request.getProject());
@@ -182,14 +183,14 @@ public class AnalysisResource extends AlpineResource {
 
             Analysis analysis = qm.getAnalysis(component, vulnerability);
             if (analysis == null) {
-                analysis = qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_SET, AnalysisJustification.NOT_SET, AnalysisResponse.NOT_SET, null, false);
+                analysis = qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_SET, AnalysisJustification.NOT_SET, AnalysisResponse.NOT_SET, null, false, null);
             }
             final var analysisStateChange = AnalysisCommentUtil.makeStateComment(qm, analysis, request.getAnalysisState(), commenter);
             AnalysisCommentUtil.makeJustificationComment(qm, analysis, request.getAnalysisJustification(), commenter);
             AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, request.getAnalysisResponse(), commenter);
             AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, request.getAnalysisDetails(), commenter);
             final var suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
-            analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed());
+            analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed(), request.getSuppressionExpiration());
 
             final String comment = StringUtils.trimToNull(request.getComment());
             qm.makeAnalysisComment(analysis, comment, commenter);

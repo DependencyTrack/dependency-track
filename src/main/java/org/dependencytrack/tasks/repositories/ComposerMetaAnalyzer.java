@@ -165,21 +165,23 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         // without retrieving the package specific metadata
         if (repoRoot.has("packages")) {
             JSONObject packages = repoRoot.getJSONObject("packages");
-            if (!packages.has(getComposerPackageName(component))) {
-                LOGGER.debug("%s: package not found in repository %s.".formatted(component.getPurl(), this.repositoryId));
-                return meta;
+            if (!packages.isEmpty()) {
+                if (!packages.has(getComposerPackageName(component))) {
+                    LOGGER.debug("%s: package not found in repository %s.".formatted(component.getPurl(), this.repositoryId));
+                    return meta;
+                }
+            
+                Object packageEntry = packages.get(getComposerPackageName(component));
+                JSONObject packageVersions;
+                if (packageEntry instanceof JSONArray) {
+                    packageVersions = expandPackageVersions((JSONArray) packageEntry);
+                } else if (packageEntry instanceof JSONObject) {
+                    packageVersions = (JSONObject) packageEntry;
+                } else {
+                    throw new MetaAnalyzerException("Unexpected package entry type for " + getComposerPackageName(component) + ": " + packageEntry.getClass());
+                }
+                return analyzePackageVersions(meta, component, packageVersions);
             }
-        
-            Object packageEntry = packages.get(getComposerPackageName(component));
-            JSONObject packageVersions;
-            if (packageEntry instanceof JSONArray) {
-                packageVersions = expandPackageVersions((JSONArray) packageEntry);
-            } else if (packageEntry instanceof JSONObject) {
-                packageVersions = (JSONObject) packageEntry;
-            } else {
-                throw new MetaAnalyzerException("Unexpected package entry type for " + getComposerPackageName(component) + ": " + packageEntry.getClass());
-            }
-            return analyzePackageVersions(meta, component, packageVersions);
         }
 
         // V1 and no included packages, so we have to retrieve the package specific

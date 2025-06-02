@@ -802,10 +802,10 @@ void testAnalyzerHandlesArrayEntryMetadata() throws Exception {
     Component component = new Component();
     ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
-    component.setPurl(new PackageURL("pkg:composer/space/cowboy@v1.1.0"));
+    component.setPurl(new PackageURL("pkg:composer/galaxy/cow@v1.1.0"));
 
     final File packagistRepoRootFile = getRepoResourceFile("composer.include.com.metadata", "packages");
-    final File packagistFile = getPackageResourceFile("composer.include.com.metadata", "space", "cowboy-arrayentry");
+    final File packagistFile = getPackageResourceFile("composer.include.com.metadata", "galaxy", "cow-arrayentry");
 
     analyzer.setRepositoryId("13");
     analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
@@ -825,7 +825,7 @@ void testAnalyzerHandlesArrayEntryMetadata() throws Exception {
     mockClient.when(
             request()
                     .withMethod("GET")
-                    .withPath("/p2/space/cowboy.json"))
+                    .withPath("/p2/galaxy/cow.json"))
             .respond(
                     response()
                             .withStatusCode(200)
@@ -835,5 +835,6 @@ void testAnalyzerHandlesArrayEntryMetadata() throws Exception {
     MetaModel metaModel = analyzer.analyze(component);
 
     Assertions.assertEquals("6.6.6", metaModel.getLatestVersion());
-    Assertions.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-12-20 06:16:51 Z"), metaModel.getPublishedTimestamp());
+    Assertions.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX")
+            .parse("2024-12-20 06:16:51 Z"), metaModel.getPublishedTimestamp());
 }

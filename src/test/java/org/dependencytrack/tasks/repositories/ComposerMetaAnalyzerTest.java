@@ -796,3 +796,44 @@ class ComposerMetaAnalyzerTest {
                 return data;
         }
 }
+
+@Test
+void testAnalyzerHandlesArrayEntryMetadata() throws Exception {
+    Component component = new Component();
+    ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
+
+    component.setPurl(new PackageURL("pkg:composer/space/cowboy@v1.1.0"));
+
+    final File packagistRepoRootFile = getRepoResourceFile("composer.include.com.metadata", "packages");
+    final File packagistFile = getPackageResourceFile("composer.include.com.metadata", "space", "cowboy-arrayentry");
+
+    analyzer.setRepositoryId("13");
+    analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
+    @SuppressWarnings("resource")
+    MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
+
+    mockClient.when(
+            request()
+                    .withMethod("GET")
+                    .withPath("/packages.json"))
+            .respond(
+                    response()
+                            .withStatusCode(200)
+                            .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                            .withBody(getTestData(packagistRepoRootFile)));
+
+    mockClient.when(
+            request()
+                    .withMethod("GET")
+                    .withPath("/p2/space/cowboy.json"))
+            .respond(
+                    response()
+                            .withStatusCode(200)
+                            .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                            .withBody(getTestData(packagistFile)));
+
+    MetaModel metaModel = analyzer.analyze(component);
+
+    Assertions.assertEquals("6.6.6", metaModel.getLatestVersion());
+    Assertions.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-12-20 06:16:51 Z"), metaModel.getPublishedTimestamp());
+}

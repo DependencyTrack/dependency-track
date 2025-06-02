@@ -116,7 +116,7 @@
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
         <lib.swagger-parser.version>2.1.25</lib.swagger-parser.version>
         <lib.junit-pioneer.version>2.3.0</lib.junit-pioneer.version>
-        <lib.testcontainers.version>1.21.0</lib.testcontainers.version>
+        <lib.testcontainers.version>1.21.1</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
         <lib.woodstox.version>7.0.0</lib.woodstox.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>

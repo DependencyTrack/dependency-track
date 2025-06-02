@@ -11,7 +11,7 @@
         "require": {
           "galaxy/space-core": "^1.0"
         },
-        "time": "2025-01-01 00:00:00",
+        "time": "2025-01-01T00:00:00Z",
         "type": "library",
         "autoload": {
           "psr-4": {
@@ -31,7 +31,7 @@
         "require": {
           "galaxy/space-core": "^0.9"
         },
-        "time": "2024-12-01 12:00:00",
+        "time": "2024-12-01T12:00:00Z",
         "type": "library",
         "license": ["MIT"],
         "description": "Galactic Cow module (older)"

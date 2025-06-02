@@ -170,7 +170,16 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                     LOGGER.debug("%s: package not found in repository %s.".formatted(component.getPurl(), this.repositoryId));
                     return meta;
                 }
-                JSONObject packageVersions = packages.getJSONObject(getComposerPackageName(component));
+            
+                Object packageEntry = packages.get(getComposerPackageName(component));
+                JSONObject packageVersions;
+                if (packageEntry instanceof JSONArray) {
+                    packageVersions = expandPackageVersions((JSONArray) packageEntry);
+                } else if (packageEntry instanceof JSONObject) {
+                    packageVersions = (JSONObject) packageEntry;
+                } else {
+                    throw new MetaAnalyzerException("Unexpected package entry type for " + getComposerPackageName(component) + ": " + packageEntry.getClass());
+                }
                 return analyzePackageVersions(meta, component, packageVersions);
             }
         }
@@ -308,12 +317,17 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 return meta;
             }
 
-            if (isMinified(metadataJson)) {
-                return analyzePackageVersions(meta, component,
-                        expandPackageVersions(responsePackages.getJSONArray(expectedResponsePackage)));
+            Object packageEntry = responsePackages.get(expectedResponsePackage);
+            JSONObject packageVersions;
+            if (packageEntry instanceof JSONArray) {
+                packageVersions = expandPackageVersions((JSONArray) packageEntry);
+            } else if (packageEntry instanceof JSONObject) {
+                packageVersions = (JSONObject) packageEntry;
             } else {
-                return analyzePackageVersions(meta, component, responsePackages.getJSONObject(expectedResponsePackage));
+                throw new MetaAnalyzerException("Unexpected package entry type for " + expectedResponsePackage + ": " + packageEntry.getClass());
             }
+            return analyzePackageVersions(meta, component, packageVersions);
+
         } catch (IOException e) {
             handleRequestException(LOGGER, e);
         } catch (Exception e) {

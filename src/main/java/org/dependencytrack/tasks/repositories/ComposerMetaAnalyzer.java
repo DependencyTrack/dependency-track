@@ -317,12 +317,17 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 return meta;
             }
 
-            if (isMinified(metadataJson)) {
-                return analyzePackageVersions(meta, component,
-                        expandPackageVersions(responsePackages.getJSONArray(expectedResponsePackage)));
+            Object packageEntry = responsePackages.get(expectedResponsePackage);
+            JSONObject packageVersions;
+            if (packageEntry instanceof JSONArray) {
+                packageVersions = expandPackageVersions((JSONArray) packageEntry);
+            } else if (packageEntry instanceof JSONObject) {
+                packageVersions = (JSONObject) packageEntry;
             } else {
-                return analyzePackageVersions(meta, component, responsePackages.getJSONObject(expectedResponsePackage));
+                throw new MetaAnalyzerException("Unexpected package entry type for " + expectedResponsePackage + ": " + packageEntry.getClass());
             }
+            return analyzePackageVersions(meta, component, packageVersions);
+
         } catch (IOException e) {
             handleRequestException(LOGGER, e);
         } catch (Exception e) {

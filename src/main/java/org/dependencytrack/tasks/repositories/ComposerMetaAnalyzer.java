@@ -160,7 +160,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             repoRoot.put("packages", expandPackages(repoRoot.getJSONObject("packages")));
         }
 
-        loadIncludedPackages(repoRoot, repoRoot, true);
+        loadIncludedPackages(repoRoot, repoRoot, !repoRoot.has("includes"));
         // included packages are considered finite, so we can use them for analysis
         // without retrieving the package specific metadata
         if (repoRoot.has("packages")) {

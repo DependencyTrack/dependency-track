@@ -170,16 +170,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                     LOGGER.debug("%s: package not found in repository %s.".formatted(component.getPurl(), this.repositoryId));
                     return meta;
                 }
-            
-                Object packageEntry = packages.get(getComposerPackageName(component));
-                JSONObject packageVersions;
-                if (packageEntry instanceof JSONArray) {
-                    packageVersions = expandPackageVersions((JSONArray) packageEntry);
-                } else if (packageEntry instanceof JSONObject) {
-                    packageVersions = (JSONObject) packageEntry;
-                } else {
-                    throw new MetaAnalyzerException("Unexpected package entry type for " + getComposerPackageName(component) + ": " + packageEntry.getClass());
-                }
+                JSONObject packageVersions = packages.getJSONObject(getComposerPackageName(component));
                 return analyzePackageVersions(meta, component, packageVersions);
             }
         }
@@ -317,17 +308,12 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 return meta;
             }
 
-            Object packageEntry = responsePackages.get(expectedResponsePackage);
-            JSONObject packageVersions;
-            if (packageEntry instanceof JSONArray) {
-                packageVersions = expandPackageVersions((JSONArray) packageEntry);
-            } else if (packageEntry instanceof JSONObject) {
-                packageVersions = (JSONObject) packageEntry;
+            if (isMinified(metadataJson)) {
+                return analyzePackageVersions(meta, component,
+                        expandPackageVersions(responsePackages.getJSONArray(expectedResponsePackage)));
             } else {
-                throw new MetaAnalyzerException("Unexpected package entry type for " + expectedResponsePackage + ": " + packageEntry.getClass());
+                return analyzePackageVersions(meta, component, responsePackages.getJSONObject(expectedResponsePackage));
             }
-            return analyzePackageVersions(meta, component, packageVersions);
-
         } catch (IOException e) {
             handleRequestException(LOGGER, e);
         } catch (Exception e) {
@@ -423,6 +409,20 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private static boolean isMinified(JSONObject data) {
-        return data.has("minified") && data.getString("minified").equals("composer/2.0");
+        if (data.has("minified") && "composer/2.0".equals(data.getString("minified"))) {
+            return true;
+        }
+        if (data.has("packages")) {
+            Object packages = data.get("packages");
+            if (packages instanceof JSONObject) {
+                JSONObject packagesObj = (JSONObject) packages;
+                for (String key : packagesObj.keySet()) {
+                    if (packagesObj.get(key) instanceof JSONArray) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

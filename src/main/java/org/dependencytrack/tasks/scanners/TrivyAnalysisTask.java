@@ -125,6 +125,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
     private boolean shouldIgnoreUnfixed;
     private boolean shouldScanLibrary;
     private boolean shouldScanOs;
+    private boolean shouldIgnoreSeverity;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     @Override
@@ -160,6 +161,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
             shouldIgnoreUnfixed = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_UNFIXED);
             shouldScanLibrary = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_SCAN_LIBRARY);
             shouldScanOs = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_SCAN_OS);
+            shouldIgnoreSeverity = qm.isEnabled(ConfigPropertyConstants.SCANNER_TRIVY_IGNORE_SEVERITY);
         }
 
         vulnerabilityAnalysisLevel = event.analysisLevel();
@@ -502,6 +504,10 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                 LOGGER.debug("Trivy vulnerability added: " + vulnerability.getVulnId() + " to component " + persistentComponent.getName());
                 NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, persistentComponent, vulnerabilityAnalysisLevel);
                 qm.addVulnerability(vulnerability, persistentComponent, this.getAnalyzerIdentity());
+                if(!shouldIgnoreSeverity){
+                    LOGGER.debug("Trivy vulnerability: " + vulnerability.getVulnId() + " to component " + persistentComponent.getName() + " updating severity: " + parsedVulnerability.getSeverity().toString());
+                    qm.updateSeverity(vulnerability, parsedVulnerability.getSeverity(), persistentComponent);
+                }
             }
 
             if (didCreateVulns) {

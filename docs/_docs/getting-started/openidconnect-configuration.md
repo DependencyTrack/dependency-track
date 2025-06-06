@@ -126,6 +126,21 @@ Set the redirect URI to `<dependency track host>/static/oidc-callback.html`
 
 <span style="color:red">\*</span> Requires additional configuration, see [Example setup with OneLogin](#example-setup-with-onelogin)
 
+#### AWS Cognito
+
+| API server                                                                         | Frontend                                                            |
+| :----------------------------------------------------------------------------------| :-------------------------------------------------------------------|
+| alpine.oidc.enabled=true                                                           |                                                                     |
+| alpine.oidc.client.id=6s7fpripfp87v3khbn87ioq5a3<span style="color:red">\*</span>  | OIDC_CLIENT_ID=6s7fpripfp87v3khbn87ioq5a3                           |
+| alpine.oidc.issuer=https://cognito-idp.region.amazonaws.com/region_pool-id         | OIDC_ISSUER=https://cognito-idp.region.amazonaws.com/region_pool-id |
+| alpine.oidc.username.claim=email                                                   | OIDC_SCOPE=email openid<span style="color:red">\*</span>            |
+| alpine.oidc.user.provisioning=true                                                 |                                                                     |
+| alpine.oidc.teams.claim=cognito:groups                                             |                                                                     |
+| alpine.oidc.team.synchronization=true<span style="color:red">\*</span>             |                                                                     |
+ 
+<span style="color:red">\*</span> Requires additional configuration. See [Example setup with AWS Cognito](#example-setup-with-aws-cognito)
+
+
 ### Default Groups
 
 In cases where team synchronization is not possible, auto-provisioned users can be assigned one or more default teams.
@@ -312,3 +327,38 @@ The following steps demonstrate how to setup OpenID Connect with Microsoft Entra
    - OpenId permissions -> openid
    - OpenId permissions -> profile
    - GroupMember -> GroupMember.Read.All
+
+
+### Example setup with AWS Cognito
+
+The following steps demonstrate how to setup OpenID Connect with AWS Cognito.
+
+> This guide assumes that:
+>
+> - the Dependency-Track frontend has been deployed to `https://dependency-track.example.com`
+> - You have user pool in AWS Cognito
+> - You have AWS Cognito Groups to associate with Dependency Track, e.g. Admins, Users
+
+1.  Log in to AWS and navigate to _Cognito -> Applications -> App Clients_
+
+2. Create AppClient:
+  - Type: Mobile App or SPA
+  - Redirect URI's: `https://dependency-track.example.com/static/oidc-callback.html`
+
+3.  In the _Login Pages_ section of created App Client set:
+  - OAuth grant types: `Authorization code grant`
+  - OpenID Connect scopes: `openid email`
+
+4. Copy:
+  - `Client ID`
+  - `authority`(`OIDC_ISSUER`) - you can find it in _Quick setup guide_ section.
+
+6. Adjust Dependency Track apiserver and frontend OIDC configurations and restart them.
+
+7.  Login to Dependency-Track as an admin and navigate to _Administration -> Access Management -> OpenID Connect Groups_
+  - Create groups with names equivalent to those in AWS Cognito you want to associate with Dependency Track (these must match exactly, including case)
+  - Add teams that the groups should be mapped to
+
+8.  Use the _OpenID_ button on the login page to sign in with AWS Cognito user that is member of at least one of the configured groups. Navigating to _Administration -> Access Management -> OpenID Connect Users_ should now reveal that the user has been automatically provisioned and team memberships have been synchronized
+
+

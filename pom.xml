@@ -594,7 +594,7 @@
             <plugin>
                 <groupId>io.github.ascopes</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.4.1</version>
                 <configuration>
                     <protocVersion>${lib.protobuf-java.version}</protocVersion>
                     <sourceDirectories>

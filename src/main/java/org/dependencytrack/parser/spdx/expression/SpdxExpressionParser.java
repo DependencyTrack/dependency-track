@@ -18,12 +18,12 @@
  */
 package org.dependencytrack.parser.spdx.expression;
 
+import org.dependencytrack.parser.spdx.expression.model.SpdxExpression;
+import org.dependencytrack.parser.spdx.expression.model.SpdxOperator;
+
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.List;
-
-import org.dependencytrack.parser.spdx.expression.model.SpdxOperator;
-import org.dependencytrack.parser.spdx.expression.model.SpdxExpression;
 
 /**
  * This class parses SPDX expressions according to
@@ -35,16 +35,33 @@ import org.dependencytrack.parser.spdx.expression.model.SpdxExpression;
  */
 public class SpdxExpressionParser {
 
+    private static final SpdxExpressionParser INSTANCE = new SpdxExpressionParser();
+
+    private SpdxExpressionParser() {
+    }
+
+    public static SpdxExpressionParser getInstance() {
+        return INSTANCE;
+    }
+
     /**
      * Reads in a SPDX expression and returns a parsed tree of SpdxExpressionOperators and license
      * ids.
-     * 
+     *
      * @param spdxExpression
      *            spdx expression string
      * @return parsed SpdxExpression tree, or SpdxExpression.INVALID if an error has occurred during
      *         parsing
      */
     public SpdxExpression parse(final String spdxExpression) {
+        try {
+            return parseInternal(spdxExpression);
+        } catch (RuntimeException e) {
+            return SpdxExpression.INVALID;
+        }
+    }
+
+    private SpdxExpression parseInternal(final String spdxExpression) {
         // operators are surrounded by spaces or brackets. Let's make our life easier and surround brackets by spaces.
         var _spdxExpression = spdxExpression.replace("(", " ( ").replace(")", " ) ").split(" ");
         if (_spdxExpression.length == 1) {

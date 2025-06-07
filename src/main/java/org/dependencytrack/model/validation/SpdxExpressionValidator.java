@@ -34,7 +34,7 @@ public class SpdxExpressionValidator implements ConstraintValidator<ValidSpdxExp
             return true;
         }
 
-        return !Objects.equals(new SpdxExpressionParser().parse(expressionString), SpdxExpression.INVALID);
+        return !Objects.equals(SpdxExpressionParser.getInstance().parse(expressionString), SpdxExpression.INVALID);
     }
 
 }

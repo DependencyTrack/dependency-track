@@ -133,7 +133,7 @@ public class LicenseGroupPolicyEvaluator extends AbstractPolicyEvaluator {
         } else {
             String licenseString = component.getLicenseExpression();
             if (licenseString != null) {
-                expression = new SpdxExpressionParser().parse(licenseString);
+                expression = SpdxExpressionParser.getInstance().parse(licenseString);
             } else if (component.getLicense() != null) {
                 expression = new SpdxExpression(component.getLicense());
             } else {

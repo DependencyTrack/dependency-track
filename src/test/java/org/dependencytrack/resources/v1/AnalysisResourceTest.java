@@ -150,7 +150,7 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Jane Doe"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
-        assertThat(responseJson.getJsonNumber("suppressionExpiration")).isEqualTo(currentTime + twoDaysInMillis);
+        assertThat(responseJson.getJsonNumber("suppressionExpiration").longValue()).isEqualTo(currentTime + twoDaysInMillis);
     }
 
     @Test
@@ -358,7 +358,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
         final var comments = responseJson.getJsonArray("analysisComments");
-        assertThat(comments).hasSize(6);
+        assertThat(comments).hasSize(7);
         assertThat(comments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: NOT_SET → NOT_AFFECTED"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
@@ -381,7 +381,7 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
-        assertThat(responseJson.getJsonNumber("suppressionExpiration")).isEqualTo(currentTime + twoDaysInMillis);
+        assertThat(responseJson.getJsonNumber("suppressionExpiration").longValue()).isEqualTo(currentTime + twoDaysInMillis);
 
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
         final Notification projectNotification = NOTIFICATIONS.poll();
@@ -438,7 +438,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
         final var comments = responseJson.getJsonArray("analysisComments");
-        assertThat(comments).hasSize(6);
+        assertThat(comments).hasSize(7);
         assertThat(comments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: NOT_SET → NOT_AFFECTED"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
@@ -461,7 +461,7 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
-        assertThat(responseJson.getJsonNumber("suppressionExpiration")).isEqualTo(currentTime + twoDaysInMillis);
+        assertThat(responseJson.getJsonNumber("suppressionExpiration").longValue()).isEqualTo(currentTime + twoDaysInMillis);
 
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
         final Notification projectNotification = NOTIFICATIONS.poll();
@@ -587,8 +587,8 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(analysisComments.getJsonObject(5))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Unsuppressed"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
-        assertThat(analysisComments.getJsonObject(5))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppression Expiration: NOT_SET → NOT_SET"))
+        assertThat(analysisComments.getJsonObject(6))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppression Expiration: " + DateUtil.toISO8601(new Date(currentTime + twoDaysInMillis), true) + " → NOT_SET"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(analysisComments.getJsonObject(6))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("New analysis comment here"))
@@ -706,7 +706,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
 
         final JsonArray analysisComments = responseJson.getJsonArray("analysisComments");
-        assertThat(analysisComments).hasSize(4);
+        assertThat(analysisComments).hasSize(5);
         assertThat(analysisComments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Jane Doe"));

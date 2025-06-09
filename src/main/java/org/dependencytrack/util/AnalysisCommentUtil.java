@@ -56,7 +56,7 @@ public final class AnalysisCommentUtil {
         return false;
     }
 
-    public static void makeAnalysisSuppressionExpirationComment(final QueryManager qm, final Analysis analysis, final Long suppressionExpiration, final String commenter) {
+    public static void makeAnalysisSuppressionExpirationComment(final QueryManager qm, final Analysis analysis, final Boolean suppressed, final Long suppressionExpiration, final String commenter) {
         String currentValue = null;
         Date olderAnalysisSuppression = analysis.getSuppressionExpiration();
         if (olderAnalysisSuppression != null) {
@@ -64,7 +64,7 @@ public final class AnalysisCommentUtil {
         }
 
         String newerValue = null;
-        if (suppressionExpiration != null) {
+        if (Boolean.TRUE.equals(suppressed) && suppressionExpiration != null) {
             Date newSuppressionExpiration = new Date(suppressionExpiration);
             newerValue = DateUtil.toISO8601(newSuppressionExpiration, true);
         }

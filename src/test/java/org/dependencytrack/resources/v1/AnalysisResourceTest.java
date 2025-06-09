@@ -568,7 +568,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("New analysis details here");
 
         final JsonArray analysisComments = responseJson.getJsonArray("analysisComments");
-        assertThat(analysisComments).hasSize(7);
+        assertThat(analysisComments).hasSize(8);
         assertThat(analysisComments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Jane Doe"));
@@ -588,6 +588,9 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Unsuppressed"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(analysisComments.getJsonObject(6))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppression Expiration: " + DateUtil.toISO8601(new Date(currentTime + twoDaysInMillis), true) + " → NOT_SET"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(analysisComments.getJsonObject(7))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("New analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(responseJson.getBoolean("isSuppressed")).isFalse();

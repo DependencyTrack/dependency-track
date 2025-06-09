@@ -190,7 +190,7 @@ public class AnalysisResource extends AlpineResource {
             AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, request.getAnalysisResponse(), commenter);
             AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, request.getAnalysisDetails(), commenter);
             final var suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
-            AnalysisCommentUtil.makeAnalysisSuppressionExpirationComment(qm, analysis, request.getSuppressionExpiration(), commenter);
+            AnalysisCommentUtil.makeAnalysisSuppressionExpirationComment(qm, analysis, request.isSuppressed(), request.getSuppressionExpiration(), commenter);
             analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed(), request.getSuppressionExpiration());
 
             final String comment = StringUtils.trimToNull(request.getComment());

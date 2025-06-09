@@ -18,11 +18,11 @@
  */
 package org.dependencytrack.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Extension;
@@ -33,7 +33,7 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -98,12 +98,10 @@ public class Analysis implements Serializable {
     @JsonProperty(value = "isSuppressed")
     private boolean suppressed;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    @Persistent(defaultFetchGroup = "true")
-    @Column(name = "SUPPRESSION_EXPIRATION", jdbcType = "DATE", allowsNull = "true")
-    @JsonProperty("suppressionExpiration")
-    private LocalDate suppressionExpiration;
-
+    @Persistent
+    @Column(name = "SUPPRESSION_EXPIRATION", allowsNull = "true")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    private Date suppressionExpiration;
 
     public long getId() {
         return id;
@@ -182,11 +180,11 @@ public class Analysis implements Serializable {
         this.suppressed = suppressed;
     }
 
-    public LocalDate getSuppressionExpiration() {
+    public Date getSuppressionExpiration() {
         return suppressionExpiration;
     }
 
-    public void setSuppressionExpiration(LocalDate suppressionExpiration) {
+    public void setSuppressionExpiration(Date suppressionExpiration) {
         this.suppressionExpiration = suppressionExpiration;
     }
 }

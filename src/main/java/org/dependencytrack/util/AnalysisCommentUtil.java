@@ -24,6 +24,7 @@ import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.persistence.QueryManager;
 
+import java.util.Date;
 import java.util.Objects;
 
 public final class AnalysisCommentUtil {
@@ -53,6 +54,21 @@ public final class AnalysisCommentUtil {
             return true;
         }
         return false;
+    }
+
+    public static void makeAnalysisSuppressionExpirationComment(final QueryManager qm, final Analysis analysis, final Long suppressionExpiration, final String commenter) {
+        String currentValue = null;
+        Date olderAnalysisSuppression = analysis.getSuppressionExpiration();
+        if (olderAnalysisSuppression != null) {
+            currentValue = DateUtil.toISO8601(olderAnalysisSuppression, true);
+        }
+
+        String newerValue = null;
+        if (suppressionExpiration != null) {
+            Date newSuppressionExpiration = new Date(suppressionExpiration);
+            newerValue = DateUtil.toISO8601(newSuppressionExpiration, true);
+        }
+        makeCommentIfChanged("Suppression Expiration", qm, analysis, Objects.requireNonNullElse(currentValue, AnalysisResponse.NOT_SET), Objects.requireNonNullElse(newerValue, AnalysisResponse.NOT_SET), commenter);
     }
 
     static <T> boolean makeCommentIfChanged(final String prefix, final QueryManager qm, final Analysis analysis, final T currentValue, final T newValue, final String commenter) {

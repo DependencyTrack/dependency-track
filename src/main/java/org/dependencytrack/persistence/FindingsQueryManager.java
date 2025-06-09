@@ -20,6 +20,7 @@ package org.dependencytrack.persistence;
 
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
+import jakarta.validation.ValidationException;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
@@ -37,7 +38,6 @@ import org.dependencytrack.util.PurlUtil;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -157,7 +157,8 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      * @return a List of Analysis objects, or null if not found
      */
     @SuppressWarnings("unchecked")
-    List<Analysis> getAnalyses(Project project) {
+    @Override
+    public List<Analysis> getAnalyses(Project project) {
         final Query<Analysis> query = pm.newQuery(Analysis.class, "project == :project");
         return (List<Analysis>) query.execute(project);
     }
@@ -183,7 +184,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      */
     public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
                                  AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
-                                 String analysisDetails, Boolean isSuppressed, LocalDate suppressionExpiration) {
+                                 String analysisDetails, Boolean isSuppressed, Long suppressionExpiration) {
         Analysis analysis = getAnalysis(component, vulnerability);
         if (analysis == null) {
             analysis = new Analysis();
@@ -210,8 +211,15 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
         if (isSuppressed != null) {
             analysis.setSuppressed(isSuppressed);
         }
-        if(suppressionExpiration != null){
-            analysis.setSuppressionExpiration(suppressionExpiration);
+
+        if(analysis.isSuppressed() && suppressionExpiration != null){
+            if (suppressionExpiration <= System.currentTimeMillis()) {
+                throw new ValidationException("Suppression expiration must be a future timestamp");
+            }
+            Date suppressionExpirationDate = new Date(suppressionExpiration);
+            analysis.setSuppressionExpiration(suppressionExpirationDate);
+        } else {
+            analysis.setSuppressionExpiration(null);
         }
         analysis = persist(analysis);
         return getAnalysis(analysis.getComponent(), analysis.getVulnerability());

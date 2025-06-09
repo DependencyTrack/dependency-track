@@ -24,15 +24,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import jakarta.validation.constraints.Future;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-
-import java.time.LocalDate;
 
 /**
  * Defines a custom request object used when updating analysis decisions.
@@ -69,9 +67,9 @@ public class AnalysisRequest {
 
     private final Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
 
-    @Future(message = "Suppression expiration must be a future date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private final LocalDate suppressionExpiration;
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @JsonFormat(shape = JsonFormat.Shape.NUMBER)
+    private final Long suppressionExpiration;
 
     @JsonCreator
     public AnalysisRequest(@JsonProperty(value = "project") String project,
@@ -83,7 +81,7 @@ public class AnalysisRequest {
                            @JsonProperty(value = "analysisDetails") String analysisDetails,
                            @JsonProperty(value = "comment") String comment,
                            @JsonProperty(value = "isSuppressed") Boolean suppressed,
-                           @JsonProperty(value = "suppressionExpiration") LocalDate suppressionExpiration) {
+                           @JsonProperty(value = "suppressionExpiration") Long suppressionExpiration) {
         this.project = project;
         this.component = component;
         this.vulnerability = vulnerability;
@@ -144,7 +142,7 @@ public class AnalysisRequest {
         return suppressed;
     }
 
-    public LocalDate getSuppressionExpiration(){
+    public Long getSuppressionExpiration(){
         return suppressionExpiration;
     }
 }

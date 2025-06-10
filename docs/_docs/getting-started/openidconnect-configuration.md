@@ -327,6 +327,8 @@ The following steps demonstrate how to setup OpenID Connect with Microsoft Entra
    - OpenId permissions -> openid
    - OpenId permissions -> profile
    - GroupMember -> GroupMember.Read.All
+  
+5. Note that Entra will return the group UUID in the claims (not the group name). 
 
 
 ### Example setup with AWS Cognito

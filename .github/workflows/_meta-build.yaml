@@ -109,16 +109,21 @@ jobs:
           IMAGE_NAME="docker.io/dependencytrack/${{ matrix.distribution }}"
           REF_NAME="${{ inputs.ref-name }}"
           TAGS=""
+          TAGS_ALPINE=""
           
           if [[ $REF_NAME == feature-* ]]; then
             TAGS="${IMAGE_NAME}:${REF_NAME,,}"
+            TAGS_ALPINE="${IMAGE_NAME}:${REF_NAME,,}-alpine"
           else
             TAGS="${IMAGE_NAME}:${{ inputs.app-version }}"
+            TAGS_ALPINE="${IMAGE_NAME}:${{ inputs.app-version }}-alpine"
             if [[ "${{ inputs.app-version }}" != "snapshot" ]]; then
               TAGS="${TAGS},${IMAGE_NAME}:latest"
+              TAGS_ALPINE="${TAGS_ALPINE},${IMAGE_NAME}:latest-alpine"
             fi
           fi
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "tags-alpine=${TAGS_ALPINE}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # tag=v6.18.0
@@ -132,6 +137,19 @@ jobs:
           push: ${{ inputs.publish-container }}
           context: .
           file: src/main/docker/Dockerfile
+
+      - name: Build Alpine multi-arch Container Image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # tag=v6.18.0
+        with:
+          tags: ${{ steps.tags.outputs.tags-alpine }}
+          build-args: |-
+            APP_VERSION=${{ inputs.app-version }}
+            COMMIT_SHA=${{ github.sha }}
+            WAR_FILENAME=dependency-track-${{ matrix.distribution }}.jar
+          platforms: linux/amd64,linux/arm64
+          push: ${{ inputs.publish-container }}
+          context: .
+          file: src/main/docker/Dockerfile.alpine
 
       - name: Run Trivy Vulnerability Scanner
         if: ${{ inputs.publish-container }}

@@ -25,9 +25,19 @@ ARG UID=1000
 ARG GID=1000
 ARG WAR_FILENAME=dependency-track-apiserver.jar
 
-FROM eclipse-temurin:21.0.7_6-jre-jammy@sha256:2342b26a599c84bc01fb940977c44dd9aff97ab7ae64dcb8ee762fda65198126 AS jre-build
+FROM eclipse-temurin:21.0.7_6-jdk-alpine@sha256:2f2f553ce09d25e2d2f0f521ab94cd73f70c9b21327a29149c23a2b63b8e29a0 AS jre-build
 
-FROM debian:stable-slim@sha256:b3ef39b8a45ee3b689c462dfa711454bcfc9c9965fe81c6cfb7ff4029b5b8cd7
+ARG WAR_FILENAME
+
+WORKDIR /work
+
+COPY ./target/${WAR_FILENAME} ./app.jar
+
+RUN unzip -qq ./app.jar -d ./app \
+    && JAVA_MODULE_DEPS="$(jdeps -cp './app:./app/WEB-INF/lib/*' --print-module-deps --multi-release 21 --ignore-missing-deps ./app/WEB-INF/classes)" \
+    && jlink --compress zip-6 --strip-debug --no-header-files --no-man-pages --add-modules "jdk.crypto.ec,jdk.zipfs,${JAVA_MODULE_DEPS}" --output ./jre
+
+FROM alpine:3.22@sha256:8a1f59ffb675680d47db6337b49d22281a139e9d709335b492be023728e11715
 
 ARG COMMIT_SHA
 ARG APP_VERSION
@@ -64,18 +74,14 @@ ENV TZ=Etc/UTC \
 # Create a user and assign home directory to a ${DATA_DIR}
 # Ensure UID 1000 & GID 1000 own all the needed directories
 RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
-    && addgroup --system --gid ${GID} dtrack || true \
-    && adduser --system --disabled-login --ingroup dtrack --no-create-home --home ${DATA_DIR} --gecos "dtrack user" --shell /bin/false --uid ${UID} dtrack || true \
+    && addgroup -S -g ${GID} dtrack || true \
+    && adduser -S -D -G dtrack -H -h ${DATA_DIR} -g "dtrack user" -s /bin/false -u ${UID} dtrack || true \
     && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
     && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
-    \
-    # Install wget for health check
-    && apt-get -yqq update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends wget \
-    && rm -rf /var/lib/apt/lists/*
+    && apk add --no-cache tzdata
 
 # Copy JRE from temurin base image
-COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
+COPY --from=jre-build /work/jre ${JAVA_HOME}
 
 # Copy the compiled WAR to the application directory created above
 COPY ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ${APP_DIR}
@@ -98,7 +104,7 @@ CMD exec java ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD wget -t 1 -T 3 --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
+HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD wget -t 1 -T 3 --proxy off -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
 
 # metadata labels
 LABEL \

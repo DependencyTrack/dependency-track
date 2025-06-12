@@ -32,20 +32,16 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 /**
  * <p>
  * Simple object to track the parts of a version number. The parts are contained
- * in a List such that version 1.2.3 will be stored as:  <code>versionParts[0] = new Token(PRIOITY_OF_STRING, "1");
+ * in a List such that version 1.2.3 will be stored as:  <code>
+ * versionParts[0] = new Token(PRIOITY_OF_STRING, "1");
  * versionParts[1] = new Token(PRIORITY_OF_DOT, ".");
  * versionParts[2] = new Token(PRIORITY_OF_STRING, "2");
  * versionParts[3] = new Token(PRIORITY_OF_DOT, ".");
  * versionParts[4] = new Token(PRIORITY_OF_STRING, "3");
  * </code></p>
- * <p>
- * Note, the parser contained in this class expects the version numbers to be
- * separated by periods. If a different separator is used the parser will likely
- * fail.</p>
  *
- * @author Jeremy Long
+ * @author Andre Wagner
  *
- * Ported from DependencyVersion in Dependency-Check v5.2.1
  */
 @NotThreadSafe
 public class ComponentVersion implements Comparable<ComponentVersion> {
@@ -218,33 +214,33 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
 
         }
 
-        int result_code = 0;
+        int resultCode = 0;
 
-        Iterator<Token> version1_iterator = this.getVersionParts().iterator();
-        Iterator<Token> version2_iterator = version.getVersionParts().iterator();
+        Iterator<Token> version1Iterator = this.getVersionParts().iterator();
+        Iterator<Token> version2Iterator = version.getVersionParts().iterator();
 
-        Token version1_field;
-        Token version2_field;
+        Token version1Field;
+        Token version2Field;
 
         while(true) {
-            version1_field = version1_iterator.hasNext() ? version1_iterator.next() : null;
-            version2_field = version2_iterator.hasNext() ? version2_iterator.next() : null;
+            version1Field = version1Iterator.hasNext() ? version1Iterator.next() : null;
+            version2Field = version2Iterator.hasNext() ? version2Iterator.next() : null;
 
 
-            Integer priority1 = (version1_field != null) ? version1_field.getPriority() : this.ecosystem.getEndOfStringPriority();
-            Integer priority2 = (version2_field != null) ? version2_field.getPriority() : this.ecosystem.getEndOfStringPriority();
+            Integer priority1 = (version1Field != null) ? version1Field.getPriority() : this.ecosystem.getEndOfStringPriority();
+            Integer priority2 = (version2Field != null) ? version2Field.getPriority() : this.ecosystem.getEndOfStringPriority();
 
-            if((result_code = Integer.compare(priority1, priority2)) != 0) {
+            if((resultCode = Integer.compare(priority1, priority2)) != 0) {
                 break;
             }
 
 
-            if (version1_field == null || version2_field == null) {
+            if (version1Field == null || version2Field == null) {
                 break;
             }
 
-            String value1 = version1_field.getValue();
-            String value2 = version2_field.getValue();
+            String value1 = version1Field.getValue();
+            String value2 = version2Field.getValue();
 
             if(Character.isDigit(value1.charAt(0)) && Character.isDigit(value2.charAt(0))) {
                 if(value1.length() > value2.length()) {
@@ -255,12 +251,12 @@ public class ComponentVersion implements Comparable<ComponentVersion> {
                 }
             }
 
-            if((result_code = value1.compareTo(value2)) != 0) {
+            if((resultCode = value1.compareTo(value2)) != 0) {
                 break;
             }
         }
 
-        return result_code;
+        return resultCode;
     }
 
     /**

@@ -69,7 +69,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             }
         }
     }
-    
+
     private Boolean maybeMatchCpe(final VulnerableSoftware vs, final Cpe targetCpe, final String targetVersion) {
         if (targetCpe == null || vs.getCpe23() == null) {
             return null;
@@ -161,7 +161,6 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
 
         LOGGER.debug("Version compare for ecosystem %s: %s"
                 .formatted(ecosystem, targetVersion));
- 
 
         if (target.isEmpty()) {
             return false;

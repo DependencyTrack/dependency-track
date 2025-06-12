@@ -42,53 +42,53 @@ public class ComponentVersionTest {
     @Test
     public void testSimpleOpensslVersion() {
         Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
-        ComponentVersion version_1_1_0 = new ComponentVersion(ecosystem, "1.1.0");
-        ComponentVersion version_1_1_1 = new ComponentVersion(ecosystem, "1.1.1");
-        ComponentVersion version_1_1_1b = new ComponentVersion(ecosystem, "1.1.1b");
-        ComponentVersion version_1_1_1i = new ComponentVersion(ecosystem, "1.1.1i");
-        ComponentVersion version_1_1_1j = new ComponentVersion(ecosystem, "1.1.1j");
-        ComponentVersion version_1_1_1k = new ComponentVersion(ecosystem, "1.1.1k");
-        ComponentVersion version_1_1_2 = new ComponentVersion(ecosystem, "1.1.2");
+        ComponentVersion version110 = new ComponentVersion(ecosystem, "1.1.0");
+        ComponentVersion version111 = new ComponentVersion(ecosystem, "1.1.1");
+        ComponentVersion version111b = new ComponentVersion(ecosystem, "1.1.1b");
+        ComponentVersion version111i = new ComponentVersion(ecosystem, "1.1.1i");
+        ComponentVersion version111j = new ComponentVersion(ecosystem, "1.1.1j");
+        ComponentVersion version111k = new ComponentVersion(ecosystem, "1.1.1k");
+        ComponentVersion version112 = new ComponentVersion(ecosystem, "1.1.2");
 
         // equality
-        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_1j) == 0);
-        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_1b) != 0);
-        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_1) != 0);
+        Assert.assertTrue(version111j.compareTo(version111j) == 0);
+        Assert.assertTrue(version111j.compareTo(version111b) != 0);
+        Assert.assertTrue(version111j.compareTo(version111) != 0);
 
         // less than
-        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_2) < 0);
-        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_1k) < 0);
+        Assert.assertTrue(version111j.compareTo(version112) < 0);
+        Assert.assertTrue(version111j.compareTo(version111k) < 0);
 
         // greater than
-        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_0) > 0);
-        Assert.assertTrue(version_1_1_1j.compareTo(version_1_1_1i) > 0);
+        Assert.assertTrue(version111j.compareTo(version110) > 0);
+        Assert.assertTrue(version111j.compareTo(version111i) > 0);
     }
 
     @Test
     public void testUbuntuOpensslVersion() {
         Ecosystem ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.DEBIAN);
-        ComponentVersion version_1_1_0 = new ComponentVersion(ecosystem, "1.1.0");
-        ComponentVersion version_1_1_1 = new ComponentVersion(ecosystem, "1.1.1");
-        ComponentVersion version_1_1_1b = new ComponentVersion(ecosystem, "1.1.1b");
-        ComponentVersion version_1_1_1i = new ComponentVersion(ecosystem, "1.1.1i");
-        ComponentVersion version_1_1_1j = new ComponentVersion(ecosystem, "1.1.1j");
-        ComponentVersion version_1_1_1j_1ubuntu2_10 = new ComponentVersion(ecosystem, "1.1.1j-1ubuntu2.10");
-        ComponentVersion version_1_1_1k = new ComponentVersion(ecosystem, "1.1.1k");
-        ComponentVersion version_1_1_2 = new ComponentVersion(ecosystem, "1.1.2");
+        ComponentVersion version110 = new ComponentVersion(ecosystem, "1.1.0");
+        ComponentVersion version111 = new ComponentVersion(ecosystem, "1.1.1");
+        ComponentVersion version111b = new ComponentVersion(ecosystem, "1.1.1b");
+        ComponentVersion version111i = new ComponentVersion(ecosystem, "1.1.1i");
+        ComponentVersion version111j = new ComponentVersion(ecosystem, "1.1.1j");
+        ComponentVersion version111j1Ubuntu210 = new ComponentVersion(ecosystem, "1.1.1j-1ubuntu2.10");
+        ComponentVersion version111k = new ComponentVersion(ecosystem, "1.1.1k");
+        ComponentVersion version112 = new ComponentVersion(ecosystem, "1.1.2");
 
         // equality
-        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1j_1ubuntu2_10) == 0);
-        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1b) != 0);
-        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1) != 0);
+        Assert.assertTrue(version111j1Ubuntu210.compareTo(version111j1Ubuntu210) == 0);
+        Assert.assertTrue(version111j1Ubuntu210.compareTo(version111b) != 0);
+        Assert.assertTrue(version111j1Ubuntu210.compareTo(version111) != 0);
 
         // less than
-        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_2) < 0);
-        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1k) < 0);
+        Assert.assertTrue(version111j1Ubuntu210.compareTo(version112) < 0);
+        Assert.assertTrue(version111j1Ubuntu210.compareTo(version111k) < 0);
 
         // greater than
-        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1j) > 0);
-        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_0) > 0);
-        Assert.assertTrue(version_1_1_1j_1ubuntu2_10.compareTo(version_1_1_1i) > 0);
+        Assert.assertTrue(version111j1Ubuntu210.compareTo(version111j) > 0);
+        Assert.assertTrue(version111j1Ubuntu210.compareTo(version110) > 0);
+        Assert.assertTrue(version111j1Ubuntu210.compareTo(version111i) > 0);
     }
 
     @Test
@@ -153,11 +153,11 @@ public class ComponentVersionTest {
             greater = lines.get(firstPick);
         }
 
-        ComponentVersion version_lesser = new ComponentVersion(ecosystem, lesser);
-        ComponentVersion version_greater = new ComponentVersion(ecosystem, greater);
+        ComponentVersion versionLesser = new ComponentVersion(ecosystem, lesser);
+        ComponentVersion versionGreater = new ComponentVersion(ecosystem, greater);
 
         System.out.println(lesser +  "<<" + greater);
-        Assert.assertTrue(version_lesser.compareTo(version_greater) <= 0);
+        Assert.assertTrue(versionLesser.compareTo(versionGreater) <= 0);
         }
     }
 
@@ -232,11 +232,11 @@ public class ComponentVersionTest {
             greater = lines.get(firstPick);
         }
 
-        ComponentVersion version_lesser = new ComponentVersion(ecosystem, lesser);
-        ComponentVersion version_greater = new ComponentVersion(ecosystem, greater);
+        ComponentVersion versionLesser = new ComponentVersion(ecosystem, lesser);
+        ComponentVersion versionGreater = new ComponentVersion(ecosystem, greater);
 
         System.out.println(lesser +  "<<" + greater);
-        Assert.assertTrue(version_lesser.compareTo(version_greater) <= 0);
+        Assert.assertTrue(versionLesser.compareTo(versionGreater) <= 0);
         }
     }
 
@@ -280,4 +280,3 @@ public class ComponentVersionTest {
 
 
 }
-

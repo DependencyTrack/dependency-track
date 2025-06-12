@@ -26,4 +26,3 @@ public class EcosystemTest {
         Assert.assertEquals(ecosystem.getTokenRegex().toString().split("\\|")[endOfStringPriority] , "(#)");
     }
 }
-

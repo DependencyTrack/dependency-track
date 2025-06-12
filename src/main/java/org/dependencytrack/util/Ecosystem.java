@@ -35,20 +35,20 @@ public class Ecosystem {
     /**
      * Constructor for a Ecosystem with three partial lists, each sorting from low priority to high priority
      *
-     * @param pre_elements List with regexes with priorities lower than EndOfString
-     * @param ignore_element Regexes with priority same as EndOfString
-     * @param post_elements List with regexes with priorities higher than EndOfString
+     * @param preElements List with regexes with priorities lower than EndOfString
+     * @param ignoreElement Regexes with priority same as EndOfString
+     * @param postElements List with regexes with priorities higher than EndOfString
      */
-    public Ecosystem(String name, List<String> pre_elements, String ignore_element, List<String> post_elements) {
+    public Ecosystem(String name, List<String> preElements, String ignoreElement, List<String> postElements) {
         this.name = name;
-        this.equalToEmptyStringIndex = pre_elements.size();
+        this.equalToEmptyStringIndex = preElements.size();
 
         List<String> elements = new ArrayList<>();
-        elements.addAll(pre_elements);
-        elements.add(ignore_element);
+        elements.addAll(preElements);
+        elements.add(ignoreElement);
         /* This acts as a splitter between two different version blocks which are compared separatly */
         elements.add("\n");
-        elements.addAll(post_elements);
+        elements.addAll(postElements);
 
         /* Make a matching group from each element and concate them with logical OR */
         String regexString = elements.stream().map(e -> "(" + e + ")").reduce((e1, e2) -> e1 + "|" + e2).orElse("");
@@ -67,4 +67,3 @@ public class Ecosystem {
         return tokenRegex;
     }
 }
-

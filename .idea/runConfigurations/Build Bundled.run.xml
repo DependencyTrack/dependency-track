@@ -5,6 +5,7 @@
       <option name="myRunnerSettings" />
       <option name="myRunnerParameters">
         <MavenRunnerParameters>
+          <option name="cmdOptions" />
           <option name="profiles">
             <set />
           </option>
@@ -16,14 +17,19 @@
               <option value="-Dlogback.configuration.file=src/main/docker/logback.xml" />
             </list>
           </option>
+          <option name="multimoduleDir" />
           <option name="pomFileName" />
           <option name="profilesMap">
             <map>
               <entry key="bundle-ui" value="true" />
+              <entry key="quick" value="true" />
               <entry key="embedded-jetty" value="true" />
               <entry key="clean-exclude-wars" value="true" />
               <entry key="enhance" value="true" />
             </map>
+          </option>
+          <option name="projectsCmdOptionValues">
+            <list />
           </option>
           <option name="resolveToWorkspace" value="false" />
           <option name="workingDirPath" value="$PROJECT_DIR$" />

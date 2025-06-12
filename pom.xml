@@ -752,6 +752,19 @@
 
     <profiles>
         <profile>
+            <id>quick</id>
+            <activation>
+                <property>
+                    <name>quickly</name>
+                </property>
+            </activation>
+            <properties>
+                <checkstyle.skip>true</checkstyle.skip>
+                <jacoco.skip>true</jacoco.skip>
+                <maven.test.skip>true</maven.test.skip>
+            </properties>
+        </profile>
+        <profile>
             <id>clean-exclude-wars</id>
             <build>
                 <pluginManagement>

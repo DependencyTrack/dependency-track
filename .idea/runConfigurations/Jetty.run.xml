@@ -38,6 +38,7 @@
           <option name="pomFileName" />
           <option name="profilesMap">
             <map>
+              <entry key="quick" value="true" />
               <entry key="enhance" value="true" />
             </map>
           </option>

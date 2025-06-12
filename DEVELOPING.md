@@ -44,13 +44,13 @@ Knowing about the core technologies used by the API server may help you with und
 Build an executable JAR containing just the API server:
 
 ```shell
-mvn clean package -P clean-exclude-wars -P enhance -P embedded-jetty -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean package -P quick -P clean-exclude-wars -P enhance -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
 Build an executable JAR that contains both API server and frontend (aka "bundled" distribution):
 
 ```shell
-mvn clean package -P clean-exclude-wars -P enhance -P embedded-jetty -P bundle-ui -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean package -P quick -P clean-exclude-wars -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
 > When using the `bundle-ui` profile, Maven will download a [`DependencyTrack/frontend`](https://github.com/DependencyTrack/frontend) 
@@ -78,7 +78,7 @@ or environment variables. Refer to the [configuration documentation](https://doc
 To build and run the API server in one go, invoke the Jetty Maven plugin as follows:
 
 ```shell
-mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
+mvn jetty:run -P quick -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 ```
 
 > Note that the `bundle-ui` profile has no effect using this method. 
@@ -118,7 +118,7 @@ To enable it, simply pass the additional `h2-console` Maven profile to your buil
 This also works with the Jetty Maven plugin:
 
 ```shell
-mvn jetty:run -P enhance -P h2-console -Dlogback.configurationFile=src/main/docker/logback.xml
+mvn jetty:run -P quick -P enhance -P h2-console -Dlogback.configurationFile=src/main/docker/logback.xml
 ```
 
 Once enabled, the console will be available at http://localhost:8080/h2-console.
@@ -148,7 +148,7 @@ export ALPINE_DATABASE_USERNAME=dtrack
 export ALPINE_DATABASE_PASSWORD=dtrack
 
 # Launch Dependency-Track
-mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
+mvn jetty:run -P quick -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 ```
 
 You can now use tooling native to your chosen RDBMS, for example [pgAdmin](https://www.pgadmin.org/).
@@ -292,7 +292,7 @@ performed, and exceptions as that shown above are raised. If this happens, you c
 enhancement like this:
 
 ```shell
-mvn clean process-classes -P enhance
+mvn process-classes -P quick -P enhance
 ```
 
 Now just execute the test again, and it should just work. 

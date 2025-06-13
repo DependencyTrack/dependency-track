@@ -24,6 +24,7 @@ import alpine.notification.NotificationService;
 import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import alpine.security.crypto.DataEncryption;
+import jakarta.json.Json;
 import org.apache.http.HttpHeaders;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
@@ -34,15 +35,14 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 
-import jakarta.json.Json;
 import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,10 +61,11 @@ import static org.mockserver.model.HttpResponse.response;
 class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
 
     private static ClientAndServer mockServer;
+    private static final Subscription SUBSCRIPTION = new Subscription(NotificationSubscriber.class);
 
     @BeforeAll
     public static void beforeClass() {
-        NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
+        NotificationService.getInstance().subscribe(SUBSCRIPTION);
         mockServer = ClientAndServer.startClientAndServer(1080);
     }
 
@@ -101,7 +102,7 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
     @AfterAll
     public static void afterClass() {
         mockServer.stop();
-        NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
+        NotificationService.getInstance().unsubscribe(SUBSCRIPTION);
     }
 
     @Test

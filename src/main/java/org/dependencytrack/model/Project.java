@@ -50,6 +50,7 @@ import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
 import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Indices;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
 import javax.jdo.annotations.Order;
@@ -138,6 +139,9 @@ import java.util.UUID;
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Indices({
+        @Index(name="PROJECT_ACTIVE_IDX", members={"active","id"}),
+})
 public class Project implements Serializable {
 
     private static final long serialVersionUID = -7592438796591673355L;

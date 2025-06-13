@@ -47,12 +47,11 @@ jobs:
 
       - name: Build with Maven
         run: |-
-          mvn -B --no-transfer-progress clean
-          mvn -B --no-transfer-progress package -Dmaven.test.skip=true -P enhance -P embedded-jetty -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
-          mvn -B --no-transfer-progress clean -P clean-exclude-wars
-          mvn -B --no-transfer-progress package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
-          mvn -B --no-transfer-progress clean -P clean-exclude-wars
-          mvn -B --no-transfer-progress cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
+          mvn -B package -P quick -P enhance -P embedded-jetty -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
+          mvn -B clean -P clean-exclude-wars
+          mvn -B package -P quick -P enhance -P embedded-jetty -P bundle-ui -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
+          mvn -B clean -P clean-exclude-wars
+          mvn -B cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # tag=v4.6.2

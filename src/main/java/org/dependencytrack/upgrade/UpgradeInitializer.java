@@ -31,7 +31,6 @@ import org.datanucleus.PersistenceNucleusContext;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.datanucleus.store.schema.SchemaAwareStoreManager;
-import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.persistence.QueryManager;
 
 import jakarta.servlet.ServletContextEvent;
@@ -97,9 +96,6 @@ public class UpgradeInitializer implements ServletContextListener {
             classNames.add(SchemaVersion.class.getCanonicalName());
             ((SchemaAwareStoreManager) ctx.getStoreManager()).createSchemaForClasses(classNames, new Properties());
 
-            if (RequirementsVerifier.failedValidation()) {
-                return;
-            }
             try (final PersistenceManager pm = pmf.getPersistenceManager();
                  final QueryManager qm = new QueryManager(pm)) {
                 final UpgradeExecutor executor = new UpgradeExecutor(qm);

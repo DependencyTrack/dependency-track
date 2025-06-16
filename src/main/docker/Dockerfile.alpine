@@ -31,11 +31,10 @@ ARG WAR_FILENAME
 
 WORKDIR /work
 
-COPY ./target/${WAR_FILENAME} ./app.jar
+COPY --chmod=755 ./src/main/docker/create-jre.sh ./
+COPY ./target/${WAR_FILENAME} ./
 
-RUN unzip -qq ./app.jar -d ./app \
-    && JAVA_MODULE_DEPS="$(jdeps -cp './app:./app/WEB-INF/lib/*' --print-module-deps --multi-release 21 --ignore-missing-deps ./app/WEB-INF/classes)" \
-    && jlink --compress zip-6 --strip-debug --no-header-files --no-man-pages --add-modules "jdk.crypto.ec,jdk.zipfs,${JAVA_MODULE_DEPS}" --output ./jre
+RUN ./create-jre.sh -i "./${WAR_FILENAME}" -o ./jre
 
 FROM alpine:3.22@sha256:8a1f59ffb675680d47db6337b49d22281a139e9d709335b492be023728e11715
 

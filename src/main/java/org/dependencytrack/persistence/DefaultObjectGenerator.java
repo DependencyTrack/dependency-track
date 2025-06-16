@@ -23,7 +23,6 @@ import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.server.auth.PasswordService;
-import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.License;
@@ -55,9 +54,6 @@ public class DefaultObjectGenerator implements ServletContextListener {
     @Override
     public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Initializing default object generator");
-        if (RequirementsVerifier.failedValidation()) {
-            return;
-        }
 
         loadDefaultPermissions();
         loadDefaultPersonas();

@@ -22,7 +22,6 @@ import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.notification.NotificationService;
 import alpine.notification.Subscription;
-import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.common.ConfigKey;
 
 import jakarta.servlet.ServletContextEvent;
@@ -50,9 +49,6 @@ public class NotificationSubsystemInitializer implements ServletContextListener 
      */
     @Override
     public void contextInitialized(final ServletContextEvent event) {
-        if (RequirementsVerifier.failedValidation()) {
-            return;
-        }
         LOGGER.info("Initializing notification service");
         NOTIFICATION_SERVICE.subscribe(new Subscription(NotificationRouter.class));
     }

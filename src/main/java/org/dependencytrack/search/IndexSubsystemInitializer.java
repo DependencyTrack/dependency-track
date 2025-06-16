@@ -19,7 +19,6 @@
 package org.dependencytrack.search;
 
 import alpine.common.logging.Logger;
-import org.dependencytrack.RequirementsVerifier;
 
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -41,11 +40,6 @@ public class IndexSubsystemInitializer implements ServletContextListener {
     @Override
     public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Building lucene indexes if required");
-
-        if (RequirementsVerifier.failedValidation()) {
-            return;
-        }
-
         IndexManager.ensureIndexesExists();
     }
 

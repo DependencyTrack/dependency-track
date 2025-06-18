@@ -41,6 +41,7 @@ public enum ConfigPropertyConstants {
     EMAIL_SMTP_TRUSTCERT("email", "smtp.trustcert", "false", PropertyType.BOOLEAN, "Flag to enable/disable the trust of the certificate presented by the SMTP server"),
     INTERNAL_COMPONENTS_GROUPS_REGEX("internal-components", "groups.regex", null, PropertyType.STRING, "Regex that matches groups of internal components"),
     INTERNAL_COMPONENTS_NAMES_REGEX("internal-components", "names.regex", null, PropertyType.STRING, "Regex that matches names of internal components"),
+    INTERNAL_COMPONENTS_MATCH_MODE("internal-components", "match-mode", "OR", PropertyType.STRING, "Determines how internal component regexes are combined: OR (default) or AND"),
     JIRA_URL("integrations", "jira.url", null, PropertyType.URL, "The base URL of the JIRA instance"),
     JIRA_USERNAME("integrations", "jira.username", null, PropertyType.STRING, "The optional username to authenticate with when creating an Jira issue"),
     JIRA_PASSWORD("integrations", "jira.password", null, PropertyType.ENCRYPTEDSTRING, "The password for the username or bearer token used for authentication"),

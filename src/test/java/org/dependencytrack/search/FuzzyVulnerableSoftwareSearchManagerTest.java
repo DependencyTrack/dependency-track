@@ -2,6 +2,7 @@ package org.dependencytrack.search;
 
 import alpine.Config;
 import org.apache.commons.io.FileUtils;
+import org.apache.lucene.index.IndexWriter;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
@@ -21,10 +22,13 @@ import us.springett.parsers.cpe.values.Part;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -57,7 +61,7 @@ class FuzzyVulnerableSoftwareSearchManagerTest {
         vs.setCpe23("cpe:2.3:a:libexpat_project:libexpat:2.2.2:*:*:*:*:*:*:*");
         vs.setProduct("libexpat");
         VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vs));
-        VulnerableSoftwareIndexer.getInstance().commit();
+        commitIndex();
     }
     @AfterAll
     public static void restoreVsIndex() throws IOException {
@@ -115,5 +119,25 @@ class FuzzyVulnerableSoftwareSearchManagerTest {
         "cpe:2.3:a:dell:emc_vnx2_operating_environment:*:*:*:*:*:file:*:*").matches());
         Assertions.assertTrue(pattern.matcher(
                 "cpe:2.3:a:*:file:*:*:*:*:*:file:*:*").matches());
+    }
+
+    private static void commitIndex() {
+        VulnerableSoftwareIndexer.getInstance().commit();
+        final IndexWriter indexWriter;
+        try {
+            indexWriter = VulnerableSoftwareIndexer.getInstance().getIndexWriter();
+        } catch (IOException e) {
+            Assertions.fail("Unable to get IndexWriter", e);
+            return;
+        }
+        try {
+            indexWriter.flush();
+        } catch (IOException e) {
+            Assertions.fail("Unable to flush IndexWriter", e);
+            return;
+        }
+        await("Indexer flush")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(indexWriter.hasUncommittedChanges()).isFalse());
     }
 }

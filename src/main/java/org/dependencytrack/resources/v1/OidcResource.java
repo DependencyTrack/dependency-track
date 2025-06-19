@@ -276,12 +276,13 @@ public class OidcResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("A group with the specified UUID could not be found.").build();
             }
 
-            if (!qm.isOidcGroupMapped(team, group)) {
+            final MappedOidcGroup existingMapping = qm.getMappedOidcGroup(team, group);
+            if (existingMapping == null) {
                 final MappedOidcGroup mappedOidcGroup = qm.createMappedOidcGroup(team, group);
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Mapping created for group " + group.getName() + " and team " + team.getName());
                 return Response.ok(mappedOidcGroup).build();
             } else {
-                return Response.status(Response.Status.CONFLICT).entity("A mapping for the same team and group already exists.").build();
+                return Response.ok(existingMapping).build();
             }
         }
     }

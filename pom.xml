@@ -128,7 +128,7 @@
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.10.0.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.2.0</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.7.5</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.postgresql.version>42.7.7</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
         <plugin.jetty.version>12.0.22</plugin.jetty.version>
@@ -722,8 +722,7 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.build.directory}/bom.json"
-                                      tofile="${project.build.directory}/${project.artifactId}/.well-known/sbom"/>
+                                <copy file="${project.build.directory}/bom.json" tofile="${project.build.directory}/${project.artifactId}/.well-known/sbom"/>
                             </target>
                         </configuration>
                         <goals>

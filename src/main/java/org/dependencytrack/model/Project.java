@@ -306,6 +306,16 @@ public class Project implements Serializable {
     private Double lastInheritedRiskScore;
 
     /**
+     * Convenience field which stores the timestamp of when the BOM was generated (from BOM metadata).
+     */
+    @Persistent
+    @Index(name = "PROJECT_BOM_TIMESTAMP_IDX")
+    @Column(name = "BOM_TIMESTAMP", jdbcType = "BIGINT", allowsNull = "true")
+    @Schema(type = "string", format = "date-time", description = "Timestamp when the BOM was generated (from BOM metadata)")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Date bomTimestamp;
+
+    /**
      * Convenience field which will contain the date of the last vulnerability analysis of the {@link Bom} components
      */
     @Persistent
@@ -609,6 +619,14 @@ public class Project implements Serializable {
 
     public void setBomRef(String bomRef) {
         this.bomRef = bomRef;
+    }
+
+    public Date getBomTimestamp() {
+        return bomTimestamp;
+    }
+
+    public void setBomTimestamp(Date bomTimestamp) {
+        this.bomTimestamp = bomTimestamp;
     }
 
     public ProjectMetrics getMetrics() {

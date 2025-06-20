@@ -5,7 +5,7 @@ chapter: 6
 order: 8
 ---
 
-Dependency-Track is built using a *thin server architecture* and an *API-first design*. API's are simply at the heart
+Dependency-Track is built using a *thin server architecture* and an *API-first design*. APIs are simply at the heart
 of the platform. Every API is fully documented via OpenAPI v3.
 [Here](https://github.com/manuel-sommer/dependencytrack-pywrap) you can find a python wrapper around the REST API of Dependency-Track.
 

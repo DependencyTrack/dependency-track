@@ -14,16 +14,17 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.event;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.event.LdapSyncEvent;
 import alpine.event.framework.EventService;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.server.tasks.LdapSyncTask;
-import org.dependencytrack.RequirementsVerifier;
+import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.tasks.BomUploadProcessingTask;
 import org.dependencytrack.tasks.CallbackTask;
 import org.dependencytrack.tasks.ClearComponentAnalysisCacheTask;
@@ -36,10 +37,13 @@ import org.dependencytrack.tasks.IndexTask;
 import org.dependencytrack.tasks.InternalComponentIdentificationTask;
 import org.dependencytrack.tasks.KennaSecurityUploadTask;
 import org.dependencytrack.tasks.NewVulnerableDependencyAnalysisTask;
+import org.dependencytrack.tasks.NistApiMirrorTask;
 import org.dependencytrack.tasks.NistMirrorTask;
 import org.dependencytrack.tasks.OsvDownloadTask;
 import org.dependencytrack.tasks.PolicyEvaluationTask;
+import org.dependencytrack.tasks.ScheduledNotificationDispatchTask;
 import org.dependencytrack.tasks.TaskScheduler;
+import org.dependencytrack.tasks.TelemetrySubmissionTask;
 import org.dependencytrack.tasks.VexUploadProcessingTask;
 import org.dependencytrack.tasks.VulnDbSyncTask;
 import org.dependencytrack.tasks.VulnerabilityAnalysisTask;
@@ -48,12 +52,10 @@ import org.dependencytrack.tasks.metrics.PortfolioMetricsUpdateTask;
 import org.dependencytrack.tasks.metrics.ProjectMetricsUpdateTask;
 import org.dependencytrack.tasks.metrics.VulnerabilityMetricsUpdateTask;
 import org.dependencytrack.tasks.repositories.RepositoryMetaAnalyzerTask;
-import org.dependencytrack.tasks.scanners.InternalAnalysisTask;
-import org.dependencytrack.tasks.scanners.OssIndexAnalysisTask;
-import org.dependencytrack.tasks.scanners.SnykAnalysisTask;
-import org.dependencytrack.tasks.scanners.VulnDbAnalysisTask;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
+import java.time.Duration;
 
 /**
  * Initializes the event subsystem and configures event subscribers.
@@ -71,6 +73,9 @@ public class EventSubsystemInitializer implements ServletContextListener {
     // Starts the SingleThreadedEventService
     private static final SingleThreadedEventService EVENT_SERVICE_ST = SingleThreadedEventService.getInstance();
 
+    private static final Duration DRAIN_TIMEOUT_DURATION =
+            Duration.parse(Config.getInstance().getProperty(ConfigKey.ALPINE_WORKER_POOL_DRAIN_TIMEOUT_DURATION));
+
     /**
      * {@inheritDoc}
      */
@@ -78,21 +83,15 @@ public class EventSubsystemInitializer implements ServletContextListener {
     public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Initializing asynchronous event subsystem");
 
-        if (RequirementsVerifier.failedValidation()) {
-            return;
-        }
         EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(VexUploadEvent.class, VexUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
-        EVENT_SERVICE.subscribe(InternalAnalysisEvent.class, InternalAnalysisTask.class);
-        EVENT_SERVICE.subscribe(OssIndexAnalysisEvent.class, OssIndexAnalysisTask.class);
         EVENT_SERVICE.subscribe(GitHubAdvisoryMirrorEvent.class, GitHubAdvisoryMirrorTask.class);
         EVENT_SERVICE.subscribe(OsvMirrorEvent.class, OsvDownloadTask.class);
         EVENT_SERVICE.subscribe(VulnDbSyncEvent.class, VulnDbSyncTask.class);
-        EVENT_SERVICE.subscribe(VulnDbAnalysisEvent.class, VulnDbAnalysisTask.class);
-        EVENT_SERVICE.subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
+        EVENT_SERVICE.subscribe(ComponentVulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
+        EVENT_SERVICE.subscribe(ProjectVulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.subscribe(PortfolioVulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
-        EVENT_SERVICE.subscribe(SnykAnalysisEvent.class, SnykAnalysisTask.class);
         EVENT_SERVICE.subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
         EVENT_SERVICE.subscribe(PolicyEvaluationEvent.class, PolicyEvaluationTask.class);
         EVENT_SERVICE.subscribe(ComponentMetricsUpdateEvent.class, ComponentMetricsUpdateTask.class);
@@ -107,11 +106,13 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(ClearComponentAnalysisCacheEvent.class, ClearComponentAnalysisCacheTask.class);
         EVENT_SERVICE.subscribe(CallbackEvent.class, CallbackTask.class);
         EVENT_SERVICE.subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
+        EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
+        EVENT_SERVICE.subscribe(NistApiMirrorEvent.class, NistApiMirrorTask.class);
+        EVENT_SERVICE.subscribe(EpssMirrorEvent.class, EpssMirrorTask.class);
+        EVENT_SERVICE.subscribe(TelemetrySubmissionEvent.class, TelemetrySubmissionTask.class);
+        EVENT_SERVICE.subscribe(ScheduledNotificationDispatchEvent.class, ScheduledNotificationDispatchTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
-        EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
-        EVENT_SERVICE.subscribe(EpssMirrorEvent.class, EpssMirrorTask.class);
-
 
         TaskScheduler.getInstance();
     }
@@ -127,20 +128,15 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(VexUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
-        EVENT_SERVICE.unsubscribe(InternalAnalysisTask.class);
-        EVENT_SERVICE.unsubscribe(OssIndexAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(GitHubAdvisoryMirrorTask.class);
         EVENT_SERVICE.unsubscribe(OsvDownloadTask.class);
         EVENT_SERVICE.unsubscribe(VulnDbSyncTask.class);
-        EVENT_SERVICE.unsubscribe(VulnDbAnalysisTask.class);
-        EVENT_SERVICE.unsubscribe(VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(RepositoryMetaAnalyzerTask.class);
         EVENT_SERVICE.unsubscribe(PolicyEvaluationTask.class);
         EVENT_SERVICE.unsubscribe(ComponentMetricsUpdateTask.class);
         EVENT_SERVICE.unsubscribe(ProjectMetricsUpdateTask.class);
         EVENT_SERVICE.unsubscribe(PortfolioMetricsUpdateTask.class);
         EVENT_SERVICE.unsubscribe(VulnerabilityMetricsUpdateTask.class);
-        EVENT_SERVICE.unsubscribe(SnykAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(CloneProjectTask.class);
         EVENT_SERVICE.unsubscribe(FortifySscUploadTask.class);
         EVENT_SERVICE.unsubscribe(DefectDojoUploadTask.class);
@@ -148,11 +144,14 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(InternalComponentIdentificationTask.class);
         EVENT_SERVICE.unsubscribe(CallbackTask.class);
         EVENT_SERVICE.unsubscribe(NewVulnerableDependencyAnalysisTask.class);
-        EVENT_SERVICE.shutdown();
+        EVENT_SERVICE.unsubscribe(NistMirrorTask.class);
+        EVENT_SERVICE.unsubscribe(NistApiMirrorTask.class);
+        EVENT_SERVICE.unsubscribe(EpssMirrorTask.class);
+        EVENT_SERVICE.unsubscribe(TelemetrySubmissionTask.class);
+        EVENT_SERVICE.unsubscribe(ScheduledNotificationDispatchTask.class);
+        EVENT_SERVICE.shutdown(DRAIN_TIMEOUT_DURATION);
 
         EVENT_SERVICE_ST.unsubscribe(IndexTask.class);
-        EVENT_SERVICE.unsubscribe(NistMirrorTask.class);
-        EVENT_SERVICE.unsubscribe(EpssMirrorTask.class);
-        EVENT_SERVICE_ST.shutdown();
+        EVENT_SERVICE_ST.shutdown(DRAIN_TIMEOUT_DURATION);
     }
 }

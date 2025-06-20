@@ -14,15 +14,15 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model.validation;
 
 import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
 import org.dependencytrack.parser.spdx.expression.model.SpdxExpression;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import java.util.Objects;
 
 public class SpdxExpressionValidator implements ConstraintValidator<ValidSpdxExpression, String> {
@@ -34,7 +34,7 @@ public class SpdxExpressionValidator implements ConstraintValidator<ValidSpdxExp
             return true;
         }
 
-        return !Objects.equals(new SpdxExpressionParser().parse(expressionString), SpdxExpression.INVALID);
+        return !Objects.equals(SpdxExpressionParser.getInstance().parse(expressionString), SpdxExpression.INVALID);
     }
 
 }

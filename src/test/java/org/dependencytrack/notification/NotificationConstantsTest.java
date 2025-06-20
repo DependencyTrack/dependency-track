@@ -14,38 +14,38 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class NotificationConstantsTest {
+class NotificationConstantsTest {
 
     @Test
-    public void testConstants() {
-        Assert.assertEquals("Notification Test", NotificationConstants.Title.NOTIFICATION_TEST);
-        Assert.assertEquals("NVD Mirroring", NotificationConstants.Title.NVD_MIRROR);
-        Assert.assertEquals("NPM Advisory Mirroring", NotificationConstants.Title.NPM_ADVISORY_MIRROR);
-        Assert.assertEquals("VulnDB Mirroring", NotificationConstants.Title.VULNDB_MIRROR);
-        Assert.assertEquals("Component Indexing Service", NotificationConstants.Title.COMPONENT_INDEXER);
-        Assert.assertEquals("License Indexing Service", NotificationConstants.Title.LICENSE_INDEXER);
-        Assert.assertEquals("Project Indexing Service", NotificationConstants.Title.PROJECT_INDEXER);
-        Assert.assertEquals("Vulnerability Indexing Service", NotificationConstants.Title.VULNERABILITY_INDEXER);
-        Assert.assertEquals("Core Indexing Services", NotificationConstants.Title.CORE_INDEXING_SERVICES);
-        Assert.assertEquals("File System Error", NotificationConstants.Title.FILE_SYSTEM_ERROR);
-        Assert.assertEquals("Repository Error", NotificationConstants.Title.REPO_ERROR);
-        Assert.assertEquals("Integration Error", NotificationConstants.Title.INTEGRATION_ERROR);
-        Assert.assertEquals("New Vulnerability Identified", NotificationConstants.Title.NEW_VULNERABILITY);
-        Assert.assertEquals("Vulnerable Dependency Introduced", NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY);
-        Assert.assertEquals("Analysis Decision: Exploitable", NotificationConstants.Title.ANALYSIS_DECISION_EXPLOITABLE);
-        Assert.assertEquals("Analysis Decision: In Triage", NotificationConstants.Title.ANALYSIS_DECISION_IN_TRIAGE);
-        Assert.assertEquals("Analysis Decision: False Positive", NotificationConstants.Title.ANALYSIS_DECISION_FALSE_POSITIVE);
-        Assert.assertEquals("Analysis Decision: Not Affected", NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED);
-        Assert.assertEquals("Analysis Decision: Marking Finding as NOT SET", NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET);
-        Assert.assertEquals("Analysis Decision: Finding Suppressed", NotificationConstants.Title.ANALYSIS_DECISION_SUPPRESSED);
-        Assert.assertEquals("Analysis Decision: Finding UnSuppressed", NotificationConstants.Title.ANALYSIS_DECISION_UNSUPPRESSED);
-        Assert.assertEquals("Analysis Decision: Finding Resolved", NotificationConstants.Title.ANALYSIS_DECISION_RESOLVED);
+    void testConstants() {
+        Assertions.assertEquals("Notification Test", NotificationConstants.Title.NOTIFICATION_TEST);
+        Assertions.assertEquals("NVD Mirroring", NotificationConstants.Title.NVD_MIRROR);
+        Assertions.assertEquals("NPM Advisory Mirroring", NotificationConstants.Title.NPM_ADVISORY_MIRROR);
+        Assertions.assertEquals("VulnDB Mirroring", NotificationConstants.Title.VULNDB_MIRROR);
+        Assertions.assertEquals("Component Indexing Service", NotificationConstants.Title.COMPONENT_INDEXER);
+        Assertions.assertEquals("License Indexing Service", NotificationConstants.Title.LICENSE_INDEXER);
+        Assertions.assertEquals("Project Indexing Service", NotificationConstants.Title.PROJECT_INDEXER);
+        Assertions.assertEquals("Vulnerability Indexing Service", NotificationConstants.Title.VULNERABILITY_INDEXER);
+        Assertions.assertEquals("Core Indexing Services", NotificationConstants.Title.CORE_INDEXING_SERVICES);
+        Assertions.assertEquals("File System Error", NotificationConstants.Title.FILE_SYSTEM_ERROR);
+        Assertions.assertEquals("Repository Error", NotificationConstants.Title.REPO_ERROR);
+        Assertions.assertEquals("Integration Error", NotificationConstants.Title.INTEGRATION_ERROR);
+        Assertions.assertEquals("New Vulnerability Identified", NotificationConstants.Title.NEW_VULNERABILITY);
+        Assertions.assertEquals("Vulnerable Dependency Introduced", NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY);
+        Assertions.assertEquals("Analysis Decision: Exploitable", NotificationConstants.Title.ANALYSIS_DECISION_EXPLOITABLE);
+        Assertions.assertEquals("Analysis Decision: In Triage", NotificationConstants.Title.ANALYSIS_DECISION_IN_TRIAGE);
+        Assertions.assertEquals("Analysis Decision: False Positive", NotificationConstants.Title.ANALYSIS_DECISION_FALSE_POSITIVE);
+        Assertions.assertEquals("Analysis Decision: Not Affected", NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED);
+        Assertions.assertEquals("Analysis Decision: Marking Finding as NOT SET", NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET);
+        Assertions.assertEquals("Analysis Decision: Finding Suppressed", NotificationConstants.Title.ANALYSIS_DECISION_SUPPRESSED);
+        Assertions.assertEquals("Analysis Decision: Finding UnSuppressed", NotificationConstants.Title.ANALYSIS_DECISION_UNSUPPRESSED);
+        Assertions.assertEquals("Analysis Decision: Finding Resolved", NotificationConstants.Title.ANALYSIS_DECISION_RESOLVED);
     }
 }

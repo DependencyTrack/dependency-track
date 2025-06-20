@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.snyk;
 
@@ -24,9 +24,9 @@ import org.json.JSONObject;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.snyk.model.SnykError;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,79 +39,119 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_API
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_CVSS_SOURCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_ENABLED;
 
-public class SnykParserTest extends PersistenceCapableTest {
+class SnykParserTest extends PersistenceCapableTest {
 
     private SnykParser parser;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         parser = new SnykParser();
     }
 
     @Test
-    public void testParseVersionRanges() throws IOException {
+    void testParseVersionRanges() throws IOException {
 
         String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
         final JSONObject jsonObject = new JSONObject(jsonString);
         JSONArray ranges = jsonObject.optJSONArray("range0");
         String purl = "pkg:npm/bootstrap-table@1.20.0";
-        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges);
-        Assert.assertNotNull(vulnerableSoftwares);
-        Assert.assertEquals(1, vulnerableSoftwares.size());
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, false);
+        Assertions.assertNotNull(vulnerableSoftwares);
+        Assertions.assertEquals(1, vulnerableSoftwares.size());
 
         VulnerableSoftware vs = vulnerableSoftwares.get(0);
-        Assert.assertEquals("2.13.0", vs.getVersionStartIncluding());
-        Assert.assertEquals("2.13.2.1", vs.getVersionEndExcluding());
+        Assertions.assertEquals("2.13.0", vs.getVersionStartIncluding());
+        Assertions.assertEquals("2.13.2.1", vs.getVersionEndExcluding());
     }
 
     @Test
-    public void testParseVersionRangesStar() throws IOException {
+    void testParseVersionRanges_v3() throws IOException {
+
+        String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
+        final JSONObject jsonObject = new JSONObject(jsonString);
+        JSONArray ranges = jsonObject.optJSONArray("range0_v3");
+        String purl = "pkg:npm/bootstrap-table@1.20.0";
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, true);
+        Assertions.assertNotNull(vulnerableSoftwares);
+        Assertions.assertEquals(1, vulnerableSoftwares.size());
+
+        VulnerableSoftware vs = vulnerableSoftwares.get(0);
+        Assertions.assertEquals("2.13.0", vs.getVersionStartIncluding());
+        Assertions.assertEquals("2.13.2.1", vs.getVersionEndExcluding());
+    }
+
+    @Test
+    void testParseVersionRangesStar() throws IOException {
 
         String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
         final JSONObject jsonObject = new JSONObject(jsonString);
         JSONArray ranges = jsonObject.optJSONArray("range2");
         String purl = "pkg:npm/bootstrap-table@1.20.0";
-        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges);
-        Assert.assertNotNull(vulnerableSoftwares);
-        Assert.assertEquals(0, vulnerableSoftwares.size());
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, false);
+        Assertions.assertNotNull(vulnerableSoftwares);
+        Assertions.assertEquals(0, vulnerableSoftwares.size());
     }
 
     @Test
-    public void testParseVersionIndefiniteRanges() throws IOException {
+    void testParseVersionRangesStar_v3() throws IOException {
+
+        String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
+        final JSONObject jsonObject = new JSONObject(jsonString);
+        JSONArray ranges = jsonObject.optJSONArray("range2_v3");
+        String purl = "pkg:npm/bootstrap-table@1.20.0";
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, true);
+        Assertions.assertNotNull(vulnerableSoftwares);
+        Assertions.assertEquals(0, vulnerableSoftwares.size());
+    }
+
+    @Test
+    void testParseVersionIndefiniteRanges() throws IOException {
 
         String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
         final JSONObject jsonObject = new JSONObject(jsonString);
         JSONArray ranges = jsonObject.optJSONArray("range1");
         String purl = "pkg:npm/bootstrap-table@1.20.0";
-        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges);
-        Assert.assertNotNull(vulnerableSoftwares);
-        Assert.assertEquals(0, vulnerableSoftwares.size());
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, false);
+        Assertions.assertNotNull(vulnerableSoftwares);
+        Assertions.assertEquals(0, vulnerableSoftwares.size());
     }
 
     @Test
-    public void testParseSeveritiesNvd() throws IOException {
+    void testParseVersionIndefiniteRanges_v3() throws IOException {
+
+        String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
+        final JSONObject jsonObject = new JSONObject(jsonString);
+        JSONArray ranges = jsonObject.optJSONArray("range1_v3");
+        String purl = "pkg:npm/bootstrap-table@1.20.0";
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges, true);
+        Assertions.assertNotNull(vulnerableSoftwares);
+        Assertions.assertEquals(0, vulnerableSoftwares.size());
+    }
+
+    @Test
+    void testParseSeveritiesNvd() throws IOException {
 
         // By default NVD is first priority for CVSS, no need to set config property.
         String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/severities.json")));
         final JSONObject jsonObject = new JSONObject(jsonString);
         JSONArray severities = jsonObject.optJSONArray("severities1");
         JSONObject cvss = parser.selectCvssObjectBasedOnSource(severities);
-        Assert.assertNotNull(cvss);
-        Assert.assertEquals("NVD", cvss.optString("source"));
+        Assertions.assertNotNull(cvss);
+        Assertions.assertEquals("NVD", cvss.optString("source"));
 
         severities = jsonObject.optJSONArray("severities2");
         cvss = parser.selectCvssObjectBasedOnSource(severities);
-        Assert.assertNotNull(cvss);
-        Assert.assertEquals("SNYK", cvss.optString("source"));
+        Assertions.assertNotNull(cvss);
+        Assertions.assertEquals("SNYK", cvss.optString("source"));
 
         severities = jsonObject.optJSONArray("severities5");
         cvss = parser.selectCvssObjectBasedOnSource(severities);
-        Assert.assertNotNull(cvss);
-        Assert.assertEquals("RHEL", cvss.optString("source"));
+        Assertions.assertNotNull(cvss);
+        Assertions.assertEquals("RHEL", cvss.optString("source"));
     }
 
     @Test
-    public void testParseSeveritiesSnyk() throws IOException {
+    void testParseSeveritiesSnyk() throws IOException {
 
         qm.createConfigProperty(SCANNER_SNYK_CVSS_SOURCE.getGroupName(),
                 SCANNER_SNYK_CVSS_SOURCE.getPropertyName(),
@@ -123,22 +163,22 @@ public class SnykParserTest extends PersistenceCapableTest {
         final JSONObject jsonObject = new JSONObject(jsonString);
         JSONArray severities = jsonObject.optJSONArray("severities1");
         JSONObject cvss = parser.selectCvssObjectBasedOnSource(severities);
-        Assert.assertNotNull(cvss);
-        Assert.assertEquals("SNYK", cvss.optString("source"));
+        Assertions.assertNotNull(cvss);
+        Assertions.assertEquals("SNYK", cvss.optString("source"));
 
         severities = jsonObject.optJSONArray("severities3");
         cvss = parser.selectCvssObjectBasedOnSource(severities);
-        Assert.assertNotNull(cvss);
-        Assert.assertEquals("NVD", cvss.optString("source"));
+        Assertions.assertNotNull(cvss);
+        Assertions.assertEquals("NVD", cvss.optString("source"));
 
         severities = jsonObject.optJSONArray("severities4");
         cvss = parser.selectCvssObjectBasedOnSource(severities);
-        Assert.assertNotNull(cvss);
-        Assert.assertEquals("RHEL", cvss.optString("source"));
+        Assertions.assertNotNull(cvss);
+        Assertions.assertEquals("RHEL", cvss.optString("source"));
     }
 
     @Test
-    public void testGetSnykCvssConfig() {
+    void testGetSnykCvssConfig() {
         qm.createConfigProperty(SCANNER_SNYK_API_TOKEN.getGroupName(),
                 SCANNER_SNYK_API_TOKEN.getPropertyName(),
                 "token",
@@ -151,57 +191,57 @@ public class SnykParserTest extends PersistenceCapableTest {
                 "username");
 
         String config = parser.getSnykCvssConfig(SCANNER_SNYK_CVSS_SOURCE);
-        Assert.assertNotNull(config);
-        Assert.assertEquals("NVD", config);
+        Assertions.assertNotNull(config);
+        Assertions.assertEquals("NVD", config);
         config = parser.getSnykCvssConfig(SCANNER_SNYK_ENABLED);
-        Assert.assertNotNull(config);
-        Assert.assertEquals("false", config);
+        Assertions.assertNotNull(config);
+        Assertions.assertEquals("false", config);
         config = parser.getSnykCvssConfig(SCANNER_SNYK_API_TOKEN);
-        Assert.assertNotNull(config);
-        Assert.assertEquals("token", config);
+        Assertions.assertNotNull(config);
+        Assertions.assertEquals("token", config);
         config = parser.getSnykCvssConfig(SCANNER_OSSINDEX_API_USERNAME);
-        Assert.assertNotNull(config);
-        Assert.assertEquals("username", config);
+        Assertions.assertNotNull(config);
+        Assertions.assertEquals("username", config);
     }
 
     @Test
-    public void testSelectCvssObjectBasedOnSource() throws IOException {
+    void testSelectCvssObjectBasedOnSource() throws IOException {
         String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/severities.json")));
         final JSONObject jsonObject = new JSONObject(jsonString);
         JSONArray severities = jsonObject.optJSONArray("severities1");
         JSONObject cvss = parser.selectCvssObjectBasedOnSource(severities);
-        Assert.assertNotNull(cvss);
-        Assert.assertEquals("NVD", cvss.optString("source"));
-        Assert.assertEquals("high", cvss.optString("level"));
-        Assert.assertEquals("7.5", cvss.optString("score"));
-        Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", cvss.optString("vector"));
+        Assertions.assertNotNull(cvss);
+        Assertions.assertEquals("NVD", cvss.optString("source"));
+        Assertions.assertEquals("high", cvss.optString("level"));
+        Assertions.assertEquals("7.5", cvss.optString("score"));
+        Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", cvss.optString("vector"));
 
         severities = jsonObject.optJSONArray("severities4");
         cvss = parser.selectCvssObjectBasedOnSource(severities);
-        Assert.assertNotNull(cvss);
-        Assert.assertEquals("RHEL", cvss.optString("source"));
-        Assert.assertEquals("high", cvss.optString("level"));
-        Assert.assertEquals("7.5", cvss.optString("score"));
-        Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", cvss.optString("vector"));
+        Assertions.assertNotNull(cvss);
+        Assertions.assertEquals("RHEL", cvss.optString("source"));
+        Assertions.assertEquals("high", cvss.optString("level"));
+        Assertions.assertEquals("7.5", cvss.optString("score"));
+        Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", cvss.optString("vector"));
 
         severities = jsonObject.optJSONArray("severities2");
         cvss = parser.selectCvssObjectBasedOnSource(severities);
-        Assert.assertNotNull(cvss);
-        Assert.assertEquals("SNYK", cvss.optString("source"));
-        Assert.assertEquals("high", cvss.optString("level"));
-        Assert.assertEquals("7.5", cvss.optString("score"));
-        Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H/E:P", cvss.optString("vector"));
+        Assertions.assertNotNull(cvss);
+        Assertions.assertEquals("SNYK", cvss.optString("source"));
+        Assertions.assertEquals("high", cvss.optString("level"));
+        Assertions.assertEquals("7.5", cvss.optString("score"));
+        Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H/E:P", cvss.optString("vector"));
         severities = jsonObject.optJSONArray("severities3");
         cvss = parser.selectCvssObjectBasedOnSource(severities);
-        Assert.assertNotNull(cvss);
-        Assert.assertEquals("NVD", cvss.optString("source"));
-        Assert.assertEquals("high", cvss.optString("level"));
-        Assert.assertEquals("7.5", cvss.optString("score"));
-        Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", cvss.optString("vector"));
+        Assertions.assertNotNull(cvss);
+        Assertions.assertEquals("NVD", cvss.optString("source"));
+        Assertions.assertEquals("high", cvss.optString("level"));
+        Assertions.assertEquals("7.5", cvss.optString("score"));
+        Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", cvss.optString("vector"));
     }
 
     @Test
-    public void testParseErrors() {
+    void testParseErrors() {
         final JSONObject jsonObject = new JSONObject("""
                 {
                    "jsonapi": {
@@ -239,12 +279,12 @@ public class SnykParserTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testParseErrorsWhenInputIsNull() {
+    void testParseErrorsWhenInputIsNull() {
         assertThat(parser.parseErrors(null)).isEmpty();
     }
 
     @Test
-    public void testParseErrorsWhenInputHasNoErrorsField() {
+    void testParseErrorsWhenInputHasNoErrorsField() {
         assertThat(parser.parseErrors(new JSONObject("{}"))).isEmpty();
     }
 

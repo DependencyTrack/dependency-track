@@ -14,39 +14,39 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.search;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.junit.Assert;
-import org.junit.Test;
+import org.dependencytrack.search.document.VulnerableSoftwareDocument;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-public class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
+class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
 
     @Test
-    public void getSearchFieldsTest() {
+    void getSearchFieldsTest() {
         String[] fields = VulnerableSoftwareIndexer.getInstance().getSearchFields();
-        Assert.assertEquals(6, fields.length);
-        Assert.assertEquals("uuid", fields[0]);
-        Assert.assertEquals("cpe22", fields[1]);
-        Assert.assertEquals("cpe23", fields[2]);
-        Assert.assertEquals("vendor", fields[3]);
-        Assert.assertEquals("product", fields[4]);
-        Assert.assertEquals("version", fields[5]);
+        Assertions.assertEquals(6, fields.length);
+        Assertions.assertEquals("uuid", fields[0]);
+        Assertions.assertEquals("cpe22", fields[1]);
+        Assertions.assertEquals("cpe23", fields[2]);
+        Assertions.assertEquals("vendor", fields[3]);
+        Assertions.assertEquals("product", fields[4]);
+        Assertions.assertEquals("version", fields[5]);
     }
 
     @Test
-    public void getIndexTypeTest() {
-        Assert.assertEquals(IndexManager.IndexType.VULNERABLESOFTWARE, VulnerableSoftwareIndexer.getInstance().getIndexType());
+    void getIndexTypeTest() {
+        Assertions.assertEquals(IndexManager.IndexType.VULNERABLESOFTWARE, VulnerableSoftwareIndexer.getInstance().getIndexType());
     }
 
     @Test
-    public void addTest() {
+    void addTest() {
         VulnerableSoftware vulnerableSoftware = new VulnerableSoftware();
         vulnerableSoftware.setUuid(UUID.randomUUID());
         vulnerableSoftware.setCpe22("cpe22");
@@ -54,16 +54,16 @@ public class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         vulnerableSoftware.setVendor("vendor");
         vulnerableSoftware.setProduct("product");
         vulnerableSoftware.setVersion("version");
-        VulnerableSoftwareIndexer.getInstance().add(vulnerableSoftware);
+        VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vulnerableSoftware));
         VulnerableSoftwareIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
         SearchResult result = searchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getCpe23(), 10);
-        Assert.assertEquals(1, result.getResults().size());
-        Assert.assertEquals(1, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
+        Assertions.assertEquals(1, result.getResults().size());
+        Assertions.assertEquals(1, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
     }
 
     @Test
-    public void removeTest() {
+    void removeTest() {
         VulnerableSoftware vulnerableSoftware = new VulnerableSoftware();
         vulnerableSoftware.setUuid(UUID.randomUUID());
         vulnerableSoftware.setCpe22("cpe22");
@@ -71,18 +71,18 @@ public class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         vulnerableSoftware.setVendor("vendor");
         vulnerableSoftware.setProduct("product");
         vulnerableSoftware.setVersion("version");
-        VulnerableSoftwareIndexer.getInstance().add(vulnerableSoftware);
+        VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vulnerableSoftware));
         VulnerableSoftwareIndexer.getInstance().commit();
         SearchManager searchManager = new SearchManager();
-        VulnerableSoftwareIndexer.getInstance().remove(vulnerableSoftware);
+        VulnerableSoftwareIndexer.getInstance().remove(new VulnerableSoftwareDocument(vulnerableSoftware));
         VulnerableSoftwareIndexer.getInstance().commit();
         SearchResult result = searchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getUuid().toString(), 10);
-        Assert.assertEquals(1, result.getResults().size());
-        Assert.assertEquals(0, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
+        Assertions.assertEquals(1, result.getResults().size());
+        Assertions.assertEquals(0, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
     }
 
     @Test
-    public void reindexTest() {
+    void reindexTest() {
         VulnerableSoftwareIndexer.getInstance().reindex();
     }
 }

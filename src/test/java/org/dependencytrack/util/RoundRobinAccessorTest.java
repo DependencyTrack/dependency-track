@@ -14,11 +14,11 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -28,10 +28,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RoundRobinAccessorTest {
+class RoundRobinAccessorTest {
 
     @Test
-    public void testGet() {
+    void testGet() {
         final var accessor = new RoundRobinAccessor<>(List.of("foo", "bar", "baz"));
 
         for (int i = 0; i < 3_000_000; i += 3) {
@@ -42,7 +42,7 @@ public class RoundRobinAccessorTest {
     }
 
     @Test
-    public void testGetConcurrently() throws Exception {
+    void testGetConcurrently() throws Exception {
         final var accessor = new RoundRobinAccessor<>(List.of("foo", "bar", "baz"));
 
         final var countDownLatch = new CountDownLatch(3_000_000);
@@ -78,7 +78,7 @@ public class RoundRobinAccessorTest {
     }
 
     @Test
-    public void testGetOnUnderflow() {
+    void testGetOnUnderflow() {
         final var accessor = new RoundRobinAccessor<>(List.of("foo", "bar", "baz"), new AtomicInteger(Integer.MAX_VALUE - 1));
 
         // The round-robin currently doesn't repeat cleanly when the underlying index exceeds Integer.MAX_VALUE.

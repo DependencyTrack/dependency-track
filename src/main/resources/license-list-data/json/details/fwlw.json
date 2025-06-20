@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1993,1995 by Donald Arseneau\nVancouver, Canada, email asnd@triumf.ca\n\nThis software package may be freely used, transmitted, reproduced, or modified provided that \nthis notice is left intact.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1993,1995 by Donald Arseneau Vancouver, Canada, email asnd@triumf.ca\";match\u003d\".{0,5000}\"\u003e\u003e\nThis software package may be freely used, transmitted, reproduced, or modified provided that this notice is left intact.\n\n",
+  "name": "fwlw License",
+  "licenseComments": "This license is a very similar to ulem and magaz, but has slightly different obligations.",
+  "comment": "This license is a very similar to ulem and magaz, but has slightly different obligations.",
+  "licenseId": "fwlw",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://mirrors.nic.cz/tex-archive/macros/latex/contrib/fwlw/README",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:55:08Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://mirrors.nic.cz/tex-archive/macros/latex/contrib/fwlw/README"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (C) 1993,1995 by Donald Arseneau\u003cbr /\u003e\n\n            Vancouver, Canada, email asnd@triumf.ca\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            This software package may be freely used, transmitted, reproduced, or modified\n            provided that this notice is left intact.\n         \u003c/p\u003e\n\n      "
+}

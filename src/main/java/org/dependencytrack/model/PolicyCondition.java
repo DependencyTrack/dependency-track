@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -22,16 +22,19 @@ import alpine.common.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.FetchGroup;
+import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -42,6 +45,15 @@ import java.util.UUID;
  * @since 4.0.0
  */
 @PersistenceCapable
+@FetchGroups(value = {
+        @FetchGroup(name = "NOTIFICATION", members = {
+                @Persistent(name = "policy"),
+                @Persistent(name = "subject"),
+                @Persistent(name = "operator"),
+                @Persistent(name = "value"),
+                @Persistent(name = "uuid")
+        })
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PolicyCondition implements Serializable {
@@ -77,7 +89,12 @@ public class PolicyCondition implements Serializable {
         COMPONENT_HASH,
         CWE,
         VULNERABILITY_ID,
-        VERSION_DISTANCE
+        VERSION_DISTANCE,
+        EPSS
+    }
+
+    public enum FetchGroup {
+        NOTIFICATION
     }
 
     @PrimaryKey

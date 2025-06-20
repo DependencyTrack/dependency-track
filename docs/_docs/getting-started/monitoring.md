@@ -2,7 +2,7 @@
 title: Monitoring
 category: Getting Started
 chapter: 1
-order: 12
+order: 13
 ---
 
 
@@ -115,7 +115,7 @@ More metrics covering other areas of Dependency-Track will be added in future ve
 ##### Database
 
 Metrics of the ORM used by the Dependency-Track API server are exposed under the `datanucleus` namespace. 
-They provide a high-level overview of how many, and which kind of persistence operations are performend:
+They provide a high-level overview of how many, and which kind of persistence operations are performed:
 
 ```yaml
 # HELP datanucleus_transactions_rolledback_total Total number of rolled-back transactions
@@ -243,6 +243,13 @@ alpine_events_published_total{event="<EVENT_CLASS_NAME>",publisher="<PUBLISHER_C
 # HELP alpine_notifications_published_total Total number of published notifications
 # TYPE alpine_notifications_published_total counter
 alpine_notifications_published_total{group="<NOTIFICATION_GROUP>",level="<NOTIFICATION_LEVEL>",scope="<NOTIFICATION_SCOPE>",} 1.0
+# HELP alpine_event_processing_seconds
+# TYPE alpine_event_processing_seconds summary
+alpine_event_processing_seconds_count{event="<EVENT_NAME>",subscriber="<SUBSCRIBER_NAME>",} 1.0
+alpine_event_processing_seconds_sum{event="<EVENT_NAME>",subscriber="<SUBSCRIBER_NAME>",} 0.047599797
+# HELP alpine_event_processing_seconds_max  
+# TYPE alpine_event_processing_seconds_max gauge
+alpine_event_processing_seconds_max{event="<EVENT_NAME>",subscriber="<SUBSCRIBER_NAME>",} 0.047599797
 ```
 
 > `alpine_notifications_published_total` will report all notifications, not only those for which an alert has been configured.
@@ -302,6 +309,23 @@ Executor metrics are a good way to monitor how busy an API server instance is, a
 doing keeping up with the work it's being exposed to. For example, a constantly maxed-out `executor_active_threads` 
 value combined with a high number of `executor_queued_tasks` may indicate that the configured `alpine.worker.pool.size` 
 is too small for the workload at hand.
+
+##### Search Indexes
+
+```yaml
+# HELP search_index_ram_used_bytes Memory usage of the index in bytes
+# TYPE search_index_ram_used_bytes gauge
+search_index_ram_used_bytes{index="<INDEX_NAME>",} 0.0
+# HELP search_index_docs_ram_total_objects Number of documents currently buffered in RAM
+# TYPE search_index_docs_ram_total_objects gauge
+search_index_docs_ram_total_objects{index="<INDEX_NAME>",} 0.0
+# HELP search_index_docs_total_objects Number of docs in this index, including docs not yet flushed (still in the RAM buffer), and including deletions
+# TYPE search_index_docs_total_objects gauge
+search_index_docs_total_objects{index="<INDEX_NAME>",} 0.0
+# HELP search_index_operations_total Total number of index operations
+# TYPE search_index_operations_total counter
+search_index_operations_total{index="<INDEX_NAME>",operation="<OPERATION>",} 0.0
+```
 
 ##### Retries
 

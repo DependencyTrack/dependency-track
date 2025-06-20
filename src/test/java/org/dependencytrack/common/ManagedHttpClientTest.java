@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 
 package org.dependencytrack.common;
@@ -22,19 +22,19 @@ package org.dependencytrack.common;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class ManagedHttpClientTest {
+class ManagedHttpClientTest {
 
     @Test
-    public void objectTest() {
+    void objectTest() {
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
         HttpClientBuilder clientBuilder = HttpClientBuilder.create();
         clientBuilder.setConnectionManager(connectionManager);
         CloseableHttpClient client = clientBuilder.build();
         ManagedHttpClient managedHttpClient = new ManagedHttpClient(client, connectionManager);
-        Assert.assertSame(client, managedHttpClient.getHttpClient());
-        Assert.assertSame(connectionManager, managedHttpClient.getConnectionManager());
+        Assertions.assertSame(client, managedHttpClient.getHttpClient());
+        Assertions.assertSame(connectionManager, managedHttpClient.getConnectionManager());
     }
 }

@@ -14,73 +14,73 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import com.github.packageurl.PackageURL;
 
-public class RepositoryTypeTest {
+class RepositoryTypeTest {
 
     @Test
-    public void testEnums() {
-        Assert.assertEquals("CPAN", RepositoryType.CPAN.name());
-        Assert.assertEquals("MAVEN", RepositoryType.MAVEN.name());
-        Assert.assertEquals("NPM", RepositoryType.NPM.name());
-        Assert.assertEquals("GEM", RepositoryType.GEM.name());
-        Assert.assertEquals("PYPI", RepositoryType.PYPI.name());
-        Assert.assertEquals("NUGET", RepositoryType.NUGET.name());
-        Assert.assertEquals("HEX", RepositoryType.HEX.name());
-        Assert.assertEquals("UNSUPPORTED", RepositoryType.UNSUPPORTED.name());
+    void testEnums() {
+        Assertions.assertEquals("CPAN", RepositoryType.CPAN.name());
+        Assertions.assertEquals("MAVEN", RepositoryType.MAVEN.name());
+        Assertions.assertEquals("NPM", RepositoryType.NPM.name());
+        Assertions.assertEquals("GEM", RepositoryType.GEM.name());
+        Assertions.assertEquals("PYPI", RepositoryType.PYPI.name());
+        Assertions.assertEquals("NUGET", RepositoryType.NUGET.name());
+        Assertions.assertEquals("HEX", RepositoryType.HEX.name());
+        Assertions.assertEquals("UNSUPPORTED", RepositoryType.UNSUPPORTED.name());
     }
 
     @Test
-    public void testResolveMaven() throws Exception {
+    void testResolveMaven() throws Exception {
         PackageURL purl = new PackageURL("pkg:maven/groupId/artifactId@1.0.0");
-        Assert.assertEquals(RepositoryType.MAVEN, RepositoryType.resolve(purl));
+        Assertions.assertEquals(RepositoryType.MAVEN, RepositoryType.resolve(purl));
     }
 
     @Test
-    public void testResolveCpan() throws Exception {
+    void testResolveCpan() throws Exception {
         PackageURL purl = new PackageURL("pkg:cpan/artifact@1.0.0");
-        Assert.assertEquals(RepositoryType.CPAN, RepositoryType.resolve(purl));
+        Assertions.assertEquals(RepositoryType.CPAN, RepositoryType.resolve(purl));
     }
 
     @Test
-    public void testResolveNpm() throws Exception {
+    void testResolveNpm() throws Exception {
         PackageURL purl = new PackageURL("pkg:npm/artifact@1.0.0");
-        Assert.assertEquals(RepositoryType.NPM, RepositoryType.resolve(purl));
+        Assertions.assertEquals(RepositoryType.NPM, RepositoryType.resolve(purl));
     }
 
     @Test
-    public void testResolveGem() throws Exception {
+    void testResolveGem() throws Exception {
         PackageURL purl = new PackageURL("pkg:gem/artifact@1.0.0");
-        Assert.assertEquals(RepositoryType.GEM, RepositoryType.resolve(purl));
+        Assertions.assertEquals(RepositoryType.GEM, RepositoryType.resolve(purl));
     }
 
     @Test
-    public void testResolvePypi() throws Exception {
+    void testResolvePypi() throws Exception {
         PackageURL purl = new PackageURL("pkg:pypi/artifact@1.0.0");
-        Assert.assertEquals(RepositoryType.PYPI, RepositoryType.resolve(purl));
+        Assertions.assertEquals(RepositoryType.PYPI, RepositoryType.resolve(purl));
     }
 
     @Test
-    public void testResolveNuget() throws Exception {
+    void testResolveNuget() throws Exception {
         PackageURL purl = new PackageURL("pkg:nuget/artifact@1.0.0");
-        Assert.assertEquals(RepositoryType.NUGET, RepositoryType.resolve(purl));
+        Assertions.assertEquals(RepositoryType.NUGET, RepositoryType.resolve(purl));
     }
 
     @Test
-    public void testResolveHex() throws Exception {
+    void testResolveHex() throws Exception {
         PackageURL purl = new PackageURL("pkg:hex/phoenix@1.14.10");
-        Assert.assertEquals(RepositoryType.HEX, RepositoryType.resolve(purl));
+        Assertions.assertEquals(RepositoryType.HEX, RepositoryType.resolve(purl));
     }
 
     @Test
-    public void testResolveUnsupported() throws Exception {
+    void testResolveUnsupported() throws Exception {
         PackageURL purl = new PackageURL("pkg:generic/artifact@1.0.0");
-        Assert.assertEquals(RepositoryType.UNSUPPORTED, RepositoryType.resolve(purl));
+        Assertions.assertEquals(RepositoryType.UNSUPPORTED, RepositoryType.resolve(purl));
     }
 }

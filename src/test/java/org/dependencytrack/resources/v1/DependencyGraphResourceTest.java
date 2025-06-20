@@ -14,27 +14,29 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 
 package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import com.github.packageurl.PackageURL;
+import jakarta.json.JsonArray;
+import jakarta.ws.rs.core.Response;
 import net.javacrumbs.jsonunit.core.Option;
 import org.apache.http.HttpStatus;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.ServiceComponent;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.json.JSONArray;
-import org.junit.Test;
-
-import javax.json.JsonArray;
-import javax.ws.rs.core.Response;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,20 +47,16 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
-public class DependencyGraphResourceTest extends ResourceTest {
+class DependencyGraphResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                        new ResourceConfig(DependencyGraphResource.class)
-                                .register(ApiFilter.class)
-                                .register(AuthenticationFilter.class)))
-                .build();
-    }
-
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(DependencyGraphResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Test
-    public void getComponentsAndServicesByComponentUuidTests() {
+    void getComponentsAndServicesByComponentUuidTests() {
         final int nbIteration = 100;
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -91,7 +89,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
             jsonArray.put(new ComponentIdentity(component).toJSON());
         }
 
-        for(ServiceComponent serviceComponent : serviceComponents) {
+        for (ServiceComponent serviceComponent : serviceComponents) {
             jsonArray.put(new ComponentIdentity(serviceComponent).toJSON());
         }
 
@@ -99,7 +97,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
 
         final UUID rootUuid = qm.createComponent(rootComponent, false).getUuid();
 
-        final Response response = target(V1_DEPENDENCY_GRAPH + "/component/" + rootUuid.toString() + "/directDependencies")
+        final Response response = jersey.target(V1_DEPENDENCY_GRAPH + "/component/" + rootUuid.toString() + "/directDependencies")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -112,7 +110,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentsAndServicesByComponentUuidWithRepositoryMetaTests() {
+    void getComponentsAndServicesByComponentUuidWithRepositoryMetaTests() {
         final int nbIteration = 100;
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -173,7 +171,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
             jsonArray.put(new ComponentIdentity(component).toJSON());
         }
 
-        for(ServiceComponent serviceComponent : serviceComponents) {
+        for (ServiceComponent serviceComponent : serviceComponents) {
             jsonArray.put(new ComponentIdentity(serviceComponent).toJSON());
         }
 
@@ -181,7 +179,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
 
         final UUID rootUuid = qm.createComponent(rootComponent, false).getUuid();
 
-        final Response response = target(V1_DEPENDENCY_GRAPH + "/component/" + rootUuid.toString() + "/directDependencies")
+        final Response response = jersey.target(V1_DEPENDENCY_GRAPH + "/component/" + rootUuid.toString() + "/directDependencies")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -194,7 +192,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentsAndServicesByProjectUuidTests() {
+    void getComponentsAndServicesByProjectUuidTests() {
         final int nbIteration = 100;
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -222,14 +220,14 @@ public class DependencyGraphResourceTest extends ResourceTest {
             jsonArray.put(new ComponentIdentity(component).toJSON());
         }
 
-        for(ServiceComponent serviceComponent : serviceComponents) {
+        for (ServiceComponent serviceComponent : serviceComponents) {
             jsonArray.put(new ComponentIdentity(serviceComponent).toJSON());
         }
 
         project.setDirectDependencies(jsonArray.toString());
         qm.updateProject(project, false);
 
-        final Response response = target(V1_DEPENDENCY_GRAPH + "/project/" + project.getUuid().toString() + "/directDependencies")
+        final Response response = jersey.target(V1_DEPENDENCY_GRAPH + "/project/" + project.getUuid().toString() + "/directDependencies")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -242,7 +240,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentsAndServicesByProjectUuidWithRepositoryMetaTests() {
+    void getComponentsAndServicesByProjectUuidWithRepositoryMetaTests() {
         final int nbIteration = 100;
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
 
@@ -298,14 +296,14 @@ public class DependencyGraphResourceTest extends ResourceTest {
             jsonArray.put(new ComponentIdentity(component).toJSON());
         }
 
-        for(ServiceComponent serviceComponent : serviceComponents) {
+        for (ServiceComponent serviceComponent : serviceComponents) {
             jsonArray.put(new ComponentIdentity(serviceComponent).toJSON());
         }
 
         project.setDirectDependencies(jsonArray.toString());
         qm.updateProject(project, false);
 
-        final Response response = target(V1_DEPENDENCY_GRAPH + "/project/" + project.getUuid().toString() + "/directDependencies")
+        final Response response = jersey.target(V1_DEPENDENCY_GRAPH + "/project/" + project.getUuid().toString() + "/directDependencies")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -318,7 +316,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentsAndServicesByProjectUuidWithComponentsWithoutPurlTest() {
+    void getComponentsAndServicesByProjectUuidWithComponentsWithoutPurlTest() {
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
@@ -353,7 +351,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
                 """.formatted(componentWithPurl.getUuid(), componentWithoutPurl.getUuid()));
         qm.persist(project);
 
-        final Response response = target("%s/project/%s/directDependencies".formatted(V1_DEPENDENCY_GRAPH, project.getUuid()))
+        final Response response = jersey.target("%s/project/%s/directDependencies".formatted(V1_DEPENDENCY_GRAPH, project.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();

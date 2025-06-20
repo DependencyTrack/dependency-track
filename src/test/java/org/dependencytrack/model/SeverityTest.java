@@ -14,22 +14,22 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class SeverityTest {
+class SeverityTest {
 
     @Test
-    public void testEnums() {
-        Assert.assertEquals("CRITICAL", Severity.CRITICAL.name());
-        Assert.assertEquals("HIGH", Severity.HIGH.name());
-        Assert.assertEquals("MEDIUM", Severity.MEDIUM.name());
-        Assert.assertEquals("LOW", Severity.LOW.name());
-        Assert.assertEquals("INFO", Severity.INFO.name());
-        Assert.assertEquals("UNASSIGNED", Severity.UNASSIGNED.name());
+    void testEnums() {
+        Assertions.assertEquals("CRITICAL", Severity.CRITICAL.name());
+        Assertions.assertEquals("HIGH", Severity.HIGH.name());
+        Assertions.assertEquals("MEDIUM", Severity.MEDIUM.name());
+        Assertions.assertEquals("LOW", Severity.LOW.name());
+        Assertions.assertEquals("INFO", Severity.INFO.name());
+        Assertions.assertEquals("UNASSIGNED", Severity.UNASSIGNED.name());
     }
 }

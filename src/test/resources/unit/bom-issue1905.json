@@ -1,0 +1,68 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2023-05-16T08:57:13+02:00",
+    "tools": [
+      {
+        "vendor": "CycloneDX",
+        "name": "cyclonedx-gomod",
+        "version": "v1.4.0"
+      }
+    ],
+    "component": {
+      "bom-ref": "pkg:golang/go.foobar.com/localfull@v0.0.0-20230515095825-3c9a500d1e33?type=module",
+      "type": "application",
+      "name": "go.foobar.com/localfull",
+      "version": "v0.0.0-20230515095825-3c9a500d1e33",
+      "purl": "pkg:golang/go.foobar.com/localfull@v0.0.0-20230515095825-3c9a500d1e33?type=module\u0026goos=darwin\u0026goarch=amd64",
+      "properties": [
+      ],
+      "components": [
+      ]
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:golang/cloud.google.com/go/storage@v1.13.0?type=module",
+      "type": "library",
+      "name": "cloud.google.com/go/storage",
+      "version": "v1.13.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6a63ef842388f8796da7aacfbbeeb661dc2122b8dffb7e0f29500be07c206309"
+        }
+      ],
+      "purl": "pkg:golang/cloud.google.com/go/storage@v1.13.0?type=module\u0026goos=darwin\u0026goarch=amd64",
+      "components": [
+        {
+          "type": "library",
+          "name": "cloud.google.com/go/storage",
+          "version": "v1.13.0",
+          "purl": "pkg:golang/cloud.google.com/go/storage@v1.13.0?type=package"
+        }
+      ],
+      "evidence": {
+        "licenses": [
+          {
+            "license": {
+              "id": "Apache-2.0"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:golang/go.foobar.com/localfull@v0.0.0-20230515095825-3c9a500d1e33?type=module",
+      "dependsOn": [
+        "pkg:golang/cloud.google.com/go/storage@v1.13.0?type=module"
+      ]
+    }
+  ]
+}

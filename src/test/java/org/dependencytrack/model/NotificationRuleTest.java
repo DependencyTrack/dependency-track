@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -25,8 +25,8 @@ import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -34,107 +34,107 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class NotificationRuleTest {
+class NotificationRuleTest {
 
     @Test
-    public void testId() {
+    void testId() {
         NotificationRule rule = new NotificationRule();
         rule.setId(111L);
-        Assert.assertEquals(111L, rule.getId());
+        Assertions.assertEquals(111L, rule.getId());
     }
 
     @Test
-    public void testName() {
+    void testName() {
         NotificationRule rule = new NotificationRule();
         rule.setName("Test Name");
-        Assert.assertEquals("Test Name", rule.getName());
+        Assertions.assertEquals("Test Name", rule.getName());
     }
 
     @Test
-    public void testEnabled() {
+    void testEnabled() {
         NotificationRule rule = new NotificationRule();
         rule.setEnabled(true);
-        Assert.assertTrue(rule.isEnabled());
+        Assertions.assertTrue(rule.isEnabled());
     }
 
     @Test
-    public void testScope() {
+    void testScope() {
         NotificationRule rule = new NotificationRule();
         rule.setScope(NotificationScope.PORTFOLIO);
-        Assert.assertEquals(NotificationScope.PORTFOLIO, rule.getScope());
+        Assertions.assertEquals(NotificationScope.PORTFOLIO, rule.getScope());
     }
 
     @Test
-    public void testNotificationLevel() {
+    void testNotificationLevel() {
         NotificationRule rule = new NotificationRule();
         rule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
-        Assert.assertEquals(NotificationLevel.INFORMATIONAL, rule.getNotificationLevel());
+        Assertions.assertEquals(NotificationLevel.INFORMATIONAL, rule.getNotificationLevel());
     }
 
     @Test
-    public void testProjects() {
+    void testProjects() {
         List<Project> projects = new ArrayList<>();
         Project project = new Project();
         projects.add(project);
         NotificationRule rule = new NotificationRule();
         rule.setProjects(projects);
-        Assert.assertEquals(1, rule.getProjects().size());
-        Assert.assertEquals(project, rule.getProjects().get(0));
+        Assertions.assertEquals(1, rule.getProjects().size());
+        Assertions.assertEquals(project, rule.getProjects().get(0));
     }
 
     @Test
-    public void testMessage() {
+    void testMessage() {
         NotificationRule rule = new NotificationRule();
         rule.setMessage("Test Message");
-        Assert.assertEquals("Test Message", rule.getMessage());
+        Assertions.assertEquals("Test Message", rule.getMessage());
     }
 
     @Test
-    public void testNotifyOn() {
+    void testNotifyOn() {
         Set<NotificationGroup> groups = new HashSet<>();
         groups.add(NotificationGroup.NEW_VULNERABLE_DEPENDENCY);
         groups.add(NotificationGroup.NEW_VULNERABILITY);
         NotificationRule rule = new NotificationRule();
         rule.setNotifyOn(groups);
-        Assert.assertEquals(2, rule.getNotifyOn().size());
+        Assertions.assertEquals(2, rule.getNotifyOn().size());
     }
 
     @Test
-    public void testPublisher() {
+    void testPublisher() {
         NotificationPublisher publisher = new NotificationPublisher();
         NotificationRule rule = new NotificationRule();
         rule.setPublisher(publisher);
-        Assert.assertEquals(publisher, rule.getPublisher());
+        Assertions.assertEquals(publisher, rule.getPublisher());
     }
 
     @Test
-    public void testPublisherConfig() {
+    void testPublisherConfig() {
         NotificationRule rule = new NotificationRule();
         rule.setPublisherConfig("{ \"config\": \"configured\" }");
-        Assert.assertEquals("{ \"config\": \"configured\" }", rule.getPublisherConfig());
+        Assertions.assertEquals("{ \"config\": \"configured\" }", rule.getPublisherConfig());
     }
 
     @Test
-    public void testUuid() {
+    void testUuid() {
         UUID uuid = UUID.randomUUID();
         NotificationRule rule = new NotificationRule();
         rule.setUuid(uuid);
-        Assert.assertEquals(uuid.toString(), rule.getUuid().toString());
+        Assertions.assertEquals(uuid.toString(), rule.getUuid().toString());
     }
 
     @Test
-    public void testTeams(){
+    void testTeams(){
         List<Team> teams = new ArrayList<>();
         Team team = new Team();
         teams.add(team);
         NotificationRule rule = new NotificationRule();
         rule.setTeams(teams);
-        Assert.assertEquals(1, rule.getTeams().size());
-        Assert.assertEquals(team, rule.getTeams().get(0));
+        Assertions.assertEquals(1, rule.getTeams().size());
+        Assertions.assertEquals(team, rule.getTeams().get(0));
     }
 
     @Test
-    public void testManagedUsers(){
+    void testManagedUsers(){
         List<Team> teams = new ArrayList<>();
         Team team = new Team();
         List<ManagedUser> managedUsers = new ArrayList<>();
@@ -144,13 +144,13 @@ public class NotificationRuleTest {
         teams.add(team);
         NotificationRule rule = new NotificationRule();
         rule.setTeams(teams);
-        Assert.assertEquals(1, rule.getTeams().size());
-        Assert.assertEquals(team, rule.getTeams().get(0));
-        Assert.assertEquals(managedUser, rule.getTeams().get(0).getManagedUsers().get(0));
+        Assertions.assertEquals(1, rule.getTeams().size());
+        Assertions.assertEquals(team, rule.getTeams().get(0));
+        Assertions.assertEquals(managedUser, rule.getTeams().get(0).getManagedUsers().get(0));
     }
 
     @Test
-    public void testLdapUsers(){
+    void testLdapUsers(){
         List<Team> teams = new ArrayList<>();
         Team team = new Team();
         List<LdapUser> ldapUsers = new ArrayList<>();
@@ -160,13 +160,13 @@ public class NotificationRuleTest {
         teams.add(team);
         NotificationRule rule = new NotificationRule();
         rule.setTeams(teams);
-        Assert.assertEquals(1, rule.getTeams().size());
-        Assert.assertEquals(team, rule.getTeams().get(0));
-        Assert.assertEquals(ldapUser, rule.getTeams().get(0).getLdapUsers().get(0));
+        Assertions.assertEquals(1, rule.getTeams().size());
+        Assertions.assertEquals(team, rule.getTeams().get(0));
+        Assertions.assertEquals(ldapUser, rule.getTeams().get(0).getLdapUsers().get(0));
     }
 
     @Test
-    public void testOidcUsers(){
+    void testOidcUsers(){
         List<Team> teams = new ArrayList<>();
         Team team = new Team();
         List<OidcUser> oidcUsers = new ArrayList<>();
@@ -176,8 +176,8 @@ public class NotificationRuleTest {
         teams.add(team);
         NotificationRule rule = new NotificationRule();
         rule.setTeams(teams);
-        Assert.assertEquals(1, rule.getTeams().size());
-        Assert.assertEquals(team, rule.getTeams().get(0));
-        Assert.assertEquals(oidcUser, rule.getTeams().get(0).getOidcUsers().get(0));
+        Assertions.assertEquals(1, rule.getTeams().size());
+        Assertions.assertEquals(team, rule.getTeams().get(0));
+        Assertions.assertEquals(oidcUser, rule.getTeams().get(0).getOidcUsers().get(0));
     }
 }

@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": " The author hereby grants a perpetual license to everybody to \n use this code for any purpose as long as the copyright message is included \n in the source code of this or any derived work. \n  \n Yes, this means that you, your company, your club, and anyone else \n can use this code anywhere you want. You can change it and distribute it \n under the GPL, include it in your commercial product without releasing \n the source code, put it on the web, etc.  \n The only thing you cannot do is remove my copyright message,  \n or distribute any source code based on this implementation that does not  \n include my copyright message.  \n  \n I appreciate a mention in the documentation or credits,  \n but I understand if that is difficult to do. \n I also appreciate it if you tell me where and why you used my code. \n",
+  "standardLicenseTemplate": "The author hereby grants a perpetual license to everybody to use this code for any purpose as long as the copyright message is included in the source code of this or any derived work.\n\nYes, this means that you, your company, your club, and anyone else can use this code anywhere you want. You can change it and distribute it under the GPL, include it in your commercial product without releasing the source code, put it on the web, etc.\nThe only thing you cannot do is remove my copyright message, or distribute any source code based on this implementation that does not include my copyright message.\n\nI appreciate a mention in the documentation or credits, but I understand if that is difficult to do. I also appreciate it if you tell me where and why you used my code.\n\n",
+  "name": "Ferguson Twofish License",
+  "licenseId": "Ferguson-Twofish",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/wernerd/ZRTPCPP/blob/6b3cd8e6783642292bad0c21e3e5e5ce45ff3e03/cryptcommon/twofish.c#L113C3-L127",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:58:23Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/wernerd/ZRTPCPP/blob/6b3cd8e6783642292bad0c21e3e5e5ce45ff3e03/cryptcommon/twofish.c#L113C3-L127"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            The author hereby grants a perpetual license to everybody to\n            use this code for any purpose as long as the copyright message is included\n            in the source code of this or any derived work.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Yes, this means that you, your company, your club, and anyone else\n            can use this code anywhere you want. You can change it and distribute it\n            under the GPL, include it in your commercial product without releasing\n            the source code, put it on the web, etc.\u003cbr /\u003e\n\n            The only thing you cannot do is remove my copyright message,\n            or distribute any source code based on this implementation that does not\n            include my copyright message.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            I appreciate a mention in the documentation or credits,\n            but I understand if that is difficult to do.\n            I also appreciate it if you tell me where and why you used my code.\n         \u003c/p\u003e\n\n      "
+}

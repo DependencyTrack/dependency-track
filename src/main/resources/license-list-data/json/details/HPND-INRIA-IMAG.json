@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "This software is available with usual \"research\" terms with\nthe aim of retain credits of the software. Permission to use,\ncopy, modify and distribute this software for any purpose and\nwithout fee is hereby granted, provided that the above copyright\nnotice and this permission notice appear in all copies, and\nthe name of INRIA, IMAG, or any contributor not be used in\nadvertising or publicity pertaining to this material without\nthe prior explicit permission. The software is provided \"as\nis\" without any warranties, support or liabilities of any kind.\n",
+  "standardLicenseTemplate": "This software is available with usual \"research\" terms with the aim of retain credits of the software. Permission to use, copy, modify and distribute this software for any purpose and without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies, and the name of INRIA, IMAG, or any contributor not be used in advertising or publicity pertaining to this material without the prior explicit permission. The software is provided \"as is\" without any warranties, support or liabilities of any kind.\n\n",
+  "name": "Historical Permission Notice and Disclaimer    - INRIA-IMAG variant",
+  "licenseId": "HPND-INRIA-IMAG",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://github.com/ppp-project/ppp/blob/master/pppd/ipv6cp.c#L75-L83",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:04:39Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/ppp-project/ppp/blob/master/pppd/ipv6cp.c#L75-L83"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            This software is available with usual \u0026quot;research\u0026quot; terms with\n            the aim of retain credits of the software. Permission to use,\n            copy, modify and distribute this software for any purpose and\n            without fee is hereby granted, provided that the above copyright\n            notice and this permission notice appear in all copies, and\n            the name of INRIA, IMAG, or any contributor not be used in\n            advertising or publicity pertaining to this material without\n            the prior explicit permission. The software is provided \u0026quot;as\n            is\u0026quot; without any warranties, support or liabilities of any kind.\n         \u003c/p\u003e\n\n      "
+}

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -23,9 +23,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
+import javax.jdo.annotations.FetchGroup;
+import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
@@ -34,13 +40,10 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -50,6 +53,13 @@ import java.util.UUID;
  * @since 4.0.0
  */
 @PersistenceCapable
+@FetchGroups(value = {
+        @FetchGroup(name = "NOTIFICATION", members = {
+                @Persistent(name = "name"),
+                @Persistent(name = "violationState"),
+                @Persistent(name = "uuid")
+        })
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Policy implements Serializable {
@@ -63,6 +73,10 @@ public class Policy implements Serializable {
         INFO,
         WARN,
         FAIL
+    }
+
+    public enum FetchGroup {
+        NOTIFICATION
     }
 
     @PrimaryKey
@@ -120,11 +134,10 @@ public class Policy implements Serializable {
     /**
      * A list of zero-to-n tags
      */
-    @Persistent(table = "POLICY_TAGS", defaultFetchGroup = "true")
-    @Join(column = "POLICY_ID")
+    @Persistent(table = "POLICY_TAGS", defaultFetchGroup = "true", mappedBy = "policies")
+    @Join(column = "POLICY_ID", primaryKey = "POLICY_TAGS_PK")
     @Element(column = "TAG_ID")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
-    private List<Tag> tags;
+    private Set<Tag> tags;
 
     /**
      * The unique identifier of the object.
@@ -141,6 +154,10 @@ public class Policy implements Serializable {
     @Persistent
     @Column(name = "INCLUDE_CHILDREN", allowsNull = "true") // New column, must allow nulls on existing data bases)
     private boolean includeChildren;
+
+    @Persistent
+    @Column(name = "ONLY_LATEST_PROJECT_VERSION", defaultValue = "false")
+    private boolean onlyLatestProjectVersion = false;
 
     public long getId() {
         return id;
@@ -201,11 +218,11 @@ public class Policy implements Serializable {
         return (projects == null || projects.size() == 0) && (tags == null || tags.size() == 0);
     }
 
-    public List<Tag> getTags() {
+    public Set<Tag> getTags() {
         return tags;
     }
 
-    public void setTags(List<Tag> tags) {
+    public void setTags(Set<Tag> tags) {
         this.tags = tags;
     }
 
@@ -223,5 +240,13 @@ public class Policy implements Serializable {
 
     public void setIncludeChildren(boolean includeChildren) {
         this.includeChildren = includeChildren;
+    }
+
+    public boolean isOnlyLatestProjectVersion() {
+        return onlyLatestProjectVersion;
+    }
+
+    public void setOnlyLatestProjectVersion(boolean onlyLatestProjectVersion) {
+        this.onlyLatestProjectVersion = onlyLatestProjectVersion;
     }
 }

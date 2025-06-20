@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Disclaimer:\n\nThe software is provided \"as is\", without warranty of any kind,\nexpress or implied, including but not limited to the warranties\nof merchantability, fitness for a particular purpose and\nnoninfringement. In no event shall the author(s) be liable for\nany claim, damages or other liability, whether in an action of\ncontract, tort or otherwise, arising from, out of or in connection\nwith the software or the use or other dealings in the software.\n         \nPermission to use, copy, modify, distribute, and sell this\nsoftware and its documentation for any purpose is hereby\ngranted without fee, provided that the above copyright notice\nappear in all copies and that both that copyright notice and\nthis permission notice appear in supporting documentation.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"by Jim Knoble \u003cjmknoble@pobox.com\u003e Copyright (C) 1999,2000,2001 Jim Knoble\";match\u003d\".{0,5000}\"\u003e\u003e\nDisclaimer:\n\nThe software is provided \"as is\", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the author(s) be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.\n\nPermission to use, copy, modify, distribute, and sell this software and its documentation for any purpose is hereby granted without fee, provided that the above copyright notice appear in all copies and that both that copyright notice and this permission notice appear in supporting documentation.\n\n",
+  "name": "HPND sell variant with MIT disclaimer - reverse",
+  "licenseComments": "This license matches the text of HPND-sell-variant-MIT-disclaimer, but reverses the order of the clauses.",
+  "comment": "This license matches the text of HPND-sell-variant-MIT-disclaimer, but reverses the order of the clauses.",
+  "licenseId": "HPND-sell-variant-MIT-disclaimer-rev",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/sigmavirus24/x11-ssh-askpass/blob/master/dynlist.c",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:06:14Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/sigmavirus24/x11-ssh-askpass/blob/master/dynlist.c"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            by Jim Knoble \u0026lt;jmknoble@pobox.com\u0026gt;\n            Copyright (C) 1999,2000,2001 Jim Knoble\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            Disclaimer:\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            The software is provided \u0026quot;as is\u0026quot;, without warranty of any kind,\n            express or implied, including but not limited to the warranties\n            of merchantability, fitness for a particular purpose and\n            noninfringement. In no event shall the author(s) be liable for\n            any claim, damages or other liability, whether in an action of\n            contract, tort or otherwise, arising from, out of or in connection\n            with the software or the use or other dealings in the software.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Permission to use, copy, modify, distribute, and sell this\n            software and its documentation for any purpose is hereby\n            granted without fee, provided that the above copyright notice\n            appear in all copies and that both that copyright notice and\n            this permission notice appear in supporting documentation.\n         \u003c/p\u003e\n\n      "
+}

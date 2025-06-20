@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Author: Tatu Ylonen \u003cylo@ngs.fi\u003e\n\nCopyright (c) 1991 Tatu Ylonen, Espoo, Finland\n\nPermission to use, copy, modify, distribute, and sell this software\nand its documentation for any purpose is hereby granted without\nfee, provided that the above copyright notice appear in all copies.\nThis software is provided \"as is\" without express or implied\nwarranty.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Author: Tatu Ylonen \u003cylo@ngs.fi\u003e Copyright (c) 1991 Tatu Ylonen, Espoo, Finland\";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, distribute, and sell this software and its documentation for any purpose is hereby granted without fee, provided that the above copyright notice appear in all copies. This software is provided \"as is\" without express or implied warranty.\n\n",
+  "name": "Historical Permission Notice and Disclaimer - sell regexpr variant",
+  "licenseComments": "This is an even shorter variant of HPND-sell than that template allows for.",
+  "comment": "This is an even shorter variant of HPND-sell than that template allows for.",
+  "licenseId": "HPND-sell-regexpr",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://gitlab.com/bacula-org/bacula/-/blob/Branch-11.0/bacula/LICENSE-FOSS?ref_type\u003dheads#L245",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:02:19Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://gitlab.com/bacula-org/bacula/-/blob/Branch-11.0/bacula/LICENSE-FOSS?ref_type\u003dheads#L245"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n        \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n                Author: Tatu Ylonen \u0026lt;ylo@ngs.fi\u0026gt;\u003cbr /\u003e\n\n                Copyright (c) 1991 Tatu Ylonen, Espoo, Finland\n        \u003c/span\u003e\u003c/var\u003e\n        \u003cp\u003e\n                  Permission to use, copy, modify,\n                  distribute, and sell this software and its documentation for\n                  any purpose is hereby granted without fee, provided that the\n                  above copyright notice appear in all copies. This software\n                  is provided \u0026quot;as is\u0026quot; without express or implied warranty.\n        \u003c/p\u003e\n\n      "
+}

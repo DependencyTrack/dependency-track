@@ -14,25 +14,26 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
-import java.lang.reflect.Method;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.License;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
+class DefaultObjectGeneratorTest extends PersistenceCapableTest {
 
     @Test
-    public void testContextInitialized() throws Exception {
+    void testContextInitialized() throws Exception {
         testLoadDefaultPermissions();
         testLoadDefaultPersonas();
         testLoadDefaultLicenses();
@@ -42,16 +43,16 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testLoadDefaultLicenses() throws Exception {
+    void testLoadDefaultLicenses() throws Exception {
         DefaultObjectGenerator generator = new DefaultObjectGenerator();
         Method method = generator.getClass().getDeclaredMethod("loadDefaultLicenses");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(613, qm.getAllLicensesConcise().size());
+        Assertions.assertEquals(757, qm.getAllLicensesConcise().size());
     }
 
     @Test
-    public void testLoadDefaultLicensesUpdatesExistingLicenses() throws Exception {
+    void testLoadDefaultLicensesUpdatesExistingLicenses() throws Exception {
         final var license = new License();
         license.setLicenseId("LGPL-2.1+");
         license.setName("name");
@@ -67,7 +68,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         method.setAccessible(true);
         method.invoke(generator);
 
-        qm.getPersistenceManager().refresh(license);
+        qm.getPersistenceManager().evictAll();
         assertThat(license.getLicenseId()).isEqualTo("LGPL-2.1+");
         assertThat(license.getName()).isEqualTo("GNU Lesser General Public License v2.1 or later");
         assertThat(license.getComment()).isNotEqualTo("comment");
@@ -78,47 +79,47 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testLoadDefaultPermissions() throws Exception {
+    void testLoadDefaultPermissions() throws Exception {
         DefaultObjectGenerator generator = new DefaultObjectGenerator();
         Method method = generator.getClass().getDeclaredMethod("loadDefaultPermissions");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(Permissions.values().length, qm.getPermissions().size());
+        Assertions.assertEquals(Permissions.values().length, qm.getPermissions().size());
     }
 
     @Test
-    public void testLoadDefaultPersonas() throws Exception {
+    void testLoadDefaultPersonas() throws Exception {
         DefaultObjectGenerator generator = new DefaultObjectGenerator();
         Method method = generator.getClass().getDeclaredMethod("loadDefaultPersonas");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(3, qm.getTeams().size());
+        Assertions.assertEquals(4, qm.getTeams().size());
     }
 
     @Test
-    public void testLoadDefaultRepositories() throws Exception {
+    void testLoadDefaultRepositories() throws Exception {
         DefaultObjectGenerator generator = new DefaultObjectGenerator();
         Method method = generator.getClass().getDeclaredMethod("loadDefaultRepositories");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(14, qm.getAllRepositories().size());
+        Assertions.assertEquals(17, qm.getAllRepositories().size());
     }
 
     @Test
-    public void testLoadDefaultConfigProperties() throws Exception {
+    void testLoadDefaultConfigProperties() throws Exception {
         DefaultObjectGenerator generator = new DefaultObjectGenerator();
         Method method = generator.getClass().getDeclaredMethod("loadDefaultConfigProperties");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(ConfigPropertyConstants.values().length, qm.getConfigProperties().size());
+        Assertions.assertEquals(ConfigPropertyConstants.values().length, qm.getConfigProperties().size());
     }
 
     @Test
-    public void testLoadDefaultNotificationPublishers() throws Exception {
+    void testLoadDefaultNotificationPublishers() throws Exception {
         DefaultObjectGenerator generator = new DefaultObjectGenerator();
         Method method = generator.getClass().getDeclaredMethod("loadDefaultNotificationPublishers");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(DefaultNotificationPublishers.values().length, qm.getAllNotificationPublishers().size());
+        Assertions.assertEquals(DefaultNotificationPublishers.values().length, qm.getAllNotificationPublishers().size());
     }
 }

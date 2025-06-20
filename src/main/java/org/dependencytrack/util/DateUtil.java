@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.util;
 
@@ -93,6 +93,6 @@ public final class DateUtil {
         if (dateString == null) {
             return null;
         }
-        return javax.xml.bind.DatatypeConverter.parseDateTime(dateString).getTime();
+        return jakarta.xml.bind.DatatypeConverter.parseDateTime(dateString).getTime();
     }
 }

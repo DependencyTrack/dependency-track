@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
@@ -22,19 +22,29 @@ import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.extension.core.DisallowExtensionCustomizerBuilder;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.util.List;
 
 public class ConsolePublisher implements Publisher {
 
     private static final Logger LOGGER = Logger.getLogger(ConsolePublisher.class);
-    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
+    private static final PebbleEngine ENGINE = new PebbleEngine.Builder()
+            .registerExtensionCustomizer(new DisallowExtensionCustomizerBuilder()
+                    .disallowedTokenParserTags(List.of("include"))
+                    .build())
+            .newLineTrimming(false)
+            .build();
 
-    public void inform(final Notification notification, final JsonObject config) {
-        final String content = prepareTemplate(notification, getTemplate(config));
-        if (content == null) {
-            LOGGER.warn("A template was not found. Skipping notification");
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
+        final String content;
+        try {
+            content = prepareTemplate(notification, getTemplate(config));
+        } catch (IOException | RuntimeException e) {
+            LOGGER.error("Failed to prepare notification content (%s)".formatted(ctx), e);
             return;
         }
         final PrintStream ps;

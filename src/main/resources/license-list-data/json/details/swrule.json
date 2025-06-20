@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "The style package is copyrighted but may be used and extended in any way, as long as a pointer to the original author is maintained. The author is not liable for any problem that may or may not result from using this package. Use at your own risk.\n",
+  "standardLicenseTemplate": "The style package is copyrighted but may be used and extended in any way, as long as a pointer to the original author is maintained. The author is not liable for any problem that may or may not result from using this package. Use at your own risk.\n\n",
+  "name": "swrule License",
+  "licenseId": "swrule",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://ctan.math.utah.edu/ctan/tex-archive/macros/generic/misc/swrule.sty",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:57:22Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://ctan.math.utah.edu/ctan/tex-archive/macros/generic/misc/swrule.sty"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            The style package is copyrighted but may be used and extended\n            in any way, as long as a pointer to the original author is\n            maintained. The author is not liable for any problem that may\n            or may not result from using this package. Use at your own risk.\n         \u003c/p\u003e\n\n      "
+}

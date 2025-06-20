@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks;
 
@@ -23,7 +23,7 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import org.cyclonedx.BomParserFactory;
+import org.cyclonedx.parsers.BomParserFactory;
 import org.cyclonedx.parsers.Parser;
 import org.dependencytrack.event.VexUploadEvent;
 import org.dependencytrack.model.ConfigPropertyConstants;

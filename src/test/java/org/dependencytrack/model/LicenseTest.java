@@ -14,119 +14,119 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.UUID;
 
-public class LicenseTest {
+class LicenseTest {
 
     @Test
-    public void testId() {
+    void testId() {
         License license = new License();
         license.setId(111L);
-        Assert.assertEquals(111L, license.getId());
+        Assertions.assertEquals(111L, license.getId());
     }
 
     @Test
-    public void testName() {
+    void testName() {
         License license = new License();
         license.setName("Apache License 2.0");
-        Assert.assertEquals("Apache License 2.0", license.getName());
+        Assertions.assertEquals("Apache License 2.0", license.getName());
     }
 
     @Test
-    public void testText() {
+    void testText() {
         License license = new License();
         license.setText("License text");
-        Assert.assertEquals("License text", license.getText());
+        Assertions.assertEquals("License text", license.getText());
     }
 
     @Test
-    public void testTemplate() {
+    void testTemplate() {
         License license = new License();
         license.setTemplate("License template");
-        Assert.assertEquals("License template", license.getTemplate());
+        Assertions.assertEquals("License template", license.getTemplate());
     }
 
     @Test
-    public void testHeader() {
+    void testHeader() {
         License license = new License();
         license.setHeader("License header");
-        Assert.assertEquals("License header", license.getHeader());
+        Assertions.assertEquals("License header", license.getHeader());
     }
 
     @Test
-    public void testComment() {
+    void testComment() {
         License license = new License();
         license.setComment("License comment");
-        Assert.assertEquals("License comment", license.getComment());
+        Assertions.assertEquals("License comment", license.getComment());
     }
 
     @Test
-    public void testLicenseId() {
+    void testLicenseId() {
         License license = new License();
         license.setLicenseId("Apache-2.0");
-        Assert.assertEquals("Apache-2.0", license.getLicenseId());
+        Assertions.assertEquals("Apache-2.0", license.getLicenseId());
     }
 
     @Test
-    public void tesOsiApproved() {
+    void tesOsiApproved() {
         License license = new License();
         license.setOsiApproved(true);
-        Assert.assertTrue(license.isOsiApproved());
+        Assertions.assertTrue(license.isOsiApproved());
     }
 
     @Test
-    public void tesFsfLibre() {
+    void tesFsfLibre() {
         License license = new License();
         license.setFsfLibre(true);
-        Assert.assertTrue(license.isFsfLibre());
+        Assertions.assertTrue(license.isFsfLibre());
     }
 
     @Test
-    public void testDeprecatedLicenseId() {
+    void testDeprecatedLicenseId() {
         License license = new License();
         license.setDeprecatedLicenseId(true);
-        Assert.assertTrue(license.isDeprecatedLicenseId());
+        Assertions.assertTrue(license.isDeprecatedLicenseId());
     }
 
     @Test
-    public void testCustomLicense() {
+    void testCustomLicense() {
         License license = new License();
         license.setCustomLicense(true);
-        Assert.assertTrue(license.isCustomLicense());
+        Assertions.assertTrue(license.isCustomLicense());
     }
 
     @Test
-    public void testSeeAlso() {
+    void testSeeAlso() {
         License license = new License();
         license.setSeeAlso("url #1", "url #2");
-        Assert.assertEquals(2, license.getSeeAlso().length);
-        Assert.assertEquals("url #1", license.getSeeAlso()[0]);
-        Assert.assertEquals("url #2", license.getSeeAlso()[1]);
+        Assertions.assertEquals(2, license.getSeeAlso().length);
+        Assertions.assertEquals("url #1", license.getSeeAlso()[0]);
+        Assertions.assertEquals("url #2", license.getSeeAlso()[1]);
     }
 
     @Test
-    public void testLicenseGroups() {
+    void testLicenseGroups() {
         License license = new License();
         LicenseGroup lg = new LicenseGroup();
         lg.setName("Copyleft");
         license.setLicenseGroups(Collections.singletonList(lg));
-        Assert.assertEquals(1, license.getLicenseGroups().size());
-        Assert.assertEquals("Copyleft", license.getLicenseGroups().get(0).getName());
+        Assertions.assertEquals(1, license.getLicenseGroups().size());
+        Assertions.assertEquals("Copyleft", license.getLicenseGroups().get(0).getName());
     }
 
     @Test
-    public void testUuid() {
+    void testUuid() {
         UUID uuid = UUID.randomUUID();
         License license = new License();
         license.setUuid(uuid);
-        Assert.assertEquals(uuid.toString(), license.getUuid().toString());
+        Assertions.assertEquals(uuid.toString(), license.getUuid().toString());
     }
 }

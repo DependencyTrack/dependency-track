@@ -14,25 +14,22 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.search;
 
 import alpine.common.logging.Logger;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.notification.NotificationConstants;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.ComponentDocument;
 
-import java.io.IOException;
+import javax.jdo.Query;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -41,12 +38,12 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.0.0
  */
-public final class ComponentIndexer extends IndexManager implements ObjectIndexer<Component> {
+public final class ComponentIndexer extends IndexManager implements ObjectIndexer<ComponentDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(ComponentIndexer.class);
     private static final ComponentIndexer INSTANCE = new ComponentIndexer();
 
-    protected static ComponentIndexer getInstance() {
+    static ComponentIndexer getInstance() {
         return INSTANCE;
     }
 
@@ -67,29 +64,16 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      *
      * @param component A persisted Component object.
      */
-    public void add(final Component component) {
-        final Document doc = new Document();
-        addField(doc, IndexConstants.COMPONENT_UUID, component.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.COMPONENT_NAME, component.getName(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_GROUP, component.getGroup(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_VERSION, component.getVersion(), Field.Store.YES, false);
-        addField(doc, IndexConstants.COMPONENT_SHA1, component.getSha1(), Field.Store.YES, true);
-        addField(doc, IndexConstants.COMPONENT_DESCRIPTION, component.getDescription(), Field.Store.YES, true);
+    public void add(final ComponentDocument component) {
+        final Document doc = convertToDocument(component);
+        addDocument(doc);
+    }
 
-        try {
-            getIndexWriter().addDocument(doc);
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while adding component to index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.COMPONENT_INDEXER)
-                    .content("An error occurred while adding component to index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+    @Override
+    public void update(ComponentDocument component) {
+        final Term term = convertToTerm(component);
+        final Document doc = convertToDocument(component);
+        updateDocument(term, doc);
     }
 
     /**
@@ -97,21 +81,9 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      *
      * @param component A persisted Component object.
      */
-    public void remove(final Component component) {
-        try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.getUuid().toString()));
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while removing a component from the index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.COMPONENT_INDEXER)
-                    .content("An error occurred while removing a component from the index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+    public void remove(final ComponentDocument component) {
+        final Term term = convertToTerm(component);
+        deleteDocuments(term);
     }
 
     /**
@@ -121,18 +93,57 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
+
+        long docsIndexed = 0;
+        final long startTimeNs = System.nanoTime();
         try (final QueryManager qm = new QueryManager()) {
-            final List<Project> projects = qm.getAllProjects(true);
-            for (final Project project : projects) {
-                final List<Component> components = qm.getAllComponents(project);
-                LOGGER.info("Indexing " + components.size() + " components in project: " + project.getUuid());
-                for (final Component component: components) {
-                    add(component);
-                }
-                LOGGER.info("Completed indexing of " + components.size() + " components in project: " + project.getUuid());
+            List<ComponentDocument> docs = fetchNext(qm, null);
+            while (!docs.isEmpty()) {
+                docs.forEach(this::add);
+                docsIndexed += docs.size();
+                commit();
+
+                docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
-            commit();
         }
-        LOGGER.info("Reindexing complete");
+        LOGGER.info("Reindexing of %d components completed in %s"
+                .formatted(docsIndexed, Duration.ofNanos(System.nanoTime() - startTimeNs)));
     }
+
+    private static List<ComponentDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<Component> query = qm.getPersistenceManager().newQuery(Component.class);
+        var filterParts = new ArrayList<String>();
+        var params = new HashMap<String, Object>();
+        filterParts.add("project.active");
+        if (lastId != null) {
+            filterParts.add("id > :lastId");
+            params.put("lastId", lastId);
+        }
+        query.setFilter(String.join(" && ", filterParts));
+        query.setNamedParameters(params);
+        query.setOrdering("id ASC");
+        query.setRange(0, 1000);
+        query.setResult("id, uuid, \"group\", name, version, description, sha1");
+        try {
+            return List.copyOf(query.executeResultList(ComponentDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
+    private Document convertToDocument(final ComponentDocument component) {
+        final var doc = new Document();
+        addField(doc, IndexConstants.COMPONENT_UUID, component.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.COMPONENT_NAME, component.name(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_GROUP, component.group(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_VERSION, component.version(), Field.Store.YES, false);
+        addField(doc, IndexConstants.COMPONENT_SHA1, component.sha1(), Field.Store.YES, true);
+        addField(doc, IndexConstants.COMPONENT_DESCRIPTION, component.description(), Field.Store.YES, true);
+        return doc;
+    }
+
+    private static Term convertToTerm(final ComponentDocument component) {
+        return new Term(IndexConstants.COMPONENT_UUID, component.uuid().toString());
+    }
+
 }

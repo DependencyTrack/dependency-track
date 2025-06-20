@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.scanners;
 
@@ -22,7 +22,6 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
-import alpine.security.crypto.DataEncryption;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
@@ -35,7 +34,9 @@ import org.dependencytrack.parser.vulndb.ModelConverter;
 import org.dependencytrack.parser.vulndb.VulnDbClient;
 import org.dependencytrack.parser.vulndb.model.Results;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.DebugDataEncryption;
 import org.dependencytrack.util.NotificationUtil;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -103,17 +104,17 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 }
                 this.apiConsumerKey = apiConsumerKey.getPropertyValue();
                 try {
-                    this.apiConsumerSecret = DataEncryption.decryptAsString(apiConsumerSecret.getPropertyValue());
+                    this.apiConsumerSecret = DebugDataEncryption.decryptAsString(apiConsumerSecret.getPropertyValue());
                 } catch (Exception ex) {
                     LOGGER.error("An error occurred decrypting the VulnDB consumer secret. Skipping", ex);
                     return;
                 }
             }
             final var event = (VulnDbAnalysisEvent) e;
-            vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
+            vulnerabilityAnalysisLevel = event.analysisLevel();
             LOGGER.debug("Starting VulnDB analysis task");
-            if (!event.getComponents().isEmpty()) {
-                analyze(event.getComponents());
+            if (!event.components().isEmpty()) {
+                analyze(event.components());
             }
             LOGGER.debug("VulnDB analysis complete");
         }
@@ -172,12 +173,14 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     private boolean processResults(final Results results, final Component component) {
         try (final QueryManager qm = new QueryManager()) {
             final Component vulnerableComponent = qm.getObjectByUuid(Component.class, component.getUuid()); // Refresh component and attach to current pm.
-            for (org.dependencytrack.parser.vulndb.model.Vulnerability vulnDbVuln : (List<org.dependencytrack.parser.vulndb.model.Vulnerability>) results.getResults()) {
-                Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.VULNDB, String.valueOf(vulnDbVuln.id()));
+            for (org.dependencytrack.parser.vulndb.model.Vulnerability vulnDbVuln :
+                (List<org.dependencytrack.parser.vulndb.model.Vulnerability>) results.getResults()) {
+                // Synchronize the vulnerability, which may create, update, or return null
+                final Vulnerability convertedVuln = ModelConverter.convert(qm, vulnDbVuln);
+                Vulnerability vulnerability = qm.synchronizeVulnerability(convertedVuln, false);
                 if (vulnerability == null) {
-                    vulnerability = qm.createVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
-                } else {
-                    vulnerability = qm.synchronizeVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
+                    // Vulnerability already exists but is unchanged.
+                    vulnerability = qm.getVulnerabilityByVulnId(convertedVuln.getSource(), convertedVuln.getVulnId());
                 }
                 NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, vulnerableComponent, vulnerabilityAnalysisLevel);
                 qm.addVulnerability(vulnerability, vulnerableComponent, this.getAnalyzerIdentity());
@@ -187,5 +190,4 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
             return results.getPage() * PAGE_SIZE < results.getTotal();
         }
     }
-
 }

@@ -18,30 +18,25 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OidcResourceUnauthenticatedTest extends ResourceTest {
+class OidcResourceUnauthenticatedTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(OidcResource.class)
-                        .register(ApiFilter.class)))
-                .build();
-    }
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(OidcResource.class)
+                    .register(ApiFilter.class));
 
     @Test
-    public void isAvailableShouldReturnFalseWhenOidcIsNotAvailable() {
-        final Response response = target(V1_OIDC + "/available")
+    void isAvailableShouldReturnFalseWhenOidcIsNotAvailable() {
+        final Response response = jersey.target(V1_OIDC + "/available")
                 .request().get();
 
         assertThat(getPlainTextBody(response)).isEqualTo("false");

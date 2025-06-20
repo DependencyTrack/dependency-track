@@ -14,35 +14,40 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.common.logging.Logger;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.License;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 
-import javax.validation.Validator;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
-import alpine.common.logging.Logger;
 
 /**
  * JAX-RS resources for processing licenses.
@@ -51,21 +56,27 @@ import alpine.common.logging.Logger;
  * @since 3.0.0
  */
 @Path("/v1/license")
-@Api(value = "license", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "license")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class LicenseResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(LicenseResource.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all licenses with complete metadata for each license",
-            response = License.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of licenses")
-    )
+    @Operation(summary = "Returns a list of all licenses with complete metadata for each license")
+    @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all licenses with complete metadata for each license",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of licenses", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = License.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getLicenses() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
@@ -77,13 +88,15 @@ public class LicenseResource extends AlpineResource {
     @GET
     @Path("/concise")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a concise listing of all licenses",
-            response = License.class,
-            responseContainer = "List"
-    )
+    @Operation(summary = "Returns a concise listing of all licenses")
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A concise listing of all licenses",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of licenses", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = License.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getLicenseListing() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
@@ -95,16 +108,18 @@ public class LicenseResource extends AlpineResource {
     @GET
     @Path("/{licenseId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a specific license",
-            response = License.class
-    )
+    @Operation(summary = "Returns a specific license")
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The license could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A specific license",
+                    content = @Content(schema = @Schema(implementation = License.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The license could not be found")
     })
     public Response getLicense(
-            @ApiParam(value = "The SPDX License ID of the license to retrieve", required = true)
+            @Parameter(description = "The SPDX License ID of the license to retrieve", required = true)
             @PathParam("licenseId") String licenseId) {
         try (QueryManager qm = new QueryManager()) {
             final License license = qm.getLicense(licenseId);
@@ -118,13 +133,18 @@ public class LicenseResource extends AlpineResource {
 
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Creates a new custom license",
-            response = License.class
+    @Operation(
+            summary = "Creates a new custom license",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 409, message = "A license with the specified ID already exists.")
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created license",
+                    content = @Content(schema = @Schema(implementation = License.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "409", description = "A license with the specified ID already exists.")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response createLicense(License jsonLicense) {
@@ -148,18 +168,19 @@ public class LicenseResource extends AlpineResource {
     @DELETE
     @Path("/{licenseId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a custom license",
-            code = 204
+    @Operation(
+            summary = "Deletes a custom license",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The license could not be found"),
-            @ApiResponse(code = 409, message = "Only custom licenses can be deleted.")
+            @ApiResponse(responseCode = "204", description = "License removed successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The license could not be found"),
+            @ApiResponse(responseCode = "409", description = "Only custom licenses can be deleted.")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response deleteLicense(
-            @ApiParam(value = "The SPDX License ID of the license to delete", required = true)
+            @Parameter(description = "The SPDX License ID of the license to delete", required = true)
             @PathParam("licenseId") String licenseId) {
         try (QueryManager qm = new QueryManager()) {
             final License license = qm.getLicense(licenseId);

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -24,6 +24,8 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -31,8 +33,18 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
+import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
+import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Convert;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
@@ -46,16 +58,13 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Serialized;
 import javax.jdo.annotations.Unique;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -70,8 +79,9 @@ import java.util.UUID;
 @FetchGroups({
         @FetchGroup(name = "ALL", members = {
                 @Persistent(name = "name"),
-                @Persistent(name = "author"),
+                @Persistent(name = "authors"),
                 @Persistent(name = "publisher"),
+                @Persistent(name = "supplier"),
                 @Persistent(name = "group"),
                 @Persistent(name = "name"),
                 @Persistent(name = "description"),
@@ -85,15 +95,46 @@ import java.util.UUID;
                 @Persistent(name = "children"),
                 @Persistent(name = "properties"),
                 @Persistent(name = "tags"),
-                @Persistent(name = "accessTeams")
+                @Persistent(name = "accessTeams"),
+                @Persistent(name = "metadata"),
+                @Persistent(name = "isLatest")
+        }),
+        @FetchGroup(name = "METADATA", members = {
+                @Persistent(name = "metadata")
         }),
         @FetchGroup(name = "METRICS_UPDATE", members = {
                 @Persistent(name = "id"),
+                @Persistent(name = "parent"),
+                @Persistent(name = "collectionLogic"),
+                @Persistent(name = "collectionTag"),
                 @Persistent(name = "lastInheritedRiskScore"),
+                @Persistent(name = "uuid")
+        }),
+        @FetchGroup(name = "NOTIFICATION", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "name"),
+                @Persistent(name = "version"),
+                @Persistent(name = "description"),
+                @Persistent(name = "purl"),
+                @Persistent(name = "tags"),
                 @Persistent(name = "uuid")
         }),
         @FetchGroup(name = "PARENT", members = {
                 @Persistent(name = "parent")
+        }),
+        @FetchGroup(name = "PROJECT_TAGS", members = {
+                @Persistent(name = "tags")
+        }),
+        @FetchGroup(name = "PORTFOLIO_METRICS_UPDATE", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "lastInheritedRiskScore"),
+                @Persistent(name = "uuid")
+        }),
+        @FetchGroup(name = "PROJECT_VULN_ANALYSIS", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "name"),
+                @Persistent(name = "version"),
+                @Persistent(name = "uuid")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -106,8 +147,13 @@ public class Project implements Serializable {
      */
     public enum FetchGroup {
         ALL,
+        METADATA,
         METRICS_UPDATE,
-        PARENT
+        NOTIFICATION,
+        PARENT,
+        PORTFOLIO_METRICS_UPDATE,
+        PROJECT_TAGS,
+        PROJECT_VULN_ANALYSIS
     }
 
     @PrimaryKey
@@ -115,12 +161,10 @@ public class Project implements Serializable {
     @JsonIgnore
     private long id;
 
-    @Persistent
-    @Column(name = "AUTHOR", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
-    private String author;
+    @Persistent(defaultFetchGroup = "true")
+    @Convert(OrganizationalContactsJsonConverter.class)
+    @Column(name = "AUTHORS", jdbcType = "CLOB", allowsNull = "true")
+    private List<OrganizationalContact> authors;
 
     @Persistent
     @Column(name = "PUBLISHER", jdbcType = "VARCHAR")
@@ -128,6 +172,16 @@ public class Project implements Serializable {
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
     private String publisher;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Convert(OrganizationalEntityJsonConverter.class)
+    @Column(name = "MANUFACTURER", jdbcType = "CLOB", allowsNull = "true")
+    private OrganizationalEntity manufacturer;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Convert(OrganizationalEntityJsonConverter.class)
+    @Column(name = "SUPPLIER", jdbcType = "CLOB", allowsNull = "true")
+    private OrganizationalEntity supplier;
 
     @Persistent
     @Column(name = "GROUP", jdbcType = "VARCHAR")
@@ -166,6 +220,15 @@ public class Project implements Serializable {
     private Classifier classifier;
 
     @Persistent
+    @Column(name = "COLLECTION_LOGIC", jdbcType = "VARCHAR", allowsNull = "true")
+    @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
+    private ProjectCollectionLogic collectionLogic;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "COLLECTION_TAG", allowsNull = "true")
+    private Tag collectionTag;
+
+    @Persistent
     @Index(name = "PROJECT_CPE_IDX")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
@@ -175,9 +238,11 @@ public class Project implements Serializable {
 
     @Persistent
     @Index(name = "PROJECT_PURL_IDX")
-    @Size(max = 255)
+    @Column(name = "PURL", length = 786)
+    @Size(max = 786)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Schema(type = "string")
     private String purl;
 
     @Persistent
@@ -211,10 +276,9 @@ public class Project implements Serializable {
     private List<ProjectProperty> properties;
 
     @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true", mappedBy = "projects")
-    @Join(column = "PROJECT_ID")
+    @Join(column = "PROJECT_ID", primaryKey = "PROJECTS_TAGS_PK")
     @Element(column = "TAG_ID")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
-    private List<Tag> tags;
+    private Set<Tag> tags;
 
     /**
      * Convenience field which will contain the date of the last entry in the {@link Bom} table
@@ -222,6 +286,7 @@ public class Project implements Serializable {
     @Persistent
     @Index(name = "PROJECT_LASTBOMIMPORT_IDX")
     @Column(name = "LAST_BOM_IMPORTED")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date lastBomImport;
 
     /**
@@ -240,16 +305,28 @@ public class Project implements Serializable {
     @Column(name = "LAST_RISKSCORE", allowsNull = "true") // New column, must allow nulls on existing databases))
     private Double lastInheritedRiskScore;
 
+    /**
+     * Convenience field which will contain the date of the last vulnerability analysis of the {@link Bom} components
+     */
     @Persistent
-    @Column(name = "ACTIVE")
+    @Column(name = "LAST_VULNERABILITY_ANALYSIS", allowsNull = "true")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    private Date lastVulnerabilityAnalysis;
+
+    @Persistent
+    @Column(name = "ACTIVE", defaultValue = "true")
     @JsonSerialize(nullsUsing = BooleanDefaultTrueSerializer.class)
-    private Boolean active; // Added in v3.6. Existing records need to be nullable on upgrade.
+    private boolean active = true;
+
+    @Persistent
+    @Index(name = "PROJECT_IS_LATEST_IDX")
+    @Column(name = "IS_LATEST", defaultValue = "false")
+    private boolean isLatest = false; // Added in v4.12.
 
     @Persistent(table = "PROJECT_ACCESS_TEAMS", defaultFetchGroup = "true")
     @Join(column = "PROJECT_ID")
     @Element(column = "TEAM_ID")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
-    @JsonIgnore
     private List<Team> accessTeams;
 
     @Persistent(defaultFetchGroup = "true")
@@ -257,6 +334,11 @@ public class Project implements Serializable {
     @Serialized
     private List<ExternalReference> externalReferences;
 
+    @Persistent(mappedBy = "project")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+    private ProjectMetadata metadata;
+
+    private transient String bomRef;
     private transient ProjectMetrics metrics;
     private transient List<ProjectVersion> versions;
     private transient List<Component> dependencyGraph;
@@ -269,12 +351,30 @@ public class Project implements Serializable {
         this.id = id;
     }
 
-    public String getAuthor() {
-        return author;
+    public List<OrganizationalContact> getAuthors() {
+        return authors;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setAuthors(List<OrganizationalContact> authors) {
+        this.authors = authors;
+    }
+
+    @Deprecated
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getAuthor(){
+        return ModelConverter.convertContactsToString(this.authors);
+    }
+
+    @Deprecated
+    public void setAuthor(String author){
+        if(this.authors==null){
+            this.authors = new ArrayList<>();
+        } else{
+            this.authors.clear();
+        }
+        this.authors.add(new OrganizationalContact() {{
+            setName(author);
+        }});
     }
 
     public String getPublisher() {
@@ -283,6 +383,22 @@ public class Project implements Serializable {
 
     public void setPublisher(String publisher) {
         this.publisher = publisher;
+    }
+
+    public OrganizationalEntity getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(final OrganizationalEntity manufacturer) {
+        this.manufacturer = manufacturer;
+    }
+
+    public OrganizationalEntity getSupplier() {
+        return supplier;
+    }
+
+    public void setSupplier(OrganizationalEntity supplier) {
+        this.supplier = supplier;
     }
 
     public String getGroup() {
@@ -323,6 +439,26 @@ public class Project implements Serializable {
 
     public void setClassifier(Classifier classifier) {
         this.classifier = classifier;
+    }
+
+    public ProjectCollectionLogic getCollectionLogic() {
+        return collectionLogic == null
+                ? ProjectCollectionLogic.NONE
+                : collectionLogic;
+    }
+
+    public void setCollectionLogic(ProjectCollectionLogic collectionLogic) {
+        this.collectionLogic = collectionLogic != ProjectCollectionLogic.NONE
+                ? collectionLogic
+                : null;
+    }
+
+    public Tag getCollectionTag() {
+        return collectionTag;
+    }
+
+    public void setCollectionTag(Tag collectionTag) {
+        this.collectionTag = collectionTag;
     }
 
     public String getCpe() {
@@ -402,11 +538,11 @@ public class Project implements Serializable {
         this.properties = properties;
     }
 
-    public List<Tag> getTags() {
+    public Set<Tag> getTags() {
         return tags;
     }
 
-    public void setTags(List<Tag> tags) {
+    public void setTags(Set<Tag> tags) {
         this.tags = tags;
     }
 
@@ -426,6 +562,14 @@ public class Project implements Serializable {
         this.lastBomImportFormat = lastBomImportFormat;
     }
 
+    public Date getLastVulnerabilityAnalysis() {
+        return lastVulnerabilityAnalysis;
+    }
+
+    public void setLastVulnerabilityAnalysis(Date lastVulnerabilityAnalysis) {
+        this.lastVulnerabilityAnalysis = lastVulnerabilityAnalysis;
+    }
+
     public Double getLastInheritedRiskScore() {
         return lastInheritedRiskScore;
     }
@@ -442,12 +586,29 @@ public class Project implements Serializable {
         this.externalReferences = externalReferences;
     }
 
-    public Boolean isActive() {
+    public boolean isActive() {
         return active;
     }
 
-    public void setActive(Boolean active) {
+    public void setActive(boolean active) {
         this.active = active;
+    }
+
+    @JsonProperty("isLatest")
+    public boolean isLatest() {
+        return isLatest;
+    }
+
+    public void setIsLatest(Boolean latest) {
+        isLatest = latest != null ? latest : false;
+    }
+
+    public String getBomRef() {
+        return bomRef;
+    }
+
+    public void setBomRef(String bomRef) {
+        this.bomRef = bomRef;
     }
 
     public ProjectMetrics getMetrics() {
@@ -466,10 +627,12 @@ public class Project implements Serializable {
         this.versions = versions;
     }
 
+    @JsonIgnore
     public List<Team> getAccessTeams() {
         return accessTeams;
     }
 
+    @JsonSetter
     public void setAccessTeams(List<Team> accessTeams) {
         this.accessTeams = accessTeams;
     }
@@ -479,6 +642,14 @@ public class Project implements Serializable {
             this.accessTeams = new ArrayList<>();
         }
         this.accessTeams.add(accessTeam);
+    }
+
+    public ProjectMetadata getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(final ProjectMetadata metadata) {
+        this.metadata = metadata;
     }
 
     @JsonIgnore

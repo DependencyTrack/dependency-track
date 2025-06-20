@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.vulndb;
 
@@ -22,19 +22,23 @@ import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.vulndb.model.Author;
 import org.dependencytrack.parser.vulndb.model.CvssV2Metric;
 import org.dependencytrack.parser.vulndb.model.CvssV3Metric;
 import org.dependencytrack.parser.vulndb.model.ExternalReference;
 import org.dependencytrack.persistence.QueryManager;
-import us.springett.cvss.CvssV2;
-import us.springett.cvss.CvssV3;
-import us.springett.cvss.Score;
+import org.dependencytrack.util.VulnerabilityUtil;
+import org.metaeffekt.core.security.cvss.CvssVector;
+import org.metaeffekt.core.security.cvss.v2.Cvss2;
+import org.metaeffekt.core.security.cvss.v3.Cvss3;
+import org.metaeffekt.core.security.cvss.v3.Cvss3P0;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Utility class that converts various VulnDB to Dependency-Track models.
@@ -90,12 +94,12 @@ public final class ModelConverter {
             final OffsetDateTime odt = OffsetDateTime.parse(vulnDbVuln.disclosureDate());
             vuln.setPublished(Date.from(odt.toInstant()));
         }
-        /*
-        if (StringUtils.isNotBlank(vulnDbVuln.getUpdatedAt())) {
-            final OffsetDateTime odt = OffsetDateTime.parse(vulnDbVuln.getUpdatedAt());
+
+        if (StringUtils.isNotBlank(vulnDbVuln.lastModified())) {
+            final OffsetDateTime odt = OffsetDateTime.parse(vulnDbVuln.lastModified());
             vuln.setUpdated(Date.from(odt.toInstant()));
         }
-        */
+
 
 
         /* References */
@@ -134,40 +138,47 @@ public final class ModelConverter {
             vuln.setCredits(StringUtils.trimToNull(creditsText.substring(0, creditsText.length() - 2)));
         }
 
-        CvssV2 cvssV2;
+        CvssVector cvssV2;
+        String cveId = "";
         for (final CvssV2Metric metric : vulnDbVuln.cvssV2Metrics()) {
             cvssV2 = toNormalizedMetric(metric);
-            final Score score = cvssV2.calculateScore();
-            vuln.setCvssV2Vector(cvssV2.getVector());
-            vuln.setCvssV2BaseScore(BigDecimal.valueOf(score.getBaseScore()));
-            vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
-            vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
+            vuln.applyV2Score(cvssV2);
             if (metric.cveId() != null) {
+                cveId = metric.cveId();
                 break; // Always prefer use of the NVD scoring, if available
             }
         }
 
-        CvssV3 cvssV3;
+        Cvss3 cvssV3;
         for (final CvssV3Metric metric : vulnDbVuln.cvssV3Metrics()) {
             cvssV3 = toNormalizedMetric(metric);
-            final Score score = cvssV3.calculateScore();
-            vuln.setCvssV3Vector(cvssV3.getVector());
-            vuln.setCvssV3BaseScore(BigDecimal.valueOf(score.getBaseScore()));
-            vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
-            vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
+            vuln.applyV3Score(cvssV3);
             if (metric.cveId() != null) {
+                cveId = metric.cveId();
                 break; // Always prefer use of the NVD scoring, if available
             }
         }
+        vuln.setSeverity(VulnerabilityUtil.getSeverity(
+                vuln.getCvssV2BaseScore(),
+                vuln.getCvssV3BaseScore(),
+                vuln.getOwaspRRLikelihoodScore(),
+                vuln.getOwaspRRTechnicalImpactScore(),
+                vuln.getOwaspRRBusinessImpactScore()
+        ));
 
         if (vulnDbVuln.nvdAdditionalInfo() != null) {
             final String cweString = vulnDbVuln.nvdAdditionalInfo().cweId();
+            final String cveString = vulnDbVuln.nvdAdditionalInfo().cveId();
             if (cweString != null && cweString.startsWith("CWE-")) {
-                final Cwe cwe = CweResolver.getInstance().resolve(qm, cweString);
+                final Cwe cwe = CweResolver.getInstance().lookup(cweString);
                 if (cwe != null) {
                     vuln.addCwe(cwe);
                 }
             }
+            cveId = cveString;
+        }
+        if (!cveId.isEmpty()) {
+            setAliasIfValid(vuln, qm, cveId);
         }
         return vuln;
     }
@@ -197,54 +208,84 @@ public final class ModelConverter {
         );
     }
 
-    public static CvssV2 toNormalizedMetric(CvssV2Metric metric) {
-        CvssV2 cvss = new CvssV2();
-        if (!"ADJACENT_NETWORK" .equals(metric.accessVector()) && !"ADJACENT" .equals(metric.accessVector())) {
-            if ("LOCAL" .equals(metric.accessVector())) {
-                cvss.attackVector(CvssV2.AttackVector.LOCAL);
-            } else if ("NETWORK" .equals(metric.accessVector())) {
-                cvss.attackVector(CvssV2.AttackVector.NETWORK);
-            }
-        } else {
-            cvss.attackVector(CvssV2.AttackVector.ADJACENT);
+    public static Cvss2 toNormalizedMetric(CvssV2Metric metric) {
+        var cvss = new Cvss2();
+        if ("ADJACENT_NETWORK".equals(metric.accessVector()) || "ADJACENT".equals(metric.accessVector())) {
+            cvss.setAccessVector(Cvss2.AccessVector.ADJACENT_NETWORK);
+        } else if ("LOCAL".equals(metric.accessVector())) {
+            cvss.setAccessVector(Cvss2.AccessVector.LOCAL);
+        } else if ("NETWORK".equals(metric.accessVector())) {
+            cvss.setAccessVector(Cvss2.AccessVector.NETWORK);
         }
 
-        if ("SINGLE_INSTANCE" .equals(metric.authentication())) {
-            cvss.authentication(CvssV2.Authentication.SINGLE);
-        } else if ("MULTIPLE_INSTANCES" .equals(metric.authentication())) {
-            cvss.authentication(CvssV2.Authentication.MULTIPLE);
-        } else if ("NONE" .equals(metric.authentication())) {
-            cvss.authentication(CvssV2.Authentication.NONE);
+        if ("SINGLE_INSTANCE".equals(metric.authentication())) {
+            cvss.setAuthentication(Cvss2.Authentication.SINGLE);
+        } else if ("MULTIPLE_INSTANCES".equals(metric.authentication())) {
+            cvss.setAuthentication(Cvss2.Authentication.MULTIPLE);
+        } else if ("NONE".equals(metric.authentication())) {
+            cvss.setAuthentication(Cvss2.Authentication.NONE);
         }
 
-        cvss.attackComplexity(CvssV2.AttackComplexity.valueOf(metric.accessComplexity()));
-        cvss.confidentiality(CvssV2.CIA.valueOf(metric.confidentialityImpact()));
-        cvss.integrity(CvssV2.CIA.valueOf(metric.integrityImpact()));
-        cvss.availability(CvssV2.CIA.valueOf(metric.availabilityImpact()));
+        cvss.setAccessComplexity(Cvss2.AccessComplexity.fromString(metric.accessComplexity()));
+        cvss.setConfidentialityImpact(Cvss2.CIAImpact.fromString(metric.confidentialityImpact()));
+        cvss.setIntegrityImpact(Cvss2.CIAImpact.fromString(metric.integrityImpact()));
+        cvss.setAvailabilityImpact(Cvss2.CIAImpact.fromString(metric.availabilityImpact()));
         return cvss;
     }
 
-    public static CvssV3 toNormalizedMetric(CvssV3Metric metric) {
-        CvssV3 cvss = new CvssV3();
-        if (!"ADJACENT_NETWORK" .equals(metric.attackVector()) && !"ADJACENT" .equals(metric.attackVector())) {
-            if ("LOCAL" .equals(metric.attackVector())) {
-                cvss.attackVector(CvssV3.AttackVector.LOCAL);
-            } else if ("NETWORK" .equals(metric.attackVector())) {
-                cvss.attackVector(CvssV3.AttackVector.NETWORK);
-            } else if ("PHYSICAL" .equals(metric.attackVector())) {
-                cvss.attackVector(CvssV3.AttackVector.PHYSICAL);
-            }
-        } else {
-            cvss.attackVector(CvssV3.AttackVector.ADJACENT);
+    public static Cvss3 toNormalizedMetric(CvssV3Metric metric) {
+        var cvss = new Cvss3P0();
+        if ("ADJACENT_NETWORK".equals(metric.attackVector()) || "ADJACENT".equals(metric.attackVector())) {
+            cvss.setAttackVector(Cvss3.AttackVector.ADJACENT_NETWORK);
+        } else if ("LOCAL".equals(metric.attackVector())) {
+            cvss.setAttackVector(Cvss3.AttackVector.LOCAL);
+        } else if ("NETWORK".equals(metric.attackVector())) {
+            cvss.setAttackVector(Cvss3.AttackVector.NETWORK);
+        } else if ("PHYSICAL".equals(metric.attackVector())) {
+            cvss.setAttackVector(Cvss3.AttackVector.PHYSICAL);
         }
 
-        cvss.attackComplexity(CvssV3.AttackComplexity.valueOf(metric.attackComplexity()));
-        cvss.privilegesRequired(CvssV3.PrivilegesRequired.valueOf(metric.privilegesRequired()));
-        cvss.userInteraction(CvssV3.UserInteraction.valueOf(metric.userInteraction()));
-        cvss.scope(CvssV3.Scope.valueOf(metric.scope()));
-        cvss.confidentiality(CvssV3.CIA.valueOf(metric.confidentialityImpact()));
-        cvss.integrity(CvssV3.CIA.valueOf(metric.integrityImpact()));
-        cvss.availability(CvssV3.CIA.valueOf(metric.availabilityImpact()));
+        cvss.setAttackComplexity(Cvss3.AttackComplexity.fromString(metric.attackComplexity()));
+        cvss.setPrivilegesRequired(Cvss3.PrivilegesRequired.fromString(metric.privilegesRequired()));
+        cvss.setUserInteraction(Cvss3.UserInteraction.fromString(metric.userInteraction()));
+        cvss.setScope(Cvss3.Scope.fromString(metric.scope()));
+        cvss.setConfidentialityImpact(Cvss3.CIAImpact.fromString(metric.confidentialityImpact()));
+        cvss.setIntegrityImpact(Cvss3.CIAImpact.fromString(metric.integrityImpact()));
+        cvss.setAvailabilityImpact(Cvss3.CIAImpact.fromString(metric.availabilityImpact()));
         return cvss;
+    }
+    /**
+     * Set corresponding Alias to vulnDbVuln
+     * If the input `cveString` represents a valid CVE ID, this function sets
+     * the corresponding aliases for the `vuln` object by calling `computeAliases`.
+     *
+     * @param vuln the `Vulnerability` object for which to set the aliases
+     * @param qm the `QueryManager` object used for synchronization
+     * @param cveString the string that may represent a valid CVE ID
+     */
+    private static void setAliasIfValid(Vulnerability vuln,QueryManager qm, String cveString) {
+        final String cveId = VulnerabilityUtil.getValidCveId(cveString);
+        final List<VulnerabilityAlias> aliases = new ArrayList<>();
+        if (cveId != null) {
+            aliases.add(computeAlias(vuln,qm,cveId));
+            vuln.setAliases(aliases);
+        }
+    }
+    /**
+     * Computes a list of `VulnerabilityAlias` objects for the given `vulnerability` and valid `cveId`.
+     * The aliases are computed by creating a new `VulnerabilityAlias` object with the `vulnDbId`
+     * and the `cveId`. The `VulnerabilityAlias` object is then synchronized using the `qm` object.
+     *
+     * @param vulnerability the `Vulnerability` object for which to compute the aliases
+     * @param qm the `QueryManager` object used for synchronization
+     * @param cveId the valid CVE ID string
+     * @return a `VulnerabilityAlias` object
+     */
+    private static VulnerabilityAlias computeAlias(Vulnerability vulnerability, QueryManager qm, String cveId) {
+        final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+        vulnerabilityAlias.setVulnDbId(vulnerability.getVulnId());
+        vulnerabilityAlias.setCveId(cveId);
+        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+        return vulnerabilityAlias;
     }
 }

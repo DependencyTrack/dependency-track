@@ -14,26 +14,18 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
-import io.pebbletemplates.pebble.PebbleEngine;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 public class CsWebexPublisher extends AbstractWebhookPublisher implements Publisher {
 
-    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
-
-    public void inform(final Notification notification, final JsonObject config) {
-        publish(DefaultNotificationPublishers.CS_WEBEX.getPublisherName(), getTemplate(config), notification, config);
-    }
-
-    @Override
-    public PebbleEngine getTemplateEngine() {
-        return ENGINE;
+    public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
+        publish(ctx, getTemplate(config), notification, config);
     }
 
 }

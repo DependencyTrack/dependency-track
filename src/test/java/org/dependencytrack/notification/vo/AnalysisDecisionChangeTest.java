@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.vo;
 
@@ -22,24 +22,21 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.util.HashSet;
-import java.util.Set;
-
-public class AnalysisDecisionChangeTest {
+class AnalysisDecisionChangeTest {
 
     @Test
-    public void testVo() {
+    void testVo() {
         Vulnerability vuln = new Vulnerability();
         Component component = new Component();
         Project project = new Project();
         Analysis analysis = new Analysis();
         AnalysisDecisionChange vo = new AnalysisDecisionChange(vuln, component, project, analysis);
-        Assert.assertEquals(vuln, vo.getVulnerability());
-        Assert.assertEquals(component, vo.getComponent());
-        Assert.assertEquals(project, vo.getProject());
-        Assert.assertEquals(analysis, vo.getAnalysis());
+        Assertions.assertEquals(vuln, vo.getVulnerability());
+        Assertions.assertEquals(component, vo.getComponent());
+        Assertions.assertEquals(project, vo.getProject());
+        Assertions.assertEquals(analysis, vo.getAnalysis());
     }
 }

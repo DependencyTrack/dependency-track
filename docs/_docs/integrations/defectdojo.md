@@ -82,7 +82,22 @@ As mentioned in the DefectDojo documentation this feature 'Will keep existing fi
 | Property Value | 'true'                            |
 | Property Type  | `BOOLEAN`                         |
 
-#### Step 9: Global configuration for Reimport Enhancement (Optional)
+#### Step 9: Add Per-project configuration for test title (Optional)
+![Configure Project](../../images/screenshots/defectdojo_test-title.png)
+
+* Dependency-Track v4.13.0 or higher
+
+You can define the title of the test. 
+The DefectDojo documentation says 'If no test_title is provided, the latest test inside the engagement will be chosen based on scan_type.'
+
+| Attribute      | Value                                           |
+| ---------------|-------------------------------------------------|
+| Group Name     | `integrations`                                  |
+| Property Name  | `defectdojo.testTitle`                          |
+| Property Value | Title of the test that is created in DefectDojo |s
+| Property Type  | `STRING`                                        |
+
+#### Step 10: Global configuration for Reimport Enhancement (Optional)
 * Dependency-Track v4.6.0 or higher
 ![Configure Project](/images/screenshots/defectdojo_global_reimport.png)
 Alternatively, you can turn on the above reimport feature for all projects in one click, by checking on 'Enable reimport' box as shown in the screenshot above.

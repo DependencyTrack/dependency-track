@@ -14,20 +14,20 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.common;
 
-import io.jsonwebtoken.lang.Assert;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class HttpClientPoolTest {
+class HttpClientPoolTest {
 
     @Test
-    public void getClientTest() {
+    void getClientTest() {
         CloseableHttpClient client = HttpClientPool.getClient();
-        Assert.notNull(client);
+        Assertions.assertNotNull(client);
     }
 
 }

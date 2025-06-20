@@ -14,11 +14,13 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.event;
 
+import alpine.event.framework.Event;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 
 import java.util.List;
 
@@ -28,15 +30,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.6.0
  */
-public class InternalAnalysisEvent extends VulnerabilityAnalysisEvent {
-
-    public InternalAnalysisEvent() { }
-
-    public InternalAnalysisEvent(final Component component) {
-        super(component);
-    }
-
-    public InternalAnalysisEvent(final List<Component> components) {
-        super(components);
-    }
+public record InternalAnalysisEvent(
+        List<Component> components,
+        VulnerabilityAnalysisLevel analysisLevel) implements Event {
 }

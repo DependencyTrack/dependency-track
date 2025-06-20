@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.policy;
 
@@ -26,15 +26,15 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {
+class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {
 
     @Test
-    public void hasMatch() {
+    void hasMatch() {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         Project project = new Project();
@@ -54,14 +54,14 @@ public class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyEvaluator evaluator = new SeverityPolicyEvaluator();
         evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component.getId(), violation.getComponent().getId());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component.getId(), violation.getComponent().getId());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void noMatch() {
+    void noMatch() {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         Project project = new Project();
@@ -81,11 +81,11 @@ public class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyEvaluator evaluator = new CpePolicyEvaluator();
         evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void wrongSubject() {
+    void wrongSubject() {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         Project project = new Project();
@@ -105,11 +105,11 @@ public class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyEvaluator evaluator = new CpePolicyEvaluator();
         evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void wrongOperator() {
+    void wrongOperator() {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.SEVERITY, PolicyCondition.Operator.MATCHES, Severity.CRITICAL.name());
         Project project = new Project();
@@ -129,6 +129,6 @@ public class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyEvaluator evaluator = new CpePolicyEvaluator();
         evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 }

@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright(c) 2001 by David Kastrup\nAny use of the code is permitted as long as this copyright \nnotice is preserved in the code.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright(c) 2001 by David Kastrup\";match\u003d\".{0,5000}\"\u003e\u003e\nAny use of the code is permitted as long as this copyright notice is preserved in the code.\n\n",
+  "name": "Kastrup License",
+  "licenseId": "Kastrup",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://ctan.math.utah.edu/ctan/tex-archive/macros/generic/kastrup/binhex.dtx",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:00:57Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://ctan.math.utah.edu/ctan/tex-archive/macros/generic/kastrup/binhex.dtx"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n           Copyright(c) 2001 by David Kastrup\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            Any use of the code is permitted\n            as long as this copyright notice is preserved in the code.\n         \u003c/p\u003e\n\n      "
+}

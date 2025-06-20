@@ -14,25 +14,20 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.search;
 
 import alpine.common.logging.Logger;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
-import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.License;
-import org.dependencytrack.notification.NotificationConstants;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.search.document.LicenseDocument;
 
-import java.io.IOException;
+import javax.jdo.Query;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -41,12 +36,12 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.0.0
  */
-public final class LicenseIndexer extends IndexManager implements ObjectIndexer<License> {
+public final class LicenseIndexer extends IndexManager implements ObjectIndexer<LicenseDocument> {
 
     private static final Logger LOGGER = Logger.getLogger(LicenseIndexer.class);
     private static final LicenseIndexer INSTANCE = new LicenseIndexer();
 
-    protected static LicenseIndexer getInstance() {
+    static LicenseIndexer getInstance() {
         return INSTANCE;
     }
 
@@ -67,26 +62,16 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param license A persisted License object.
      */
-    public void add(final License license) {
-        final Document doc = new Document();
-        addField(doc, IndexConstants.LICENSE_UUID, license.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.LICENSE_LICENSEID, license.getLicenseId(), Field.Store.YES, true);
-        addField(doc, IndexConstants.LICENSE_NAME, license.getName(), Field.Store.YES, true);
+    public void add(final LicenseDocument license) {
+        final Document doc = convertToDocument(license);
+        addDocument(doc);
+    }
 
-        try {
-            getIndexWriter().addDocument(doc);
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while adding a license to the index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.LICENSE_INDEXER)
-                    .content("An error occurred while adding a license to the index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+    @Override
+    public void update(final LicenseDocument license) {
+        final Term term = convertToTerm(license);
+        final Document doc = convertToDocument(license);
+        updateDocument(term, doc);
     }
 
     /**
@@ -94,21 +79,9 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param license A persisted License object.
      */
-    public void remove(final License license) {
-        try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.LICENSE_UUID, license.getUuid().toString()));
-        } catch (CorruptIndexException e) {
-            handleCorruptIndexException(e);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while removing a license from the index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.LICENSE_INDEXER)
-                    .content("An error occurred while removing a license from the index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
+    public void remove(final LicenseDocument license) {
+        final Term term = convertToTerm(license);
+        deleteDocuments(term);
     }
 
     /**
@@ -118,20 +91,49 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
+
+        long docsIndexed = 0;
+        final long startTimeNs = System.nanoTime();
         try (QueryManager qm = new QueryManager()) {
-            final long total = qm.getCount(License.class);
-            long count = 0;
-            while (count < total) {
-                final PaginatedResult result = qm.getLicenses();
-                final List<License> licenses = result.getList(License.class);
-                for (final License license: licenses) {
-                    add(license);
-                }
-                count += result.getObjects().size();
-                qm.advancePagination();
+            List<LicenseDocument> docs = fetchNext(qm, null);
+            while (!docs.isEmpty()) {
+                docs.forEach(this::add);
+                docsIndexed += docs.size();
+                commit();
+
+                docs = fetchNext(qm, docs.get(docs.size() - 1).id());
             }
-            commit();
         }
-        LOGGER.info("Reindexing complete");
+        LOGGER.info("Reindexing of %d licenses completed in %s"
+                .formatted(docsIndexed, Duration.ofNanos(System.nanoTime() - startTimeNs)));
     }
+
+    private static List<LicenseDocument> fetchNext(final QueryManager qm, final Long lastId) {
+        final Query<License> query = qm.getPersistenceManager().newQuery(License.class);
+        if (lastId != null) {
+            query.setFilter("id > :lastId");
+            query.setParameters(lastId);
+        }
+        query.setOrdering("id ASC");
+        query.setRange(0, 1000);
+        query.setResult("id, uuid, licenseId, name");
+        try {
+            return List.copyOf(query.executeResultList(LicenseDocument.class));
+        } finally {
+            query.closeAll();
+        }
+    }
+
+    private Document convertToDocument(final LicenseDocument license) {
+        final var doc = new Document();
+        addField(doc, IndexConstants.LICENSE_UUID, license.uuid().toString(), Field.Store.YES, false);
+        addField(doc, IndexConstants.LICENSE_LICENSEID, license.licenseId(), Field.Store.YES, true);
+        addField(doc, IndexConstants.LICENSE_NAME, license.name(), Field.Store.YES, true);
+        return doc;
+    }
+
+    private static Term convertToTerm(final LicenseDocument license) {
+        return new Term(IndexConstants.LICENSE_UUID, license.uuid().toString());
+    }
+
 }

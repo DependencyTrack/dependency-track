@@ -12,7 +12,7 @@ how effective the system will be when performing component risk analysis.
 ### Generating and Obtaining BOMs
 * When developing software, generate BOMs during Continuous Integration (CI)
 * If using Jenkins, use the [Dependency-Track Jenkins Plugin](https://plugins.jenkins.io/dependency-track/) with synchronous publishing mode enabled
-* Contractually require BOMs ([CycloneDX](https://cyclonedx.org) from vendors
+* Contractually require BOMs ([CycloneDX](https://cyclonedx.org)) from vendors
 * Generate or acquire BOMs from commercial-off-the-shelf (COTS) software
 
 #### Summary

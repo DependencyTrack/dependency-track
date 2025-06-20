@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
@@ -24,35 +24,35 @@ import org.apache.http.HttpHeaders;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class CsWebexPublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
+class CsWebexPublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
 
     private static ClientAndServer mockServer;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         mockServer = startClientAndServer(1080);
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         mockServer.stop();
     }
 
     @Test
-    public void testPublish() throws IOException {
+    void testPublish() throws IOException {
         new MockServerClient("localhost", 1080)
                 .when(
                         request()
@@ -72,6 +72,6 @@ public class CsWebexPublisherTest extends PersistenceCapableTest implements Noti
         notification.setTitle("Test Notification");
         notification.setContent("This is only a test");
         CsWebexPublisher publisher = new CsWebexPublisher();
-        publisher.inform(notification, config);
+        publisher.inform(PublishContext.from(notification), notification, config);
     }
 }

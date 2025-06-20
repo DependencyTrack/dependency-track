@@ -1,0 +1,35 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright \u003cyear\u003e \u003ccopyright holder\u003e\n\nPermission to use, copy, modify, and distribute this documentation for\nany purpose and without fee is hereby granted, provided that the above\ncopyright notice and this permission notice appear in all copies.\n\u003ccopyright holder\u003e makes no representations about the suitability for\nany purpose of the information in this document.  This documentation is\nprovided ``as is\u0027\u0027 without express or implied warranty.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright \u003cyear\u003e \u003ccopyright holder\u003e  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this documentation for any purpose and without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies. \u003c\u003cvar;name\u003d\"copyrightHolder1\";original\u003d\"\u003ccopyright holder\u003e\";match\u003d\".*\"\u003e\u003e makes no representations about the suitability for any purpose of the information in this document. This documentation is provided \"as is\" without express or implied warranty.\n\n",
+  "name": "Historical Permission Notice and Disclaimer - documentation variant",
+  "licenseComments": "This is very similar to HPND but is for documentation and alters the notice obligation.",
+  "comment": "This is very similar to HPND but is for documentation and alters the notice obligation.",
+  "licenseId": "HPND-doc",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxext/-/blob/master/COPYING?ref_type\u003dheads#L185-197",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:56:34Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxtst/-/blob/master/COPYING?ref_type\u003dheads#L70-77",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:56:40Z",
+      "isWayBackLink": false,
+      "order": 1
+    }
+  ],
+  "seeAlso": [
+    "https://gitlab.freedesktop.org/xorg/lib/libxext/-/blob/master/COPYING?ref_type\u003dheads#L185-197",
+    "https://gitlab.freedesktop.org/xorg/lib/libxtst/-/blob/master/COPYING?ref_type\u003dheads#L70-77"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            \u003cp\u003e\n               Copyright \u0026lt;year\u0026gt; \u0026lt;copyright holder\u0026gt;\n            \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n          \u003cp\u003e\n            Permission to use, copy, modify, and distribute this documentation\n            for any purpose and without fee is hereby granted, provided that\n            the above copyright notice and this permission notice appear in all\n            copies.\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .*\"\u003e \u0026lt;copyright holder\u0026gt;\u003c/span\u003e\u003c/var\u003e\n            makes no representations about the suitability for\n            any purpose of the information in this document. This documentation\n            is provided \u0026quot;as is\u0026quot; without express or implied warranty.\n         \u003c/p\u003e\n\n      "
+}

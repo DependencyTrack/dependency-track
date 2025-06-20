@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.policy;
 
@@ -133,7 +133,7 @@ public class LicenseGroupPolicyEvaluator extends AbstractPolicyEvaluator {
         } else {
             String licenseString = component.getLicenseExpression();
             if (licenseString != null) {
-                expression = new SpdxExpressionParser().parse(licenseString);
+                expression = SpdxExpressionParser.getInstance().parse(licenseString);
             } else if (component.getLicense() != null) {
                 expression = new SpdxExpression(component.getLicense());
             } else {

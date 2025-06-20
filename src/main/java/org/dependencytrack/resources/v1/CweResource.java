@@ -14,28 +14,33 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
 import alpine.persistence.PaginatedResult;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.model.Cwe;
-import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 /**
  * JAX-RS resources for processing CWEs.
@@ -44,48 +49,53 @@ import javax.ws.rs.core.Response;
  * @since 3.0.0
  */
 @Path("/v1/cwe")
-@Api(value = "cwe", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "cwe")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class CweResource extends AlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all CWEs",
-            response = Cwe.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of CWEs")
-    )
+    @Operation(summary = "Returns a list of all CWEs")
+    @PaginatedApi
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all CWEs",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of CWEs", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Cwe.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getCwes() {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = qm.getCwes();
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
-        }
+        final PaginatedResult cwes = CweResolver.getInstance().all(getAlpineRequest().getPagination());
+        return Response.ok(cwes.getObjects()).header(TOTAL_COUNT_HEADER, cwes.getTotal()).build();
     }
 
     @GET
     @Path("/{cweId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a specific CWE",
-            response = Cwe.class
-    )
+    @Operation(
+            summary = "Returns a specific CWE")
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The CWE could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A CWE matching the provided ID",
+                    content = @Content(schema = @Schema(implementation = Cwe.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The CWE could not be found")
     })
     public Response getCwe(
-            @ApiParam(value = "The CWE ID of the CWE to retrieve", required = true)
+            @Parameter(description = "The CWE ID of the CWE to retrieve", required = true)
             @PathParam("cweId") int cweId) {
-        try (QueryManager qm = new QueryManager()) {
-            final Cwe cwe = qm.getCweById(cweId);
-            if (cwe != null) {
-                return Response.ok(cwe).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The CWE could not be found.").build();
-            }
+        final Cwe cwe = CweResolver.getInstance().lookup(cweId);
+        if (cwe != null) {
+            return Response.ok(cwe).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("The CWE could not be found.").build();
         }
     }
 

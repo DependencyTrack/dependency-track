@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
@@ -30,7 +30,6 @@ import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,38 +65,6 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
     }
 
     /**
-     * Intelligently adds service components that are not already a dependency
-     * of the specified project and removes the dependency relationship for service components
-     * that are not in the list of specified components.
-     * @param project the project to bind components to
-     * @param existingProjectServices the complete list of existing dependent service components
-     * @param services the complete list of service components that should be dependencies of the project
-     */
-    public void reconcileServiceComponents(Project project, List<ServiceComponent> existingProjectServices, List<ServiceComponent> services) {
-        // Removes components as dependencies to the project for all
-        // components not included in the list provided
-        List<ServiceComponent> markedForDeletion = new ArrayList<>();
-        for (final ServiceComponent existingService: existingProjectServices) {
-            boolean keep = false;
-            for (final ServiceComponent service: services) {
-                if (service.getId() == existingService.getId()) {
-                    keep = true;
-                    break;
-                }
-            }
-            if (!keep) {
-                markedForDeletion.add(existingService);
-            }
-        }
-        if (!markedForDeletion.isEmpty()) {
-            for (ServiceComponent sc: markedForDeletion) {
-                this.recursivelyDelete(sc, false);
-            }
-            //this.delete(markedForDeletion);
-        }
-    }
-
-    /**
      * Creates a new ServiceComponent.
      * @param service the ServiceComponent to persist
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
@@ -105,7 +72,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
      */
     public ServiceComponent createServiceComponent(ServiceComponent service, boolean commitIndex) {
         final ServiceComponent result = persist(service);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, ServiceComponent.class);
         return result;
     }
@@ -228,7 +195,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
         service.setGroup(transientServiceComponent.getGroup());
         service.setDescription(transientServiceComponent.getDescription());
         final ServiceComponent result = persist(service);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, ServiceComponent.class);
         return result;
     }
@@ -240,6 +207,18 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
     private void deleteServiceComponents(Project project) {
         final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project");
         query.deletePersistentAll(project);
+    }
+
+    @Override
+    public boolean hasServiceComponents(final Project project) {
+        final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project");
+        query.setParameters(project);
+        query.setResult("count(this)");
+        try {
+            return query.executeResultUnique(Long.class) > 0;
+        } finally {
+            query.closeAll();
+        }
     }
 
     /**
@@ -255,7 +234,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final ServiceComponent result = pm.getObjectById(ServiceComponent.class, service.getId());
-        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, result));
         // TODO: Add these in when these features are supported by service components
         //deleteAnalysisTrail(service);
         //deleteViolationAnalysisTrail(service);

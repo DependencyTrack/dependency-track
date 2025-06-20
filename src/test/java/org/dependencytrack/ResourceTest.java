@@ -14,37 +14,29 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack;
 
 import alpine.Config;
-import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
-import alpine.server.auth.JsonWebToken;
 import alpine.server.auth.PasswordService;
-import alpine.server.persistence.PersistenceManagerFactory;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import jakarta.ws.rs.core.Response;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.persistence.QueryManager;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.grizzly.connector.GrizzlyConnectorProvider;
-import org.glassfish.jersey.test.JerseyTest;
-import org.glassfish.jersey.test.spi.TestContainerFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.ws.rs.core.Response;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ResourceTest extends JerseyTest {
+public abstract class ResourceTest extends PersistenceCapableTest {
 
     protected final String V1_ANALYSIS = "/v1/analysis";
     protected final String V1_BADGE = "/v1/badge";
@@ -67,6 +59,7 @@ public abstract class ResourceTest extends JerseyTest {
     protected final String V1_POLICY = "/v1/policy";
     protected final String V1_POLICY_VIOLATION = "/v1/violation";
     protected final String V1_PROJECT = "/v1/project";
+    protected final String V1_PROJECT_LATEST = "/v1/project/latest/";
     protected final String V1_REPOSITORY = "/v1/repository";
     protected final String V1_SCAN = "/v1/scan";
     protected final String V1_SEARCH = "/v1/search";
@@ -84,47 +77,25 @@ public abstract class ResourceTest extends JerseyTest {
     protected final String SIZE = "size";
     protected final String TOTAL_COUNT_HEADER = "X-Total-Count";
     protected final String X_API_KEY = "X-Api-Key";
-
+    protected final String API_KEY = "apiKey";
     protected final String V1_TAG = "/v1/tag";
 
-    protected QueryManager qm;
-    protected ManagedUser testUser;
-    protected String jwt;
+    // Hashing is expensive. Do it once and re-use across tests as much as possible.
+    protected static final String TEST_USER_PASSWORD_HASH = new String(PasswordService.createHash("testuser".toCharArray()));
+
     protected Team team;
     protected String apiKey;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         Config.enableUnitTests();
     }
 
-    @Before
-    public void before() throws Exception {
+    @BeforeEach
+    final void initResourceTest() throws Exception {
         // Add a test user and team with API key. Optional if this is used, but its available to all tests.
-        this.qm = new QueryManager();
-        testUser = qm.createManagedUser("testuser", String.valueOf(PasswordService.createHash("testuser".toCharArray())));
-        this.jwt = new JsonWebToken().createToken(testUser);
-        team = qm.createTeam("Test Users", true);
-        qm.addUserToTeam(testUser, team);
-        this.apiKey = team.getApiKeys().get(0).getKey();
-    }
-
-    @After
-    public void after() {
-        PersistenceManagerFactory.tearDown();
-    }
-
-    @Override
-    protected TestContainerFactory getTestContainerFactory() {
-        return new DTGrizzlyWebTestContainerFactory();
-    }
-
-    @Override
-    protected void configureClient(final ClientConfig config) {
-        // Prevent InaccessibleObjectException with JDK >= 16 when performing PATCH requests
-        // using the default HttpUrlConnection connector provider.
-        // See https://github.com/eclipse-ee4j/jersey/issues/4825
-        config.connectorProvider(new GrizzlyConnectorProvider());
+        team = qm.createTeam("Test Users");
+        this.apiKey = qm.createApiKey(team).getKey();
     }
 
     public void initializeWithPermissions(Permissions... permissions) {
@@ -132,10 +103,18 @@ public abstract class ResourceTest extends JerseyTest {
         for (Permissions permission: permissions) {
             permissionList.add(qm.createPermission(permission.name(), null));
         }
-        testUser.setPermissions(permissionList);
         team.setPermissions(permissionList);
         qm.persist(team);
-        testUser = qm.persist(testUser);
+    }
+
+    protected void enablePortfolioAccessControl() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                null
+        );
     }
 
     protected String getPlainTextBody(Response response) {

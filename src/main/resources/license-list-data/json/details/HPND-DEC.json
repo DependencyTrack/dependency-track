@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "COPYRIGHT 1990\nDIGITAL EQUIPMENT CORPORATION\nMAYNARD, MASSACHUSETTS\nALL RIGHTS RESERVED.\n\nTHE INFORMATION IN THIS SOFTWARE IS SUBJECT TO CHANGE WITHOUT NOTICE AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT CORPORATION.\nDIGITAL MAKES NO REPRESENTATIONS ABOUT THE SUITABILITY OF THIS SOFTWARE\nFOR ANY PURPOSE. IT IS SUPPLIED \"AS IS\" WITHOUT EXPRESS OR IMPLIED\nWARRANTY.\n\nIF THE SOFTWARE IS MODIFIED IN A MANNER CREATING DERIVATIVE COPYRIGHT\nRIGHTS, APPROPRIATE LEGENDS MAY BE PLACED ON THE DERIVATIVE WORK IN\nADDITION TO THAT SET FORTH ABOVE.\n\nPermission to use, copy, modify, and distribute this software and\nits documentation for any purpose and without fee is hereby granted,\nprovided that the above copyright notice appear in all copies\nand that both that copyright notice and this permission notice appear in supporting\ndocumentation,\nand that the name of Digital Equipment Corporation not be\nused in advertising or publicity pertaining to distribution of the\nsoftware without specific, written prior permission.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"COPYRIGHT 1990 DIGITAL EQUIPMENT CORPORATION MAYNARD, MASSACHUSETTS ALL RIGHTS RESERVED.\";match\u003d\".{0,5000}\"\u003e\u003e\nTHE INFORMATION IN THIS SOFTWARE IS SUBJECT TO CHANGE WITHOUT NOTICE AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT CORPORATION. DIGITAL MAKES NO REPRESENTATIONS ABOUT THE SUITABILITY OF THIS SOFTWARE FOR ANY PURPOSE. IT IS SUPPLIED \"AS IS\" WITHOUT EXPRESS OR IMPLIED WARRANTY.\n\nIF THE SOFTWARE IS MODIFIED IN A MANNER CREATING DERIVATIVE COPYRIGHT RIGHTS, APPROPRIATE LEGENDS MAY BE PLACED ON THE DERIVATIVE WORK IN ADDITION TO THAT SET FORTH ABOVE.\n\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose and without fee is hereby granted, provided that the above copyright notice appear in all copies and that both that copyright notice and this permission notice appear in supporting documentation, and that the name of Digital Equipment Corporation not be used in advertising or publicity pertaining to distribution of the software without specific, written prior permission.\n\n",
+  "name": "Historical Permission Notice and Disclaimer - DEC variant",
+  "licenseComments": "The permission grant is the same as HPND, but the disclaimer is quite different and there is a obligation related to modified versions.",
+  "comment": "The permission grant is the same as HPND, but the disclaimer is quite different and there is a obligation related to modified versions.",
+  "licenseId": "HPND-DEC",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/app/xkbcomp/-/blob/master/COPYING?ref_type\u003dheads#L69",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:00:26Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://gitlab.freedesktop.org/xorg/app/xkbcomp/-/blob/master/COPYING?ref_type\u003dheads#L69"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n           COPYRIGHT 1990\u003cbr /\u003e\n\n           DIGITAL EQUIPMENT CORPORATION\u003cbr /\u003e\n\n           MAYNARD, MASSACHUSETTS\u003cbr /\u003e\n\n           ALL RIGHTS RESERVED.\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            THE INFORMATION IN THIS SOFTWARE IS SUBJECT TO CHANGE WITHOUT\n            NOTICE AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL\n            EQUIPMENT CORPORATION. DIGITAL MAKES NO REPRESENTATIONS\n            ABOUT THE SUITABILITY OF THIS SOFTWARE FOR ANY PURPOSE. IT\n            IS SUPPLIED \u0026quot;AS IS\u0026quot; WITHOUT EXPRESS OR IMPLIED WARRANTY.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            IF THE SOFTWARE IS MODIFIED IN A MANNER CREATING DERIVATIVE\n            COPYRIGHT RIGHTS, APPROPRIATE LEGENDS MAY BE PLACED ON\n            THE DERIVATIVE WORK IN ADDITION TO THAT SET FORTH ABOVE.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Permission to use, copy, modify, and distribute this software\n            and its documentation for any purpose and without fee is\n            hereby granted, provided that the above copyright notice\n            appear in all copies and that both that copyright notice and\n            this permission notice appear in supporting documentation,\n            and that the name of Digital Equipment Corporation not be\n            used in advertising or publicity pertaining to distribution\n            of the software without specific, written prior permission.\n         \u003c/p\u003e\n\n      "
+}

@@ -14,54 +14,47 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.common.resolver;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Cwe;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class CweResolverTest extends PersistenceCapableTest {
+class CweResolverTest extends PersistenceCapableTest {
 
-    @Before
-    public void before() throws Exception {
-        super.before();
-        qm.createCweIfNotExist(79, "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
+    @Test
+    void testPositiveResolutionByCweId() {
+        Cwe cwe = CweResolver.getInstance().lookup("CWE-79");
+        Assertions.assertNotNull(cwe);
+        Assertions.assertEquals(79, cwe.getCweId());
     }
 
     @Test
-    public void testPositiveResolutionByCweId() {
-        Cwe cwe = CweResolver.getInstance().resolve(qm,"CWE-79");
-        Assert.assertNotNull(cwe);
-        Assert.assertEquals(79, cwe.getCweId());
+    void testPositiveResolutionByCweIdIntegerOnly() {
+        Cwe cwe = CweResolver.getInstance().lookup("79");
+        Assertions.assertNotNull(cwe);
+        Assertions.assertEquals(79, cwe.getCweId());
     }
 
     @Test
-    public void testPositiveResolutionByCweIdIntegerOnly() {
-        Cwe cwe = CweResolver.getInstance().resolve(qm,"79");
-        Assert.assertNotNull(cwe);
-        Assert.assertEquals(79, cwe.getCweId());
+    void testPositiveResolutionByCweIdAndName() {
+        Cwe cwe = CweResolver.getInstance().lookup("CWE-79 Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
+        Assertions.assertNotNull(cwe);
+        Assertions.assertEquals(79, cwe.getCweId());
     }
 
     @Test
-    public void testPositiveResolutionByCweIdAndName() {
-        Cwe cwe = CweResolver.getInstance().resolve(qm,"CWE-79 Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
-        Assert.assertNotNull(cwe);
-        Assert.assertEquals(79, cwe.getCweId());
+    void testNegativeResolutionByCweId() {
+        Cwe cwe = CweResolver.getInstance().lookup("CWE-9999");
+        Assertions.assertNull(cwe);
     }
 
     @Test
-    public void testNegativeResolutionByCweId() {
-        Cwe cwe = CweResolver.getInstance().resolve(qm,"CWE-9999");
-        Assert.assertNull(cwe);
-    }
-
-    @Test
-    public void testNegativeResolutionByInvalidCweId() {
-        Cwe cwe = CweResolver.getInstance().resolve(qm,"CWE-A");
-        Assert.assertNull(cwe);
+    void testNegativeResolutionByInvalidCweId() {
+        Cwe cwe = CweResolver.getInstance().lookup("CWE-A");
+        Assertions.assertNull(cwe);
     }
 }

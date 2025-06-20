@@ -14,27 +14,27 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
 import com.github.packageurl.PackageURL;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class PackageURLStringConverterTest { 
+class PackageURLStringConverterTest {
 
     @Test
-    public void testConvertToAttributeStr() throws Exception {
+    void testConvertToAttributeStr() throws Exception {
         PackageURLStringConverter converter = new PackageURLStringConverter();
         PackageURL purl = converter.convertToAttribute("pkg:maven/acme/example@1.0.0?type=jar");
-        Assert.assertEquals(purl.toString(), "pkg:maven/acme/example@1.0.0?type=jar");
+        Assertions.assertEquals(purl.toString(), "pkg:maven/acme/example@1.0.0?type=jar");
     } 
 
     @Test
-    public void testConvertToDatastoreUrl() throws Exception {
+    void testConvertToDatastoreUrl() throws Exception {
         PackageURLStringConverter converter = new PackageURLStringConverter();
         String purlString = converter.convertToDatastore(new PackageURL("pkg:maven/acme/example@1.0.0?type=jar"));
-        Assert.assertEquals("pkg:maven/acme/example@1.0.0?type=jar", purlString);
+        Assertions.assertEquals("pkg:maven/acme/example@1.0.0?type=jar", purlString);
     }
 } 

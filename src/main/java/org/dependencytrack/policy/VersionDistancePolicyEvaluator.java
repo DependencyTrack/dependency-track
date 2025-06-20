@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.policy;
 
@@ -164,13 +164,17 @@ public class VersionDistancePolicyEvaluator extends AbstractPolicyEvaluator {
     }
 
     /**
-     * Test if the components project direct dependencies contain a givven component
+     * Test if the components project direct dependencies contain a given component
      * If so, the component is a direct dependency of the project
      *
      * @param component component to test
      * @return If the components project direct dependencies contain the component
      */
     private boolean isDirectDependency(Component component) {
+        if (component.getProject().getDirectDependencies() == null) {
+            return false;
+        }
+
         return component.getProject().getDirectDependencies().contains("\"uuid\":\"" + component.getUuid().toString() + "\"");
     }
 

@@ -14,22 +14,22 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class AnalysisStateTest { 
+class AnalysisStateTest {
 
     @Test
-    public void testEnums() {
-        Assert.assertEquals("NOT_SET", AnalysisState.NOT_SET.name());
-        Assert.assertEquals("IN_TRIAGE", AnalysisState.IN_TRIAGE.name());
-        Assert.assertEquals("NOT_AFFECTED", AnalysisState.NOT_AFFECTED.name());
-        Assert.assertEquals("FALSE_POSITIVE", AnalysisState.FALSE_POSITIVE.name());
-        Assert.assertEquals("NOT_AFFECTED", AnalysisState.NOT_AFFECTED.name());
+    void testEnums() {
+        Assertions.assertEquals("NOT_SET", AnalysisState.NOT_SET.name());
+        Assertions.assertEquals("IN_TRIAGE", AnalysisState.IN_TRIAGE.name());
+        Assertions.assertEquals("NOT_AFFECTED", AnalysisState.NOT_AFFECTED.name());
+        Assertions.assertEquals("FALSE_POSITIVE", AnalysisState.FALSE_POSITIVE.name());
+        Assertions.assertEquals("NOT_AFFECTED", AnalysisState.NOT_AFFECTED.name());
     }
 
 } 

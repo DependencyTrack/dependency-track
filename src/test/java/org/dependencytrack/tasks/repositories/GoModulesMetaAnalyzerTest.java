@@ -14,45 +14,45 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.repositories;
 
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class GoModulesMetaAnalyzerTest {
+class GoModulesMetaAnalyzerTest {
 
     @Test
-    public void testAnalyzer() throws Exception {
+    void testAnalyzer() throws Exception {
         final var component = new Component();
         component.setVersion("v0.1.0");
         component.setPurl(new PackageURL("pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0"));
 
         final var analyzer = new GoModulesMetaAnalyzer();
-        Assert.assertTrue(analyzer.isApplicable(component));
-        Assert.assertEquals(RepositoryType.GO_MODULES, analyzer.supportedRepositoryType());
+        Assertions.assertTrue(analyzer.isApplicable(component));
+        Assertions.assertEquals(RepositoryType.GO_MODULES, analyzer.supportedRepositoryType());
 
         MetaModel metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertTrue(metaModel.getLatestVersion().startsWith("v"));
-        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertTrue(metaModel.getLatestVersion().startsWith("v"));
+        Assertions.assertNotNull(metaModel.getPublishedTimestamp());
 
         component.setVersion("0.1.0");
         metaModel = analyzer.analyze(component);
-        Assert.assertNotNull(metaModel.getLatestVersion());
-        Assert.assertFalse(metaModel.getLatestVersion().startsWith("v"));
+        Assertions.assertNotNull(metaModel.getLatestVersion());
+        Assertions.assertFalse(metaModel.getLatestVersion().startsWith("v"));
     }
 
     @Test
-    public void testCaseEncode() {
+    void testCaseEncode() {
         final var analyzer = new GoModulesMetaAnalyzer();
 
-        Assert.assertEquals("!cyclone!d!x", analyzer.caseEncode("CycloneDX"));
-        Assert.assertEquals("cyclonedx", analyzer.caseEncode("cyclonedx"));
+        Assertions.assertEquals("!cyclone!d!x", analyzer.caseEncode("CycloneDX"));
+        Assertions.assertEquals("cyclonedx", analyzer.caseEncode("cyclonedx"));
     }
 
 }

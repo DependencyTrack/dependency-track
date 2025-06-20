@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright 1994, 1996, Tony Sanders \u003csanders@earth.com\u003e\n\nRights are hereby granted to download, use, modify, sell, copy, and\nredistribute this software so long as the original copyright notice\nand this list of conditions remain intact and modified versions are\nnoted as such.\n\nI would also very much appreciate it if you could send me a copy of\nany changes you make so I can possibly integrate them into my version.\n",
+  "standardLicenseTemplate": "Copyright 1994, 1996, Tony Sanders \u003csanders@earth.com\u003e\n\nRights are hereby granted to download, use, modify, sell, copy, and redistribute this software so long as the original copyright notice and this list of conditions remain intact and modified versions are noted as such.\n\nI would also very much appreciate it if you could send me a copy of any changes you make so I can possibly integrate them into my version.\n\n",
+  "name": "mailprio License",
+  "licenseId": "mailprio",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://fossies.org/linux/sendmail/contrib/mailprio",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:55:02Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fossies.org/linux/sendmail/contrib/mailprio"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            Copyright 1994, 1996, Tony Sanders \u0026lt;sanders@earth.com\u0026gt;\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Rights are hereby granted to download, use, modify,\n            sell, copy, and redistribute this software so long as\n            the original copyright notice and this list of conditions\n            remain intact and modified versions are noted as such.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            I would also very much appreciate it if you\n            could send me a copy of any changes you make so\n            I can possibly integrate them into my version.\n         \u003c/p\u003e\n\n      "
+}

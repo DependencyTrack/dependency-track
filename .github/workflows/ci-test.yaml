@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'master'          # Default branch
+      - 'feature-**'      # Feature branches
       - '[0-9]+.[0-9]+.x' # Release branches
     paths-ignore:
       - '**/*.md'
@@ -11,6 +12,7 @@ on:
   pull_request:
     branches:
       - 'master'          # Default branch
+      - 'feature-**'      # Feature branches
       - '[0-9]+.[0-9]+.x' # Release branches
     paths-ignore:
       - '**/*.md'
@@ -31,24 +33,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # tag=v4.1.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # tag=v4.2.2
 
       - name: Set up JDK
-        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # tag=v3.13.0
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # tag=v4.7.1
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'maven'
 
       - name: Execute unit tests
         run: |-
-          mvn clean
-          mvn test -P enhance
+          mvn -B --no-transfer-progress clean
+          mvn -B --no-transfer-progress test -P enhance
 
+      # Publishing coverage to Codacy is only possible for builds of push events.
+      # PRs from forks do not get access to repository secrets.
+      # https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
       - name: Publish test coverage
-        if: ${{ github.ref == 'refs/heads/master' && contains(github.repository, 'DependencyTrack/') }}
+        if: ${{ github.event_name != 'pull_request' && github.repository_owner == 'DependencyTrack' }}
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           language: Java
           coverage-reports: target/jacoco-ut/jacoco.xml
+
+      - name: Save PR details
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |-
+          echo ${{ github.sha }} > pr-commit.txt
+          echo ${{ github.event.number }} > pr-number.txt
+
+      - name: Upload PR test coverage report
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # tag=v4.6.2
+        with:
+          name: pr-test-coverage-report
+          path: |-
+            pr-commit.txt
+            pr-number.txt
+            target/jacoco-ut/jacoco.xml

@@ -14,31 +14,30 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.integrations.kenna;
 
 import alpine.model.IConfigProperty;
 import org.dependencytrack.PersistenceCapableTest;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 
-public class KennaSecurityUploaderTest extends PersistenceCapableTest {
-
+class KennaSecurityUploaderTest extends PersistenceCapableTest {
     @Test
-    public void testIntegrationMetadata() {
+    void testIntegrationMetadata() {
         KennaSecurityUploader extension = new KennaSecurityUploader();
-        Assert.assertEquals("Kenna Security", extension.name());
-        Assert.assertEquals("Pushes Dependency-Track findings to Kenna Security", extension.description());
+        Assertions.assertEquals("Kenna Security", extension.name());
+        Assertions.assertEquals("Pushes Dependency-Track findings to Kenna Security", extension.description());
     }
 
     @Test
-    public void testIntegrationEnabledCases() {
+    void testIntegrationEnabledCases() {
         qm.createConfigProperty(
                 KENNA_ENABLED.getGroupName(),
                 KENNA_ENABLED.getPropertyName(),
@@ -55,21 +54,21 @@ public class KennaSecurityUploaderTest extends PersistenceCapableTest {
         );
         KennaSecurityUploader extension = new KennaSecurityUploader();
         extension.setQueryManager(qm);
-        Assert.assertTrue(extension.isEnabled());
+        Assertions.assertTrue(extension.isEnabled());
     }
 
     @Test
-    public void testIntegrationDisabledCases() {
+    void testIntegrationDisabledCases() {
         KennaSecurityUploader extension = new KennaSecurityUploader();
         extension.setQueryManager(qm);
-        Assert.assertFalse(extension.isEnabled());
+        Assertions.assertFalse(extension.isEnabled());
     }
 
     @Test
-    public void testIntegrationFindings() throws Exception {
+    void testIntegrationFindings() throws Exception {
         KennaSecurityUploader extension = new KennaSecurityUploader();
         extension.setQueryManager(qm);
         InputStream in = extension.process();
-        Assert.assertTrue(in != null && in.available() > 0);
+        Assertions.assertTrue(in != null && in.available() > 0);
     }
 }

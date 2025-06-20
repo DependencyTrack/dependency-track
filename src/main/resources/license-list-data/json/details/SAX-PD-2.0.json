@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "SAX2 is Free!\n\nI hereby abandon any property rights to SAX 2.0 (the Simple API for\nXML), and release all of the SAX 2.0 source code, compiled code, and\ndocumentation contained in this distribution into the Public Domain.\nSAX comes with NO WARRANTY or guarantee of fitness for any\npurpose.\n\nDavid Megginson, david@megginson.com\n2000-05-05\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e\u003c\u003cvar;name\u003d\"header\";original\u003d\"SAX IS FREE\";match\u003d\"(SAX 2.0)|(SAX IS FREE)|(SAX2 is Free!)\"\u003e\u003e \u003c\u003cvar;name\u003d\"underline\";original\u003d\"-----------\";match\u003d\"-*\"\u003e\u003e\u003c\u003cendOptional\u003e\u003e\nI hereby abandon any property rights to SAX 2.0 (the Simple API for XML), and release all of the SAX 2.0 source code, compiled code, and documentation contained in this distribution into the Public Domain. SAX comes with NO WARRANTY or guarantee of fitness for any purpose.\n\n\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"David Megginson, Megginson Technologies Ltd.   2000-05-05  \";match\u003d\".{0,5000}\"\u003e\u003e",
+  "name": "Sax Public Domain Notice 2.0",
+  "licenseId": "SAX-PD-2.0",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "http://www.saxproject.org/copying.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:01:38Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "http://www.saxproject.org/copying.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n                        \u003cvar class\u003d\"optional-license-text\"\u003e \n                                \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern (SAX 2.0)|(SAX IS FREE)|(SAX2 is Free!)\"\u003e SAX IS FREE\u003c/span\u003e\u003c/var\u003e\n                                \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern -*\"\u003e -----------\u003c/span\u003e\u003c/var\u003e\n                        \u003c/var\u003e\n                        \u003cp\u003e\n                                I hereby abandon any property rights to SAX 2.0\n                                (the Simple API for XML), and release all of the\n                                SAX 2.0 source code, compiled code, and\n                                documentation contained in this distribution\n                                into the Public Domain. SAX comes with NO\n                                WARRANTY or guarantee of fitness for any\n                                purpose.\n                        \u003c/p\u003e\n\n                        \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n                                \u003cp\u003e\n                                        David Megginson, Megginson Technologies\n                                        Ltd.\n                                \u003c/p\u003e\n\n                                \u003cp\u003e\n                                        2000-05-05\n                                \u003c/p\u003e\n\n                        \u003c/span\u003e\u003c/div\u003e\n                "
+}

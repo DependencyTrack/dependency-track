@@ -23,7 +23,7 @@ jobs:
             exit 1
           fi
       - name: Checkout Repository
-        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # tag=v4.1.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # tag=v4.2.2
 
       - name: Parse Version from POM
         id: parse
@@ -38,6 +38,7 @@ jobs:
     with:
       app-version: ${{ needs.read-version.outputs.version }}
       publish-container: true
+      ref-name: ${{ github.ref_name }}
     permissions:
       security-events: write # Required to upload trivy's SARIF output
     secrets:
@@ -51,10 +52,10 @@ jobs:
       - call-build
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # tag=v4.1.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # tag=v4.2.2
 
       - name: Download Artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # tag=v3.0.2
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # tag=v4.3.0
         with:
           name: assembled-wars
           path: target
@@ -79,6 +80,9 @@ jobs:
           $(cat target/checksums.txt)
           \`\`\`
           EOF
+          
+          gh release view ${{ needs.read-version.outputs.version }} \
+            --json body --jq .body >> .github/default-release-notes.md
 
           gh release edit ${{ needs.read-version.outputs.version }} \
             --notes-file ".github/default-release-notes.md"

@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Portions of this code Copyright (C) 1989 by Michael Mauldin.\nPermission is granted to use this file in whole or in\npart for any purpose, educational, recreational or commercial,\nprovided that this copyright notice is retained unchanged.\nThis software is available to all free of charge by anonymous\nFTP and in the UUNET archives.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Portions of this code Copyright (C) 1989 by Michael Mauldin.\";match\u003d\".{0,5000}\"\u003e\u003e\nPermission is granted to use this file in whole or in part for any purpose, educational, recreational or commercial, provided that this copyright notice is retained unchanged. This software is available to all free of charge by anonymous FTP and in the UUNET archives.\n\n",
+  "name": "Fuzzy Bitmap License",
+  "licenseId": "FBM",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/SWI-Prolog/packages-xpce/blob/161a40cd82004f731ba48024f9d30af388a7edf5/src/img/gifwrite.c#L21-L26",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:56:35Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/SWI-Prolog/packages-xpce/blob/161a40cd82004f731ba48024f9d30af388a7edf5/src/img/gifwrite.c#L21-L26"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n\t\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n\t  Portions of this code Copyright (C) 1989 by Michael Mauldin.\n\t\u003c/span\u003e\u003c/var\u003e\n        \u003cp\u003ePermission is granted to use this file in whole or in\n part for any purpose, educational, recreational or commercial,\n provided that this copyright notice is retained unchanged.\n This software is available to all free of charge by anonymous\n FTP and in the UUNET archives.\u003c/p\u003e\n\n      "
+}

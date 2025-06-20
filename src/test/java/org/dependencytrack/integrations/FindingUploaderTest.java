@@ -14,29 +14,29 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.integrations;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class FindingUploaderTest {
+class FindingUploaderTest {
 
     @Test
-    public final void testIsEnabled_True() {
+    final void testIsEnabled_True() {
         FindingUploader findingUploader = mock(FindingUploader.class);
         when(findingUploader.isEnabled()).thenReturn(true);
-        Assert.assertTrue(findingUploader.isEnabled());
+        Assertions.assertTrue(findingUploader.isEnabled());
     }
 
     @Test
-    public final void testIsEnabled_False() {
+    final void testIsEnabled_False() {
         FindingUploader findingUploader = mock(FindingUploader.class);
         when(findingUploader.isEnabled()).thenReturn(false);
-        Assert.assertFalse(findingUploader.isEnabled());
+        Assertions.assertFalse(findingUploader.isEnabled());
     }
 }

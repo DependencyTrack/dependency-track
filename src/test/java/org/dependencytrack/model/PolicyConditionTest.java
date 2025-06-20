@@ -14,48 +14,48 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class PolicyConditionTest {
+class PolicyConditionTest {
 
     @Test
-    public void testId() {
+    void testId() {
         PolicyCondition pc = new PolicyCondition();
         pc.setId(111L);
-        Assert.assertEquals(111L, pc.getId());
+        Assertions.assertEquals(111L, pc.getId());
     }
 
     @Test
-    public void testPolicy() {
+    void testPolicy() {
         Policy policy = new Policy();
         PolicyCondition pc = new PolicyCondition();
         pc.setPolicy(policy);
-        Assert.assertEquals(policy, pc.getPolicy());
+        Assertions.assertEquals(policy, pc.getPolicy());
     }
 
     @Test
-    public void testOperator() {
+    void testOperator() {
         PolicyCondition pc = new PolicyCondition();
         pc.setOperator(PolicyCondition.Operator.NUMERIC_EQUAL);
-        Assert.assertEquals("NUMERIC_EQUAL", pc.getOperator().name());
+        Assertions.assertEquals("NUMERIC_EQUAL", pc.getOperator().name());
     }
 
     @Test
-    public void testSubject() {
+    void testSubject() {
         PolicyCondition pc = new PolicyCondition();
         pc.setSubject(PolicyCondition.Subject.LICENSE_GROUP);
-        Assert.assertEquals("LICENSE_GROUP", pc.getSubject().name());
+        Assertions.assertEquals("LICENSE_GROUP", pc.getSubject().name());
     }
 
     @Test
-    public void testValue() {
+    void testValue() {
         PolicyCondition pc = new PolicyCondition();
         pc.setValue("Test Value");
-        Assert.assertEquals("Test Value", pc.getValue());
+        Assertions.assertEquals("Test Value", pc.getValue());
     }
 }

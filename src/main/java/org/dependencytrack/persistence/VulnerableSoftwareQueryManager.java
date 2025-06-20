@@ -14,30 +14,35 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
-import alpine.event.framework.Event;
+import alpine.common.logging.Logger;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Cpe;
-import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.h2.util.StringUtils;
-import us.springett.parsers.cpe.values.LogicalValue;
+import org.dependencytrack.util.PersistenceUtil;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
+import static java.util.stream.Collectors.groupingBy;
+import static org.dependencytrack.util.PersistenceUtil.assertNonPersistentAll;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
+
 final class VulnerableSoftwareQueryManager extends QueryManager implements IQueryManager {
+
+    private static final Logger LOGGER = Logger.getLogger(VulnerableSoftwareQueryManager.class);
 
     /**
      * Constructs a new QueryManager.
@@ -54,71 +59,6 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      */
     VulnerableSoftwareQueryManager(final PersistenceManager pm, final AlpineRequest request) {
         super(pm, request);
-    }
-
-    /**
-     * Synchronize a Cpe, updating it if it needs updating, or creating it if it doesn't exist.
-     * @param cpe the Cpe object to synchronize
-     * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @return a synchronize Cpe object
-     */
-    public Cpe synchronizeCpe(Cpe cpe, boolean commitIndex) {
-        Cpe result = getCpeBy23(cpe.getCpe23());
-        if (result == null) {
-            result = persist(cpe);
-            Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
-            commitSearchIndex(commitIndex, Cpe.class);
-        }
-        return result;
-    }
-
-    /**
-     * Returns a CPE by it's CPE v2.3 string.
-     * @param cpe23 the CPE 2.3 string
-     * @return a CPE object, or null if not found
-     */
-    public Cpe getCpeBy23(String cpe23) {
-        final Query<Cpe> query = pm.newQuery(Cpe.class, "cpe23 == :cpe23");
-        query.setRange(0, 1);
-        return singleResult(query.execute(cpe23));
-    }
-
-    /**
-     * Returns a List of all CPE objects.
-     * @return a List of all CPE objects
-     */
-    public PaginatedResult getCpes() {
-        final Query<Cpe> query = pm.newQuery(Cpe.class);
-        if (orderBy == null) {
-            query.setOrdering("id asc");
-        }
-        if (filter != null) {
-            query.setFilter("vendor.toLowerCase().matches(:filter) || product.toLowerCase().matches(:filter)");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, filterString);
-        }
-        return execute(query);
-    }
-
-    /**
-     * Returns a List of all CPE objects that match the specified CPE (v2.2 or v2.3) uri.
-     * @return a List of matching CPE objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<Cpe> getCpes(final String cpeString) {
-        final Query<Cpe> query = pm.newQuery(Cpe.class, "cpe23 == :cpeString || cpe22 == :cpeString");
-        return (List<Cpe>)query.execute(cpeString);
-    }
-
-    /**
-     * Returns a List of all CPE objects that match the specified vendor/product/version.
-     * @return a List of matching CPE objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<Cpe> getCpes(final String part, final String vendor, final String product, final String version) {
-        final Query<Cpe> query = pm.newQuery(Cpe.class);
-        query.setFilter("part == :part && vendor == :vendor && product == :product && version == :version");
-        return (List<Cpe>)query.executeWithArray(part, vendor, product, version);
     }
 
     /**
@@ -166,7 +106,11 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
         query.setFilter(filter);
         query.setNamedParameters(parameters);
         query.setRange(0, 1);
-        return query.executeUnique();
+        try {
+            return query.executeUnique();
+        } finally {
+            query.closeAll();
+        }
     }
 
     /**
@@ -197,16 +141,71 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     }
 
     /**
-     * Returns a List of all VulnerableSoftware objects that match the specified PackageURL
-     * @return a List of matching VulnerableSoftware objects
+     * @since 4.12.3
      */
-    @SuppressWarnings("unchecked")
-    public VulnerableSoftware getVulnerableSoftwareByPurl(String purlType, String purlNamespace, String purlName,
-                                                                   String versionEndExcluding, String versionEndIncluding,
-                                                                   String versionStartExcluding, String versionStartIncluding) {
-        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class, "purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && versionEndExcluding == :versionEndExcluding && versionEndIncluding == :versionEndIncluding && versionStartExcluding == :versionStartExcluding && versionStartIncluding == :versionStartIncluding");
+    public VulnerableSoftware getVulnerableSoftwareByPurl(
+            final String purlType,
+            final String purlNamespace,
+            final String purlName,
+            final String version,
+            final String versionEndExcluding,
+            final String versionEndIncluding,
+            final String versionStartExcluding,
+            final String versionStartIncluding) {
+        final var queryFilterParts = new ArrayList<>(List.of(
+                "purlType == :purlType",
+                "purlName == :purlName"));
+        final var queryParams = new HashMap<String, Object>(Map.ofEntries(
+                Map.entry("purlType", purlType),
+                Map.entry("purlName", purlName)));
+
+        if (purlNamespace == null) {
+            queryFilterParts.add("purlNamespace == null");
+        } else {
+            queryFilterParts.add("purlNamespace == :purlNamespace");
+            queryParams.put("purlNamespace", purlNamespace);
+        }
+
+        if (version != null) {
+            queryFilterParts.add("version == :version");
+            queryParams.put("version", version);
+        } else {
+            queryFilterParts.add("version == null");
+        }
+
+        if (versionEndExcluding == null) {
+            queryFilterParts.add("versionEndExcluding == null");
+        } else {
+            queryFilterParts.add("versionEndExcluding == :versionEndExcluding");
+            queryParams.put("versionEndExcluding", versionEndExcluding);
+        }
+
+        if (versionEndIncluding == null) {
+            queryFilterParts.add("versionEndIncluding == null");
+        } else {
+            queryFilterParts.add("versionEndIncluding == :versionEndIncluding");
+            queryParams.put("versionEndIncluding", versionEndIncluding);
+        }
+
+        if (versionStartExcluding == null) {
+            queryFilterParts.add("versionStartExcluding == null");
+        } else {
+            queryFilterParts.add("versionStartExcluding == :versionStartExcluding");
+            queryParams.put("versionStartExcluding", versionStartExcluding);
+        }
+
+        if (versionStartIncluding == null) {
+            queryFilterParts.add("versionStartIncluding == null");
+        } else {
+            queryFilterParts.add("versionStartIncluding == :versionStartIncluding");
+            queryParams.put("versionStartIncluding", versionStartIncluding);
+        }
+
+        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
+        query.setFilter(String.join(" && ", queryFilterParts));
+        query.setNamedParameters(queryParams);
         query.setRange(0, 1);
-        return singleResult(query.executeWithArray(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding));
+        return executeAndCloseUnique(query);
     }
 
     /**
@@ -217,16 +216,19 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      * @return a {@link List} of {@link VulnerableSoftware}s
      */
     @Override
-    @SuppressWarnings("unchecked")
     public List<VulnerableSoftware> getVulnerableSoftwareByVulnId(final String source, final String vulnId) {
-        final Query<?> query = pm.newQuery(Query.JDOQL, """
-                SELECT FROM org.dependencytrack.model.VulnerableSoftware
-                WHERE vulnerabilities.contains(vuln)
-                    && vuln.source == :source && vuln.vulnId == :vulnId
-                VARIABLES org.dependencytrack.model.Vulnerability vuln
-                """);
-        query.setParameters(source, vulnId);
-        return (List<VulnerableSoftware>) query.executeList();
+        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
+        query.setFilter("vulnerabilities.contains(vuln) && vuln.source == :source && vuln.vulnId == :vulnId");
+        query.declareVariables("org.dependencytrack.model.Vulnerability vuln");
+        query.setNamedParameters(Map.of(
+                "source", source,
+                "vulnId", vulnId
+        ));
+        try {
+            return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
+        }
     }
 
     /**
@@ -271,8 +273,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
             // Evaluating wildcards in the source can only be done in-memory. If we wanted to do that,
             // we'd have to fetch *all* records, which is not practical.
 
-            if (!LogicalValue.ANY.getAbbreviation().equals(cpePart)
-                    && !LogicalValue.NA.getAbbreviation().equals(cpePart)) {
+            if (!"*".equals(cpePart) && !"-".equals(cpePart)) {
                 // | No. | Source A-V      | Target A-V | Relation             |
                 // | :-- | :-------------- | :--------- | :------------------- |
                 // | 3   | ANY             | i          | SUPERSET             |
@@ -295,7 +296,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                 // | 8   | NA              | m + wild cards  | undefined  |
                 // | 11  | i               | m + wild cards  | undefined  |
                 // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
-            } else if (LogicalValue.NA.getAbbreviation().equals(cpePart)) {
+            } else if ("-".equals(cpePart)) {
                 // | No. | Source A-V     | Target A-V | Relation |
                 // | :-- | :------------- | :--------- | :------- |
                 // | 2   | ANY            | NA         | SUPERSET |
@@ -308,32 +309,30 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                 // | :-- | :------------- | :--------- | :------- |
                 // | 1   | ANY            | ANY        | EQUAL    |
                 // | 5   | NA             | ANY        | SUBSET   |
-                // | 13  | i              | ANY        | SUPERSET |
-                // | 15  | m + wild cards | ANY        | SUPERSET |
+                // | 13  | i              | ANY        | SUBSET   |
+                // | 15  | m + wild cards | ANY        | SUBSET   |
                 cpeQueryFilterParts.add("part != null");
             }
 
-            if (!LogicalValue.ANY.getAbbreviation().equals(cpeVendor)
-                    && !LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
+            if (!"*".equals(cpeVendor) && !"-".equals(cpeVendor)) {
                 // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
                 //   Can't currently do this as it would require an index on UPPER("VENDOR"),
                 //   which we cannot add through JDO annotations.
                 cpeQueryFilterParts.add("(vendor == '*' || vendor == :vendor)");
                 queryParams.put("vendor", cpeVendor);
-            } else if (LogicalValue.NA.getAbbreviation().equals(cpeVendor)) {
+            } else if ("-".equals(cpeVendor)) {
                 cpeQueryFilterParts.add("(vendor == '*' || vendor == '-')");
             } else {
                 cpeQueryFilterParts.add("vendor != null");
             }
 
-            if (!LogicalValue.ANY.getAbbreviation().equals(cpeProduct)
-                    && !LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
+            if (!"*".equals(cpeProduct) && !"-".equals(cpeProduct)) {
                 // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
                 //   Can't currently do this as it would require an index on UPPER("PRODUCT"),
                 //   which we cannot add through JDO annotations.
                 cpeQueryFilterParts.add("(product == '*' || product == :product)");
                 queryParams.put("product", cpeProduct);
-            } else if (LogicalValue.NA.getAbbreviation().equals(cpeProduct)) {
+            } else if ("-".equals(cpeProduct)) {
                 cpeQueryFilterParts.add("(product == '*' || product == '-')");
             } else {
                 cpeQueryFilterParts.add("product != null");
@@ -383,65 +382,168 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     }
 
     /**
-     * Checks if the specified CWE id exists or not. If not, creates
-     * a new CWE with the specified ID and name. In both cases, the
-     * CWE will be returned.
-     * @param id the CWE ID
-     * @param name the name of the CWE
-     * @return a CWE object
+     * @since 4.12.0
      */
-    public Cwe createCweIfNotExist(int id, String name) {
-        Cwe cwe = getCweById(id);
-        if (cwe != null) {
-            return cwe;
-        }
-        cwe = new Cwe();
-        cwe.setCweId(id);
-        cwe.setName(name);
-        return persist(cwe);
-    }
+    public void synchronizeVulnerableSoftware(
+            final Vulnerability persistentVuln,
+            final List<VulnerableSoftware> vsList,
+            final Vulnerability.Source source) {
+        assertPersistent(persistentVuln, "vuln must be persistent");
+        assertNonPersistentAll(vsList, "vsList must not be persistent");
 
-    /**
-     * Returns a CWE by it's CWE-ID.
-     * @param cweId the CWE-ID
-     * @return a CWE object, or null if not found
-     */
-    public Cwe getCweById(int cweId) {
-        final Query<Cwe> query = pm.newQuery(Cwe.class, "cweId == :cweId");
-        query.setRange(0, 1);
-        return singleResult(query.execute(cweId));
-    }
+        runInTransaction(() -> {
+            // Get all VulnerableSoftware records that are currently associated with the vulnerability.
+            // Note: For SOME ODD REASON, duplicate (as in, same database ID and all) VulnerableSoftware
+            // records are returned, when operating on data that was originally created by the feed-based
+            // NistMirrorTask. We thus have to deduplicate here.
+            final List<VulnerableSoftware> vsOldList = persistentVuln.getVulnerableSoftware().stream().distinct().toList();
+            LOGGER.trace("%s: Existing VS: %d".formatted(persistentVuln.getVulnId(), vsOldList.size()));
 
-    /**
-     * Returns a complete list of all CWE's.
-     * @return a List of CWEs
-     */
-    public PaginatedResult getCwes() {
-        final Query<Cwe> query = pm.newQuery(Cwe.class);
-        if (orderBy == null) {
-            query.setOrdering("id asc");
-        }
-        if (filter != null) {
-            if (StringUtils.isNumber(filter)) {
-                query.setFilter("cweId == :cweId || name.matches(:filter)");
-                final String filterString = ".*" + filter.toLowerCase() + ".*";
-                return execute(query, Integer.valueOf(filter), filterString);
-            } else {
-                query.setFilter("name.toLowerCase().matches(:filter)");
-                final String filterString = ".*" + filter.toLowerCase() + ".*";
-                return execute(query, filterString);
+            // Get attributions for all existing VulnerableSoftware records.
+            final Map<Long, List<AffectedVersionAttribution>> attributionsByVsId =
+                    getAffectedVersionAttributions(persistentVuln, vsOldList).stream()
+                            .collect(groupingBy(attribution -> attribution.getVulnerableSoftware().getId()));
+            for (final VulnerableSoftware vsOld : vsOldList) {
+                vsOld.setAffectedVersionAttributions(attributionsByVsId.get(vsOld.getId()));
             }
-        }
-        return execute(query);
+
+            // Based on the lists of currently reported, and previously reported VulnerableSoftware records,
+            // divide the previously reported ones into lists of records to keep, and records to remove.
+            // Records to keep are removed from vsList. Remaining records in vsList thus are entirely new.
+            final var vsListToRemove = new ArrayList<VulnerableSoftware>();
+            final var vsListToKeep = new ArrayList<VulnerableSoftware>();
+
+            // Separately track existing VulnerableSoftware records that are reported by the source.
+            // Records in this list must be attributed to the source.
+            // Records in vsListToKeep that are NOT in this list could have been reported by other sources.
+            final var matchedOldVsList = new ArrayList<VulnerableSoftware>();
+
+            for (final VulnerableSoftware vsOld : vsOldList) {
+                if (vsList.removeIf(vsOld::equalsIgnoringDatastoreIdentity)) {
+                    vsListToKeep.add(vsOld);
+                    matchedOldVsList.add(vsOld);
+                } else {
+                    final List<AffectedVersionAttribution> attributions = vsOld.getAffectedVersionAttributions();
+                    if (attributions == null || attributions.isEmpty()) {
+                        // DT versions prior to 4.7.0 did not record attributions.
+                        // Drop the VulnerableSoftware for now. If it was previously
+                        // reported by another source, it will be recorded and attributed
+                        // whenever that source is mirrored again.
+                        vsListToRemove.add(vsOld);
+                        continue;
+                    }
+
+                    final boolean previouslyReportedBySource = attributions.stream()
+                            .anyMatch(attr -> attr.getSource() == source);
+                    final boolean previouslyReportedByOthers = !previouslyReportedBySource;
+
+                    if (previouslyReportedByOthers) {
+                        vsListToKeep.add(vsOld);
+                    } else {
+                        vsListToRemove.add(vsOld);
+                    }
+                }
+            }
+            LOGGER.trace("%s: vsListToKeep: %d".formatted(persistentVuln.getVulnId(), vsListToKeep.size()));
+            LOGGER.trace("%s: vsListToRemove: %d".formatted(persistentVuln.getVulnId(), vsListToRemove.size()));
+
+            // Remove attributions for VulnerableSoftware records that are no longer reported.
+            if (!vsListToRemove.isEmpty()) {
+                deleteAffectedVersionAttributions(persistentVuln, vsListToRemove, source);
+            }
+
+            final var attributionDate = new Date();
+
+            // For VulnerableSoftware records that existed before, update the lastSeen timestamp,
+            // or create an attribution if it doesn't exist already.
+            for (final VulnerableSoftware oldVs : vsListToKeep) {
+                boolean hasAttribution = false;
+                if (oldVs.getAffectedVersionAttributions() != null) {
+                    for (final AffectedVersionAttribution attribution : oldVs.getAffectedVersionAttributions()) {
+                        if (attribution.getSource() == source) {
+                            attribution.setLastSeen(attributionDate);
+                            hasAttribution = true;
+                            break;
+                        }
+                    }
+                }
+
+                // The record was previously reported by others, but now the source reports it, too.
+                // Ensure that an attribution is added accordingly.
+                if (matchedOldVsList.contains(oldVs) && !hasAttribution) {
+                    LOGGER.trace("%s: Adding attribution".formatted(persistentVuln.getVulnId()));
+                    final AffectedVersionAttribution attribution = createAttribution(
+                            persistentVuln, oldVs, attributionDate, source);
+                    persist(attribution);
+                }
+            }
+
+            // For VulnerableSoftware records that are newly reported for this vulnerability, check if any matching
+            // records exist in the database that are currently associated with other (or no) vulnerabilities.
+            for (final VulnerableSoftware vs : vsList) {
+                final VulnerableSoftware existingVs;
+                if (vs.getCpe23() != null) {
+                    existingVs = getVulnerableSoftwareByCpe23(
+                            vs.getCpe23(),
+                            vs.getVersionEndExcluding(),
+                            vs.getVersionEndIncluding(),
+                            vs.getVersionStartExcluding(),
+                            vs.getVersionStartIncluding());
+                } else if (vs.getPurl() != null) {
+                    existingVs = getVulnerableSoftwareByPurl(
+                            vs.getPurlType(),
+                            vs.getPurlNamespace(),
+                            vs.getPurlName(),
+                            vs.getVersion(),
+                            vs.getVersionEndExcluding(),
+                            vs.getVersionEndIncluding(),
+                            vs.getVersionStartExcluding(),
+                            vs.getVersionStartIncluding());
+                } else {
+                    throw new IllegalStateException("VulnerableSoftware must define a CPE or PURL, but %s has neither".formatted(vs));
+                }
+                if (existingVs != null) {
+                    final boolean hasAttribution = hasAffectedVersionAttribution(persistentVuln, existingVs, source);
+                    if (!hasAttribution) {
+                        LOGGER.trace("%s: Adding attribution".formatted(persistentVuln.getVulnId()));
+                        final AffectedVersionAttribution attribution = createAttribution(persistentVuln, existingVs, attributionDate, source);
+                        persist(attribution);
+                    } else {
+                        LOGGER.debug("%s: Encountered dangling attribution; Re-using by updating firstSeen and lastSeen timestamps".formatted(persistentVuln.getVulnId()));
+                        final AffectedVersionAttribution existingAttribution = getAffectedVersionAttribution(persistentVuln, existingVs, source);
+                        existingAttribution.setFirstSeen(attributionDate);
+                        existingAttribution.setLastSeen(attributionDate);
+                    }
+                    vsListToKeep.add(existingVs);
+                } else {
+                    LOGGER.trace("%s: Creating new VS".formatted(persistentVuln.getVulnId()));
+                    final VulnerableSoftware persistentVs = persist(vs);
+                    final AffectedVersionAttribution attribution = createAttribution(persistentVuln, persistentVs, attributionDate, source);
+                    persist(attribution);
+                    vsListToKeep.add(persistentVs);
+                }
+            }
+
+            LOGGER.trace("%s: Final vsList: %d".formatted(persistentVuln.getVulnId(), vsListToKeep.size()));
+            if (!Objects.equals(persistentVuln.getVulnerableSoftware(), vsListToKeep)) {
+                LOGGER.trace("%s: vsList has changed: %s".formatted(persistentVuln.getVulnId(), new PersistenceUtil.Diff(persistentVuln.getVulnerableSoftware(), vsListToKeep)));
+                persistentVuln.setVulnerableSoftware(vsListToKeep);
+            }
+        });
     }
 
-    /**
-     * Returns a complete list of all CWE's.
-     * @return a List of CWEs
-     */
-    public List<Cwe> getAllCwes() {
-        final Query<Cwe> query = pm.newQuery(Cwe.class);
-        query.setOrdering("id asc");
-        return query.executeList();
+    private static AffectedVersionAttribution createAttribution(
+            final Vulnerability vuln,
+            final VulnerableSoftware vs,
+            final Date attributionDate,
+            final Vulnerability.Source source) {
+        final var attribution = new AffectedVersionAttribution();
+        attribution.setSource(source);
+        attribution.setVulnerability(vuln);
+        attribution.setVulnerableSoftware(vs);
+        attribution.setFirstSeen(attributionDate);
+        attribution.setLastSeen(attributionDate);
+        return attribution;
     }
+
 }

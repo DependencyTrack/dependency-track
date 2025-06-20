@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.metrics;
 
@@ -34,9 +34,9 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.CallbackTask;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 import java.util.List;
@@ -44,22 +44,22 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @NotThreadSafe
-public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
+class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
         EventService.getInstance().subscribe(ProjectMetricsUpdateEvent.class, ProjectMetricsUpdateTask.class);
         EventService.getInstance().subscribe(CallbackEvent.class, CallbackTask.class);
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownClass() {
         EventService.getInstance().unsubscribe(ProjectMetricsUpdateTask.class);
         EventService.getInstance().unsubscribe(CallbackTask.class);
     }
 
     @Test
-    public void testUpdateMetricsEmpty() {
+    void testUpdateMetricsEmpty() {
         new PortfolioMetricsUpdateTask().inform(new PortfolioMetricsUpdateEvent());
 
         final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
@@ -96,7 +96,7 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdateMetricsUnchanged() {
+    void testUpdateMetricsUnchanged() {
         // Record initial portfolio metrics
         new PortfolioMetricsUpdateTask().inform(new PortfolioMetricsUpdateEvent());
         final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
@@ -113,7 +113,7 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdateMetricsVulnerabilities() {
+    void testUpdateMetricsVulnerabilities() {
         var vuln = new Vulnerability();
         vuln.setVulnId("INTERNAL-001");
         vuln.setSource(Vulnerability.Source.INTERNAL);
@@ -197,7 +197,7 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdateMetricsPolicyViolations() {
+    void testUpdateMetricsPolicyViolations() {
         // Create a project with an unaudited violation.
         var projectUnaudited = new Project();
         projectUnaudited.setName("acme-app-a");

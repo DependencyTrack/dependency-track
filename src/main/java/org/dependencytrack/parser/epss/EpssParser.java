@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.epss;
 
@@ -56,7 +56,7 @@ public final class EpssParser {
                     final String cveId = values.get(0);
                     final BigDecimal epssScore = new BigDecimal(values.get(1));
                     final BigDecimal percentile = new BigDecimal(values.get(2));
-                    try (final QueryManager qm = new QueryManager().withL2CacheDisabled()) {
+                    try (final QueryManager qm = new QueryManager()) {
                         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, cveId);
                         if (vuln != null) {
                             vuln.setEpssScore(epssScore);

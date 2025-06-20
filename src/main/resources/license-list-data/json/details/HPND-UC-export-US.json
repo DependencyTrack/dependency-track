@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1985, 1990 Regents of the University of California.\n\nPermission to use, copy, modify, and distribute this\nsoftware and its documentation for any purpose and without\nfee is hereby granted, provided that the above copyright\nnotice appear in all copies.  The University of California\nmakes no representations about the suitability of this\nsoftware for any purpose.  It is provided \"as is\" without\nexpress or implied warranty.  Export of this software outside\nof the United States of America may require an export license.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1985, 1990 Regents of the University of California.\";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose and without fee is hereby granted, provided that the above copyright notice appear in all copies. The University of California makes no representations about the suitability of this software for any purpose. It is provided \"as is\" without express or implied warranty. Export of this software outside of the United States of America may require an export license.\n\n",
+  "name": "Historical Permission Notice and Disclaimer - University of California, US export warning",
+  "licenseComments": "This license is similar to HPND-UC, but adds the sentence related to export law at the end.",
+  "comment": "This license is similar to HPND-UC, but adds the sentence related to export law at the end.",
+  "licenseId": "HPND-UC-export-US",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/RTimothyEdwards/magic/blob/master/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:55:11Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/RTimothyEdwards/magic/blob/master/LICENSE"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (C) 1985, 1990 Regents of the University of California.\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            Permission to use, copy, modify, and distribute this software and\n            its documentation for any purpose and without fee is hereby granted,\n            provided that the above copyright notice appear in all copies.\n            The University of California makes no representations about the\n            suitability of this software for any purpose. It is provided \u0026quot;as is\u0026quot;\n            without express or implied warranty. Export of this software outside\n            of the United States of America may require an export license.\n         \u003c/p\u003e\n\n      "
+}

@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "(c) Copyright 1998-2007 by Mark Mielke\n\nFreedom to use these sources for whatever you want, as long as credit\nis given where credit is due, is hereby granted. You may make modifications\nwhere you see fit but leave this copyright somewhere visible. As well, try\nto initial any changes you make so that if I like the changes I can\nincorporate them into later versions.\n\n     - Mark Mielke \u003cmark@mielke.cc\u003e\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"(c) Copyright 1998-2007 by Mark Mielke  \";match\u003d\".{0,5000}\"\u003e\u003e\nFreedom to use these sources for whatever you want, as long as credit is given where credit is due, is hereby granted. You may make modifications where you see fit but leave this copyright somewhere visible. As well, try to initial any changes you make so that if I like the changes I can incorporate them into later versions.\n\n- Mark Mielke \u003cmark@mielke.cc\u003e\n\n",
+  "name": "Soundex License",
+  "licenseId": "Soundex",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://metacpan.org/release/RJBS/Text-Soundex-3.05/source/Soundex.pm#L3-11",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:55:03Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://metacpan.org/release/RJBS/Text-Soundex-3.05/source/Soundex.pm#L3-11"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            \u003cp\u003e(c) Copyright 1998-2007 by Mark Mielke\u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            Freedom to use\n            these sources for whatever you want, as long as credit is\n            given where credit is due, is hereby granted. You may make\n            modifications where you see fit but leave this copyright\n            somewhere visible. As well, try to initial any changes you\n            make so that if I like the changes I can incorporate them\n            into later versions.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            - Mark Mielke \u0026lt;mark@mielke.cc\u0026gt;\n         \u003c/p\u003e\n\n      "
+}

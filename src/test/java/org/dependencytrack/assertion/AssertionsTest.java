@@ -1,6 +1,6 @@
 package org.dependencytrack.assertion;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.function.Supplier;
@@ -9,10 +9,10 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
-public class AssertionsTest {
+class AssertionsTest {
 
     @Test
-    public void testAssertConditionWithTimeout() {
+    void testAssertConditionWithTimeout() {
         assertThatNoException()
                 .isThrownBy(() -> assertConditionWithTimeout(new TestSupplier(), Duration.ofMillis(500)));
 

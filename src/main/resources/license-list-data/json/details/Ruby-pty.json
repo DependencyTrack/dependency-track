@@ -1,0 +1,45 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "(c) Copyright 1998 by Akinori Ito.\n\nThis software may be redistributed freely for this purpose, in full\nor in part, provided that this entire copyright notice is included\non any copies of this software and applications and derivations thereof.\n\nThis software is provided on an \"as is\" basis, without warranty of any\nkind, either expressed or implied, as to any matter including, but not\nlimited to warranty of fitness of purpose, or merchantability, or\nresults obtained from use of this software.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"(c) Copyright 1998 by Akinori Ito.  \";match\u003d\".{0,5000}\"\u003e\u003e\nThis software may be redistributed freely for this purpose, in full or in part, provided that this entire copyright notice is included on any copies of this software and applications and derivations thereof.\n\nThis software is provided on an \"as is\" basis, without warranty of any kind, either expressed or implied, as to any matter including, but not limited to warranty of fitness of purpose, or merchantability, or results obtained from use of this software.\n\n",
+  "name": "Ruby pty extension license",
+  "licenseComments": "There is a Japanese translation of this license included with some instances of use.",
+  "comment": "There is a Japanese translation of this license included with some instances of use.",
+  "licenseId": "Ruby-pty",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/ruby/ruby/commit/0a64817fb80016030c03518fb9459f63c11605ea#diff-fedf217c1ce44bda01f0a678d3ff8b198bed478754d699c527a698ad933979a0",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:03:13Z",
+      "isWayBackLink": false,
+      "order": 2
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/ruby/ruby/commit/0a64817fb80016030c03518fb9459f63c11605ea#diff-ef5fa30838d6d0cecad9e675cc50b24628cfe2cb277c346053fafcc36c91c204",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:03:13Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/ruby/ruby/blob/9f6deaa6888a423720b4b127b5314f0ad26cc2e6/ext/pty/pty.c#L775-L786",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:03:14Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/ruby/ruby/blob/9f6deaa6888a423720b4b127b5314f0ad26cc2e6/ext/pty/pty.c#L775-L786",
+    "https://github.com/ruby/ruby/commit/0a64817fb80016030c03518fb9459f63c11605ea#diff-ef5fa30838d6d0cecad9e675cc50b24628cfe2cb277c346053fafcc36c91c204",
+    "https://github.com/ruby/ruby/commit/0a64817fb80016030c03518fb9459f63c11605ea#diff-fedf217c1ce44bda01f0a678d3ff8b198bed478754d699c527a698ad933979a0"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n        \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n                \u003cp\u003e\n                        (c) Copyright 1998 by Akinori Ito.\n                \u003c/p\u003e\n\n        \u003c/span\u003e\u003c/div\u003e\n        \u003cp\u003e\n                This software may be redistributed freely for this\n                purpose, in full or in part, provided that this entire\n                copyright notice is included on any copies of this\n                software and applications and derivations thereof.\n        \u003c/p\u003e\n\n        \u003cp\u003e\n                This software is provided on an \u0026quot;as is\u0026quot; basis, without warranty\n                of any kind, either expressed or implied, as to any matter\n                including, but not limited to warranty of fitness of purpose, or\n                merchantability, or results obtained from use of this software.\n        \u003c/p\u003e\n\n      "
+}

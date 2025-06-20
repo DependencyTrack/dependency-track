@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Permission to use, reproduce, display and distribute the listed typefaces\nis hereby granted, provided that the Adobe Copyright notice appears in all\nwhole and partial copies of the software and that the following trademark\nsymbol and attribution appear in all unmodified copies of the software:\n\nThe Adobe typefaces (Type 1 font program, bitmaps and Adobe Font Metric\nfiles) donated are:\n\n        Utopia Regular\n        Utopia Italic\n        Utopia Bold\n        Utopia Bold Italic\n",
+  "standardLicenseTemplate": "Permission to use, reproduce, display and distribute the listed typefaces is hereby granted, provided that the Adobe Copyright notice appears in all whole and partial copies of the software and that the following trademark symbol and attribution appear in all unmodified copies of the software:\n\nThe Adobe typefaces (Type 1 font program, bitmaps and Adobe Font Metric files) donated are:\n\nUtopia Regular\nUtopia Italic\nUtopia Bold\nUtopia Bold Italic\n\n",
+  "name": "Adobe Utopia Font License",
+  "licenseId": "Adobe-Utopia",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/font/adobe-utopia-100dpi/-/blob/master/COPYING?ref_type\u003dheads",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:04:08Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://gitlab.freedesktop.org/xorg/font/adobe-utopia-100dpi/-/blob/master/COPYING?ref_type\u003dheads"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            Permission to use, reproduce, display and distribute the\n            listed typefaces is hereby granted, provided that the Adobe\n            Copyright notice appears in all whole and partial copies\n            of the software and that the following trademark symbol and\n            attribution appear in all unmodified copies of the software:\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            The Adobe typefaces (Type 1 font program, bitmaps and Adobe Font Metric\n            files) donated are:\u003cbr /\u003e\n\n            \u003cbr /\u003e\n\n            Utopia Regular\u003cbr /\u003e\n\n            Utopia Italic\u003cbr /\u003e\n\n            Utopia Bold\u003cbr /\u003e\n\n            Utopia Bold Italic\u003cbr /\u003e\n\n         \u003c/p\u003e\n\n      "
+}

@@ -14,42 +14,45 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
-import alpine.model.ApiKey;
-import alpine.model.Team;
-import alpine.model.UserPrincipal;
+import alpine.model.IConfigProperty;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonValue;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonValue;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static org.dependencytrack.util.PersistenceUtil.assertNonPersistent;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
 
@@ -153,7 +156,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         final PaginatedResult result;
         String querySring ="SELECT FROM org.dependencytrack.model.Component WHERE project == :project ";
         if (filter != null) {
-            querySring += " && (project == :project) && name.toLowerCase().matches(:name)";
+            querySring += " && (project == :project) && (name.toLowerCase().matches(:filter) || group.toLowerCase().matches(:filter))";
         }
         if (onlyOutdated) {
             // Components are considered outdated when metadata does exists, but the version is different than latestVersion
@@ -163,7 +166,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 " && !("+
                 " SELECT FROM org.dependencytrack.model.RepositoryMetaComponent m " +
                 " WHERE m.name == this.name " +
-                " && m.namespace == this.group " +
+                " && (m.namespace == this.group || (m.namespace == null && this.group == null)) " +
                 " && m.latestVersion != this.version " +
                 " && this.purl.matches('pkg:' + m.repositoryType.toString().toLowerCase() + '/%') " +
                 " ).isEmpty()";
@@ -172,7 +175,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             querySring +=
                 " && this.project.directDependencies.matches('%\"uuid\":\"'+this.uuid+'\"%') "; // only direct dependencies
         }
-        final Query<Component> query = pm.newQuery(querySring);
+        final Query<?> query = pm.newQuery(Query.JDOQL, querySring);
         query.getFetchPlan().setMaxFetchDepth(2);
         if (orderBy == null) {
             query.setOrdering("name asc, version desc");
@@ -339,7 +342,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      */
     public Component createComponent(Component component, boolean commitIndex) {
         final Component result = persist(component);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, Component.class);
         return result;
     }
@@ -367,6 +370,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setCpe(sourceComponent.getCpe());
         component.setPurl(sourceComponent.getPurl());
         component.setPurlCoordinates(sourceComponent.getPurlCoordinates());
+        component.setSwidTagId(sourceComponent.getSwidTagId());
         component.setInternal(sourceComponent.isInternal());
         component.setDescription(sourceComponent.getDescription());
         component.setCopyright(sourceComponent.getCopyright());
@@ -374,7 +378,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setLicenseExpression(sourceComponent.getLicenseExpression());
         component.setLicenseUrl(sourceComponent.getLicenseUrl());
         component.setResolvedLicense(sourceComponent.getResolvedLicense());
-        component.setAuthor(sourceComponent.getAuthor());
+        component.setAuthors(sourceComponent.getAuthors());
+        component.setSupplier(sourceComponent.getSupplier());
+        component.setDirectDependencies(sourceComponent.getDirectDependencies());
         // TODO Add support for parent component and children components
         component.setProject(destinationProject);
         return createComponent(component, commitIndex);
@@ -408,9 +414,11 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setCpe(transientComponent.getCpe());
         component.setPurl(transientComponent.getPurl());
         component.setInternal(transientComponent.isInternal());
-        component.setAuthor(transientComponent.getAuthor());
+        component.setAuthors(transientComponent.getAuthors());
+        component.setSupplier(transientComponent.getSupplier());
+        component.setExternalReferences(transientComponent.getExternalReferences());
         final Component result = persist(component);
-        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, Component.class);
         return result;
     }
@@ -438,7 +446,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         try {
             final Component result = pm.getObjectById(Component.class, component.getId());
-            Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+            Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, result));
             deleteAnalysisTrail(component);
             deleteViolationAnalysisTrail(component);
             deleteMetrics(component);
@@ -453,28 +461,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
-     * Returns a component by matching its identity information.
-     * @param project the Project the component is a dependency of
-     * @param cid the identity values of the component
-     * @return a Component object, or null if not found
-     */
-    public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
-        String purlString = null;
-        String purlCoordinates = null;
-        if (cid.getPurl() != null) {
-            try {
-                final PackageURL purl = cid.getPurl();
-                purlString = cid.getPurl().canonicalize();
-                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
-            } catch (MalformedPackageURLException e) { // throw it away
-            }
-        }
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version))");
-        query.setRange(0, 1);
-        return singleResult(query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()));
-    }
-
-    /**
      * Returns a list of components by matching its identity information.
      * @param project the Project the component is a dependency of
      * @param cid the identity values of the component
@@ -482,18 +468,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      */
     @SuppressWarnings("unchecked")
     public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {
-        String purlString = null;
-        String purlCoordinates = null;
-        if (cid.getPurl() != null) {
-            try {
-                final PackageURL purl = cid.getPurl();
-                purlString = cid.getPurl().canonicalize();
-                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
-            } catch (MalformedPackageURLException e) { // throw it away
-            }
-        }
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version))");
-        return (List<Component>) query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion());
+        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(project, cid);
+        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getLeft());
+        return (List<Component>) query.executeWithMap(queryFilterParamsPair.getRight());
     }
 
     /**
@@ -503,116 +480,85 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      */
     @SuppressWarnings("unchecked")
     public List<Component> matchIdentity(final ComponentIdentity cid) {
+        final Pair<String, Map<String, Object>> queryFilterParamsPair = buildComponentIdentityQuery(null, cid);
+        final Query<Component> query = pm.newQuery(Component.class, queryFilterParamsPair.getLeft());
+        return (List<Component>) query.executeWithMap(queryFilterParamsPair.getRight());
+    }
+
+    private static Pair<String, Map<String, Object>> buildComponentIdentityQuery(final Project project, final ComponentIdentity cid) {
         String purlString = null;
         String purlCoordinates = null;
         if (cid.getPurl() != null) {
-            purlString = cid.getPurl().canonicalize();
             try {
                 final PackageURL purl = cid.getPurl();
+                purlString = cid.getPurl().canonicalize();
                 purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
             } catch (MalformedPackageURLException e) { // throw it away
             }
         }
-        final Query<Component> query = pm.newQuery(Component.class, "(purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version)");
-        return (List<Component>) query.executeWithArray(purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion());
-    }
 
-    /**
-     * Intelligently adds dependencies for components that are not already a dependency
-     * of the specified project and removes the dependency relationship for components
-     * that are not in the list of specified components.
-     * @param project the project to bind components to
-     * @param existingProjectComponents the complete list of existing dependent components
-     * @param components the complete list of components that should be dependencies of the project
-     */
-    public void reconcileComponents(Project project, List<Component> existingProjectComponents, List<Component> components) {
-        // Removes components as dependencies to the project for all
-        // components not included in the list provided
-        List<Component> markedForDeletion = new ArrayList<>();
-        for (final Component existingComponent: existingProjectComponents) {
-            boolean keep = false;
-            for (final Component component: components) {
-                if (component.getId() == existingComponent.getId()) {
-                    keep = true;
-                    break;
-                }
-            }
-            if (!keep) {
-                markedForDeletion.add(existingComponent);
-            }
-        }
-        if (!markedForDeletion.isEmpty()) {
-            for (Component c: markedForDeletion) {
-                this.recursivelyDelete(c, false);
-            }
-            //this.delete(markedForDeletion);
-        }
-    }
+        final var filterParts = new ArrayList<String>();
+        final var params = new HashMap<String, Object>();
 
-    /**
-     * A similar method exists in ProjectQueryManager
-     */
-    private void preprocessACLs(final Query<Component> query, final String inputFilter, final Map<String, Object> params, final boolean bypass) {
-        if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
-            final List<Team> teams;
-            if (super.principal instanceof UserPrincipal) {
-                final UserPrincipal userPrincipal = ((UserPrincipal) super.principal);
-                teams = userPrincipal.getTeams();
-                if (super.hasAccessManagementPermission(userPrincipal)) {
-                    query.setFilter(inputFilter);
-                    return;
-                }
-            } else {
-                final ApiKey apiKey = ((ApiKey) super.principal);
-                teams = apiKey.getTeams();
-                if (super.hasAccessManagementPermission(apiKey)) {
-                    query.setFilter(inputFilter);
-                    return;
-                }
-            }
-            if (teams != null && teams.size() > 0) {
-                final StringBuilder sb = new StringBuilder();
-                for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
-                    final Team team = super.getObjectById(Team.class, teams.get(i).getId());
-                    sb.append(" project.accessTeams.contains(:team").append(i).append(") ");
-                    params.put("team" + i, team);
-                    if (i < teamsSize-1) {
-                        sb.append(" || ");
-                    }
-                }
-                if (inputFilter != null) {
-                    query.setFilter(inputFilter + " && (" + sb.toString() + ")");
-                } else {
-                    query.setFilter(sb.toString());
-                }
-            }
+        if (purlString != null) {
+            filterParts.add("purl == :purl");
+            params.put("purl", purlString);
+        }
+        if (purlCoordinates != null) {
+            filterParts.add("purlCoordinates == :purlCoordinates");
+            params.put("purlCoordinates", purlCoordinates);
+        }
+        if (cid.getCpe() != null) {
+            filterParts.add("cpe == :cpe");
+            params.put("cpe", cid.getCpe());
+        }
+        if (cid.getSwidTagId() != null) {
+            filterParts.add("swidTagId == :swidTagId");
+            params.put("swidTagId", cid.getSwidTagId());
+        }
+
+        final var coordinatesFilterParts = new ArrayList<String>();
+        if (cid.getGroup() != null) {
+            coordinatesFilterParts.add("group == :group");
+            params.put("group", cid.getGroup());
         } else {
-            query.setFilter(inputFilter);
+            coordinatesFilterParts.add("group == null");
         }
+        if (cid.getName() != null) {
+            coordinatesFilterParts.add("name == :name");
+            params.put("name", cid.getName());
+        } else {
+            coordinatesFilterParts.add("name == null");
+        }
+        if (cid.getVersion() != null) {
+            coordinatesFilterParts.add("version == :version");
+            params.put("version", cid.getVersion());
+        } else {
+            coordinatesFilterParts.add("version == null");
+        }
+        filterParts.add("(%s)".formatted(String.join(" && ", coordinatesFilterParts)));
+
+        if (project == null) {
+            final String filter = String.join(" || ", filterParts);
+            return Pair.of(filter, params);
+        }
+
+        final String filter = "project == :project && (%s)".formatted(String.join(" || ", filterParts));
+        params.put("project", project);
+        return Pair.of(filter, params);
     }
 
-    public Map<String, Component> getDependencyGraphForComponent(Project project, Component component) {
+    public Map<String, Component> getDependencyGraphForComponents(Project project, List<Component> components) {
         Map<String, Component> dependencyGraph = new HashMap<>();
         if (project.getDirectDependencies() == null || project.getDirectDependencies().isBlank()) {
             return dependencyGraph;
         }
-        String queryUuid = ".*" + component.getUuid().toString() + ".*";
-        final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
-        List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
-        for (Component parentNodeComponent : components) {
-            parentNodeComponent.setExpandDependencyGraph(true);
-            if (dependencyGraph.containsKey(parentNodeComponent.getUuid().toString())) {
-                parentNodeComponent.getDependencyGraph().add(component.getUuid().toString());
-            } else {
-                dependencyGraph.put(parentNodeComponent.getUuid().toString(), parentNodeComponent);
-                Set<String> set = new HashSet<>();
-                set.add(component.getUuid().toString());
-                parentNodeComponent.setDependencyGraph(set);
-            }
-            getParentDependenciesOfComponent(project, parentNodeComponent, dependencyGraph, component);
-        }
-        if (!dependencyGraph.isEmpty() || project.getDirectDependencies().contains(component.getUuid().toString())){
+
+        for(Component component : components) {
             dependencyGraph.put(component.getUuid().toString(), component);
+            getParentDependenciesOfComponent(project, component, dependencyGraph);
+        }
+        if (!dependencyGraph.isEmpty()){
             getRootDependencies(dependencyGraph, project);
             getDirectDependenciesForPathDependencies(dependencyGraph);
         }
@@ -654,24 +600,20 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         return List.copyOf(query.executeResultList(DependencyGraphResponse.class));
     }
 
-    private void getParentDependenciesOfComponent(Project project, Component parentNode, Map<String, Component> dependencyGraph, Component searchedComponent) {
-        String queryUuid = ".*" + parentNode.getUuid().toString() + ".*";
+    private void getParentDependenciesOfComponent(Project project, Component childComponent, Map<String, Component> dependencyGraph) {
+        String queryUuid = ".*" + childComponent.getUuid().toString() + ".*";
         final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
-        List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
-        for (Component component : components) {
-            if (component.getUuid() != searchedComponent.getUuid()) {
-                component.setExpandDependencyGraph(true);
-                if (dependencyGraph.containsKey(component.getUuid().toString())) {
-                    if (component.getDependencyGraph().add(component.getUuid().toString())) {
-                        getParentDependenciesOfComponent(project, component, dependencyGraph, searchedComponent);
-                    }
-                } else {
-                    dependencyGraph.put(component.getUuid().toString(), component);
-                    Set<String> set = new HashSet<>();
-                    set.add(component.getUuid().toString());
-                    component.setDependencyGraph(set);
-                    getParentDependenciesOfComponent(project, component, dependencyGraph, searchedComponent);
-                }
+        query.setParameters(queryUuid, project);
+        List<Component> parentComponents = executeAndCloseList(query);
+        for (Component parentComponent : parentComponents) {
+            parentComponent.setExpandDependencyGraph(true);
+            if(parentComponent.getDependencyGraph() == null) {
+                parentComponent.setDependencyGraph(new HashSet<>());
+            }
+            parentComponent.getDependencyGraph().add(childComponent.getUuid().toString());
+            if (!dependencyGraph.containsKey(parentComponent.getUuid().toString())) {
+                dependencyGraph.put(parentComponent.getUuid().toString(), parentComponent);
+                getParentDependenciesOfComponent(project, parentComponent, dependencyGraph);
             }
         }
     }
@@ -679,9 +621,10 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     private void getRootDependencies(Map<String, Component> dependencyGraph, Project project) {
         JsonArray directDependencies = Json.createReader(new StringReader(project.getDirectDependencies())).readArray();
         for (JsonValue directDependency : directDependencies) {
-            if (!dependencyGraph.containsKey(directDependency.asJsonObject().getString("uuid"))) {
-                Component component = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
-                dependencyGraph.put(component.getUuid().toString(), component);
+            String uuid = directDependency.asJsonObject().getString("uuid");
+            if (!dependencyGraph.containsKey(uuid)) {
+                Component component = this.getObjectByUuid(Component.class, uuid);
+                dependencyGraph.put(uuid, component);
             }
         }
         getDirectDependenciesForPathDependencies(dependencyGraph);
@@ -696,16 +639,155 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                     if (component.getDependencyGraph() == null) {
                         component.setDependencyGraph(new HashSet<>());
                     }
-                    if (!dependencyGraph.containsKey(directDependency.asJsonObject().getString("uuid")) && !addToDependencyGraph.containsKey(directDependency.asJsonObject().getString("uuid"))) {
-                        Component childNode = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
+                    String uuid = directDependency.asJsonObject().getString("uuid");
+                    if (!dependencyGraph.containsKey(uuid) && !addToDependencyGraph.containsKey(uuid)) {
+                        Component childNode = this.getObjectByUuid(Component.class, uuid);
                         addToDependencyGraph.put(childNode.getUuid().toString(), childNode);
                         component.getDependencyGraph().add(childNode.getUuid().toString());
                     } else {
-                        component.getDependencyGraph().add(directDependency.asJsonObject().getString("uuid"));
+                        component.getDependencyGraph().add(uuid);
                     }
                 }
             }
         }
         dependencyGraph.putAll(addToDependencyGraph);
     }
+
+    @Override
+    public List<ComponentProperty> getComponentProperties(final Component component, final String groupName, final String propertyName) {
+        final Query<ComponentProperty> query = pm.newQuery(ComponentProperty.class);
+        query.setFilter("component == :component && groupName == :groupName && propertyName == :propertyName");
+        query.setParameters(component, groupName, propertyName);
+        try {
+            return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
+        }
+    }
+
+    @Override
+    public List<ComponentProperty> getComponentProperties(final Component component) {
+        final Query<ComponentProperty> query = pm.newQuery(ComponentProperty.class);
+        query.setFilter("component == :component");
+        query.setParameters(component);
+        query.setOrdering("groupName ASC, propertyName ASC, id ASC");
+        try {
+            return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
+        }
+    }
+
+    @Override
+    public ComponentProperty createComponentProperty(final Component component,
+                                                     final String groupName,
+                                                     final String propertyName,
+                                                     final String propertyValue,
+                                                     final IConfigProperty.PropertyType propertyType,
+                                                     final String description) {
+        final ComponentProperty property = new ComponentProperty();
+        property.setComponent(component);
+        property.setGroupName(groupName);
+        property.setPropertyName(propertyName);
+        property.setPropertyValue(propertyValue);
+        property.setPropertyType(propertyType);
+        property.setDescription(description);
+        return persist(property);
+    }
+
+    @Override
+    public long deleteComponentPropertyByUuid(final Component component, final UUID uuid) {
+        final Query<ComponentProperty> query = pm.newQuery(ComponentProperty.class);
+        query.setFilter("component == :component && uuid == :uuid");
+        try {
+            return query.deletePersistentAll(component, uuid);
+        } finally {
+            query.closeAll();
+        }
+    }
+
+    @Override
+    public boolean hasComponents(final Project project) {
+        final Query<Component> query = pm.newQuery(Component.class, "project == :project");
+        query.setParameters(project);
+        query.setResult("count(this)");
+        try {
+            return query.executeResultUnique(Long.class) > 0;
+        } finally {
+            query.closeAll();
+        }
+    }
+
+    public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {
+        assertPersistent(component, "component must be persistent");
+
+        if (properties == null || properties.isEmpty()) {
+            // TODO: We currently remove all existing properties that are no longer included in the BOM.
+            //   This is to stay consistent with the BOM being the source of truth. However, this may feel
+            //   counter-intuitive to some users, who might expect their manual changes to persist.
+            //   If we want to support that, we need a way to track which properties were added and / or
+            //   modified manually.
+            if (component.getProperties() != null && !component.getProperties().isEmpty()) {
+                pm.deletePersistentAll(component.getProperties());
+            }
+
+            return;
+        }
+
+        properties.forEach(property -> assertNonPersistent(property, "property must not be persistent"));
+
+        if (component.getProperties() == null || component.getProperties().isEmpty()) {
+            for (final ComponentProperty property : properties) {
+                property.setComponent(component);
+                pm.makePersistent(property);
+            }
+
+            return;
+        }
+
+        // Group properties by group, name, and value. Because CycloneDX supports duplicate
+        // property names, uniqueness can only be determined by also considering the value.
+        final var existingPropertyIdentitiesSeen = new HashSet<ComponentProperty.Identity>();
+        final var existingDuplicateProperties = new HashSet<ComponentProperty>();
+        final var existingPropertiesByIdentity = component.getProperties().stream()
+                // The legacy BOM processing in <= 4.11.x allowed duplicates to be persisted.
+                // Collectors#toMap fails upon encounter of duplicate keys.
+                // Prevent existing duplicates from breaking this.
+                // https://github.com/DependencyTrack/dependency-track/issues/4027
+                .filter(property -> {
+                    final var identity = new ComponentProperty.Identity(property);
+                    final boolean isUnique = existingPropertyIdentitiesSeen.add(identity);
+                    if (!isUnique) {
+                        existingDuplicateProperties.add(property);
+                    }
+
+                    return isUnique;
+                })
+                .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
+        final var incomingPropertyIdentitiesSeen = new HashSet<ComponentProperty.Identity>();
+        final var incomingPropertiesByIdentity = properties.stream()
+                .filter(property -> incomingPropertyIdentitiesSeen.add(new ComponentProperty.Identity(property)))
+                .collect(Collectors.toMap(ComponentProperty.Identity::new, Function.identity()));
+
+        if (!existingDuplicateProperties.isEmpty()) {
+            pm.deletePersistentAll(existingDuplicateProperties);
+        }
+
+        final var propertyIdentities = new HashSet<ComponentProperty.Identity>();
+        propertyIdentities.addAll(existingPropertiesByIdentity.keySet());
+        propertyIdentities.addAll(incomingPropertiesByIdentity.keySet());
+
+        for (final ComponentProperty.Identity identity : propertyIdentities) {
+            final ComponentProperty existingProperty = existingPropertiesByIdentity.get(identity);
+            final ComponentProperty incomingProperty = incomingPropertiesByIdentity.get(identity);
+
+            if (existingProperty == null) {
+                incomingProperty.setComponent(component);
+                pm.makePersistent(incomingProperty);
+            } else if (incomingProperty == null) {
+                pm.deletePersistent(existingProperty);
+            }
+        }
+    }
+
 }

@@ -14,21 +14,21 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.metrics;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class MetricsTest {
+class MetricsTest {
 
     @Test
-    public void testMetricCalculations() {
+    void testMetricCalculations() {
         double chml = Metrics.inheritedRiskScore(20, 10, 5, 1, 3);
-        Assert.assertEquals(281, chml, 0);
+        Assertions.assertEquals(281, chml, 0);
 
         double ratio = Metrics.vulnerableComponentRatio(5, 100);
-        Assert.assertEquals(0.05, ratio, 0);
+        Assertions.assertEquals(0.05, ratio, 0);
     }
 }

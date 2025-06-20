@@ -6,6 +6,6 @@
     "timestamp": "{{ notification.timestamp }}",
     "title": "{{ notification.title | escape(strategy="json") }}",
     "content": "{{ notification.content | escape(strategy="json") }}",
-    "subject": {{ subjectJson | raw }}
+    "subject": {% if subjectJson != null %}{{ subjectJson | raw }}{% else %}null{% endif %}
   }
 }

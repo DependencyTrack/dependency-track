@@ -1,0 +1,35 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1995,1996,1997,1998 Lars Fenneberg \u003clf@elemental.net\u003e\n\nPermission to use, copy, modify, and distribute this software for any\npurpose and without fee is hereby granted, provided that this copyright and\npermission notice appear on all copies and supporting documentation, the\nname of Lars Fenneberg not be used in advertising or publicity pertaining to\ndistribution of the program without specific prior permission, and notice be\ngiven in supporting documentation that copying and distribution is by\npermission of Lars Fenneberg.\n\nLars Fenneberg makes no representations about the suitability of this\nsoftware for any purpose.  It is provided \"as is\" without express or implied\nwarranty.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright \u003cyear\u003e \u003ccopyright holder\u003e  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this software for any purpose and without fee is hereby granted, provided that this copyright and permission notice appear on all copies and supporting documentation, the name of \u003c\u003cvar;name\u003d\"copyrightHolder0\";original\u003d\"\u003ccopyright holder\u003e\";match\u003d\".*\"\u003e\u003e not be used in advertising or publicity pertaining to distribution of the program without specific prior permission, and notice be given in supporting documentation that copying and distribution is by permission of \u003c\u003cvar;name\u003d\"copyrightHolder1\";original\u003d\"\u003ccopyright holder\u003e\";match\u003d\".*\"\u003e\u003e . \u003c\u003cvar;name\u003d\"copyrightHolder2\";original\u003d\"\u003ccopyright holder\u003e\";match\u003d\".*\"\u003e\u003e makes no representations about the suitability of this software for any purpose. It is provided \"as is\" without express or implied warranty.\n\n",
+  "name": "Historical Permission Notice and Disclaimer - Fenneberg-Livingston variant",
+  "licenseComments": "This is similar to HPND but adds an obligation relating notice in supporting documentation.",
+  "comment": "This is similar to HPND but adds an obligation relating notice in supporting documentation.",
+  "licenseId": "HPND-Fenneberg-Livingston",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/FreeRADIUS/freeradius-client/blob/master/COPYRIGHT#L32",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:59:39Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/radcli/radcli/blob/master/COPYRIGHT#L34",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:59:40Z",
+      "isWayBackLink": false,
+      "order": 1
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/FreeRADIUS/freeradius-client/blob/master/COPYRIGHT#L32",
+    "https://github.com/radcli/radcli/blob/master/COPYRIGHT#L34"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright \u0026lt;year\u0026gt; \u0026lt;copyright holder\u0026gt;\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003e\n        Permission to use, copy, modify, and distribute this software for any\n        purpose and without fee is hereby granted, provided that this copyright\n        and permission notice appear on all copies and supporting documentation,\n        the name of \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .*\"\u003e \u0026lt;copyright holder\u0026gt;\u003c/span\u003e\u003c/var\u003e not be used in advertising or\n        publicity pertaining to distribution of the program without specific\n        prior permission, and notice be given in supporting documentation that\n        copying and distribution is by permission of \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .*\"\u003e \u0026lt;copyright holder\u0026gt;\u003c/span\u003e\u003c/var\u003e.\n\n        \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .*\"\u003e \u0026lt;copyright holder\u0026gt;\u003c/span\u003e\u003c/var\u003e makes no representations about the suitability\n        of this software for any purpose. It is provided \u0026quot;as is\u0026quot; without express\n        or implied warranty.\n      \u003c/p\u003e\n\n    "
+}

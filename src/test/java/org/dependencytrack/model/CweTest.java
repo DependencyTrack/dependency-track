@@ -14,33 +14,26 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class CweTest {
-
-    @Test
-    public void testId() {
-        Cwe cwe = new Cwe();
-        cwe.setId(111L);
-        Assert.assertEquals(111L, cwe.getId());
-    }
+class CweTest {
 
     @Test
-    public void testCweId() {
+    void testCweId() {
         Cwe cwe = new Cwe();
         cwe.setCweId(79);
-        Assert.assertEquals(79, cwe.getCweId());
+        Assertions.assertEquals(79, cwe.getCweId());
     }
 
     @Test
-    public void testName() {
+    void testName() {
         Cwe cwe = new Cwe();
         cwe.setName("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
-        Assert.assertEquals("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')", cwe.getName());
+        Assertions.assertEquals("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')", cwe.getName());
     }
 } 

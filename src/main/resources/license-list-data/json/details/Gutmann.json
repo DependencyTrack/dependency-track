@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "You can use this code in whatever way you want, as long as you don\u0027t try\nto claim you wrote it.\n",
+  "standardLicenseTemplate": "You can use this code in whatever way you want, as long as you don\u0027t try to claim you wrote it.\n\n",
+  "name": "Gutmann License",
+  "licenseId": "Gutmann",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://www.cs.auckland.ac.nz/~pgut001/dumpasn1.c",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:54:54Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://www.cs.auckland.ac.nz/~pgut001/dumpasn1.c"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            You can use this code in whatever way you want,\n            as long as you don\u0026apos;t try to claim you wrote it.\n         \u003c/p\u003e\n\n      "
+}

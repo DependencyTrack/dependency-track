@@ -1,0 +1,35 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1994 by the University of Southern California\n\n   EXPORT OF THIS SOFTWARE from the United States of America may\n   require a specific license from the United States Government. It\n   is the responsibility of any person or organization\n   contemplating export to obtain such a license before exporting.\n\nWITHIN THAT CONSTRAINT, permission to copy, modify, and distribute\nthis software and its documentation in source and binary forms is\nhereby granted, provided that any documentation or other materials\nrelated to such distribution or use acknowledge that the software\nwas developed by the University of Southern California.\n\nDISCLAIMER OF WARRANTY.  THIS SOFTWARE IS PROVIDED \"AS IS\".  The\nUniversity of Southern California MAKES NO REPRESENTATIONS OR\nWARRANTIES, EXPRESS OR IMPLIED.  By way of example, but not\nlimitation, the University of Southern California MAKES NO\nREPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY\nPARTICULAR PURPOSE. The University of Southern California shall not\nbe held liable for any liability nor for any direct, indirect, or\nconsequential damages with respect to any claim by the user or\ndistributor of the ksu software.\n",
+  "standardLicenseTemplate": "Copyright (C) 1994 by the University of Southern California\n\nEXPORT OF THIS SOFTWARE from the United States of America may require a specific license from the United States Government. It is the responsibility of any person or organization contemplating export to obtain such a license before exporting.\n\nWITHIN THAT CONSTRAINT, permission to copy, modify, and distribute this software and its documentation in source and binary forms is hereby granted, provided that any documentation or other materials related to such distribution or use acknowledge that the software was developed by the University of Southern California.\n\nDISCLAIMER OF WARRANTY. THIS SOFTWARE IS PROVIDED \"AS IS\". The University of Southern California MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED. By way of example, but not limitation, the University of Southern California MAKES NO REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE. The University of Southern California shall not be held liable for any liability nor for any direct, indirect, or consequential damages with respect to any claim by the user or distributor of the ksu software.\n\n",
+  "name": "HPND with US Government export control warning and acknowledgment",
+  "licenseComments": "This license is similar to HPND-export-US, but has a different obligation relating to notice and different disclaimer.",
+  "comment": "This license is similar to HPND-export-US, but has a different obligation relating to notice and different disclaimer.",
+  "licenseId": "HPND-export-US-acknowledgement",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://web.mit.edu/kerberos/krb5-1.21/doc/mitK5license.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:55:01Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://github.com/krb5/krb5/blob/krb5-1.21.2-final/NOTICE#L831-L852",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:55:01Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/krb5/krb5/blob/krb5-1.21.2-final/NOTICE#L831-L852",
+    "https://web.mit.edu/kerberos/krb5-1.21/doc/mitK5license.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            Copyright (C) 1994 by the University of Southern California\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            EXPORT OF THIS SOFTWARE from the United States of America may\n            require a specific license from the United States Government.\n            It is the responsibility of any person or organization\n            contemplating export to obtain such a license before exporting.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            WITHIN THAT CONSTRAINT, permission to copy, modify, and distribute\n            this software and its documentation in source and binary forms\n            is hereby granted, provided that any documentation or other\n            materials related to such distribution or use acknowledge that the\n            software was developed by the University of Southern California.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            DISCLAIMER OF WARRANTY. THIS SOFTWARE IS PROVIDED \u0026quot;AS IS\u0026quot;.\n            The University of Southern California MAKES NO REPRESENTATIONS\n            OR WARRANTIES, EXPRESS OR IMPLIED. By way of example, but not\n            limitation, the University of Southern California MAKES NO\n            REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS\n            FOR ANY PARTICULAR PURPOSE. The University of Southern\n            California shall not be held liable for any liability nor for\n            any direct, indirect, or consequential damages with respect\n            to any claim by the user or distributor of the ksu software.\n         \u003c/p\u003e\n\n      "
+}

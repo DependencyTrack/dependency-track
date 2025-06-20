@@ -1,0 +1,39 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "components": [
+    {
+      "type": "library",
+      "name": "acme-lib-a",
+      "licenses": [
+        {
+          "license": {
+            "name": "custom license foobar"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "acme-lib-b",
+      "licenses": [
+        {
+          "license": {
+            "name": "does not exist"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "acme-lib-c",
+      "licenses": [
+        {
+          "license": {
+            "name": " "
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 title: Deploying the Executable WAR
 category: Getting Started
 chapter: 1
-order: 2
+order: 3
 ---
 
 An executable WAR is a traditional Java Web Archive (WAR) that is packaged in a way where it can executed from 
@@ -28,14 +28,9 @@ Refer to [distributions](../distributions/) for details.
 
 | Minimum             | Recommended         |
 |:--------------------|:--------------------|
-| Java 17 (or higher) | Java 17 (or higher) |
-| 4GB RAM             | 16GB RAM            |
+| Java 21 (or higher) | Java 21 (or higher) |
+| 2GB RAM             | 8GB RAM             |
 | 2 CPU cores         | 4 CPU cores         |
-
-If minimum requirements are not met, Dependency-Track will not start correctly. However, for systems with Java 17 
-already installed, this method of execution may provide the fastest deployment path.
-
-> These requirements can be disabled by setting the 'system.requirement.check.enabled' property or the 'SYSTEM_REQUIREMENT_CHECK_ENABLED' environment variable to 'false'.
 
 ### Startup
 
@@ -61,17 +56,17 @@ The following command-line arguments can be passed to a compiled executable WAR 
 #### Examples
 
 ```bash
-java -Xmx12G -jar dependency-track-apiserver.war -context /dtrack
+java -Xmx8G -jar dependency-track-apiserver.jar -context /dtrack
 ```
 
 ```bash
-java -Xmx12G -jar dependency-track-apiserver.war -port 8081
+java -Xmx8G -jar dependency-track-apiserver.jar -port 8081
 ```
 
 ```bash
-java -Xmx12G -jar dependency-track-apiserver.war -context /dtrack -host 192.168.1.16 -port 9000
+java -Xmx8G -jar dependency-track-apiserver.jar -context /dtrack -host 192.168.1.16 -port 9000
 ```
 
 ```bash
-java -XX:MaxRAMPercentage=80.0 -jar dependency-track-bundled.war
+java -XX:MaxRAMPercentage=80.0 -jar dependency-track-bundled.jar
 ```

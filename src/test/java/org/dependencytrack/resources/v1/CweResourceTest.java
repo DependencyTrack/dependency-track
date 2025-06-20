@@ -14,68 +14,85 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
-import org.dependencytrack.persistence.CweImporter;
+import org.dependencytrack.parser.common.resolver.CweDictionary;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.core.Response;
+import java.util.HashSet;
 
-public class CweResourceTest extends ResourceTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(CweResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
-                .build();
-    }
+class CweResourceTest extends ResourceTest {
 
-    @Before
-    public void before() throws Exception {
-       super.before();
-        CweImporter cweImporter = new CweImporter();
-        cweImporter.processCweDefinitions();
-    }
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(CweResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
 
     @Test
-    public void getCwesTest() {
-        Response response = target(V1_CWE).request()
+    void getCwesTest() {
+        Response response = jersey.target(V1_CWE).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(1420), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(String.valueOf(1429), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(100, json.size());
-        Assert.assertEquals(1, json.getJsonObject(0).getInt("cweId"));
-        Assert.assertEquals("DEPRECATED: Location", json.getJsonObject(0).getString("name"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(100, json.size());
+        Assertions.assertEquals(1, json.getJsonObject(0).getInt("cweId"));
+        Assertions.assertEquals("DEPRECATED: Location", json.getJsonObject(0).getString("name"));
     }
 
     @Test
-    public void getCweTest() {
-        Response response = target(V1_CWE + "/79").request()
+    void getCwesPaginationTest() {
+        int pageNumber = 1;
+        final var cwesSeen = new HashSet<Integer>();
+        while (cwesSeen.size() < CweDictionary.DICTIONARY.size()) {
+            final Response response = jersey.target(V1_CWE)
+                    .queryParam("pageSize", "100")
+                    .queryParam("pageNumber", String.valueOf(pageNumber++))
+                    .request()
+                    .header(X_API_KEY, apiKey)
+                    .get();
+            assertThat(response.getStatus()).isEqualTo(200);
+            assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1429");
+
+            final JsonArray cwesPage = parseJsonArray(response);
+            assertThat(cwesPage).hasSizeLessThanOrEqualTo(100);
+
+            for (final JsonObject value : cwesPage.getValuesAs(JsonObject.class)) {
+                final int cweId = value.getInt("cweId");
+                assertThat(cwesSeen).doesNotContain(cweId);
+                cwesSeen.add(cweId);
+            }
+        }
+    }
+
+    @Test
+    void getCweTest() {
+        Response response = jersey.target(V1_CWE + "/79").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(79, json.getInt("cweId"));
-        Assert.assertEquals("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')", json.getString("name"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(79, json.getInt("cweId"));
+        Assertions.assertEquals("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')", json.getString("name"));
     }
+
 }

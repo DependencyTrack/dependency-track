@@ -14,35 +14,39 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 
 package org.dependencytrack.resources.v1;
 
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 
-import javax.validation.Validator;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 /**
  * JAX-RS resources for processing policies.
@@ -51,26 +55,34 @@ import javax.ws.rs.core.Response;
  * @since 4.0.0
  */
 @Path("/v1/policy")
-@Api(value = "policyCondition", authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "policyCondition")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class PolicyConditionResource extends AlpineResource {
 
     @PUT
     @Path("/{uuid}/condition")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Creates a new policy condition",
-            response = PolicyCondition.class,
-            code = 201
+    @Operation(
+            summary = "Creates a new policy condition",
+            description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the policy could not be found")
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created policy condition",
+                    content = @Content(schema = @Schema(implementation = PolicyCondition.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the policy could not be found")
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response createPolicyCondition(
-            @ApiParam(value = "The UUID of the policy", required = true)
-            @PathParam("uuid") String uuid,
+            @Parameter(description = "The UUID of the policy", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
             PolicyCondition jsonPolicyCondition) {
         final Validator validator = super.getValidator();
         failOnValidationError(
@@ -81,6 +93,11 @@ public class PolicyConditionResource extends AlpineResource {
             if (policy != null) {
                 final PolicyCondition pc = qm.createPolicyCondition(policy, jsonPolicyCondition.getSubject(),
                         jsonPolicyCondition.getOperator(), StringUtils.trimToNull(jsonPolicyCondition.getValue()));
+
+                // Prevent infinite recursion during JSON serialization.
+                qm.makeTransient(pc);
+                pc.setPolicy(null);
+
                 return Response.status(Response.Status.CREATED).entity(pc).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the policy could not be found.").build();
@@ -92,14 +109,18 @@ public class PolicyConditionResource extends AlpineResource {
     @Path("/condition")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Updates a policy condition",
-            response = PolicyCondition.class,
-            code = 200
+    @Operation(
+            summary = "Updates a policy condition",
+            description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the policy condition could not be found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated policy condition",
+                    content = @Content(schema = @Schema(implementation = PolicyCondition.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the policy condition could not be found")
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response updatePolicyCondition(PolicyCondition jsonPolicyCondition) {
@@ -111,7 +132,12 @@ public class PolicyConditionResource extends AlpineResource {
             PolicyCondition pc = qm.getObjectByUuid(PolicyCondition.class, jsonPolicyCondition.getUuid());
             if (pc != null) {
                 pc = qm.updatePolicyCondition(jsonPolicyCondition);
-                return Response.status(Response.Status.CREATED).entity(pc).build();
+
+                // Prevent infinite recursion during JSON serialization.
+                qm.makeTransient(pc);
+                pc.setPolicy(null);
+
+                return Response.status(Response.Status.OK).entity(pc).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the policy condition could not be found.").build();
             }
@@ -122,18 +148,19 @@ public class PolicyConditionResource extends AlpineResource {
     @Path("/condition/{uuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a policy condition",
-            code = 204
+    @Operation(
+            summary = "Deletes a policy condition",
+            description = "<p>Requires permission <strong>POLICY_MANAGEMENT</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the policy condition could not be found")
+            @ApiResponse(responseCode = "204", description = "Policy condition removed successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the policy condition could not be found")
     })
     @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
     public Response deletePolicyCondition(
-            @ApiParam(value = "The UUID of the policy condition to delete", required = true)
-            @PathParam("uuid") String uuid) {
+            @Parameter(description = "The UUID of the policy condition to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("uuid") @ValidUuid String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final PolicyCondition pc = qm.getObjectByUuid(PolicyCondition.class, uuid);
             if (pc != null) {

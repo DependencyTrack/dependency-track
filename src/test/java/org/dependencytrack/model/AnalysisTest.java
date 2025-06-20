@@ -14,69 +14,69 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AnalysisTest {
+class AnalysisTest {
 
     @Test
-    public void testId() {
+    void testId() {
         Analysis analysis = new Analysis();
         analysis.setId(111L);
-        Assert.assertEquals(111L, analysis.getId());
+        Assertions.assertEquals(111L, analysis.getId());
     }
 
     @Test
-    public void testComponent() {
+    void testComponent() {
         Project project = new Project();
         Component component = new Component();
         component.setProject(project);
         Analysis analysis = new Analysis();
         analysis.setComponent(component);
-        Assert.assertEquals(component, analysis.getComponent());
-        Assert.assertEquals(project, analysis.getProject());
-        Assert.assertEquals(project, analysis.getComponent().getProject());
+        Assertions.assertEquals(component, analysis.getComponent());
+        Assertions.assertEquals(project, analysis.getProject());
+        Assertions.assertEquals(project, analysis.getComponent().getProject());
     }
 
     @Test
-    public void testVulnerability() {
+    void testVulnerability() {
         Vulnerability vuln = new Vulnerability();
         Analysis analysis = new Analysis();
         analysis.setVulnerability(vuln);
-        Assert.assertEquals(vuln, analysis.getVulnerability());
+        Assertions.assertEquals(vuln, analysis.getVulnerability());
     }
 
     @Test
-    public void testAnalysisState() {
+    void testAnalysisState() {
         Analysis analysis = new Analysis();
         analysis.setAnalysisState(AnalysisState.EXPLOITABLE);
-        Assert.assertEquals(AnalysisState.EXPLOITABLE, analysis.getAnalysisState());
+        Assertions.assertEquals(AnalysisState.EXPLOITABLE, analysis.getAnalysisState());
     }
 
     @Test
-    public void testGetAnalysisComments() {
+    void testGetAnalysisComments() {
         List<AnalysisComment> comments = new ArrayList<>();
         AnalysisComment comment = new AnalysisComment();
         comments.add(comment);
         Analysis analysis = new Analysis();
         analysis.setAnalysisComments(comments);
-        Assert.assertEquals(1, analysis.getAnalysisComments().size());
-        Assert.assertEquals(comment, analysis.getAnalysisComments().get(0));
+        Assertions.assertEquals(1, analysis.getAnalysisComments().size());
+        Assertions.assertEquals(comment, analysis.getAnalysisComments().get(0));
     }
 
     @Test
-    public void testSuppressed() {
+    void testSuppressed() {
         Analysis analysis = new Analysis();
         analysis.setSuppressed(true);
-        Assert.assertTrue(analysis.isSuppressed());
+        Assertions.assertTrue(analysis.isSuppressed());
         analysis.setSuppressed(false);
-        Assert.assertFalse(analysis.isSuppressed());
+        Assertions.assertFalse(analysis.isSuppressed());
     }
 }

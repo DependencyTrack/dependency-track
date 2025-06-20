@@ -14,15 +14,16 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.util;
 
-import javax.json.JsonObjectBuilder;
+import jakarta.json.JsonObjectBuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
+import org.apache.commons.lang3.StringUtils;
 
 public final class JsonUtil {
 
@@ -68,6 +69,13 @@ public final class JsonUtil {
         } catch (DateTimeParseException e) {
             return null;
         }
+    }
+
+    public static boolean isBlankJson(final String jsonString) {
+        if (StringUtils.isBlank(jsonString) || jsonString.equalsIgnoreCase("{}")) {
+            return true;
+        }
+        return false;
     }
 
 }

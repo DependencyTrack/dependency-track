@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "[C] The Regents of the University of Michigan and Merit Network, Inc. 1992,\n1993, 1994, 1995 All Rights Reserved\n\nPermission to use, copy, modify, and distribute this software and its\ndocumentation for any purpose and without fee is hereby granted, provided\nthat the above copyright notice and this permission notice appear in all\ncopies of the software and derivative works or modified versions thereof,\nand that both the copyright notice and this permission and disclaimer\nnotice appear in supporting documentation.\n\nTHIS SOFTWARE IS PROVIDED \"AS IS\" WITHOUT WARRANTY OF ANY KIND, EITHER\nEXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF\nMERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE REGENTS OF THE\nUNIVERSITY OF MICHIGAN AND MERIT NETWORK, INC. DO NOT WARRANT THAT THE\nFUNCTIONS CONTAINED IN THE SOFTWARE WILL MEET LICENSEE\u0027S REQUIREMENTS OR\nTHAT OPERATION WILL BE UNINTERRUPTED OR ERROR FREE.  The Regents of the\nUniversity of Michigan and Merit Network, Inc. shall not be liable for any\nspecial, indirect, incidental or consequential damages with respect to any\nclaim by Licensee or any third party arising from use of the software.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eMichigan/Merit Networks License\n\n\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"[C] \u003ccopyright holder\u003e \u003cyear\u003e All Rights Reserved  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose and without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies of the software and derivative works or modified versions thereof, and that both the copyright notice and this permission and disclaimer notice appear in supporting documentation. THIS SOFTWARE IS PROVIDED \"AS IS\" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE REGENTS OF THE UNIVERSITY OF MICHIGAN AND MERIT NETWORK, INC. DO NOT WARRANT THAT THE FUNCTIONS CONTAINED IN THE SOFTWARE WILL MEET LICENSEE\u0027S REQUIREMENTS OR THAT OPERATION WILL BE UNINTERRUPTED OR ERROR FREE. The Regents of the University of Michigan and Merit Network, Inc. shall not be liable for any special, indirect, incidental or consequential damages with respect to any claim by Licensee or any third party arising from use of the software.\n\n",
+  "name": "Michigan/Merit Networks License",
+  "licenseComments": "This license starts with an HPND-like grant, but has additional obligations (similar to HPND-Kevlin-Henney and HPND_Pbmplus) and a different disclaimer of warranties.",
+  "comment": "This license starts with an HPND-like grant, but has additional obligations (similar to HPND-Kevlin-Henney and HPND_Pbmplus) and a different disclaimer of warranties.",
+  "licenseId": "UMich-Merit",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/radcli/radcli/blob/master/COPYRIGHT#L64",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:56:10Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/radcli/radcli/blob/master/COPYRIGHT#L64"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eMichigan/Merit Networks License\u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003e[C] \u0026lt;copyright holder\u0026gt; \u0026lt;year\u0026gt; All Rights Reserved\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003e\n\tPermission to use, copy, modify, and distribute this software and its\n\tdocumentation for any purpose and without fee is hereby granted, provided\n\tthat the above copyright notice and this permission notice appear in all\n\tcopies of the software and derivative works or modified versions thereof,\n\tand that both the copyright notice and this permission and disclaimer\n\tnotice appear in supporting documentation.\n\n\tTHIS SOFTWARE IS PROVIDED \u0026quot;AS IS\u0026quot; WITHOUT WARRANTY OF ANY KIND, EITHER\n\tEXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF\n\tMERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE REGENTS OF THE\n\tUNIVERSITY OF MICHIGAN AND MERIT NETWORK, INC. DO NOT WARRANT THAT THE\n\tFUNCTIONS CONTAINED IN THE SOFTWARE WILL MEET LICENSEE\u0026apos;S REQUIREMENTS OR\n\tTHAT OPERATION WILL BE UNINTERRUPTED OR ERROR FREE.  The Regents of the\n\tUniversity of Michigan and Merit Network, Inc. shall not be liable for any\n\tspecial, indirect, incidental or consequential damages with respect to any\n\tclaim by Licensee or any third party arising from use of the software.\n      \u003c/p\u003e\n\n    "
+}

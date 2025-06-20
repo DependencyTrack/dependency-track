@@ -14,158 +14,162 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.server.filters.ApiFilter;
 import alpine.model.ManagedUser;
 import alpine.server.auth.PasswordService;
+import alpine.server.filters.ApiFilter;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Form;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Form;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+class UserResourceUnauthenticatedTest extends ResourceTest {
 
-public class UserResourceUnauthenticatedTest extends ResourceTest {
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(UserResource.class)
+                    .register(ApiFilter.class));
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(UserResource.class)
-                        .register(ApiFilter.class)))
-                .build();
+    private ManagedUser testUser;
+
+    @BeforeEach
+    public void before() throws Exception {
+        testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        qm.addUserToTeam(testUser, team);
     }
 
     @Test
-    public void validateCredentialsTest() {
+    void validateCredentialsTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
-        Response response = target(V1_USER + "/login").request()
+        Response response = jersey.target(V1_USER + "/login").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         String token = getPlainTextBody(response);
-        Assert.assertNotNull(token);
-        //Assert.assertEquals(token, response.getCookies().get("Authorization-Token").getValue());
+        Assertions.assertNotNull(token);
+        //Assertions.assertEquals(token, response.getCookies().get("Authorization-Token").getValue());
     }
 
     @Test
-    public void validateCredentialsSuspendedTest() {
+    void validateCredentialsSuspendedTest() {
         ManagedUser user = qm.getManagedUser("testuser");
         user.setSuspended(true);
         qm.persist(user);
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
-        Response response = target(V1_USER + "/login").request()
+        Response response = jersey.target(V1_USER + "/login").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertEquals(403, response.getStatus(), 0);
     }
 
     @Test
-    public void validateCredentialsUnauthorizedTest() {
+    void validateCredentialsUnauthorizedTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "wrong");
-        Response response = target(V1_USER + "/login").request()
+        Response response = jersey.target(V1_USER + "/login").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(401, response.getStatus(), 0);
+        Assertions.assertEquals(401, response.getStatus(), 0);
     }
 
     @Test
-    public void validateOidcAccessTokenOidcNotAvailableTest() {
+    void validateOidcAccessTokenOidcNotAvailableTest() {
         final Form form = new Form();
         form.param("accessToken", "accessToken");
 
-        final Response response = target(V1_USER + "/oidc/login").request()
+        final Response response = jersey.target(V1_USER + "/oidc/login").request()
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         // OIDC is disabled by default
-        Assert.assertEquals(204, response.getStatus());
+        Assertions.assertEquals(204, response.getStatus());
     }
 
     @Test
-    public void forceChangePasswordTest() {
+    void forceChangePasswordTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "Password1!");
-        Assert.assertTrue(PasswordService.matches("testuser".toCharArray(), testUser));
-        Response response = target(V1_USER + "/forceChangePassword").request()
+        Assertions.assertTrue(PasswordService.matches("testuser".toCharArray(), testUser));
+        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         qm.getPersistenceManager().refresh(testUser);
-        Assert.assertTrue(PasswordService.matches("Password1!".toCharArray(), testUser));
+        Assertions.assertTrue(PasswordService.matches("Password1!".toCharArray(), testUser));
     }
 
     @Test
-    public void forceChangePasswordFlagResetTest() {
+    void forceChangePasswordFlagResetTest() {
         testUser.setForcePasswordChange(true);
         qm.persist(testUser);
         qm.getPersistenceManager().refresh(testUser);
-        Assert.assertTrue(testUser.isForcePasswordChange());
+        Assertions.assertTrue(testUser.isForcePasswordChange());
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "Password1!");
-        Assert.assertTrue(PasswordService.matches("testuser".toCharArray(), testUser));
-        Response response = target(V1_USER + "/forceChangePassword").request()
+        Assertions.assertTrue(PasswordService.matches("testuser".toCharArray(), testUser));
+        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         qm.getPersistenceManager().refresh(testUser);
-        Assert.assertTrue(PasswordService.matches("Password1!".toCharArray(), testUser));
-        Assert.assertFalse(testUser.isForcePasswordChange());
+        Assertions.assertTrue(PasswordService.matches("Password1!".toCharArray(), testUser));
+        Assertions.assertFalse(testUser.isForcePasswordChange());
     }
 
     @Test
-    public void forceChangePasswordMismatchTest() {
+    void forceChangePasswordMismatchTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "blah");
-        Response response = target(V1_USER + "/forceChangePassword").request()
+        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(406, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(406, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The passwords do not match. Password not changed.", body);
+        Assertions.assertEquals("The passwords do not match. Password not changed.", body);
     }
 
     @Test
-    public void forceChangePasswordUnchangedTest() {
+    void forceChangePasswordUnchangedTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "testuser");
         form.param("newPassword", "testuser");
         form.param("confirmPassword", "testuser");
-        Response response = target(V1_USER + "/forceChangePassword").request()
+        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(406, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(406, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("Existing password is the same as new password. Password not changed.", body);
+        Assertions.assertEquals("Existing password is the same as new password. Password not changed.", body);
     }
 
     @Test
-    public void forceChangePasswordSuspendedTest() {
+    void forceChangePasswordSuspendedTest() {
         testUser.setSuspended(true);
         qm.persist(testUser);
         Form form = new Form();
@@ -173,28 +177,28 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
         form.param("password", "testuser");
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "Password1!");
-        Response response = target(V1_USER + "/forceChangePassword").request()
+        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(403, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(403, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("SUSPENDED", body);
+        Assertions.assertEquals("SUSPENDED", body);
     }
 
     @Test
-    public void forceChangePasswordInvalidCredsTest() {
+    void forceChangePasswordInvalidCredsTest() {
         Form form = new Form();
         form.param("username", "testuser");
         form.param("password", "blah");
         form.param("newPassword", "Password1!");
         form.param("confirmPassword", "Password1!");
-        Response response = target(V1_USER + "/forceChangePassword").request()
+        Response response = jersey.target(V1_USER + "/forceChangePassword").request()
                 .accept(MediaType.TEXT_PLAIN)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(401, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(401, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("INVALID_CREDENTIALS", body);
+        Assertions.assertEquals("INVALID_CREDENTIALS", body);
     }
 }

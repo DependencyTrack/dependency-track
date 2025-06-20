@@ -14,11 +14,10 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.nvd;
 
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.ICpe;
 import org.dependencytrack.model.VulnerableSoftware;
 import us.springett.parsers.cpe.CpeParser;
@@ -46,11 +45,6 @@ public final class ModelConverter {
         cpe.setTargetHw(parsedCpe.getTargetHw());
         cpe.setOther(parsedCpe.getOther());
         return cpe;
-    }
-
-    public static Cpe convertCpe23UriToCpe(String cpe23Uri) throws CpeParsingException, CpeEncodingException {
-        Cpe cpe = new Cpe();
-        return (Cpe)convertCpe23Uri(cpe, cpe23Uri);
     }
 
     public static VulnerableSoftware convertCpe23UriToVulnerableSoftware(String cpe23Uri) throws CpeParsingException, CpeEncodingException {

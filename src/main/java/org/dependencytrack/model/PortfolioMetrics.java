@@ -14,22 +14,21 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-import io.swagger.annotations.ApiModelProperty;
-
+import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -53,22 +52,22 @@ public class PortfolioMetrics implements Serializable {
 
     @Persistent
     @Column(name = "CRITICAL")
-    @ApiModelProperty(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int critical;
 
     @Persistent
     @Column(name = "HIGH")
-    @ApiModelProperty(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int high;
 
     @Persistent
     @Column(name = "MEDIUM")
-    @ApiModelProperty(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int medium;
 
     @Persistent
     @Column(name = "LOW")
-    @ApiModelProperty(required = true)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int low;
 
     @Persistent
@@ -179,14 +178,14 @@ public class PortfolioMetrics implements Serializable {
     @Column(name = "FIRST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "PORTFOLIOMETRICS_FIRST_OCCURRENCE_IDX")
-    @ApiModelProperty(required = true, dataType = "number")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date firstOccurrence;
 
     @Persistent
     @Column(name = "LAST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "PORTFOLIOMETRICS_LAST_OCCURRENCE_IDX")
-    @ApiModelProperty(required = true, dataType = "number")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date lastOccurrence;
 
     public long getId() {
@@ -230,7 +229,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getUnassigned() {
-        return unassigned;
+        return unassigned != null ? unassigned : 0;
     }
 
     public void setUnassigned(int unassigned) {
@@ -286,7 +285,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getFindingsTotal() {
-        return findingsTotal;
+        return findingsTotal != null ? findingsTotal : 0;
     }
 
     public void setFindingsTotal(int findingsTotal) {
@@ -294,7 +293,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getFindingsAudited() {
-        return findingsAudited;
+        return findingsAudited != null ? findingsAudited : 0;
     }
 
     public void setFindingsAudited(int findingsAudited) {
@@ -302,7 +301,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getFindingsUnaudited() {
-        return findingsUnaudited;
+        return findingsUnaudited != null ? findingsUnaudited : 0;
     }
 
     public void setFindingsUnaudited(int findingsUnaudited) {
@@ -318,7 +317,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsFail() {
-        return policyViolationsFail;
+        return policyViolationsFail != null ? policyViolationsFail : 0;
     }
 
     public void setPolicyViolationsFail(int policyViolationsFail) {
@@ -326,7 +325,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsWarn() {
-        return policyViolationsWarn;
+        return policyViolationsWarn != null ? policyViolationsWarn : 0;
     }
 
     public void setPolicyViolationsWarn(int policyViolationsWarn) {
@@ -334,7 +333,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsInfo() {
-        return policyViolationsInfo;
+        return policyViolationsInfo != null ? policyViolationsInfo : 0;
     }
 
     public void setPolicyViolationsInfo(int policyViolationsInfo) {
@@ -342,7 +341,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsTotal() {
-        return policyViolationsTotal;
+        return policyViolationsTotal != null ? policyViolationsTotal : 0;
     }
 
     public void setPolicyViolationsTotal(int policyViolationsTotal) {
@@ -350,7 +349,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsAudited() {
-        return policyViolationsAudited;
+        return policyViolationsAudited != null ? policyViolationsAudited : 0;
     }
 
     public void setPolicyViolationsAudited(int policyViolationsAudited) {
@@ -358,7 +357,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsUnaudited() {
-        return policyViolationsUnaudited;
+        return policyViolationsUnaudited != null ? policyViolationsUnaudited : 0;
     }
 
     public void setPolicyViolationsUnaudited(int policyViolationsUnaudited) {
@@ -366,7 +365,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsSecurityTotal() {
-        return policyViolationsSecurityTotal;
+        return policyViolationsSecurityTotal != null ? policyViolationsSecurityTotal : 0;
     }
 
     public void setPolicyViolationsSecurityTotal(int policyViolationsSecurityTotal) {
@@ -374,7 +373,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsSecurityAudited() {
-        return policyViolationsSecurityAudited;
+        return policyViolationsSecurityAudited != null ? policyViolationsSecurityAudited : 0;
     }
 
     public void setPolicyViolationsSecurityAudited(int policyViolationsSecurityAudited) {
@@ -382,7 +381,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsSecurityUnaudited() {
-        return policyViolationsSecurityUnaudited;
+        return policyViolationsSecurityUnaudited != null ? policyViolationsSecurityUnaudited : 0;
     }
 
     public void setPolicyViolationsSecurityUnaudited(int policyViolationsSecurityUnaudited) {
@@ -390,7 +389,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsLicenseTotal() {
-        return policyViolationsLicenseTotal;
+        return policyViolationsLicenseTotal != null ? policyViolationsLicenseTotal : 0;
     }
 
     public void setPolicyViolationsLicenseTotal(int policyViolationsLicenseTotal) {
@@ -398,7 +397,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsLicenseAudited() {
-        return policyViolationsLicenseAudited;
+        return policyViolationsLicenseAudited != null ? policyViolationsLicenseAudited : 0;
     }
 
     public void setPolicyViolationsLicenseAudited(int policyViolationsLicenseAudited) {
@@ -406,7 +405,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsLicenseUnaudited() {
-        return policyViolationsLicenseUnaudited;
+        return policyViolationsLicenseUnaudited != null ? policyViolationsLicenseUnaudited : 0;
     }
 
     public void setPolicyViolationsLicenseUnaudited(int policyViolationsLicenseUnaudited) {
@@ -414,7 +413,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsOperationalTotal() {
-        return policyViolationsOperationalTotal;
+        return policyViolationsOperationalTotal != null ? policyViolationsOperationalTotal : 0;
     }
 
     public void setPolicyViolationsOperationalTotal(int policyViolationsOperationalTotal) {
@@ -422,7 +421,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsOperationalAudited() {
-        return policyViolationsOperationalAudited;
+        return policyViolationsOperationalAudited != null ? policyViolationsOperationalAudited : 0;
     }
 
     public void setPolicyViolationsOperationalAudited(int policyViolationsOperationalAudited) {
@@ -430,7 +429,7 @@ public class PortfolioMetrics implements Serializable {
     }
 
     public int getPolicyViolationsOperationalUnaudited() {
-        return policyViolationsOperationalUnaudited;
+        return policyViolationsOperationalUnaudited != null ? policyViolationsOperationalUnaudited : 0;
     }
 
     public void setPolicyViolationsOperationalUnaudited(int policyViolationsOperationalUnaudited) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification;
 
@@ -40,6 +40,7 @@ public class NotificationConstants {
         public static final String ANALYZER_ERROR = "Analyzer Error";
         public static final String INTEGRATION_ERROR = "Integration Error";
         public static final String NEW_VULNERABILITY = "New Vulnerability Identified";
+        public static final String NEW_VULNERABILITIES_SUMMARY = "New Vulnerabilities Summary";
         public static final String NEW_VULNERABLE_DEPENDENCY = "Vulnerable Dependency Introduced";
         public static final String ANALYSIS_DECISION_EXPLOITABLE = "Analysis Decision: Exploitable";
         public static final String ANALYSIS_DECISION_IN_TRIAGE = "Analysis Decision: In Triage";
@@ -55,12 +56,16 @@ public class NotificationConstants {
         public static final String VIOLATIONANALYSIS_DECISION_SUPPRESSED = "Violation Analysis Decision: Violation Suppressed";
         public static final String VIOLATIONANALYSIS_DECISION_UNSUPPRESSED = "Violation Analysis Decision: Violation UnSuppressed";
         public static final String POLICY_VIOLATION = "Policy Violation";
+        public static final String NEW_POLICY_VIOLATIONS_SUMMARY = "New Policy Violations Summary";
         public static final String BOM_CONSUMED = "Bill of Materials Consumed";
         public static final String BOM_PROCESSED = "Bill of Materials Processed";
         public static final String BOM_PROCESSING_FAILED = "Bill of Materials Processing Failed";
+        public static final String BOM_VALIDATION_FAILED = "Bill of Materials Validation Failed";
         public static final String VEX_CONSUMED = "Vulnerability Exploitability Exchange (VEX) Consumed";
         public static final String VEX_PROCESSED = "Vulnerability Exploitability Exchange (VEX) Processed";
         public static final String PROJECT_CREATED = "Project Added";
+        public static final String USER_CREATED = "User Created";
+        public static final String USER_DELETED = "User Deleted";
     }
 
 }

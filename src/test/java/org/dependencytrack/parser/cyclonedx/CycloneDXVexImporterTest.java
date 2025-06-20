@@ -1,8 +1,8 @@
 package org.dependencytrack.parser.cyclonedx;
 
 import org.assertj.core.api.Assertions;
-import org.cyclonedx.BomParserFactory;
 import org.cyclonedx.exception.ParseException;
+import org.cyclonedx.parsers.BomParserFactory;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
@@ -11,8 +11,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.jdo.Query;
 import java.io.IOException;
@@ -24,12 +23,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-public class CycloneDXVexImporterTest extends PersistenceCapableTest {
+class CycloneDXVexImporterTest extends PersistenceCapableTest {
 
     private CycloneDXVexImporter vexImporter = new CycloneDXVexImporter();
 
     @Test
-    public void shouldAuditVulnerabilityFromAllSourcesUsingVex() throws URISyntaxException, IOException, ParseException {
+    void shouldAuditVulnerabilityFromAllSourcesUsingVex() throws URISyntaxException, IOException, ParseException {
         // Arrange
         var sources = Arrays.asList(Vulnerability.Source.values());
         var project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -106,9 +105,10 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
 
         // Assert
         final Query<Analysis> query = qm.getPersistenceManager().newQuery(Analysis.class, "project == :project");
-        var analyses =  (List<Analysis>) query.execute(project);
+        query.setParameters(project);
+        final List<Analysis> analyses = query.executeList();
         // CVE-2020-256[49|50|51] are not audited otherwise analyses.size would have been equal to sources.size()+3
-        Assert.assertEquals(sources.size(), analyses.size());
+        org.junit.jupiter.api.Assertions.assertEquals(sources.size(), analyses.size());
         Assertions.assertThat(analyses).allSatisfy(analysis -> {
             Assertions.assertThat(analysis.getVulnerability().getVulnId()).isNotEqualTo("CVE-2020-25649");
             Assertions.assertThat(analysis.getVulnerability().getVulnId()).isNotEqualTo("CVE-2020-25650");

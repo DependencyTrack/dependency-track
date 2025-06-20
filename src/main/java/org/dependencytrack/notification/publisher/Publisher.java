@@ -14,13 +14,13 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
-import alpine.common.logging.Logger;
 import alpine.common.util.UrlUtil;
 import alpine.model.ConfigProperty;
+import alpine.model.UserPrincipal;
 import alpine.notification.Notification;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
@@ -30,6 +30,9 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
+import org.dependencytrack.notification.vo.BomValidationFailed;
+import org.dependencytrack.notification.vo.NewPolicyViolationsSummary;
+import org.dependencytrack.notification.vo.NewVulnerabilitiesSummary;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -38,7 +41,7 @@ import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -53,8 +56,10 @@ public interface Publisher {
     String CONFIG_TEMPLATE_MIME_TYPE_KEY = "mimeType";
 
     String CONFIG_DESTINATION = "destination";
+    String CONFIG_TOKEN = "token";
+    String CONFIG_TOKEN_HEADER = "tokenHeader";
 
-    void inform(Notification notification, JsonObject config);
+    void inform(final PublishContext ctx, final Notification notification, final JsonObject config);
 
     PebbleEngine getTemplateEngine();
 
@@ -78,8 +83,7 @@ public interface Publisher {
     default void enrichTemplateContext(final Map<String, Object> context) {
     }
 
-    default String prepareTemplate(final Notification notification, final PebbleTemplate template) {
-
+    default String prepareTemplate(final Notification notification, final PebbleTemplate template) throws IOException {
         try (QueryManager qm = new QueryManager()) {
             final ConfigProperty baseUrlProperty = qm.getConfigProperty(
                     ConfigPropertyConstants.GENERAL_BASE_URL.getGroupName(),
@@ -119,10 +123,28 @@ public interface Publisher {
                 } else if (notification.getSubject() instanceof final BomProcessingFailed subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
+                } else if (notification.getSubject() instanceof final BomValidationFailed subject) {
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final VexConsumedOrProcessed subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final PolicyViolationIdentified subject) {
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                } else if (notification.getSubject() instanceof final NewVulnerabilitiesSummary subject) {
+                    context.put("subject", subject);
+                    // TODO: Can we make subjectJson evaluate lazily? Kinda wasteful to convert the subject
+                    //  to JSON "just in case" if it can be a rather large object graph...
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                } else if (notification.getSubject() instanceof final NewPolicyViolationsSummary subject) {
+                    context.put("subject", subject);
+                    // TODO: Can we make subjectJson evaluate lazily? Kinda wasteful to convert the subject
+                    //  to JSON "just in case" if it can be a rather large object graph...
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                }
+            } else if  (NotificationScope.SYSTEM.name().equals(notification.getScope())) {
+                if (notification.getSubject() instanceof final UserPrincipal subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
                 }
@@ -132,9 +154,6 @@ public interface Publisher {
             try (final Writer writer = new StringWriter()) {
                 template.evaluate(writer, context);
                 return writer.toString();
-            } catch (IOException e) {
-                Logger.getLogger(this.getClass()).error("An error was encountered evaluating template", e);
-                return null;
             }
         }
     }

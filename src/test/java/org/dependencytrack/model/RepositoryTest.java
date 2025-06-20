@@ -14,54 +14,68 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.model; 
+package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class RepositoryTest {
-    
+class RepositoryTest {
+
     @Test
-    public void testId() {
+    void testId() {
         Repository repo = new Repository();
         repo.setId(111L);
-        Assert.assertEquals(111L, repo.getId());
+        Assertions.assertEquals(111L, repo.getId());
     }
 
     @Test
-    public void testType() {
+    void testType() {
         Repository repo = new Repository();
         repo.setType(RepositoryType.MAVEN);
-        Assert.assertEquals(RepositoryType.MAVEN, repo.getType());
-    } 
-
-    @Test
-    public void testIdentifier() {
-        Repository repo = new Repository();
-        repo.setIdentifier("maven-central");
-        Assert.assertEquals("maven-central", repo.getIdentifier());
+        Assertions.assertEquals(RepositoryType.MAVEN, repo.getType());
     }
 
     @Test
-    public void testUrl() {
+    void testIdentifier() {
+        Repository repo = new Repository();
+        repo.setIdentifier("maven-central");
+        Assertions.assertEquals("maven-central", repo.getIdentifier());
+    }
+
+    @Test
+    void testUrl() {
         Repository repo = new Repository();
         repo.setUrl("https://repo.maven.apache.org/maven2");
-        Assert.assertEquals("https://repo.maven.apache.org/maven2", repo.getUrl());
-    } 
+        Assertions.assertEquals("https://repo.maven.apache.org/maven2", repo.getUrl());
+    }
 
     @Test
-    public void testResolutionOrder() {
+    void testResolutionOrder() {
         Repository repo = new Repository();
         repo.setResolutionOrder(5);
-        Assert.assertEquals(5, repo.getResolutionOrder());
-    } 
+        Assertions.assertEquals(5, repo.getResolutionOrder());
+    }
 
     @Test
-    public void testEnabled() {
+    void testEnabled() {
         Repository repo = new Repository();
         repo.setEnabled(true);
-        Assert.assertTrue(repo.isEnabled());
+        Assertions.assertTrue(repo.isEnabled());
+    }
+
+    @Test
+    void testAuthenticationRequiredTrue() {
+        Repository repo = new Repository();
+        repo.setAuthenticationRequired(true);
+        Assertions.assertTrue(repo.isAuthenticationRequired());
+    }
+
+    @Test
+    void testAuthenticationRequiredFalse() {
+        Repository repo = new Repository();
+        repo.setAuthenticationRequired(false);
+        Assertions.assertFalse(repo.isAuthenticationRequired());
     }
 } 

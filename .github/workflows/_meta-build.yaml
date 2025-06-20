@@ -11,6 +11,10 @@ on:
         required: false
         default: false
         description: "publish and scan the container image once its built"
+      ref-name:
+        type: string
+        required: true
+        description: "Short ref name of the branch or tag that triggered the workflow run"
     secrets:
       registry-0-usr:
         required: true
@@ -24,34 +28,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # tag=v4.1.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # tag=v4.2.2
 
       - name: Set up JDK
-        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # tag=v3.13.0
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # tag=v4.7.1
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'maven'
 
       - name: Setup CycloneDX CLI
         run: |
           mkdir -p "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          wget -O "$HOME/.local/bin/cyclonedx" https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.24.2/cyclonedx-linux-x64
-          echo "ef0d3b31d176e02bc594f83e19cfcea053c6bc5b197351f71696e189390f851d $HOME/.local/bin/cyclonedx" | sha256sum -c
+          wget -O "$HOME/.local/bin/cyclonedx" https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.26.0/cyclonedx-linux-x64
+          echo "207c82fbbaed96642a033a4da1c20eb4c6d4b53acccf37619c8d4183803ccbf4 $HOME/.local/bin/cyclonedx" | sha256sum -c
           chmod +x "$HOME/.local/bin/cyclonedx"
 
       - name: Build with Maven
         run: |-
-          mvn clean
-          mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
-          mvn clean -P clean-exclude-wars
-          mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
-          mvn clean -P clean-exclude-wars
-          mvn cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
+          mvn -B package -P quick -P enhance -P embedded-jetty -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
+          mvn -B clean -P clean-exclude-wars
+          mvn -B package -P quick -P enhance -P embedded-jetty -P bundle-ui -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
+          mvn -B clean -P clean-exclude-wars
+          mvn -B cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # tag=v3.1.3
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # tag=v4.6.2
         with:
           name: assembled-wars
           path: |-
@@ -74,25 +77,25 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # tag=v4.1.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # tag=v4.2.2
 
       - name: Download Artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # tag=v3.0.2
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # tag=v4.3.0
         with:
           name: assembled-wars
           path: target
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # tag=v3.0.0
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # tag=v3.6.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # tag=v3.0.0
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # tag=v3.10.0
         id: buildx
         with:
           install: true
 
       - name: Login to Docker.io
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # tag=v3.0.0
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # tag=v3.4.0
         if: ${{ inputs.publish-container }}
         with:
           registry: docker.io
@@ -102,14 +105,27 @@ jobs:
       - name: Set Container Tags
         id: tags
         run: |-
-          TAGS="docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}"
-          if [[ "${{ inputs.app-version }}" != "snapshot" ]]; then
-            TAGS="${TAGS},docker.io/dependencytrack/${{ matrix.distribution }}:latest"
+          IMAGE_NAME="docker.io/dependencytrack/${{ matrix.distribution }}"
+          REF_NAME="${{ inputs.ref-name }}"
+          TAGS=""
+          TAGS_ALPINE=""
+          
+          if [[ $REF_NAME == feature-* ]]; then
+            TAGS="${IMAGE_NAME}:${REF_NAME,,}"
+            TAGS_ALPINE="${IMAGE_NAME}:${REF_NAME,,}-alpine"
+          else
+            TAGS="${IMAGE_NAME}:${{ inputs.app-version }}"
+            TAGS_ALPINE="${IMAGE_NAME}:${{ inputs.app-version }}-alpine"
+            if [[ "${{ inputs.app-version }}" != "snapshot" ]]; then
+              TAGS="${TAGS},${IMAGE_NAME}:latest"
+              TAGS_ALPINE="${TAGS_ALPINE},${IMAGE_NAME}:latest-alpine"
+            fi
           fi
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "tags-alpine=${TAGS_ALPINE}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # tag=v5.0.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # tag=v6.18.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
@@ -121,9 +137,26 @@ jobs:
           context: .
           file: src/main/docker/Dockerfile
 
+      - name: Build Alpine multi-arch Container Image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # tag=v6.18.0
+        with:
+          tags: ${{ steps.tags.outputs.tags-alpine }}
+          build-args: |-
+            APP_VERSION=${{ inputs.app-version }}
+            COMMIT_SHA=${{ github.sha }}
+            WAR_FILENAME=dependency-track-${{ matrix.distribution }}.jar
+          platforms: linux/amd64,linux/arm64
+          push: ${{ inputs.publish-container }}
+          context: .
+          file: src/main/docker/Dockerfile.alpine
+
       - name: Run Trivy Vulnerability Scanner
         if: ${{ inputs.publish-container }}
-        uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f # tag=0.12.0
+        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # tag=0.31.0
+        env:
+          # https://github.com/aquasecurity/trivy-action/issues/389
+          TRIVY_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-db:2"
+          TRIVY_JAVA_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-java-db:1"
         with:
           image-ref: docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
           format: 'sarif'
@@ -133,6 +166,6 @@ jobs:
 
       - name: Upload Trivy Scan Results to GitHub Security Tab
         if: ${{ inputs.publish-container }}
-        uses: github/codeql-action/upload-sarif@0116bc2df50751f9724a2e35ef1f24d22f90e4e1 # tag=v2.22.3
+        uses: github/codeql-action/upload-sarif@ce28f5bb42b7a9f2c824e633a3f6ee835bab6858 # tag=v3.29.0
         with:
           sarif_file: 'trivy-results.sarif'

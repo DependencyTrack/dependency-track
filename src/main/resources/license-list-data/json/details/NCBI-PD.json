@@ -1,0 +1,63 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "PUBLIC DOMAIN NOTICE\nNational Center for Biotechnology Information\n\nThis software is a \"United States Government Work\" under the terms of the\nUnited States Copyright Act.  It was written as part of the authors\u0027\nofficial duties as United States Government employees and thus cannot\nbe copyrighted.  This software is freely available to the public for\nuse. The National Library of Medicine and the U.S. Government have not\nplaced any restriction on its use or reproduction.\n\nAlthough all reasonable efforts have been taken to ensure the accuracy\nand reliability of the software and data, the NLM and the U.S.\nGovernment do not and cannot warrant the performance or results that\nmay be obtained by using this software or data. The NLM and the U.S.\nGovernment disclaim all warranties, express or implied, including\nwarranties of performance, merchantability or fitness for any\nparticular purpose.\n\nPlease cite the author in any work or product based on this material.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003ePUBLIC DOMAIN NOTICE\nNational Center for Biotechnology Information\n\n\u003c\u003cendOptional\u003e\u003e\n\u003c\u003cbeginOptional\u003e\u003eWith the exception of certain third-party files summarized below,\u003c\u003cendOptional\u003e\u003e this software\u003c\u003cbeginOptional\u003e\u003e /database\u003c\u003cendOptional\u003e\u003e is a \"United States Government Work\" under the terms of the United States Copyright Act. It was written as part of the \u003c\u003cvar;name\u003d\"author1\";original\u003d\"author\u0027s\";match\u003d\"authors\u0027|author\u0027s\"\u003e\u003e official duties as\u003c\u003cbeginOptional\u003e\u003e a\u003c\u003cendOptional\u003e\u003e United States Government \u003c\u003cvar;name\u003d\"employee\";original\u003d\"employees\";match\u003d\"employees|employee\"\u003e\u003e and thus cannot be copyrighted. This software\u003c\u003cbeginOptional\u003e\u003e /database\u003c\u003cendOptional\u003e\u003e is freely available to the public for use. The \u003c\u003cvar;name\u003d\"nlm\";original\u003d\"NLM\";match\u003d\"NLM|National Library of Medicine|National Library of Medicine \\(NLM\\)\"\u003e\u003e and the U.S. Government have not placed any restriction on its use or reproduction.\n\nAlthough all reasonable efforts have been taken to ensure the accuracy and reliability of the software and data, the NLM and the U.S. Government do not and cannot warrant the performance or results that may be obtained by using this software or data. The NLM and the U.S. Government disclaim all warranties, express or implied, including warranties of performance, merchantability or fitness for any particular purpose.\n\nPlease cite \u003c\u003cvar;name\u003d\"authors1\";original\u003d\"the author\";match\u003d\"the author|the authors|NCBI\"\u003e\u003e in any work or product based on this material.\n\n\u003c\u003cbeginOptional\u003e\u003eEXCEPTIONS (in all cases excluding NCBI-written makefiles):\n\n\u003clist of exceptions\u003e\n\nCopyright F.A.Q.\n\nQ. Our product makes use of the NCBI source code, and we made changes and additions to that version of the NCBI code to better fit it to our needs. Can we copyright the code, and how?\n\nA. You can copyright only the *changes* or the *additions* you made to the NCBI source code. You should identify unambiguously those sections of the code that were modified, e.g. by commenting any changes you made in the code you distribute. Therefore, your license has to make clear to users that your product is a combination of code that is public domain within the U.S. (but may be subject to copyright by the U.S. in foreign countries) and code that has been created or modified by you.\n\nQ. Can we (re)license all or part of the NCBI source code?\n\nA. No, you cannot license or relicense the source code written by NCBI since you cannot claim any copyright in the software that was developed at NCBI as a \u0027government work\u0027 and consequently is in the public domain within the U.S.\n\nQ. What if these copyright guidelines are not clear enough or are not applicable to my particular case?\n\nA. Contact us. Send your questions to \u0027\u003c \u003c\u003cvar;name\u003d\"email\";original\u003d\"email address\";match\u003d\".+\"\u003e\u003e \u003e\u0027.\n\n\u003c\u003cendOptional\u003e\u003e",
+  "name": "NCBI Public Domain Notice",
+  "licenseId": "NCBI-PD",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/ncbi/datasets/blob/0ea4cd16b61e5b799d9cc55aecfa016d6c9bd2bf/LICENSE.md",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:59:24Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/ncbi/sra-tools/blob/e8e5b6af4edc460156ad9ce5902d0779cffbf685/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:59:24Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/ncbi/egapx/blob/08930b9dec0c69b2d1a05e5153c7b95ef0a3eb0f/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:59:24Z",
+      "isWayBackLink": false,
+      "order": 3
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/ncbi/gprobe/blob/de64d30fee8b4c4013094d7d3139ea89b5dd1ace/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:59:24Z",
+      "isWayBackLink": false,
+      "order": 2
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/ncbi/datasets/blob/master/LICENSE.md",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:59:25Z",
+      "isWayBackLink": false,
+      "order": 4
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/ncbi/sra-tools/blob/e8e5b6af4edc460156ad9ce5902d0779cffbf685/LICENSE",
+    "https://github.com/ncbi/datasets/blob/0ea4cd16b61e5b799d9cc55aecfa016d6c9bd2bf/LICENSE.md",
+    "https://github.com/ncbi/gprobe/blob/de64d30fee8b4c4013094d7d3139ea89b5dd1ace/LICENSE",
+    "https://github.com/ncbi/egapx/blob/08930b9dec0c69b2d1a05e5153c7b95ef0a3eb0f/LICENSE",
+    "https://github.com/ncbi/datasets/blob/master/LICENSE.md"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"optional-license-text\"\u003e \n            \u003cp\u003ePUBLIC DOMAIN NOTICE\u003cbr /\u003e\nNational Center for Biotechnology Information\u003c/p\u003e\n\n         \u003c/div\u003e\n         \u003cp\u003e\u003cvar class\u003d\"optional-license-text\"\u003e With the exception of certain third-party files summarized below, \u003c/var\u003e\n            this software\u003cvar class\u003d\"optional-license-text\"\u003e /database\u003c/var\u003e is a \u0026quot;United States Government Work\u0026quot; under \n            the terms of the United States Copyright Act.  It was written as part of the \n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern authors\u0027|author\u0027s\"\u003e author\u0026apos;s\u003c/span\u003e\u003c/var\u003e official duties as \u003cvar class\u003d\"optional-license-text\"\u003e a\u003c/var\u003e\n            United States Government \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern employees|employee\"\u003e employees\u003c/span\u003e\u003c/var\u003e and \n            thus cannot be copyrighted.  \n            This software\u003cvar class\u003d\"optional-license-text\"\u003e /database\u003c/var\u003e is freely available to the public for use. \n            The \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern NLM|National Library of Medicine|National Library of Medicine \\(NLM\\)\"\u003e NLM\u003c/span\u003e\u003c/var\u003e \n            and the U.S. Government have not placed any restriction on its use or reproduction.\u003c/p\u003e\n\n         \u003cp\u003eAlthough all reasonable efforts have been taken to ensure the accuracy and reliability \n            of the software and data, the NLM and the U.S. Government do not and cannot warrant \n            the performance or results that may be obtained by using this software or data. \n           The NLM and the U.S. Government disclaim all warranties, express or implied, including \n            warranties of performance, merchantability or fitness for any particular purpose.\u003c/p\u003e\n\n         \u003cp\u003ePlease cite \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern the author|the authors|NCBI\"\u003e the author\u003c/span\u003e\u003c/var\u003e in \n            any work or product based on this material.\u003c/p\u003e\n\n         \u003cdiv class\u003d\"optional-license-text\"\u003e \n            \u003cp\u003eEXCEPTIONS (in all cases excluding NCBI-written makefiles):\u003c/p\u003e\n\n            \u003cp\u003e\u0026lt;list of exceptions\u0026gt;\u003c/p\u003e\n\n            \u003cp\u003eCopyright F.A.Q.\u003c/p\u003e\n\n            \u003cp\u003eQ. Our product makes use of the NCBI source code, and we made changes and additions to that version of the NCBI code to better fit it to our needs. Can we copyright the code, and how?\u003c/p\u003e\n\n            \u003cp\u003eA. You can copyright only the *changes* or the *additions* you made to the NCBI source code. You should identify unambiguously those sections of the code that were modified, e.g. by commenting any changes you made in the code you distribute. Therefore, your license has to make clear to users that your product is a combination of code that is public domain within the U.S. (but may be subject to copyright by the U.S. in foreign countries) and code that has been created or modified by you.\u003c/p\u003e\n\n            \u003cp\u003eQ. Can we (re)license all or part of the NCBI source code?\u003c/p\u003e\n\n            \u003cp\u003eA. No, you cannot license or relicense the source code written by NCBI since you cannot claim any copyright in the software that was developed at NCBI as a \u0026apos;government work\u0026apos; and consequently is in the public domain within the U.S.\u003c/p\u003e\n\n            \u003cp\u003eQ. What if these copyright guidelines are not clear enough or are not applicable to my particular case?\u003c/p\u003e\n\n            \u003cp\u003eA. Contact us. Send your questions to \u0026apos;\u0026lt;\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e email address\u003c/span\u003e\u003c/var\u003e\u0026gt;\u0026apos;.\u003c/p\u003e\n\n         \u003c/div\u003e\n      "
+}

@@ -14,31 +14,31 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.event;
 
 import org.dependencytrack.model.Component;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-public class RepositoryMetaEventTest {
+class RepositoryMetaEventTest {
 
     @Test
-    public void testDefaultConstructor() {
+    void testDefaultConstructor() {
         RepositoryMetaEvent event = new RepositoryMetaEvent();
-        Assert.assertEquals(Optional.empty(), event.getComponents());
+        Assertions.assertEquals(Optional.empty(), event.getComponents());
     }
 
     @Test
-    public void testComponentConstructor() {
+    void testComponentConstructor() {
         List<Component> components = new LinkedList<>();
         Component component = new Component();
         components.add(component);
         RepositoryMetaEvent event = new RepositoryMetaEvent(components);
-        Assert.assertEquals(components, event.getComponents().get());
+        Assertions.assertEquals(components, event.getComponents().get());
     }
 }

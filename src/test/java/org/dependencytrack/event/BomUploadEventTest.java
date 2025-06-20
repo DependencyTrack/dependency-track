@@ -14,37 +14,24 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.event;
 
-import alpine.common.util.SystemUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import org.dependencytrack.model.Project;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.util.UUID;
-
-public class BomUploadEventTest {
+class BomUploadEventTest {
 
     @Test
-    public void testByteArrayConstructor() {
-        UUID uuid = UUID.randomUUID();
+    void testByteArrayConstructor() {
+        var project = new Project();
         byte[] bom = "testing".getBytes();
-        BomUploadEvent event = new BomUploadEvent(uuid, bom);
-        Assert.assertEquals(uuid, event.getProjectUuid());
-        Assert.assertNotEquals(bom, event.getBom()); // should be a cloned byte array - not the same reference
-        Assert.assertTrue(event.getBom().length > 0);
-        Assert.assertNull(event.getFile());
+        BomUploadEvent event = new BomUploadEvent(project, bom);
+        Assertions.assertEquals(project, event.getProject());
+        Assertions.assertNotEquals(bom, event.getBom()); // should be a cloned byte array - not the same reference
+        Assertions.assertTrue(event.getBom().length > 0);
     }
 
-    @Test
-    public void testFileConstructor() {
-        UUID uuid = UUID.randomUUID();
-        File bitBucket = new File(SystemUtil.getBitBucket());
-        BomUploadEvent event = new BomUploadEvent(uuid, bitBucket);
-        Assert.assertEquals(uuid, event.getProjectUuid());
-        Assert.assertEquals(bitBucket, event.getFile());
-        Assert.assertNull(event.getBom());
-    }
 }

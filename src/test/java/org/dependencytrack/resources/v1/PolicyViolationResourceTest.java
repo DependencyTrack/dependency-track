@@ -14,49 +14,49 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.model.ConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ViolationAnalysis;
+import org.dependencytrack.model.ViolationAnalysisState;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PolicyViolationResourceTest extends ResourceTest {
+class PolicyViolationResourceTest extends ResourceTest {
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                        new ResourceConfig(PolicyViolationResource.class)
-                                .register(ApiFilter.class)
-                                .register(AuthenticationFilter.class)
-                                .register(AuthorizationFilter.class)))
-                .build();
-    }
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(PolicyViolationResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class)
+                    .register(AuthorizationFilter.class));
 
     @Test
-    public void getViolationsTest() {
+    void getViolationsTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -77,7 +77,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violation.setTimestamp(new Date());
         violation = qm.persist(violation);
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -98,8 +98,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsUnauthorizedTest() {
-        final Response response = target(V1_POLICY_VIOLATION)
+    void getViolationsUnauthorizedTest() {
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -108,7 +108,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByProjectTest() {
+    void getViolationsByProjectTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -119,11 +119,11 @@ public class PolicyViolationResourceTest extends ResourceTest {
         component0.setVersion("1.0");
         component0 = qm.createComponent(component0, false);
 
-        var component1 = new Component();
-        component1.setProject(project);
-        component1.setName("Acme Component 1");
-        component1.setVersion("1.0");
-        component1 = qm.createComponent(component1, false);
+        var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("Acme Component 1");
+        componentA.setVersion("1.0");
+        componentA = qm.createComponent(componentA, false);
 
         final Policy policy0 = qm.createPolicy("Blacklisted Version 0", Policy.Operator.ALL, Policy.ViolationState.FAIL);
         final PolicyCondition condition0 = qm.createPolicyCondition(policy0, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
@@ -138,7 +138,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
 
             var violation = new PolicyViolation();
             violation.setType(PolicyViolation.Type.OPERATIONAL);
-            violation.setComponent(componentFilter ? component0 : component1);
+            violation.setComponent(componentFilter ? component0 : componentA);
             violation.setPolicyCondition(conditionFilter ? condition0 : condition1);
             violation.setTimestamp(new Date());
             violation = qm.persist(violation);
@@ -148,7 +148,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
             }
         }
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .queryParam("searchText", "0")
                 .path("/project/" + project.getUuid())
                 .request()
@@ -180,7 +180,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByProjectIssue2766() {
+    void getViolationsByProjectIssue2766() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project projectA = qm.createProject("acme-app-a", null, "1.0", null, null, null, true, false);
@@ -207,7 +207,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         qm.persist(violation);
 
         // Requesting violations for projectB must not yield violations for projectA.
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/project/" + projectB.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -220,8 +220,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByProjectUnauthorizedTest() {
-        final Response response = target(V1_POLICY_VIOLATION)
+    void getViolationsByProjectUnauthorizedTest() {
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/project/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -231,10 +231,10 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByProjectNotFoundTest() {
+    void getViolationsByProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/project/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -245,7 +245,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByComponentTest() {
+    void getViolationsByComponentTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -266,7 +266,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violation.setTimestamp(new Date());
         violation = qm.persist(violation);
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/component/" + component.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -287,8 +287,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByComponentUnauthorizedTest() {
-        final Response response = target(V1_POLICY_VIOLATION)
+    void getViolationsByComponentUnauthorizedTest() {
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/component/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -298,10 +298,10 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getViolationsByComponentNotFoundTest() {
+    void getViolationsByComponentNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
-        final Response response = target(V1_POLICY_VIOLATION)
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
                 .path("/component/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -311,4 +311,348 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(getPlainTextBody(response)).contains("component could not be found");
     }
 
+    @Test
+    void getViolationsWithAclEnabledTest() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+
+        final Project projectA = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        final Project projectA_child = qm.createProject("Acme Example - Child", null, "1.0", null, projectA, null, true, false);
+        final Project projectB = qm.createProject("Acme Example - Grandchild", null, "1.0", null, null, null, true, false);
+
+        projectA.addAccessTeam(team);
+
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Acme Component");
+        componentA.setVersion("1.0");
+        componentA = qm.createComponent(componentA, false);
+
+        var componentB = new Component();
+        componentB.setProject(projectA_child);
+        componentB.setName("Acme Component");
+        componentB.setVersion("1.0");
+        componentB = qm.createComponent(componentB, false);
+
+        var componentC = new Component();
+        componentC.setProject(projectB);
+        componentC.setName("Acme Component");
+        componentC.setVersion("1.0");
+        componentC = qm.createComponent(componentC, false);
+
+        var componentD = new Component();
+        componentD.setProject(projectA);
+        componentD.setName("Acme Component");
+        componentD.setVersion("1.0");
+        componentD = qm.createComponent(componentA, false);
+
+        final Policy policy = qm.createPolicy("Blacklisted Version", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+
+        var violationA = new PolicyViolation();
+        violationA.setType(PolicyViolation.Type.OPERATIONAL);
+        violationA.setComponent(componentA);
+        violationA.setPolicyCondition(condition);
+        violationA.setTimestamp(new Date());
+        violationA = qm.persist(violationA);
+
+        var violationB = new PolicyViolation();
+        violationB.setType(PolicyViolation.Type.OPERATIONAL);
+        violationB.setComponent(componentB);
+        violationB.setPolicyCondition(condition);
+        violationB.setTimestamp(new Date());
+        violationB = qm.persist(violationB);
+
+        var violationC = new PolicyViolation();
+        violationC.setType(PolicyViolation.Type.OPERATIONAL);
+        violationC.setComponent(componentC);
+        violationC.setPolicyCondition(condition);
+        violationC.setTimestamp(new Date());
+        violationC = qm.persist(violationC);
+
+        var violationD = new PolicyViolation();
+        violationD.setType(PolicyViolation.Type.OPERATIONAL);
+        violationD.setComponent(componentD);
+        violationD.setPolicyCondition(condition);
+        violationD.setTimestamp(new Date());
+        violationD = qm.persist(violationD);
+
+        final Response responseA = jersey.target(V1_POLICY_VIOLATION)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseA.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+        assertThat(parseJsonArray(responseA)).hasSize(4);
+
+        ConfigProperty aclToggle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToggle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToggle.setPropertyValue("true");
+            qm.persist(aclToggle);
+        }
+
+        final Response responseB = jersey.target(V1_POLICY_VIOLATION)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseB.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseB.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("2");
+
+        final JsonArray jsonArray = parseJsonArray(responseB);
+        assertThat(jsonArray).hasSize(2);
+
+        final JsonObject jsonObjectA = jsonArray.getJsonObject(0);
+        assertThat(jsonObjectA.getString("uuid")).isEqualTo(violationD.getUuid().toString());
+        assertThat(jsonObjectA.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObjectA.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObjectA.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObjectA.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObjectA.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
+        assertThat(jsonObjectA.getJsonObject("project").getString("uuid")).isEqualTo(projectA.getUuid().toString());
+
+        final JsonObject jsonObjectB = jsonArray.getJsonObject(1);
+        assertThat(jsonObjectB.getString("uuid")).isEqualTo(violationA.getUuid().toString());
+        assertThat(jsonObjectB.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObjectB.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObjectB.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObjectB.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObjectB.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
+        assertThat(jsonObjectB.getJsonObject("project").getString("uuid")).isEqualTo(projectA.getUuid().toString());
+    }
+
+    @Test
+    void getViolationsWithArrayFilter() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+        
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        final Policy policyA = qm.createPolicy("Policy A", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition conditionA = qm.createPolicyCondition(policyA, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationA = new PolicyViolation();
+        violationA.setType(PolicyViolation.Type.OPERATIONAL);
+        violationA.setComponent(component);
+        violationA.setPolicyCondition(conditionA);
+        violationA.setTimestamp(new Date());
+        violationA = qm.persist(violationA);
+
+        final Policy policyB = qm.createPolicy("Policy B", Policy.Operator.ALL, Policy.ViolationState.INFO);
+        final PolicyCondition conditionB = qm.createPolicyCondition(policyB, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, "unresolved");
+        var violationB = new PolicyViolation();
+        violationB.setType(PolicyViolation.Type.LICENSE);
+        violationB.setComponent(component);
+        violationB.setPolicyCondition(conditionB);
+        violationB.setTimestamp(new Date());
+        violationB = qm.persist(violationB);
+
+        final Policy policyC = qm.createPolicy("Policy C", Policy.Operator.ALL, Policy.ViolationState.INFO);
+        final PolicyCondition conditionC = qm.createPolicyCondition(policyC, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        ViolationAnalysis violationAnalysis = new ViolationAnalysis();
+        violationAnalysis.setViolationAnalysisState(ViolationAnalysisState.REJECTED);
+        var violationC = new PolicyViolation();
+        violationC.setType(PolicyViolation.Type.OPERATIONAL);
+        violationC.setComponent(component);
+        violationC.setPolicyCondition(conditionC);
+        violationC.setTimestamp(new Date());
+        violationC.setAnalysis(violationAnalysis);
+        violationAnalysis.setPolicyViolation(violationC);
+        violationC = qm.persist(violationC);
+
+        final Policy policyD = qm.createPolicy("Policy D", Policy.Operator.ALL, Policy.ViolationState.INFO);
+        final PolicyCondition conditionD = qm.createPolicyCondition(policyD, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationD = new PolicyViolation();
+        violationD.setType(PolicyViolation.Type.OPERATIONAL);
+        violationD.setComponent(component);
+        violationD.setPolicyCondition(conditionD);
+        violationD.setTimestamp(new Date());
+        violationD = qm.persist(violationD);
+
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+        assertThat(parseJsonArray(response)).hasSize(4);
+
+        final Response responseA = jersey.target(V1_POLICY_VIOLATION).queryParam("violationState", "FAIL")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseA.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayA = parseJsonArray(responseA);
+        assertThat(jsonArrayA).hasSize(1);
+        assertThat(jsonArrayA.getJsonObject(0).getString("uuid")).isEqualTo(violationA.getUuid().toString());
+
+
+        final Response responseB = jersey.target(V1_POLICY_VIOLATION).queryParam("riskType", "LICENSE")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseB.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseB.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayB = parseJsonArray(responseB);
+        assertThat(jsonArrayB).hasSize(1);
+        assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
+        assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
+
+        final Response responseC = jersey.target(V1_POLICY_VIOLATION).queryParam("analysisState", "REJECTED")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseC.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseC.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayC = parseJsonArray(responseC);
+        assertThat(jsonArrayC).hasSize(1);
+        assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
+        assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
+
+        final Response responseD = jersey.target(V1_POLICY_VIOLATION).queryParam("policy", policyD.getUuid().toString())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseD.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseD.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayD = parseJsonArray(responseD);
+        assertThat(jsonArrayD).hasSize(1);
+        assertThat(jsonArrayD.getJsonObject(0).getString("uuid")).isEqualTo(violationD.getUuid().toString());
+        assertThat(jsonArrayD.getJsonObject(0).getString("uuid")).isEqualTo(violationD.getUuid().toString());
+    }
+
+    @Test
+    void getViolationsWithInputFilter() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        final Project projectC = qm.createProject("Project C", null, "1.0", null, null, null, true, false);
+        final Project projectD = qm.createProject("Project D", null, "1.0", null, null, null, true, false);
+
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA.setVersion("1.0");
+        componentA.setLicense("License A");
+        componentA = qm.createComponent(componentA, false);
+        
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB.setVersion("1.0");
+        componentB.setLicense("License B");
+        componentB = qm.createComponent(componentB, false);
+
+        var componentC = new Component();
+        componentC.setProject(projectC);
+        componentC.setName("Component C");
+        componentC.setVersion("1.0");
+        componentC.setLicense("License C");
+        componentC = qm.createComponent(componentC, false);
+
+        var componentD = new Component();
+        componentD.setProject(projectD);
+        componentD.setName("Component D");
+        componentD.setVersion("1.0");
+        componentD.setLicense("License D");
+        componentD = qm.createComponent(componentD, false);
+
+        final Policy policyA = qm.createPolicy("Policy A", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition conditionA = qm.createPolicyCondition(policyA, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationA = new PolicyViolation();
+        violationA.setType(PolicyViolation.Type.OPERATIONAL);
+        violationA.setComponent(componentA);
+        violationA.setPolicyCondition(conditionA);
+        violationA.setTimestamp(new Date());
+        violationA = qm.persist(violationA);
+
+        final Policy policyB = qm.createPolicy("Policy B", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition conditionB = qm.createPolicyCondition(policyB, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationB = new PolicyViolation();
+        violationB.setType(PolicyViolation.Type.OPERATIONAL);
+        violationB.setComponent(componentB);
+        violationB.setPolicyCondition(conditionB);
+        violationB.setTimestamp(new Date());
+        violationB = qm.persist(violationB);
+
+        final Policy policyC = qm.createPolicy("Policy C", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition conditionC = qm.createPolicyCondition(policyC, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationC = new PolicyViolation();
+        violationC.setType(PolicyViolation.Type.OPERATIONAL);
+        violationC.setComponent(componentC);
+        violationC.setPolicyCondition(conditionC);
+        violationC.setTimestamp(new Date());
+        violationC = qm.persist(violationC);
+
+        final Policy policyD = qm.createPolicy("Policy D", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition conditionD = qm.createPolicyCondition(policyD, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        var violationD = new PolicyViolation();
+        violationD.setType(PolicyViolation.Type.OPERATIONAL);
+        violationD.setComponent(componentD);
+        violationD.setPolicyCondition(conditionD);
+        violationD.setTimestamp(new Date());
+        violationD = qm.persist(violationD);
+
+        final Response response = jersey.target(V1_POLICY_VIOLATION)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+        assertThat(parseJsonArray(response)).hasSize(4);
+
+        final Response responseA = jersey.target(V1_POLICY_VIOLATION)
+                .queryParam("textSearchField", "policy_name")
+                .queryParam("textSearchInput", "Policy A")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseA.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayA = parseJsonArray(responseA);
+        assertThat(jsonArrayA).hasSize(1);
+        assertThat(jsonArrayA.getJsonObject(0).getString("uuid")).isEqualTo(violationA.getUuid().toString());
+
+        final Response responseB = jersey.target(V1_POLICY_VIOLATION)
+                .queryParam("textSearchField", "component")
+                .queryParam("textSearchInput", "Component B")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseB.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseB.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayB = parseJsonArray(responseB);
+        assertThat(jsonArrayB).hasSize(1);
+        assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
+
+        final Response responseC = jersey.target(V1_POLICY_VIOLATION)
+                .queryParam("textSearchField", "license")
+                .queryParam("textSearchInput", "License C")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseC.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseC.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayC = parseJsonArray(responseC);
+        assertThat(jsonArrayC).hasSize(1);
+        assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
+
+        final Response responseD = jersey.target(V1_POLICY_VIOLATION)
+                .queryParam("textSearchField", "project_name")
+                .queryParam("textSearchInput", "Project D")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(responseD.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(responseD.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final JsonArray jsonArrayD = parseJsonArray(responseD);
+        assertThat(jsonArrayD).hasSize(1);
+        assertThat(jsonArrayD.getJsonObject(0).getString("uuid")).isEqualTo(violationD.getUuid().toString());
+    }
 }

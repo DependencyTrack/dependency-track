@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "* Copyright 1995, 1996 by David Mazieres \u003cdm@lcs.mit.edu\u003e.\n*\n* Modification and redistribution in source and binary forms is\n* permitted provided that due credit is given to the author and the\n* OpenBSD project by leaving this copyright notice intact.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1995, 1996 by David Mazieres \u003cdm@lcs.mit.edu\u003e.\";match\u003d\".{0,5000}\"\u003e\u003e\nModification and redistribution in source and binary forms is permitted provided that due credit is given to the author and the OpenBSD project by leaving this copyright notice intact.\n\n",
+  "name": "ssh-keyscan License",
+  "licenseId": "ssh-keyscan",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/openssh/openssh-portable/blob/master/LICENCE#L82",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:00:04Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/openssh/openssh-portable/blob/master/LICENCE#L82"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n               \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n                  Copyright 1995, 1996 by David Mazieres \u0026lt;dm@lcs.mit.edu\u0026gt;.\n               \u003c/span\u003e\u003c/var\u003e\n               \u003cp\u003e\n                  Modification and redistribution in source and binary forms is\n                  permitted provided that due credit is given to the author and\n                  the OpenBSD project by leaving this copyright notice intact.\n               \u003c/p\u003e\n\n      "
+}

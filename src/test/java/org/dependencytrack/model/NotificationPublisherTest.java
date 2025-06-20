@@ -14,71 +14,71 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-public class NotificationPublisherTest { 
+class NotificationPublisherTest {
 
     @Test
-    public void testId() {
+    void testId() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setId(111L);
-        Assert.assertEquals(111L, publisher.getId());
+        Assertions.assertEquals(111L, publisher.getId());
     } 
 
     @Test
-    public void testName() {
+    void testName() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setName("My Publisher");
-        Assert.assertEquals("My Publisher", publisher.getName());
+        Assertions.assertEquals("My Publisher", publisher.getName());
     } 
 
     @Test
-    public void testDescription() {
+    void testDescription() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setDescription("My description");
-        Assert.assertEquals("My description", publisher.getDescription());
+        Assertions.assertEquals("My description", publisher.getDescription());
     } 
 
     @Test
-    public void testPublisherClass() {
+    void testPublisherClass() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setPublisherClass("org.acme.publisher");
-        Assert.assertEquals("org.acme.publisher", publisher.getPublisherClass());
+        Assertions.assertEquals("org.acme.publisher", publisher.getPublisherClass());
     } 
 
     @Test
-    public void testTemplate() {
+    void testTemplate() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setTemplate("{ \"config\": \"configured\" }");
-        Assert.assertEquals("{ \"config\": \"configured\" }", publisher.getTemplate());
+        Assertions.assertEquals("{ \"config\": \"configured\" }", publisher.getTemplate());
     } 
 
     @Test
-    public void testTemplateMimeType() {
+    void testTemplateMimeType() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setTemplateMimeType("application/json");
-        Assert.assertEquals("application/json", publisher.getTemplateMimeType());
+        Assertions.assertEquals("application/json", publisher.getTemplateMimeType());
     } 
 
     @Test
-    public void testDefaultPublisher() {
+    void testDefaultPublisher() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setDefaultPublisher(true);
-        Assert.assertTrue(publisher.isDefaultPublisher());
+        Assertions.assertTrue(publisher.isDefaultPublisher());
     } 
 
     @Test
-    public void testUuid() {
+    void testUuid() {
         UUID uuid = UUID.randomUUID();
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setUuid(uuid);
-        Assert.assertEquals(uuid.toString(), publisher.getUuid().toString());
+        Assertions.assertEquals(uuid.toString(), publisher.getUuid().toString());
     } 
 }

@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright 1989-2019 by Donald Arseneau (Vancouver, Canada, asnd@triumf.ca)\n\nThis software may be freely transmitted, reproduced, or modified\nfor any purpose provided that this copyright notice is left intact.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1989-2019 by Donald Arseneau (Vancouver, Canada, asnd@triumf.ca)\";match\u003d\".{0,5000}\"\u003e\u003e\n\u003c\u003cvar;name\u003d\"software\";original\u003d\"This software\";match\u003d\"This software|These macros\"\u003e\u003e may be freely transmitted, reproduced, or modified for any purpose provided that this\u003c\u003cbeginOptional\u003e\u003e copyright\u003c\u003cendOptional\u003e\u003e notice is left intact.\n\n",
+  "name": "ulem License",
+  "licenseComments": "This license is a very similar to fwlw and magaz, but has slightly different obligations.",
+  "comment": "This license is a very similar to fwlw and magaz, but has slightly different obligations.",
+  "licenseId": "ulem",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://mirrors.ctan.org/macros/latex/contrib/ulem/README",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:01:34Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://mirrors.ctan.org/macros/latex/contrib/ulem/README"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright 1989-2019 by Donald Arseneau (Vancouver, Canada, asnd@triumf.ca)\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern This software|These macros\"\u003e This software\u003c/span\u003e\u003c/var\u003e may be freely transmitted, reproduced, or modified\n            for any purpose provided that this \u003cvar class\u003d\"optional-license-text\"\u003e copyright\u003c/var\u003e notice is left intact.\n         \u003c/p\u003e\n\n      "
+}

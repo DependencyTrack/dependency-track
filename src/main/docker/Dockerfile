@@ -1,9 +1,22 @@
-FROM eclipse-temurin:21_35-jre-jammy@sha256:a755ee9dd8e82abe91e748cdea4835a7b3dafa8e4635842654f093c313751182 AS jre-build
-
-FROM debian:stable-slim@sha256:8cfbea7c925801b678943e59e3ae6fc5b925e8bfe0243f4e724e180edb5aabcd
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
 
 # Arguments that can be passed at build time
-# Directory names must end with / to avoid errors when ADDing and COPYing
+# Directory names must end with / to avoid errors when COPYing
 ARG COMMIT_SHA=unknown
 ARG APP_VERSION=0.0.0
 ARG APP_DIR=/opt/owasp/dependency-track/
@@ -12,11 +25,23 @@ ARG UID=1000
 ARG GID=1000
 ARG WAR_FILENAME=dependency-track-apiserver.jar
 
+FROM eclipse-temurin:21.0.7_6-jre-jammy@sha256:2342b26a599c84bc01fb940977c44dd9aff97ab7ae64dcb8ee762fda65198126 AS jre-build
+
+FROM debian:stable-slim@sha256:50db38a20a279ccf50761943c36f9e82378f92ef512293e1239b26bb77a8b496
+
+ARG COMMIT_SHA
+ARG APP_VERSION
+ARG APP_DIR
+ARG DATA_DIR
+ARG UID
+ARG GID
+ARG WAR_FILENAME
+
 ENV TZ=Etc/UTC \
     # Dependency-Track's default logging level
     LOGGING_LEVEL=INFO \
     # JVM Options that are passed at runtime by default
-    JAVA_OPTIONS="-XX:+UseParallelGC -XX:MaxRAMPercentage=90.0" \
+    JAVA_OPTIONS="-XX:+UseParallelGC -XX:+UseStringDeduplication -XX:MaxRAMPercentage=90.0" \
     # JVM Options that can be passed at runtime, while maintaining also those set in JAVA_OPTIONS
     EXTRA_JAVA_OPTIONS="" \
     # The web context defaults to the root. To override, supply an alternative context which starts with a / but does not end with one
@@ -73,7 +98,7 @@ CMD exec java ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=30s --timeout=3s CMD wget --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
+HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD wget -t 1 -T 3 --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
 
 # metadata labels
 LABEL \

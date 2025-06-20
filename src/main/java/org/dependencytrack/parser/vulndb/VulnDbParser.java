@@ -14,9 +14,18 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.vulndb;
+
+import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.parser.vulndb.model.ApiObject;
@@ -39,15 +48,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 /*
  * Model class needed by VulnDBAnalysis task. Class brought over from the vulndb-data-mirror repo:
@@ -127,7 +127,7 @@ public class VulnDbParser {
     private List<Cpe> parseCpes(JSONArray rso) {
         List<Cpe> cpes = null;
         if (rso != null) {
-            cpes = new ArrayList();
+            cpes = new ArrayList<>();
 
             for (int i = 0; i < rso.length(); ++i) {
                 JSONObject object = rso.getJSONObject(i);
@@ -142,7 +142,7 @@ public class VulnDbParser {
     private List<Product> parseProducts(JSONArray rso) {
         List<Product> products = null;
         if (rso != null) {
-            products = new ArrayList();
+            products = new ArrayList<>();
 
             for (int i = 0; i < rso.length(); ++i) {
                 JSONObject object = rso.getJSONObject(i);
@@ -159,7 +159,7 @@ public class VulnDbParser {
     private List<Vendor> parseVendors(JSONArray rso) {
         List<Vendor> vendors = null;
         if (rso != null) {
-            vendors = new ArrayList();
+            vendors = new ArrayList<>();
 
             for (int i = 0; i < rso.length(); ++i) {
                 JSONObject object = rso.getJSONObject(i);
@@ -189,7 +189,7 @@ public class VulnDbParser {
     private List<Version> parseVersions(JSONArray rso) {
         List<Version> versions = null;
         if (rso != null) {
-            versions = new ArrayList();
+            versions = new ArrayList<>();
 
             for (int i = 0; i < rso.length(); ++i) {
                 JSONObject object = rso.getJSONObject(i);
@@ -207,7 +207,7 @@ public class VulnDbParser {
     private List<Vulnerability> parseVulnerabilities(JSONArray rso) {
         List<Vulnerability> vulnerabilities = null;
         if (rso != null) {
-            vulnerabilities = new ArrayList();
+            vulnerabilities = new ArrayList<>();
 
             for (int i = 0; i < rso.length(); ++i) {
                 JSONObject object = rso.getJSONObject(i);
@@ -291,8 +291,8 @@ public class VulnDbParser {
                                 jso.optBigDecimal("score", (BigDecimal) null),
                                 StringUtils.trimToNull(jso.optString("privileges_required", (String) null)),
                                 StringUtils.trimToNull(jso.optString("user_interaction", (String) null)),
-                                StringUtils.trimToNull(jso.optString("cve_id", (String) null)),
                                 StringUtils.trimToNull(jso.optString("source", (String) null)),
+                                StringUtils.trimToNull(jso.optString("cve_id", (String) null)),
                                 StringUtils.trimToNull(jso.optString("confidentiality_impact", (String) null)),
                                 jso.optBigDecimal("calculated_cvss_base_score", (BigDecimal) null),
                                 StringUtils.trimToNull(jso.optString("generated_on", (String) null)),
@@ -305,7 +305,7 @@ public class VulnDbParser {
                 JSONArray nvdInfo = object.optJSONArray("nvd_additional_information");
                // List<NvdAdditionalInfo> nvdAdditionalInfos = new ArrayList<>();
                 NvdAdditionalInfo nvdAdditionalInfo = null;
-                if (nvdInfo != null) {
+                if (nvdInfo != null && nvdInfo.length() > 0) {
 //                    for (int j = 0; j < nvdInfo.length(); ++j) {
 //                        JSONObject jso = nvdInfo.getJSONObject(j);
 //                        NvdAdditionalInfo nvdAdditionalInfo = new NvdAdditionalInfo(StringUtils.trimToNull(jso.optString("summary", (String) null)),
@@ -329,6 +329,7 @@ public class VulnDbParser {
                         StringUtils.trimToNull(object.optString("short_description", (String) null)),
                         StringUtils.trimToNull(object.optString("description", (String) null)),
                         StringUtils.trimToNull(object.optString("solution", (String) null)),
+                        StringUtils.trimToNull(object.optString("vulndb_last_modified", (String) null)),
                         StringUtils.trimToNull(object.optString("manual_notes", (String) null)),
                         StringUtils.trimToNull(object.optString("t_description", (String) null)),
                         StringUtils.trimToNull(object.optString("solution_date", (String) null)),

@@ -14,17 +14,21 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks;
 
 import alpine.Config;
 import alpine.common.logging.Logger;
+import alpine.common.metrics.Metrics;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
-import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
@@ -34,14 +38,20 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.EpssMirrorEvent;
+import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.event.NistApiMirrorEvent;
 import org.dependencytrack.event.NistMirrorEvent;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.listener.IndexingInstanceLifecycleListener;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -50,13 +60,24 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
+import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
+import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
+import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_DOWNLOAD_FEEDS;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_FEEDS_URL;
 
@@ -66,7 +87,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NistMirrorTask implements LoggableSubscriber {
+public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSubscriber {
 
     private enum ResourceType {
         CVE_YEAR_DATA,
@@ -77,7 +98,7 @@ public class NistMirrorTask implements LoggableSubscriber {
         NONE // DO NOT PARSE THIS TYPE
     }
 
-    public static final String NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
+    public static final Path DEFAULT_NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().toPath().resolve("nist").toAbsolutePath();
     private static final String CVE_JSON_11_MODIFIED_URL = "/json/cve/1.1/nvdcve-1.1-modified.json.gz";
     private static final String CVE_JSON_11_BASE_URL = "/json/cve/1.1/nvdcve-1.1-%d.json.gz";
     private static final String CVE_JSON_11_MODIFIED_META = "/json/cve/1.1/nvdcve-1.1-modified.meta";
@@ -86,24 +107,63 @@ public class NistMirrorTask implements LoggableSubscriber {
     private final int endYear = Calendar.getInstance().get(Calendar.YEAR);
 
     private final boolean isEnabled;
+    private final boolean isApiEnabled;
+    private final boolean isApiDownloadFeeds;
     private String nvdFeedsUrl;
     private File outputDir;
     private long metricParseTime;
     private long metricDownloadTime;
 
     private static final Logger LOGGER = Logger.getLogger(NistMirrorTask.class);
+    private static final Retry RETRY;
 
+    static {
+        final RetryRegistry retryRegistry = RetryRegistry.of(RetryConfig.<CloseableHttpResponse>custom()
+                .intervalFunction(ofExponentialBackoff(
+                        /* initialInterval */ Duration.ofSeconds(1),
+                        /* multiplier */ 2,
+                        /* maxInterval */ Duration.ofSeconds(32)
+                ))
+                .failAfterMaxAttempts(true)
+                .maxAttempts(6)
+                .retryOnException(exception -> exception instanceof ConnectTimeoutException
+                        || exception instanceof NoRouteToHostException
+                        || exception instanceof SocketTimeoutException)
+                .retryOnResult(response -> 403 == response.getStatusLine().getStatusCode()
+                        || 429 == response.getStatusLine().getStatusCode())
+                .build());
+        RETRY = retryRegistry.retry("nvd-feeds");
+        RETRY.getEventPublisher()
+                .onRetry(event -> LOGGER.warn("Encountered retryable exception; Will execute retry #%d in %s"
+                        .formatted(event.getNumberOfRetryAttempts(), event.getWaitInterval()), event.getLastThrowable()))
+                .onError(event -> LOGGER.error("Failed after %d retry attempts"
+                        .formatted(event.getNumberOfRetryAttempts()), event.getLastThrowable()));
+        TaggedRetryMetrics.ofRetryRegistry(retryRegistry)
+                .bindTo(Metrics.getRegistry());
+    }
+
+    private final Path mirrorDirPath;
     private boolean mirroredWithoutErrors = true;
 
     public NistMirrorTask() {
+        this(DEFAULT_NVD_MIRROR_DIR);
+    }
+
+    NistMirrorTask(final Path mirrorDirPath) {
+        this.mirrorDirPath = mirrorDirPath;
+
         try (final QueryManager qm = new QueryManager()) {
-            final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_NVD_ENABLED.getGroupName(), VULNERABILITY_SOURCE_NVD_ENABLED.getPropertyName());
-            this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
-            this.nvdFeedsUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_NVD_FEEDS_URL.getGroupName(), VULNERABILITY_SOURCE_NVD_FEEDS_URL.getPropertyName()).getPropertyValue();
+            this.isEnabled = qm.isEnabled(VULNERABILITY_SOURCE_NVD_ENABLED);
+            this.isApiEnabled = qm.isEnabled(VULNERABILITY_SOURCE_NVD_API_ENABLED);
+            this.isApiDownloadFeeds = qm.isEnabled(VULNERABILITY_SOURCE_NVD_API_DOWNLOAD_FEEDS);
+            this.nvdFeedsUrl = qm.getConfigProperty(
+                    VULNERABILITY_SOURCE_NVD_FEEDS_URL.getGroupName(),
+                    VULNERABILITY_SOURCE_NVD_FEEDS_URL.getPropertyName()
+            ).getPropertyValue();
             if (this.nvdFeedsUrl.endsWith("/")) {
                 this.nvdFeedsUrl = this.nvdFeedsUrl.substring(0, this.nvdFeedsUrl.length()-1);
             }
-         }
+        }
     }
 
     /**
@@ -111,17 +171,36 @@ public class NistMirrorTask implements LoggableSubscriber {
      */
     public void inform(final Event e) {
         if (e instanceof NistMirrorEvent && this.isEnabled) {
+            if (isApiEnabled) {
+                Event.dispatch(new NistApiMirrorEvent());
+
+                if (!isApiDownloadFeeds) {
+                    LOGGER.debug("""
+                            Not downloading feeds because mirroring via NVD is enabled,\
+                            but additional feed download is not; It can be enabled in \
+                            the settings if desired""");
+                    return;
+                }
+            } else {
+                LOGGER.warn("""
+                        The NVD is planning to retire the legacy data feeds used by Dependency-Track \
+                        (https://nvd.nist.gov/General/News/change-timeline); Consider enabling mirroring \
+                        via NVD REST API in the settings: https://docs.dependencytrack.org/datasources/nvd/#mirroring-via-nvd-rest-api""");
+            }
+
             final long start = System.currentTimeMillis();
             LOGGER.info("Starting NIST mirroring task");
-            final File mirrorPath = new File(NVD_MIRROR_DIR);
+            final File mirrorPath = mirrorDirPath.toFile();
             setOutputDir(mirrorPath.getAbsolutePath());
             getAllFiles();
             final long end = System.currentTimeMillis();
             LOGGER.info("NIST mirroring complete");
             LOGGER.info("Time spent (d/l):   " + metricDownloadTime + "ms");
-            LOGGER.info("Time spent (parse): " + metricParseTime + "ms");
+            if (!isApiEnabled) {
+                LOGGER.info("Time spent (parse): " + metricParseTime + "ms");
+                Event.dispatch(new EpssMirrorEvent());
+            }
             LOGGER.info("Time spent (total): " + (end - start) + "ms");
-            Event.dispatch(new EpssMirrorEvent());
         }
     }
 
@@ -192,7 +271,7 @@ public class NistMirrorTask implements LoggableSubscriber {
     private void doDownload(final String urlString, final ResourceType resourceType) {
         File file;
         try {
-            final URL url = new URL(urlString);
+            final URL url = URI.create(urlString).toURL();
             String filename = url.getFile();
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();
@@ -223,7 +302,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             final long start = System.currentTimeMillis();
             LOGGER.info("Initiating download of " + url.toExternalForm());
             final HttpUriRequest request = new HttpGet(urlString);
-            try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+            try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
                 final StatusLine status = response.getStatusLine();
                 final long end = System.currentTimeMillis();
                 metricDownloadTime += end - start;
@@ -269,7 +348,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             if (file.getName().endsWith(".gz")) {
                 uncompress(file, resourceType);
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
             mirroredWithoutErrors = false;
             LOGGER.error("Download failed : " + e.getMessage());
             Notification.dispatch(new Notification()
@@ -299,14 +378,36 @@ public class NistMirrorTask implements LoggableSubscriber {
 
         final long start = System.currentTimeMillis();
         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
-            final NvdParser parser = new NvdParser();
-            parser.parse(uncompressedFile);
+            if (!isApiEnabled) {
+                final NvdParser parser = new NvdParser(this::processVulnerability);
+                parser.parse(uncompressedFile);
+                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, VulnerableSoftware.class));
+            } else {
+                LOGGER.debug("""
+                        %s was successfully downloaded and uncompressed, but will not be parsed because \
+                        mirroring via NVD REST API is enabled""".formatted(uncompressedFile.getName()));
+            }
             // Update modification time
             File timestampFile = new File(file.getAbsolutePath() + ".ts");
             writeTimeStampFile(timestampFile, start);
         }
         final long end = System.currentTimeMillis();
         metricParseTime += end - start;
+    }
+
+    private void processVulnerability(final Vulnerability vuln, final List<VulnerableSoftware> vsList) {
+        try (final var qm = new QueryManager()) {
+            qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+            qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
+            qm.getPersistenceManager().addInstanceLifecycleListener(new IndexingInstanceLifecycleListener(Event::dispatch),
+                    Vulnerability.class, VulnerableSoftware.class);
+
+            final Vulnerability persistentVuln = synchronizeVulnerability(qm, vuln);
+            qm.synchronizeVulnerableSoftware(persistentVuln, vsList, Vulnerability.Source.NVD);
+        } catch (RuntimeException e) {
+            LOGGER.error("An unexpected error occurred while processing %s".formatted(vuln.getVulnId()), e);
+        }
     }
 
     /**

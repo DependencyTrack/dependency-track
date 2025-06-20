@@ -14,60 +14,60 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 import java.util.UUID;
 
-public class BomTest {
+class BomTest {
 
     @Test
-    public void testId() {
+    void testId() {
         Bom bom = new Bom();
         bom.setId(111L);
-        Assert.assertEquals(111L, bom.getId());
+        Assertions.assertEquals(111L, bom.getId());
     }
 
     @Test
-    public void testImported() {
+    void testImported() {
         Date date = new Date();
         Bom bom = new Bom();
         bom.setImported(date);
-        Assert.assertEquals(date, bom.getImported());
+        Assertions.assertEquals(date, bom.getImported());
     }
 
     @Test
-    public void testProject() {
+    void testProject() {
         Project project = new Project();
         Bom bom = new Bom();
         bom.setProject(project);
-        Assert.assertEquals(project, bom.getProject());
+        Assertions.assertEquals(project, bom.getProject());
     }
 
     @Test
-    public void testUuid() {
+    void testUuid() {
         UUID uuid = UUID.randomUUID();
         Bom bom = new Bom();
         bom.setUuid(uuid);
-        Assert.assertEquals(uuid.toString(), bom.getUuid().toString());
+        Assertions.assertEquals(uuid.toString(), bom.getUuid().toString());
     }
 
     @Test
-    public void testBomFormat() {
+    void testBomFormat() {
         Bom bom = new Bom();
         bom.setBomFormat(Bom.Format.CYCLONEDX);
-        Assert.assertEquals(Bom.Format.CYCLONEDX.getFormatShortName(), bom.getBomFormat());
+        Assertions.assertEquals(Bom.Format.CYCLONEDX.getFormatShortName(), bom.getBomFormat());
     }
 
     @Test
-    public void testBomSpecVersion() {
+    void testBomSpecVersion() {
         Bom bom = new Bom();
         bom.setSpecVersion("1.1");
-        Assert.assertEquals("1.1", bom.getSpecVersion());
+        Assertions.assertEquals("1.1", bom.getSpecVersion());
     }
 }

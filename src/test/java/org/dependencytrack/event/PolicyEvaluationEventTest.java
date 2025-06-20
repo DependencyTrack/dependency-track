@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.event;
 
@@ -22,39 +22,39 @@ import java.util.ArrayList;
 import java.util.List;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class PolicyEvaluationEventTest {
+class PolicyEvaluationEventTest {
 
     @Test
-    public void testDefaultConstructor() {
+    void testDefaultConstructor() {
         PolicyEvaluationEvent event = new PolicyEvaluationEvent();
-        Assert.assertNull(event.getProject());
-        Assert.assertEquals(0, event.getComponents().size());
+        Assertions.assertNull(event.getProject());
+        Assertions.assertEquals(0, event.getComponents().size());
     }
 
     @Test
-    public void testComponentConstructor() {
+    void testComponentConstructor() {
         Component component = new Component();
         PolicyEvaluationEvent event = new PolicyEvaluationEvent(component);
-        Assert.assertEquals(1, event.getComponents().size());
+        Assertions.assertEquals(1, event.getComponents().size());
     }
 
     @Test
-    public void testComponentsConstructor() {
+    void testComponentsConstructor() {
         Component component = new Component();
         List<Component> components = new ArrayList<>();
         components.add(component);
         PolicyEvaluationEvent event = new PolicyEvaluationEvent(components);
-        Assert.assertEquals(1, event.getComponents().size());
+        Assertions.assertEquals(1, event.getComponents().size());
     }
 
     @Test
-    public void testProjectCriteria() {
+    void testProjectCriteria() {
         Project project = new Project();
         PolicyEvaluationEvent event = new PolicyEvaluationEvent().project(project);
-        Assert.assertEquals(project, event.getProject());
-        Assert.assertEquals(0, event.getComponents().size());
+        Assertions.assertEquals(project, event.getProject());
+        Assertions.assertEquals(0, event.getComponents().size());
     }
 }

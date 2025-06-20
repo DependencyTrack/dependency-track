@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright Kevlin Henney, 1997, 2003, 2012. All rights reserved.\n\nPermission to use, copy, modify, and distribute this software and its\ndocumentation for any purpose is hereby granted without fee, provided\nthat this copyright and permissions notice appear in all copies and\nderivatives.\n\nThis software is supplied \"as is\" without express or implied warranty.\n\nBut that said, if there are any problems please get in touch.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright Kevlin Henney, 1997, 2003, 2012. All rights reserved.  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose is hereby granted without fee, provided that this copyright and permissions notice appear in all copies and derivatives.\n\nThis software is supplied \"as is\" without express or implied warranty.\n\nBut that said, if there are any problems please get in touch.\n\n",
+  "name": "Historical Permission Notice and Disclaimer - Kevlin Henney variant",
+  "licenseComments": "This license is similar to HPND-Pbmplus but varies the order of hereby granted/without fee and has a different notice clause.",
+  "comment": "This license is similar to HPND-Pbmplus but varies the order of hereby granted/without fee and has a different notice clause.",
+  "licenseId": "HPND-Kevlin-Henney",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/mruby/mruby/blob/83d12f8d52522cdb7c8cc46fad34821359f453e6/mrbgems/mruby-dir/src/Win/dirent.c#L127-L140",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:57:14Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/mruby/mruby/blob/83d12f8d52522cdb7c8cc46fad34821359f453e6/mrbgems/mruby-dir/src/Win/dirent.c#L127-L140"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            \u003cp\u003e\n               Copyright Kevlin Henney, 1997, 2003, 2012. All rights reserved.\n            \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            Permission to use, copy, modify, and distribute this\n            software and its documentation for any purpose is hereby\n            granted without fee, provided that this copyright and\n            permissions notice appear in all copies and derivatives.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            This software is supplied \u0026quot;as is\u0026quot;\n            without express or implied warranty.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            But that said, if there are any problems please get in touch.\n         \u003c/p\u003e\n\n      "
+}

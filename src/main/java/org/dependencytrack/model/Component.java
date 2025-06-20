@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -27,11 +27,21 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.validation.ValidSpdxExpression;
+import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
+import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
+import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 
+import jakarta.json.JsonObject;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Convert;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
@@ -45,17 +55,12 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Serialized;
 import javax.jdo.annotations.Unique;
-import javax.json.JsonObject;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Model class for tracking individual components.
@@ -71,7 +76,21 @@ import java.util.Set;
                 @Persistent(name = "externalReferences"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
+                @Persistent(name = "properties"),
                 @Persistent(name = "vulnerabilities"),
+        }),
+        @FetchGroup(name = "BOM_UPLOAD_PROCESSING", members = {
+                @Persistent(name = "properties")
+        }),
+        @FetchGroup(name = "COMPONENT_VULN_ANALYSIS", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "group"),
+                @Persistent(name = "name"),
+                @Persistent(name = "version"),
+                @Persistent(name = "cpe"),
+                @Persistent(name = "purl"),
+                @Persistent(name = "purlCoordinates"),
+                @Persistent(name = "uuid")
         }),
         @FetchGroup(name = "INTERNAL_IDENTIFICATION", members = {
                 @Persistent(name = "id"),
@@ -83,6 +102,22 @@ import java.util.Set;
         @FetchGroup(name = "METRICS_UPDATE", members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
+                @Persistent(name = "uuid")
+        }),
+        @FetchGroup(name = "NOTIFICATION", members = {
+                @Persistent(name = "group"),
+                @Persistent(name = "name"),
+                @Persistent(name = "version"),
+                @Persistent(name = "md5"),
+                @Persistent(name = "sha1"),
+                @Persistent(name = "sha256"),
+                @Persistent(name = "sha512"),
+                @Persistent(name = "purl"),
+                @Persistent(name = "uuid")
+        }),
+        @FetchGroup(name = "REPO_META_ANALYSIS", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "purl"),
                 @Persistent(name = "uuid")
         })
 })
@@ -96,8 +131,12 @@ public class Component implements Serializable {
      */
     public enum FetchGroup {
         ALL,
+        COMPONENT_VULN_ANALYSIS,
+        BOM_UPLOAD_PROCESSING,
         INTERNAL_IDENTIFICATION,
-        METRICS_UPDATE
+        METRICS_UPDATE,
+        NOTIFICATION,
+        REPO_META_ANALYSIS
     }
 
     @PrimaryKey
@@ -105,16 +144,21 @@ public class Component implements Serializable {
     @JsonIgnore
     private long id;
 
-    @Persistent
-    @Column(name = "AUTHOR", jdbcType = "CLOB")
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
-    private String author;
+    @Persistent(defaultFetchGroup = "true")
+    @Convert(OrganizationalContactsJsonConverter.class)
+    @Column(name = "AUTHORS", jdbcType = "CLOB", allowsNull = "true")
+    private List<OrganizationalContact> authors;
 
     @Persistent
     @Column(name = "PUBLISHER", jdbcType = "VARCHAR")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
     private String publisher;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Convert(OrganizationalEntityJsonConverter.class)
+    @Column(name = "SUPPLIER", jdbcType = "CLOB", allowsNull = "true")
+    private OrganizationalEntity supplier;
 
     @Persistent
     @Column(name = "GROUP", jdbcType = "VARCHAR")
@@ -142,6 +186,7 @@ public class Component implements Serializable {
     @Persistent
     @Column(name = "CLASSIFIER", jdbcType = "VARCHAR")
     @Index(name = "COMPONENT_CLASSIFIER_IDX")
+    @NotNull
     @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
     private Classifier classifier;
 
@@ -162,92 +207,108 @@ public class Component implements Serializable {
     @Persistent
     @Index(name = "COMPONENT_MD5_IDX")
     @Column(name = "MD5", jdbcType = "VARCHAR", length = 32)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "^[0-9a-fA-F]{32}$", message = "The MD5 hash must be a valid 32 character HEX number")
     private String md5;
 
     @Persistent
     @Index(name = "COMPONENT_SHA1_IDX")
     @Column(name = "SHA1", jdbcType = "VARCHAR", length = 40)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "^[0-9a-fA-F]{40}$", message = "The SHA1 hash must be a valid 40 character HEX number")
     private String sha1;
 
     @Persistent
     @Index(name = "COMPONENT_SHA256_IDX")
     @Column(name = "SHA_256", jdbcType = "VARCHAR", length = 64)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "^[0-9a-fA-F]{64}$", message = "The SHA-256 hash must be a valid 64 character HEX number")
     private String sha256;
 
     @Persistent
     @Index(name = "COMPONENT_SHA384_IDX")
     @Column(name = "SHA_384", jdbcType = "VARCHAR", length = 96)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "^[0-9a-fA-F]{96}$", message = "The SHA-384 hash must be a valid 96 character HEX number")
     private String sha384;
 
     @Persistent
     @Index(name = "COMPONENT_SHA512_IDX")
     @Column(name = "SHA_512", jdbcType = "VARCHAR", length = 128)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "^[0-9a-fA-F]{128}$", message = "The SHA-512 hash must be a valid 128 character HEX number")
     private String sha512;
 
     @Persistent
     @Index(name = "COMPONENT_SHA3_256_IDX")
     @Column(name = "SHA3_256", jdbcType = "VARCHAR", length = 64)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "^[0-9a-fA-F]{64}$", message = "The SHA3-256 hash must be a valid 64 character HEX number")
     private String sha3_256;
 
     @Persistent
     @Index(name = "COMPONENT_SHA3_384_IDX")
     @Column(name = "SHA3_384", jdbcType = "VARCHAR", length = 96)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "^[0-9a-fA-F]{96}$", message = "The SHA3-384 hash must be a valid 96 character HEX number")
     private String sha3_384;
 
     @Persistent
     @Index(name = "COMPONENT_SHA3_512_IDX")
     @Column(name = "SHA3_512", jdbcType = "VARCHAR", length = 128)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = "^[0-9a-fA-F]{128}$", message = "The SHA3-512 hash must be a valid 128 character HEX number")
     private String sha3_512;
 
     @Persistent
     @Index(name = "COMPONENT_BLAKE2B_256_IDX")
     @Column(name = "BLAKE2B_256", jdbcType = "VARCHAR", length = 64)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.HASH_SHA256, message = "The BLAKE2b hash must be a valid 64 character HEX number")
     private String blake2b_256;
 
     @Persistent
     @Index(name = "COMPONENT_BLAKE2B_384_IDX")
     @Column(name = "BLAKE2B_384", jdbcType = "VARCHAR", length = 96)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.HASH_SHA384, message = "The BLAKE2b hash must be a valid 96 character HEX number")
     private String blake2b_384;
 
     @Persistent
     @Index(name = "COMPONENT_BLAKE2B_512_IDX")
     @Column(name = "BLAKE2B_512", jdbcType = "VARCHAR", length = 128)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The BLAKE2b hash must be a valid 128 character HEX number")
     private String blake2b_512;
 
     @Persistent
     @Index(name = "COMPONENT_BLAKE3_IDX")
     @Column(name = "BLAKE3", jdbcType = "VARCHAR", length = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.HEXADECIMAL, message = "The BLAKE3 hash must be a valid HEX number")
     private String blake3;
 
     @Persistent
     @Index(name = "COMPONENT_CPE_IDX")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     //Patterns obtained from https://csrc.nist.gov/schema/cpe/2.3/cpe-naming_2.3.xsd
     @Pattern(regexp = "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})", message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
     private String cpe;
 
     @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_IDX")
-    @Size(max = 255)
+    @Column(name = "PURL", length = 786)
+    @Size(max = 786)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Schema(type = "string")
     private String purl;
 
     @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_COORDINATES_IDX")
-    @Size(max = 255)
+    @Column(name = "PURLCOORDINATES", length = 786)
+    @Size(max = 786)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String purlCoordinates; // Field should contain only type, namespace, name, and version. Everything up to the qualifiers
@@ -319,6 +380,10 @@ public class Component implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private Collection<Component> children;
 
+    @Persistent(mappedBy = "component", defaultFetchGroup = "false")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "groupName ASC, propertyName ASC, id ASC"))
+    private List<ComponentProperty> properties;
+
     @Persistent(table = "COMPONENTS_VULNERABILITIES")
     @Join(column = "COMPONENT_ID")
     @Element(column = "VULNERABILITY_ID")
@@ -354,9 +419,10 @@ public class Component implements Serializable {
     private UUID uuid;
 
     private transient String bomRef;
+    private transient List<org.cyclonedx.model.License> licenseCandidates;
     private transient DependencyMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
-    private transient int usedBy;
+    private transient boolean isNew;
     private transient JsonObject cacheResult;
     private transient Set<String> dependencyGraph;
     private transient boolean expandDependencyGraph;
@@ -369,20 +435,46 @@ public class Component implements Serializable {
         this.id = id;
     }
 
-    public String getAuthor() {
-        return author;
+    public List<OrganizationalContact> getAuthors() {
+        return authors;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setAuthors(List<OrganizationalContact> authors) {
+        this.authors = authors;
     }
 
     public String getPublisher() {
         return publisher;
     }
 
+    @Deprecated
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getAuthor(){
+        return ModelConverter.convertContactsToString(this.authors);
+    }
+
+    @Deprecated
+    public void setAuthor(String author){
+        if(this.authors==null){
+            this.authors = new ArrayList<>();
+        } else {
+            this.authors.clear();
+        }
+        this.authors.add(new OrganizationalContact() {{
+            setName(author);
+        }});
+    }
+
     public void setPublisher(String publisher) {
         this.publisher = publisher;
+    }
+
+    public OrganizationalEntity getSupplier() {
+        return supplier;
+    }
+
+    public void setSupplier(OrganizationalEntity supplier) {
+        this.supplier = supplier;
     }
 
     public String getGroup() {
@@ -562,6 +654,7 @@ public class Component implements Serializable {
     }
 
     @JsonSerialize(using = CustomPackageURLSerializer.class)
+    @Schema(type = "string", accessMode = Schema.AccessMode.READ_ONLY)
     public PackageURL getPurlCoordinates() {
         if (purlCoordinates == null) {
             return null;
@@ -691,6 +784,14 @@ public class Component implements Serializable {
         this.children = children;
     }
 
+    public List<ComponentProperty> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(final List<ComponentProperty> properties) {
+        this.properties = properties;
+    }
+
     public List<Vulnerability> getVulnerabilities() {
         return vulnerabilities;
     }
@@ -750,6 +851,17 @@ public class Component implements Serializable {
         this.repositoryMeta = repositoryMeta;
     }
 
+    @JsonIgnore
+    @Schema(hidden = true)
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @JsonIgnore
+    public void setNew(final boolean aNew) {
+        isNew = aNew;
+    }
+
     public Double getLastInheritedRiskScore() {
         return lastInheritedRiskScore;
     }
@@ -758,23 +870,30 @@ public class Component implements Serializable {
         this.lastInheritedRiskScore = lastInheritedRiskScore;
     }
 
+    @JsonIgnore
+    @Schema(hidden = true)
     public String getBomRef() {
         return bomRef;
     }
 
+    @JsonIgnore
     public void setBomRef(String bomRef) {
         this.bomRef = bomRef;
     }
 
-    public int getUsedBy() {
-        return usedBy;
-    }
-
-    public void setUsedBy(int usedBy) {
-        this.usedBy = usedBy;
+    @JsonIgnore
+    @Schema(hidden = true)
+    public List<org.cyclonedx.model.License> getLicenseCandidates() {
+        return licenseCandidates;
     }
 
     @JsonIgnore
+    public void setLicenseCandidates(final List<org.cyclonedx.model.License> licenseCandidates) {
+        this.licenseCandidates = licenseCandidates;
+    }
+
+    @JsonIgnore
+    @Schema(hidden = true)
     public JsonObject getCacheResult() {
         return cacheResult;
     }

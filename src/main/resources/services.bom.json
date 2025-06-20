@@ -1,6 +1,6 @@
 {
   "bomFormat": "CycloneDX",
-  "specVersion": "1.4",
+  "specVersion": "1.5",
   "serialNumber": "urn:uuid:d8e07202-6817-42c1-8cae-20254567672f",
   "version": 1,
   "services": [
@@ -487,6 +487,49 @@
         {
           "classification": "public",
           "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.aquasec",
+      "provider": {
+        "name": "Trivy"
+      },
+      "group": "com.aquasec",
+      "name": "Trivy",
+      "description": "Trivy is a comprehensive and versatile security scanner. Trivy has scanners that look for security issues, and targets where it can find those issues.",
+      "authenticated": true,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.dependencytrack.metrics",
+      "provider": {
+        "name": "OWASP"
+      },
+      "group": "org.dependencytrack",
+      "name": "metrics",
+      "description": "Dependency-Track telemetry service.",
+      "endpoints": [
+        "https://metrics.dependencytrack.org"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ],
+      "externalReferences": [
+        {
+          "url": "https://docs.dependencytrack.org/getting-started/telemetry/",
+          "type": "documentation"
         }
       ]
     }

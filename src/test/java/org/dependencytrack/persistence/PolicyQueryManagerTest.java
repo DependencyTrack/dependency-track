@@ -14,23 +14,32 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.persistence;
 
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
-import org.junit.Test;
+import org.dependencytrack.model.ViolationAnalysis;
+import org.dependencytrack.model.ViolationAnalysisComment;
+import org.dependencytrack.model.ViolationAnalysisState;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PolicyQueryManagerTest extends PersistenceCapableTest {
+class PolicyQueryManagerTest extends PersistenceCapableTest {
 
     @Test
-    public void testRemoveProjectFromPolicies() {
+    void testRemoveProjectFromPolicies() {
         final Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
 
         // Create multiple policies that all reference the project
@@ -45,6 +54,55 @@ public class PolicyQueryManagerTest extends PersistenceCapableTest {
         qm.removeProjectFromPolicies(project);
         assertThat(qm.getObjectById(Policy.class, policy1.getId()).getProjects()).isEmpty();
         assertThat(qm.getObjectById(Policy.class, policy2.getId()).getProjects()).isEmpty();
+    }
+
+    @Test
+    void testclonePolicyViolation() throws Exception{
+        PolicyViolation policyViolation = new PolicyViolation();
+        policyViolation.setId(1);
+
+        // Component for cloning
+        Component component = new Component();
+        component.setId(111L);
+        component.setName("name");
+        component.setVersion("1.0");
+        component.setCopyright("Copyright Acme");
+        
+        policyViolation.setComponent(component);
+        policyViolation.setText("policyViolation");
+        policyViolation.setTimestamp(new Date());
+        policyViolation.setType(PolicyViolation.Type.LICENSE);
+
+        // ViolationAnalysis for cloning
+        ViolationAnalysis violationAnalysis = new ViolationAnalysis();
+        violationAnalysis.setSuppressed(true);
+        violationAnalysis.setViolationAnalysisState(ViolationAnalysisState.APPROVED);
+
+        // ViolationAnalysisComments
+        List<ViolationAnalysisComment> violationAnalysisComments = new ArrayList<>();
+        ViolationAnalysisComment violationAnalysisComment = new ViolationAnalysisComment();
+        violationAnalysisComment.setComment("testComment");
+        violationAnalysisComment.setCommenter("admin");
+        violationAnalysisComment.setTimestamp(new Date());
+        violationAnalysisComment.setViolationAnalysis(violationAnalysis);
+        violationAnalysisComments.add(violationAnalysisComment);
+        violationAnalysis.setAnalysisComments(violationAnalysisComments);
+
+        policyViolation.setAnalysis(violationAnalysis);
+
+        PolicyViolation clonedPolicyViolation = qm.clonePolicyViolation(policyViolation, component);
+        Assertions.assertEquals(policyViolation.getText(), clonedPolicyViolation.getText());
+        Assertions.assertEquals(policyViolation.getType(), clonedPolicyViolation.getType());
+        Assertions.assertEquals(policyViolation.getTimestamp(), clonedPolicyViolation.getTimestamp());
+        Assertions.assertEquals(policyViolation.getAnalysis().isSuppressed(), clonedPolicyViolation.getAnalysis().isSuppressed());
+        Assertions.assertEquals(policyViolation.getAnalysis().getAnalysisState(), clonedPolicyViolation.getAnalysis().getAnalysisState());
+        Assertions.assertEquals(policyViolation.getAnalysis().getAnalysisComments().get(0).getComment(), clonedPolicyViolation.getAnalysis().getAnalysisComments().get(0).getComment());
+        Assertions.assertEquals(policyViolation.getAnalysis().getAnalysisComments().get(0).getCommenter(), clonedPolicyViolation.getAnalysis().getAnalysisComments().get(0).getCommenter());
+        Assertions.assertEquals(policyViolation.getAnalysis().getAnalysisComments().get(0).getTimestamp(), clonedPolicyViolation.getAnalysis().getAnalysisComments().get(0).getTimestamp());
+        Assertions.assertEquals(policyViolation.getComponent().getId(), clonedPolicyViolation.getComponent().getId());
+        Assertions.assertEquals(policyViolation.getComponent().getName(), clonedPolicyViolation.getComponent().getName());
+        Assertions.assertEquals(policyViolation.getComponent().getCopyright(), clonedPolicyViolation.getComponent().getCopyright());
+        Assertions.assertEquals(policyViolation.getComponent().getVersion(), clonedPolicyViolation.getComponent().getVersion());
     }
 
 }

@@ -14,18 +14,18 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class NotificationScopeTest {
+class NotificationScopeTest {
 
     @Test
-    public void testEnums() {
-        Assert.assertEquals("SYSTEM", NotificationScope.SYSTEM.name());
-        Assert.assertEquals("PORTFOLIO", NotificationScope.PORTFOLIO.name());
+    void testEnums() {
+        Assertions.assertEquals("SYSTEM", NotificationScope.SYSTEM.name());
+        Assertions.assertEquals("PORTFOLIO", NotificationScope.PORTFOLIO.name());
     }
 }

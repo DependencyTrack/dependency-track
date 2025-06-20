@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Everyone is permitted to do anything on this program including copying,\nmodifying, and improving, unless you try to pretend that you wrote it.\ni.e., the above copyright notice has to appear in all copies.\nTHE AUTHOR DISCLAIMS ANY RESPONSIBILITY WITH REGARD TO THIS SOFTWARE.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eSL License\u003c\u003cendOptional\u003e\u003e\nEveryone is permitted to do anything on this program including copying, modifying, and improving, unless you try to pretend that you wrote it. i.e., the above copyright notice has to appear in all copies. THE AUTHOR DISCLAIMS ANY RESPONSIBILITY WITH REGARD TO THIS SOFTWARE.\n\n",
+  "name": "SL License",
+  "licenseId": "SL",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://github.com/mtoyoda/sl/blob/master/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:57:36Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/mtoyoda/sl/blob/master/LICENSE"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"optional-license-text\"\u003e \n            SL License\n         \u003c/var\u003e\n         \u003cp\u003e\n            Everyone is permitted to do anything on this program including copying,\n            modifying, and improving, unless you try to pretend that you wrote it.\n            i.e., the above copyright notice has to appear in all copies.\n            THE AUTHOR DISCLAIMS ANY RESPONSIBILITY WITH REGARD TO THIS SOFTWARE.\n         \u003c/p\u003e\n\n      "
+}

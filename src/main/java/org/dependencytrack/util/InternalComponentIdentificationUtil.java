@@ -14,17 +14,11 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.util;
 
-import alpine.model.ConfigProperty;
-import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.persistence.QueryManager;
-
-import java.util.regex.Pattern;
 
 /**
  * @author nscuro
@@ -35,40 +29,8 @@ public final class InternalComponentIdentificationUtil {
     private InternalComponentIdentificationUtil() {
     }
 
-    public static boolean isInternalComponent(final Component component, final QueryManager qm) {
-        return isInternalGroup(component.getGroup(), qm) || isInternalName(component.getName(), qm);
-    }
-
-    private static boolean isInternalGroup(final String group, final QueryManager qm) {
-        if (StringUtils.trimToNull(group) == null) {
-            return false;
-        }
-
-        final ConfigProperty internalGroupsRegexProperty = qm.getConfigProperty(
-                ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX.getGroupName(),
-                ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName()
-        );
-        if (internalGroupsRegexProperty == null || StringUtils.trimToNull(internalGroupsRegexProperty.getPropertyValue()) == null) {
-            return false;
-        }
-
-        return Pattern.matches(StringUtils.trimToNull(internalGroupsRegexProperty.getPropertyValue()), group);
-    }
-
-    private static boolean isInternalName(final String name, final QueryManager qm) {
-        if (StringUtils.trimToNull(name) == null) {
-            return false;
-        }
-
-        final ConfigProperty internalNamesRegexProperty = qm.getConfigProperty(
-                ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName(),
-                ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyName()
-        );
-        if (internalNamesRegexProperty == null || StringUtils.trimToNull(internalNamesRegexProperty.getPropertyValue()) == null) {
-            return false;
-        }
-
-        return Pattern.matches(StringUtils.trimToNull(internalNamesRegexProperty.getPropertyValue()), name);
+    public static boolean isInternalComponent(final Component component) {
+        return new InternalComponentIdentifier().isInternal(component);
     }
 
 }

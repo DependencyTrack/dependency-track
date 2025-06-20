@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -25,6 +25,7 @@ package org.dependencytrack.model;
  * @since 3.0.0
  */
 public enum Classifier {
+    NONE,
     APPLICATION,
     FRAMEWORK,
     LIBRARY,
@@ -32,5 +33,9 @@ public enum Classifier {
     OPERATING_SYSTEM,
     DEVICE,
     FIRMWARE,
-    FILE
+    FILE,
+    PLATFORM,
+    DEVICE_DRIVER,
+    MACHINE_LEARNING_MODEL,
+    DATA
 }

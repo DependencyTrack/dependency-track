@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
@@ -23,6 +23,7 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.util.PurlUtil;
 import org.json.JSONObject;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -71,6 +72,13 @@ public class ComponentIdentity {
         this.objectType = ObjectType.COMPONENT;
     }
 
+    public ComponentIdentity(final Component component, final boolean excludeUuid) {
+        this(component);
+        if (excludeUuid) {
+            this.uuid = null;
+        }
+    }
+
     public ComponentIdentity(final org.cyclonedx.model.Component component) {
         try {
             this.purl = new PackageURL(component.getPurl());
@@ -92,6 +100,13 @@ public class ComponentIdentity {
         this.version = service.getVersion();
         this.uuid = service.getUuid();
         this.objectType = ObjectType.SERVICE;
+    }
+
+    public ComponentIdentity(final ServiceComponent service, final boolean excludeUuid) {
+        this(service);
+        if (excludeUuid) {
+            this.uuid = null;
+        }
     }
 
     public ComponentIdentity(final org.cyclonedx.model.Service service) {
@@ -135,6 +150,27 @@ public class ComponentIdentity {
 
     public UUID getUuid() {
         return uuid;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ComponentIdentity that = (ComponentIdentity) o;
+        return objectType == that.objectType
+                && Objects.equals(purl, that.purl)
+                && Objects.equals(purlCoordinates, that.purlCoordinates)
+                && Objects.equals(cpe, that.cpe)
+                && Objects.equals(swidTagId, that.swidTagId)
+                && Objects.equals(group, that.group)
+                && Objects.equals(name, that.name)
+                && Objects.equals(version, that.version)
+                && Objects.equals(uuid, that.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(objectType, purl, purlCoordinates, cpe, swidTagId, group, name, version, uuid);
     }
 
     public JSONObject toJSON() {

@@ -14,44 +14,44 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.policy;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class MatcherTest {
+class MatcherTest {
 
     @Test
-    public void checkNulls() {
-        Assert.assertTrue(Matcher.matches(null, null));
-        Assert.assertFalse(Matcher.matches("", null));
-        Assert.assertFalse(Matcher.matches(null, ""));
+    void checkNulls() {
+        Assertions.assertTrue(Matcher.matches(null, null));
+        Assertions.assertFalse(Matcher.matches("", null));
+        Assertions.assertFalse(Matcher.matches(null, ""));
     }
 
     @Test
-    public void checkExact() {
-        Assert.assertTrue(Matcher.matches("", ""));
-        Assert.assertTrue(Matcher.matches("something", "something"));
+    void checkExact() {
+        Assertions.assertTrue(Matcher.matches("", ""));
+        Assertions.assertTrue(Matcher.matches("something", "something"));
     }
 
     @Test
-    public void checkPartials() {
-        Assert.assertTrue(Matcher.matches("something", "some"));
-        Assert.assertTrue(Matcher.matches("something", "meth"));
-        Assert.assertTrue(Matcher.matches("something", "thing"));
+    void checkPartials() {
+        Assertions.assertTrue(Matcher.matches("something", "some"));
+        Assertions.assertTrue(Matcher.matches("something", "meth"));
+        Assertions.assertTrue(Matcher.matches("something", "thing"));
     }
 
     @Test
-    public void checkWildcards() {
-        Assert.assertTrue(Matcher.matches("something", "some*"));
-        Assert.assertTrue(Matcher.matches("something", "*thing"));
+    void checkWildcards() {
+        Assertions.assertTrue(Matcher.matches("something", "some*"));
+        Assertions.assertTrue(Matcher.matches("something", "*thing"));
     }
 
     @Test
-    public void checkRegex() {
-        Assert.assertTrue(Matcher.matches("something", "^some.*"));
-        Assert.assertTrue(Matcher.matches("something", ".*thing$"));
+    void checkRegex() {
+        Assertions.assertTrue(Matcher.matches("something", "^some.*"));
+        Assertions.assertTrue(Matcher.matches("something", ".*thing$"));
     }
 }

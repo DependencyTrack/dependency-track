@@ -18,7 +18,7 @@ This document primarily covers the API server. Please refer to the frontend repo
 
 There are a few things you'll need on your journey:
 
-* JDK 17+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
+* JDK 21+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
 * Maven (comes bundled with IntelliJ and Eclipse)
 * A Java IDE of your preference (we recommend IntelliJ, but any other IDE is fine as well)
 * Docker (optional)
@@ -44,13 +44,13 @@ Knowing about the core technologies used by the API server may help you with und
 Build an executable JAR containing just the API server:
 
 ```shell
-mvn clean package -P clean-exclude-wars -P enhance -P embedded-jetty -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean package -P quick -P clean-exclude-wars -P enhance -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
 Build an executable JAR that contains both API server and frontend (aka "bundled" distribution):
 
 ```shell
-mvn clean package -P clean-exclude-wars -P enhance -P embedded-jetty -P bundle-ui -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean package -P quick -P clean-exclude-wars -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
 > When using the `bundle-ui` profile, Maven will download a [`DependencyTrack/frontend`](https://github.com/DependencyTrack/frontend) 
@@ -78,7 +78,7 @@ or environment variables. Refer to the [configuration documentation](https://doc
 To build and run the API server in one go, invoke the Jetty Maven plugin as follows:
 
 ```shell
-mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
+mvn jetty:run -P quick -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 ```
 
 > Note that the `bundle-ui` profile has no effect using this method. 
@@ -118,7 +118,7 @@ To enable it, simply pass the additional `h2-console` Maven profile to your buil
 This also works with the Jetty Maven plugin:
 
 ```shell
-mvn jetty:run -P enhance -P h2-console -Dlogback.configurationFile=src/main/docker/logback.xml
+mvn jetty:run -P quick -P enhance -P h2-console -Dlogback.configurationFile=src/main/docker/logback.xml
 ```
 
 Once enabled, the console will be available at http://localhost:8080/h2-console.
@@ -148,7 +148,7 @@ export ALPINE_DATABASE_USERNAME=dtrack
 export ALPINE_DATABASE_PASSWORD=dtrack
 
 # Launch Dependency-Track
-mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
+mvn jetty:run -P quick -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 ```
 
 You can now use tooling native to your chosen RDBMS, for example [pgAdmin](https://www.pgadmin.org/).
@@ -209,6 +209,12 @@ To run all tests:
 
 ```shell
 mvn clean verify -P enhance
+```
+
+To run a single test:
+
+```shell
+mvn -P enhance -Dtest=ComposerMetaAnalyzerTest verify
 ```
 
 Depending on your machine, this will take roughly 10-30min. Unless you modified central parts of the application,
@@ -286,7 +292,7 @@ performed, and exceptions as that shown above are raised. If this happens, you c
 enhancement like this:
 
 ```shell
-mvn clean process-classes -P enhance
+mvn process-classes -P quick -P enhance
 ```
 
 Now just execute the test again, and it should just work. 
@@ -343,3 +349,36 @@ This will start a local webserver that listens on `127.0.0.1:4000` and rebuilds 
 > ```
 > docker run --rm -it --name jekyll -p "127.0.0.1:4000:4000" -v "$(pwd)/docs:/srv/jekyll:Z" jekyll/jekyll:3.8 jekyll serve
 > ```
+
+## Feature Branches
+
+When working on larger changes, it can happen that pull requests remain open for a prolonged period of time.
+As the `master` branch evolves, more and more merge conflicts occur, which the PR author needs to address.
+
+Sometimes it's desired to get user feedback on a new feature before it's being merged to `master`.
+Expecting users to clone the repository and build the project on their own however is not realistic.
+Instead, it would be beneficial to offer a container image including the new feature.
+
+When a feature is built in collaboration by multiple individuals, teams have to jump through annoying hoops
+to make it work with the GitHub workflow. Usually this requires one individual to raise a PR from their fork,
+and giving the rest of the team write permissions to their repository.
+
+To address the use cases above, contributors to the Dependency-Track project can request a *feature branch*
+from a maintainer. Feature branches follow the `feature-*` naming pattern, and are subject to branch protection rules.
+Just like for the `master` branch, changes pushed to a `feature` branch trigger a container image build.
+Images built from `feature` branches are tagged with the name of the branch, for example for a branch named `feature-foobar`:
+
+```
+docker.io/dependencytrack/apiserver:feature-foobar
+```
+
+This imagine can be shared with colleagues and community members for testing. Images built this way will be deleted
+shortly after the respective feature has been merged into the `master` branch.
+
+Instead of raising PRs into `master`, contributors would now raise PRs into `feature-foobar`. 
+
+> [!NOTE]
+> PRs into `feature` branches must still be approved by maintainers, to avoid malicious code being introduced.
+> However, this is only a surface-level review, unless explicitly requested otherwise by the contributor(s).
+
+Once the feature is considered ready, a PR can be raised from `feature-foobar` into `master`.

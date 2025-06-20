@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Permission to use, copy, modify, and/or distribute this software for any\npurpose with or without fee is hereby granted, provided that the above\ncopyright notice and this permission notice appear in all copies.\n\nThis software is provided \u0027as is\u0027 and without any warranty, express or\nimplied.  In no event shall the authors be liable for any damages arising\nfrom the use of this software.\n",
+  "standardLicenseTemplate": "Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.\n\nThis software is provided \u0027as is\u0027 and without any warranty, express or implied. In no event shall the authors be liable for any damages arising from the use of this software.\n\n",
+  "name": "pkgconf License",
+  "licenseId": "pkgconf",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/pkgconf/pkgconf/blob/master/cli/main.c#L8",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:06:20Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/pkgconf/pkgconf/blob/master/cli/main.c#L8"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            Permission to use, copy, modify, and/or distribute this software\n            for any purpose with or without fee is hereby granted, provided\n            that the above copyright notice and this permission notice appear\n            in all copies.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            This software is provided \u0026apos;as is\u0026apos; and without any\n            warranty, express or implied. In no event shall the authors be\n            liable for any damages arising from the use of this software.\n         \u003c/p\u003e\n\n      "
+}

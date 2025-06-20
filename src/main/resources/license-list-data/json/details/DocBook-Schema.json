@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright 1992-2011 HaL Computer Systems, Inc.,\nO\u0027Reilly \u0026 Associates, Inc., ArborText, Inc., Fujitsu Software\nCorporation, Norman Walsh, Sun Microsystems, Inc., and the\nOrganization for the Advancement of Structured Information\nStandards (OASIS).\n \nPermission to use, copy, modify and distribute the DocBook schema\nand its accompanying documentation for any purpose and without fee\nis hereby granted in perpetuity, provided that the above copyright\nnotice and this paragraph appear in all copies. The copyright\nholders make no representation about the suitability of the schema\nfor any purpose. It is provided \"as is\" without expressed or implied\nwarranty.\n \nIf you modify the DocBook schema in any way, label your schema as a\nvariant of DocBook. See the reference documentation\n(http://docbook.org/tdg5/en/html/ch05.html#s-notdocbook)\nfor more information.\n \nPlease direct all questions, bug reports, or suggestions for changes\nto the docbook@lists.oasis-open.org mailing list. For more\ninformation, see http://www.oasis-open.org/docbook/.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1992-2011 HaL Computer Systems, Inc., O\u0027Reilly \u0026 Associates, Inc., ArborText, Inc., Fujitsu Software Corporation, Norman Walsh, Sun Microsystems, Inc., and the Organization for the Advancement of Structured Information Standards (OASIS).\";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify and distribute the DocBook schema and its accompanying documentation for any purpose and without fee is hereby granted in perpetuity, provided that the above copyright notice and this paragraph appear in all copies. The copyright holders make no representation about the suitability of the schema for any purpose. It is provided \"as is\" without expressed or implied warranty.\n\nIf you modify the DocBook schema in any way, label your schema as a variant of DocBook. See the reference documentation (http://docbook.org/tdg5/en/html/ch05.html#s-notdocbook) for more information.\n\nPlease direct all questions, bug reports, or suggestions for changes to the docbook@lists.oasis-open.org mailing list. For more information, see http://www.oasis-open.org/docbook/.\n\n",
+  "name": "DocBook Schema License",
+  "licenseId": "DocBook-Schema",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/docbook/xslt10-stylesheets/blob/efd62655c11cc8773708df7a843613fa1e932bf8/xsl/assembly/schema/docbook51b7.rnc",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:57:45Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/docbook/xslt10-stylesheets/blob/efd62655c11cc8773708df7a843613fa1e932bf8/xsl/assembly/schema/docbook51b7.rnc"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright 1992-2011 HaL Computer Systems, Inc., O\u0026apos;Reilly \u0026amp;\n            Associates, Inc., ArborText, Inc., Fujitsu Software Corporation,\n            Norman Walsh, Sun Microsystems, Inc., and the Organization for\n            the Advancement of Structured Information Standards (OASIS).\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            Permission to use, copy, modify and distribute the DocBook\n            schema and its accompanying documentation for any purpose\n            and without fee is hereby granted in perpetuity, provided\n            that the above copyright notice and this paragraph appear\n            in all copies. The copyright holders make no representation\n            about the suitability of the schema for any purpose. It\n            is provided \u0026quot;as is\u0026quot; without expressed or implied warranty.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            If you modify the DocBook schema in any way, label your schema\n            as a variant of DocBook. See the reference documentation\n            (http://docbook.org/tdg5/en/html/ch05.html#s-notdocbook)\n            for more information.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Please direct all questions, bug reports, or suggestions for\n            changes to the docbook@lists.oasis-open.org mailing list.\n            For more information, see http://www.oasis-open.org/docbook/.\n         \u003c/p\u003e\n\n      "
+}

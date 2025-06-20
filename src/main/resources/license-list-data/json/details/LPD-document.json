@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 1996 L. Peter Deutsch\n\nPermission is granted to copy and distribute this\ndocument for any purpose and without charge, including\ntranslations into other languages and incorporation\ninto compilations, provided that the copyright notice\nand this notice are preserved, and that any substantive\nchanges or deletions from the original are clearly marked.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) Yann Collet  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission is granted to copy and distribute this document for any purpose and without charge, including translations into other languages and incorporation into compilations, provided that the copyright notice and this notice are preserved, and that any substantive changes or deletions from the original are clearly marked.\u003c\u003cbeginOptional\u003e\u003e Distribution of this document is unlimited.\u003c\u003cendOptional\u003e\u003e\n\n",
+  "name": "LPD Documentation License",
+  "licenseId": "LPD-document",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://www.ietf.org/rfc/rfc1952.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:58:25Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://github.com/Cyan4973/xxHash/blob/dev/doc/xxhash_spec.md",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:58:26Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/Cyan4973/xxHash/blob/dev/doc/xxhash_spec.md",
+    "https://www.ietf.org/rfc/rfc1952.txt"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003e\n            Copyright (c) Yann Collet\n         \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            Permission is granted to copy and distribute this document for\n            any purpose and without charge, including translations into\n            other languages and incorporation into compilations, provided\n            that the copyright notice and this notice are preserved, and\n            that any substantive changes or deletions from the original\n            are clearly marked.\u003cvar class\u003d\"optional-license-text\"\u003e  Distribution\n            of this document is unlimited.\u003c/var\u003e\n         \u003c/p\u003e\n\n      "
+}

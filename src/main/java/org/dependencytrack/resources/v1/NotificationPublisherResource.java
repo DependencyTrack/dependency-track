@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -24,44 +24,47 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.Api;
-
-import io.swagger.annotations.Authorization;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.validation.Validator;
-
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
@@ -72,20 +75,28 @@ import java.util.List;
  * @since 3.2.0
  */
 @Path("/v1/notification/publisher")
-@Api(authorizations = @Authorization(value = "X-Api-Key"))
+@Tag(name = "notification")
+@SecurityRequirements({
+        @SecurityRequirement(name = "ApiKeyAuth"),
+        @SecurityRequirement(name = "BearerAuth")
+})
 public class NotificationPublisherResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(NotificationPublisherResource.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a list of all notification publishers",
-            response = NotificationPublisher.class,
-            responseContainer = "List"
+    @Operation(
+            summary = "Returns a list of all notification publishers",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of all notification publishers",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationPublisher.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getAllNotificationPublishers() {
@@ -98,15 +109,19 @@ public class NotificationPublisherResource extends AlpineResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Creates a new notification publisher",
-            response = NotificationPublisher.class,
-            code = 201
+    @Operation(
+            summary = "Creates a new notification publisher",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Invalid notification class or trying to modify a default publisher"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 409, message = "Conflict with an existing publisher's name")
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "The created notification publisher",
+                    content = @Content(schema = @Schema(implementation = NotificationPublisher.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid notification class or trying to modify a default publisher"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "409", description = "Conflict with an existing publisher's name")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response createNotificationPublisher(NotificationPublisher jsonNotificationPublisher) {
@@ -129,37 +144,40 @@ public class NotificationPublisherResource extends AlpineResource {
                 return Response.status(Response.Status.BAD_REQUEST).entity("The creation of a new default publisher is forbidden").build();
             }
 
-            Class<?> publisherClass = Class.forName(jsonNotificationPublisher.getPublisherClass());
-
-            if (Publisher.class.isAssignableFrom(publisherClass)) {
-                Class<Publisher> castedPublisherClass = (Class<Publisher>) publisherClass;
-                NotificationPublisher notificationPublisherCreated = qm.createNotificationPublisher(
-                        jsonNotificationPublisher.getName(), jsonNotificationPublisher.getDescription(),
-                        castedPublisherClass, jsonNotificationPublisher.getTemplate(), jsonNotificationPublisher.getTemplateMimeType(),
-                        jsonNotificationPublisher.isDefaultPublisher()
-                );
-                return Response.status(Response.Status.CREATED).entity(notificationPublisherCreated).build();
-            } else {
-                return Response.status(Response.Status.BAD_REQUEST).entity("The class "+jsonNotificationPublisher.getPublisherClass()+" does not implement "+Publisher.class.getName()).build();
-            }
-
+            final Class<? extends Publisher> publisherClass = Class.forName(jsonNotificationPublisher.getPublisherClass()).asSubclass(Publisher.class);
+            final NotificationPublisher notificationPublisherCreated = qm.createNotificationPublisher(
+                    jsonNotificationPublisher.getName(),
+                    jsonNotificationPublisher.getDescription(),
+                    publisherClass,
+                    jsonNotificationPublisher.getTemplate(),
+                    jsonNotificationPublisher.getTemplateMimeType(),
+                    jsonNotificationPublisher.isDefaultPublisher()
+            );
+            return Response.status(Response.Status.CREATED).entity(notificationPublisherCreated).build();
+        } catch (ClassCastException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("The class " + jsonNotificationPublisher.getPublisherClass() + " does not implement " + Publisher.class.getName()).build();
         } catch (ClassNotFoundException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("The class "+jsonNotificationPublisher.getPublisherClass()+" cannot be found").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity("The class " + jsonNotificationPublisher.getPublisherClass() + " cannot be found").build();
         }
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Updates a notification publisher",
-            response = NotificationRule.class
+    @Operation(
+            summary = "Updates a notification publisher",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Invalid notification class or trying to modify a default publisher"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The notification publisher could not be found"),
-            @ApiResponse(code = 409, message = "Conflict with an existing publisher's name")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The updated notification publisher",
+                    content = @Content(schema = @Schema(implementation = NotificationPublisher.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid notification class or trying to modify a default publisher"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The notification publisher could not be found"),
+            @ApiResponse(responseCode = "409", description = "Conflict with an existing publisher's name")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response updateNotificationPublisher(NotificationPublisher jsonNotificationPublisher) {
@@ -213,18 +231,19 @@ public class NotificationPublisherResource extends AlpineResource {
     @Path("/{notificationPublisherUuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Deletes a notification publisher and all related notification rules",
-            code = 204
+    @Operation(
+            summary = "Deletes a notification publisher and all related notification rules",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Deleting a default notification publisher is forbidden"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the notification publisher could not be found")
+            @ApiResponse(responseCode = "204", description = "Notification publisher removed successfully"),
+            @ApiResponse(responseCode = "400", description = "Deleting a default notification publisher is forbidden"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "The UUID of the notification publisher could not be found")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
-    public Response deleteNotificationPublisher(@ApiParam(value = "The UUID of the notification publisher to delete", required = true)
-                                               @PathParam("notificationPublisherUuid") String notificationPublisherUuid) {
+    public Response deleteNotificationPublisher(@Parameter(description = "The UUID of the notification publisher to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
+                                               @PathParam("notificationPublisherUuid") @ValidUuid String notificationPublisherUuid) {
         try (QueryManager qm = new QueryManager()) {
             final NotificationPublisher notificationPublisher = qm.getObjectByUuid(NotificationPublisher.class, notificationPublisherUuid);
             if (notificationPublisher != null) {
@@ -244,11 +263,13 @@ public class NotificationPublisherResource extends AlpineResource {
     @Path("/restoreDefaultTemplates")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Restore the default notification publisher templates using the ones in the solution classpath"
+    @Operation(
+            summary = "Restore the default notification publisher templates using the ones in the solution classpath",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", description = "Default templates restored successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response restoreDefaultTemplates() {
@@ -271,18 +292,20 @@ public class NotificationPublisherResource extends AlpineResource {
     @Path("/test/smtp")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Dispatches a SMTP notification test"
+    @Operation(
+            summary = "Dispatches a SMTP notification test",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(responseCode = "200", description = "Test notification dispatched successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response testSmtpPublisherConfig(@FormParam("destination") String destination) {
         try(QueryManager qm = new QueryManager()) {
-            Class defaultEmailPublisherClass = SendMailPublisher.class;
+            Class<? extends Publisher> defaultEmailPublisherClass = SendMailPublisher.class;
             NotificationPublisher emailNotificationPublisher = qm.getDefaultNotificationPublisher(defaultEmailPublisherClass);
-            final Publisher emailPublisher = (Publisher) defaultEmailPublisherClass.getDeclaredConstructor().newInstance();
+            final Publisher emailPublisher = defaultEmailPublisherClass.getDeclaredConstructor().newInstance();
             final JsonObject config = Json.createObjectBuilder()
                     .add(Publisher.CONFIG_DESTINATION, destination)
                     .add(Publisher.CONFIG_TEMPLATE_KEY, emailNotificationPublisher.getTemplate())
@@ -295,11 +318,73 @@ public class NotificationPublisherResource extends AlpineResource {
                     .content("SMTP configuration test")
                     .level(NotificationLevel.INFORMATIONAL);
             // Bypass Notification.dispatch() and go directly to the publisher itself
-            emailPublisher.inform(notification, config);
+            emailPublisher.inform(PublishContext.from(notification), notification, config);
             return Response.ok().build();
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
             LOGGER.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending test mail notification.").build();
+        }
+    }
+
+    @POST
+    @Path("/test/{uuid}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Dispatches a rule notification test",
+            description = "<p>Requires permission <strong>SYSTEM_CONFIGURATION</strong></p>"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Test notification dispatched successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response testNotificationRule(
+            @Parameter(description = "The UUID of the rule to test", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("uuid") @ValidUuid String ruleUuid) throws Exception {
+        try (final var qm = new QueryManager()) {
+            final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            if (rule == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            final JsonObject publisherConfig;
+            final String publisherConfigJson = rule.getPublisherConfig() != null ? rule.getPublisherConfig() : "{}";
+            try (final JsonReader jsonReader = Json.createReader(new StringReader(publisherConfigJson))) {
+                publisherConfig = jsonReader.readObject();
+            }
+
+            final JsonObject config = Json.createObjectBuilder(publisherConfig)
+                    .add(Publisher.CONFIG_TEMPLATE_KEY, rule.getPublisher().getTemplate())
+                    .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, rule.getPublisher().getTemplateMimeType())
+                    .build();
+
+            final Class<?> publisherClass = Class.forName(rule.getPublisher().getPublisherClass());
+            final Publisher publisher = (Publisher) publisherClass.getDeclaredConstructor().newInstance();
+
+            for (NotificationGroup group : rule.getNotifyOn()) {
+                final Notification notification = new Notification()
+                        .scope(rule.getScope())
+                        .group(group.toString())
+                        .title(group)
+                        .content("Rule configuration test")
+                        .level(rule.getNotificationLevel())
+                        .subject(NotificationUtil.generateSubject(rule, group));
+
+                publisher.inform(PublishContext.from(notification), notification, config);
+            }
+
+            return Response.ok().build();
+        } catch (
+                InvocationTargetException
+                | InstantiationException
+                | IllegalAccessException
+                | NoSuchMethodException e) {
+            LOGGER.error(e.getMessage(), e);
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Exception occurred while sending the notification.")
+                    .build();
         }
     }
 }

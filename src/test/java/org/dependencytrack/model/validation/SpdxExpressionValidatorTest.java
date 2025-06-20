@@ -14,48 +14,49 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model.validation;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class SpdxExpressionValidatorTest {
+class SpdxExpressionValidatorTest {
 
     private Validator validator;
 
     private record TestRecord(@ValidSpdxExpression String expression) {
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         final ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
     }
 
     @Test
-    public void testWithValidExpression() {
+    void testWithValidExpression() {
         final Set<ConstraintViolation<TestRecord>> violations = validator.validate(new TestRecord("Apache-2.0 OR MIT"));
         assertThat(violations).isEmpty();
     }
 
     @Test
-    public void testWithInvalidExpression() {
+    void testWithInvalidExpression() {
         final Set<ConstraintViolation<TestRecord>> violations = validator.validate(new TestRecord("(Apache-2.0"));
         assertThat(violations).isNotEmpty();
     }
 
     @Test
-    public void testWithNullExpression() {
+    void testWithNullExpression() {
         final Set<ConstraintViolation<TestRecord>> violations = validator.validate(new TestRecord(null));
         assertThat(violations).isEmpty();
     }

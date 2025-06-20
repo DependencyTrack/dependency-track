@@ -14,14 +14,14 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.event;
 
 import alpine.event.framework.AbstractChainableEvent;
+import org.dependencytrack.model.Project;
 
-import java.io.File;
-import java.util.UUID;
+import static org.dependencytrack.util.PersistenceUtil.assertNonPersistent;
 
 /**
  * Defines an event triggered when a bill-of-material (bom) document is submitted.
@@ -31,31 +31,21 @@ import java.util.UUID;
  */
 public class BomUploadEvent extends AbstractChainableEvent {
 
-    private final UUID projectUuid;
-    private File file;
-    private byte[] bom;
+    private final Project project;
+    private final byte[] bom;
 
-    public BomUploadEvent(final UUID projectUuid, final byte[] bom) {
-        this.projectUuid = projectUuid;
-        if (bom != null) {
-            this.bom = bom.clone();
-        }
+    public BomUploadEvent(final Project project, final byte[] bom) {
+        assertNonPersistent(project, "project must not be persistent");
+        this.project = project;
+        this.bom = bom.clone();
     }
 
-    public BomUploadEvent(final UUID projectUuid, final File file) {
-        this.projectUuid = projectUuid;
-        this.file = file;
-    }
-
-    public UUID getProjectUuid() {
-        return projectUuid;
+    public Project getProject() {
+        return project;
     }
 
     public byte[] getBom() {
         return bom == null ? null : bom.clone();
     }
 
-    public File getFile() {
-        return file;
-    }
 }

@@ -7,6 +7,12 @@ order:
 
 Frequently asked questions about Dependency Track functionality that may not be covered by the documentation. If you don't find an answer here, try reaching out to the Slack [channel](https://owasp.slack.com/archives/C6R3R32H4) related to dependency track.
 
+
+#### Which domains must I allow in my firewall?
+
+See [Which external services does Dependency-Track contact?](outbound-connections.md)
+
+
 #### Dependency Check and Dependency Track Comparison
 
 This topic is heavily explained in the [Dependency Check Comparison](./../odt-odc-comparison/) to Dependency Track.
@@ -92,5 +98,16 @@ DELETE FROM "VULNERABILITYALIAS" WHERE "ID" > 0;
 Alias data will be re-populated the next time vulnerability intelligence sources are mirrored, or vulnerability
 analysis is taking place. If this does not solve the problem, please raise a [defect report] on GitHub, 
 as it is likely a bug in Dependency-Track.
+
+#### Received a 413 Request Entity Too Large error while uploading SBOM
+
+If you encounter the `413 Request Entity Too Large` error while uploading SBOMs in your Kubernetes environment where
+DependencyTrack is running served with nginx, you can try to expand the maximum upload size by including the subsequent annotations:
+
+```yaml
+nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+```
+
+Please consult the [official documentation](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#custom-max-body-size)
 
 [defect report]: https://github.com/DependencyTrack/dependency-track/issues/new?assignees=&labels=defect%2Cin+triage&template=defect-report.yml

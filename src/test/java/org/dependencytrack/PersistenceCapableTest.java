@@ -14,38 +14,45 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack;
 
 import alpine.Config;
 import alpine.server.persistence.PersistenceManagerFactory;
 import org.dependencytrack.persistence.QueryManager;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 public abstract class PersistenceCapableTest {
 
     protected QueryManager qm;
 
-    @BeforeClass
-    public static void init() {
+    @BeforeAll
+    static void init() {
         Config.enableUnitTests();
+
+        // ensure nothing is left open so the database is properly cleaned up between tests
+        System.setProperty(Config.AlpineKey.DATABASE_POOL_TX_MAX_LIFETIME.getPropertyName(), "0");
+        System.setProperty(Config.AlpineKey.DATABASE_POOL_NONTX_MAX_LIFETIME.getPropertyName(), "0");
+        System.setProperty(Config.AlpineKey.DATABASE_POOL_TX_IDLE_TIMEOUT.getPropertyName(), "0");
+        System.setProperty(Config.AlpineKey.DATABASE_POOL_NONTX_IDLE_TIMEOUT.getPropertyName(), "0");
     }
 
-    @Before
-    public void before() throws Exception {
+    @BeforeEach
+    final void initQueryManager() {
         this.qm = new QueryManager();
     }
 
-    @After
-    public void after() {
+    @AfterEach
+    final void tearDownQueryManager() {
         // PersistenceManager will refuse to close when there's an active transaction
         // that was neither committed nor rolled back. Unfortunately some areas of the
         // code base can leave such a broken state behind if they run into unexpected
         // errors. See: https://github.com/DependencyTrack/dependency-track/issues/2677
-        if (qm.getPersistenceManager().currentTransaction().isActive()) {
+        if (!qm.getPersistenceManager().isClosed()
+                && qm.getPersistenceManager().currentTransaction().isActive()) {
             qm.getPersistenceManager().currentTransaction().rollback();
         }
 

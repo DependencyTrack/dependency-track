@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.integrations.kenna;
 
@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Transforms Dependency-Track findings into Kenna Data Importer (KDI) format.
@@ -73,7 +74,7 @@ public class KennaDataTransformer {
         final JSONArray vulns = new JSONArray();
         final List<Finding> findings = qm.getFindings(project);
         for (final Finding finding: findings) {
-            final Map analysis = finding.getAnalysis();
+            final Map<String, Object> analysis = finding.getAnalysis();
             final Object suppressed = finding.getAnalysis().get("isSuppressed");
             if (suppressed instanceof Boolean) {
                 final boolean isSuppressed = (Boolean)analysis.get("isSuppressed");
@@ -111,7 +112,7 @@ public class KennaDataTransformer {
         asset.put("application", application);
         asset.put("external_id", externalId);
         // If the project has tags, add them to the KDI
-        final List<Tag> tags = project.getTags();
+        final Set<Tag> tags = project.getTags();
         if (CollectionUtils.isNotEmpty(tags)) {
             final ArrayList<String> tagArray = new ArrayList<>();
             for (final Tag tag: tags) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.vulndb.model;
 
@@ -26,7 +26,8 @@ import java.math.BigDecimal;
  * Record created to replace the model class defined here: <a href="https://github.com/stevespringett/vulndb-data-mirror">...</a>
  */
 public record CvssV3Metric(int id,
-                           String attackComplexity, String scope,
+                           String attackComplexity,
+                           String scope,
                            String attackVector,
                            String availabilityImpact,
                            BigDecimal score,

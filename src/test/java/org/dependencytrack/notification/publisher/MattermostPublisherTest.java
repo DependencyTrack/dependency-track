@@ -14,9 +14,11 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
+
+import org.junit.jupiter.api.Test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -30,9 +32,69 @@ public class MattermostPublisherTest extends AbstractWebhookPublisherTest<Matter
         super(DefaultNotificationPublishers.MATTERMOST, new MattermostPublisher());
     }
 
-    @Override
+    @Test
+    public void testInformWithBomConsumedNotification() {
+        super.baseTestInformWithBomConsumedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "username": "Dependency Track",
+                          "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                          "text": "#### Bill of Materials Consumed\\nA CycloneDX BOM was consumed and will be processed\\n**Project**: pkg:maven/org.acme/projectName@projectVersion\\n[View Project](https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95)"
+                        }
+                        """)));
+    }
+
+    @Test
+    public void testInformWithBomProcessingFailedNotification() {
+        super.baseTestInformWithBomProcessingFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "username": "Dependency Track",
+                          "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                          "text": "#### Bill of Materials Processing Failed\\nAn error occurred while processing a BOM\\n"
+                        }
+                        """)));
+    }
+
+    @Test
+    public void testInformWithBomValidationFailedNotification() {
+        super.baseTestInformWithBomValidationFailedNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "username": "Dependency Track",
+                          "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                          "text": "#### Bill of Materials Validation Failed\\nAn error occurred during BOM Validation\\n"
+                        }
+                        """)));
+    }
+
+    @Test
+    public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
+        super.baseTestInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "username": "Dependency Track",
+                          "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                          "text": "#### Bill of Materials Processing Failed\\nAn error occurred while processing a BOM\\n"
+                        }
+                        """)));
+    }
+
+    @Test
     public void testInformWithDataSourceMirroringNotification() {
-        super.testInformWithDataSourceMirroringNotification();
+        super.baseTestInformWithDataSourceMirroringNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -45,9 +107,9 @@ public class MattermostPublisherTest extends AbstractWebhookPublisherTest<Matter
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithNewVulnerabilityNotification() {
-        super.testInformWithNewVulnerabilityNotification();
+        super.baseTestInformWithNewVulnerabilityNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -60,9 +122,24 @@ public class MattermostPublisherTest extends AbstractWebhookPublisherTest<Matter
                         """)));
     }
 
-    @Override
+    @Test
+    public void testInformWithNewVulnerableDependencyNotification() {
+        super.baseTestInformWithNewVulnerableDependencyNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "username" : "Dependency Track",
+                          "icon_url" : "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                          "text" : "#### Vulnerable Dependency Introduced\\n\\n**Project**: \\n**Component**: componentName : componentVersion\\n[View Project](https://example.com/projects/) - [View Component](https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6)"
+                        }
+                        """)));
+    }
+
+    @Test
     public void testInformWithProjectAuditChangeNotification() {
-        super.testInformWithProjectAuditChangeNotification();
+        super.baseTestInformWithProjectAuditChangeNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))

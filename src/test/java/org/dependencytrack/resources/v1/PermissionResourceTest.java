@@ -14,283 +14,336 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFilter;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
-import alpine.server.auth.PasswordService;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import net.javacrumbs.jsonunit.core.Option;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.glassfish.jersey.test.DeploymentContext;
-import org.glassfish.jersey.test.ServletDeploymentContext;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.UUID;
 
-public class PermissionResourceTest extends ResourceTest {
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 
-    @Override
-    protected DeploymentContext configureDeployment() {
-        return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(PermissionResource.class)
-                        .register(ApiFilter.class)
-                        .register(AuthenticationFilter.class)))
-                .build();
-    }
+class PermissionResourceTest extends ResourceTest {
 
-    @Before
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(PermissionResource.class)
+                    .register(ApiFilter.class)
+                    .register(AuthenticationFilter.class));
+
+    @BeforeEach
     public void before() throws Exception {
-        super.before();
-        DefaultObjectGenerator generator = new DefaultObjectGenerator();
-        generator.contextInitialized(null);
+        final var generator = new DefaultObjectGenerator();
+        generator.loadDefaultPermissions();
     }
 
     @Test
-    public void getAllPermissionsTest() {
-        Response response = target(V1_PERMISSION).request()
+    void getAllPermissionsTest() {
+        Response response = jersey.target(V1_PERMISSION).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(12, json.size());
-        Assert.assertEquals("ACCESS_MANAGEMENT", json.getJsonObject(0).getString("name"));
-        Assert.assertEquals("Allows the management of users, teams, and API keys", json.getJsonObject(0).getString("description"));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        assertThatJson(getPlainTextBody(response))
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .isEqualTo("""
+                        [
+                          {
+                            "description": "Allows the management of users, teams, and API keys",
+                            "name": "ACCESS_MANAGEMENT"
+                          },
+                          {
+                            "description": "Allows the ability to upload CycloneDX Software Bill of Materials (SBOM)",
+                            "name": "BOM_UPLOAD"
+                          },
+                          {
+                            "description": "Allows the creation, modification, and deletion of policy",
+                            "name": "POLICY_MANAGEMENT"
+                          },
+                          {
+                            "description": "Provides the ability to make analysis decisions on policy violations",
+                            "name": "POLICY_VIOLATION_ANALYSIS"
+                          },
+                          {
+                            "description": "Allows the creation, modification, and deletion of data in the portfolio",
+                            "name": "PORTFOLIO_MANAGEMENT"
+                          },
+                          {
+                            "description": "Provides the ability to optionally create project (if non-existent) on BOM or scan upload",
+                            "name": "PROJECT_CREATION_UPLOAD"
+                          },
+                          {
+                            "description": "Allows the configuration of the system including notifications, repositories, and email settings",
+                            "name": "SYSTEM_CONFIGURATION"
+                          },
+                          {
+                            "description": "Allows the modification and deletion of tags",
+                            "name": "TAG_MANAGEMENT"
+                          },
+                          {
+                            "description": "Provides the ability to view badges",
+                            "name": "VIEW_BADGES"
+                          },
+                          {
+                            "description": "Provides the ability to view policy violations",
+                            "name": "VIEW_POLICY_VIOLATION"
+                          },
+                          {
+                            "description": "Provides the ability to view the portfolio of projects, components, and licenses",
+                            "name": "VIEW_PORTFOLIO"
+                          },
+                          {
+                            "description": "Provides the ability to view the vulnerabilities projects are affected by",
+                            "name": "VIEW_VULNERABILITY"
+                          },
+                          {
+                            "description": "Provides the ability to make analysis decisions on vulnerabilities",
+                            "name": "VULNERABILITY_ANALYSIS"
+                          },
+                          {
+                            "description": "Allows management of internally-defined vulnerabilities",
+                            "name": "VULNERABILITY_MANAGEMENT"
+                          }
+                        ]
+                        """);
     }
 
     @Test
-    public void addPermissionToUserTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+    void addPermissionToUserTest() {
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         qm.close();
-        Response response = target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/" + username).request()
+        Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/" + username).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("user1", json.getString("username"));
-        Assert.assertEquals(1, json.getJsonArray("permissions").size());
-        Assert.assertEquals("PORTFOLIO_MANAGEMENT", json.getJsonArray("permissions").getJsonObject(0).getString("name"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("user1", json.getString("username"));
+        Assertions.assertEquals(1, json.getJsonArray("permissions").size());
+        Assertions.assertEquals("PORTFOLIO_MANAGEMENT", json.getJsonArray("permissions").getJsonObject(0).getString("name"));
     }
 
     @Test
-    public void addPermissionToUserInvalidUserTest() {
-        Response response = target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/blah").request()
+    void addPermissionToUserInvalidUserTest() {
+        Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/blah").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The user could not be found.", body);
+        Assertions.assertEquals("The user could not be found.", body);
     }
 
     @Test
-    public void addPermissionToUserInvalidPermissionTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+    void addPermissionToUserInvalidPermissionTest() {
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         qm.close();
-        Response response = target(V1_PERMISSION + "/BLAH/user/" + username).request()
+        Response response = jersey.target(V1_PERMISSION + "/BLAH/user/" + username).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The permission could not be found.", body);
+        Assertions.assertEquals("The permission could not be found.", body);
     }
 
     @Test
-    public void addPermissionToUserDuplicateTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+    void addPermissionToUserDuplicateTest() {
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         Permission permission = qm.getPermission(Permissions.PORTFOLIO_MANAGEMENT.name());
         user.getPermissions().add(permission);
         qm.persist(user);
         qm.close();
-        Response response = target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/" + username).request()
+        Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/" + username).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(304, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(304, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
     }
 
     @Test
-    public void removePermissionFromUserTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+    void removePermissionFromUserTest() {
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         Permission permission = qm.getPermission(Permissions.PORTFOLIO_MANAGEMENT.name());
         user.getPermissions().add(permission);
         qm.persist(user);
         qm.close();
-        Response response = target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/" + username).request()
+        Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/" + username).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("user1", json.getString("username"));
-        Assert.assertEquals(0, json.getJsonArray("permissions").size());
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("user1", json.getString("username"));
+        Assertions.assertEquals(0, json.getJsonArray("permissions").size());
     }
 
     @Test
-    public void removePermissionFromUserInvalidUserTest() {
-        Response response = target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/blah").request()
+    void removePermissionFromUserInvalidUserTest() {
+        Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/user/blah").request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The user could not be found.", body);
+        Assertions.assertEquals("The user could not be found.", body);
     }
 
     @Test
-    public void removePermissionFromUserInvalidPermissionTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+    void removePermissionFromUserInvalidPermissionTest() {
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
         qm.close();
-        Response response = target(V1_PERMISSION + "/BLAH/user/" + username).request()
+        Response response = jersey.target(V1_PERMISSION + "/BLAH/user/" + username).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The permission could not be found.", body);
+        Assertions.assertEquals("The permission could not be found.", body);
     }
 
     @Test
-    public void removePermissionFromUserNoChangesTest() {
-        ManagedUser user = qm.createManagedUser("user1", new String(PasswordService.createHash("password".toCharArray())));
+    void removePermissionFromUserNoChangesTest() {
+        ManagedUser user = qm.createManagedUser("user1", TEST_USER_PASSWORD_HASH);
         String username = user.getUsername();
-        Response response = target(V1_PERMISSION + "/BOM_UPLOAD/user/" + username).request()
+        Response response = jersey.target(V1_PERMISSION + "/BOM_UPLOAD/user/" + username).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(304, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(304, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
     }
 
     @Test
-    public void addPermissionToTeamTest() {
-        Team team = qm.createTeam("team1", false);
+    void addPermissionToTeamTest() {
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         qm.close();
-        Response response = target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + teamUuid).request()
+        Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + teamUuid).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("team1", json.getString("name"));
-        Assert.assertEquals(1, json.getJsonArray("permissions").size());
-        Assert.assertEquals("PORTFOLIO_MANAGEMENT", json.getJsonArray("permissions").getJsonObject(0).getString("name"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("team1", json.getString("name"));
+        Assertions.assertEquals(1, json.getJsonArray("permissions").size());
+        Assertions.assertEquals("PORTFOLIO_MANAGEMENT", json.getJsonArray("permissions").getJsonObject(0).getString("name"));
     }
 
     @Test
-    public void addPermissionToTeamInvalidTeamTest() {
-        Response response = target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + UUID.randomUUID().toString()).request()
+    void addPermissionToTeamInvalidTeamTest() {
+        Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The team could not be found.", body);
+        Assertions.assertEquals("The team could not be found.", body);
     }
 
     @Test
-    public void addPermissionToTeamInvalidPermissionTest() {
-        Team team = qm.createTeam("team1", false);
+    void addPermissionToTeamInvalidPermissionTest() {
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         qm.close();
-        Response response = target(V1_PERMISSION + "/BLAH/team/" + teamUuid).request()
+        Response response = jersey.target(V1_PERMISSION + "/BLAH/team/" + teamUuid).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The permission could not be found.", body);
+        Assertions.assertEquals("The permission could not be found.", body);
     }
 
     @Test
-    public void addPermissionToTeamDuplicateTest() {
-        Team team = qm.createTeam("team1", false);
+    void addPermissionToTeamDuplicateTest() {
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         Permission permission = qm.getPermission(Permissions.PORTFOLIO_MANAGEMENT.name());
         team.getPermissions().add(permission);
         qm.persist(team);
         qm.close();
-        Response response = target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + teamUuid).request()
+        Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + teamUuid).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(304, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(304, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
     }
 
     @Test
-    public void removePermissionFromTeamTest() {
-        Team team = qm.createTeam("team1", false);
+    void removePermissionFromTeamTest() {
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         Permission permission = qm.getPermission(Permissions.PORTFOLIO_MANAGEMENT.name());
         team.getPermissions().add(permission);
         qm.persist(team);
         qm.close();
-        Response response = target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + teamUuid).request()
+        Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + teamUuid).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("team1", json.getString("name"));
-        Assert.assertEquals(0, json.getJsonArray("permissions").size());
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("team1", json.getString("name"));
+        Assertions.assertEquals(0, json.getJsonArray("permissions").size());
     }
 
     @Test
-    public void removePermissionFromTeamInvalidTeamTest() {
-        Response response = target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + UUID.randomUUID().toString()).request()
+    void removePermissionFromTeamInvalidTeamTest() {
+        Response response = jersey.target(V1_PERMISSION + "/PORTFOLIO_MANAGEMENT/team/" + UUID.randomUUID().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The team could not be found.", body);
+        Assertions.assertEquals("The team could not be found.", body);
     }
 
     @Test
-    public void removePermissionFromTeamInvalidPermissionTest() {
-        Team team = qm.createTeam("team1", false);
+    void removePermissionFromTeamInvalidPermissionTest() {
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
         qm.close();
-        Response response = target(V1_PERMISSION + "/BLAH/team/" + teamUuid).request()
+        Response response = jersey.target(V1_PERMISSION + "/BLAH/team/" + teamUuid).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The permission could not be found.", body);
+        Assertions.assertEquals("The permission could not be found.", body);
     }
 
     @Test
-    public void removePermissionFromTeamNoChangesTest() {
-        Team team = qm.createTeam("team1", false);
+    void removePermissionFromTeamNoChangesTest() {
+        Team team = qm.createTeam("team1");
         String teamUuid = team.getUuid().toString();
-        Response response = target(V1_PERMISSION + "/BOM_UPLOAD/team/" + teamUuid).request()
+        Response response = jersey.target(V1_PERMISSION + "/BOM_UPLOAD/team/" + teamUuid).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(304, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(304, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
     }
 }

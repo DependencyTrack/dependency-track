@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.policy;
 
@@ -23,25 +23,25 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
 
-public class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
+class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
 
     private PolicyEvaluator evaluator;
 
-    @Before
+    @BeforeEach
     public void initEvaluator() {
         evaluator = new LicensePolicyEvaluator();
         evaluator.setQueryManager(qm);
     }
 
     @Test
-    public void hasMatch() {
+    void hasMatch() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -53,14 +53,14 @@ public class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
-        Assert.assertEquals(component, violation.getComponent());
-        Assert.assertEquals(condition, violation.getPolicyCondition());
+        Assertions.assertEquals(component, violation.getComponent());
+        Assertions.assertEquals(condition, violation.getPolicyCondition());
     }
 
     @Test
-    public void noMatch() {
+    void noMatch() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -79,11 +79,11 @@ public class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void wrongSubject() {
+    void wrongSubject() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -95,11 +95,11 @@ public class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void wrongOperator() {
+    void wrongOperator() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -111,11 +111,11 @@ public class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
     }
 
     @Test
-    public void valueIsUnresolved() {
+    void valueIsUnresolved() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -131,10 +131,10 @@ public class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
         Component componentWithoutLicense = new Component();
 
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, componentWithLicense);
-        Assert.assertEquals(0, violations.size());
+        Assertions.assertEquals(0, violations.size());
 
         violations = evaluator.evaluate(policy, componentWithoutLicense);
-        Assert.assertEquals(1, violations.size());
+        Assertions.assertEquals(1, violations.size());
     }
 
 }

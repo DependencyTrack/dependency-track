@@ -14,142 +14,142 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 
-public class PortfolioMetricsTest {
+class PortfolioMetricsTest {
 
     @Test
-    public void testId() {
+    void testId() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setId(111L);
-        Assert.assertEquals(111L, metric.getId());
+        Assertions.assertEquals(111L, metric.getId());
     }
 
     @Test
-    public void testCritical() {
+    void testCritical() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setCritical(10);
-        Assert.assertEquals(10, metric.getCritical());
+        Assertions.assertEquals(10, metric.getCritical());
     }
 
     @Test
-    public void testHigh() {
+    void testHigh() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setHigh(9);
-        Assert.assertEquals(9, metric.getHigh());
+        Assertions.assertEquals(9, metric.getHigh());
     }
 
     @Test
-    public void testMedium() {
+    void testMedium() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setMedium(8);
-        Assert.assertEquals(8, metric.getMedium());
+        Assertions.assertEquals(8, metric.getMedium());
     }
 
     @Test
-    public void testLow() {
+    void testLow() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setLow(7);
-        Assert.assertEquals(7, metric.getLow());
+        Assertions.assertEquals(7, metric.getLow());
     }
 
     @Test
-    public void testUnassigned() {
+    void testUnassigned() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setUnassigned(9191);
-        Assert.assertEquals(9191, metric.getUnassigned());
+        Assertions.assertEquals(9191, metric.getUnassigned());
     }
 
     @Test
-    public void testVulnerabilities() {
+    void testVulnerabilities() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setVulnerabilities(6);
-        Assert.assertEquals(6, metric.getVulnerabilities());
+        Assertions.assertEquals(6, metric.getVulnerabilities());
     }
 
     @Test
-    public void testProjects() {
+    void testProjects() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setProjects(99);
-        Assert.assertEquals(99, metric.getProjects());
+        Assertions.assertEquals(99, metric.getProjects());
     }
 
     @Test
-    public void testVulnerableProjects() {
+    void testVulnerableProjects() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setVulnerableProjects(98);
-        Assert.assertEquals(98, metric.getVulnerableProjects());
+        Assertions.assertEquals(98, metric.getVulnerableProjects());
     }
 
     @Test
-    public void testComponents() {
+    void testComponents() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setComponents(97);
-        Assert.assertEquals(97, metric.getComponents());
+        Assertions.assertEquals(97, metric.getComponents());
     }
 
     @Test
-    public void testVulnerableComponents() {
+    void testVulnerableComponents() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setVulnerableComponents(96);
-        Assert.assertEquals(96, metric.getVulnerableComponents());
+        Assertions.assertEquals(96, metric.getVulnerableComponents());
     }
 
     @Test
-    public void testSuppressed() {
+    void testSuppressed() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setSuppressed(5);
-        Assert.assertEquals(5, metric.getSuppressed());
+        Assertions.assertEquals(5, metric.getSuppressed());
     }
 
     @Test
-    public void testFindingsTotal() {
+    void testFindingsTotal() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setFindingsTotal(4);
-        Assert.assertEquals(4, metric.getFindingsTotal());
+        Assertions.assertEquals(4, metric.getFindingsTotal());
     }
 
     @Test
-    public void testFindingsAudited() {
+    void testFindingsAudited() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setFindingsAudited(3);
-        Assert.assertEquals(3, metric.getFindingsAudited());
+        Assertions.assertEquals(3, metric.getFindingsAudited());
     }
 
     @Test
-    public void testFindingsUnaudited() {
+    void testFindingsUnaudited() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setFindingsUnaudited(2);
-        Assert.assertEquals(2, metric.getFindingsUnaudited());
+        Assertions.assertEquals(2, metric.getFindingsUnaudited());
     }
 
     @Test
-    public void testInheritedRiskScore() {
+    void testInheritedRiskScore() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setInheritedRiskScore(1000);
-        Assert.assertEquals(1000, metric.getInheritedRiskScore(), 0);
+        Assertions.assertEquals(1000, metric.getInheritedRiskScore(), 0);
     }
 
     @Test
-    public void testFirstOccurrence() {
+    void testFirstOccurrence() {
         Date date = new Date();
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setFirstOccurrence(date);
-        Assert.assertEquals(date, metric.getFirstOccurrence());
+        Assertions.assertEquals(date, metric.getFirstOccurrence());
     }
 
     @Test
-    public void testLastOccurrence() {
+    void testLastOccurrence() {
         Date date = new Date();
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setLastOccurrence(date);
-        Assert.assertEquals(date, metric.getLastOccurrence());
+        Assertions.assertEquals(date, metric.getLastOccurrence());
     }
 }

@@ -14,27 +14,28 @@ other than a modern version of Docker.
 ### Container Requirements (API Server)
 
 | Minimum     | Recommended |
-| :---------- | :---------- |
-| 4.5GB RAM   | 16GB RAM    |
+|:------------|:------------|
+| 2GB RAM     | 8GB RAM     |
 | 2 CPU cores | 4 CPU cores |
-
-> These requirements can be disabled by setting the 'system.requirement.check.enabled' property or the 'SYSTEM_REQUIREMENT_CHECK_ENABLED' environment variable to 'false'. 
 
 ### Container Requirements (Front End)
 
-| Minimum     | Recommended |
-| :---------- | :---------- |
-| 512MB RAM   | 1GB RAM    |
-| 1 CPU cores | 2 CPU cores |
+| Minimum       | Recommended |
+|:--------------|:------------|
+| 128MB RAM     | 512MB RAM   |
+| 0.5 CPU cores | 1 CPU cores |
 
 ### Quickstart (Docker Compose)
+
+> The easiest way to use Docker Compose is by installing Docker Desktop, since Compose comes bundled as a plugin.
+> See the official [Docker Compose installation guide](https://docs.docker.com/compose/install/) for alternative installation methods.
 
 ```bash
 # Downloads the latest Docker Compose file
 curl -LO https://dependencytrack.org/docker-compose.yml
 
 # Starts the stack using Docker Compose
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Quickstart (Docker Swarm)
@@ -52,6 +53,8 @@ docker stack deploy -c docker-compose.yml dtrack
 
 ### Quickstart (Manual Execution)
 
+> **NOTE:** the bundled container does _not_ support [OpenID Connect authentication]({{ site.baseurl }}{% link _docs/getting-started/openidconnect-configuration.md %}).
+
 ```bash
 # Pull the image from the Docker Hub OWASP repo
 docker pull dependencytrack/bundled
@@ -67,11 +70,9 @@ docker run -d -m 8192m -p 8080:8080 --name dependency-track -v dependency-track:
 
 The preferred method for production environments is to use docker-compose.yml with a corresponding
 database container (Postgres, MySQL, or Microsoft SQL). The following is an example YAML file that
-can be used with `docker-compose` or `docker stack deploy`.
+can be used with `docker compose` or `docker stack deploy`.
 
 ```yaml
-version: '3.7'
-
 #####################################################
 # This Docker Compose file contains two services
 #    Dependency-Track API Server
@@ -121,6 +122,7 @@ services:
     #
     # Optional OpenID Connect (OIDC) Properties
     # - ALPINE_OIDC_ENABLED=true
+    # - ALPINE_OIDC_CLIENT_ID=
     # - ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example
     # - ALPINE_OIDC_USERNAME_CLAIM=preferred_username
     # - ALPINE_OIDC_TEAMS_CLAIM=groups
@@ -179,8 +181,6 @@ services:
     # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_LOCK_BUCKETS=1000
     # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_MAX_ATTEMPTS=10
     #
-    # Optional configuration for the system requirements
-    # - SYSTEM_REQUIREMENT_CHECK_ENABLED=true
     # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8"
     # - EXTRA_JAVA_OPTIONS=
     

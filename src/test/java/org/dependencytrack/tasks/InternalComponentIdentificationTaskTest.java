@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks;
 
@@ -24,17 +24,17 @@ import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class InternalComponentIdentificationTaskTest extends PersistenceCapableTest {
+class InternalComponentIdentificationTaskTest extends PersistenceCapableTest {
 
-    @Before
+    @BeforeEach
     public void setUp() {
         // Configure internal components to be identified by group "org.acme"
         // and names starting with "foobar-".
@@ -64,7 +64,7 @@ public class InternalComponentIdentificationTaskTest extends PersistenceCapableT
     }
 
     @Test
-    public void test() throws Exception {
+    void test() throws Exception {
         new InternalComponentIdentificationTask().inform(new InternalComponentIdentificationEvent());
         assertThat(getInternalComponentCount()).isEqualTo(30);
     }

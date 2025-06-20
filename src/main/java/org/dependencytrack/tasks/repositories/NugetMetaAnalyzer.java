@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.repositories;
 
@@ -46,7 +46,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
 
     public static final DateFormat[] SUPPORTED_DATE_FORMATS = new DateFormat[]{
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
-            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"),
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
     };
     private static final Logger LOGGER = Logger.getLogger(NugetMetaAnalyzer.class);
     private static final String DEFAULT_BASE_URL = "https://api.nuget.org";
@@ -104,13 +105,14 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private boolean performVersionCheck(final MetaModel meta, final Component component) {
-        final String url = String.format(versionQueryUrl, component.getPurl().getName().toLowerCase());
+        final String url = String.format(versionQueryUrl, urlEncode(component.getPurl().getName().toLowerCase()));
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {
                     String responseString = EntityUtils.toString(response.getEntity());
                     var jsonObject = new JSONObject(responseString);
                     final JSONArray versions = jsonObject.getJSONArray("versions");
+
                     final String latest = findLatestVersion(versions); // get the last version in the array
                     meta.setLatestVersion(latest);
                 }
@@ -126,15 +128,17 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         return false;
     }
 
-    private String findLatestVersion(JSONArray versions) {
-        if (versions.length() < 1) {
+    private String findLatestVersion(JSONArray versions) { 
+        JSONArray filteredVersions = filterPreReleaseVersions(versions);
+
+        if (filteredVersions.length() < 1) {
             return null;
         }
 
-        ComparableVersion latestVersion = new ComparableVersion(versions.getString(0));
+        ComparableVersion latestVersion = new ComparableVersion(filteredVersions.getString(0));
 
-        for (int i = 1; i < versions.length(); i++) {
-            ComparableVersion version = new ComparableVersion(versions.getString(i));
+        for (int i = 1; i < filteredVersions.length(); i++) {
+            ComparableVersion version = new ComparableVersion(filteredVersions.getString(i));
             if (version.compareTo(latestVersion) > 0) {
                 latestVersion = version;
             }
@@ -143,8 +147,18 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         return latestVersion.toString();
     }
 
+    private JSONArray filterPreReleaseVersions(JSONArray versions) {
+        JSONArray filteredVersions = new JSONArray();
+        for (int i = 0; i < versions.length(); i++) {
+            if (!versions.getString(i).contains("-")) {
+                filteredVersions.put(versions.getString(i));
+            }
+        }
+        return filteredVersions;
+    } 
+
     private boolean performLastPublishedCheck(final MetaModel meta, final Component component) {
-        final String url = String.format(registrationUrl, component.getPurl().getName().toLowerCase(), meta.getLatestVersion());
+        final String url = String.format(registrationUrl, urlEncode(component.getPurl().getName().toLowerCase()), urlEncode(meta.getLatestVersion()));
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {

@@ -14,52 +14,52 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-public class TagTest { 
+class TagTest {
 
     @Test
-    public void testId() { 
+    void testId() {
         Tag tag = new Tag();
         tag.setId(111L);
-        Assert.assertEquals(111L, tag.getId());
+        Assertions.assertEquals(111L, tag.getId());
     } 
 
     @Test
-    public void testName() {
+    void testName() {
         Tag tag = new Tag();
         tag.setName("java");
-        Assert.assertEquals("java", tag.getName());
+        Assertions.assertEquals("java", tag.getName());
     } 
 
     @Test
-    public void testProjects() {
-        List<Project> projects = new ArrayList<>();
+    void testProjects() {
+        Set<Project> projects = new HashSet<>();
         Project project = new Project();
         projects.add(project);
         Tag tag = new Tag();
         tag.setProjects(projects);
-        Assert.assertEquals(1, tag.getProjects().size());
-        Assert.assertEquals(project, tag.getProjects().get(0));
+        Assertions.assertEquals(1, tag.getProjects().size());
+        Assertions.assertEquals(project, tag.getProjects().iterator().next());
     } 
 
     @Test
-    public void testEquals() {
+    void testEquals() {
         Tag t1 = new Tag();
-        t1.setId(111L);
+        t1.setName("foo");
         Tag t2 = new Tag();
-        t2.setId(222L);
+        t2.setName("bar");
         Tag t3 = new Tag();
-        t3.setId(111L);
-        Assert.assertFalse(t1.equals(t2));
-        Assert.assertTrue(t1.equals(t3));
+        t3.setName("foo");
+        Assertions.assertFalse(t1.equals(t2));
+        Assertions.assertTrue(t1.equals(t3));
     }
 } 

@@ -14,13 +14,14 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.tasks.repositories;
 
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
+
 import com.github.packageurl.PackageURL;
 
 /**
@@ -30,6 +31,12 @@ import com.github.packageurl.PackageURL;
  * @since 3.1.0
  */
 public interface IMetaAnalyzer {
+
+    /**
+     * Optionally set repositoryId that can be used in a cache key for example.
+     * @param repositoryId
+     */
+    public void setRepositoryId(String repositoryId);
 
     /**
      * Sets the base URL for the repository being used. If not specified, IMetaAnalyzer implementations
@@ -90,6 +97,11 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
+            } else if (PackageURL.StandardTypes.CARGO.equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new CargoMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
             } else if ("cpan".equals(component.getPurl().getType())) {
                 IMetaAnalyzer analyzer = new CpanMetaAnalyzer();
                 if (analyzer.isApplicable(component)) {
@@ -125,10 +137,28 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
+            } else if (PackageURL.StandardTypes.GITHUB.equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new GithubMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
+            } else if ("hackage".equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new HackageMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
+            } else if ("nixpkgs".equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new NixpkgsMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
             }
         }
 
         return new IMetaAnalyzer() {
+            @Override
+            public void setRepositoryId(String repositoryId) {}
+
             @Override
             public void setRepositoryBaseUrl(String baseUrl) {
             }

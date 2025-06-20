@@ -14,33 +14,27 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.notification.publisher;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import org.junit.Before;
-import org.junit.Rule;
-
-import javax.json.JsonObjectBuilder;
+import jakarta.json.JsonObjectBuilder;
+import org.junit.jupiter.api.BeforeEach;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL;
 
 public abstract class AbstractWebhookPublisherTest<T extends AbstractWebhookPublisher> extends AbstractPublisherTest<T> {
-
-    @Rule
-    public WireMockRule wireMock = new WireMockRule(options().dynamicPort());
 
     AbstractWebhookPublisherTest(final DefaultNotificationPublishers publisher, final T publisherInstance) {
         super(publisher, publisherInstance);
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    final void initAbstractWebhookPublisherTest() {
         qm.createConfigProperty(
                 GENERAL_BASE_URL.getGroupName(),
                 GENERAL_BASE_URL.getPropertyName(),
@@ -49,7 +43,7 @@ public abstract class AbstractWebhookPublisherTest<T extends AbstractWebhookPubl
                 GENERAL_BASE_URL.getDescription()
         );
 
-        stubFor(post("/")
+        stubFor(post(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(200)));
     }
@@ -57,7 +51,7 @@ public abstract class AbstractWebhookPublisherTest<T extends AbstractWebhookPubl
     @Override
     JsonObjectBuilder extraConfig() {
         return super.extraConfig()
-                .add(Publisher.CONFIG_DESTINATION, wireMock.baseUrl());
+                .add(Publisher.CONFIG_DESTINATION, wmRuntimeInfo.getHttpBaseUrl());
     }
 
 }

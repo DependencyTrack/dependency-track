@@ -1,0 +1,65 @@
+name: Adopt Dependency Track
+description: Let the community know you have adopted Dependency Track.
+title: organization_name has adopted Dependency Track
+labels: "adopt-dependency-track"
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for supporting the Dependency track project. Adding your organization to the list of adopters raises awareness for the project and is more help than you think!
+
+        Check the current list of adopters:
+        https://github.com/DependencyTrack/dependency-track/blob/master/ADOPTERS.md
+  - type: input
+    id: org-name
+    attributes:
+      label: Organization Name
+      description: Name of the organization.
+      placeholder: ex. OWASP, Inc.
+    validations:
+      required: false
+  - type: input
+    id: org-url
+    attributes:
+      label: Organization Website
+      description: Provide a link to the organization website.
+      placeholder: ex. https://dependencytrack.org/
+    validations:
+      required: false
+  - type: input
+    id: org-logo
+    attributes:
+      label: Organization Logo (optional)
+      description: Provide a link to the organization logo.
+      placeholder: ex. https://avatars.githubusercontent.com/u/40258585?s=200&v=4
+    validations:
+      required: false
+  - type: textarea
+    id: dependency-track-use-case
+    attributes:
+      label: How is your organization using Dependency Track?
+      description: 2 or 3 sentences about how your organization has incorporated Dependency Track.
+      placeholder: We secure all the things!
+    validations:
+      required: false
+  - type: input
+    id: source-code
+    attributes:
+      label: Source Code Link (optional)
+      description: Is your use case open source? Provide a link.
+      placeholder: ex. https://github.com/DependencyTrack/dependency-track
+    validations:
+      required: false
+  - type: textarea
+    id: content-links
+    attributes:
+      label: Want to link blogs or videos? Share them here.
+      description: Please copy and paste links to content that shows how you're using Dependency Track.
+  - type: checkboxes
+    id: existing-entry
+    attributes:
+      label: Update entry
+      options:
+        - label: Check this box if you want to update an existing entry.
+          required: false

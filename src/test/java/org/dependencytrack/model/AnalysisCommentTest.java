@@ -14,53 +14,53 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 
-public class AnalysisCommentTest {
+class AnalysisCommentTest {
 
     @Test
-    public void testId() {
+    void testId() {
         AnalysisComment comment = new AnalysisComment();
         comment.setId(111L);
-        Assert.assertEquals(111L, comment.getId());
+        Assertions.assertEquals(111L, comment.getId());
     }
 
     @Test
-    public void testAnalysis() {
+    void testAnalysis() {
         Analysis analysis = new Analysis();
         AnalysisComment comment = new AnalysisComment();
         comment.setAnalysis(analysis);
-        Assert.assertEquals(analysis, comment.getAnalysis());
+        Assertions.assertEquals(analysis, comment.getAnalysis());
     }
 
     @Test
-    public void testTimestamp() {
+    void testTimestamp() {
         Date date = new Date();
         AnalysisComment comment = new AnalysisComment();
         comment.setTimestamp(date);
-        Assert.assertEquals(date, comment.getTimestamp());
+        Assertions.assertEquals(date, comment.getTimestamp());
     }
 
     @Test
-    public void testComment() {
+    void testComment() {
         String commentString = "This is a test comment";
         AnalysisComment comment = new AnalysisComment();
         comment.setComment(commentString);
-        Assert.assertEquals(commentString, comment.getComment());
+        Assertions.assertEquals(commentString, comment.getComment());
     }
 
     @Test
-    public void testCommenter() {
+    void testCommenter() {
         String commenter = "John Doe";
         AnalysisComment comment = new AnalysisComment();
         comment.setCommenter(commenter);
-        Assert.assertEquals(commenter, comment.getCommenter());
+        Assertions.assertEquals(commenter, comment.getCommenter());
     }
 } 

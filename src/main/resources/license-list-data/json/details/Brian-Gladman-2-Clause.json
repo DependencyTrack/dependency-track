@@ -1,0 +1,35 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1998-2013, Brian Gladman, Worcester, UK. All\n   rights reserved.\n\nThe redistribution and use of this software (with or without\nchanges) is allowed without the payment of fees or royalties\nprovided that:\n\n   source code distributions include the above copyright notice,\n   this list of conditions and the following disclaimer;\n\n   binary distributions include the above copyright notice, this\n   list of conditions and the following disclaimer in their\n   documentation.\n\nThis software is provided \u0027as is\u0027 with no explicit or implied\nwarranties in respect of its operation, including, but not limited\nto, correctness and fitness for purpose.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1998-2013, Brian Gladman, Worcester, UK. All rights reserved.\";match\u003d\".{0,5000}\"\u003e\u003e\nThe redistribution and use of this software (with or without changes) is allowed without the payment of fees or royalties provided that:\n\nsource code distributions include the above copyright notice, this list of conditions and the following disclaimer;\n\nbinary distributions include the above copyright notice, this list of conditions and the following disclaimer in their documentation.\n\nThis software is provided \u0027as is\u0027 with no explicit or implied warranties in respect of its operation, including, but not limited to, correctness and fitness for purpose.\n\n",
+  "name": "Brian Gladman 2-Clause License",
+  "licenseComments": "This is similar to Brian-Gladman-3-Clause but sort omits the third clause, adds \"without the payment of fees or royalties\", and re-words the lead-in and first two clauses.",
+  "comment": "This is similar to Brian-Gladman-3-Clause but sort omits the third clause, adds \"without the payment of fees or royalties\", and re-words the lead-in and first two clauses.",
+  "licenseId": "Brian-Gladman-2-Clause",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://web.mit.edu/kerberos/krb5-1.21/doc/mitK5license.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:03:51Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/krb5/krb5/blob/krb5-1.21.2-final/NOTICE#L140-L156",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T18:03:51Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/krb5/krb5/blob/krb5-1.21.2-final/NOTICE#L140-L156",
+    "https://web.mit.edu/kerberos/krb5-1.21/doc/mitK5license.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (C) 1998-2013, Brian Gladman,\u003cbr /\u003e\n\n            Worcester, UK. All rights reserved.\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            The redistribution and use of this software\n            (with or without changes) is allowed without\n            the payment of fees or royalties provided that:\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            source code distributions include the above copyright\n            notice, this list of conditions and the following disclaimer;\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            binary distributions include the above copyright notice, this list\n            of conditions and the following disclaimer in their documentation.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            This software is provided \u0026apos;as is\u0026apos; with no explicit or\n            implied warranties in respect of its operation, including,\n            but not limited to, correctness and fitness for purpose.\n         \u003c/p\u003e\n\n      "
+}

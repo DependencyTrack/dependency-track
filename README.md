@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/DependencyTrack/dependency-track/workflows/CI%20Build/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions?workflow=CI+Build)
+[![Build Status](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-build.yaml/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions?workflow=CI+Build)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/b2ecd06dab57438a9a55bc4a71c5a8ce)](https://www.codacy.com/gh/DependencyTrack/dependency-track/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DependencyTrack/dependency-track&amp;utm_campaign=Badge_Grade)
 [![Alpine](https://img.shields.io/badge/built%20on-Alpine-blue.svg)](https://github.com/stevespringett/Alpine)
 [![License][license-image]][Apache License 2.0]
@@ -57,6 +57,7 @@ CI/CD environments.
   * [GitHub Advisories]
   * [Sonatype OSS Index]
   * [Snyk]
+  * [Trivy]
   * [OSV]
   * [VulnDB] from [Risk Based Security]
   * More coming soon.
@@ -75,7 +76,7 @@ CI/CD environments.
   * NPM (Javascript)
   * CPAN (Perl)
   * NuGet (.NET)
-  * Pypi (Python)
+  * PyPI (Python)
   * More coming soon.
 * Identifies APIs and external service components including:
   * Service provider
@@ -170,21 +171,8 @@ The Traditional variant combines the API Server and the Frontend user interface 
 container. This variant is not supported, deprecated, and will be discontinued in a future release.
 
 ## Deploying on Kubernetes with Helm
-You can install on Kubernetes using the [community-maintained chart](https://github.com/evryfs/helm-charts/tree/master/charts/dependency-track) like this:
 
-Helm v3:
-```shell
-helm repo add evryfs-oss https://evryfs.github.io/helm-charts/
-helm install dependency-track evryfs-oss/dependency-track --namespace dependency-track --create-namespace
-```
-
-Helm v2:
-```shell
-helm repo add evryfs-oss https://evryfs.github.io/helm-charts/
-helm install evryfs-oss/dependency-track --name dependency-track --namespace dependency-track --create-namespace
-```
-
-by default, it will install PostgreSQL and use persistent volume claims for the data-directory used for vulnerability feeds.
+Refer to https://github.com/DependencyTrack/helm-charts.
 
 ## Contributing
 
@@ -204,7 +192,7 @@ Interested in contributing to Dependency-Track? Please check [`CONTRIBUTING.md`]
 * Discussion (Groups.io): <https://dependencytrack.org/discussion>
 
 ## Copyright & License
-Dependency-Track is Copyright (c) Steve Springett. All Rights Reserved.
+Dependency-Track is Copyright (c) OWASP Foundation. All Rights Reserved.
 
 Permission to modify and redistribute is granted under the terms of the
 [Apache License 2.0].
@@ -216,6 +204,7 @@ the [notices] file for more information.
   [GitHub Advisories]: https://www.github.com/advisories
   [Sonatype OSS Index]: https://ossindex.sonatype.org
   [Snyk]: https://snyk.io
+  [Trivy]: https://www.aquasec.com/products/trivy/
   [OSV]: https://osv.dev
   [VulnDB]: https://vulndb.cyberriskanalytics.com
   [Risk Based Security]: https://www.riskbasedsecurity.com

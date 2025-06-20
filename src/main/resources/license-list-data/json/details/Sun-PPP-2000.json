@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 2000 by Sun Microsystems, Inc.\nAll rights reserved.\n\nPermission to use, copy, modify, and distribute this software and its\ndocumentation is hereby granted, provided that the above copyright\nnotice appears in all copies.\n\nSUN MAKES NO REPRESENTATION OR WARRANTIES ABOUT THE SUITABILITY OF\nTHE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED\nTO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A\nPARTICULAR PURPOSE, OR NON-INFRINGEMENT.  SUN SHALL NOT BE LIABLE FOR\nANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR\nDISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES\n\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 2000 by Sun Microsystems, Inc. All rights reserved.  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this software and its documentation is hereby granted, provided that the above copyright notice appears in all copies.\n\nSUN MAKES NO REPRESENTATION OR WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SUN SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES\n\n",
+  "name": "Sun PPP License (2000)",
+  "licenseId": "Sun-PPP-2000",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://github.com/ppp-project/ppp/blob/master/modules/ppp_ahdlc.c#L7-L19",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2024-12-30T18:01:59Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/ppp-project/ppp/blob/master/modules/ppp_ahdlc.c#L7-L19"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright (c) 2000 by Sun Microsystems, Inc.\u003cbr /\u003e\n\n            All rights reserved.\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n      \u003cp\u003e\n         Permission to use, copy, modify, and distribute this software and its\n         documentation is hereby granted, provided that the above copyright\n         notice appears in all copies.\n      \u003c/p\u003e\n\n      \u003cp\u003e\n         SUN MAKES NO REPRESENTATION OR WARRANTIES ABOUT THE SUITABILITY OF\n         THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED\n         TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A\n         PARTICULAR PURPOSE, OR NON-INFRINGEMENT.  SUN SHALL NOT BE LIABLE FOR\n         ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR\n         DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES\n      \u003c/p\u003e\n\n    "
+}

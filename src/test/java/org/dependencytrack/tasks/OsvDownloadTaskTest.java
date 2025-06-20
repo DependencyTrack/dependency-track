@@ -28,11 +28,10 @@ import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
-import org.dependencytrack.persistence.CweImporter;
 import org.json.JSONObject;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,11 +47,11 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 
-public class OsvDownloadTaskTest extends PersistenceCapableTest {
+class OsvDownloadTaskTest extends PersistenceCapableTest {
     private JSONObject jsonObject;
     private final OsvAdvisoryParser parser = new OsvAdvisoryParser();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(),
@@ -77,9 +76,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testParseOSVJsonToAdvisoryAndSave() throws Exception {
-        new CweImporter().processCweDefinitions(); // Necessary for resolving CWEs
-
+    void testParseOSVJsonToAdvisoryAndSave() throws Exception {
         // Enable alias synchronization
         qm.createConfigProperty(
                 ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getGroupName(),
@@ -91,47 +88,47 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
-        Assert.assertNotNull(advisory);
-        Assert.assertEquals(8, advisory.getAffectedPackages().size());
+        Assertions.assertNotNull(advisory);
+        Assertions.assertEquals(8, advisory.getAffectedPackages().size());
 
         // pass the mapped advisory to OSV task to update the database
         final var task = new OsvDownloadTask();
         task.updateDatasource(advisory);
 
         final Consumer<Vulnerability> assertVulnerability = (vulnerability) -> {
-            Assert.assertNotNull(vulnerability);
-            Assert.assertFalse(StringUtils.isEmpty(vulnerability.getTitle()));
-            Assert.assertFalse(StringUtils.isEmpty(vulnerability.getDescription()));
-            Assert.assertNotNull(vulnerability.getCwes());
-            Assert.assertEquals(1, vulnerability.getCwes().size());
-            Assert.assertEquals(601, vulnerability.getCwes().get(0).intValue());
-            Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H", vulnerability.getCvssV3Vector());
-            Assert.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
-            Assert.assertNull(vulnerability.getCreated());
-            Assert.assertNotNull(vulnerability.getPublished());
-            Assert.assertEquals(LocalDateTime.of(2019, 3, 14, 15, 39, 30).toInstant(ZoneOffset.UTC), vulnerability.getPublished().toInstant());
-            Assert.assertNotNull(vulnerability.getUpdated());
-            Assert.assertEquals(LocalDateTime.of(2022, 6, 9, 7, 1, 32, 587000000).toInstant(ZoneOffset.UTC), vulnerability.getUpdated().toInstant());
-            Assert.assertEquals("Skywalker, Solo", vulnerability.getCredits());
+            Assertions.assertNotNull(vulnerability);
+            Assertions.assertFalse(StringUtils.isEmpty(vulnerability.getTitle()));
+            Assertions.assertFalse(StringUtils.isEmpty(vulnerability.getDescription()));
+            Assertions.assertNotNull(vulnerability.getCwes());
+            Assertions.assertEquals(1, vulnerability.getCwes().size());
+            Assertions.assertEquals(601, vulnerability.getCwes().get(0).intValue());
+            Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H", vulnerability.getCvssV3Vector());
+            Assertions.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
+            Assertions.assertNull(vulnerability.getCreated());
+            Assertions.assertNotNull(vulnerability.getPublished());
+            Assertions.assertEquals(LocalDateTime.of(2019, 3, 14, 15, 39, 30).toInstant(ZoneOffset.UTC), vulnerability.getPublished().toInstant());
+            Assertions.assertNotNull(vulnerability.getUpdated());
+            Assertions.assertEquals(LocalDateTime.of(2022, 6, 9, 7, 1, 32, 587000000).toInstant(ZoneOffset.UTC), vulnerability.getUpdated().toInstant());
+            Assertions.assertEquals("Skywalker, Solo", vulnerability.getCredits());
         };
 
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", true);
         assertVulnerability.accept(vulnerability);
 
         List<VulnerableSoftware> vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth"));
-        Assert.assertEquals(4, vulnerableSoftware.size());
-        Assert.assertNull(vulnerableSoftware.get(0).getVersionStartIncluding());
-        Assert.assertEquals("2.0.17", vulnerableSoftware.get(0).getVersionEndExcluding());
-        Assert.assertEquals("2.1.0", vulnerableSoftware.get(1).getVersionStartIncluding());
-        Assert.assertEquals("2.1.4", vulnerableSoftware.get(1).getVersionEndExcluding());
-        Assert.assertEquals("2.2.0", vulnerableSoftware.get(2).getVersionStartIncluding());
-        Assert.assertEquals("2.2.4", vulnerableSoftware.get(2).getVersionEndExcluding());
-        Assert.assertEquals("2.3.0", vulnerableSoftware.get(3).getVersionStartIncluding());
-        Assert.assertEquals("2.3.5", vulnerableSoftware.get(3).getVersionEndExcluding());
+        Assertions.assertEquals(4, vulnerableSoftware.size());
+        Assertions.assertNull(vulnerableSoftware.get(0).getVersionStartIncluding());
+        Assertions.assertEquals("2.0.17", vulnerableSoftware.get(0).getVersionEndExcluding());
+        Assertions.assertEquals("2.1.0", vulnerableSoftware.get(1).getVersionStartIncluding());
+        Assertions.assertEquals("2.1.4", vulnerableSoftware.get(1).getVersionEndExcluding());
+        Assertions.assertEquals("2.2.0", vulnerableSoftware.get(2).getVersionStartIncluding());
+        Assertions.assertEquals("2.2.4", vulnerableSoftware.get(2).getVersionEndExcluding());
+        Assertions.assertEquals("2.3.0", vulnerableSoftware.get(3).getVersionStartIncluding());
+        Assertions.assertEquals("2.3.5", vulnerableSoftware.get(3).getVersionEndExcluding());
 
         // The advisory reports both spring-security-oauth and spring-security-oauth2 as affected
         vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth2"));
-        Assert.assertEquals(4, vulnerableSoftware.size());
+        Assertions.assertEquals(4, vulnerableSoftware.size());
 
         final List<VulnerabilityAlias> aliases = qm.getVulnerabilityAliases(vulnerability);
         assertThat(aliases).satisfiesExactly(
@@ -144,18 +141,18 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         // incoming vulnerability when vulnerability with same ID already exists
         prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");
         advisory = parser.parse(jsonObject);
-        Assert.assertNotNull(advisory);
+        Assertions.assertNotNull(advisory);
         task.updateDatasource(advisory);
         vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", true);
-        Assert.assertNotNull(vulnerability);
+        Assertions.assertNotNull(vulnerability);
         assertVulnerability.accept(vulnerability); // Ensure that the vulnerability was not modified
-        Assert.assertEquals(1, vulnerability.getVulnerableSoftware().size());
-        Assert.assertEquals("3.1.0", vulnerability.getVulnerableSoftware().get(0).getVersionStartIncluding());
-        Assert.assertEquals("3.3.0", vulnerability.getVulnerableSoftware().get(0).getVersionEndExcluding());
+        Assertions.assertEquals(1, vulnerability.getVulnerableSoftware().size());
+        Assertions.assertEquals("3.1.0", vulnerability.getVulnerableSoftware().get(0).getVersionStartIncluding());
+        Assertions.assertEquals("3.3.0", vulnerability.getVulnerableSoftware().get(0).getVersionEndExcluding());
     }
 
     @Test
-    public void testUpdateDatasourceWithAliasSyncDisabled() throws Exception {
+    void testUpdateDatasourceWithAliasSyncDisabled() throws Exception {
         // Disable alias synchronization
         qm.createConfigProperty(
                 ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED.getGroupName(),
@@ -167,8 +164,8 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
-        Assert.assertNotNull(advisory);
-        Assert.assertEquals(8, advisory.getAffectedPackages().size());
+        Assertions.assertNotNull(advisory);
+        Assertions.assertEquals(8, advisory.getAffectedPackages().size());
 
         // pass the mapped advisory to OSV task to update the database
         final var task = new OsvDownloadTask();
@@ -181,7 +178,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUpdateDatasourceVulnerableVersionRanges() {
+    void testUpdateDatasourceVulnerableVersionRanges() {
         var vs1 = new VulnerableSoftware();
         vs1.setPurlType("maven");
         vs1.setPurlNamespace("com.fasterxml.jackson.core");
@@ -288,6 +285,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
                  }
                 """)));
 
+        qm.getPersistenceManager().evictAll();
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.GITHUB, "GHSA-57j2-w4cx-62h2");
         assertThat(vuln).isNotNull();
 
@@ -351,89 +349,95 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testParseAdvisoryToVulnerability() throws IOException {
+    void testParseAdvisoryToVulnerability() throws IOException {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
-        Assert.assertNotNull(advisory);
+        Assertions.assertNotNull(advisory);
         final var task = new OsvDownloadTask();
         Vulnerability vuln = task.mapAdvisoryToVulnerability(qm, advisory);
-        Assert.assertNotNull(vuln);
-        Assert.assertEquals("Skywalker, Solo", vuln.getCredits());
-        Assert.assertEquals("GITHUB", vuln.getSource());
-        Assert.assertEquals(Severity.CRITICAL, vuln.getSeverity());
-        Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H", vuln.getCvssV3Vector());
+        Assertions.assertNotNull(vuln);
+        Assertions.assertEquals("Skywalker, Solo", vuln.getCredits());
+        Assertions.assertEquals("GITHUB", vuln.getSource());
+        Assertions.assertEquals(Severity.CRITICAL, vuln.getSeverity());
+        Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H", vuln.getCvssV3Vector());
     }
 
     @Test
-    public void testParseAdvisoryToVulnerabilityWithInvalidPurl() throws IOException {
+    void testParseAdvisoryToVulnerabilityWithInvalidPurl() throws IOException {
         final var task = new OsvDownloadTask();
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-invalid-purl.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
         task.updateDatasource(advisory);
-        Assert.assertNotNull(advisory);
+        Assertions.assertNotNull(advisory);
         Vulnerability vuln = qm.getVulnerabilityByVulnId("OSV", "OSV-2021-60", true);
-        Assert.assertNotNull(vuln);
-        Assert.assertEquals(Severity.MEDIUM, vuln.getSeverity());
-        Assert.assertEquals(1, vuln.getVulnerableSoftware().size());
+        Assertions.assertNotNull(vuln);
+        Assertions.assertEquals(Severity.MEDIUM, vuln.getSeverity());
+        Assertions.assertEquals(1, vuln.getVulnerableSoftware().size());
     }
 
     @Test
-    public void testWithdrawnAdvisory() throws Exception {
+    void testWithdrawnAdvisory() throws Exception {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-withdrawn.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
-        Assert.assertNull(advisory);
+        Assertions.assertNull(advisory);
     }
 
     @Test
-    public void testSourceOfVulnerability() {
+    void testSourceOfVulnerability() {
         final var task = new OsvDownloadTask();
 
         String sourceTestId = "GHSA-77rv-6vfw-x4gc";
         Vulnerability.Source source = task.extractSource(sourceTestId);
-        Assert.assertNotNull(source);
-        Assert.assertEquals(Vulnerability.Source.GITHUB, source);
+        Assertions.assertNotNull(source);
+        Assertions.assertEquals(Vulnerability.Source.GITHUB, source);
 
         sourceTestId = "CVE-2022-tyhg";
         source = task.extractSource(sourceTestId);
-        Assert.assertNotNull(source);
-        Assert.assertEquals(Vulnerability.Source.NVD, source);
+        Assertions.assertNotNull(source);
+        Assertions.assertEquals(Vulnerability.Source.NVD, source);
 
         sourceTestId = "anyOther-2022-tyhg";
         source = task.extractSource(sourceTestId);
-        Assert.assertNotNull(source);
-        Assert.assertEquals(Vulnerability.Source.OSV, source);
+        Assertions.assertNotNull(source);
+        Assertions.assertEquals(Vulnerability.Source.OSV, source);
     }
 
     @Test
-    public void testCalculateOSVSeverity() throws IOException {
+    void testCalculateOSVSeverity() throws IOException {
         final var task = new OsvDownloadTask();
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
-        Assert.assertNotNull(advisory);
+        Assertions.assertNotNull(advisory);
         Severity severity = task.calculateOSVSeverity(advisory);
-        Assert.assertEquals(Severity.CRITICAL, severity);
+        Assertions.assertEquals(Severity.CRITICAL, severity);
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-severity-test-ecosystem-cvss.json");
         advisory = parser.parse(jsonObject);
         severity = task.calculateOSVSeverity(advisory);
-        Assert.assertEquals(Severity.CRITICAL, severity);
+        Assertions.assertEquals(Severity.CRITICAL, severity);
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-severity-test-ecosystem.json");
         advisory = parser.parse(jsonObject);
         severity = task.calculateOSVSeverity(advisory);
-        Assert.assertEquals(Severity.MEDIUM, severity);
+        Assertions.assertEquals(Severity.MEDIUM, severity);
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-vulnerability-no-range.json");
         advisory = parser.parse(jsonObject);
-        Assert.assertNotNull(advisory);
+        Assertions.assertNotNull(advisory);
         severity = task.calculateOSVSeverity(advisory);
-        Assert.assertEquals(Severity.UNASSIGNED, severity);
+        Assertions.assertEquals(Severity.UNASSIGNED, severity);
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-CURL-CVE-2009-0037.json");
+        advisory = parser.parse(jsonObject);
+        Assertions.assertNotNull(advisory);
+        severity = task.calculateOSVSeverity(advisory);
+        Assertions.assertEquals(Severity.UNASSIGNED, severity);
     }
 
     @Test
-    public void testCommitHashRangesAndVersions() throws IOException {
+    void testCommitHashRangesAndVersions() throws IOException {
         final var task = new OsvDownloadTask();
 
         // insert a vulnerability in database
@@ -442,21 +446,21 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         task.updateDatasource(advisory);
 
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("OSV", "OSV-2021-1820", true);
-        Assert.assertNotNull(vulnerability);
-        Assert.assertEquals(22, vulnerability.getVulnerableSoftware().size());
-        Assert.assertEquals(Severity.MEDIUM, vulnerability.getSeverity());
+        Assertions.assertNotNull(vulnerability);
+        Assertions.assertEquals(22, vulnerability.getVulnerableSoftware().size());
+        Assertions.assertEquals(Severity.MEDIUM, vulnerability.getSeverity());
     }
 
     @Test
-    public void testGetEcosystems() {
+    void testGetEcosystems() {
         final var task = new OsvDownloadTask();
         List<String> ecosystems = task.getEcosystems();
-        Assert.assertNotNull(ecosystems);
-        Assert.assertTrue(ecosystems.contains("Maven"));
+        Assertions.assertNotNull(ecosystems);
+        Assertions.assertTrue(ecosystems.contains("Maven"));
     }
 
     @Test
-    public void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromEnabledNvdSource() throws IOException {
+    void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromEnabledNvdSource() throws IOException {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-existing-nvd-vuln-CVE-2021-34552.json");
 
@@ -484,9 +488,9 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         // Reload from database to bypass first level cache
         qm.getPersistenceManager().refreshAll();
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("NVD", "CVE-2021-34552", false);
-        Assert.assertNotNull(vulnerability);
-        Assert.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
-        Assert.assertEquals(existingVuln.getDescription(), vulnerability.getDescription());
+        Assertions.assertNotNull(vulnerability);
+        Assertions.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
+        Assertions.assertEquals(existingVuln.getDescription(), vulnerability.getDescription());
 
         final List<VulnerableSoftware> vsList = vulnerability.getVulnerableSoftware();
         assertThat(vsList).satisfiesExactlyInAnyOrder(
@@ -527,7 +531,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromDisabledNvdSource() throws IOException {
+    void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromDisabledNvdSource() throws IOException {
 
         ConfigProperty property = qm.getConfigProperty(VULNERABILITY_SOURCE_NVD_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_NVD_ENABLED.getPropertyName());
@@ -560,9 +564,9 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         // Reload from database to bypass first level cache
         qm.getPersistenceManager().refreshAll();
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("NVD", "CVE-2021-34552", false);
-        Assert.assertNotNull(vulnerability);
-        Assert.assertEquals(Severity.UNASSIGNED, vulnerability.getSeverity());
-        Assert.assertEquals(jsonObject.getString("details"), vulnerability.getDescription());
+        Assertions.assertNotNull(vulnerability);
+        Assertions.assertEquals(Severity.UNASSIGNED, vulnerability.getSeverity());
+        Assertions.assertEquals(jsonObject.getString("details"), vulnerability.getDescription());
 
         final List<VulnerableSoftware> vsList = vulnerability.getVulnerableSoftware();
         assertThat(vsList).satisfiesExactlyInAnyOrder(
@@ -603,7 +607,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromEnabledGithubSource() throws IOException {
+    void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromEnabledGithubSource() throws IOException {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
 
@@ -620,12 +624,12 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         // Reload from database to bypass first level cache
         qm.getPersistenceManager().refreshAll();
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", false);
-        Assert.assertNotNull(vulnerability);
-        Assert.assertEquals(Severity.LOW, vulnerability.getSeverity());
+        Assertions.assertNotNull(vulnerability);
+        Assertions.assertEquals(Severity.LOW, vulnerability.getSeverity());
     }
 
     @Test
-    public void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromDisabledGithubSource() throws IOException {
+    void testUpdateDatasourceWithAdvisoryAlreadyMirroredFromDisabledGithubSource() throws IOException {
 
         ConfigProperty property = qm.getConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getPropertyName());
@@ -647,8 +651,8 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         // Reload from database to bypass first level cache
         qm.getPersistenceManager().refreshAll();
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", false);
-        Assert.assertNotNull(vulnerability);
-        Assert.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
+        Assertions.assertNotNull(vulnerability);
+        Assertions.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
     }
 
     private void prepareJsonObject(String filePath) throws IOException {

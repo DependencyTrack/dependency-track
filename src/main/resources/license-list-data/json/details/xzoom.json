@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright Itai Nahshon 1995, 1996.\nThis program is distributed with no warranty.\n\nSource files for this program may be distributed freely.\nModifications to this file are okay as long as:\n a. This copyright notice and comment are preserved and\n    left at the top of the file.\n b. The man page is fixed to reflect the change.\n c. The author of this change adds his name and change\n    description to the list of changes below.\nExecutable files may be distributed with sources, or with\nexact location where the source code can be obtained.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright: \u003cyear\u003e \u003cowner\u003e  \";match\u003d\".{0,5000}\"\u003e\u003e\nThis program is distributed with no warranty.\n\nSource files for this program may be distributed freely. Modifications to this file are okay as long as:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"a.\";match\u003d\".{0,20}\"\u003e\u003e This copyright notice and comment are preserved and left at the top of the file.\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"b.\";match\u003d\".{0,20}\"\u003e\u003e The man page is fixed to reflect the change.\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"c.\";match\u003d\".{0,20}\"\u003e\u003e The author of this change adds his name and change description to the list of changes below.\nExecutable files may be distributed with sources, or with exact location where the source code can be obtained.\n\n",
+  "name": "xzoom License",
+  "licenseId": "xzoom",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://metadata.ftp-master.debian.org/changelogs//main/x/xzoom/xzoom_0.3-27_copyright",
+      "isValid": false,
+      "isLive": false,
+      "timestamp": "2024-12-30T18:05:42Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://metadata.ftp-master.debian.org/changelogs//main/x/xzoom/xzoom_0.3-27_copyright"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            \u003cp\u003e\n               Copyright: \u0026lt;year\u0026gt; \u0026lt;owner\u0026gt;\n            \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            This program is distributed with no warranty.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Source files for this program may be distributed\n            freely. Modifications to this file are okay as long as:\n         \u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n            \n\u003cli\u003e\n               \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e a.\u003c/span\u003e\u003c/var\u003e\n               This copyright notice and comment are\n               preserved and left at the top of the file.\n            \u003c/li\u003e\n            \n\u003cli\u003e\n               \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e b.\u003c/span\u003e\u003c/var\u003e\n               The man page is fixed to reflect the change.\n            \u003c/li\u003e\n            \n\u003cli\u003e\n               \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e c.\u003c/span\u003e\u003c/var\u003e\n               The author of this change adds his name and\n               change description to the list of changes below.\n            \u003c/li\u003e\n         \n\u003c/ul\u003e\n         \u003cp\u003e\n            Executable files may be distributed with sources, or with\n            exact location where the source code can be obtained.\n         \u003c/p\u003e\n\n      "
+}

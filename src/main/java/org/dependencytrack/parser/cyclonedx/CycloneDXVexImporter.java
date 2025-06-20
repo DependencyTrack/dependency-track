@@ -14,12 +14,12 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.parser.cyclonedx;
 
 import alpine.common.logging.Logger;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.util.BomLink;
 import org.cyclonedx.util.ObjectLocator;
@@ -35,7 +35,11 @@ import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.AnalysisCommentUtil;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.trimToNull;
 
 public class CycloneDXVexImporter {
 
@@ -44,57 +48,97 @@ public class CycloneDXVexImporter {
     private static final String COMMENTER = "CycloneDX VEX";
 
     public void applyVex(final QueryManager qm, final Bom bom, final Project project) {
-        if (bom.getVulnerabilities() == null) return;
-        List<org.cyclonedx.model.vulnerability.Vulnerability> auditableVulnerabilities = bom.getVulnerabilities().stream().filter(
-                bomVuln -> bomVuln.getSource() == null || Vulnerability.Source.isKnownSource(bomVuln.getSource().getName())
-        ).toList();
-        for (org.cyclonedx.model.vulnerability.Vulnerability cdxVuln: auditableVulnerabilities) {
-            if (cdxVuln.getAnalysis() == null) continue;
-            final List<Vulnerability> vulns = qm.getVulnerabilities(project, true);
-            if (vulns == null) continue;
-            for (final Vulnerability vuln: vulns) {
-                // NOTE: These vulnerability objects are detached
-                if (shouldAuditVulnerability(cdxVuln, vuln)) {
+        if (bom.getVulnerabilities() == null || bom.getVulnerabilities().isEmpty()) {
+            LOGGER.info("The uploaded VEX does not contain any vulnerabilities; Skipping VEX import");
+            return;
+        }
+        if (qm.getVulnerabilityCount(project, true) == 0) {
+            LOGGER.info("The project %s does not have any vulnerabilities; Skipping VEX import".formatted(project));
+            return;
+        }
 
-                    if (cdxVuln.getAffects() == null) continue;
-                    for (org.cyclonedx.model.vulnerability.Vulnerability.Affect affect: cdxVuln.getAffects()) {
-                        final ObjectLocator ol = new ObjectLocator(bom, affect.getRef()).locate();
-                        if ((ol.found() && ol.isMetadataComponent()) || (!ol.found() && BomLink.isBomLink(affect.getRef()))) {
-                            // Affects the project itself
-                            List<Component> components = qm.getAllVulnerableComponents(project, vuln, true);
-                            for (final Component component: components) {
-                                updateAnalysis(qm, component, vuln, cdxVuln);
-                            }
-                        } else if (ol.found() && ol.isComponent()) {
-                            // Affects an individual component
-                            final org.cyclonedx.model.Component cdxComponent = (org.cyclonedx.model.Component)ol.getObject();
-                            final ComponentIdentity cid = new ComponentIdentity(cdxComponent);
-                            List<Component> components = qm.matchIdentity(project, cid);
-                            for (final Component component: components) {
-                                updateAnalysis(qm, component, vuln, cdxVuln);
-                            }
-                        } else if (ol.found() && ol.isService()) {
-                            // Affects an individual service
-                            // TODO add VEX support for services
-                        }
+        final List<org.cyclonedx.model.vulnerability.Vulnerability> vexVulns = getApplicableVexVulnerabilities(bom.getVulnerabilities());
+        if (vexVulns.isEmpty()) {
+            LOGGER.info("The uploaded VEX does not contain any applicable vulnerabilities; Skipping VEX import");
+            return;
+        }
+
+        for (final org.cyclonedx.model.vulnerability.Vulnerability vexVuln : vexVulns) {
+            final Vulnerability dtVuln = qm.getVulnerabilityByVulnId(vexVuln.getSource().getName(), vexVuln.getId());
+            if (dtVuln == null) {
+                LOGGER.warn("""
+                        VEX contains analysis for vulnerability %s/%s, but the project is not affected by it. \
+                        Analyses can currently only be applied to existing findings.\
+                        """.formatted(vexVuln.getSource().getName(), vexVuln.getId()));
+                continue;
+            }
+
+            for (org.cyclonedx.model.vulnerability.Vulnerability.Affect affect : vexVuln.getAffects()) {
+                final ObjectLocator ol = new ObjectLocator(bom, affect.getRef()).locate();
+                if ((ol.found() && ol.isMetadataComponent()) || (!ol.found() && BomLink.isBomLink(affect.getRef()))) {
+                    // Affects the project itself
+                    List<Component> components = qm.getAllVulnerableComponents(project, dtVuln, true);
+                    for (final Component component : components) {
+                        updateAnalysis(qm, component, dtVuln, vexVuln);
                     }
+                } else if (ol.found() && ol.isComponent()) {
+                    // Affects an individual component
+                    final org.cyclonedx.model.Component cdxComponent = (org.cyclonedx.model.Component) ol.getObject();
+                    final ComponentIdentity cid = new ComponentIdentity(cdxComponent);
+                    List<Component> components = qm.matchIdentity(project, cid);
+                    for (final Component component : components) {
+                        updateAnalysis(qm, component, dtVuln, vexVuln);
+                    }
+                } else if (ol.found() && ol.isService()) {
+                    // Affects an individual service
+                    // TODO add VEX support for services
                 } else {
-                    LOGGER.warn("Analysis data for vulnerability "+cdxVuln.getId()+" will be ignored because either the source is missing or there is a source/vulnid mismatch between VEX and Dependency Track database.");
+                    LOGGER.warn("""
+                            Unable to locate affected element (metadata.component, components[].component, \
+                            or services[].service) based on the BOM reference %s. The vulnerability.affects[].ref \
+                            node of %s/%s is not resolvable; Skipping it\
+                            """.formatted(affect.getRef(), vexVuln.getSource().getName(), vexVuln.getId()));
                 }
             }
         }
     }
 
-    private boolean shouldAuditVulnerability(org.cyclonedx.model.vulnerability.Vulnerability bomVulnerability, Vulnerability dtVulnerability) {
-        boolean result = true;
-        result = result && bomVulnerability.getSource() != null;
-        result = result && dtVulnerability.getVulnId().equals(bomVulnerability.getId());
-        result = result && dtVulnerability.getSource().equalsIgnoreCase(bomVulnerability.getSource().getName());
-        return result;
+    private static List<org.cyclonedx.model.vulnerability.Vulnerability> getApplicableVexVulnerabilities(
+            final List<org.cyclonedx.model.vulnerability.Vulnerability> vexVulns) {
+        final var applicableVulns = new ArrayList<org.cyclonedx.model.vulnerability.Vulnerability>();
+        for (final var vexVuln : vexVulns) {
+            final int vexVulnPos = vexVulns.indexOf(vexVuln);
+            if (isBlank(vexVuln.getId()) || vexVuln.getSource() == null || isBlank(vexVuln.getSource().getName())) {
+                LOGGER.warn("VEX vulnerability at position #%d does not have an ID and / or source; Skipping it".formatted(vexVulnPos));
+                continue;
+            }
+
+            final String vexVulnId = vexVuln.getId();
+            final String vexVulnSource = vexVuln.getSource().getName();
+            if (!Vulnerability.Source.isKnownSource(vexVuln.getSource().getName())) {
+                LOGGER.warn("VEX vulnerability %s/%s at position #%d is from an unsupported source; Skipping it"
+                        .formatted(vexVulnSource, vexVulnId, vexVulnPos));
+                continue;
+            }
+            if (CollectionUtils.isEmpty(vexVuln.getAffects())) {
+                LOGGER.debug("VEX vulnerability %s/%s at position #%d does not have an affects node; Skipping it"
+                        .formatted(vexVulnSource, vexVulnId, vexVulnPos));
+                continue;
+            }
+            if (vexVuln.getAnalysis() == null) {
+                LOGGER.debug("VEX vulnerability %s/%s at position #%d does not have an analysis; Skipping it"
+                        .formatted(vexVulnSource, vexVulnId, vexVulnPos));
+                continue;
+            }
+
+            applicableVulns.add(vexVuln);
+        }
+
+        return applicableVulns;
     }
 
-    private void updateAnalysis(final QueryManager qm, final Component component, final Vulnerability vuln,
-                                final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
+    private static void updateAnalysis(final QueryManager qm, final Component component, final Vulnerability vuln,
+                                       final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
         // The vulnerability object is detached, so refresh it.
         final Vulnerability refreshedVuln = qm.getObjectByUuid(Vulnerability.class, vuln.getUuid());
         Analysis analysis = qm.getAnalysis(component, refreshedVuln);
@@ -115,16 +159,16 @@ public class CycloneDXVexImporter {
             analysisJustification = ModelConverter.convertCdxVulnAnalysisJustificationToDtAnalysisJustification(cdxVuln.getAnalysis().getJustification());
             AnalysisCommentUtil.makeJustificationComment(qm, analysis, analysisJustification, COMMENTER);
         }
-        if (StringUtils.trimToNull(cdxVuln.getAnalysis().getDetail()) != null) {
+        if (trimToNull(cdxVuln.getAnalysis().getDetail()) != null) {
             analysisDetails = cdxVuln.getAnalysis().getDetail().trim();
             AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, cdxVuln.getAnalysis().getDetail().trim(), COMMENTER);
         }
         if (cdxVuln.getAnalysis().getResponses() != null) {
-            for (org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response cdxRes: cdxVuln.getAnalysis().getResponses()) {
+            for (org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response cdxRes : cdxVuln.getAnalysis().getResponses()) {
                 analysisResponse = ModelConverter.convertCdxVulnAnalysisResponseToDtAnalysisResponse(cdxRes);
                 AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, analysisResponse, COMMENTER);
             }
         }
-        analysis = qm.makeAnalysis(component, refreshedVuln, analysisState, analysisJustification, analysisResponse, analysisDetails, suppress);
+        qm.makeAnalysis(component, refreshedVuln, analysisState, analysisJustification, analysisResponse, analysisDetails, suppress);
     }
 }

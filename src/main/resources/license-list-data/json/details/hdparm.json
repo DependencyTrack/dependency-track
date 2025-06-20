@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "BSD-Style Open Source License:\n\nYou may freely use, modify, and redistribute the hdparm program,\nas either binary or source, or both.\n\nThe only condition is that my name and copyright notice\nremain in the source code as-is.\n\nMark Lord (mlord@pobox.com)\n",
+  "standardLicenseTemplate": "BSD-Style Open Source License:\n\nYou may freely use, modify, and redistribute the hdparm program, as either binary or source, or both.\n\nThe only condition is that my name and copyright notice remain in the source code as-is.\n\n\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Mark Lord (mlord@pobox.com)  \";match\u003d\".{0,5000}\"\u003e\u003e",
+  "name": "hdparm License",
+  "licenseId": "hdparm",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://github.com/Distrotech/hdparm/blob/4517550db29a91420fb2b020349523b1b4512df2/LICENSE.TXT",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2024-12-30T17:55:31Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/Distrotech/hdparm/blob/4517550db29a91420fb2b020349523b1b4512df2/LICENSE.TXT"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            BSD-Style Open Source License:\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            You may freely use, modify, and redistribute the\n            hdparm program, as either binary or source, or both.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            The only condition is that my name and copyright\n            notice remain in the source code as-is.\n         \u003c/p\u003e\n\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003e\n            Mark Lord (mlord@pobox.com)\n         \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n      "
+}

@@ -14,19 +14,23 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1.vo;
 
 import alpine.common.validation.RegexSequence;
 import alpine.server.json.TrimmedStringDeserializer;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.model.Tag;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import java.util.List;
 
 /**
  * Defines a custom request object used when uploading bill-of-material (bom) documents.
@@ -50,6 +54,8 @@ public final class BomSubmitRequest {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The project version may only contain printable characters")
     private final String projectVersion;
 
+    private final List<Tag> projectTags;
+
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The parent UUID must be a valid 36 character UUID")
     private final String parentUUID;
 
@@ -67,53 +73,75 @@ public final class BomSubmitRequest {
 
     private final boolean autoCreate;
 
+    private final boolean isLatest;
+
     public BomSubmitRequest(String project,
                             String projectName,
                             String projectVersion,
+                            List<Tag> projectTags,
                             boolean autoCreate,
+                            boolean isLatest,
                             String bom) {
-        this(project, projectName, projectVersion, autoCreate, null, null, null, bom);
+        this(project, projectName, projectVersion, projectTags, autoCreate, null, null, null, isLatest, bom);
     }
 
     @JsonCreator
-    public BomSubmitRequest(@JsonProperty(value = "project", required = false) String project,
-                            @JsonProperty(value = "projectName", required = false) String projectName,
-                            @JsonProperty(value = "projectVersion", required = false) String projectVersion,
-                            @JsonProperty(value = "autoCreate", required = false) boolean autoCreate,
-                            @JsonProperty(value = "parentUUID", required = false) String parentUUID,
-                            @JsonProperty(value = "parentName", required = false) String parentName,
-                            @JsonProperty(value = "parentVersion", required = false) String parentVersion,
-                            @JsonProperty(value = "bom", required = true) String bom) {
+    public BomSubmitRequest(
+            @JsonProperty(value = "project") String project,
+            @JsonProperty(value = "projectName") String projectName,
+            @JsonProperty(value = "projectVersion") String projectVersion,
+            @JsonProperty(value = "projectTags") List<Tag> projectTags,
+            @JsonProperty(value = "autoCreate") boolean autoCreate,
+            @JsonProperty(value = "parentUUID") String parentUUID,
+            @JsonProperty(value = "parentName") String parentName,
+            @JsonProperty(value = "parentVersion") String parentVersion,
+            @JsonProperty(value = "isLatest", defaultValue = "false") @JsonAlias("isLatestProjectVersion") boolean isLatest,
+            @JsonProperty(value = "bom", required = true) String bom) {
         this.project = project;
         this.projectName = projectName;
         this.projectVersion = projectVersion;
+        this.projectTags = projectTags;
         this.autoCreate = autoCreate;
         this.parentUUID = parentUUID;
         this.parentName = parentName;
         this.parentVersion = parentVersion;
+        this.isLatest = isLatest;
         this.bom = bom;
     }
 
+    @Schema(example = "38640b33-4ba9-4733-bdab-cbfc40c6f8aa")
     public String getProject() {
         return project;
     }
 
+    @Schema(example = "Example Application")
     public String getProjectName() {
         return projectName;
     }
 
+    @Schema(example = "1.0.0")
     public String getProjectVersion() {
         return projectVersion;
     }
 
+    @Schema(description = """
+            Overwrite project tags. Modifying the tags of an existing \
+            project requires the PORTFOLIO_MANAGEMENT permission.""")
+    public List<Tag> getProjectTags() {
+        return projectTags;
+    }
+
+    @Schema(example = "5341f53c-611b-4388-9d9c-731026dc5eec")
     public String getParentUUID() {
         return parentUUID;
     }
 
+    @Schema(example = "Example Application Parent")
     public String getParentName() {
         return parentName;
     }
 
+    @Schema(example = "1.0.0")
     public String getParentVersion() {
         return parentVersion;
     }
@@ -122,6 +150,18 @@ public final class BomSubmitRequest {
         return autoCreate;
     }
 
+    @JsonProperty("isLatest")
+    public boolean isLatest() { return isLatest; }
+
+    @Schema(
+            description = "Base64 encoded BOM",
+            required = true,
+            example = """
+                    ewogICJib21Gb3JtYXQiOiAiQ3ljbG9uZURYIiwKICAic3BlY1ZlcnNpb24iOiAi\
+                    MS40IiwKICAiY29tcG9uZW50cyI6IFsKICAgIHsKICAgICAgInR5cGUiOiAibGli\
+                    cmFyeSIsCiAgICAgICJuYW1lIjogImFjbWUtbGliIiwKICAgICAgInZlcnNpb24i\
+                    OiAiMS4wLjAiCiAgICB9CiAgXQp9"""
+    )
     public String getBom() {
         return bom;
     }

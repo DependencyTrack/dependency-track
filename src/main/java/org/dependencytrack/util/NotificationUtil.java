@@ -14,25 +14,32 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.util;
 
 import alpine.model.ConfigProperty;
+import alpine.model.UserPrincipal;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
 import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyCondition.Operator;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vex;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
@@ -44,28 +51,39 @@ import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
+import org.dependencytrack.notification.vo.BomValidationFailed;
+import org.dependencytrack.notification.vo.NewPolicyViolationsSummary;
+import org.dependencytrack.notification.vo.NewVulnerabilitiesSummary;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
+import org.dependencytrack.notification.vo.ProjectFinding;
+import org.dependencytrack.notification.vo.ProjectPolicyViolation;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import javax.jdo.FetchPlan;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -256,18 +274,30 @@ public final class NotificationUtil {
         if (project.getPurl() != null) {
             projectBuilder.add("purl", project.getPurl().canonicalize());
         }
-        if (project.getTags() != null && project.getTags().size() > 0) {
-            final StringBuilder sb = new StringBuilder();
-            for (final Tag tag: project.getTags()) {
-                sb.append(tag.getName()).append(",");
-            }
-            String tags = sb.toString();
-            if (tags.endsWith(",")) {
-                tags = tags.substring(0, tags.length()-1);
-            }
-            JsonUtil.add(projectBuilder, "tags", tags);
+        if (project.getTags() != null && !project.getTags().isEmpty()) {
+            JsonUtil.add(projectBuilder, "tags",
+                    project.getTags().stream()
+                            .map(Tag::getName)
+                            .sorted()
+                            .collect(Collectors.joining(",")));
         }
         return projectBuilder.build();
+    }
+
+    public static JsonObject toJson(final UserPrincipal user) {
+        final JsonObjectBuilder userBuilder = Json.createObjectBuilder();
+
+        userBuilder.add("username", user.getUsername());
+
+        if (user.getName() != null) {
+            userBuilder.add("name", user.getName());
+        }
+
+        if (user.getEmail() != null) {
+            userBuilder.add("email", user.getEmail());
+        }
+
+        return userBuilder.build();
     }
 
     public static JsonObject toJson(final Component component) {
@@ -450,13 +480,33 @@ public final class NotificationUtil {
         }
         if (vo.getBom() != null) {
             builder.add("bom", Json.createObjectBuilder()
-                    .add("content", vo.getBom())
-                    .add("format", vo.getFormat().getFormatShortName())
-                    .add("specVersion", vo.getSpecVersion()).build()
+                    .add("content", Optional.ofNullable(vo.getBom()).orElse("Unknown"))
+                    .add("format", Optional.ofNullable(vo.getFormat()).map(Bom.Format::getFormatShortName).orElse("Unknown"))
+                    .add("specVersion", Optional.ofNullable(vo.getSpecVersion()).orElse("Unknown")).build()
             );
         }
         if (vo.getCause() != null) {
             builder.add("cause", vo.getCause());
+        }
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final BomValidationFailed vo) {
+        final var builder = Json.createObjectBuilder();
+        if (vo.getProject() != null) {
+            builder.add("project", toJson(vo.getProject()));
+        }
+        if (vo.getBom() != null) {
+            builder.add("bom", Json.createObjectBuilder()
+                    .add("content", Optional.ofNullable(vo.getBom()).orElse("Unknown"))
+                    .add("format", Optional.ofNullable(vo.getFormat()).map(Bom.Format::getFormatShortName).orElse("Unknown"))
+                    .build()
+            );
+        }
+        final var errors = vo.getErrors();
+        if (errors != null && !errors.isEmpty()) {
+            final var commaSeparatedErrors = String.join(",", errors);
+            JsonUtil.add(builder, "errors", commaSeparatedErrors);
         }
         return builder.build();
     }
@@ -486,6 +536,169 @@ public final class NotificationUtil {
         }
         if (vo.getPolicyViolation() != null) {
             builder.add("policyViolation", toJson(vo.getPolicyViolation()));
+        }
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final NewPolicyViolationsSummary vo) {
+        return Json.createObjectBuilder()
+                .add("overview", toJson(vo.overview()))
+                .add("summary", toJson(vo.summary()))
+                .add("details", toJson(vo.details()))
+                .add("since", DateUtil.toISO8601(vo.since()))
+                .build();
+    }
+
+    private static JsonObject toJson(final NewPolicyViolationsSummary.Overview vo) {
+        return Json.createObjectBuilder()
+                .add("affectedProjectsCount", vo.affectedProjectsCount())
+                .add("affectedComponentsCount", vo.affectedComponentsCount())
+                .add("newViolationsCount", vo.newViolationsCount())
+                .add("suppressedNewViolationsCount", vo.suppressedNewViolationsCount())
+                .add("totalNewViolationsCount", vo.totalNewViolationsCount())
+                .build();
+    }
+
+    private static JsonObject toJson(final NewPolicyViolationsSummary.Summary vo) {
+        final var projectSummariesBuilder = Json.createArrayBuilder();
+        for (final Map.Entry<Project, NewPolicyViolationsSummary.ProjectSummary> entry : vo.projectSummaries().entrySet()) {
+            projectSummariesBuilder.add(
+                    Json.createObjectBuilder()
+                            .add("project", toJson(entry.getKey()))
+                            .add("summary", toJson(entry.getValue())));
+        }
+
+        return Json.createObjectBuilder()
+                .add("projectSummaries", projectSummariesBuilder)
+                .build();
+    }
+
+    private static JsonObject toJson(final NewPolicyViolationsSummary.ProjectSummary vo) {
+        return Json.createObjectBuilder()
+                .add("newViolationsCountByType", violationTypeCountMapToJson(vo.newViolationsCountByType()))
+                .add("suppressedNewViolationsCountByType", violationTypeCountMapToJson(vo.suppressedNewViolationsCountByType()))
+                .add("totalNewViolationsCountByType", violationTypeCountMapToJson(vo.totalNewViolationsCountByType()))
+                .build();
+    }
+
+    private static JsonObject toJson(final NewPolicyViolationsSummary.Details vo) {
+        final JsonArrayBuilder violationsByProjectBuilder = Json.createArrayBuilder();
+        for (final Map.Entry<Project, List<ProjectPolicyViolation>> entry : vo.violationsByProject().entrySet()) {
+            final JsonArrayBuilder violationsBuilder = Json.createArrayBuilder();
+            for (final ProjectPolicyViolation violation : entry.getValue()) {
+                violationsBuilder.add(toJson(violation));
+            }
+
+            violationsByProjectBuilder.add(
+                    Json.createObjectBuilder()
+                            .add("project", toJson(entry.getKey()))
+                            .add("violations", violationsBuilder));
+        }
+
+        return Json.createObjectBuilder()
+                .add("violationsByProject", violationsByProjectBuilder)
+                .build();
+    }
+
+    private static JsonObject toJson(final ProjectPolicyViolation vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder()
+                .add("uuid", vo.uuid().toString())
+                .add("component", toJson(vo.component()))
+                .add("policyCondition", toJson(vo.policyCondition()))
+                .add("type", vo.type().name())
+                .add("timestamp", DateUtil.toISO8601(vo.timestamp()))
+                .add("suppressed", vo.suppressed());
+        if (vo.analysisState() != null) {
+            builder.add("analysisState", vo.analysisState().name());
+        }
+        return builder.build();
+    }
+
+    private static JsonObject violationTypeCountMapToJson(final Map<PolicyViolation.Type, Integer> map) {
+        final var builder = Json.createObjectBuilder();
+        for (final Map.Entry<PolicyViolation.Type, Integer> entry : map.entrySet()) {
+            builder.add(entry.getKey().name(), entry.getValue());
+        }
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final NewVulnerabilitiesSummary vo) {
+        return Json.createObjectBuilder()
+                .add("overview", toJson(vo.overview()))
+                .add("summary", toJson(vo.summary()))
+                .add("details", toJson(vo.details()))
+                .add("since", DateUtil.toISO8601(vo.since()))
+                .build();
+    }
+
+    private static JsonObject toJson(final NewVulnerabilitiesSummary.Overview vo) {
+        return Json.createObjectBuilder()
+                .add("affectedProjectsCount", vo.affectedProjectsCount())
+                .add("affectedComponentsCount", vo.affectedComponentsCount())
+                .add("newVulnerabilitiesCount", vo.newVulnerabilitiesCount())
+                .add("newVulnerabilitiesCountBySeverity", severityCountMapToJson(vo.newVulnerabilitiesCountBySeverity()))
+                .add("suppressedNewVulnerabilitiesCount", vo.suppressedNewVulnerabilitiesCount())
+                .add("totalNewVulnerabilitiesCount", vo.totalNewVulnerabilitiesCount())
+                .build();
+    }
+
+    private static JsonObject toJson(final NewVulnerabilitiesSummary.Summary vo) {
+        final var projectSummariesBuilder = Json.createArrayBuilder();
+        for (final Map.Entry<Project, NewVulnerabilitiesSummary.ProjectSummary> entry : vo.projectSummaries().entrySet()) {
+            projectSummariesBuilder.add(Json.createObjectBuilder()
+                    .add("project", toJson(entry.getKey()))
+                    .add("summary", toJson(entry.getValue())));
+        }
+
+        return Json.createObjectBuilder()
+                .add("projectSummaries", projectSummariesBuilder)
+                .build();
+    }
+
+    private static JsonObject toJson(final NewVulnerabilitiesSummary.ProjectSummary vo) {
+        return Json.createObjectBuilder()
+                .add("newVulnerabilitiesCountBySeverity", severityCountMapToJson(vo.newVulnerabilitiesCountBySeverity()))
+                .add("suppressedNewVulnerabilitiesCountBySeverity", severityCountMapToJson(vo.suppressedNewVulnerabilitiesCountBySeverity()))
+                .add("totalNewVulnerabilitiesCountBySeverity", severityCountMapToJson(vo.totalNewVulnerabilitiesCountBySeverity()))
+                .build();
+    }
+
+    private static JsonObject toJson(final NewVulnerabilitiesSummary.Details vo) {
+        final JsonArrayBuilder findingsByProjectBuilder = Json.createArrayBuilder();
+        for (final Map.Entry<Project, List<ProjectFinding>> entry : vo.findingsByProject().entrySet()) {
+            final JsonArrayBuilder findingsBuilder = Json.createArrayBuilder();
+            for (final ProjectFinding finding : entry.getValue()) {
+                findingsBuilder.add(toJson(finding));
+            }
+
+            findingsByProjectBuilder.add(
+                    Json.createObjectBuilder()
+                            .add("project", toJson(entry.getKey()))
+                            .add("findings", findingsBuilder));
+        }
+
+        return Json.createObjectBuilder()
+                .add("findingsByProject", findingsByProjectBuilder)
+                .build();
+    }
+
+    private static JsonObject toJson(final ProjectFinding vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder()
+                .add("component", toJson(vo.component()))
+                .add("vulnerability", toJson(vo.vulnerability()))
+                .add("analyzer", vo.analyzerIdentity().name())
+                .add("attributedOn", DateUtil.toISO8601(vo.attributedOn()))
+                .add("suppressed", vo.suppressed());
+        if (vo.analysisState() != null) {
+            builder.add("analysisState", vo.analysisState().name());
+        }
+        return builder.build();
+    }
+
+    private static JsonObject severityCountMapToJson(final Map<Severity, Integer> map) {
+        final var builder = Json.createObjectBuilder();
+        for (final Map.Entry<Severity, Integer> entry : map.entrySet()) {
+            builder.add(entry.getKey().name(), entry.getValue());
         }
         return builder.build();
     }
@@ -588,10 +801,178 @@ public final class NotificationUtil {
         return "An violation analysis decision was made to a policy violation affecting a project";
     }
 
+    public static String generateNotificationContent(final NewVulnerabilitiesSummary vo) {
+        if (vo.overview().totalNewVulnerabilitiesCount() == 0) {
+            return "No new vulnerabilities identified since %s.".formatted(DateUtil.toISO8601(vo.since()));
+        } else {
+            return "Identified %d new vulnerabilities across %d projects and %d components since %s, of which %d are suppressed.".formatted(
+                    vo.overview().totalNewVulnerabilitiesCount(),
+                    vo.overview().affectedProjectsCount(),
+                    vo.overview().affectedComponentsCount(),
+                    DateUtil.toISO8601(vo.since()),
+                    vo.overview().suppressedNewVulnerabilitiesCount());
+        }
+    }
+
+    public static String generateNotificationContent(final NewPolicyViolationsSummary vo) {
+        if (vo.overview().totalNewViolationsCount() == 0) {
+            return "No new policy violations identified since %s.".formatted(DateUtil.toISO8601(vo.since()));
+        } else {
+            return "Identified %d new policy violations across %d project and %d components since %s, of which %d are suppressed.".formatted(
+                    vo.overview().totalNewViolationsCount(),
+                    vo.overview().affectedProjectsCount(),
+                    vo.overview().affectedComponentsCount(),
+                    DateUtil.toISO8601(vo.since()),
+                    vo.overview().suppressedNewViolationsCount());
+        }
+    }
+
     public static String generateNotificationTitle(String messageType, Project project) {
         if (project != null) {
             return messageType + " on Project: [" + project.toString() + "]";
         }
         return messageType;
     }
+
+    public static String generateNotificationTitle(NotificationGroup notificationGroup, List<Project> projects) {
+        String messageType;
+
+        switch (notificationGroup) {
+            case NEW_VULNERABILITY:
+                messageType = NotificationConstants.Title.NEW_VULNERABILITY;
+                break;
+            case POLICY_VIOLATION:
+                messageType = NotificationConstants.Title.POLICY_VIOLATION;
+                break;
+            default:
+                return notificationGroup.name();
+        }
+
+        if (projects != null) {
+            if (projects.size() == 1) {
+                return generateNotificationTitle(messageType, projects.get(0));
+            }
+        }
+
+        return messageType + " on " + projects.size() + " projects";
+    }
+
+    public static Object generateSubject(final NotificationRule rule, final NotificationGroup group) {
+        final Project project = createProject();
+        final Vulnerability vuln = createVulnerability();
+        final Component component = createComponent(project);
+        final Analysis analysis = createAnalysis(component, vuln);
+        final PolicyViolation policyViolation = createPolicyViolation(component, project);
+
+        return switch (group) {
+            case BOM_CONSUMED, BOM_PROCESSED ->
+                    new BomConsumedOrProcessed(project, "bomContent", Bom.Format.CYCLONEDX, "1.5");
+            case BOM_PROCESSING_FAILED ->
+                    new BomProcessingFailed(project, "bomContent", "cause", Bom.Format.CYCLONEDX, "1.5");
+            case BOM_VALIDATION_FAILED ->
+                    new BomValidationFailed(project, "bomContent", List.of("TEST"), Bom.Format.CYCLONEDX);
+            case VEX_CONSUMED, VEX_PROCESSED -> new VexConsumedOrProcessed(project, "", Vex.Format.CYCLONEDX, "");
+            case NEW_VULNERABILITY ->
+                    new NewVulnerabilityIdentified(vuln, component, Set.of(project), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+            case NEW_VULNERABLE_DEPENDENCY -> new NewVulnerableDependency(component, List.of(vuln));
+            case POLICY_VIOLATION -> new PolicyViolationIdentified(policyViolation, component, project);
+            case PROJECT_CREATED -> NotificationUtil.toJson(project);
+            case PROJECT_AUDIT_CHANGE -> new AnalysisDecisionChange(vuln, component, project, analysis);
+            case NEW_POLICY_VIOLATIONS_SUMMARY -> {
+                final var projectPolicyViolation = new ProjectPolicyViolation(
+                        UUID.fromString("924eaf86-454d-49f5-96c0-71d9008ac614"),
+                        component,
+                        policyViolation.getPolicyCondition(),
+                        policyViolation.getType(),
+                        policyViolation.getTimestamp(),
+                        ViolationAnalysisState.APPROVED,
+                        false);
+                yield NewPolicyViolationsSummary.of(
+                        Map.of(project, List.of(projectPolicyViolation)),
+                        rule.getScheduleLastTriggeredAt(),
+                        rule.getId());
+            }
+            case NEW_VULNERABILITIES_SUMMARY -> {
+                final var projectFinding = new ProjectFinding(
+                        component,
+                        vuln,
+                        AnalyzerIdentity.INTERNAL_ANALYZER,
+                        new Date(),
+                        "https://example.com",
+                        analysis.getAnalysisState(),
+                        analysis.isSuppressed());
+                yield NewVulnerabilitiesSummary.of(
+                        Map.of(project, List.of(projectFinding)),
+                        rule.getScheduleLastTriggeredAt(),
+                        rule.getId());
+            }
+            default -> null;
+        };
+    }
+
+    private static Project createProject() {
+        final Project project = new Project();
+        project.setUuid(UUID.fromString("c9c9539a-e381-4b36-ac52-6a7ab83b2c95"));
+        project.setName("projectName");
+        project.setVersion("projectVersion");
+        project.setPurl("pkg:maven/org.acme/projectName@projectVersion");
+        return project;
+    }
+
+    private static Vulnerability createVulnerability() {
+        final Vulnerability vuln = new Vulnerability();
+        vuln.setUuid(UUID.fromString("bccec5d5-ec21-4958-b3e8-22a7a866a05a"));
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.MEDIUM);
+        return vuln;
+    }
+
+    private static Component createComponent(Project project) {
+        final Component component = new Component();
+        component.setProject(project);
+        component.setUuid(UUID.fromString("94f87321-a5d1-4c2f-b2fe-95165debebc6"));
+        component.setName("componentName");
+        component.setVersion("componentVersion");
+        return component;
+    }
+
+    private static Analysis createAnalysis(Component component, Vulnerability vuln) {
+        final Analysis analysis = new Analysis();
+        analysis.setComponent(component);
+        analysis.setVulnerability(vuln);
+        analysis.setAnalysisState(AnalysisState.FALSE_POSITIVE);
+        analysis.setSuppressed(true);
+        return analysis;
+    }
+
+    private static PolicyViolation createPolicyViolation(Component component, Project project) {
+        final Policy policy = new Policy();
+        policy.setId(1);
+        policy.setName("test");
+        policy.setOperator(Policy.Operator.ALL);
+        policy.setProjects(List.of(project));
+        policy.setUuid(UUID.randomUUID());
+        policy.setViolationState(Policy.ViolationState.INFO);
+
+        final PolicyCondition condition = new PolicyCondition();
+        condition.setId(1);
+        condition.setUuid(UUID.randomUUID());
+        condition.setOperator(Operator.NUMERIC_EQUAL);
+        condition.setSubject(PolicyCondition.Subject.AGE);
+        condition.setValue("1");
+        condition.setPolicy(policy);
+
+        final PolicyViolation policyViolation = new PolicyViolation();
+        policyViolation.setId(1);
+        policyViolation.setPolicyCondition(condition);
+        policyViolation.setComponent(component);
+        policyViolation.setText("test");
+        policyViolation.setType(PolicyViolation.Type.SECURITY);
+        policyViolation.setAnalysis(new ViolationAnalysis());
+        policyViolation.setUuid(UUID.randomUUID());
+        policyViolation.setTimestamp(new Date(System.currentTimeMillis()));
+        return policyViolation;
+    }
+
 }

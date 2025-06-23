@@ -18,13 +18,19 @@
  */
 package org.dependencytrack.search;
 
+import org.apache.lucene.index.IndexWriter;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.search.document.ServiceComponentDocument;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 class ServiceComponentIndexerTest extends PersistenceCapableTest {
 
@@ -53,9 +59,8 @@ class ServiceComponentIndexerTest extends PersistenceCapableTest {
         s.setName("stock-ticker");
         s.setVersion("1.0.0");
         ServiceComponentIndexer.getInstance().add(new ServiceComponentDocument(s));
-        ServiceComponentIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(ServiceComponentIndexer.getInstance(), s.getUuid().toString(), 10);
+        commitIndex();
+        SearchResult result = SearchManager.searchIndex(ServiceComponentIndexer.getInstance(), s.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(1, result.getResults().get("servicecomponent").size());
     }
@@ -68,11 +73,10 @@ class ServiceComponentIndexerTest extends PersistenceCapableTest {
         s.setName("stock-ticker");
         s.setVersion("1.0.0");
         ServiceComponentIndexer.getInstance().add(new ServiceComponentDocument(s));
-        ServiceComponentIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
+        commitIndex();
         ServiceComponentIndexer.getInstance().remove(new ServiceComponentDocument(s));
-        ServiceComponentIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(ServiceComponentIndexer.getInstance(), s.getUuid().toString(), 10);
+        commitIndex();
+        SearchResult result = SearchManager.searchIndex(ServiceComponentIndexer.getInstance(), s.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(0, result.getResults().get("servicecomponent").size());
     }
@@ -80,5 +84,25 @@ class ServiceComponentIndexerTest extends PersistenceCapableTest {
     @Test
     void reindexTest() {
         ServiceComponentIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        ServiceComponentIndexer.getInstance().commit();
+        final IndexWriter indexWriter;
+        try {
+            indexWriter = ServiceComponentIndexer.getInstance().getIndexWriter();
+        } catch (IOException e) {
+            Assertions.fail("Unable to get IndexWriter", e);
+            return;
+        }
+        try {
+            indexWriter.flush();
+        } catch (IOException e) {
+            Assertions.fail("Unable to flush IndexWriter", e);
+            return;
+        }
+        await("Indexer flush")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(indexWriter.hasUncommittedChanges()).isFalse());
     }
 }

@@ -18,13 +18,19 @@
  */
 package org.dependencytrack.search;
 
+import org.apache.lucene.index.IndexWriter;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.search.document.ComponentDocument;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 class ComponentIndexerTest extends PersistenceCapableTest {
 
@@ -53,9 +59,8 @@ class ComponentIndexerTest extends PersistenceCapableTest {
         c.setName("crypto-library");
         c.setVersion("1.0.0");
         ComponentIndexer.getInstance().add(new ComponentDocument(c));
-        ComponentIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
+        commitIndex();
+        SearchResult result = SearchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(1, result.getResults().get("component").size());
     }
@@ -68,11 +73,10 @@ class ComponentIndexerTest extends PersistenceCapableTest {
         c.setName("crypto-library");
         c.setVersion("1.0.0");
         ComponentIndexer.getInstance().add(new ComponentDocument(c));
-        ComponentIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
+        commitIndex();
         ComponentIndexer.getInstance().remove(new ComponentDocument(c));
-        ComponentIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
+        commitIndex();
+        SearchResult result = SearchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(0, result.getResults().get("component").size());
     }
@@ -80,5 +84,25 @@ class ComponentIndexerTest extends PersistenceCapableTest {
     @Test
     void reindexTest() {
         ComponentIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        ComponentIndexer.getInstance().commit();
+        final IndexWriter indexWriter;
+        try {
+            indexWriter = ComponentIndexer.getInstance().getIndexWriter();
+        } catch (IOException e) {
+            Assertions.fail("Unable to get IndexWriter", e);
+            return;
+        }
+        try {
+            indexWriter.flush();
+        } catch (IOException e) {
+            Assertions.fail("Unable to flush IndexWriter", e);
+            return;
+        }
+        await("Indexer flush")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(indexWriter.hasUncommittedChanges()).isFalse());
     }
 }

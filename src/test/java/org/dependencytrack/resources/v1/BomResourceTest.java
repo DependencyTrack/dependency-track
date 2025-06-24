@@ -28,6 +28,7 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -61,6 +62,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junitpioneer.jupiter.DefaultLocale;
 
 import java.nio.charset.StandardCharsets;
@@ -94,21 +96,66 @@ class BomResourceTest extends ResourceTest {
                     .register(MultiPartFeature.class)
                     .register(JsonMappingExceptionMapper.class));
 
-    @Test
-    void exportProjectAsCycloneDxTest() {
+    @ParameterizedTest
+    @MethodSource("jsonVersionSpecTests")
+    void exportProjectAsCycloneDxTest(String cdxExportVersionParameter) {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component c = new Component();
         c.setProject(project);
         c.setName("sample-component");
         c.setVersion("1.0");
         Component component = qm.createComponent(c, false);
-        Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid()).request()
+        cdxExportVersionParameter = StringUtils.trimToNull(cdxExportVersionParameter);
+
+        Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .queryParam("version", cdxExportVersionParameter)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
+        String body = getPlainTextBody(response);
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        String body = getPlainTextBody(response);
         Assertions.assertTrue(body.startsWith("{"));
+
+        String expectedCdxVersionSpec = cdxExportVersionParameter == null ? "1.5": cdxExportVersionParameter;
+        assertThatJson(body).withMatcher("specVersion", equalTo(expectedCdxVersionSpec));
+    }
+
+    @ParameterizedTest
+    @MethodSource("xmlVersionSpecTests")
+    void exportProjectAsCycloneDxXMLTest(String cdxExportVersionParameter) {
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Component c = new Component();
+        c.setProject(project);
+        c.setName("sample-component");
+        c.setVersion("1.0");
+        Component component = qm.createComponent(c, false);
+        cdxExportVersionParameter = StringUtils.trimToNull(cdxExportVersionParameter);
+
+        Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .queryParam("version", cdxExportVersionParameter)
+                .queryParam("format", "xml")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        String body = getPlainTextBody(response);
+        if(cdxExportVersionParameter == null) {
+            cdxExportVersionParameter = "1.5"; // Expect 1.5 as default for null / not set parameter
+        }
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertTrue(body.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
+        Assertions.assertTrue(body.contains("version=\"1\" xmlns=\"http://cyclonedx.org/schema/bom/" + cdxExportVersionParameter +"\">"));
+
+        
+    }
+
+    private static String[] jsonVersionSpecTests(){
+        return new String[]{"1.2", "1.3", "1.4", "1.5", "1.6", null}; // JSON is only supported  >= 1.2
+    }
+
+    private static String[] xmlVersionSpecTests(){
+        return new String[]{"1.0","1.1", "1.2", "1.3", "1.4", "1.5", "1.6", null};
     }
 
     @Test
@@ -793,26 +840,37 @@ class BomResourceTest extends ResourceTest {
         assertThat(componentWithVulnAndAnalysis.getDirectDependencies()).isNotNull();
     }
 
-    @Test
-    void exportComponentAsCycloneDx() {
+
+    @ParameterizedTest
+    @MethodSource("jsonVersionSpecTests")
+    void exportComponentAsCycloneDx(String cdxExportVersionParameter) {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, false, false);
         Component c = new Component();
         c.setProject(project);
         c.setName("sample-component");
         c.setVersion("1.0");
         Component component = qm.createComponent(c, false);
-        Response response = jersey.target(V1_BOM + "/cyclonedx/component/" + component.getUuid()).request()
+
+        cdxExportVersionParameter = StringUtils.trimToNull(cdxExportVersionParameter);
+
+        Response response = jersey.target(V1_BOM + "/cyclonedx/component/" + component.getUuid())
+                .queryParam("version", cdxExportVersionParameter)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assertions.assertTrue(body.startsWith("{"));
+
+        String expectedCdxVersionSpec = cdxExportVersionParameter == null ? "1.5": cdxExportVersionParameter;
+        assertThatJson(body).withMatcher("specVersion", equalTo(expectedCdxVersionSpec));
     }
 
     @Test
-    void exportComponentAsCycloneDxInvalid() {
-        Response response = jersey.target(V1_BOM + "/cyclonedx/component/" + UUID.randomUUID()).request()
+    void exportComponentAsCycloneDxInvalid(){
+        Response response = jersey.target(V1_BOM + "/cyclonedx/component/" + UUID.randomUUID())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assertions.assertEquals(404, response.getStatus(), 0);
@@ -820,6 +878,27 @@ class BomResourceTest extends ResourceTest {
         String body = getPlainTextBody(response);
         Assertions.assertEquals("The component could not be found.", body);
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"99", "-15", "1.9"," 0.9", "invalidString"})
+    void exportComponentAsCycloneDxInvalidVersion(String  cdxExportVersionParameter) {
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, false, false);
+        Component c = new Component();
+        c.setProject(project);
+        c.setName("sample-component");
+        c.setVersion("1.0");
+        Component component = qm.createComponent(c, false);
+
+        Response response = jersey.target(V1_BOM + "/cyclonedx/component/" + component.getUuid())
+                .queryParam("version", cdxExportVersionParameter)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assertions.assertEquals("Invalid BOM version specified.", body);
+    }
+
 
     @Test
     void uploadBomTest() throws Exception {

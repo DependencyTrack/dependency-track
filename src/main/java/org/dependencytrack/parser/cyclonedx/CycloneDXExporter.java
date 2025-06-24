@@ -93,14 +93,11 @@ public class CycloneDXExporter {
         return bom;
     }
 
-    public String export(final Bom bom, final Format format) throws GeneratorException {
-        // TODO: The output version should be user-controllable.
-
+    public String export(final Bom bom, final Format format, final Version version) throws GeneratorException {
         if (Format.JSON == format) {
-            return BomGeneratorFactory.createJson(Version.VERSION_15, bom).toJsonString();
-        } else {
-            return BomGeneratorFactory.createXml(Version.VERSION_15, bom).toXmlString();
+            return BomGeneratorFactory.createJson(version, bom).toJsonString();
         }
+        return BomGeneratorFactory.createXml(version, bom).toXmlString();
     }
 
 }

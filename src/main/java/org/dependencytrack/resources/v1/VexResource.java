@@ -35,6 +35,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.CycloneDxMediaType;
+import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.VexUploadEvent;
@@ -67,6 +68,7 @@ import java.io.InputStream;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * JAX-RS resources for processing VEX documents.
@@ -83,6 +85,7 @@ import java.util.List;
 public class VexResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(VexResource.class);
+    private static final String DEFAULT_EXPORT_VERSION = "1.5";
 
     @GET
     @Path("/cyclonedx/project/{uuid}")
@@ -106,7 +109,10 @@ public class VexResource extends AlpineResource {
             @Parameter(description = "The UUID of the project to export", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "Force the resulting VEX to be downloaded as a file (defaults to 'false')")
-            @QueryParam("download") boolean download) {
+            @QueryParam("download") boolean download,
+            @Parameter(description = "The CycloneDX Spec variant exported (defaults to: '" + DEFAULT_EXPORT_VERSION + "')")
+            @QueryParam("version") String version
+            ) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project == null) {
@@ -116,16 +122,22 @@ public class VexResource extends AlpineResource {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
 
+            String versionParameter =  Objects.toString(StringUtils.trimToNull(version), DEFAULT_EXPORT_VERSION);
+            Version cdxOutputVersion = Version.fromVersionString(versionParameter);
+            if(cdxOutputVersion == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid CycloneDX version specified.").build();
+            }
+
             final CycloneDXExporter exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VEX, qm);
 
             try {
                 if (download) {
-                    return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON), MediaType.APPLICATION_OCTET_STREAM)
-                            .header("content-disposition","attachment; filename=\"" + project.getUuid() + "-vex.cdx.json\"").build();
-                } else {
-                    return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON),
-                            CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
+                    return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
+                            .header("content-disposition", "attachment; filename=\"" + project.getUuid() + "-vex.cdx.json\"").build();
                 }
+                return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON, cdxOutputVersion),
+                        CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
+
             } catch (GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();

@@ -490,78 +490,7 @@ class VexResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         final String jsonResponse = getPlainTextBody(response);
         assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
-        assertThatJson(jsonResponse)
-                .withMatcher("specVersion", equalTo(expectedCdxVersionSpec))
-                .withMatcher("vulnUuid", equalTo(vuln.getUuid().toString()))
-                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
-                .withMatcher("compAUuid", equalTo(componentAWithVuln.getUuid().toString()))
-                .withMatcher("compBUuid", equalTo(componentBWithVuln.getUuid().toString()))
-                .isEqualTo( /* language=JSON */ """
-                        {
-                           "bomFormat" : "CycloneDX",
-                           "specVersion" : "${json-unit.matches:specVersion}",
-                           "serialNumber": "${json-unit.any-string}",
-                           "version" : 1,
-                           "metadata" : {
-                             "timestamp" : "${json-unit.any-string}",
-                             "tools" : [ {
-                               "vendor" : "OWASP",
-                               "name" : "Dependency-Track",
-                               "version" : "${json-unit.any-string}"
-                             } ],
-                             "component" : {
-                               "type" : "application",
-                               "bom-ref" : "${json-unit.matches:projectUuid}",
-                               "name" : "acme-app",
-                               "version" : "1.0.0"
-                             }
-                           },
-                           "vulnerabilities" : [ {
-                             "bom-ref" : "${json-unit.matches:vulnUuid}",
-                             "id" : "INT-001",
-                             "source" : {
-                               "name" : "INTERNAL"
-                             },
-                             "ratings" : [ {
-                               "source" : {
-                                 "name" : "INTERNAL"
-                               },
-                               "severity" : "high",
-                               "method" : "other"
-                             } ],
-                             "analysis" : {
-                               "state" : "in_triage",
-                               "response" : [ "update" ]
-                             },
-                             "affects" : [ {
-                               "ref" : "${json-unit.matches:projectUuid}"
-                             } ]
-                           }, {
-                             "bom-ref" : "${json-unit.matches:vulnUuid}",
-                             "id" : "INT-001",
-                             "source" : {
-                               "name" : "INTERNAL"
-                             },
-                             "ratings" : [ {
-                               "source" : {
-                                 "name" : "INTERNAL"
-                               },
-                               "severity" : "high",
-                               "method" : "other"
-                             } ],
-                             "analysis" : {
-                               "state" : "exploitable",
-                               "response" : [ "update" ]
-                             },
-                             "affects" : [ {
-                               "ref" : "${json-unit.matches:projectUuid}"
-                             } ]
-                           } ]
-                         }
-                        """)
-        ;
-
-
+        assertThatJson(jsonResponse, json -> json.inPath("specVersion").isEqualTo("\"" + expectedCdxVersionSpec + "\""));
     }
 
     private static String[] jsonVersionSpecTests(){

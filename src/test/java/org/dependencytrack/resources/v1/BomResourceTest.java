@@ -112,13 +112,13 @@ class BomResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        String body = getPlainTextBody(response);
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
         Assertions.assertTrue(body.startsWith("{"));
 
-        String expectedCdxVersionSpec = cdxExportVersionParameter == null ? "1.5": cdxExportVersionParameter;
-        assertThatJson(body).withMatcher("specVersion", equalTo(expectedCdxVersionSpec));
+        String expectedCdxVersionSpec = cdxExportVersionParameter == null ? "1.5" : cdxExportVersionParameter;
+        assertThatJson(body, json -> json.inPath("specVersion").isEqualTo("\"" + expectedCdxVersionSpec + "\""));
     }
 
     @ParameterizedTest
@@ -139,23 +139,23 @@ class BomResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         String body = getPlainTextBody(response);
-        if(cdxExportVersionParameter == null) {
+        if (cdxExportVersionParameter == null) {
             cdxExportVersionParameter = "1.5"; // Expect 1.5 as default for null / not set parameter
         }
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         Assertions.assertTrue(body.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
-        Assertions.assertTrue(body.contains("version=\"1\" xmlns=\"http://cyclonedx.org/schema/bom/" + cdxExportVersionParameter +"\">"));
+        Assertions.assertTrue(body.contains("version=\"1\" xmlns=\"http://cyclonedx.org/schema/bom/" + cdxExportVersionParameter + "\">"));
 
-        
+
     }
 
-    private static String[] jsonVersionSpecTests(){
+    private static String[] jsonVersionSpecTests() {
         return new String[]{"1.2", "1.3", "1.4", "1.5", "1.6", null}; // JSON is only supported  >= 1.2
     }
 
-    private static String[] xmlVersionSpecTests(){
-        return new String[]{"1.0","1.1", "1.2", "1.3", "1.4", "1.5", "1.6", null};
+    private static String[] xmlVersionSpecTests() {
+        return new String[]{"1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", null};
     }
 
     @Test
@@ -863,12 +863,12 @@ class BomResourceTest extends ResourceTest {
         String body = getPlainTextBody(response);
         Assertions.assertTrue(body.startsWith("{"));
 
-        String expectedCdxVersionSpec = cdxExportVersionParameter == null ? "1.5": cdxExportVersionParameter;
+        String expectedCdxVersionSpec = cdxExportVersionParameter == null ? "1.5" : cdxExportVersionParameter;
         assertThatJson(body).withMatcher("specVersion", equalTo(expectedCdxVersionSpec));
     }
 
     @Test
-    void exportComponentAsCycloneDxInvalid(){
+    void exportComponentAsCycloneDxInvalid() {
         Response response = jersey.target(V1_BOM + "/cyclonedx/component/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -880,8 +880,8 @@ class BomResourceTest extends ResourceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"99", "-15", "1.9"," 0.9", "invalidString"})
-    void exportComponentAsCycloneDxInvalidVersion(String  cdxExportVersionParameter) {
+    @ValueSource(strings = {"99", "-15", "1.9", " 0.9", "invalidString"})
+    void exportComponentAsCycloneDxInvalidVersion(String cdxExportVersionParameter) {
         Project project = qm.createProject("Acme Example", null, null, null, null, null, false, false);
         Component c = new Component();
         c.setProject(project);
@@ -1072,7 +1072,7 @@ class BomResourceTest extends ResourceTest {
         project.setVersion("1.0.0");
         project.setIsLatest(true);
         qm.persist(project);
-        
+
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
 
         StringBuilder jsonBuilder = new StringBuilder();

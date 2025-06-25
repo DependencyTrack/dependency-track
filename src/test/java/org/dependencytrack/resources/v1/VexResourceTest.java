@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.StreamReadConstraints;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -44,6 +45,9 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junitpioneer.jupiter.DefaultLocale;
 
 import java.util.Base64;
@@ -440,6 +444,77 @@ class VexResourceTest extends ResourceTest {
                           ]
                         }
                         """);
+    }
+
+    @ParameterizedTest
+    @MethodSource("jsonVersionSpecTests")
+    void exportVexWithValidJsonVersions(String cdxVersion){
+        Project project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setClassifier(Classifier.APPLICATION);
+        qm.persist(project);
+
+        Component componentAWithVuln = new Component();
+        componentAWithVuln.setProject(project);
+        componentAWithVuln.setName("acme-lib-a");
+        componentAWithVuln.setVersion("1.0.0");
+        componentAWithVuln = qm.createComponent(componentAWithVuln, false);
+
+        Component componentBWithVuln = new Component();
+        componentBWithVuln.setProject(project);
+        componentBWithVuln.setName("acme-lib-b");
+        componentBWithVuln.setVersion("1.0.0");
+        componentBWithVuln = qm.createComponent(componentBWithVuln, false);
+
+        Vulnerability vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln = qm.createVulnerability(vuln, false);
+        qm.addVulnerability(vuln, componentAWithVuln, AnalyzerIdentity.NONE);
+        qm.makeAnalysis(componentAWithVuln, vuln, AnalysisState.IN_TRIAGE, null, AnalysisResponse.UPDATE, null, true);
+        qm.addVulnerability(vuln, componentBWithVuln, AnalyzerIdentity.NONE);
+        qm.makeAnalysis(componentBWithVuln, vuln, AnalysisState.EXPLOITABLE, null, AnalysisResponse.UPDATE, null, true);
+
+        qm.persist(project);
+
+        cdxVersion = StringUtils.trimToNull(cdxVersion);
+        String expectedCdxVersionSpec = cdxVersion == null ? "1.5" : cdxVersion;
+        Response response = jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
+                .queryParam("version", cdxVersion)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatJson(jsonResponse, json -> json.inPath("specVersion").isEqualTo("\"" + expectedCdxVersionSpec + "\""));
+    }
+
+    private static String[] jsonVersionSpecTests(){
+        return new String[]{"1.4", "1.5", "1.6", null}; // Vulnerabilities are only supported starting spec 1.4
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"99", "-15", "1.9"," 0.9", "invalidString"})
+    void exportVexWithInvalidVersionsStrings(String version){
+        Project project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setClassifier(Classifier.APPLICATION);
+        qm.persist(project);
+
+        Response response = jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
+                .queryParam("version", version)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assertions.assertEquals("Invalid CycloneDX version specified.", body);
     }
 
     @Test

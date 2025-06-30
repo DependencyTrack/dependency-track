@@ -96,7 +96,7 @@
         <lib.cpe-parser.version>3.0.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.27.1</lib.commons-compress.version>
         <lib.commons-text.version>1.13.1</lib.commons-text.version>
-        <lib.ae-security.version>0.138.0</lib.ae-security.version>
+        <lib.ae-security.version>0.140.0</lib.ae-security.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>10.2.1</lib.cyclonedx-java.version>
         <lib.jakarta-validation.version>3.0.2</lib.jakarta-validation.version>

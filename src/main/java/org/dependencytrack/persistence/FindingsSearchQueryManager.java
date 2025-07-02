@@ -207,6 +207,14 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                         processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", true, false, false);
                 case "cvssv3To" ->
                         processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", false, false, false);
+                case "epssFrom" ->
+                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"EPSSSCORE\"", true, false, false);
+                case "epssTo" ->
+                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"EPSSSCORE\"", false, false, false);
+                case "epssPercentileFrom" ->
+                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"EPSSPERCENTILE\"", true, false, false);
+                case "epssPercentileTo" ->
+                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"EPSSPERCENTILE\"", false, false, false);
             }
         }
         preprocessACLs(queryFilter, params);
@@ -219,6 +227,8 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                            , "VULNERABILITY"."SEVERITY"
                            , "VULNERABILITY"."CVSSV2BASESCORE"
                            , "VULNERABILITY"."CVSSV3BASESCORE"
+                           , "VULNERABILITY"."EPSSSCORE"
+                           , "VULNERABILITY"."EPSSPERCENTILE"
                            , "VULNERABILITY"."OWASPRRLIKELIHOODSCORE"
                            , "VULNERABILITY"."OWASPRRTECHNICALIMPACTSCORE"
                            , "VULNERABILITY"."OWASPRRBUSINESSIMPACTSCORE"

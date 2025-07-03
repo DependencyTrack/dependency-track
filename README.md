@@ -57,6 +57,7 @@ CI/CD environments.
   * [GitHub Advisories]
   * [Sonatype OSS Index]
   * [Snyk]
+  * [Vulert](Vulert.com) Vulert secures software by detecting vulnerabilities in open-source dependencies—without accessing your code. It supports Js, PHP, Java, Python, and more.
   * [Trivy]
   * [OSV]
   * [VulnDB] from [Risk Based Security]

@@ -49,8 +49,8 @@ public class v4131Updater extends AbstractUpgradeItem {
 
     private void createTagJoinTablePrimaryKeys(final Connection connection) throws SQLException {
         try (final Statement statement = connection.createStatement()) {
-            if (DbUtil.isMssql()) {
-                // MSSQL requires primary key columns to have NOT NULL constraints.
+            if (DbUtil.isH2() || DbUtil.isMssql()) {
+                // H2 and MSSQL require primary key columns to have NOT NULL constraints.
                 // For some reason, DT versions <4.11.0 generated the POLICY_TAGS.TAG_ID column without such a constraint.
                 // https://github.com/DependencyTrack/dependency-track/issues/4906
                 try (final ResultSet rs = connection.getMetaData().getColumns(null, null, "POLICY_TAGS", "TAG_ID")) {
@@ -70,20 +70,30 @@ public class v4131Updater extends AbstractUpgradeItem {
                             }
                         }
 
-                        LOGGER.info("Dropping index %s from POLICY_TAGS.TAG_ID".formatted(indexName));
-                        statement.execute(/* language=SQL */ """
-                                DROP INDEX "POLICY_TAGS"."%s"
-                                """.formatted(indexName));
+                        if (DbUtil.isMssql()) {
+                            LOGGER.info("Dropping index %s from POLICY_TAGS.TAG_ID".formatted(indexName));
+                            statement.execute(/* language=SQL */ """
+                                    DROP INDEX "POLICY_TAGS"."%s"
+                                    """.formatted(indexName));
+                        }
 
                         LOGGER.info("Adding NOT NULL constraint to POLICY_TAGS.TAG_ID column");
-                        statement.execute(/* language=SQL */ """
-                                ALTER TABLE "POLICY_TAGS" ALTER COLUMN "TAG_ID" BIGINT NOT NULL
-                                """);
+                        if (DbUtil.isH2()) {
+                            statement.execute(/* language=SQL */ """
+                                    ALTER TABLE "POLICY_TAGS" ALTER COLUMN "TAG_ID" SET NOT NULL
+                                    """);
+                        } else {
+                            statement.execute(/* language=SQL */ """
+                                    ALTER TABLE "POLICY_TAGS" ALTER COLUMN "TAG_ID" BIGINT NOT NULL
+                                    """);
+                        }
 
-                        LOGGER.info("Recreating index %s on POLICY_TAGS.TAG_ID".formatted(indexName));
-                        statement.execute(/* language=SQL */ """
-                                CREATE INDEX "%s" ON "POLICY_TAGS" ("TAG_ID")
-                                """.formatted(indexName));
+                        if (DbUtil.isMssql()) {
+                            LOGGER.info("Recreating index %s on POLICY_TAGS.TAG_ID".formatted(indexName));
+                            statement.execute(/* language=SQL */ """
+                                    CREATE INDEX "%s" ON "POLICY_TAGS" ("TAG_ID")
+                                    """.formatted(indexName));
+                        }
                     }
                 }
             }

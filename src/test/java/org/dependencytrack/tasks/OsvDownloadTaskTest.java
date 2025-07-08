@@ -455,7 +455,7 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
     void testGetEcosystems() {
         final var task = new OsvDownloadTask();
         List<String> ecosystems = task.getEcosystems();
-        Assertions.assertNotNull(ecosystems);
+        Assertions.assertFalse(ecosystems.isEmpty());
         Assertions.assertTrue(ecosystems.contains("Maven"));
     }
 

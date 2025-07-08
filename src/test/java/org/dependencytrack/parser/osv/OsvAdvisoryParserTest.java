@@ -1,9 +1,9 @@
 package org.dependencytrack.parser.osv;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -157,4 +157,13 @@ public class OsvAdvisoryParserTest {
         Assert.assertNotNull(advisory);
     }
 
+    @Test
+        // https://github.com/DependencyTrack/dependency-track/issues/5105
+    public void testIssue5105() throws Exception {
+        String jsonFile = "src/test/resources/unit/osv.jsons/osv-UBUNTU-CVE-2025-6297.json";
+        String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
+        JSONObject jsonObject = new JSONObject(jsonString);
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assert.assertNotNull(advisory);
+    }
 }

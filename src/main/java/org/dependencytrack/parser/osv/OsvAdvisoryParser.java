@@ -96,6 +96,7 @@ public class OsvAdvisoryParser {
                 for (int i=0; i<cvssList.length(); i++) {
                     final JSONObject cvss = cvssList.getJSONObject(i);
                     final String type = cvss.optString("type", null);
+                    if (type == null) continue;
                     if (type.equalsIgnoreCase("CVSS_V3")) {
                         advisory.setCvssV3Vector(cvss.optString("score", null));
                     }

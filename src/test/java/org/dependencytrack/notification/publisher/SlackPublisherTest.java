@@ -19,12 +19,18 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.model.ConfigProperty;
+import alpine.notification.Notification;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.notification.NotificationRouter;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL;
 
@@ -842,6 +848,116 @@ class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublisher> {
                         		}
                         	  ]
                         	}
+                          ]
+                        }
+                        """)));
+    }
+
+    @Test
+    public void testNotificationThatShouldNotTriggerNotification() {
+        Notification notification = createNotificationWithNotifySeverities(List.of(Severity.LOW));
+
+        NotificationRouter router = new NotificationRouter();
+        router.inform(notification);
+
+        verify(0, postRequestedFor(urlPathEqualTo("/rest/api/2/issue")));
+    }
+
+    @Test
+    public void testNotificationThatShouldTriggerNotification() {
+        Notification notification = createNotificationWithNotifySeverities(List.of(Severity.MEDIUM));
+
+        NotificationRouter router = new NotificationRouter();
+        router.inform(notification);
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "New Vulnerability"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*INFORMATIONAL*  |  *PORTFOLIO*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "New Vulnerability Identified",
+                                "type": "mrkdwn"
+                              },
+                              "fields": [
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*VulnID*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "INT-001"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Severity*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "MEDIUM"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Source*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "INTERNAL"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Component*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "componentName : componentVersion"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "actions",
+                              "elements": [
+                                {
+                                  "type": "button",
+                                  "text": {
+                                    "type": "plain_text",
+                                    "text": "View Vulnerability"
+                                  },
+                                  "action_id": "actionId-1",
+                                  "url": "https://example.com/vulnerabilities/INTERNAL/INT-001"
+                                },
+                                {
+                                  "type": "button",
+                                  "text": {
+                                    "type": "plain_text",
+                                    "text": "View Component"
+                                  },
+                                  "action_id": "actionId-2",
+                                  "url": "https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6"
+                                }
+                              ]
+                            }
                           ]
                         }
                         """)));

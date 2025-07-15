@@ -24,7 +24,7 @@ and configure the API credentials in Dependency-Track's administration panel.
 
 ![OSS Index Configuration]({{ site.baseurl }}/images/screenshots/ossindex-configuration.png)
 
-Vulnerabilities from the proprietary dataset have their IDs prefixed with `sonatpye-`, and their source labeled as `OSSINDEX`.
+Vulnerabilities from the proprietary dataset have their IDs prefixed with `sonatype-`, and their source labeled as `OSSINDEX`.
 
 ![OSS Index Findings]({{ site.baseurl }}/images/screenshots/ossindex-findings.png)
 

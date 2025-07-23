@@ -18,13 +18,19 @@
  */
 package org.dependencytrack.search;
 
+import org.apache.lucene.index.IndexWriter;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
 
@@ -55,9 +61,9 @@ class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         vulnerableSoftware.setProduct("product");
         vulnerableSoftware.setVersion("version");
         VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vulnerableSoftware));
-        VulnerableSoftwareIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getCpe23(), 10);
+        commitIndex();
+
+        SearchResult result = SearchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getCpe23(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(1, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
     }
@@ -72,11 +78,12 @@ class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
         vulnerableSoftware.setProduct("product");
         vulnerableSoftware.setVersion("version");
         VulnerableSoftwareIndexer.getInstance().add(new VulnerableSoftwareDocument(vulnerableSoftware));
-        VulnerableSoftwareIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
+        commitIndex();
+
         VulnerableSoftwareIndexer.getInstance().remove(new VulnerableSoftwareDocument(vulnerableSoftware));
-        VulnerableSoftwareIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getUuid().toString(), 10);
+        commitIndex();
+
+        SearchResult result = SearchManager.searchIndex(VulnerableSoftwareIndexer.getInstance(), vulnerableSoftware.getUuid().toString(), 10);
         Assertions.assertEquals(1, result.getResults().size());
         Assertions.assertEquals(0, result.getResults().get(VulnerableSoftwareIndexer.getInstance().getIndexType().name().toLowerCase()).size());
     }
@@ -84,5 +91,25 @@ class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
     @Test
     void reindexTest() {
         VulnerableSoftwareIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        VulnerableSoftwareIndexer.getInstance().commit();
+        final IndexWriter indexWriter;
+        try {
+            indexWriter = VulnerableSoftwareIndexer.getInstance().getIndexWriter();
+        } catch (IOException e) {
+            Assertions.fail("Unable to get IndexWriter", e);
+            return;
+        }
+        try {
+            indexWriter.flush();
+        } catch (IOException e) {
+            Assertions.fail("Unable to flush IndexWriter", e);
+            return;
+        }
+        await("Indexer flush")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(indexWriter.hasUncommittedChanges()).isFalse());
     }
 }

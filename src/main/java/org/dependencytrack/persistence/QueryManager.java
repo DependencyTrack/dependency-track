@@ -78,6 +78,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.resources.v1.vo.AffectedProject;
@@ -813,6 +814,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {
         getVulnerabilityQueryManager().addVulnerability(vulnerability, component, analyzerIdentity);
+    }
+
+    public void updateSeverity(Vulnerability vulnerability, Severity newSeverity, Component component) {
+        getVulnerabilityQueryManager().updateSeverity(vulnerability, newSeverity, component);
     }
 
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity,

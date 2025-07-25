@@ -947,9 +947,10 @@ class BomResourceTest extends ResourceTest {
         Assertions.assertNotNull(project);
     }
 
-    @Test
-    void uploadBomAutoCreateWithTagsTest() throws Exception {
-        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+    @ParameterizedTest
+    @MethodSource("uploadBomAutoCreateWithTagsTestParameters")
+    void uploadBomAutoCreateWithTagsTest(Permissions[] permissions, String[] expectedTags) throws Exception {
+        initializeWithPermissions(permissions);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
         List<Tag> tags = Stream.of("tag1", "tag2").map(name -> {
           Tag tag = new Tag();
@@ -970,12 +971,13 @@ class BomResourceTest extends ResourceTest {
         Assertions.assertNotNull(project);
         assertThat(project.getTags())
           .extracting(Tag::getName)
-          .containsExactlyInAnyOrder("tag1", "tag2");
+          .containsExactlyInAnyOrder(expectedTags);
     }
 
-    @Test
-    void uploadBomAutoCreateWithTagsMultipartTest() throws Exception {
-        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+    @ParameterizedTest
+    @MethodSource("uploadBomAutoCreateWithTagsTestParameters")
+    void uploadBomAutoCreateWithTagsMultipartTest(Permissions[] permissions, String[] expectedTags) throws Exception {
+        initializeWithPermissions(permissions);
 
         final var multiPart = new FormDataMultiPart()
                 .field("bom", resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8), MediaType.APPLICATION_XML_TYPE)
@@ -1003,7 +1005,14 @@ class BomResourceTest extends ResourceTest {
         assertThat(project).isNotNull();
         assertThat(project.getTags())
                 .extracting(Tag::getName)
-                .containsExactlyInAnyOrder("tag1", "tag2");
+                .containsExactlyInAnyOrder(expectedTags);
+    }
+
+    private static Object[] uploadBomAutoCreateWithTagsTestParameters() {
+        return new Object[] {
+            new Object[] { new Permissions[] { Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD }, new String[] {} },
+            new Object[] { new Permissions[] { Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD, Permissions.PORTFOLIO_MANAGEMENT }, new String[] { "tag1", "tag2" } },
+        };
     }
 
     @Test

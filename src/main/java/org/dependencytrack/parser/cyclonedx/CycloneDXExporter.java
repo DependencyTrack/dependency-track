@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
+import alpine.persistence.ScopedCustomization;
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
 import org.cyclonedx.generators.BomGeneratorFactory;
@@ -29,6 +30,7 @@ import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 
+import javax.jdo.FetchGroup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -57,8 +59,13 @@ public class CycloneDXExporter {
     }
 
     public Bom create(final Project project) {
-        final List<Component> components = qm.getAllComponents(project);
-        final List<ServiceComponent> services = qm.getAllServiceComponents(project);
+        final List<Component> components;
+        final List<ServiceComponent> services;
+        try (final var ignored = new ScopedCustomization(qm.getPersistenceManager())
+                .withFetchGroup(FetchGroup.ALL)) {
+            components = qm.getAllComponents(project);
+            services = qm.getAllServiceComponents(project);
+        }
         final List<Finding> findings = switch (variant) {
             case INVENTORY_WITH_VULNERABILITIES, VDR, VEX -> qm.getFindings(project, true);
             default -> null;

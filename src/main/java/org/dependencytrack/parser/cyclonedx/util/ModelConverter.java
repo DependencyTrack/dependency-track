@@ -560,7 +560,7 @@ public class ModelConverter {
             cycloneComponent.setPurl(component.getPurl().canonicalize());
         }
 
-        if (component.getClassifier() != null) {
+        if (component.getClassifier() != null && component.getClassifier() != Classifier.NONE) {
             cycloneComponent.setType(org.cyclonedx.model.Component.Type.valueOf(component.getClassifier().name()));
         } else {
             cycloneComponent.setType(org.cyclonedx.model.Component.Type.LIBRARY);
@@ -725,10 +725,10 @@ public class ModelConverter {
                 swid.setVersion(StringUtils.trimToNull(project.getVersion()));
                 cycloneComponent.setSwid(swid);
             }
-            if (project.getClassifier() != null) {
+            if (project.getClassifier() != null && project.getClassifier() != Classifier.NONE) {
                 cycloneComponent.setType(org.cyclonedx.model.Component.Type.valueOf(project.getClassifier().name()));
             } else {
-                cycloneComponent.setType(org.cyclonedx.model.Component.Type.LIBRARY);
+                cycloneComponent.setType(org.cyclonedx.model.Component.Type.APPLICATION);
             }
             if (project.getExternalReferences() != null && !project.getExternalReferences().isEmpty()) {
                 List<org.cyclonedx.model.ExternalReference> references = new ArrayList<>();

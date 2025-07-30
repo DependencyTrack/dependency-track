@@ -60,31 +60,38 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
         for (final PolicyCondition condition : super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final Coordinates coordinates = parseCoordinatesDefinition(condition);
-            if (matches(condition.getOperator(), coordinates.getGroup(), component.getGroup())
-                    && matches(condition.getOperator(), coordinates.getName(), component.getName())
-                    && versionMatches(condition.getOperator(), coordinates.getVersion(), component.getVersion())) {
-                violations.add(new PolicyConditionViolation(condition, component));
+            final boolean positiveMatch = matches(coordinates.getGroup(), component.getGroup())
+                    && matches(coordinates.getName(), component.getName())
+                    && versionMatches(coordinates.getVersion(), component.getVersion());
+            switch (condition.getOperator()) {
+                case MATCHES -> {
+                    if (positiveMatch) {
+                        violations.add(new PolicyConditionViolation(condition, component));
+                    }
+                }
+                case NO_MATCH -> {
+                    if (!positiveMatch) {
+                        violations.add(new PolicyConditionViolation(condition, component));
+                    }
+                }
+                default -> {
+                    // silently swallow this
+                }
             }
         }
         return violations;
     }
 
-    private boolean matches(final PolicyCondition.Operator operator, final String conditionValue, final String part) {
-        if (conditionValue == null && part == null) {
-            return true;
+    private boolean matches(final String conditionValue, final String part) {
+        if (part == null) {
+            return conditionValue == null;
         }
+
         final String p = StringUtils.trimToNull(part);
-        if (p != null) {
-            if (PolicyCondition.Operator.MATCHES == operator) {
-                return org.dependencytrack.policy.Matcher.matches(p, conditionValue);
-            } else if (PolicyCondition.Operator.NO_MATCH == operator) {
-                return !org.dependencytrack.policy.Matcher.matches(p, conditionValue);
-            }
-        }
-        return false;
+        return p == null || org.dependencytrack.policy.Matcher.matches(p, conditionValue);
     }
 
-    private boolean versionMatches(final PolicyCondition.Operator conditionOperator, final String conditionValue, final String part) {
+    private boolean versionMatches(final String conditionValue, final String part) {
         if (conditionValue == null && part == null) {
             return true;
         } else if (conditionValue == null ^ part == null) {
@@ -93,7 +100,7 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
         final Matcher versionOperatorMatcher = VERSION_OPERATOR_PATTERN.matcher(conditionValue);
         if (!versionOperatorMatcher.find()) {
             // No operator provided, use default matching algorithm
-            return matches(conditionOperator, conditionValue, part);
+            return matches(conditionValue, part);
         }
 
         final PolicyCondition.Operator versionOperator;
@@ -129,11 +136,7 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
         final var componentVersion = new ComponentVersion(part);
         final var conditionVersion = new ComponentVersion(VERSION_OPERATOR_PATTERN.split(conditionValue)[1]);
 
-        final boolean versionMatches = VersionPolicyEvaluator.matches(componentVersion, conditionVersion, versionOperator);
-        if (PolicyCondition.Operator.NO_MATCH == conditionOperator) {
-            return !versionMatches;
-        }
-        return versionMatches;
+        return VersionPolicyEvaluator.matches(componentVersion, conditionVersion, versionOperator);
     }
 
     /**

@@ -444,4 +444,29 @@ class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
     }
 
+    @Test
+    void noMatchWithInvertedMatch() {
+        String def = "{ 'group': 'Acme', 'name': 'Test Component', 'version': '1.0.0' }";
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
+        Component component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+        component.setVersion("1.0.0");
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assertions.assertEquals(0, violations.size());
+    }
+
+    @Test
+    void matchWithInvertedMatch() {
+        String def = "{ 'group': 'Acme', 'name': 'Test Component', 'version': '1.0.0' }";
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
+        Component component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+        component.setVersion("2.0.0");
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assertions.assertEquals(1, violations.size());
+    }
 }

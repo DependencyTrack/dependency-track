@@ -110,4 +110,16 @@ nginx.ingress.kubernetes.io/proxy-body-size: "100m"
 
 Please consult the [official documentation](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#custom-max-body-size)
 
+#### Policy conditions do not work for some PURLs
+
+Policy condition values are treated as regular expressions.
+
+1. Policy condition values are implicitly treated as substring matches.
+   They must be explicitly anchored with `^` and `$` to make them an exact match.
+2. Characters with special meaning in regular expressions should be escaped with a `\\`.
+   This is needed if the PURL contains a `?`, since the question mark makes the previous character optional and is not treated literally.
+   Another special character is `.`, which should also be escaped.
+3. Policy condition values support wildcards, so an `*` means that any text is allowed, including missing text.
+   For example, `^vendor/*$` would match `vendor/lib-1`, `vendor/app`, or even only `vendor/`.
+
 [defect report]: https://github.com/DependencyTrack/dependency-track/issues/new?assignees=&labels=defect%2Cin+triage&template=defect-report.yml

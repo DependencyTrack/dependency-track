@@ -805,4 +805,46 @@ public class ComposerMetaAnalyzerTest {
                 fileStream.close();
                 return data;
         }
+
+        @Test
+        public void testAnalyzerHandlesArrayEntryMetadata() throws Exception {
+            Component component = new Component();
+            ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
+        
+            component.setPurl(new PackageURL("pkg:composer/galaxy/cow@v1.1.0"));
+        
+            final File packagistRepoRootFile = getRepoResourceFile("composer.include.com.metadata", "packages");
+            final File packagistFile = getPackageResourceFile("composer.include.com.metadata", "galaxy", "cow-arrayentry");
+        
+            analyzer.setRepositoryId("13");
+            analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
+            @SuppressWarnings("resource")
+            MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
+        
+            mockClient.when(
+                    request()
+                            .withMethod("GET")
+                            .withPath("/packages.json"))
+                    .respond(
+                            response()
+                                    .withStatusCode(200)
+                                    .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                                    .withBody(getTestData(packagistRepoRootFile)));
+        
+            mockClient.when(
+                    request()
+                            .withMethod("GET")
+                            .withPath("/p2/galaxy/cow.json"))
+                    .respond(
+                            response()
+                                    .withStatusCode(200)
+                                    .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                                    .withBody(getTestData(packagistFile)));
+        
+            MetaModel metaModel = analyzer.analyze(component);
+        
+            Assert.assertEquals("9.9.9", metaModel.getLatestVersion());
+            Assert.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX")
+                    .parse("2025-01-01 00:00:00 Z"), metaModel.getPublishedTimestamp());
+        }
 }

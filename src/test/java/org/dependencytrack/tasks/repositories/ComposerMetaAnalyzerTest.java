@@ -807,7 +807,7 @@ public class ComposerMetaAnalyzerTest {
         }
 
         @Test
-        void testAnalyzerHandlesArrayEntryMetadata() throws Exception {
+        public void testAnalyzerHandlesArrayEntryMetadata() throws Exception {
             Component component = new Component();
             ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
         
@@ -843,8 +843,8 @@ public class ComposerMetaAnalyzerTest {
         
             MetaModel metaModel = analyzer.analyze(component);
         
-            Assertions.assertEquals("9.9.9", metaModel.getLatestVersion());
-            Assertions.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX")
+            Assert.assertEquals("9.9.9", metaModel.getLatestVersion());
+            Assert.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX")
                     .parse("2025-01-01 00:00:00 Z"), metaModel.getPublishedTimestamp());
         }
 }

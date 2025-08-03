@@ -30,11 +30,13 @@ import org.dependencytrack.util.PersistenceUtil;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.dependencytrack.util.PersistenceUtil.assertNonPersistentAll;
@@ -253,132 +255,184 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      * @param purl       The Package URL
      * @return A {@link List} of all matching {@link VulnerableSoftware}s
      */
-    public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor,
-                                                             final String cpeProduct, final PackageURL purl) {
-        var queryFilterParts = new ArrayList<String>();
-        var queryParams = new HashMap<String, Object>();
+    public List<VulnerableSoftware> getAllVulnerableSoftware(
+            final String cpePart,
+            final String cpeVendor,
+            final String cpeProduct,
+            final PackageURL purl) {
+        int queryConditionIndex = 0;
+        final var queryConditions = new ArrayList<String>();
+        final var queryParams = new HashMap<String, Object>();
+
+        // Assemble multiple queries and join their results using UNION.
+        // This ensures that the database is able to leverage indexes properly,
+        // which use of OR can prevent from happening: https://dba.stackexchange.com/a/293838
+        //
+        // i.e., what usually would've been:
+        //   SELECT "ID" FROM "VULNERABLESOFTWARE" WHERE ("PART" = '*' OR "PART" = 'foo') ...
+        // now becomes:
+        //   SELECT "ID" FROM "VULNERABLESOFTWARE" WHERE "PART" = '*' ...
+        //   UNION
+        //   SELECT "ID" FROM "VULNERABLESOFTWARE" WHERE "PART" = 'foo' ...
 
         if (cpePart != null && cpeVendor != null && cpeProduct != null) {
-            final var cpeQueryFilterParts = new ArrayList<String>();
+            final List<CpeFilterCondition> partConditions = buildCpeFilterConditions("\"PART\"", cpePart);
+            final List<CpeFilterCondition> vendorConditions = buildCpeFilterConditions("\"VENDOR\"", cpeVendor);
+            final List<CpeFilterCondition> productConditions = buildCpeFilterConditions("\"PRODUCT\"", cpeProduct);
 
-            // The query composition below represents a partial implementation of the CPE
-            // matching logic. It makes references to table 6-2 of the CPE name matching
-            // specification: https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf
-            //
-            // In CPE matching terms, the parameters of this method represent the target,
-            // and the `VulnerableSoftware`s in the database represent the source.
-            //
-            // While the source *can* contain wildcards ("*", "?"), there is currently (Oct. 2023)
-            // no occurrence of part, vendor, or product with wildcards in the NVD database.
-            // Evaluating wildcards in the source can only be done in-memory. If we wanted to do that,
-            // we'd have to fetch *all* records, which is not practical.
-
-            if (!"*".equals(cpePart) && !"-".equals(cpePart)) {
-                // | No. | Source A-V      | Target A-V | Relation             |
-                // | :-- | :-------------- | :--------- | :------------------- |
-                // | 3   | ANY             | i          | SUPERSET             |
-                // | 7   | NA              | i          | DISJOINT             |
-                // | 9   | i               | i          | EQUAL                |
-                // | 10  | i               | k          | DISJOINT             |
-                // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
-                // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
-                //   Can't currently do this as it would require an index on UPPER("PART"),
-                //   which we cannot add through JDO annotations.
-                cpeQueryFilterParts.add("(part == '*' || part == :part)");
-                queryParams.put("part", cpePart);
-
-                // NOTE: Target *could* include wildcard, but the relation
-                // for those cases is undefined:
-                //
-                // | No. | Source A-V      | Target A-V      | Relation   |
-                // | :-- | :-------------- | :-------------- | :--------- |
-                // | 4   | ANY             | m + wild cards  | undefined  |
-                // | 8   | NA              | m + wild cards  | undefined  |
-                // | 11  | i               | m + wild cards  | undefined  |
-                // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
-            } else if ("-".equals(cpePart)) {
-                // | No. | Source A-V     | Target A-V | Relation |
-                // | :-- | :------------- | :--------- | :------- |
-                // | 2   | ANY            | NA         | SUPERSET |
-                // | 6   | NA             | NA         | EQUAL    |
-                // | 12  | i              | NA         | DISJOINT |
-                // | 16  | m + wild cards | NA         | DISJOINT |
-                cpeQueryFilterParts.add("(part == '*' || part == '-')");
-            } else {
-                // | No. | Source A-V     | Target A-V | Relation |
-                // | :-- | :------------- | :--------- | :------- |
-                // | 1   | ANY            | ANY        | EQUAL    |
-                // | 5   | NA             | ANY        | SUBSET   |
-                // | 13  | i              | ANY        | SUBSET   |
-                // | 15  | m + wild cards | ANY        | SUBSET   |
-                cpeQueryFilterParts.add("part != null");
+            for (final CpeFilterCondition partCondition : partConditions) {
+                for (final CpeFilterCondition vendorCondition : vendorConditions) {
+                    for (final CpeFilterCondition productCondition : productConditions) {
+                        final int index = queryConditionIndex++;
+                        if (partCondition.value() != null) {
+                            queryParams.put("part" + index, partCondition.value());
+                        }
+                        if (vendorCondition.value() != null) {
+                            queryParams.put("vendor" + index, vendorCondition.value());
+                        }
+                        if (productCondition.value() != null) {
+                            queryParams.put("product" + index, productCondition.value());
+                        }
+                        queryConditions.add("%s AND %s AND %s".formatted(
+                                partCondition.toSql("part" + index),
+                                vendorCondition.toSql("vendor" + index),
+                                productCondition.toSql("product" + index)));
+                    }
+                }
             }
-
-            if (!"*".equals(cpeVendor) && !"-".equals(cpeVendor)) {
-                // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
-                //   Can't currently do this as it would require an index on UPPER("VENDOR"),
-                //   which we cannot add through JDO annotations.
-                cpeQueryFilterParts.add("(vendor == '*' || vendor == :vendor)");
-                queryParams.put("vendor", cpeVendor);
-            } else if ("-".equals(cpeVendor)) {
-                cpeQueryFilterParts.add("(vendor == '*' || vendor == '-')");
-            } else {
-                cpeQueryFilterParts.add("vendor != null");
-            }
-
-            if (!"*".equals(cpeProduct) && !"-".equals(cpeProduct)) {
-                // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
-                //   Can't currently do this as it would require an index on UPPER("PRODUCT"),
-                //   which we cannot add through JDO annotations.
-                cpeQueryFilterParts.add("(product == '*' || product == :product)");
-                queryParams.put("product", cpeProduct);
-            } else if ("-".equals(cpeProduct)) {
-                cpeQueryFilterParts.add("(product == '*' || product == '-')");
-            } else {
-                cpeQueryFilterParts.add("product != null");
-            }
-
-            queryFilterParts.add("(%s)".formatted(String.join(" && ", cpeQueryFilterParts)));
         }
 
         if (purl != null) {
             final var purlFilterParts = new ArrayList<String>();
 
-            // Use explicit null matching to avoid bypassing of the query compilation cache.
-            // https://github.com/DependencyTrack/dependency-track/issues/2540
-
             if (purl.getType() != null) {
-                purlFilterParts.add("purlType == :purlType");
+                purlFilterParts.add("\"PURL_TYPE\" = :purlType");
                 queryParams.put("purlType", purl.getType());
             } else {
-                purlFilterParts.add("purlType == null");
+                purlFilterParts.add("\"PURL_TYPE\" IS NULL");
             }
 
             if (purl.getNamespace() != null) {
-                purlFilterParts.add("purlNamespace == :purlNamespace");
+                purlFilterParts.add("\"PURL_NAMESPACE\" = :purlNamespace");
                 queryParams.put("purlNamespace", purl.getNamespace());
             } else {
-                purlFilterParts.add("purlNamespace == null");
+                purlFilterParts.add("\"PURL_NAMESPACE\" IS NULL");
             }
 
             if (purl.getName() != null) {
-                purlFilterParts.add("purlName == :purlName");
+                purlFilterParts.add("\"PURL_NAME\" = :purlName");
                 queryParams.put("purlName", purl.getName());
             } else {
-                purlFilterParts.add("purlName == null");
+                purlFilterParts.add("\"PURL_NAME\" IS NULL");
             }
 
-            queryFilterParts.add("(%s)".formatted(String.join(" && ", purlFilterParts)));
+            queryConditions.add(String.join(" AND ", purlFilterParts));
         }
 
-        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
-        query.setFilter(String.join(" || ", queryFilterParts));
-        query.setNamedParameters(queryParams);
-        try {
-            return List.copyOf(query.executeList());
-        } finally {
-            query.closeAll();
+        final Query<?> candidateIdQuery = pm.newQuery(
+                Query.SQL,
+                queryConditions.stream()
+                        .map(condition -> "SELECT \"ID\" FROM \"VULNERABLESOFTWARE\" WHERE " + condition)
+                        .collect(Collectors.joining(" UNION ")));
+        candidateIdQuery.setNamedParameters(queryParams);
+        final List<Long> candidateIds = executeAndCloseResultList(candidateIdQuery, Long.class);
+
+        if (candidateIds.isEmpty()) {
+            return Collections.emptyList();
         }
+
+        // This second query is unfortunately needed because the objects returned
+        // by this method are expected to be persistent. DataNucleus does not
+        // recognize SQL query results as persistent.
+        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
+        query.setFilter(":ids.contains(id)");
+        query.setParameters(candidateIds);
+        return executeAndCloseList(query);
+    }
+
+    private record CpeFilterCondition(String column, Operator operator, String value) {
+
+        private enum Operator {
+
+            EQUALS("="),
+            IS_NOT("IS NOT");
+
+            private final String sql;
+
+            Operator(final String sql) {
+                this.sql = sql;
+            }
+
+        }
+
+        private String toSql(final String parameterName) {
+            return value != null
+                    ? "%s %s :%s".formatted(column, operator.sql, parameterName)
+                    : "%s %s NULL".formatted(column, operator.sql);
+        }
+
+    }
+
+    private List<CpeFilterCondition> buildCpeFilterConditions(
+            final String columnName,
+            final String attributeValue) {
+        final var conditions = new ArrayList<CpeFilterCondition>();
+
+        // The query composition below represents a partial implementation of the CPE
+        // matching logic. It makes references to table 6-2 of the CPE name matching
+        // specification: https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf
+        //
+        // In CPE matching terms, the parameters of this method represent the target,
+        // and the `VulnerableSoftware`s in the database represent the source.
+        //
+        // While the source *can* contain wildcards ("*", "?"), there is currently (Oct. 2023)
+        // no occurrence of part, vendor, or product with wildcards in the NVD database.
+        // Evaluating wildcards in the source can only be done in-memory. If we wanted to do that,
+        // we'd have to fetch *all* records, which is not practical.
+
+        if (!"*".equals(attributeValue) && !"-".equals(attributeValue)) {
+            // | No. | Source A-V      | Target A-V | Relation             |
+            // | :-- | :-------------- | :--------- | :------------------- |
+            // | 3   | ANY             | i          | SUPERSET             |
+            // | 7   | NA              | i          | DISJOINT             |
+            // | 9   | i               | i          | EQUAL                |
+            // | 10  | i               | k          | DISJOINT             |
+            // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
+            // TODO: Filter should use equalsIgnoreCase as CPE matching is case-insensitive.
+            //   Can't currently do this as it would require an index on UPPER("PART"),
+            //   which we cannot add through JDO annotations.
+            conditions.add(new CpeFilterCondition(columnName, CpeFilterCondition.Operator.EQUALS, "*"));
+            conditions.add(new CpeFilterCondition(columnName, CpeFilterCondition.Operator.EQUALS, attributeValue));
+
+            // NOTE: Target *could* include wildcard, but the relation
+            // for those cases is undefined:
+            //
+            // | No. | Source A-V      | Target A-V      | Relation   |
+            // | :-- | :-------------- | :-------------- | :--------- |
+            // | 4   | ANY             | m + wild cards  | undefined  |
+            // | 8   | NA              | m + wild cards  | undefined  |
+            // | 11  | i               | m + wild cards  | undefined  |
+            // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
+        } else if ("-".equals(attributeValue)) {
+            // | No. | Source A-V     | Target A-V | Relation |
+            // | :-- | :------------- | :--------- | :------- |
+            // | 2   | ANY            | NA         | SUPERSET |
+            // | 6   | NA             | NA         | EQUAL    |
+            // | 12  | i              | NA         | DISJOINT |
+            // | 16  | m + wild cards | NA         | DISJOINT |
+            conditions.add(new CpeFilterCondition(columnName, CpeFilterCondition.Operator.EQUALS, "*"));
+            conditions.add(new CpeFilterCondition(columnName, CpeFilterCondition.Operator.EQUALS, "-"));
+        } else {
+            // | No. | Source A-V     | Target A-V | Relation |
+            // | :-- | :------------- | :--------- | :------- |
+            // | 1   | ANY            | ANY        | EQUAL    |
+            // | 5   | NA             | ANY        | SUBSET   |
+            // | 13  | i              | ANY        | SUBSET   |
+            // | 15  | m + wild cards | ANY        | SUBSET   |
+            conditions.add(new CpeFilterCondition(columnName, CpeFilterCondition.Operator.IS_NOT, null));
+        }
+
+        return conditions;
     }
 
     /**

@@ -373,7 +373,7 @@ public class BomResourceTest extends ResourceTest {
                             }
                         ],
                         "component": {
-                            "type": "library",
+                            "type": "application",
                             "bom-ref": "${json-unit.matches:projectUuid}",
                             "name": "Acme Example",
                             "version": "1.0"

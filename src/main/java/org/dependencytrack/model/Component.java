@@ -47,6 +47,7 @@ import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
 import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Indices;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
 import javax.jdo.annotations.Order;
@@ -122,6 +123,19 @@ import java.util.UUID;
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Indices({
+        @Index(
+                name       = "COMPONENT_COMPOSITE_PROJECT_ID_IDX",
+                members    = { "project", "id" },
+                extensions = {
+                        @Extension(
+                                vendorName = "datanucleus",
+                                key        = "index-column-ordering",
+                                value      = "ASC,DESC"   // project ASC (default), id DESC
+                        )
+                }
+        )
+})
 public class Component implements Serializable {
 
     private static final long serialVersionUID = 6841650046433674702L;
@@ -387,6 +401,7 @@ public class Component implements Serializable {
     @Persistent(table = "COMPONENTS_VULNERABILITIES")
     @Join(column = "COMPONENT_ID")
     @Element(column = "VULNERABILITY_ID")
+    @Index(name = "COMPONENTS_VULNERABILITIES_COMPOSITE_IDX", members = {"vulnerabilities", "component"})
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Vulnerability> vulnerabilities;
 

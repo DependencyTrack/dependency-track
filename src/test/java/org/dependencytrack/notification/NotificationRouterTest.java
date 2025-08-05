@@ -256,6 +256,50 @@ class NotificationRouterTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testValidMatchingParentProjectLimitingRuleAndPublisherInform()  {
+        NotificationPublisher publisher = createMockPublisher();
+        // Creates a new rule and defines when the rule should be triggered (notifyOn)
+        NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Set<NotificationGroup> notifyOn = new HashSet<>();
+        notifyOn.add(NotificationGroup.NEW_VULNERABILITY);
+        rule.setNotifyOn(notifyOn);
+        rule.setPublisherConfig("{\"destination\":\"testDestination\"}");
+        // Creates a project which will later be matched on
+        List<Project> projects = new ArrayList<>();
+        Project parentProject = qm.createProject("Parent project", null, "1.0", null, null, null, true, false);
+        projects.add(parentProject);
+        rule.setProjects(projects);
+        Project childProject = qm.createProject("Child Project", null, "1.0", null, parentProject, null, true, false);
+        Project grandChildProject = qm.createProject("GrandChild Project", null, "1.0", null, childProject, null, true, false);
+        // Creates a new notification
+        Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
+        Set<Project> affectedProjects = new HashSet<>();
+        affectedProjects.add(grandChildProject);
+        Component affectedComponent = new Component();
+        affectedComponent.setProject(grandChildProject);
+        affectedComponent.setName("acme-lib");
+        qm.persist(affectedComponent);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(affectedComponent), qm.detach(affectedProjects), null);
+        notification.setSubject(subject);
+        // Ok, let's test this
+        NotificationRouter router = new NotificationRouter();
+        router.inform(notification);
+        JsonObject providedConfig = MockPublisher.getConfig();
+        Assertions.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_CONTENT, providedConfig.getString(Publisher.CONFIG_TEMPLATE_KEY));
+        Assertions.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_MIME_TYPE, providedConfig.getString(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY));
+        Assertions.assertEquals("testDestination", providedConfig.getString(Publisher.CONFIG_DESTINATION));
+        Notification providedNotification = MockPublisher.getNotification();
+        NewVulnerabilityIdentified providedSubject = (NewVulnerabilityIdentified) providedNotification.getSubject();
+        Assertions.assertEquals(1, providedSubject.getAffectedProjects().size());
+        Assertions.assertEquals(grandChildProject.getName(), providedSubject.getAffectedProjects().toArray(new Project[1])[0].getName());
+    }
+
+    @Test
     void testValidNonMatchingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)

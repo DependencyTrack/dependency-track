@@ -45,7 +45,7 @@ public final class CompressUtil {
             if (ais.canReadEntryData(entry)) {
                 return IOUtils.toByteArray(ais);
             }
-        } catch (IOException e) {
+        } catch (IOException | org.apache.commons.compress.archivers.ArchiveException e) {
             // throw it away and return the original byte array
         }
         return input;

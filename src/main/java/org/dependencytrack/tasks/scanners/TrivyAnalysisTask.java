@@ -497,6 +497,11 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                     LOGGER.debug("Creating unavailable vulnerability:" + parsedVulnerability.getSource() + " - " + parsedVulnerability.getVulnId());
                     vulnerability = qm.createVulnerability(parsedVulnerability, false);
                     didCreateVulns = true;
+                } else {
+                    if (parsedVulnerability.getSeverity() != null &&
+                            !parsedVulnerability.getSeverity().equals(vulnerability.getSeverity())) {
+                        qm.updateVulnerability(parsedVulnerability, false);
+                    }
                 }
 
                 LOGGER.debug("Trivy vulnerability added: " + vulnerability.getVulnId() + " to component " + persistentComponent.getName());

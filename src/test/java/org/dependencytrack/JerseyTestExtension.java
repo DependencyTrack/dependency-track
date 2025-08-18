@@ -31,6 +31,7 @@ import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.platform.commons.support.AnnotationSupport;
 import org.junitpioneer.jupiter.DefaultLocale;
 
 import java.util.Locale;
@@ -51,9 +52,9 @@ public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         final var testClass = context.getRequiredTestClass();
-        final var defaultLocale = testClass.getAnnotation(DefaultLocale.class);
-        if (defaultLocale != null) {
-            final var locale = Locale.forLanguageTag(defaultLocale.value());
+        final var defaultLocale = AnnotationSupport.findAnnotation(testClass, DefaultLocale.class);
+        if (defaultLocale.isPresent()) {
+            final var locale = Locale.forLanguageTag(defaultLocale.get().value());
             Locale.setDefault(locale);
         }
 

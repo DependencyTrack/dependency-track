@@ -28,6 +28,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.json.JsonObject;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.validation.ValidSpdxExpression;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
@@ -35,32 +40,9 @@ import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConve
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 
-import jakarta.json.JsonObject;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import javax.jdo.annotations.Column;
-import javax.jdo.annotations.Convert;
-import javax.jdo.annotations.Element;
-import javax.jdo.annotations.Extension;
-import javax.jdo.annotations.FetchGroup;
-import javax.jdo.annotations.FetchGroups;
-import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.Index;
-import javax.jdo.annotations.Join;
-import javax.jdo.annotations.Order;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
-import javax.jdo.annotations.Serialized;
-import javax.jdo.annotations.Unique;
+import javax.jdo.annotations.*;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Model class for tracking individual components.
@@ -182,6 +164,13 @@ public class Component implements Serializable {
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
     private String version;
+
+    @Persistent
+    @Column(name = "SCOPE", jdbcType = "VARCHAR")
+    @Index(name = "COMPONENT_SCOPE_IDX")
+    @NotNull
+    @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
+    private org.cyclonedx.model.Component.Scope scope;
 
     @Persistent
     @Column(name = "CLASSIFIER", jdbcType = "VARCHAR")
@@ -919,6 +908,13 @@ public class Component implements Serializable {
         this.expandDependencyGraph = expandDependencyGraph;
     }
 
+    public org.cyclonedx.model.Component.Scope getScope() {
+        return scope;
+    }
+
+    public void setScope(org.cyclonedx.model.Component.Scope scope) {
+        this.scope = scope;
+    }
     @Override
     public String toString() {
         if (getPurl() != null) {

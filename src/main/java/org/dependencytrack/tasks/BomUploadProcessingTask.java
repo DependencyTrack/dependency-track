@@ -420,6 +420,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 applyIfChanged(persistentComponent, component, Component::getGroup, persistentComponent::setGroup);
                 applyIfChanged(persistentComponent, component, Component::getName, persistentComponent::setName);
                 applyIfChanged(persistentComponent, component, Component::getVersion, persistentComponent::setVersion);
+                applyIfChanged(persistentComponent, component, Component::getScope, persistentComponent::setScope);
                 applyIfChanged(persistentComponent, component, Component::getDescription, persistentComponent::setDescription);
                 applyIfChanged(persistentComponent, component, Component::getCopyright, persistentComponent::setCopyright);
                 applyIfChanged(persistentComponent, component, Component::getCpe, persistentComponent::setCpe);

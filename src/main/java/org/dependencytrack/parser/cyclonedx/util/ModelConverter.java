@@ -23,33 +23,20 @@ import alpine.model.IConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
-import org.cyclonedx.model.BomReference;
-import org.cyclonedx.model.Dependency;
-import org.cyclonedx.model.Hash;
-import org.cyclonedx.model.LicenseChoice;
-import org.cyclonedx.model.Swid;
+import org.cyclonedx.model.*;
 import org.cyclonedx.model.license.Expression;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisJustification;
-import org.dependencytrack.model.AnalysisResponse;
-import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Classifier;
+import org.dependencytrack.model.*;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ComponentProperty;
-import org.dependencytrack.model.Cwe;
-import org.dependencytrack.model.DataClassification;
 import org.dependencytrack.model.ExternalReference;
-import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectMetadata;
-import org.dependencytrack.model.ServiceComponent;
-import org.dependencytrack.model.Severity;
-import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
@@ -57,28 +44,14 @@ import org.dependencytrack.parser.spdx.expression.model.SpdxExpression;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.VulnerabilityUtil;
 
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonValue;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNullElse;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.trim;
-import static org.apache.commons.lang3.StringUtils.trimToNull;
+import static org.apache.commons.lang3.StringUtils.*;
 import static org.dependencytrack.util.PurlUtil.silentPurlCoordinatesOnly;
 
 public class ModelConverter {
@@ -171,6 +144,7 @@ public class ModelConverter {
         component.setGroup(trimToNull(cdxComponent.getGroup()));
         component.setName(requireNonNullElse(trimToNull(cdxComponent.getName()), "-"));
         component.setVersion(trimToNull(cdxComponent.getVersion()));
+        component.setScope(cdxComponent.getScope());
         component.setDescription(trimToNull(cdxComponent.getDescription()));
         component.setCopyright(trimToNull(cdxComponent.getCopyright()));
         component.setCpe(trimToNull(cdxComponent.getCpe()));
@@ -273,6 +247,8 @@ public class ModelConverter {
 
         return component;
     }
+
+
 
     private static List<ComponentProperty> convertToComponentProperties(final List<org.cyclonedx.model.Property> cdxProperties) {
         if (cdxProperties == null || cdxProperties.isEmpty()) {

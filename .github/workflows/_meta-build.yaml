@@ -166,6 +166,6 @@ jobs:
 
       - name: Upload Trivy Scan Results to GitHub Security Tab
         if: ${{ inputs.publish-container }}
-        uses: github/codeql-action/upload-sarif@76621b61decf072c1cee8dd1ce2d2a82d33c17ed # tag=v3.29.5
+        uses: github/codeql-action/upload-sarif@3c3833e0f8c1c83d449a7478aa59c036a9165498 # tag=v3.29.5
         with:
           sarif_file: 'trivy-results.sarif'

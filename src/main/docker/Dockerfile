@@ -27,7 +27,7 @@ ARG WAR_FILENAME=dependency-track-apiserver.jar
 
 FROM eclipse-temurin:21.0.8_9-jre-jammy@sha256:8234720ae5083d3b972fe20b4a997b7c56546db8bf8da5f4c54c6470901e2e67 AS jre-build
 
-FROM debian:stable-slim@sha256:377ddc2a20fe8632a49b69dcfff10fccbd5b4f0b8c2d593420a6a5e03070dfa1
+FROM debian:stable-slim@sha256:8810492a2dd16b7f59239c1e0cc1e56c1a1a5957d11f639776bd6798e795608b
 
 ARG COMMIT_SHA
 ARG APP_VERSION
@@ -64,8 +64,8 @@ ENV TZ=Etc/UTC \
 # Create a user and assign home directory to a ${DATA_DIR}
 # Ensure UID 1000 & GID 1000 own all the needed directories
 RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
-    && addgroup --system --gid ${GID} dtrack || true \
-    && adduser --system --disabled-login --ingroup dtrack --no-create-home --home ${DATA_DIR} --gecos "dtrack user" --shell /bin/false --uid ${UID} dtrack || true \
+    && groupadd --system --gid ${GID} dtrack || true \
+    && useradd --system --no-user-group --gid dtrack --no-create-home --home-dir ${DATA_DIR} --comment "dtrack user" --shell /bin/false --uid ${UID} dtrack || true \
     && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
     && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
     \

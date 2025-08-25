@@ -278,7 +278,12 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             final String packageMetaDataPathPattern) {
         final String composerPackageMetadataFilename = packageMetaDataPathPattern.replaceAll("%package%",
                 getComposerPackageName(component));
-        final String url = UriBuilder.fromUri(baseUrl).path(composerPackageMetadataFilename).build().toString();
+        final String url;
+        if (composerPackageMetadataFilename.matches("^https?://.+$")) {
+            url = composerPackageMetadataFilename;
+        } else {
+            url = UriBuilder.fromUri(baseUrl).path(composerPackageMetadataFilename).build().toString();
+        }
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
                 // 404s are valid responses, as the package might not exist in the repository

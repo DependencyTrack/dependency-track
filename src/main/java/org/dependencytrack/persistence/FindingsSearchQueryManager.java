@@ -116,7 +116,17 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             params.put("showSuppressed", false);
         }
         processFilters(filters, queryFilter, params, false);
-        final Query<Object[]> query = pm.newQuery(Query.SQL, Finding.QUERY_ALL_FINDINGS + queryFilter + (this.orderBy != null ? " ORDER BY " + sortingAttributes.get(this.orderBy) + " " + (this.orderDirection == OrderDirection.DESCENDING ? " DESC" : "ASC") : ""));
+
+        final var orderByFragments = new ArrayList<String>();
+        if (this.orderBy != null) {
+            orderByFragments.add("%s %s".formatted(
+                    sortingAttributes.get(this.orderBy),
+                    (this.orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC")));
+        }
+        orderByFragments.add("\"FINDINGATTRIBUTION\".\"ID\""); // Tie-breaker to ensure stable ordering.
+        final var orderByClause = " ORDER BY " + String.join(", ", orderByFragments);
+
+        final Query<Object[]> query = pm.newQuery(Query.SQL, Finding.QUERY_ALL_FINDINGS + queryFilter + orderByClause);
         PaginatedResult result = new PaginatedResult();
         query.setNamedParameters(params);
         final List<Object[]> totalList = query.executeList();
@@ -165,7 +175,19 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             params.put("active", true);
         }
         processFilters(filters, queryFilter, params, true);
-        final Query<Object[]> query = pm.newQuery(Query.SQL, GroupedFinding.QUERY + queryFilter + (this.orderBy != null ? " ORDER BY " + sortingAttributes.get(this.orderBy) + " " + (this.orderDirection == OrderDirection.DESCENDING ? " DESC" : "ASC") : ""));
+
+        final var orderByFragments = new ArrayList<String>();
+        if (this.orderBy != null) {
+            orderByFragments.add("%s %s".formatted(
+                    sortingAttributes.get(this.orderBy),
+                    (this.orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC")));
+        }
+        if (!"vulnerability.vulnId".equals(this.orderBy)) {
+            orderByFragments.add(sortingAttributes.get("vulnerability.vulnId")); // Tie-breaker to ensure stable ordering.
+        }
+        final var orderByClause = " ORDER BY " + String.join(", ", orderByFragments);
+
+        final Query<Object[]> query = pm.newQuery(Query.SQL, GroupedFinding.QUERY + queryFilter + orderByClause);
         PaginatedResult result = new PaginatedResult();
         query.setNamedParameters(params);
         final List<Object[]> totalList = query.executeList();

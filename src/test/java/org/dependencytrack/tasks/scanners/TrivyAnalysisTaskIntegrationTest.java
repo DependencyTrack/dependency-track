@@ -33,6 +33,7 @@ import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.tasks.VulnerabilityAnalysisTask;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -477,6 +478,45 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(component)).hasSizeGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    public void testIssue5216Regression() {
+        Assume.assumeTrue("latest".equals(trivyVersion));
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var osComponent = new Component();
+        osComponent.setProject(project);
+        osComponent.setClassifier(Classifier.OPERATING_SYSTEM);
+        osComponent.setName("amazon");
+        osComponent.setVersion("2 (Karoo)");
+        qm.persist(osComponent);
+        qm.createComponentProperty(osComponent, "aquasecurity", "trivy:Class", "os-pkgs", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(osComponent, "aquasecurity", "trivy:Type", "amazon", IConfigProperty.PropertyType.STRING, null);
+
+        final var pkgComponent = new Component();
+        pkgComponent.setProject(project);
+        pkgComponent.setClassifier(Classifier.LIBRARY);
+        pkgComponent.setName("libxml2");
+        pkgComponent.setVersion("2.9.1-6.amzn2.5.18");
+        pkgComponent.setPurl("pkg:rpm/amazon/libxml2@2.9.1-6.amzn2.5.18?arch=x86_64&distro=amazon-2+%28Karoo%29");
+        qm.persist(pkgComponent);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:LayerDiffID", "sha256:61f240a8747b2f8f13a54e1ee5a887e389b6f37a10185c117522b45861f25224", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:LayerDigest", "sha256:59c3b062666ba29c100bd47e4ef63a7010fdd4d56e4483d5f68f9ba709e6f55c", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:PkgID", "libxml2@2.9.1-6.amzn2.5.18.x86_64", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:PkgType", "amazon", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:SrcName", "libxml2", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:SrcRelease", "6.amzn2.5.18", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:SrcVersion", "2.9.1", IConfigProperty.PropertyType.STRING, null);
+
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
+
+        assertThat(qm.getAllVulnerabilities(pkgComponent)).hasSizeGreaterThanOrEqualTo(1);
     }
 
 }

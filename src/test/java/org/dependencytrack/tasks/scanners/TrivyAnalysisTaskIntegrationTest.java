@@ -350,13 +350,13 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(component)).anySatisfy(vuln -> {
-            assertThat(vuln.getVulnId()).isEqualTo("CVE-2016-20013");
+            assertThat(vuln.getVulnId()).isEqualTo("CVE-2025-4802");
             assertThat(vuln.getSource()).isEqualTo(Vulnerability.Source.NVD.name());
 
             // NB: Can't assert specific values here, as we're testing against
             // a moving target. These values may change over time. We do proper
             // assertions in TrivyAnalyzerTaskTest.
-            assertThat(vuln.getTitle()).isBlank();
+            assertThat(vuln.getTitle()).isNotBlank();
             assertThat(vuln.getDescription()).isNotBlank();
             assertThat(vuln.getCreated()).isNotNull();
             assertThat(vuln.getPublished()).isNotNull();

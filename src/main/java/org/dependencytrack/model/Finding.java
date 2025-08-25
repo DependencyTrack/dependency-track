@@ -102,6 +102,7 @@ public class Finding implements Serializable {
                AND "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
              WHERE "COMPONENT"."PROJECT_ID" = :projectId
                AND (:includeSuppressed = :true OR "ANALYSIS"."SUPPRESSED" IS NULL OR "ANALYSIS"."SUPPRESSED" = :false)
+             ORDER BY "FINDINGATTRIBUTION"."ID"
             """;
 
     // language=SQL

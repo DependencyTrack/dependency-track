@@ -68,26 +68,26 @@ public class NistMirrorTaskTest extends PersistenceCapableTest {
 
     @Test
     public void test() throws Exception {
-        final byte[] gzippedFeedFileBytes = gzipResource("/unit/nvd/feed/nvdcve-1.1-2022.json");
+        final byte[] gzippedFeedFileBytes = gzipResource("/unit/nvd/feed/nvdcve-2.0-2022.json");
 
         wireMock.stubFor(get(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(404)));
-        wireMock.stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2022.json.gz"))
+        wireMock.stubFor(get(urlPathEqualTo("/json/cve/2.0/nvdcve-2.0-2022.json.gz"))
                 .willReturn(aResponse()
                         .withBody(gzippedFeedFileBytes)));
-        wireMock.stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2022.meta"))
+        wireMock.stubFor(get(urlPathEqualTo("/json/cve/2.0/nvdcve-2.0-2022.meta"))
                 .willReturn(aResponse()
-                        .withBody(resourceToByteArray("/unit/nvd/feed/nvdcve-1.1-2022.meta"))));
+                        .withBody(resourceToByteArray("/unit/nvd/feed/nvdcve-2.0-2022.meta"))));
 
         final Path mirrorDirPath = Files.createTempDirectory(null);
         mirrorDirPath.toFile().deleteOnExit();
 
         new NistMirrorTask(mirrorDirPath).inform(new NistMirrorEvent());
 
-        assertThat(mirrorDirPath.resolve("nvdcve-1.1-2022.json.gz")).exists();
-        assertThat(mirrorDirPath.resolve("nvdcve-1.1-2022.json")).exists();
-        assertThat(mirrorDirPath.resolve("nvdcve-1.1-2022.meta")).exists();
+        assertThat(mirrorDirPath.resolve("nvdcve-2.0-2022.json.gz")).exists();
+        assertThat(mirrorDirPath.resolve("nvdcve-2.0-2022.json")).exists();
+        assertThat(mirrorDirPath.resolve("nvdcve-2.0-2022.meta")).exists();
 
         final List<Vulnerability> vulns = qm.getVulnerabilities().getList(Vulnerability.class);
         assertThat(vulns).satisfiesExactlyInAnyOrder(
@@ -99,13 +99,15 @@ public class NistMirrorTaskTest extends PersistenceCapableTest {
                             in some Intel(R) Processors may allow an authorized user to potentially \
                             enable information disclosure via local access.""");
                     assertThat(vuln.getReferences()).isEqualTo("""
-                            * [https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00598.html](https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00598.html)
-                            * [http://www.openwall.com/lists/oss-security/2022/03/18/2](http://www.openwall.com/lists/oss-security/2022/03/18/2)
-                            * [https://www.oracle.com/security-alerts/cpujul2022.html](https://www.oracle.com/security-alerts/cpujul2022.html)
-                            * [https://security.netapp.com/advisory/ntap-20220818-0004/](https://security.netapp.com/advisory/ntap-20220818-0004/)
-                            * [https://www.kb.cert.org/vuls/id/155143](https://www.kb.cert.org/vuls/id/155143)""");
+                          * [http://www.openwall.com/lists/oss-security/2022/03/18/2](http://www.openwall.com/lists/oss-security/2022/03/18/2)
+                          * [https://security.netapp.com/advisory/ntap-20220818-0004/](https://security.netapp.com/advisory/ntap-20220818-0004/)
+                          * [https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00598.html](https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00598.html)
+                          * [https://www.kb.cert.org/vuls/id/155143](https://www.kb.cert.org/vuls/id/155143)
+                          * [https://www.oracle.com/security-alerts/cpujul2022.html](https://www.oracle.com/security-alerts/cpujul2022.html)
+                          * [https://www.vicarius.io/vsociety/posts/cve-2022-0001-detect-specter-vulnerability?prevUrl=wizard](https://www.vicarius.io/vsociety/posts/cve-2022-0001-detect-specter-vulnerability?prevUrl=wizard)
+                          * [https://www.vicarius.io/vsociety/posts/cve-2022-0001-mitigate-specter-vulnerability?prevUrl=wizard](https://www.vicarius.io/vsociety/posts/cve-2022-0001-mitigate-specter-vulnerability?prevUrl=wizard)""");
                     assertThat(vuln.getPublished()).isInSameMinuteAs("2022-03-11T18:15:00Z");
-                    assertThat(vuln.getUpdated()).isInSameMinuteAs("2024-04-09T15:15:00Z");
+                    assertThat(vuln.getUpdated()).isInSameMinuteAs("2025-05-05T17:17:00Z");
                     assertThat(vuln.getCvssV2BaseScore()).isEqualByComparingTo("2.1");
                     assertThat(vuln.getCvssV2ExploitabilitySubScore()).isEqualByComparingTo("3.9");
                     assertThat(vuln.getCvssV2ImpactSubScore()).isEqualByComparingTo("2.9");
@@ -124,12 +126,12 @@ public class NistMirrorTaskTest extends PersistenceCapableTest {
                             Intel(R) Processors may allow an authorized user to potentially enable \
                             information disclosure via local access.""");
                     assertThat(vuln.getReferences()).isEqualTo("""
-                            * [https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00598.html](https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00598.html)
-                            * [http://www.openwall.com/lists/oss-security/2022/03/18/2](http://www.openwall.com/lists/oss-security/2022/03/18/2)
-                            * [https://www.oracle.com/security-alerts/cpujul2022.html](https://www.oracle.com/security-alerts/cpujul2022.html)
-                            * [https://security.netapp.com/advisory/ntap-20220818-0004/](https://security.netapp.com/advisory/ntap-20220818-0004/)""");
+                          * [http://www.openwall.com/lists/oss-security/2022/03/18/2](http://www.openwall.com/lists/oss-security/2022/03/18/2)
+                          * [https://security.netapp.com/advisory/ntap-20220818-0004/](https://security.netapp.com/advisory/ntap-20220818-0004/)
+                          * [https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00598.html](https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00598.html)
+                          * [https://www.oracle.com/security-alerts/cpujul2022.html](https://www.oracle.com/security-alerts/cpujul2022.html)""");
                     assertThat(vuln.getPublished()).isInSameMinuteAs("2022-03-11T18:15:00Z");
-                    assertThat(vuln.getUpdated()).isInSameMinuteAs("2022-08-19T12:28:00Z");
+                    assertThat(vuln.getUpdated()).isInSameMinuteAs("2025-05-05T17:17:00Z");
                     assertThat(vuln.getCvssV2BaseScore()).isEqualByComparingTo("2.1");
                     assertThat(vuln.getCvssV2ExploitabilitySubScore()).isEqualByComparingTo("3.9");
                     assertThat(vuln.getCvssV2ImpactSubScore()).isEqualByComparingTo("2.9");
@@ -151,7 +153,7 @@ public class NistMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vuln.getReferences()).isEqualTo("""
                             * [https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00613.html](https://www.intel.com/content/www/us/en/security-center/advisory/intel-sa-00613.html)""");
                     assertThat(vuln.getPublished()).isInSameMinuteAs("2022-05-12T17:15:00Z");
-                    assertThat(vuln.getUpdated()).isInSameMinuteAs("2022-06-10T20:52:00Z");
+                    assertThat(vuln.getUpdated()).isInSameMinuteAs("2025-05-05T17:17:00Z");
                     assertThat(vuln.getCvssV2BaseScore()).isEqualByComparingTo("7.2");
                     assertThat(vuln.getCvssV2ExploitabilitySubScore()).isEqualByComparingTo("3.9");
                     assertThat(vuln.getCvssV2ImpactSubScore()).isEqualByComparingTo("10.0");
@@ -167,12 +169,12 @@ public class NistMirrorTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testWithDuplicateCpes() throws Exception {
-        final byte[] gzippedFeedFileBytes = gzipResource("/unit/nvd/feed/nvdcve-1.1-2021_duplicate-cpes.json");
+        final byte[] gzippedFeedFileBytes = gzipResource("/unit/nvd/feed/nvdcve-2.0-2021_duplicate-cpes.json");
 
         wireMock.stubFor(get(anyUrl())
                 .willReturn(aResponse()
                         .withStatus(404)));
-        wireMock.stubFor(get(urlPathEqualTo("/json/cve/1.1/nvdcve-1.1-2021.json.gz"))
+        wireMock.stubFor(get(urlPathEqualTo("/json/cve/2.0/nvdcve-2.0-2021.json.gz"))
                 .willReturn(aResponse()
                         .withBody(gzippedFeedFileBytes)));
 

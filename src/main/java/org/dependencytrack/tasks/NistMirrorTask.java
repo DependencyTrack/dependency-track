@@ -99,10 +99,10 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
     }
 
     public static final Path DEFAULT_NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().toPath().resolve("nist").toAbsolutePath();
-    private static final String CVE_JSON_11_MODIFIED_URL = "/json/cve/1.1/nvdcve-1.1-modified.json.gz";
-    private static final String CVE_JSON_11_BASE_URL = "/json/cve/1.1/nvdcve-1.1-%d.json.gz";
-    private static final String CVE_JSON_11_MODIFIED_META = "/json/cve/1.1/nvdcve-1.1-modified.meta";
-    private static final String CVE_JSON_11_BASE_META = "/json/cve/1.1/nvdcve-1.1-%d.meta";
+    private static final String CVE_JSON_20_MODIFIED_URL = "/json/cve/2.0/nvdcve-2.0-modified.json.gz";
+    private static final String CVE_JSON_20_BASE_URL = "/json/cve/2.0/nvdcve-2.0-%d.json.gz";
+    private static final String CVE_JSON_20_MODIFIED_META = "/json/cve/2.0/nvdcve-2.0-modified.meta";
+    private static final String CVE_JSON_20_BASE_META = "/json/cve/2.0/nvdcve-2.0-%d.meta";
     private static final int START_YEAR = 2002;
     private final int endYear = Calendar.getInstance().get(Calendar.YEAR);
 
@@ -181,11 +181,6 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
                             the settings if desired""");
                     return;
                 }
-            } else {
-                LOGGER.warn("""
-                        The NVD is planning to retire the legacy data feeds used by Dependency-Track \
-                        (https://nvd.nist.gov/General/News/change-timeline); Consider enabling mirroring \
-                        via NVD REST API in the settings: https://docs.dependencytrack.org/datasources/nvd/#mirroring-via-nvd-rest-api""");
             }
 
             final long start = System.currentTimeMillis();
@@ -211,17 +206,17 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
         final Date currentDate = new Date();
         LOGGER.info("Downloading files at " + currentDate);
         for (int i = endYear; i >= START_YEAR; i--) {
-            // Download JSON 1.1 year feeds in reverse order
-            final String json11BaseUrl = this.nvdFeedsUrl + CVE_JSON_11_BASE_URL.replace("%d", String.valueOf(i));
-            final String cve11BaseMetaUrl = this.nvdFeedsUrl + CVE_JSON_11_BASE_META.replace("%d", String.valueOf(i));
-            doDownload(json11BaseUrl, ResourceType.CVE_YEAR_DATA);
-            doDownload(cve11BaseMetaUrl, ResourceType.CVE_META);
+            // Download JSON 2.0 year feeds in reverse order
+            final String json20BaseUrl = this.nvdFeedsUrl + CVE_JSON_20_BASE_URL.replace("%d", String.valueOf(i));
+            final String cve20BaseMetaUrl = this.nvdFeedsUrl + CVE_JSON_20_BASE_META.replace("%d", String.valueOf(i));
+            doDownload(json20BaseUrl, ResourceType.CVE_YEAR_DATA);
+            doDownload(cve20BaseMetaUrl, ResourceType.CVE_META);
         }
 
         // Modified feeds must be mirrored last, otherwise we risk more recent data being
         // overwritten by old or stale data: https://github.com/DependencyTrack/dependency-track/pull/1929#issuecomment-1743579226
-        doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_URL, ResourceType.CVE_MODIFIED_DATA);
-        doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_META, ResourceType.CVE_META);
+        doDownload(this.nvdFeedsUrl + CVE_JSON_20_MODIFIED_URL, ResourceType.CVE_MODIFIED_DATA);
+        doDownload(this.nvdFeedsUrl + CVE_JSON_20_MODIFIED_META, ResourceType.CVE_META);
 
         if (mirroredWithoutErrors) {
             Notification.dispatch(new Notification()

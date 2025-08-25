@@ -65,6 +65,8 @@ import trivy.proto.scanner.v1.Result;
 import trivy.proto.scanner.v1.ScanOptions;
 import trivy.proto.scanner.v1.ScanResponse;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -253,7 +255,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                             String distro = component.getPurl().getQualifiers().get("distro");
 
                             if (distro != null) {
-                                pkgType = distro;
+                                pkgType = URLDecoder.decode(distro, StandardCharsets.UTF_8);
                             }
                         }
 
@@ -272,7 +274,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                                 String distro = component.getPurl().getQualifiers().get("distro");
 
                                 if (distro != null) {
-                                    pkgType += "-" + distro;
+                                    pkgType += "-" + URLDecoder.decode(distro, StandardCharsets.UTF_8);
                                 }
                             }
                         }

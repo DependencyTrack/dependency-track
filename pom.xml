@@ -85,7 +85,7 @@
         <maven.compiler.target>21</maven.compiler.target>
 
         <!-- Dependency Versions -->
-        <frontend.version>4.13.3</frontend.version>
+        <frontend.version>4.13.4</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>

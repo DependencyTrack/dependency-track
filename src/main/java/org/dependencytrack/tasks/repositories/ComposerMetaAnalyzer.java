@@ -278,7 +278,12 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             final String packageMetaDataPathPattern) {
         final String composerPackageMetadataFilename = packageMetaDataPathPattern.replaceAll("%package%",
                 getComposerPackageName(component));
-        final String url = UriBuilder.fromUri(baseUrl).path(composerPackageMetadataFilename).build().toString();
+        final String url;
+        if (composerPackageMetadataFilename.matches("^https?://.+$")) {
+            url = composerPackageMetadataFilename;
+        } else {
+            url = UriBuilder.fromUri(baseUrl).path(composerPackageMetadataFilename).build().toString();
+        }
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
                 // 404s are valid responses, as the package might not exist in the repository
@@ -409,6 +414,20 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private static boolean isMinified(JSONObject data) {
-        return data.has("minified") && data.getString("minified").equals("composer/2.0");
+        if (data.has("minified") && "composer/2.0".equals(data.getString("minified"))) {
+            return true;
+        }
+        if (data.has("packages")) {
+            Object packages = data.get("packages");
+            if (packages instanceof JSONObject) {
+                JSONObject packagesObj = (JSONObject) packages;
+                for (String key : packagesObj.keySet()) {
+                    if (packagesObj.get(key) instanceof JSONArray) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

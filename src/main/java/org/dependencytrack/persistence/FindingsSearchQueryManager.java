@@ -116,7 +116,17 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             params.put("showSuppressed", false);
         }
         processFilters(filters, queryFilter, params, false);
-        final Query<Object[]> query = pm.newQuery(Query.SQL, Finding.QUERY_ALL_FINDINGS + queryFilter + (this.orderBy != null ? " ORDER BY " + sortingAttributes.get(this.orderBy) + " " + (this.orderDirection == OrderDirection.DESCENDING ? " DESC" : "ASC") : ""));
+
+        final var orderByFragments = new ArrayList<String>();
+        if (this.orderBy != null) {
+            orderByFragments.add("%s %s".formatted(
+                    sortingAttributes.get(this.orderBy),
+                    (this.orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC")));
+        }
+        orderByFragments.add("\"FINDINGATTRIBUTION\".\"ID\""); // Tie-breaker to ensure stable ordering.
+        final var orderByClause = " ORDER BY " + String.join(", ", orderByFragments);
+
+        final Query<Object[]> query = pm.newQuery(Query.SQL, Finding.QUERY_ALL_FINDINGS + queryFilter + orderByClause);
         PaginatedResult result = new PaginatedResult();
         query.setNamedParameters(params);
         final List<Object[]> totalList = query.executeList();
@@ -165,7 +175,19 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             params.put("active", true);
         }
         processFilters(filters, queryFilter, params, true);
-        final Query<Object[]> query = pm.newQuery(Query.SQL, GroupedFinding.QUERY + queryFilter + (this.orderBy != null ? " ORDER BY " + sortingAttributes.get(this.orderBy) + " " + (this.orderDirection == OrderDirection.DESCENDING ? " DESC" : "ASC") : ""));
+
+        final var orderByFragments = new ArrayList<String>();
+        if (this.orderBy != null) {
+            orderByFragments.add("%s %s".formatted(
+                    sortingAttributes.get(this.orderBy),
+                    (this.orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC")));
+        }
+        if (!"vulnerability.vulnId".equals(this.orderBy)) {
+            orderByFragments.add(sortingAttributes.get("vulnerability.vulnId")); // Tie-breaker to ensure stable ordering.
+        }
+        final var orderByClause = " ORDER BY " + String.join(", ", orderByFragments);
+
+        final Query<Object[]> query = pm.newQuery(Query.SQL, GroupedFinding.QUERY + queryFilter + orderByClause);
         PaginatedResult result = new PaginatedResult();
         query.setNamedParameters(params);
         final List<Object[]> totalList = query.executeList();
@@ -207,6 +229,14 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                         processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", true, false, false);
                 case "cvssv3To" ->
                         processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", false, false, false);
+                case "epssFrom" ->
+                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"EPSSSCORE\"", true, false, false);
+                case "epssTo" ->
+                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"EPSSSCORE\"", false, false, false);
+                case "epssPercentileFrom" ->
+                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"EPSSPERCENTILE\"", true, false, false);
+                case "epssPercentileTo" ->
+                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"EPSSPERCENTILE\"", false, false, false);
             }
         }
         preprocessACLs(queryFilter, params);
@@ -219,6 +249,8 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                            , "VULNERABILITY"."SEVERITY"
                            , "VULNERABILITY"."CVSSV2BASESCORE"
                            , "VULNERABILITY"."CVSSV3BASESCORE"
+                           , "VULNERABILITY"."EPSSSCORE"
+                           , "VULNERABILITY"."EPSSPERCENTILE"
                            , "VULNERABILITY"."OWASPRRLIKELIHOODSCORE"
                            , "VULNERABILITY"."OWASPRRTECHNICALIMPACTSCORE"
                            , "VULNERABILITY"."OWASPRRBUSINESSIMPACTSCORE"

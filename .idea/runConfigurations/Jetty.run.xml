@@ -6,9 +6,7 @@
         <MavenRunnerSettings>
           <option name="delegateBuildToMaven" value="false" />
           <option name="environmentProperties">
-            <map>
-              <entry key="SYSTEM_REQUIREMENT_CHECK_ENABLED" value="false" />
-            </map>
+            <map />
           </option>
           <option name="jreName" value="#USE_PROJECT_JDK" />
           <option name="mavenProperties">
@@ -38,6 +36,7 @@
           <option name="pomFileName" />
           <option name="profilesMap">
             <map>
+              <entry key="quick" value="true" />
               <entry key="enhance" value="true" />
             </map>
           </option>

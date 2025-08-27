@@ -14,18 +14,16 @@ other than a modern version of Docker.
 ### Container Requirements (API Server)
 
 | Minimum     | Recommended |
-| :---------- | :---------- |
-| 4.5GB RAM   | 16GB RAM    |
+|:------------|:------------|
+| 2GB RAM     | 8GB RAM     |
 | 2 CPU cores | 4 CPU cores |
-
-> These requirements can be disabled by setting the 'system.requirement.check.enabled' property or the 'SYSTEM_REQUIREMENT_CHECK_ENABLED' environment variable to 'false'.
 
 ### Container Requirements (Front End)
 
-| Minimum     | Recommended |
-| :---------- | :---------- |
-| 512MB RAM   | 1GB RAM    |
-| 1 CPU cores | 2 CPU cores |
+| Minimum       | Recommended |
+|:--------------|:------------|
+| 128MB RAM     | 512MB RAM   |
+| 0.5 CPU cores | 1 CPU cores |
 
 ### Quickstart (Docker Compose)
 
@@ -183,8 +181,6 @@ services:
     # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_LOCK_BUCKETS=1000
     # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_MAX_ATTEMPTS=10
     #
-    # Optional configuration for the system requirements
-    # - SYSTEM_REQUIREMENT_CHECK_ENABLED=true
     # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8"
     # - EXTRA_JAVA_OPTIONS=
     

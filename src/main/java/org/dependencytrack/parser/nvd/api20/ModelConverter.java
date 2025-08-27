@@ -104,6 +104,8 @@ public final class ModelConverter {
 
         return references.stream()
                 .map(Reference::getUrl)
+                .sorted()
+                .distinct()
                 .map(url -> "* [%s](%s)".formatted(url, url))
                 .collect(Collectors.joining("\n"));
     }

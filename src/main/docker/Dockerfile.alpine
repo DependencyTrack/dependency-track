@@ -25,9 +25,18 @@ ARG UID=1000
 ARG GID=1000
 ARG WAR_FILENAME=dependency-track-apiserver.jar
 
-FROM eclipse-temurin:21.0.8_9-jre-jammy@sha256:8234720ae5083d3b972fe20b4a997b7c56546db8bf8da5f4c54c6470901e2e67 AS jre-build
+FROM eclipse-temurin:21.0.8_9-jdk-alpine@sha256:df8ce8302ed2ed1690ef490c633981b07e752b373b5fdf796960fb2eb0d640ea AS jre-build
 
-FROM debian:stable-slim@sha256:8810492a2dd16b7f59239c1e0cc1e56c1a1a5957d11f639776bd6798e795608b
+ARG WAR_FILENAME
+
+WORKDIR /work
+
+COPY --chmod=755 ./src/main/docker/create-jre.sh ./
+COPY ./target/${WAR_FILENAME} ./
+
+RUN ./create-jre.sh -i "./${WAR_FILENAME}" -o ./jre
+
+FROM alpine:3.22@sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1
 
 ARG COMMIT_SHA
 ARG APP_VERSION
@@ -64,18 +73,14 @@ ENV TZ=Etc/UTC \
 # Create a user and assign home directory to a ${DATA_DIR}
 # Ensure UID 1000 & GID 1000 own all the needed directories
 RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
-    && groupadd --system --gid ${GID} dtrack || true \
-    && useradd --system --no-user-group --gid dtrack --no-create-home --home-dir ${DATA_DIR} --comment "dtrack user" --shell /bin/false --uid ${UID} dtrack || true \
+    && addgroup -S -g ${GID} dtrack || true \
+    && adduser -S -D -G dtrack -H -h ${DATA_DIR} -g "dtrack user" -s /bin/false -u ${UID} dtrack || true \
     && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
     && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
-    \
-    # Install wget for health check
-    && apt-get -yqq update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends wget \
-    && rm -rf /var/lib/apt/lists/*
+    && apk add --no-cache tzdata
 
 # Copy JRE from temurin base image
-COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
+COPY --from=jre-build /work/jre ${JAVA_HOME}
 
 # Copy the compiled WAR to the application directory created above
 COPY ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ${APP_DIR}
@@ -98,7 +103,7 @@ CMD exec java ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD wget -t 1 -T 3 --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
+HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD wget -t 1 -T 3 --proxy off -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
 
 # metadata labels
 LABEL \

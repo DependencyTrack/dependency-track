@@ -187,8 +187,7 @@ public class Component implements Serializable {
     @Column(name = "SCOPE", jdbcType = "VARCHAR")
     @Index(name = "COMPONENT_SCOPE_IDX")
     @NotNull
-    @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
-    private org.cyclonedx.model.Component.Scope scope;
+    private Scope scope;
 
     @Persistent
     @Column(name = "CLASSIFIER", jdbcType = "VARCHAR")
@@ -926,11 +925,11 @@ public class Component implements Serializable {
         this.expandDependencyGraph = expandDependencyGraph;
     }
 
-    public org.cyclonedx.model.Component.Scope getScope() {
+    public Scope getScope() {
         return scope;
     }
 
-    public void setScope(org.cyclonedx.model.Component.Scope scope) {
+    public void setScope(Scope scope) {
         this.scope = scope;
     }
     @Override

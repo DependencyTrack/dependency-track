@@ -37,7 +37,7 @@ public class ComponentIdentity {
         COMPONENT,
         SERVICE
     }
-    private org.cyclonedx.model.Component.Scope scope;
+    private Scope scope;
 
     private ObjectType objectType;
     private PackageURL purl;
@@ -94,7 +94,7 @@ public class ComponentIdentity {
         this.name = component.getName();
         this.version = component.getVersion();
         this.objectType = ObjectType.COMPONENT;
-        this.scope = component.getScope();
+        this.scope = Scope.getMappedScope(component.getScope());
     }
 
     public ComponentIdentity(final ServiceComponent service) {
@@ -155,7 +155,7 @@ public class ComponentIdentity {
         return uuid;
     }
 
-    public org.cyclonedx.model.Component.Scope getScope() {
+    public Scope getScope() {
         return scope;
     }
 

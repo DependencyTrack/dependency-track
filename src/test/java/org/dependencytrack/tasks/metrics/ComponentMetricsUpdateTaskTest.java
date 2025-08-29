@@ -136,7 +136,7 @@ class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
         vulnAudited.setSeverity(Severity.MEDIUM);
         vulnAudited = qm.createVulnerability(vulnAudited, false);
         qm.addVulnerability(vulnAudited, component, AnalyzerIdentity.NONE);
-        qm.makeAnalysis(component, vulnAudited, AnalysisState.NOT_AFFECTED, null, null, null, false);
+        qm.makeAnalysis(component, vulnAudited, AnalysisState.NOT_AFFECTED, null, null, null, false, null);
 
         // Create a suppressed vulnerability.
         var vulnSuppressed = new Vulnerability();
@@ -145,7 +145,7 @@ class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
         vulnSuppressed.setSeverity(Severity.MEDIUM);
         vulnSuppressed = qm.createVulnerability(vulnSuppressed, false);
         qm.addVulnerability(vulnSuppressed, component, AnalyzerIdentity.NONE);
-        qm.makeAnalysis(component, vulnSuppressed, AnalysisState.FALSE_POSITIVE, null, null, null, true);
+        qm.makeAnalysis(component, vulnSuppressed, AnalysisState.FALSE_POSITIVE, null, null, null, true, null);
 
         new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(component.getUuid()));
 

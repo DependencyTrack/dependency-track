@@ -26,8 +26,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
+
+import java.util.stream.Stream;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -54,10 +59,19 @@ class NugetMetaAnalyzerTest {
         mockServer.stop();
     }
 
-    @Test
-    void testAnalyzer() throws Exception {
+    // This test is to check if the analyzer is:
+    // * excluding pre-release versions if a release version exists,
+    // * including pre-release versions if no release version exists
+    // The test is transient depending on the current version of the package
+    // retrieved from the repository at the time of running.
+    // For example, when it was created, the latest released version of:
+    // * Microsoft.Extensions.DependencyInjection was 9.0.0-preview.1.24080.9
+    // * OpenTelemetry.Instrumentation.SqlClient was 1.12.0-beta.2 (no release version exists)
+    @ParameterizedTest
+    @MethodSource("testAnalyzerData")
+    void testAnalyzer(String purl, boolean isLatestVersionPreRelease) throws Exception {
         Component component = new Component();
-        component.setPurl(new PackageURL("pkg:nuget/CycloneDX.Core@5.4.0"));
+        component.setPurl(new PackageURL(purl));
         NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
 
         analyzer.setRepositoryBaseUrl("https://api.nuget.org");
@@ -67,47 +81,16 @@ class NugetMetaAnalyzerTest {
         Assertions.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
         Assertions.assertNotNull(metaModel.getLatestVersion());
         Assertions.assertNotNull(metaModel.getPublishedTimestamp());
+        Assertions.assertEquals(isLatestVersionPreRelease, metaModel.getLatestVersion().contains("-"));
     }
 
-
-    // This test is to check if the analyzer is excluding pre-release versions
-    // The test is transitent depending on the current version of the package 
-    // retrieved from the repository at the time of running. 
-    // When it was created, the latest release version was 9.0.0-preview.1.24080.9
-    @Test
-    void testAnalyzerExcludingPreRelease() throws Exception {
-        Component component = new Component();
-        component.setPurl(new PackageURL("pkg:nuget/Microsoft.Extensions.DependencyInjection@8.0.0"));
-        NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
-
-        analyzer.setRepositoryBaseUrl("https://api.nuget.org");
-        MetaModel metaModel = analyzer.analyze(component);
-
-        Assertions.assertTrue(analyzer.isApplicable(component));
-        Assertions.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
-        Assertions.assertNotNull(metaModel.getLatestVersion());
-
-        Assertions.assertFalse(metaModel.getLatestVersion().contains("-"));
-    }
-
-    // This test is to check if the analyzer is including pre-release versions
-    // The test is transitent depending on the current version of the package 
-    // retrieved from the repository at the time of running. 
-    // When it was created, the latest release version was 9.0.0-preview.1.24080.9
-    @Test
-    void testAnalyzerIncludingPreRelease() throws Exception {
-        Component component = new Component();
-        component.setPurl(new PackageURL("pkg:nuget/Microsoft.Extensions.DependencyInjection@8.0.0-beta.21301.5"));
-        NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
-
-        analyzer.setRepositoryBaseUrl("https://api.nuget.org");
-        MetaModel metaModel = analyzer.analyze(component);
-
-        Assertions.assertTrue(analyzer.isApplicable(component));
-        Assertions.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
-        Assertions.assertNotNull(metaModel.getLatestVersion());
-
-        Assertions.assertFalse(metaModel.getLatestVersion().contains("-"));
+    static Stream<Arguments> testAnalyzerData() {
+        return Stream.of(
+            Arguments.of("pkg:nuget/CycloneDX.Core@5.4.0", false),
+            Arguments.of("pkg:nuget/Microsoft.Extensions.DependencyInjection@8.0.0", false),
+            Arguments.of("pkg:nuget/Microsoft.Extensions.DependencyInjection@8.0.0-beta.21301.5", false),
+            Arguments.of("pkg:nuget/OpenTelemetry.Instrumentation.SqlClient@1.12.0-beta.1", true)
+        );
     }
 
     @Test
@@ -149,7 +132,7 @@ class NugetMetaAnalyzerTest {
                 .when(
                         request()
                                 .withMethod("GET")
-                                .withPath("/v3/registrations2/nunitprivate/5.0.2.json")
+                                .withPath("/v3/registrations2-semver2/nunitprivate/5.0.2.json")
                                 .withHeader("Authorization", encodedBasicHeader)
                 )
                 .respond(

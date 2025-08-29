@@ -55,8 +55,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     private static final String INDEX_URL = "/v3/index.json";
 
     private static final String DEFAULT_VERSION_QUERY_ENDPOINT = "/v3-flatcontainer/%s/index.json";
-
-    private static final String DEFAULT_REGISTRATION_ENDPOINT = "/v3/registration5-semver1/%s/%s.json";
+    
+    private static final String DEFAULT_REGISTRATION_ENDPOINT = "/v3/registration5-gz-semver2/%s/%s.json";
 
     private String versionQueryUrl;
 
@@ -113,7 +113,10 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                     var jsonObject = new JSONObject(responseString);
                     final JSONArray versions = jsonObject.getJSONArray("versions");
 
-                    final String latest = findLatestVersion(versions); // get the last version in the array
+                    String latest = findLatestVersion(filterPreReleaseVersions(versions));
+                    if (latest == null) {
+                        latest = findLatestVersion(versions);
+                    }
                     meta.setLatestVersion(latest);
                 }
                 return true;
@@ -128,17 +131,16 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         return false;
     }
 
-    private String findLatestVersion(JSONArray versions) { 
-        JSONArray filteredVersions = filterPreReleaseVersions(versions);
+    private String findLatestVersion(JSONArray versions) {
 
-        if (filteredVersions.length() < 1) {
+        if (versions.isEmpty()) {
             return null;
         }
 
-        ComparableVersion latestVersion = new ComparableVersion(filteredVersions.getString(0));
+        ComparableVersion latestVersion = new ComparableVersion(versions.getString(0));
 
-        for (int i = 1; i < filteredVersions.length(); i++) {
-            ComparableVersion version = new ComparableVersion(filteredVersions.getString(i));
+        for (int i = 1; i < versions.length(); i++) {
+            ComparableVersion version = new ComparableVersion(versions.getString(i));
             if (version.compareTo(latestVersion) > 0) {
                 latestVersion = version;
             }
@@ -193,7 +195,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                         JSONObject responseJson = new JSONObject(responseString);
                         final JSONArray resources = responseJson.getJSONArray("resources");
                         final JSONObject packageBaseResource = findResourceByType(resources, "PackageBaseAddress");
-                        final JSONObject registrationsBaseResource = findResourceByType(resources, "RegistrationsBaseUrl");
+                        final JSONObject registrationsBaseResource = findResourceByType(resources, "RegistrationsBaseUrl/Versioned");
                         if (packageBaseResource != null && registrationsBaseResource != null) {
                             versionQueryUrl = packageBaseResource.getString("@id") + "%s/index.json";
                             registrationUrl = registrationsBaseResource.getString("@id") + "%s/%s.json";

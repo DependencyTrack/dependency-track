@@ -26,7 +26,9 @@ import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.publisher.PublishContext;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
@@ -218,12 +220,50 @@ public class NotificationRouter implements Subscriber {
             pm.detachCopyAll(result);
             LOGGER.debug("Matched %d notification rules (%s)".formatted(result.size(), ctx));
 
+            final List<NotificationRule> severityFiltered = new ArrayList<>();
+            for (final NotificationRule rule : result) {
+                List<Severity> severities = rule.getNotifySeverities();
+                if (severities == null || severities.isEmpty()) {
+                    severities = List.of(Severity.values());
+                }
+
+                // NewVulnerabilityIdentified
+                if (notification.getSubject() instanceof NewVulnerabilityIdentified vi && vi.getVulnerability() != null) {
+                    Severity s = vi.getVulnerability().getSeverity();
+                    if (s == null || severities.contains(s)) {
+                        severityFiltered.add(rule);
+                    }
+                    // else: skip
+                    continue;
+                }
+
+                // NewVulnerableDependency
+                if (notification.getSubject() instanceof NewVulnerableDependency nd) {
+                    List<Vulnerability> vs = nd.getVulnerabilities();
+                    if (vs == null || vs.isEmpty()) {
+                        severityFiltered.add(rule);
+                    } else {
+                        List<Severity> finalSeverities = severities;
+                        boolean anyMatch = vs.stream()
+                                .map(Vulnerability::getSeverity)
+                                .anyMatch(sev -> sev != null && finalSeverities.contains(sev));
+                        if (anyMatch) {
+                            severityFiltered.add(rule);
+                        }
+                    }
+                    continue;
+                }
+
+                // everything else (no severity to filter on)
+                severityFiltered.add(rule);
+            }
+
             if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
-                limitToProject(qm, ctx, rules, result, notification, subject.getComponent().getProject());
+                limitToProject(qm, ctx, rules, severityFiltered, notification, subject.getComponent().getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final NewVulnerableDependency subject) {
-                limitToProject(qm, ctx, rules, result, notification, subject.getComponent().getProject());
+                limitToProject(qm, ctx, rules, severityFiltered, notification, subject.getComponent().getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() instanceof final BomConsumedOrProcessed subject) {
                 limitToProject(qm, ctx, rules, result, notification, subject.getProject());

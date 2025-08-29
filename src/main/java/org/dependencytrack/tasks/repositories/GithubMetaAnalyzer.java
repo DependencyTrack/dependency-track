@@ -43,6 +43,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private static final Logger LOGGER = Logger.getLogger(GithubMetaAnalyzer.class);
+    private static final String COMMIT_SHA_REGEXP = "^(?:[0-9a-fA-F]{7}|[0-9a-fA-F]{40})$";
 
     private enum VersionType {
         RELEASE,
@@ -97,16 +98,20 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
      * @throws IOException when GitHub API Calls fail
      */
     private VersionType get_version_type(final Component component, GHRepository repository) throws IOException {
-        if (component.getPurl().getVersion() == null){
+        if (component.getPurl().getVersion() == null) {
             LOGGER.debug(String.format("Version is not set, assuming %s", DEFAULT_VERSION_TYPE.name()));
             return DEFAULT_VERSION_TYPE;
         }
-        if (repository.getReleaseByTagName(component.getPurl().getVersion()) != null){
+        if (repository.getReleaseByTagName(component.getPurl().getVersion()) != null) {
             LOGGER.debug("Version is release");
             return VersionType.RELEASE;
-        } else {
-            LOGGER.debug("Version is commit");
+        }
+        if (component.getPurl().getVersion().matches(COMMIT_SHA_REGEXP)) {
+            LOGGER.debug("Version is commit sha");
             return VersionType.COMMIT;
+        } else {
+            LOGGER.debug(String.format("Most probably version is incorrect, assuming %s", DEFAULT_VERSION_TYPE.name()));
+            return DEFAULT_VERSION_TYPE;
         }
     }
 

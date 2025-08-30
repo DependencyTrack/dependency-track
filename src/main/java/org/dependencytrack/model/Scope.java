@@ -28,7 +28,8 @@ import org.cyclonedx.model.Component;
 public enum Scope {
     REQUIRED("Required"),
     OPTIONAL("Optional"),
-    EXCLUDED("Excluded");
+    EXCLUDED("Excluded"),
+    EMPTY("Empty");
 
     private final String label;
 
@@ -40,10 +41,11 @@ public enum Scope {
         return label;
     }
     public static Scope getMappedScope(Component.Scope scope) {
-        return switch (scope){
+        return scope==null?Scope.EMPTY:switch (scope){
             case REQUIRED ->  Scope.REQUIRED;
             case EXCLUDED ->  Scope.EXCLUDED;
             case OPTIONAL -> Scope.OPTIONAL;
+
         };
     }
 }

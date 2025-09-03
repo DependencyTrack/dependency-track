@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
+import static org.awaitility.Awaitility.await;
+
 class ComponentIndexerTest extends PersistenceCapableTest {
 
     @Test
@@ -53,11 +55,13 @@ class ComponentIndexerTest extends PersistenceCapableTest {
         c.setName("crypto-library");
         c.setVersion("1.0.0");
         ComponentIndexer.getInstance().add(new ComponentDocument(c));
-        ComponentIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
-        Assertions.assertEquals(1, result.getResults().size());
-        Assertions.assertEquals(1, result.getResults().get("component").size());
+        commitIndex();
+
+        await().untilAsserted(() -> {
+            SearchResult result = SearchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
+            Assertions.assertEquals(1, result.getResults().size());
+            Assertions.assertEquals(1, result.getResults().get("component").size());
+        });
     }
 
     @Test
@@ -68,17 +72,23 @@ class ComponentIndexerTest extends PersistenceCapableTest {
         c.setName("crypto-library");
         c.setVersion("1.0.0");
         ComponentIndexer.getInstance().add(new ComponentDocument(c));
-        ComponentIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
+        commitIndex();
         ComponentIndexer.getInstance().remove(new ComponentDocument(c));
-        ComponentIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
-        Assertions.assertEquals(1, result.getResults().size());
-        Assertions.assertEquals(0, result.getResults().get("component").size());
+        commitIndex();
+
+        await().untilAsserted(() -> {
+            SearchResult result = SearchManager.searchIndex(ComponentIndexer.getInstance(), c.getUuid().toString(), 10);
+            Assertions.assertEquals(1, result.getResults().size());
+            Assertions.assertEquals(0, result.getResults().get("component").size());
+        });
     }
 
     @Test
     void reindexTest() {
         ComponentIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        IndexManagerTestUtil.commitIndex(ComponentIndexer.getInstance());
     }
 }

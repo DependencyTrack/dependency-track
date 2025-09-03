@@ -392,7 +392,9 @@ class PolicyEngineTest extends PersistenceCapableTest {
         // Evaluate policies and ensure that a notification has been sent.
         final var policyEngine = new PolicyEngine();
         assertThat(policyEngine.evaluate(List.of(component))).hasSize(1);
-        assertThat(NOTIFICATIONS).hasSize(2);
+        await("Notifications")
+                .atMost(Duration.ofSeconds(3))
+                .untilAsserted(() -> assertThat(NOTIFICATIONS).hasSize(2));
 
         // Create an additional policy condition that matches on the exact version of the component,
         // and re-evaluate policies. Ensure that only one notification per newly violated condition was sent.

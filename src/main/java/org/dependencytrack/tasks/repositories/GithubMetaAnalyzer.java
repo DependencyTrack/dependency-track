@@ -144,8 +144,12 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
                     }
                     GHRelease current_release = repository.getReleaseByTagName(component.getPurl().getVersion());
                     if (current_release != null) {
-                        meta.setPublishedTimestamp(current_release.getPublished_at());
-                        LOGGER.debug(String.format("Current version published at: %s", meta.getPublishedTimestamp()));
+                        if (current_release.getPublished_at() != null) {
+                            meta.setPublishedTimestamp(current_release.getPublished_at());
+                            LOGGER.debug(String.format("Current version published at: %s", meta.getPublishedTimestamp()));
+                        } else {
+                            LOGGER.debug("Current version has no published timestamp available");
+                        }
                     }
                 }
 
@@ -155,8 +159,12 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
                     meta.setLatestVersion(latest_release.getSHA1());
                     LOGGER.debug(String.format("Latest version: %s", meta.getLatestVersion()));
                     GHCommit current_release = repository.getCommit(component.getPurl().getVersion());
-                    meta.setPublishedTimestamp(current_release.getCommitDate());
-                    LOGGER.debug(String.format("Current version published at: %s", meta.getPublishedTimestamp()));
+                    if (current_release.getCommitDate() != null) {
+                        meta.setPublishedTimestamp(current_release.getCommitDate());
+                        LOGGER.debug(String.format("Current version published at: %s", meta.getPublishedTimestamp()));
+                    } else {
+                        LOGGER.debug("Current version has no published timestamp available");
+                    }
                 }
             } catch (IOException ex) {
                 handleRequestException(LOGGER, ex);

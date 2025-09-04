@@ -35,6 +35,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.ComponentVulnerabilityAnalysisEvent;
@@ -53,18 +65,6 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 
-import jakarta.validation.Validator;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -307,7 +307,8 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "sha512"),
                 validator.validateProperty(jsonComponent, "sha3_256"),
                 validator.validateProperty(jsonComponent, "sha3_384"),
-                validator.validateProperty(jsonComponent, "sha3_512")
+                validator.validateProperty(jsonComponent, "sha3_512"),
+                validator.validateProperty(jsonComponent, "externalReferences")
         );
 
         try (QueryManager qm = new QueryManager()) {
@@ -367,6 +368,7 @@ public class ComponentResource extends AlpineResource {
             }
             component.setParent(parent);
             component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
+            component.setExternalReferences(jsonComponent.getExternalReferences());
 
             component = qm.createComponent(component, true);
             Event.dispatch(

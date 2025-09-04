@@ -32,6 +32,8 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Policy.ViolationState;
 import org.dependencytrack.model.PolicyCondition;
@@ -63,6 +65,7 @@ import org.dependencytrack.util.NotificationUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -318,6 +321,54 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
+    protected Notification createNotificationWithNotifySeverities(List<Severity> notifySeverities) {
+        // build the Notification itself
+        Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setTitle(NotificationConstants.Title.NEW_VULNERABILITY);
+        notification.setContent("");
+        notification.setTimestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC));
+        var project   = createProject();
+        var component = createComponent(project);
+        var vuln      = createVulnerability(); // sets severity = MEDIUM
+        notification.setSubject(new NewVulnerabilityIdentified(vuln, component, Set.of(project), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
+
+        // create + persist the NotificationPublisher
+        String template;
+        try {
+            template = IOUtils.resourceToString(publisher.getPublisherTemplateFile(), UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        NotificationPublisher np = qm.createNotificationPublisher(
+                publisher.getPublisherName(),
+                publisher.getPublisherDescription(),
+                publisher.getPublisherClass(),
+                template,
+                publisher.getTemplateMimeType(),
+                publisher.isDefaultPublisher()
+        );
+
+        // create + persist the NotificationRule that the router will query
+        NotificationRule rule = qm.createNotificationRule(
+                "Test Rule",
+                NotificationScope.PORTFOLIO,
+                NotificationLevel.INFORMATIONAL,
+                np
+        );
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+        rule.setNotifySeverities(notifySeverities);
+        try {
+            rule.setPublisherConfig(String.valueOf(createConfig()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return notification;
+    }
+
     private static Component createComponent(final Project project) {
         final var component = new Component();
         component.setProject(project);
@@ -418,7 +469,7 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
         return violation;
     }
 
-    JsonObject createConfig() throws Exception {
+    JsonObject createConfig() throws IOException {
         return Json.createObjectBuilder()
                 .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
                 .add(Publisher.CONFIG_TEMPLATE_KEY, IOUtils.resourceToString(publisher.getPublisherTemplateFile(), UTF_8))

@@ -412,28 +412,18 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.NVD, "CVE-2015-0312");
         assertThat(vuln).isNotNull();
         assertThat(vuln.getVulnerableSoftware()).extracting(VulnerableSoftware::getCpe23).containsExactlyInAnyOrder(
-                // Ignoring "running on/with" CPE matches:
-                //   cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*
+                "cpe:2.3:a:adobe:flash_player:*:*:*:*:*:linux_kernel:*:*",
+                // if dependant component is an application then there is a wildcard for targetsw
+                // todo maybe in this case simplify and remove all cpe with targetsw!=*
                 "cpe:2.3:a:adobe:flash_player:*:*:*:*:*:*:*:*",
-                // Ignoring "running on/with" CPE matches:
-                //   cpe:2.3:a:microsoft:internet_explorer:10:*:*:*:*:*:*:*
-                //   cpe:2.3:a:microsoft:internet_explorer:11:-:*:*:*:*:*:*
-                //   cpe:2.3:o:microsoft:windows_8:-:*:*:*:*:*:*:*
-                //   cpe:2.3:o:microsoft:windows_8.1:-:*:*:*:*:*:*:*
-                "cpe:2.3:a:adobe:flash_player:*:*:*:*:*:*:*:*",
-                // Ignoring "running on/with" CPE matches:
-                //   cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*
-                //   cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*
-                //   cpe:2.3:o:microsoft:windows:-:*:*:*:*:*:*:*
-                "cpe:2.3:a:adobe:flash_player:*:*:*:*:*:chrome:*:*",
-                // Ignoring "running on/with" CPE matches:
-                //   cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*
-                //   cpe:2.3:o:microsoft:windows:-:*:*:*:*:*:*:*
-                "cpe:2.3:a:adobe:flash_player:*:*:*:*:extended_support:*:*:*",
-                // Ignoring "running on/with" CPE matches:
-                //   cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*
-                //    cpe:2.3:o:microsoft:windows:-:*:*:*:*:*:*:*
-                "cpe:2.3:a:adobe:flash_player_desktop_runtime:*:*:*:*:*:*:*:*"
+                "cpe:2.3:a:adobe:flash_player:*:*:*:*:*:windows_8.1:*:*",
+                "cpe:2.3:a:adobe:flash_player:*:*:*:*:*:windows_8:*:*",
+                "cpe:2.3:a:adobe:flash_player:*:*:*:*:*:windows:*:*",
+                "cpe:2.3:a:adobe:flash_player:*:*:*:*:*:macos:*:*",
+                "cpe:2.3:a:adobe:flash_player:*:*:*:*:extended_support:windows:*:*",
+                "cpe:2.3:a:adobe:flash_player:*:*:*:*:extended_support:macos:*:*",
+                "cpe:2.3:a:adobe:flash_player_desktop_runtime:*:*:*:*:*:windows:*:*",
+                "cpe:2.3:a:adobe:flash_player_desktop_runtime:*:*:*:*:*:macos:*:*"
         );
     }
 
@@ -460,5 +450,17 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
                 "cpe:2.3:o:fortinet:fortipam:*:*:*:*:*:*:*:*",
                 "cpe:2.3:o:fortinet:fortipam:1.2.0:*:*:*:*:*:*:*"
         );
+    }
+    @Test
+    void testInformWithRunningOnCpeMatches() throws Exception {
+        stubFor(get(anyUrl())
+                .willReturn(aResponse()
+                        .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2025-4056.json"))));
+
+        new NistApiMirrorTask().inform(new NistApiMirrorEvent());
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.NVD, "CVE-2025-4056");
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getVulnerableSoftware().get(0).getTargetSw()).isEqualTo("windows");
     }
 }

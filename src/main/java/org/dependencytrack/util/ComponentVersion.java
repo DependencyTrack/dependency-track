@@ -18,45 +18,80 @@
  */
 package org.dependencytrack.util;
 
+import alpine.common.logging.Logger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
-import org.apache.commons.lang3.StringUtils;
+import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * <p>
  * Simple object to track the parts of a version number. The parts are contained
- * in a List such that version 1.2.3 will be stored as:  <code>versionParts[0] = 1;
- * versionParts[1] = 2;
- * versionParts[2] = 3;
+ * in a List such that version 1.2.3 will be stored as:  <code>
+ * versionParts[0] = new Token(PRIOITY_OF_STRING, "1");
+ * versionParts[1] = new Token(PRIORITY_OF_DOT, ".");
+ * versionParts[2] = new Token(PRIORITY_OF_STRING, "2");
+ * versionParts[3] = new Token(PRIORITY_OF_DOT, ".");
+ * versionParts[4] = new Token(PRIORITY_OF_STRING, "3");
  * </code></p>
- * <p>
- * Note, the parser contained in this class expects the version numbers to be
- * separated by periods. If a different separator is used the parser will likely
- * fail.</p>
  *
- * @author Jeremy Long
+ * @author Andre Wagner
  *
- * Ported from DependencyVersion in Dependency-Check v5.2.1
  */
 @NotThreadSafe
-public class ComponentVersion implements Iterable<String>, Comparable<ComponentVersion> {
+public class ComponentVersion implements Comparable<ComponentVersion> {
+    /**
+     * A class for describing a version part or a separator.
+     */
+    private class Token {
+        /**
+         * An integer describing the sort order, the main sort criterion
+         */
+        private Integer priority;
+        /**
+         * A string holding a actual value, the secondary sort criterion
+         */
+        private String value;
+
+        public Token(Integer priority, String value) {
+            this.priority = priority;
+            this.value = value;
+        }
+
+        public Integer getPriority() {
+            return priority;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+
 
     /**
      * A list of the version parts.
      */
-    private List<String> versionParts;
+    private List<Token> versionParts;
+
+    /**
+     * Member holding to with ecosystem this version belongs to.
+     */
+    private Ecosystem ecosystem;
 
     /**
      * Constructor for a empty DependencyVersion.
      */
     public ComponentVersion() {
+        this.ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.GENERIC);
+    }
+
+    public ComponentVersion(Ecosystem ecosystem) {
+        this.ecosystem = ecosystem;
     }
 
     /**
@@ -68,6 +103,12 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      * @param version the well formatted version number to parse
      */
     public ComponentVersion(String version) {
+        this.ecosystem = EcosystemFactory.getEcosystem(PackageURL.StandardTypes.GENERIC);
+        parseVersion(version);
+    }
+
+    public ComponentVersion(Ecosystem ecosystem, String version) {
+        this.ecosystem = ecosystem;
         parseVersion(version);
     }
 
@@ -80,24 +121,34 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      */
     public final void parseVersion(String version) {
         versionParts = new ArrayList<>();
-        if (version != null) {
-            // https://github.com/DependencyTrack/dependency-track/issues/1374
-            // handle deb versions
-            String lcVersion = version.toLowerCase();
-            final Pattern debrx = Pattern.compile("^([0-9]+:)?(.*)(-[^-]+ubuntu[^-]+)$");
-            final Matcher debmatcher = debrx.matcher(lcVersion);
-            if (debmatcher.matches()) {
-                lcVersion = debmatcher.group(2);
+
+        if(version == null) {
+            return;
+        }
+
+        // Debian/Ubuntu specific
+        if(this.ecosystem.getName().equals("deb")) {
+            // When no epoch is given, use default epoch 0
+            if (!version.contains(":")) {
+               version = "0:" + version;
             }
 
-            final Pattern rx = Pattern.compile("(\\d+[a-z]{1,3}$|[a-z]{1,3}[_-]?\\d+|\\d+|(rc|release|snapshot|beta|alpha)$)",
-                    Pattern.CASE_INSENSITIVE);
-            final Matcher matcher = rx.matcher(lcVersion);
-            while (matcher.find()) {
-                versionParts.add(matcher.group());
-            }
-            if (versionParts.isEmpty()) {
-                versionParts.add(version);
+           // So we replace '-' which acts a blocks splitter (split between upstream and debian version) by the block-splitter "\n" since
+           // also upstream versions uses sometimes '-'. But to follow semver with debian sorting it should be debian pre-splitter '~'
+           int debianSplitterIndex = version.lastIndexOf("-");
+           if(debianSplitterIndex > 0) {
+               version = version.substring(0, debianSplitterIndex) + "\n" + version.substring(debianSplitterIndex + 1);
+           }
+        }
+
+        // General part
+        Matcher matcher = this.ecosystem.getTokenRegex().matcher(version.toLowerCase());
+        while (matcher.find()) {
+            for (int i = 1; i <= matcher.groupCount(); i++) {
+                if (matcher.group(i) != null) {
+                    versionParts.add(new Token(i - 1, matcher.group(i)));
+                    break;
+                }
             }
         }
     }
@@ -107,27 +158,8 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      *
      * @return the value of versionParts
      */
-    public List<String> getVersionParts() {
+    private List<Token> getVersionParts() {
         return versionParts;
-    }
-
-    /**
-     * Set the value of versionParts.
-     *
-     * @param versionParts new value of versionParts
-     */
-    public void setVersionParts(List<String> versionParts) {
-        this.versionParts = versionParts;
-    }
-
-    /**
-     * Retrieves an iterator for the version parts.
-     *
-     * @return an iterator for the version parts
-     */
-    @Override
-    public Iterator<String> iterator() {
-        return versionParts.iterator();
     }
 
     /**
@@ -137,7 +169,11 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
      */
     @Override
     public String toString() {
-        return StringUtils.join(versionParts, '.');
+        StringBuilder result = new StringBuilder();
+        for (Token token : this.versionParts) {
+            result.append(token.getValue().replaceAll("\n","-"));
+        }
+        return result.toString();
     }
 
     /**
@@ -151,49 +187,7 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
         if (obj == null || !(obj instanceof ComponentVersion)) {
             return false;
         }
-        if (this == obj) {
-            return true;
-        }
-        final ComponentVersion other = (ComponentVersion) obj;
-        final int minVersionMatchLength = (this.versionParts.size() < other.versionParts.size())
-                ? this.versionParts.size() : other.versionParts.size();
-        final int maxVersionMatchLength = (this.versionParts.size() > other.versionParts.size())
-                ? this.versionParts.size() : other.versionParts.size();
-
-        if (minVersionMatchLength == 1 && maxVersionMatchLength >= 3) {
-            return false;
-        }
-
-        //TODO steal better version of code from compareTo
-        for (int i = 0; i < minVersionMatchLength; i++) {
-            final String thisPart = this.versionParts.get(i);
-            final String otherPart = other.versionParts.get(i);
-            if (!thisPart.equals(otherPart)) {
-                return false;
-            }
-        }
-        if (this.versionParts.size() > minVersionMatchLength) {
-            for (int i = minVersionMatchLength; i < this.versionParts.size(); i++) {
-                if (!"0".equals(this.versionParts.get(i))) {
-                    return false;
-                }
-            }
-        }
-
-        if (other.versionParts.size() > minVersionMatchLength) {
-            for (int i = minVersionMatchLength; i < other.versionParts.size(); i++) {
-                if (!"0".equals(other.versionParts.get(i))) {
-                    return false;
-                }
-            }
-        }
-
-        /*
-         *  if (this.versionParts != other.versionParts && (this.versionParts == null || !this.versionParts.equals(other.versionParts))) {
-         *      return false;
-         *  }
-         */
-        return true;
+        return (compareTo((ComponentVersion) obj) == 0);
     }
 
     /**
@@ -208,83 +202,69 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
                 .toHashCode();
     }
 
-    /**
-     * Determines if the three most major major version parts are identical. For
-     * instances, if version 1.2.3.4 was compared to 1.2.3 this function would
-     * return true.
-     *
-     * @param version the version number to compare
-     * @return true if the first three major parts of the version are identical
-     */
-    public boolean matchesAtLeastThreeLevels(ComponentVersion version) {
-        if (version == null) {
-            return false;
-        }
-        if (Math.abs(this.versionParts.size() - version.versionParts.size()) >= 3) {
-            return false;
-        }
-
-        final int max = (this.versionParts.size() < version.versionParts.size())
-                ? this.versionParts.size() : version.versionParts.size();
-
-        boolean ret = true;
-        for (int i = 0; i < max; i++) {
-            final String thisVersion = this.versionParts.get(i);
-            final String otherVersion = version.getVersionParts().get(i);
-            if (i >= 3) {
-                if (thisVersion.compareToIgnoreCase(otherVersion) >= 0) {
-                    ret = false;
-                    break;
-                }
-            } else if (!thisVersion.equals(otherVersion)) {
-                ret = false;
-                break;
-            }
-        }
-
-        return ret;
-    }
-
     @Override
     public int compareTo(ComponentVersion version) {
         if (version == null) {
             return 1;
         }
-        final List<String> left = this.getVersionParts();
-        final List<String> right = version.getVersionParts();
-        final int max = left.size() < right.size() ? left.size() : right.size();
 
-        for (int i = 0; i < max; i++) {
-            final String lStr = left.get(i);
-            final String rStr = right.get(i);
-            if (lStr.equals(rStr)) {
-                continue;
+        if(!this.ecosystem.getName().equals(version.ecosystem.getName())) {
+            Logger.getLogger(getClass()).warn("Comparing versions of ecosystem %s and ecosystem %s: This will led to wrong results"
+                    .formatted(this.ecosystem.getName(), version.ecosystem.getName()));
+
+        }
+
+        int resultCode = 0;
+
+        Iterator<Token> version1Iterator = this.getVersionParts().iterator();
+        Iterator<Token> version2Iterator = version.getVersionParts().iterator();
+
+        Token version1Field;
+        Token version2Field;
+
+        while(true) {
+            version1Field = version1Iterator.hasNext() ? version1Iterator.next() : null;
+            version2Field = version2Iterator.hasNext() ? version2Iterator.next() : null;
+
+
+            Integer priority1 = (version1Field != null) ? version1Field.getPriority() : this.ecosystem.getEndOfStringPriority();
+            Integer priority2 = (version2Field != null) ? version2Field.getPriority() : this.ecosystem.getEndOfStringPriority();
+
+            if((resultCode = Integer.compare(priority1, priority2)) != 0) {
+                break;
             }
-            try {
-                final int l = Integer.parseInt(lStr);
-                final int r = Integer.parseInt(rStr);
-                if (l < r) {
-                    return -1;
-                } else if (l > r) {
-                    return 1;
+
+
+            if (version1Field == null || version2Field == null) {
+                break;
+            }
+
+            String value1 = version1Field.getValue();
+            String value2 = version2Field.getValue();
+
+            if(Character.isDigit(value1.charAt(0)) && Character.isDigit(value2.charAt(0))) {
+                if(value1.length() > value2.length()) {
+                    value2 = "0".repeat(value1.length() - value2.length()) + value2;
                 }
-            } catch (NumberFormatException ex) {
-                final int comp = left.get(i).compareTo(right.get(i));
-                if (comp < 0) {
-                    return -1;
-                } else if (comp > 0) {
-                    return 1;
+                else if(value1.length() < value2.length()) {
+                    value1 = "0".repeat(value2.length() - value1.length()) + value1;
                 }
+            }
+
+            if((resultCode = value1.compareTo(value2)) != 0) {
+                break;
             }
         }
-        // Modified from original by Steve Springett
-        // Account for comparisons where one version may be 1.0.0 and another may be 1.0.0.0.
-        if (left.size() == max && right.size() == left.size()+1 && right.get(right.size()-1).equals("0")) {
-            return 0;
-        } else if (right.size() == max && left.size() == right.size()+1 && left.get(left.size()-1).equals("0")) {
-            return 0;
-        } else {
-            return Integer.compare(left.size(), right.size());
-        }
+
+        return resultCode;
+    }
+
+    /**
+     * Reflects if there is a version contained.
+     *
+     * @return true if there is.
+     */
+    public boolean isEmpty() {
+        return versionParts == null || versionParts.isEmpty();
     }
 }

@@ -330,6 +330,8 @@ public class FindingResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
     public Response getAllFindings(@Parameter(description = "Show inactive projects")
                                    @QueryParam("showInactive") boolean showInactive,
+                                   @Parameter(description = "Show suppressed findings")
+                                   @QueryParam("showSuppressed") boolean showSuppressed,
                                    @Parameter(description = "Filter by severity")
                                    @QueryParam("severity") String severity,
                                    @Parameter(description = "Filter published from this date")
@@ -377,7 +379,7 @@ public class FindingResource extends AlpineResource {
             filters.put("epssPercentileTo", epssPercentileTo);
             filters.put("occurrencesFrom", occurrencesFrom);
             filters.put("occurrencesTo", occurrencesTo);
-            final PaginatedResult result = qm.getAllFindingsGroupedByVulnerability(filters, showInactive);
+            final PaginatedResult result = qm.getAllFindingsGroupedByVulnerability(filters, showSuppressed, showInactive);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }

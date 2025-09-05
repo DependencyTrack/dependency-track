@@ -65,6 +65,10 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             }
         }
     }
+
+    private static String toLowerCaseNullable(final String string) {
+        return string == null ? null : string.toLowerCase();
+    }
     
     private Boolean maybeMatchCpe(final VulnerableSoftware vs, final Cpe targetCpe, final String targetVersion) {
         if (targetCpe == null || vs.getCpe23() == null) {
@@ -72,9 +76,9 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         }
 
         final List<Relation> relations = List.of(
-                Cpe.compareAttribute(vs.getPart(), targetCpe.getPart().getAbbreviation()),
-                Cpe.compareAttribute(vs.getVendor(), targetCpe.getVendor()),
-                Cpe.compareAttribute(vs.getProduct(), targetCpe.getProduct()),
+                Cpe.compareAttribute(vs.getPart(), toLowerCaseNullable(targetCpe.getPart().getAbbreviation())),
+                Cpe.compareAttribute(vs.getVendor(), toLowerCaseNullable(targetCpe.getVendor())),
+                Cpe.compareAttribute(vs.getProduct(), toLowerCaseNullable(targetCpe.getProduct())),
                 Cpe.compareAttribute(vs.getVersion(), targetVersion),
                 Cpe.compareAttribute(vs.getUpdate(), targetCpe.getUpdate()),
                 Cpe.compareAttribute(vs.getEdition(), targetCpe.getEdition()),

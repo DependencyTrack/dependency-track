@@ -45,7 +45,6 @@ import us.springett.parsers.cpe.exceptions.CpeValidationException;
 import us.springett.parsers.cpe.values.Part;
 
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -262,7 +261,7 @@ public class FuzzyVulnerableSoftwareSearchManager {
 
     private static String getComponentRegex(String component) {
         if (component != null) {
-            return component.replace("*", ".*");
+            return component.replace("*", ".*").toLowerCase();
         } else {
             return ".*";
         }
@@ -274,7 +273,7 @@ public class FuzzyVulnerableSoftwareSearchManager {
         } else if (input.equals(".*")) {
             return input;
         }
-        return QueryParser.escape(input);
+        return QueryParser.escape(input.toLowerCase());
     }
 
 }

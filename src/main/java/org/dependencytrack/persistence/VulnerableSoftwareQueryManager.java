@@ -276,9 +276,9 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
         //   SELECT "ID" FROM "VULNERABLESOFTWARE" WHERE "PART" = 'foo' ...
 
         if (cpePart != null && cpeVendor != null && cpeProduct != null) {
-            final List<CpeFilterCondition> partConditions = buildCpeFilterConditions("\"PART\"", cpePart);
-            final List<CpeFilterCondition> vendorConditions = buildCpeFilterConditions("\"VENDOR\"", cpeVendor);
-            final List<CpeFilterCondition> productConditions = buildCpeFilterConditions("\"PRODUCT\"", cpeProduct);
+            final List<CpeFilterCondition> partConditions = buildCpeFilterConditions("\"PART\"", cpePart.toLowerCase());
+            final List<CpeFilterCondition> vendorConditions = buildCpeFilterConditions("\"VENDOR\"", cpeVendor.toLowerCase());
+            final List<CpeFilterCondition> productConditions = buildCpeFilterConditions("\"PRODUCT\"", cpeProduct.toLowerCase());
 
             for (final CpeFilterCondition partCondition : partConditions) {
                 for (final CpeFilterCondition vendorCondition : vendorConditions) {

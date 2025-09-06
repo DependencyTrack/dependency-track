@@ -96,7 +96,7 @@
         <lib.cpe-parser.version>3.0.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.28.0</lib.commons-compress.version>
         <lib.commons-text.version>1.14.0</lib.commons-text.version>
-        <lib.ae-security.version>0.142.0</lib.ae-security.version>
+        <lib.ae-security.version>0.143.0</lib.ae-security.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>10.2.1</lib.cyclonedx-java.version>
         <lib.jakarta-validation.version>3.0.2</lib.jakarta-validation.version>
@@ -612,7 +612,7 @@
             <plugin>
                 <groupId>io.github.ascopes</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.9.0</version>
                 <configuration>
                     <protocVersion>${lib.protobuf-java.version}</protocVersion>
                     <sourceDirectories>
@@ -638,6 +638,7 @@
                             <value>src/test/resources/logging.properties</value>
                         </property>
                     </systemProperties>
+                    <reuseForks>true</reuseForks>
                 </configuration>
             </plugin>
             <plugin>

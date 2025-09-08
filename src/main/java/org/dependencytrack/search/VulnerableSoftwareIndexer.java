@@ -126,8 +126,10 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
     private Document convertToDocument(final VulnerableSoftwareDocument vs) {
         final var doc = new Document();
         addField(doc, IndexConstants.VULNERABLESOFTWARE_UUID, vs.uuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_22, vs.cpe22(), Field.Store.YES, false);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_23, vs.cpe23(), Field.Store.YES, false);
+        final var cpe22 = vs.cpe22() != null ? vs.cpe22().toLowerCase() : null;
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_22, cpe22, Field.Store.YES, false);
+        final var cpe23 = vs.cpe23() != null ? vs.cpe23().toLowerCase() : null;
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_23, cpe23, Field.Store.YES, false);
         addField(doc, IndexConstants.VULNERABLESOFTWARE_VENDOR, vs.vendor(), Field.Store.YES, true);
         addField(doc, IndexConstants.VULNERABLESOFTWARE_PRODUCT, vs.product(), Field.Store.YES, true);
         addField(doc, IndexConstants.VULNERABLESOFTWARE_VERSION, vs.version(), Field.Store.YES, true);

@@ -2,9 +2,9 @@ package org.dependencytrack.tasks.scanners;
 
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
-import com.github.tomakehurst.wiremock.client.BasicCredentials;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import jakarta.json.Json;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
@@ -15,6 +15,8 @@ import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.util.HttpUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,6 +42,9 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX
 
 @WireMockTest
 class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
+
+    private static final String API_USER = "foo";
+    private static final String API_TOKEN = "apiToken";
 
     private OssIndexAnalysisTask analysisTask;
     private WireMockRuntimeInfo wmRuntimeInfo;
@@ -96,7 +101,8 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testAnalyzeWithRateLimiting() {
+    void testAnalyzeWithRateLimiting() throws Exception {
+        configApiToken(API_USER, DataEncryption.encryptAsString(API_TOKEN));
         stubFor(post(urlPathEqualTo("/api/v3/component-report"))
                 .inScenario("rateLimit")
                 .willReturn(aResponse()
@@ -143,16 +149,9 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
                                 ]
                                 """)));
 
-        var project = new Project();
-        project.setName("acme-app");
-        qm.persist(project);
+        var project = configProject();
 
-        var component = new Component();
-        component.setProject(project);
-        component.setGroup("com.fasterxml.jackson.core");
-        component.setName("jackson-databind");
-        component.setVersion("2.13.1");
-        component.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1");
+        var component = getComponent(project);
         qm.persist(component);
 
         assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
@@ -180,118 +179,127 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
                 }
         );
 
-        verify(exactly(3), postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
-                .withHeader("Content-Type", equalTo("application/json"))
-                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
-                .withRequestBody(equalToJson("""
-                        {
-                          "coordinates": [
-                            "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1"
-                          ]
-                        }
-                        """)));
+        verify(exactly(3), getRequestedPost());
     }
 
     @Test
     void testAnalyzeWithAuthentication() throws Exception {
-        qm.createConfigProperty(
-                SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
-                SCANNER_OSSINDEX_API_USERNAME.getPropertyName(),
-                "foo",
-                SCANNER_OSSINDEX_API_USERNAME.getPropertyType(),
-                SCANNER_OSSINDEX_API_USERNAME.getDescription()
-        );
-        qm.createConfigProperty(
-                SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
-                SCANNER_OSSINDEX_API_TOKEN.getPropertyName(),
-                DataEncryption.encryptAsString("apiToken"),
-                SCANNER_OSSINDEX_API_TOKEN.getPropertyType(),
-                SCANNER_OSSINDEX_API_TOKEN.getDescription()
-        );
+        configApiToken(API_USER, DataEncryption.encryptAsString(API_TOKEN));
+        stubPOSTRequest();
 
-        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/vnd.ossindex.component-report.v1+json")
-                        .withBody("[]")));
+      var project = configProject();
 
-        var project = new Project();
-        project.setName("acme-app");
-        qm.persist(project);
-
-        var component = new Component();
-        component.setProject(project);
-        component.setGroup("com.fasterxml.jackson.core");
-        component.setName("jackson-databind");
-        component.setVersion("2.13.1");
-        component.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1");
+      var component = getComponent(project);
         qm.persist(component);
 
         assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
                 List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
 
-        verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
-                .withHeader("Content-Type", equalTo("application/json"))
-                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
-                .withBasicAuth(new BasicCredentials("foo", "apiToken"))
-                .withRequestBody(equalToJson("""
-                        {
-                          "coordinates": [
-                            "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1"
-                          ]
-                        }
-                        """)));
+        verify(getRequestedPost());
     }
 
     @Test
     void testAnalyzeWithApiTokenDecryptionError() {
-        qm.createConfigProperty(
-                SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
-                SCANNER_OSSINDEX_API_USERNAME.getPropertyName(),
-                "foo",
-                SCANNER_OSSINDEX_API_USERNAME.getPropertyType(),
-                SCANNER_OSSINDEX_API_USERNAME.getDescription()
-        );
-        qm.createConfigProperty(
-                SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
-                SCANNER_OSSINDEX_API_TOKEN.getPropertyName(),
-                "notAnEncryptedValue",
-                SCANNER_OSSINDEX_API_TOKEN.getPropertyType(),
-                SCANNER_OSSINDEX_API_TOKEN.getDescription()
-        );
+        configApiToken(API_USER, "notAnEncryptedValue");
+        stubPOSTRequest();
 
-        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/vnd.ossindex.component-report.v1+json")
-                        .withBody("[]")));
+        var project = configProject();
 
+        var component = getComponent(project);
+        qm.persist(component);
+
+        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
+
+        verify(0, getRequestedPost());
+    }
+
+    @Test
+    void testAnalyzeWithoutApiToken() {
+        configApiToken(API_USER, null);
+        stubPOSTRequest();
+
+        var project = configProject();
+
+        var component = getComponent(project);
+        qm.persist(component);
+
+        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
+            List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
+
+        verify(0, getRequestedPost());
+    }
+
+    @Test
+    void testAnalyzeWithoutUser() {
+        configApiToken(null, API_TOKEN);
+        stubPOSTRequest();
+
+        var project = configProject();
+
+        var component = getComponent(project);
+        qm.persist(component);
+
+        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
+            List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
+
+        verify(0, getRequestedPost());
+    }
+
+    private @NotNull Project configProject() {
         var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
+        return project;
+    }
 
+    private static RequestPatternBuilder getRequestedPost() {
+        return postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
+            .withHeader("Content-Type", equalTo("application/json"))
+            .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
+            .withHeader("Authorization", equalTo(HttpUtil.basicAuthHeaderValue(API_USER, API_TOKEN)))
+            .withRequestBody(equalToJson("""
+                    {
+                      "coordinates": [
+                        "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1"
+                      ]
+                    }
+            """));
+    }
+
+    private static void stubPOSTRequest() {
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+                .willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/vnd.ossindex.component-report.v1+json")
+                    .withBody("[]")));
+    }
+
+    private static @NotNull Component getComponent(final Project project) {
         var component = new Component();
         component.setProject(project);
         component.setGroup("com.fasterxml.jackson.core");
         component.setName("jackson-databind");
         component.setVersion("2.13.1");
         component.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1");
-        qm.persist(component);
+        return component;
+    }
 
-        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
-                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
-
-        verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
-                .withHeader("Content-Type", equalTo("application/json"))
-                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent()))
-                .withoutHeader("Authorization")
-                .withRequestBody(equalToJson("""
-                        {
-                          "coordinates": [
-                            "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1"
-                          ]
-                        }
-                        """)));
+    private void configApiToken(final String user, String apiToken) {
+        qm.createConfigProperty(
+            SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
+            SCANNER_OSSINDEX_API_USERNAME.getPropertyName(),
+            user,
+            SCANNER_OSSINDEX_API_USERNAME.getPropertyType(),
+            SCANNER_OSSINDEX_API_USERNAME.getDescription()
+        );
+        qm.createConfigProperty(
+            SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
+            SCANNER_OSSINDEX_API_TOKEN.getPropertyName(),
+            apiToken,
+            SCANNER_OSSINDEX_API_TOKEN.getPropertyType(),
+            SCANNER_OSSINDEX_API_TOKEN.getDescription()
+        );
     }
 
 }

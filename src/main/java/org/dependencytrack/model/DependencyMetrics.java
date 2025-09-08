@@ -24,7 +24,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Indices;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -40,7 +42,26 @@ import java.util.Date;
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Index(name = "DEPENDENCYMETRICS_COMPOSITE_IDX", members = {"project", "component"})
+@Indices({
+        // omposite on (project, component)
+        @Index(
+                name    = "DEPENDENCYMETRICS_COMPOSITE_IDX",
+                members = { "project", "component" }
+        ),
+
+        // composite on (component, lastOccurrence DESC)
+        @Index(
+                name       = "DEPENDENCYMETRICS_COMPOSITE_LAST_OCCURRENCE_IDX",
+                members    = { "component", "lastOccurrence" },
+                extensions = {
+                        @Extension(
+                                vendorName = "datanucleus",
+                                key        = "index-column-ordering",
+                                value      = "ASC,DESC"    // first column ASC, second DESC
+                        )
+                }
+        )
+})
 public class DependencyMetrics implements Serializable {
 
     private static final long serialVersionUID = 5231823328085979791L;

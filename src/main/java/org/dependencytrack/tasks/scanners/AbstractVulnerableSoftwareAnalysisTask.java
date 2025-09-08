@@ -19,12 +19,14 @@
 package org.dependencytrack.tasks.scanners;
 
 import alpine.common.logging.Logger;
+import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.ComponentVersion;
+import org.dependencytrack.util.EcosystemFactory;
 import org.dependencytrack.util.NotificationUtil;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.util.Relation;
@@ -39,6 +41,8 @@ import java.util.List;
  * @since 3.6.0
  */
 public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseComponentAnalyzerTask {
+
+    private static final Logger LOGGER = Logger.getLogger(AbstractVulnerableSoftwareAnalysisTask.class);
 
     /**
      * Analyzes the targetVersion against a list of VulnerableSoftware objects which may contain
@@ -65,7 +69,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             }
         }
     }
-    
+
     private Boolean maybeMatchCpe(final VulnerableSoftware vs, final Cpe targetCpe, final String targetVersion) {
         if (targetCpe == null || vs.getCpe23() == null) {
             return null;
@@ -152,25 +156,38 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             return true;
         }
 
-        final ComponentVersion target = new ComponentVersion(targetVersion);
-        if (target.getVersionParts().isEmpty()) {
+        final String ecosystem = (vs.getPurl() != null) ? vs.getPurlType() : PackageURL.StandardTypes.GENERIC;
+        final ComponentVersion target = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), targetVersion);
+
+        LOGGER.debug("Version compare for ecosystem %s: %s"
+                .formatted(ecosystem, targetVersion));
+
+        if (target.isEmpty()) {
             return false;
         }
         if (result && vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty()) {
-            final ComponentVersion endExcluding = new ComponentVersion(vs.getVersionEndExcluding());
+            final ComponentVersion endExcluding = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), vs.getVersionEndExcluding());
             result = endExcluding.compareTo(target) > 0;
+            LOGGER.debug("Version compare for ecosystem %s: (%s > %s) == %b"
+                    .formatted(ecosystem, vs.getVersionEndExcluding(), targetVersion, result));
         }
         if (result && vs.getVersionStartExcluding() != null && !vs.getVersionStartExcluding().isEmpty()) {
-            final ComponentVersion startExcluding = new ComponentVersion(vs.getVersionStartExcluding());
+            final ComponentVersion startExcluding = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), vs.getVersionStartExcluding());
             result = startExcluding.compareTo(target) < 0;
+            LOGGER.debug("Version compare for ecosystem %s: (%s < %s) == %b"
+                    .formatted(ecosystem, vs.getVersionStartExcluding(), targetVersion, result));
         }
         if (result && vs.getVersionEndIncluding() != null && !vs.getVersionEndIncluding().isEmpty()) {
-            final ComponentVersion endIncluding = new ComponentVersion(vs.getVersionEndIncluding());
+            final ComponentVersion endIncluding = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), vs.getVersionEndIncluding());
             result &= endIncluding.compareTo(target) >= 0;
+            LOGGER.debug("Version compare for ecosystem %s: (%s >= %s) == %b"
+                    .formatted(ecosystem, vs.getVersionEndIncluding(), targetVersion, result));
         }
         if (result && vs.getVersionStartIncluding() != null && !vs.getVersionStartIncluding().isEmpty()) {
-            final ComponentVersion startIncluding = new ComponentVersion(vs.getVersionStartIncluding());
+            final ComponentVersion startIncluding = new ComponentVersion(EcosystemFactory.getEcosystem(ecosystem), vs.getVersionStartIncluding());
             result &= startIncluding.compareTo(target) <= 0;
+            LOGGER.debug("Version compare for ecosystem %s: (%s <= %s) == %b"
+                    .formatted(ecosystem, vs.getVersionStartIncluding(), targetVersion, result));
         }
         return result;
     }

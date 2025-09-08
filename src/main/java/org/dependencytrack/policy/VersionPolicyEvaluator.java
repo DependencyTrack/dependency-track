@@ -56,7 +56,7 @@ public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
 
             final var conditionVersion = new ComponentVersion(condition.getValue());
-            if (conditionVersion.getVersionParts().isEmpty()) {
+            if (conditionVersion.isEmpty()) {
                 LOGGER.warn("Unable to parse version (" + condition.getValue() + " provided by condition");
                 continue;
             }

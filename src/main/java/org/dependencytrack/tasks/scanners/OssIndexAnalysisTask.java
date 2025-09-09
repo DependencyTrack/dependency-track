@@ -153,16 +153,16 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
             );
             if (apiUsernameProperty == null || apiUsernameProperty.getPropertyValue() == null
                     || apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
-                LOGGER.warn("An API username or token has not been specified for use with OSS Index. Using anonymous access");
+                LOGGER.warn("An API username or token has not been specified for use with OSS Index; Skipping");
+                return;
             } else {
                 try {
                     apiUsername = apiUsernameProperty.getPropertyValue();
                     apiToken = DebugDataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
                 } catch (Exception ex) {
-                    // NB: OSS Index can be used without AuthN, however stricter rate limiting may apply.
-                    // We favour "service degradation" over "service outage" here. Analysis will continue
-                    // to work, although more retries may need to be performed until a new token is supplied.
-                    LOGGER.error("An error occurred decrypting the OSS Index API Token; Continuing without authentication", ex);
+                    // OSS Index will stop supporting unauthenticated requests
+                    LOGGER.error("An error occurred decrypting the OSS Index API Token; Skipping", ex);
+                    return;
                 }
             }
             aliasSyncEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ALIAS_SYNC_ENABLED);

@@ -43,7 +43,7 @@ public class v4135Updater extends AbstractUpgradeItem {
         try (final Statement statement = connection.createStatement()) {
             LOGGER.info("Normalizing \"VULNERABLESOFTWARE\" CPE columns");
             statement.execute(/* language=SQL */ """
-                    UPDATE TABLE "VULNERABLESOFTWARE" SET "PART" = LOWER("PART"), "VENDOR" = LOWER("VENDOR"), "PRODUCT" = LOWER("PRODUCT")
+                    UPDATE "VULNERABLESOFTWARE" SET "PART" = LOWER("PART"), "VENDOR" = LOWER("VENDOR"), "PRODUCT" = LOWER("PRODUCT")
                     """);
         }
     }

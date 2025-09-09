@@ -96,7 +96,7 @@
         <lib.cpe-parser.version>3.0.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.28.0</lib.commons-compress.version>
         <lib.commons-text.version>1.14.0</lib.commons-text.version>
-        <lib.ae-security.version>0.143.0</lib.ae-security.version>
+        <lib.ae-security.version>0.144.0</lib.ae-security.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>10.2.1</lib.cyclonedx-java.version>
         <lib.jakarta-validation.version>3.0.2</lib.jakarta-validation.version>
@@ -131,7 +131,7 @@
         <lib.jdbc-driver.postgresql.version>42.7.7</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.jetty.version>12.1.0</plugin.jetty.version>
+        <plugin.jetty.version>12.1.1</plugin.jetty.version>
         <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>

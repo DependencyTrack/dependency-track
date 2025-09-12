@@ -35,7 +35,7 @@ class FindingTest extends PersistenceCapableTest {
     private final UUID projectUuid = UUID.randomUUID();
     private final Date attributedOn = new Date();
     private final Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
-            "component-version", "component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
+            "component-version", "Required","component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
             "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
             "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
 

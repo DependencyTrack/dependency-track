@@ -1,0 +1,1369 @@
+{
+  "count": 60,
+  "lower": "1.0.19123.2-preview",
+  "parent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/microsoft.data.sqlclient/index.json",
+  "upper": "1.1.2",
+  "items": [
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n\nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/1.0.19123.2-preview/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19123.2-Preview/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19123.2-preview",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "1.0.19123.2-Preview",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "id": "System.Data.Common"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              }
+            ],
+            "targetFramework": ".NETCoreApp2.1"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "id": "System.Memory"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19123.2-preview",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19123.2-preview.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n\nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/1.0.19128.1-preview/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19128.1-Preview/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19128.1-preview",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "1.0.19128.1-Preview",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "id": "System.Data.Common"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              }
+            ],
+            "targetFramework": ".NETCoreApp2.1"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "id": "System.Memory"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19128.1-preview",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19128.1-preview.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n\nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/1.0.19189.1-preview/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19189.1-Preview/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19189.1-preview",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "1.0.19189.1-Preview",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "id": "System.Data.Common"
+              },
+              {
+                "range": "[1.0.19178.1-Preview, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.sni"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              }
+            ],
+            "targetFramework": ".NETCoreApp2.1"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "id": "System.Memory"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19189.1-preview",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19189.1-preview.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n\nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/1.0.19221.1-preview/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19221.1-Preview/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19221.1-preview",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "1.0.19221.1-Preview",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "id": "System.Data.Common"
+              },
+              {
+                "range": "[1.0.19221.2-Preview, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.sni"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETCoreApp2.1"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "id": "System.Memory"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19221.1-preview",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19221.1-preview.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n\nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/1.0.19239.1/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19239.1/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19239.1",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "1.0.19239.1",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "id": "System.Data.Common"
+              },
+              {
+                "range": "[1.0.19235.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.sni"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETCoreApp2.1"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "id": "System.Memory"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19239.1",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19239.1.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n\nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/1.0.19249.1/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19249.1/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19249.1",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "1.0.19249.1",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "id": "System.Data.Common"
+              },
+              {
+                "range": "[1.0.19235.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.sni"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETCoreApp2.1"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "id": "System.Memory"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19249.1",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19249.1.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n\nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/1.0.19269.1/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19269.1/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19269.1",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "1.0.19269.1",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "id": "System.Data.Common"
+              },
+              {
+                "range": "[1.0.19235.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.sni"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETCoreApp2.1"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "id": "System.Memory"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19269.1",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19269.1.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n\nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen running on Windows, this library has a dependency on Microsoft.Data.SqlClient.SNI on .NET Framework and runtime.native.System.Data.SqlClient.sni on .NET Core, which requires the Microsoft Visual C++ Redistributable to be installed:\nhttps://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/1.1.0/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.1.0/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.0",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "1.1.0",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "id": "System.Data.Common"
+              },
+              {
+                "range": "[1.1.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.sni"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              }
+            ],
+            "targetFramework": ".NETCoreApp2.1"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "id": "System.Memory"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.0",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.1.0.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n\nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/1.1.1/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.1.1/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.1",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "1.1.1",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "id": "System.Data.Common"
+              },
+              {
+                "range": "[1.1.0, 1.2.0)",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.sni"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              }
+            ],
+            "targetFramework": ".NETCoreApp2.1"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "id": "System.Memory"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.1",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.1.1.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n\nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/1.1.2/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.1.2/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.2",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "1.1.2",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "id": "System.Data.Common"
+              },
+              {
+                "range": "[1.1.0, 1.2.0)",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.sni"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[5.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              }
+            ],
+            "targetFramework": ".NETCoreApp2.1"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "id": "runtime.native.System.Data.SqlClient.sni"
+              },
+              {
+                "range": "[4.4.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "id": "System.Memory"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[4.5.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[3.0.8, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.2",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.1.2.json"
+    }
+  ],
+  "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/microsoft.data.sqlclient/page/1.0.19123.2-preview/6.1.0.json"
+}

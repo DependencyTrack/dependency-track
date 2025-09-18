@@ -48,6 +48,9 @@ import org.json.JSONObject;
 import org.slf4j.MDC;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -105,32 +108,41 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
     @Override
     public void inform(Event e) {
+        if (!(e instanceof OsvMirrorEvent)) {
+            return;
+        }
 
-        if (e instanceof OsvMirrorEvent) {
+        if (this.ecosystems == null || this.ecosystems.isEmpty()) {
+            LOGGER.info("Google OSV mirroring is disabled. No ecosystem selected.");
+            return;
+        }
 
-            if (this.ecosystems != null && !this.ecosystems.isEmpty()) {
-                for (String ecosystem : this.ecosystems) {
-                    LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
-                    String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20")
-                            + "/all.zip";
-                    HttpUriRequest request = new HttpGet(url);
-                    try (var ignoredMdcOsvEcosystem = MDC.putCloseable("osvEcosystem", ecosystem);
-                         final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                        final StatusLine status = response.getStatusLine();
-                        if (status.getStatusCode() == HttpStatus.SC_OK) {
-                            try (InputStream in = response.getEntity().getContent();
-                                 ZipInputStream zipInput = new ZipInputStream(in)) {
-                                unzipFolder(zipInput);
-                            }
-                        } else {
-                            LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
-                        }
-                    } catch (Exception ex) {
-                        LOGGER.error("Exception while executing Http client request", ex);
+        for (final var ecosystem : this.ecosystems) {
+            LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
+            final var url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20") + "/all.zip";
+            final var request = new HttpGet(url);
+            try (final var ignoredMdcOsvEcosystem = MDC.putCloseable("osvEcosystem", ecosystem); final var response = HttpClientPool.getClient().execute(request)) {
+                final var status = response.getStatusLine();
+                if (status.getStatusCode() != HttpStatus.SC_OK) {
+                    LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
+                    continue;
+                }
+
+                final var tempFile = File.createTempFile("google-osv-download", ".zip");
+                try {
+                    try (final var out = new FileOutputStream(tempFile); final var in = response.getEntity().getContent()) {
+                        out.write(in.readAllBytes());
+                    }
+                    try (final var in = new FileInputStream(tempFile); final var zipInput = new ZipInputStream(in)) {
+                        unzipFolder(zipInput);
+                    }
+                } finally {
+                    if (!tempFile.delete()) {
+                        LOGGER.warn("Failed to delete temporary file: " + tempFile.getAbsolutePath());
                     }
                 }
-            } else {
-                LOGGER.info("Google OSV mirroring is disabled. No ecosystem selected.");
+            } catch (Exception ex) {
+                LOGGER.error("Exception while executing Http client request", ex);
             }
         }
     }

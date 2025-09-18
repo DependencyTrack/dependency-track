@@ -184,9 +184,9 @@ public class Component implements Serializable {
     private String version;
 
     @Persistent
-    @Column(name = "SCOPE", jdbcType = "VARCHAR")
+    @Column(name = "SCOPE", jdbcType = "VARCHAR",length = 255)
+    @Size(max = 255)
     @Index(name = "COMPONENT_SCOPE_IDX")
-    @NotNull
     private Scope scope;
 
     @Persistent

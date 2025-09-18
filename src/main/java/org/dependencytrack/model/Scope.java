@@ -17,35 +17,25 @@
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.model;
-import org.cyclonedx.model.Component;
+
 /**
  * Enum class for tracking individual components scope.
  * Scope would be deriving from different SBOM provider.
- * * <a href="https://cyclonedx.org/docs/1.6/json/#components_items_scope">Cyclondx Reference</a>
- * * @author Anant Kurapati
+ * <a href="https://cyclonedx.org/docs/1.6/json/#components_items_scope">Cyclondx Reference</a>
+ *
+ * @author Anant Kurapati
  * @since 4.14.0
  */
 public enum Scope {
-    REQUIRED("Required"),
-    OPTIONAL("Optional"),
-    EXCLUDED("Excluded"),
-    EMPTY("Empty");
+    REQUIRED,
+    OPTIONAL,
+    EXCLUDED;
 
-    private final String label;
-
-    Scope(String label) {
-        this.label = label;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-    public static Scope getMappedScope(Component.Scope scope) {
-        return scope==null?Scope.EMPTY:switch (scope){
-            case REQUIRED ->  Scope.REQUIRED;
-            case EXCLUDED ->  Scope.EXCLUDED;
+    public static Scope getMappedScope(org.cyclonedx.model.Component.Scope scope) {
+        return scope == null ? null : switch (scope) {
+            case REQUIRED -> Scope.REQUIRED;
+            case EXCLUDED -> Scope.EXCLUDED;
             case OPTIONAL -> Scope.OPTIONAL;
-
         };
     }
 }

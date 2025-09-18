@@ -99,7 +99,7 @@ public class ModelConverter {
     private ModelConverter() {
     }
 
-    public static ProjectMetadata convertToProjectMetadata(final Metadata cdxMetadata) {
+    public static ProjectMetadata convertToProjectMetadata(final org.cyclonedx.model.Metadata cdxMetadata) {
         if (cdxMetadata == null) {
             return null;
         }
@@ -111,7 +111,7 @@ public class ModelConverter {
         return projectMetadata;
     }
 
-    public static Project convertToProject(final Metadata cdxMetadata) {
+    public static Project convertToProject(final org.cyclonedx.model.Metadata cdxMetadata) {
         if (cdxMetadata == null || cdxMetadata.getComponent() == null) {
             return null;
         }

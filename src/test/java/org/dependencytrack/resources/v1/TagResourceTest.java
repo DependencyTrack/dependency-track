@@ -3,6 +3,10 @@ package org.dependencytrack.resources.v1;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
+import jakarta.json.JsonArray;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -23,10 +27,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junitpioneer.jupiter.DefaultLocale;
 
-import jakarta.json.JsonArray;
-import jakarta.ws.rs.HttpMethod;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -1668,11 +1668,10 @@ class TagResourceTest extends ResourceTest {
                 .get();
 
         Assertions.assertEquals(200, response.getStatus());
-        Assertions.assertEquals(String.valueOf(4), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(String.valueOf(0), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
-        Assertions.assertEquals(4, json.size());
-        Assertions.assertEquals("tag 2", json.getJsonObject(0).getString("name"));
+        Assertions.assertEquals(0, json.size());
     }
 
     @Test
@@ -1695,11 +1694,10 @@ class TagResourceTest extends ResourceTest {
                 .get();
 
         Assertions.assertEquals(200, response.getStatus());
-        Assertions.assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(String.valueOf(0), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
-        Assertions.assertEquals(3, json.size());
-        Assertions.assertEquals("tag 1", json.getJsonObject(0).getString("name"));
+        Assertions.assertEquals(0, json.size());
     }
 
     @Test

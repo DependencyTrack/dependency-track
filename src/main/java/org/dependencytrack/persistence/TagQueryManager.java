@@ -37,15 +37,16 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TagQueryManager extends QueryManager implements IQueryManager {
 
@@ -725,26 +726,12 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
     }
 
     @Override
-    public PaginatedResult getTagsForPolicy(String policyUuid) {
-
+    public PaginatedResult getTagsForPolicy(final String policyUuid) {
         LOGGER.debug("Retrieving tags under policy " + policyUuid);
 
-        Policy policy = getObjectByUuid(Policy.class, policyUuid);
-        List<Project> projects = policy.getProjects();
-
-        final Stream<Tag> tags;
-        if (projects != null && !projects.isEmpty()) {
-            tags = projects.stream()
-                    .map(Project::getTags)
-                    .flatMap(Set::stream)
-                    .distinct();
-        } else {
-            tags = pm.newQuery(Tag.class).executeList().stream();
-        }
-
-        List<Tag> tagsToShow = tags.sorted(TAG_COMPARATOR).toList();
-
-        return (new PaginatedResult()).objects(tagsToShow).total(tagsToShow.size());
+        final var policy = getObjectByUuid(Policy.class, policyUuid);
+        final var tags = Optional.ofNullable(policy.getTags()).orElse(Collections.emptySet()).stream().sorted(TAG_COMPARATOR).toList();
+        return (new PaginatedResult()).objects(tags).total(tags.size());
     }
 
     /**

@@ -176,10 +176,10 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
         ) {
             this(
                     name,
-                    (long) projectCount,
-                    (long) collectionProjectCount,
-                    (long) policyCount,
-                    (long) notificationRuleCount,
+                    projectCount,
+                    collectionProjectCount,
+                    policyCount,
+                    notificationRuleCount,
                     (long) totalCount);
         }
 
@@ -272,11 +272,11 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             this(
                     id,
                     name,
-                    (long) projectCount,
-                    (long) accessibleProjectCount,
-                    (long) collectionProjectCount,
-                    (long) accessibleCollectionProjectCount,
-                    (long) policyCount,
+                    projectCount,
+                    accessibleProjectCount,
+                    collectionProjectCount,
+                    accessibleCollectionProjectCount,
+                    policyCount,
                     (long) notificationRuleCount);
         }
 

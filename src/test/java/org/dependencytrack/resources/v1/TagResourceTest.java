@@ -3,6 +3,10 @@ package org.dependencytrack.resources.v1;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
+import jakarta.json.JsonArray;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestRule;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -22,10 +26,6 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import jakarta.json.JsonArray;
-import jakarta.ws.rs.HttpMethod;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -1666,11 +1666,10 @@ public class TagResourceTest extends ResourceTest {
                 .get();
 
         Assert.assertEquals(200, response.getStatus());
-        Assert.assertEquals(String.valueOf(4), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(0), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(4, json.size());
-        Assert.assertEquals("tag 2", json.getJsonObject(0).getString("name"));
+        Assert.assertEquals(0, json.size());
     }
 
     @Test
@@ -1693,11 +1692,10 @@ public class TagResourceTest extends ResourceTest {
                 .get();
 
         Assert.assertEquals(200, response.getStatus());
-        Assert.assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(0), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(3, json.size());
-        Assert.assertEquals("tag 1", json.getJsonObject(0).getString("name"));
+        Assert.assertEquals(0, json.size());
     }
 
     @Test

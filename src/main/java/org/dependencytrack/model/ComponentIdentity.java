@@ -37,6 +37,7 @@ public class ComponentIdentity {
         COMPONENT,
         SERVICE
     }
+    private Scope scope;
 
     private ObjectType objectType;
     private PackageURL purl;
@@ -70,6 +71,7 @@ public class ComponentIdentity {
         this.version = component.getVersion();
         this.uuid = component.getUuid();
         this.objectType = ObjectType.COMPONENT;
+        this.scope = component.getScope();
     }
 
     public ComponentIdentity(final Component component, final boolean excludeUuid) {
@@ -92,6 +94,7 @@ public class ComponentIdentity {
         this.name = component.getName();
         this.version = component.getVersion();
         this.objectType = ObjectType.COMPONENT;
+        this.scope = Scope.getMappedScope(component.getScope());
     }
 
     public ComponentIdentity(final ServiceComponent service) {
@@ -150,6 +153,10 @@ public class ComponentIdentity {
 
     public UUID getUuid() {
         return uuid;
+    }
+
+    public Scope getScope() {
+        return scope;
     }
 
     @Override

@@ -1,9 +1,17 @@
 /*
- * SPDX-License-Identifier: Apache-2.0
+ * This file is part of Dependency-Track.
  *
- * (Replace the above header block with the project's exact license/header block
- * copied from another source file in this repository if one exists. Many projects
- * require an exact header; copying that exactly avoids Checkstyle header violations.)
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.dependencytrack.rest;
@@ -14,31 +22,14 @@ import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
 
-/**
- * Adds permissive CORS headers to responses for development/testing.
- *
- * <p>Note: For production, restrict allowed origins instead of using "*".</p>
- */
 @Provider
-public final class CORSFilter implements ContainerResponseFilter {
-
-    /**
-     * Add CORS headers to every response.
-     *
-     * @param requestContext  the request context
-     * @param responseContext the response context
-     * @throws IOException when an I/O error occurs
-     */
+public class CORSFilter implements ContainerResponseFilter {
     @Override
-    public void filter(final ContainerRequestContext requestContext,
-                       final ContainerResponseContext responseContext) throws IOException {
+    public void filter(ContainerRequestContext requestContext,
+                       ContainerResponseContext responseContext) throws IOException {
         responseContext.getHeaders().add("Access-Control-Allow-Origin", "*");
-        responseContext.getHeaders().add(
-                "Access-Control-Allow-Headers",
-                "origin, content-type, accept, authorization");
+        responseContext.getHeaders().add("Access-Control-Allow-Headers", "origin, content-type, accept, authorization");
         responseContext.getHeaders().add("Access-Control-Allow-Credentials", "true");
-        responseContext.getHeaders().add(
-                "Access-Control-Allow-Methods",
-                "GET, POST, PUT, DELETE, OPTIONS, HEAD");
+        responseContext.getHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
     }
 }

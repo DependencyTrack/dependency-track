@@ -69,6 +69,9 @@ jobs:
     
         - name: Run Ansible playbook
           run: ansible-playbook -i localhost, ansibleEC2Provisoner.yml
+          env:
+            ANSIBLE_HOST_KEY_CHECKING: 'False'
+
             
     
         - name: Upload instance info

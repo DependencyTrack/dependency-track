@@ -252,7 +252,7 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
     private long checkHead(final String cveUrl) {
         final HttpUriRequest request = new HttpHead(cveUrl);
         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-            return Long.valueOf(response.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue());
+            return Long.parseLong(response.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue());
         } catch (IOException | NumberFormatException | NullPointerException e) {
             LOGGER.error("Failed to determine content length");
         }
@@ -273,7 +273,7 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
             if (file.exists()) {
                 long modificationTime = 0;
                 File timestampFile = new File(outputDir, filename + ".ts");
-                if(timestampFile.exists()) {
+                if(timestampFile.exists() && timestampFile.length() > 0) {
                     BufferedReader tsBufReader = new BufferedReader(new FileReader(timestampFile));
                     String text = tsBufReader.readLine();
                     modificationTime = Long.parseLong(text);
@@ -345,7 +345,7 @@ public class NistMirrorTask extends AbstractNistMirrorTask implements LoggableSu
             }
         } catch (Throwable e) {
             mirroredWithoutErrors = false;
-            LOGGER.error("Download failed : " + e.getMessage());
+            LOGGER.error("Download failed: " + e.getMessage());
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.SYSTEM)
                     .group(NotificationGroup.DATASOURCE_MIRRORING)

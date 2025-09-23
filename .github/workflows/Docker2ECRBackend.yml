@@ -96,16 +96,14 @@ jobs:
                 echo "Frontend repository name is not set. CD terminated"
                 exit 1
               fi
-          
-
-              aws ecr describe-images \
+                        aws ecr describe-images \
                 --repository-name ${{ vars.FRONTEND_ECR_REPOSITORY }} \
                 --image-ids imageTag=latest \
                 || { echo "Missing frontend image in ECR. CD terminated"; exit 1; }
 
   deploy:
     runs-on: ubuntu-latest
-    needs: provision
+    needs: check-backend-deps
     steps:
       - uses: actions/checkout@v4
   

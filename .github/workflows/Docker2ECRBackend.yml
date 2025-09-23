@@ -74,9 +74,9 @@ provision:
       run: ansible-playbook ansibleEC2Provisoner.yml
 
 
-      - name: Upload instance info
-        uses: actions/upload-artifact@v4
-        with:
+    - name: Upload instance info
+      uses: actions/upload-artifact@v4
+      with:
           name: ec2-info
           path: |
             ec2_ip.txt

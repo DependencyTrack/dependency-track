@@ -38,6 +38,10 @@
       delegate_to: localhost
       when: new_keypair.changed
 
+    - name: Set pem_file fact for later plays
+      set_fact:
+        pem_file_path: "{{ pem_file }}"
+
     - name: Launch EC2 instance
       amazon.aws.ec2_instance:
         name: ansible-youssef-amazonlinux
@@ -70,7 +74,7 @@
   vars:
     ansible_host: "{{ hostvars['localhost'].ec2.instances[0].public_ip_address }}"
     ansible_user: ec2-user
-    ansible_ssh_private_key_file: "{{ pem_file }}"
+    ansible_ssh_private_key_file: "{{ hostvars['localhost'].pem_file_path }}"
   tasks:
     - name: Update all packages
       ansible.builtin.yum:
@@ -97,15 +101,15 @@
 
     - name: Install Docker Compose
       ansible.builtin.shell: |
-        sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/libexec/docker/cli-plugins/docker-compose
-        sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose
+        curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/libexec/docker/cli-plugins/docker-compose
+        chmod +x /usr/libexec/docker/cli-plugins/docker-compose
       args:
         executable: /bin/bash
 
     - name: Install SSM agent
       ansible.builtin.shell: |
-        sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-        sudo systemctl enable amazon-ssm-agent
-        sudo systemctl start amazon-ssm-agent
+        yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+        systemctl enable amazon-ssm-agent
+        systemctl start amazon-ssm-agent
       args:
         executable: /bin/bash

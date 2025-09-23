@@ -64,7 +64,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-      
+  
       - name: Run Ansible playbook
         run: ansible-playbook -i localhost, ansibleEC2Provisoner.yml
         env:
@@ -73,13 +73,14 @@ jobs:
       - name: Upload EC2 connection artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ec2-info
+          name: ec2-info   
           path: |
             ansible_key.pem
             ec2_ip.txt
+
   
 
-  check-backend-deps:
+  check-frontend-deps:
         runs-on: ubuntu-latest
         needs: [build-and-push, provision]
         steps:
@@ -101,9 +102,10 @@ jobs:
                 --image-ids imageTag=latest \
                 || { echo "Missing frontend image in ECR. CD terminated"; exit 1; }
 
+
   deploy:
     runs-on: ubuntu-latest
-    needs: check-backend-deps
+    needs: check-frontend-deps
     steps:
       - uses: actions/checkout@v4
   
@@ -138,4 +140,5 @@ jobs:
             cd ~/app
             docker compose pull
             docker compose up -d
+
 

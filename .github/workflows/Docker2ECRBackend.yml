@@ -113,41 +113,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
   
-      - name: Download instance info
+      - name: Download EC2 info
         uses: actions/download-artifact@v4
         with:
           name: ec2-info
           path: ./ec2-info
-          
-      - name: List files after downloading
+  
+      - name: List downloaded files
         run: ls -la ./ec2-info
-
-
   
-      - name: Set env from instance info
+      - name: Deploy via SSM Run Command
         run: |
-          echo "TARGET_HOST=$(cat ./ec2-info/ec2_ip.txt)" >> $GITHUB_ENV
-          chmod 600 ./ec2-info/ansible_key.pem
-          echo "TARGET_SSH_KEY=./ec2-info/ansible_key.pem" >> $GITHUB_ENV
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=ip-address,Values=$(cat ./ec2-info/ec2_ip.txt)" \
+            --query "Reservations[0].Instances[0].InstanceId" \
+            --output text)
   
-      - name: Copy docker-compose.yml to target EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ env.TARGET_HOST }}
-          username: ubuntu
-          key: ${{ env.TARGET_SSH_KEY }}
-          source: "docker-compose.yml"
-          target: "~/app/docker-compose.yml"
-  
-      - name: Run docker compose on target EC2
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ env.TARGET_HOST }}
-          username: ubuntu
-          key: ${{ env.TARGET_SSH_KEY }}
-          script: |
-            cd ~/app
-            docker compose pull
-            docker compose up -d
+          aws ssm send-command \
+            --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy docker compose from repo" \
+            --parameters 'commands=[
+              "cd ~/app",
+              "git pull origin main",
+              "docker compose pull",
+              "docker compose up -d"
+            ]' \
+            --region ${{ vars.AWS_REGION }}
 
 

@@ -51,6 +51,7 @@
         count: 1
         network:
           assign_public_ip: yes
+          iam_instance_profile: YoussefSSMrole
       register: ec2
 
     - name: Save instance IP for GitHub Actions artifact

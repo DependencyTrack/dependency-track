@@ -76,10 +76,11 @@ jobs:
       - name: Upload EC2 connection artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ec2-info   
+          name: ec2-info
           path: |
-            ansible_key.pem
-            ec2_ip.txt
+            ./ansible_key.pem
+            ./ec2_ip.txt
+                if-no-files-found: error
 
   
 

@@ -33,7 +33,7 @@
     - name: Save private key for GitHub Actions artifact
       copy:
         content: "{{ new_keypair.key.private_key }}"
-        dest: "{{ playbook_dir }}/ansible_key.pem"
+        dest: ./ansible_key.pem
         mode: '0600'
       delegate_to: localhost
       when: new_keypair.changed

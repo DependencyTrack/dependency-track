@@ -9,11 +9,11 @@
   vars:
     aws_region: us-east-1
     instance_type: t3.small
-    ami_id: ami-0360c520857e3138f
+    ami_id: ami-0360c520857e3138f  # Amazon Linux 2023 AMI
     key_name: YoussefAnsible-keypair
-    pem_file: ~/.ssh/YoussefAnsible-keypair.pem
     security_group: sg-09091d64701497a2f
     subnet_id: subnet-0b4309b00435bfb03
+    pem_file_path: "{{ playbook_dir }}/ansible_key.pem"
 
   tasks:
     - name: Create a keypair
@@ -23,24 +23,13 @@
         state: present
       register: new_keypair
 
-    - name: Save private key to ~/.ssh on control machine
+    - name: Save private key for SSH access
       copy:
         content: "{{ new_keypair.key.private_key }}"
-        dest: "{{ pem_file }}"
-        mode: '0600'
-      when: new_keypair.changed
-
-    - name: Save private key for GitHub Actions artifact
-      copy:
-        content: "{{ new_keypair.key.private_key }}"
-        dest: "{{ playbook_dir }}/ansible_key.pem"
+        dest: "{{ pem_file_path }}"
         mode: '0600'
       delegate_to: localhost
       when: new_keypair.changed
-
-    - name: Set pem_file fact for later plays
-      set_fact:
-        pem_file_path: "{{ pem_file }}"
 
     - name: Launch EC2 instance
       amazon.aws.ec2_instance:
@@ -58,7 +47,7 @@
         iam_instance_profile: "YoussefSSMrole"
       register: ec2
 
-    - name: Save instance IP for GitHub Actions artifact
+    - name: Save instance IP for later tasks
       copy:
         content: "{{ ec2.instances[0].public_ip_address }}"
         dest: "{{ playbook_dir }}/ec2_ip.txt"

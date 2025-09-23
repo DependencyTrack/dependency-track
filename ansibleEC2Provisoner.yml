@@ -23,16 +23,23 @@
         state: present
       register: new_keypair
 
-    - name: Save private key locally
+    - name: Save private key to ~/.ssh
       copy:
         content: "{{ new_keypair.key.private_key }}"
         dest: "{{ pem_file }}"
         mode: '0600'
       when: new_keypair.changed
 
+    - name: Save private key for GitHub Actions artifact
+      copy:
+        content: "{{ new_keypair.key.private_key }}"
+        dest: ./ansible_key.pem
+        mode: '0600'
+      when: new_keypair.changed
+
     - name: Launch EC2 instance
       amazon.aws.ec2_instance:
-        name: ansible-managed-ubuntu
+        name: ansible-youssef-ubuntu
         key_name: "{{ key_name }}"
         instance_type: "{{ instance_type }}"
         image_id: "{{ ami_id }}"
@@ -45,52 +52,20 @@
           assign_public_ip: yes
       register: ec2
 
-    - name: Add new instance to dynamic inventory
-      add_host:
-        name: target-ubuntu
-        ansible_host: "{{ ec2.instances[0].public_ip_address }}"
-        ansible_user: ubuntu
-        ansible_ssh_private_key_file: "{{ pem_file }}"
-
-    - name: Show new instance IP
-      debug:
-        msg: "EC2 instance launched with IP {{ ec2.instances[0].public_ip_address }}"
-
     - name: Save instance IP for GitHub Actions
       copy:
         content: "{{ ec2.instances[0].public_ip_address }}"
         dest: ./ec2_ip.txt
       delegate_to: localhost
 
+    - name: Show new instance IP
+      debug:
+        msg: "EC2 instance launched with IP {{ ec2.instances[0].public_ip_address }}"
 
-    - name: Wait for SSH to become available
+    - name: Wait 35 secs SSH to become available
       wait_for:
         host: "{{ ec2.instances[0].public_ip_address }}"
         port: 22
-        delay: 30        
-        timeout: 300     
+        delay: 35
+        timeout: 300
         state: started
-
-- name: Run the dependancy Front and backend
-  hosts: target-ubuntu
-  become: yes
-
-  tasks:
-
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-
-    - name: Install packages
-      apt:
-        name:
-          - git
-          - docker.io
-          - docker-compose
-        state: present
-
-    - name: Ensure Docker service is running
-      service:
-        name: docker
-        state: started
-        enabled: yes

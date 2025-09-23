@@ -64,10 +64,28 @@
       debug:
         msg: "EC2 instance launched with IP {{ ec2.instances[0].public_ip_address }}"
 
-    - name: Wait 20 seconds for SSH to become available
-      wait_for:
-        host: "{{ ec2.instances[0].public_ip_address }}"
-        port: 22
-        delay: 20
-        timeout: 300
-        state: started
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name: curl
+        state: present
+      become: yes
+      hosts: all
+      vars:
+        ansible_host: "{{ ec2.instances[0].public_ip_address }}"
+        ansible_user: ubuntu
+        ansible_ssh_private_key_file: "{{ pem_file }}"
+    
+    - name: Download and install SSM agent
+      ansible.builtin.shell: |
+        curl "https://s3.us-east-1.amazonaws.com/amazon-ssm-us-east-1/latest/debian_amd64/amazon-ssm-agent.deb" -o "amazon-ssm-agent.deb"
+        sudo dpkg -i amazon-ssm-agent.deb
+        sudo systemctl enable amazon-ssm-agent
+        sudo systemctl start amazon-ssm-agent
+      become: yes
+      args:
+        executable: /bin/bash
+      hosts: all
+      vars:
+        ansible_host: "{{ ec2.instances[0].public_ip_address }}"
+        ansible_user: ubuntu
+        ansible_ssh_private_key_file: "{{ pem_file }}"

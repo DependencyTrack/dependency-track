@@ -1,0 +1,20 @@
+services:
+  backend:
+    image: 645537741587.dkr.ecr.us-east-1.amazonaws.com/joe/backend:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+  frontend:
+    image: 645537741587.dkr.ecr.us-east-1.amazonaws.com/joe/frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

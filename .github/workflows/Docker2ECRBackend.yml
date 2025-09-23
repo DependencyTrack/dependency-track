@@ -47,41 +47,38 @@ jobs:
 
 
   provision:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-          
-        - name: Set up Ansible
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y ansible python3-pip
-            ansible-galaxy collection install amazon.aws
-            python3 -m pip install boto3 botocore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Set up Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible python3-pip
+          ansible-galaxy collection install amazon.aws
+          python3 -m pip install boto3 botocore
+  
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+      
+      - name: Run Ansible playbook
+        run: ansible-playbook -i localhost, ansibleEC2Provisoner.yml
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
+  
+      - name: Upload EC2 connection artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ec2-info
+          path: |
+            ansible_key.pem
+            ec2_ip.txt
+  
 
-
-
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v4
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: ${{ vars.AWS_REGION }}
-    
-        - name: Run Ansible playbook
-          run: ansible-playbook -i localhost, ansibleEC2Provisoner.yml
-          env:
-            ANSIBLE_HOST_KEY_CHECKING: 'False'
-
-            
-    
-        - name: Upload instance info
-          uses: actions/upload-artifact@v4
-          with:
-              name: ec2-info
-              path: |
-                ec2_ip.txt
-                ~/.ssh/YoussefAnsible-keypair.pem
-    
   check-backend-deps:
         runs-on: ubuntu-latest
         needs: [build-and-push, provision]
@@ -102,22 +99,22 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: check-backend-deps
+    needs: provision
     steps:
       - uses: actions/checkout@v4
-
+  
       - name: Download instance info
         uses: actions/download-artifact@v4
         with:
           name: ec2-info
           path: ./ec2-info
-
+  
       - name: Set env from instance info
         run: |
           echo "TARGET_HOST=$(cat ./ec2-info/ec2_ip.txt)" >> $GITHUB_ENV
-          chmod 600 ./ec2-info/YoussefAnsible-keypair.pem
-          echo "TARGET_SSH_KEY=./ec2-info/YoussefAnsible-keypair.pem" >> $GITHUB_ENV
-
+          chmod 600 ./ec2-info/ansible_key.pem
+          echo "TARGET_SSH_KEY=./ec2-info/ansible_key.pem" >> $GITHUB_ENV
+  
       - name: Copy docker-compose.yml to target EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -126,9 +123,15 @@ jobs:
           key: ${{ env.TARGET_SSH_KEY }}
           source: "docker-compose.yml"
           target: "~/app/docker-compose.yml"
-
+  
       - name: Run docker compose on target EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ env.TARGET_HOST }}
           username: ubuntu
+          key: ${{ env.TARGET_SSH_KEY }}
+          script: |
+            cd ~/app
+            docker compose pull
+            docker compose up -d
+

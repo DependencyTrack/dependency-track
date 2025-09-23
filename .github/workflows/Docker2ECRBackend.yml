@@ -16,8 +16,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'Corretto'
+          java-version: '17'
+          distribution: 'temurin'
 
       - name: Cache Maven
         uses: actions/cache@v4

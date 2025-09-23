@@ -29,14 +29,15 @@
         dest: "{{ pem_file }}"
         mode: '0600'
       when: new_keypair.changed
-
+    
     - name: Save private key for GitHub Actions artifact
       copy:
         content: "{{ new_keypair.key.private_key }}"
         dest: ./ansible_key.pem
         mode: '0600'
+      delegate_to: localhost
       when: new_keypair.changed
-
+    
     - name: Launch EC2 instance
       amazon.aws.ec2_instance:
         name: ansible-youssef-ubuntu
@@ -51,7 +52,7 @@
         network:
           assign_public_ip: yes
       register: ec2
-
+    
     - name: Save instance IP for GitHub Actions
       copy:
         content: "{{ ec2.instances[0].public_ip_address }}"

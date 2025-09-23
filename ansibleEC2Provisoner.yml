@@ -33,7 +33,7 @@
     - name: Save private key for GitHub Actions artifact
       copy:
         content: "{{ new_keypair.key.private_key }}"
-        dest: ./ansible_key.pem
+        dest: "{{ playbook_dir }}/ansible_key.pem"
         mode: '0600'
       delegate_to: localhost
       when: new_keypair.changed
@@ -51,7 +51,7 @@
         count: 1
         network:
           assign_public_ip: yes
-          iam_instance_profile: YoussefSSMrole
+        iam_instance_profile: "YoussefSSMrole"
       register: ec2
 
     - name: Save instance IP for GitHub Actions artifact

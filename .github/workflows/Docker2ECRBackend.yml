@@ -45,54 +45,56 @@ jobs:
           push: true
           tags: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:latest
 
+
   provision:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-  
-      - name: Set up Ansible
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible python3-pip
-          ansible-galaxy collection install amazon.aws
-          pip install boto3 botocore
-  
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-  
-      - name: Run Ansible playbook
-        run: ansible-playbook ansibleEC2Provisoner.yml
-  
-  
-      - name: Upload instance info
-        uses: actions/upload-artifact@v4
-        with:
-            name: ec2-info
-            path: |
-              ec2_ip.txt
-              ~/.ssh/YoussefAnsible-keypair.pem
-  
-    check-backend-deps:
       runs-on: ubuntu-latest
-      needs: [build-and-push, provision]
       steps:
+        - uses: actions/checkout@v4
+    
+        - name: Set up Ansible
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y ansible python3-pip
+            ansible-galaxy collection install amazon.aws
+            pip install boto3 botocore
+
+
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@v4
           with:
             aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: ${{ vars.AWS_REGION }}
-  
-        - name: Check if frontend image exists in ECR
-          run: |
-            aws ecr describe-images \
-              --repository-name ${{ vars.FRONTEND_ECR_REPOSITORY }} \
-              --image-ids imageTag=latest \
-              || { echo "Missing frontend repo. CD terminated"; exit 666; }
+            aws-region: ${{ secrets.AWS_REGION }}
+    
+        - name: Run Ansible playbook
+          run: ansible-playbook ansibleEC2Provisoner.yml
+    
+    
+        - name: Upload instance info
+          uses: actions/upload-artifact@v4
+          with:
+              name: ec2-info
+              path: |
+                ec2_ip.txt
+                ~/.ssh/YoussefAnsible-keypair.pem
+    
+  check-backend-deps:
+        runs-on: ubuntu-latest
+        needs: [build-and-push, provision]
+        steps:
+          - name: Configure AWS credentials
+            uses: aws-actions/configure-aws-credentials@v4
+            with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws-region: ${{ vars.AWS_REGION }}
+    
+          - name: Check if frontend image exists in ECR
+            run: |
+              aws ecr describe-images \
+                --repository-name ${{ vars.FRONTEND_ECR_REPOSITORY }} \
+                --image-ids imageTag=latest \
+                || { echo "Missing frontend repo. CD terminated"; exit 666; }
 
   deploy:
     runs-on: ubuntu-latest
@@ -126,8 +128,3 @@ jobs:
         with:
           host: ${{ env.TARGET_HOST }}
           username: ubuntu
-          key: ${{ env.TARGET_SSH_KEY }}
-          script: |
-            cd ~/app
-            docker compose pull
-            docker compose up -d

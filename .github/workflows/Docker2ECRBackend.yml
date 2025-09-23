@@ -50,13 +50,14 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-    
+          
         - name: Set up Ansible
           run: |
             sudo apt-get update
             sudo apt-get install -y ansible python3-pip
             ansible-galaxy collection install amazon.aws
-            pip install boto3 botocore
+            python3 -m pip install boto3 botocore
+
 
 
         - name: Configure AWS credentials
@@ -67,8 +68,8 @@ jobs:
             aws-region: ${{ vars.AWS_REGION }}
     
         - name: Run Ansible playbook
-          run: ansible-playbook ansibleEC2Provisoner.yml
-    
+          run: ansible-playbook -i localhost, ansibleEC2Provisoner.yml
+            
     
         - name: Upload instance info
           uses: actions/upload-artifact@v4

@@ -89,13 +89,19 @@ jobs:
               aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
               aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
               aws-region: ${{ vars.AWS_REGION }}
-    
           - name: Check if frontend image exists in ECR
             run: |
+              # Make sure the variable is set
+              if [ -z "${{ vars.FRONTEND_ECR_REPOSITORY }}" ]; then
+                echo "Frontend repository name is not set. CD terminated"
+                exit 1
+              fi
+          
+
               aws ecr describe-images \
                 --repository-name ${{ vars.FRONTEND_ECR_REPOSITORY }} \
                 --image-ids imageTag=latest \
-                || { echo "Missing frontend repo. CD terminated"; exit 666; }
+                || { echo "Missing frontend image in ECR. CD terminated"; exit 1; }
 
   deploy:
     runs-on: ubuntu-latest

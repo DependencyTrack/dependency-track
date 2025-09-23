@@ -9,7 +9,7 @@
   vars:
     aws_region: us-east-1
     instance_type: t3.small
-    ami_id: ami-0360c520857e3138f
+    ami_id: ami-08982f1c5bf93d976
     key_name: YoussefAnsible-keypair
     pem_file: ~/.ssh/YoussefAnsible-keypair.pem
     security_group: sg-09091d64701497a2f

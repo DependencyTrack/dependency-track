@@ -15,59 +15,58 @@
     security_group: sg-09091d64701497a2f
     subnet_id: subnet-0b4309b00435bfb03
 
-tasks:
-  - name: Create a keypair
-    amazon.aws.ec2_key:
-      name: "{{ key_name }}"
-      region: "{{ aws_region }}"
-      state: present
-    register: new_keypair
+  tasks:
+    - name: Create a keypair
+      amazon.aws.ec2_key:
+        name: "{{ key_name }}"
+        region: "{{ aws_region }}"
+        state: present
+      register: new_keypair
 
-  - name: Save private key to ~/.ssh on control machine
-    copy:
-      content: "{{ new_keypair.key.private_key }}"
-      dest: "{{ pem_file }}"
-      mode: '0600'
-    when: new_keypair.changed
+    - name: Save private key to ~/.ssh on control machine
+      copy:
+        content: "{{ new_keypair.key.private_key }}"
+        dest: "{{ pem_file }}"
+        mode: '0600'
+      when: new_keypair.changed
 
-  - name: Save private key for GitHub Actions artifact
-    copy:
-      content: "{{ new_keypair.key.private_key }}"
-      dest: "{{ playbook_dir }}/ansible_key.pem"
-      mode: '0600'
-    delegate_to: localhost
-    when: new_keypair.changed
+    - name: Save private key for GitHub Actions artifact
+      copy:
+        content: "{{ new_keypair.key.private_key }}"
+        dest: "{{ playbook_dir }}/ansible_key.pem"
+        mode: '0600'
+      delegate_to: localhost
+      when: new_keypair.changed
 
-  - name: Launch EC2 instance
-    amazon.aws.ec2_instance:
-      name: ansible-youssef-ubuntu
-      key_name: "{{ key_name }}"
-      instance_type: "{{ instance_type }}"
-      image_id: "{{ ami_id }}"
-      region: "{{ aws_region }}"
-      security_group: "{{ security_group }}"
-      subnet_id: "{{ subnet_id }}"
-      wait: yes
-      count: 1
-      network:
-        assign_public_ip: yes
-    register: ec2
+    - name: Launch EC2 instance
+      amazon.aws.ec2_instance:
+        name: ansible-youssef-ubuntu
+        key_name: "{{ key_name }}"
+        instance_type: "{{ instance_type }}"
+        image_id: "{{ ami_id }}"
+        region: "{{ aws_region }}"
+        security_group: "{{ security_group }}"
+        subnet_id: "{{ subnet_id }}"
+        wait: yes
+        count: 1
+        network:
+          assign_public_ip: yes
+      register: ec2
 
-  - name: Save instance IP for GitHub Actions artifact
-    copy:
-      content: "{{ ec2.instances[0].public_ip_address }}"
-      dest: "{{ playbook_dir }}/ec2_ip.txt"
-    delegate_to: localhost
+    - name: Save instance IP for GitHub Actions artifact
+      copy:
+        content: "{{ ec2.instances[0].public_ip_address }}"
+        dest: "{{ playbook_dir }}/ec2_ip.txt"
+      delegate_to: localhost
 
-  - name: Show new instance IP
-    debug:
-      msg: "EC2 instance launched with IP {{ ec2.instances[0].public_ip_address }}"
+    - name: Show new instance IP
+      debug:
+        msg: "EC2 instance launched with IP {{ ec2.instances[0].public_ip_address }}"
 
-  - name: Wait 20 seconds for SSH to become available
-    wait_for:
-      host: "{{ ec2.instances[0].public_ip_address }}"
-      port: 22
-      delay: 20
-      timeout: 300
-      state: started
-
+    - name: Wait 20 seconds for SSH to become available
+      wait_for:
+        host: "{{ ec2.instances[0].public_ip_address }}"
+        port: 22
+        delay: 20
+        timeout: 300
+        state: started

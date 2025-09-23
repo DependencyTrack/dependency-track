@@ -88,5 +88,4 @@
             sudo systemctl enable amazon-ssm-agent
             sudo systemctl start amazon-ssm-agent
           args:
-            executable: /bin/bash
-
+            executable: /bin/sh

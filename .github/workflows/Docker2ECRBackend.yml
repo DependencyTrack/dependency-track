@@ -45,7 +45,7 @@ jobs:
           push: true
           tags: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:latest
 
-jobs:
+
   provision:
     runs-on: ubuntu-latest
     steps:

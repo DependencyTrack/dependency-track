@@ -135,12 +135,14 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
         run: |
+          # Get instance ID from the public IP file
           INSTANCE_ID=$(aws ec2 describe-instances \
             --filters "Name=ip-address,Values=$(cat ./ec2-info/ec2_ip.txt)" \
             --query "Reservations[0].Instances[0].InstanceId" \
             --output text)
           echo "Target instance: $INSTANCE_ID"
       
+          # Wait until SSM agent registers the instance
           echo "Waiting for SSM agent to be ready..."
           for i in {1..30}; do
             STATUS=$(aws ssm describe-instance-information \
@@ -155,17 +157,17 @@ jobs:
             sleep 10
           done
       
-          # Send SSM command with ECR login and wait for it
+          # Send SSM command
           COMMAND_ID=$(aws ssm send-command \
             --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --comment "Deploy docker compose from repo" \
+            --comment "Deploy docker compose from S3" \
             --parameters 'commands=[
               "cd /home/ec2-user",
+              "aws s3 cp s3://joe1dayusebucket/docker-compose.yml ./docker-compose.yml",
               "aws ecr get-login-password --region '"$AWS_REGION"' | docker login --username AWS --password-stdin 645537741587.dkr.ecr.'"$AWS_REGION"'.amazonaws.com",
-              "git pull origin main",
-              "docker compose pull",
-              "docker compose up -d"
+              "docker compose -f ./docker-compose.yml pull",
+              "docker compose -f ./docker-compose.yml up -d"
             ]' \
             --query "Command.CommandId" \
             --output text)

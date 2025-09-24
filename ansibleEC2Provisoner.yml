@@ -11,7 +11,7 @@
     instance_type: t3.small
     ami_id: "{{ lookup('aws_ssm', '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64', region=aws_region) }}"
     key_name: YoussefAnsible-keypair
-    pem_file: "{{ lookup('env','HOME') }}/.ssh/YoussefAnsible-keypair.pem"
+    pem_file: "{{ playbook_dir }}/ansible_key.pem"
     security_group: sg-09091d64701497a2f
     subnet_id: subnet-0b4309b00435bfb03
 
@@ -23,19 +23,11 @@
         state: present
       register: new_keypair
 
-    - name: Save private key to ~/.ssh on control machine
+    - name: Save private key for Ansible SSH
       copy:
         content: "{{ new_keypair.key.private_key }}"
         dest: "{{ pem_file }}"
         mode: '0600'
-      when: new_keypair.changed
-
-    - name: Save private key for GitHub Actions artifact
-      copy:
-        content: "{{ new_keypair.key.private_key }}"
-        dest: "{{ playbook_dir }}/ansible_key.pem"
-        mode: '0600'
-      delegate_to: localhost
       when: new_keypair.changed
 
     - name: Launch EC2 instance
@@ -88,10 +80,9 @@
   gather_facts: no
   become: yes
   vars:
-    pem_file: "{{ lookup('env','HOME') }}/.ssh/YoussefAnsible-keypair.pem"
     ansible_host: "{{ ec2.instances[0].public_ip_address }}"
     ansible_user: ec2-user
-    ansible_ssh_private_key_file: "{{ pem_file }}"
+    ansible_ssh_private_key_file: "{{ playbook_dir }}/ansible_key.pem"
 
   tasks:
     - name: Install dependencies

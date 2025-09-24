@@ -57,7 +57,7 @@
         msg: "EC2 instance launched with IP {{ ec2.instances[0].public_ip_address }}"
 
 # ---------------------------------------------------------
-# Second play: Configure EC2 using SSM Run Command
+# Second play: Wait for SSM and run commands
 # ---------------------------------------------------------
 - name: Configure EC2 via SSM
   hosts: localhost
@@ -68,6 +68,16 @@
     aws_region: us-east-1
 
   tasks:
+    - name: Wait until instance is managed by SSM
+      amazon.aws.aws_ssm_facts:
+        region: "{{ aws_region }}"
+        instance_ids:
+          - "{{ instance_id }}"
+      register: ssm_status
+      retries: 20
+      delay: 15
+      until: ssm_status.instances | length > 0
+
     - name: Install curl and write test file via SSM
       ansible.builtin.shell: |
         aws ssm send-command \

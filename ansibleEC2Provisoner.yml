@@ -59,24 +59,24 @@
 # ---------------------------------------------------------
 # Configure EC2 using SSM Run Command
 # ---------------------------------------------------------
-- name: Configure EC2 via SSM
-  hosts: localhost
-  connection: local
-  gather_facts: no
-  vars:
-    instance_id: "{{ lookup('aws_ec2_instance_facts', filters={'ip-address': ec2.instances[0].public_ip_address}, region=aws_region)['instances'][0]['instance_id'] }}"
-  tasks:
-    - name: Install curl and write test file via SSM
-      ansible.builtin.shell: |
-        aws ssm send-command \
-          --targets "Key=InstanceIds,Values={{ instance_id }}" \
-          --document-name "AWS-RunShellScript" \
-          --comment "Install curl and write test file" \
-          --parameters 'commands=[
-            "sudo yum install -y curl",
-            "echo Hello SSM > /home/ec2-user/test_ssm.txt",
-            "sudo chown ec2-user:ec2-user /home/ec2-user/test_ssm.txt"
-          ]'
-        --region {{ aws_region }}
-      args:
-        executable: /bin/bash
+    - name: Configure EC2 via SSM
+      hosts: localhost
+      connection: local
+      gather_facts: no
+      vars:
+        instance_id: "{{ ec2.instances[0].instance_id }}"
+      tasks:
+        - name: Install curl and write test file via SSM
+          ansible.builtin.shell: |
+            aws ssm send-command \
+              --targets "Key=InstanceIds,Values={{ instance_id }}" \
+              --document-name "AWS-RunShellScript" \
+              --comment "Install curl and write test file" \
+              --parameters 'commands=[
+                "sudo yum install -y curl",
+                "echo Hello SSM > /home/ec2-user/test_ssm.txt",
+                "sudo chown ec2-user:ec2-user /home/ec2-user/test_ssm.txt"
+              ]' \
+              --region {{ aws_region }}
+          args:
+            executable: /bin/bash

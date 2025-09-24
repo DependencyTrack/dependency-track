@@ -176,7 +176,7 @@ jobs:
               --command-id "$COMMAND_ID" \
               --instance-id "$INSTANCE_ID" \
               --output text --query 'Status')
-            clear
+            
             echo "$OUTPUT"
             if [[ "$STATUS" == "Success" || "$STATUS" == "Failed" || "$STATUS" == "Cancelled" ]]; then
               echo "Final status: $STATUS"

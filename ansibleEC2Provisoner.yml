@@ -69,14 +69,15 @@
 # ---------------------------------------------------------
 - name: Wait for SSH to become available
   hosts: localhost
+  connection: local
   gather_facts: no
   tasks:
     - name: Wait for port 22 on EC2 instance
       ansible.builtin.wait_for:
         host: "{{ ec2.instances[0].public_ip_address }}"
         port: 22
-        delay: 10       # initial delay before checking
-        timeout: 300    # max wait time in seconds
+        delay: 10
+        timeout: 300
         state: started
 
 # ---------------------------------------------------------

@@ -59,33 +59,36 @@
         content: "{{ ec2.instances[0].public_ip_address }}"
         dest: "{{ playbook_dir }}/ec2_ip.txt"
       delegate_to: localhost
-    
+
     - name: Show new instance IP
       debug:
         msg: "EC2 instance launched with IP {{ ec2.instances[0].public_ip_address }}"
-    
-    - name: Configure the EC2 instance
-      hosts: all
-      gather_facts: no
-      become: yes
-      vars:
-        ansible_host: "{{ ec2.instances[0].public_ip_address }}"
-        ansible_user: ec2-user
-        ansible_ssh_private_key_file: "{{ pem_file }}"
-    
-      tasks:
-        - name: Install dependencies
-          ansible.builtin.yum:
-            name: curl
-            state: present
-    
-        - name: Ensure SSM agent is installed and running
-          ansible.builtin.shell: |
-            if ! rpm -q amazon-ssm-agent >/dev/null 2>&1; then
-              curl "https://s3.us-east-1.amazonaws.com/amazon-ssm-us-east-1/latest/amazon-ssm-agent.rpm" -o "amazon-ssm-agent.rpm"
-              sudo rpm -i amazon-ssm-agent.rpm
-            fi
-            sudo systemctl enable amazon-ssm-agent
-            sudo systemctl start amazon-ssm-agent
-          args:
-            executable: /bin/sh
+
+# ---------------------------------------------------------
+# Second play: configure the EC2 instance
+# ---------------------------------------------------------
+- name: Configure the EC2 instance
+  hosts: all
+  gather_facts: no
+  become: yes
+  vars:
+    ansible_host: "{{ ec2.instances[0].public_ip_address }}"
+    ansible_user: ec2-user
+    ansible_ssh_private_key_file: "{{ pem_file }}"
+
+  tasks:
+    - name: Install dependencies
+      ansible.builtin.yum:
+        name: curl
+        state: present
+
+    - name: Ensure SSM agent is installed and running
+      ansible.builtin.shell: |
+        if ! rpm -q amazon-ssm-agent >/dev/null 2>&1; then
+          curl "https://s3.us-east-1.amazonaws.com/amazon-ssm-us-east-1/latest/amazon-ssm-agent.rpm" -o "amazon-ssm-agent.rpm"
+          sudo rpm -i amazon-ssm-agent.rpm
+        fi
+        sudo systemctl enable amazon-ssm-agent
+        sudo systemctl start amazon-ssm-agent
+      args:
+        executable: /bin/sh

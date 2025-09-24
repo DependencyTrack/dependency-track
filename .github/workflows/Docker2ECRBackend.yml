@@ -113,16 +113,16 @@ jobs:
     needs: check-frontend-deps
     steps:
       - uses: actions/checkout@v4
-
+  
       - name: Download EC2 info
         uses: actions/download-artifact@v4
         with:
           name: ec2-info
           path: ./ec2-info
-
+  
       - name: List downloaded files
         run: ls -la ./ec2-info
-
+  
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -140,7 +140,7 @@ jobs:
             --query "Reservations[0].Instances[0].InstanceId" \
             --output text)
           echo "Target instance: $INSTANCE_ID"
-      
+  
           echo "Waiting for SSM agent to be ready..."
           for i in {1..30}; do
             STATUS=$(aws ssm describe-instance-information \
@@ -154,30 +154,25 @@ jobs:
             echo "Not ready yet, retrying in 10 seconds..."
             sleep 10
           done
-      
+  
           COMMAND_ID=$(aws ssm send-command \
             --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy docker compose from S3 and run ECR images" \
-            --parameters 'commands=[
-              # Install docker-compose plugin if not present
-              "if ! docker compose version > /dev/null 2>&1; then",
-              "  sudo yum install -y docker-compose-plugin",
-              "fi",
-              # Go to home directory
-              "cd /home/ec2-user",
-              # Download docker-compose.yml from S3
-              "aws s3 cp s3://joe1dayusebucket/docker-compose.yml ./docker-compose.yml",
-              # ECR login
-              "aws ecr get-login-password --region '"$AWS_REGION"' | docker login --username AWS --password-stdin 645537741587.dkr.ecr.'"$AWS_REGION"'.amazonaws.com",
-              # Run docker compose
-              "docker compose up -d"
-            ]' \
+            --parameters '{
+              "commands": [
+                "if ! docker compose version > /dev/null 2>&1; then sudo yum install -y docker-compose-plugin; fi",
+                "cd /home/ec2-user",
+                "aws s3 cp s3://joe1dayusebucket/docker-compose.yml ./docker-compose.yml",
+                "aws ecr get-login-password --region '"$AWS_REGION"' | docker login --username AWS --password-stdin 645537741587.dkr.ecr.'"$AWS_REGION"'.amazonaws.com",
+                "docker compose up -d"
+              ]
+            }' \
             --query "Command.CommandId" \
             --output text)
-      
+  
           echo "Sent command $COMMAND_ID, waiting for results..."
-      
+  
           for i in {1..30}; do
             STATUS=$(aws ssm list-command-invocations \
               --command-id "$COMMAND_ID" \
@@ -190,7 +185,7 @@ jobs:
             fi
             sleep 10
           done
-      
+  
           echo "Fetching output..."
           aws ssm list-command-invocations \
             --command-id "$COMMAND_ID" \

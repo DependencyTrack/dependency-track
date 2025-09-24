@@ -11,7 +11,7 @@
     instance_type: t3.small
     ami_id: "{{ lookup('aws_ssm', '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64', region=aws_region) }}"
     key_name: YoussefAnsible-keypair
-    pem_file: ~/.ssh/YoussefAnsible-keypair.pem
+    pem_file: "{{ lookup('env','HOME') }}/.ssh/YoussefAnsible-keypair.pem"
     security_group: sg-09091d64701497a2f
     subnet_id: subnet-0b4309b00435bfb03
 
@@ -54,15 +54,15 @@
         iam_instance_profile: "YoussefSSMrole"
       register: ec2
 
-- name: Save instance IP for GitHub Actions artifact
-  copy:
-    content: "{{ ec2.instances[0].public_ip_address }}"
-    dest: "{{ playbook_dir }}/ec2_ip.txt"
-  delegate_to: localhost
+    - name: Save instance IP for GitHub Actions artifact
+      copy:
+        content: "{{ ec2.instances[0].public_ip_address }}"
+        dest: "{{ playbook_dir }}/ec2_ip.txt"
+      delegate_to: localhost
 
-- name: Show new instance IP
-  debug:
-    msg: "EC2 instance launched with IP {{ ec2.instances[0].public_ip_address }}"
+    - name: Show new instance IP
+      debug:
+        msg: "EC2 instance launched with IP {{ ec2.instances[0].public_ip_address }}"
 
 # ---------------------------------------------------------
 # Second play: configure the EC2 instance
@@ -93,4 +93,3 @@
         sudo systemctl start amazon-ssm-agent
       args:
         executable: /bin/sh
-

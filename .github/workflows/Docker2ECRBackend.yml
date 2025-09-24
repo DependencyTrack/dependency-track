@@ -163,7 +163,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --comment "Deploy docker compose from repo" \
             --parameters 'commands=[
-              "cd ~/app",
+              "cd /home/ec2-user",
               "git pull origin main",
               "docker compose pull",
               "docker compose up -d"

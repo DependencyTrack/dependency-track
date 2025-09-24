@@ -46,41 +46,45 @@ jobs:
           tags: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:latest
 
 
-  provision:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        
-      - name: Set up Ansible
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible python3-pip
-          ansible-galaxy collection install amazon.aws
-          python3 -m pip install boto3 botocore
-  
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
-  
-      - name: Run Ansible playbook
-        run: ansible-playbook -i localhost, ansibleEC2Provisoner.yml
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: 'False'
-      - name: List files before uploading
-        run: ls -la
+provision:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ansible and AWS SDK
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip
+        python3 -m pip install --upgrade pip
+        python3 -m pip install ansible boto3 botocore
+        ansible-galaxy collection install amazon.aws
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Run Ansible playbook
+      run: |
+        ansible-playbook -i localhost, ansibleEC2Provisoner.yml \
+          -e "ansible_python_interpreter=$(which python3)"
+      env:
+        ANSIBLE_HOST_KEY_CHECKING: 'False'
+
+    - name: List files before uploading
+      run: ls -la
 
   
-      - name: Upload EC2 connection artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ec2-info
-          path: |
-            ./ansible_key.pem
-            ./ec2_ip.txt
-                if-no-files-found: error
+    - name: Upload EC2 connection artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ec2-info
+        path: |
+          ./ansible_key.pem
+          ./ec2_ip.txt
+              if-no-files-found: error
 
   
 

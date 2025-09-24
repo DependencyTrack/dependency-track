@@ -2,7 +2,9 @@ name: Build and Push Dependency-Track
 
 on:
   push:
-    branches: [ master ]
+    branches: 
+    - master
+    - 'feat_*'          
   workflow_dispatch:
 
 jobs:
@@ -21,7 +23,8 @@ jobs:
         run: mvn checkstyle:check
 
   build-and-push:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref_name, 'feat_')
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref_name, 'feat_') }}
+
     runs-on: ubuntu-latest
     needs: lint
     steps:
@@ -47,7 +50,8 @@ jobs:
           tags: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:latest
 
   provision:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref_name, 'feat_')
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref_name, 'feat_') }}
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -87,7 +91,8 @@ jobs:
           if-no-files-found: error
 
   check-frontend-deps:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref_name, 'feat_')
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref_name, 'feat_') }}
+
     runs-on: ubuntu-latest
     needs: [build-and-push, provision]
     steps:

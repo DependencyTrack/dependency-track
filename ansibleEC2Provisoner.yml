@@ -79,16 +79,18 @@
       args:
         executable: /bin/bash
 
-    - name: Install curl and write test file via SSM
+    - name: Install Docker and Docker Compose via SSM
       ansible.builtin.shell: |
         aws ssm send-command \
           --targets "Key=InstanceIds,Values={{ instance_id }}" \
           --document-name "AWS-RunShellScript" \
-          --comment "Install curl and write test file" \
+          --comment "Install Docker and Docker Compose" \
           --parameters 'commands=[
-            "sudo yum install -y curl",
-            "echo Hello SSM > /home/ec2-user/test_ssm.txt",
-            "sudo chown ec2-user:ec2-user /home/ec2-user/test_ssm.txt"
+            "sudo yum install -y docker",
+            "sudo systemctl enable docker",
+            "sudo systemctl start docker",
+            "sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/libexec/docker/cli-plugins/docker-compose",
+            "sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose"
           ]' \
           --region {{ aws_region }}
       args:

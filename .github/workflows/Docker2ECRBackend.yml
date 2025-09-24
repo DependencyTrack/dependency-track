@@ -135,14 +135,12 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
         run: |
-          # Get instance ID from the public IP file
           INSTANCE_ID=$(aws ec2 describe-instances \
             --filters "Name=ip-address,Values=$(cat ./ec2-info/ec2_ip.txt)" \
             --query "Reservations[0].Instances[0].InstanceId" \
             --output text)
           echo "Target instance: $INSTANCE_ID"
       
-          # Wait until SSM agent registers the instance
           echo "Waiting for SSM agent to be ready..."
           for i in {1..30}; do
             STATUS=$(aws ssm describe-instance-information \
@@ -157,15 +155,40 @@ jobs:
             sleep 10
           done
       
-          # Send your SSM command
-          aws ssm send-command \
+          # Send SSM command with ECR login and wait for it
+          COMMAND_ID=$(aws ssm send-command \
             --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy docker compose from repo" \
             --parameters 'commands=[
               "cd /home/ec2-user",
+              "aws ecr get-login-password --region '"$AWS_REGION"' | docker login --username AWS --password-stdin 645537741587.dkr.ecr.'"$AWS_REGION"'.amazonaws.com",
               "git pull origin main",
               "docker compose pull",
               "docker compose up -d"
             ]' \
-            --region $AWS_REGION
+            --query "Command.CommandId" \
+            --output text)
+      
+          echo "Sent command $COMMAND_ID, waiting for results..."
+      
+          # Poll until SSM command finishes
+          for i in {1..30}; do
+            STATUS=$(aws ssm list-command-invocations \
+              --command-id "$COMMAND_ID" \
+              --details \
+              --query "CommandInvocations[0].Status" \
+              --output text)
+            echo "Command status: $STATUS"
+            if [[ "$STATUS" == "Success" || "$STATUS" == "Failed" || "$STATUS" == "Cancelled" ]]; then
+              break
+            fi
+            sleep 10
+          done
+      
+          echo "Fetching output..."
+          aws ssm list-command-invocations \
+            --command-id "$COMMAND_ID" \
+            --details \
+            --query "CommandInvocations[0].CommandPlugins[0].Output" \
+            --output text

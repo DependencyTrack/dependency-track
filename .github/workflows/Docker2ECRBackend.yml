@@ -129,20 +129,18 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-
+      
       - name: Deploy via SSM Run Command
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
         run: |
-          # Get instance ID from the public IP file
           INSTANCE_ID=$(aws ec2 describe-instances \
             --filters "Name=ip-address,Values=$(cat ./ec2-info/ec2_ip.txt)" \
             --query "Reservations[0].Instances[0].InstanceId" \
             --output text)
           echo "Target instance: $INSTANCE_ID"
       
-          # Wait until SSM agent registers the instance
           echo "Waiting for SSM agent to be ready..."
           for i in {1..30}; do
             STATUS=$(aws ssm describe-instance-information \
@@ -157,24 +155,29 @@ jobs:
             sleep 10
           done
       
-          # Send SSM command
           COMMAND_ID=$(aws ssm send-command \
             --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --comment "Deploy docker compose from S3" \
+            --comment "Deploy docker compose from S3 and run ECR images" \
             --parameters 'commands=[
+              # Install docker-compose plugin if not present
+              "if ! docker compose version > /dev/null 2>&1; then",
+              "  sudo yum install -y docker-compose-plugin",
+              "fi",
+              # Go to home directory
               "cd /home/ec2-user",
+              # Download docker-compose.yml from S3
               "aws s3 cp s3://joe1dayusebucket/docker-compose.yml ./docker-compose.yml",
+              # ECR login
               "aws ecr get-login-password --region '"$AWS_REGION"' | docker login --username AWS --password-stdin 645537741587.dkr.ecr.'"$AWS_REGION"'.amazonaws.com",
-              "docker compose -f ./docker-compose.yml pull",
-              "docker compose -f ./docker-compose.yml up -d"
+              # Run docker compose
+              "docker compose up -d"
             ]' \
             --query "Command.CommandId" \
             --output text)
       
           echo "Sent command $COMMAND_ID, waiting for results..."
       
-          # Poll until SSM command finishes
           for i in {1..30}; do
             STATUS=$(aws ssm list-command-invocations \
               --command-id "$COMMAND_ID" \
@@ -194,3 +197,4 @@ jobs:
             --details \
             --query "CommandInvocations[0].CommandPlugins[0].Output" \
             --output text
+

@@ -65,6 +65,21 @@
         msg: "EC2 instance launched with IP {{ ec2.instances[0].public_ip_address }}"
 
 # ---------------------------------------------------------
+# Wait for SSH to become available
+# ---------------------------------------------------------
+- name: Wait for SSH to become available
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Wait for port 22 on EC2 instance
+      ansible.builtin.wait_for:
+        host: "{{ ec2.instances[0].public_ip_address }}"
+        port: 22
+        delay: 10       # initial delay before checking
+        timeout: 300    # max wait time in seconds
+        state: started
+
+# ---------------------------------------------------------
 # Second play: configure the EC2 instance
 # ---------------------------------------------------------
 - name: Configure the EC2 instance

@@ -135,13 +135,29 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
         run: |
+          # Get instance ID from the public IP file
           INSTANCE_ID=$(aws ec2 describe-instances \
             --filters "Name=ip-address,Values=$(cat ./ec2-info/ec2_ip.txt)" \
             --query "Reservations[0].Instances[0].InstanceId" \
             --output text)
-
           echo "Target instance: $INSTANCE_ID"
-
+      
+          # Wait until SSM agent registers the instance
+          echo "Waiting for SSM agent to be ready..."
+          for i in {1..30}; do
+            STATUS=$(aws ssm describe-instance-information \
+              --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
+              --query "InstanceInformationList[0].InstanceId" \
+              --output text)
+            if [ "$STATUS" == "$INSTANCE_ID" ]; then
+              echo "Instance ready for SSM!"
+              break
+            fi
+            echo "Not ready yet, retrying in 10 seconds..."
+            sleep 10
+          done
+      
+          # Send your SSM command
           aws ssm send-command \
             --targets "Key=InstanceIds,Values=$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
@@ -151,4 +167,5 @@ jobs:
               "git pull origin main",
               "docker compose pull",
               "docker compose up -d"
-            ]'
+            ]' \
+            --region $AWS_REGION

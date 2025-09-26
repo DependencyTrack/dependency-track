@@ -139,7 +139,7 @@ class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
         componentAudited.setName("acme-lib-b");
         componentAudited = qm.createComponent(componentAudited, false);
         qm.addVulnerability(vuln, componentAudited, AnalyzerIdentity.NONE);
-        qm.makeAnalysis(componentAudited, vuln, AnalysisState.NOT_AFFECTED, null, null, null, false);
+        qm.makeAnalysis(componentAudited, vuln, AnalysisState.NOT_AFFECTED, null, null, null, false, null);
 
         // Create a project with a suppressed vulnerability.
         var projectSuppressed = new Project();
@@ -150,7 +150,7 @@ class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
         componentSuppressed.setName("acme-lib-c");
         componentSuppressed = qm.createComponent(componentSuppressed, false);
         qm.addVulnerability(vuln, componentSuppressed, AnalyzerIdentity.NONE);
-        qm.makeAnalysis(componentSuppressed, vuln, AnalysisState.FALSE_POSITIVE, null, null, null, true);
+        qm.makeAnalysis(componentSuppressed, vuln, AnalysisState.FALSE_POSITIVE, null, null, null, true, null);
 
         new PortfolioMetricsUpdateTask().inform(new PortfolioMetricsUpdateEvent());
 

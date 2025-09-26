@@ -158,4 +158,13 @@ class OsvAdvisoryParserTest {
         Assertions.assertNotNull(advisory);
     }
 
+    @Test
+        // https://github.com/DependencyTrack/dependency-track/issues/5105
+    void testIssue5105() throws Exception {
+        String jsonFile = "src/test/resources/unit/osv.jsons/osv-UBUNTU-CVE-2025-6297.json";
+        String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
+        JSONObject jsonObject = new JSONObject(jsonString);
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assertions.assertNotNull(advisory);
+    }
 }

@@ -37,6 +37,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.CycloneDxMediaType;
+import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
@@ -117,6 +118,8 @@ import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_T
 public class BomResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(BomResource.class);
+    private static final String DEFAULT_EXPORT_FORMAT = "JSON";
+    private static final String DEFAULT_EXPORT_VERSION = "1.5";
 
     @GET
     @Path("/cyclonedx/project/{uuid}")
@@ -139,52 +142,66 @@ public class BomResource extends AlpineResource {
     public Response exportProjectAsCycloneDx (
             @Parameter(description = "The UUID of the project to export", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
-            @Parameter(description = "The format to output (defaults to JSON)")
+            @Parameter(description = "The format to output (defaults to '" + DEFAULT_EXPORT_FORMAT + "')")
             @QueryParam("format") String format,
             @Parameter(description = "Specifies the CycloneDX variant to export. Value options are 'inventory' and 'withVulnerabilities'. (defaults to 'inventory')")
             @QueryParam("variant") String variant,
             @Parameter(description = "Force the resulting BOM to be downloaded as a file (defaults to 'false')")
-            @QueryParam("download") boolean download) {
+            @QueryParam("download") boolean download,
+            @Parameter(description = "The CycloneDX Spec variant exported (defaults to: '" + DEFAULT_EXPORT_VERSION + "')")
+            @QueryParam("version") String version
+    ) {
         try (QueryManager qm = new QueryManager()) {
+            String formatParameter =  Objects.toString(StringUtils.trimToNull(format), DEFAULT_EXPORT_FORMAT);
+            if (! isValidBomFormatParameter(formatParameter)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
+            }
+
+            String versionParameter =  Objects.toString(StringUtils.trimToNull(version), DEFAULT_EXPORT_VERSION);
+            Version cdxOutputVersion = Version.fromVersionString(versionParameter);
+            if(cdxOutputVersion == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM version specified.").build();
+            }
+
+            CycloneDXExporter.Format cdxOutputFormat = CycloneDXExporter.Format.JSON;
+            String cdxOutputMediaType = CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON;
+
+            if (formatParameter.equalsIgnoreCase("XML")) {
+                cdxOutputFormat = CycloneDXExporter.Format.XML;
+                cdxOutputMediaType = CycloneDxMediaType.APPLICATION_CYCLONEDX_XML;
+            }
+
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
+
             if (! qm.hasAccess(super.getPrincipal(), project)) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
 
-            final CycloneDXExporter exporter;
-            if (StringUtils.trimToNull(variant) == null || variant.equalsIgnoreCase("inventory")) {
-                exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY, qm);
-            } else if (variant.equalsIgnoreCase("withVulnerabilities")) {
-                exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES, qm);
-            } else if (variant.equalsIgnoreCase("vdr")) {
-                exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VDR, qm);
-            } else {
+            String parsedVariant = Objects.toString(StringUtils.trimToNull(variant), "inventory").toLowerCase();
+
+            CycloneDXExporter.Variant exportVariant = switch (parsedVariant) {
+                case "vdr" -> CycloneDXExporter.Variant.VDR;
+                case "withvulnerabilities" -> CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES;
+                case "inventory" -> CycloneDXExporter.Variant.INVENTORY;
+                default -> null;
+            }; // exportVariant
+
+            if (exportVariant == null) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM variant specified.").build();
             }
 
+            final CycloneDXExporter exporter = new CycloneDXExporter(exportVariant, qm);
+
             try {
-                if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
-                    if (download) {
-                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON), MediaType.APPLICATION_OCTET_STREAM)
-                                .header("content-disposition","attachment; filename=\"" + project.getUuid() + "-" + variant + ".cdx.json\"").build();
-                    } else {
-                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON),
-                                CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
-                    }
-                } else if (format.equalsIgnoreCase("XML")) {
-                    if (download) {
-                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.XML), MediaType.APPLICATION_OCTET_STREAM)
-                                .header("content-disposition","attachment; filename=\"" + project.getUuid() + "-" + variant + ".cdx.xml\"").build();
-                    } else {
-                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.XML),
-                                CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
-                    }
-                } else {
-                    return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
+                if (download) {
+                    return Response.ok(exporter.export(exporter.create(project), cdxOutputFormat, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
+                            .header("content-disposition","attachment; filename=\"" + project.getUuid() + "-" + parsedVariant + ".cdx.json\"").build();
                 }
+                return Response.ok(exporter.export(exporter.create(project), cdxOutputFormat, cdxOutputVersion), cdxOutputMediaType).build();
+
             } catch (GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -213,28 +230,43 @@ public class BomResource extends AlpineResource {
     public Response exportComponentAsCycloneDx (
             @Parameter(description = "The UUID of the component to export", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
-            @Parameter(description = "The format to output (defaults to JSON)")
-            @QueryParam("format") String format) {
+            @Parameter(description = "The format to output (defaults to '" + DEFAULT_EXPORT_FORMAT + "')")
+            @QueryParam("format") String format,
+            @Parameter(description = "The CycloneDX Spec variant exported (defaults to: '" + DEFAULT_EXPORT_VERSION + "')")
+            @QueryParam("version") String version
+            ) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
             }
-            if (! qm.hasAccess(super.getPrincipal(), component.getProject())) {
+
+            String formatParameter = Objects.toString(StringUtils.trimToNull(format), DEFAULT_EXPORT_FORMAT);
+            if (!isValidBomFormatParameter(formatParameter)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
+            }
+
+            String versionParameter = Objects.toString(StringUtils.trimToNull(version), DEFAULT_EXPORT_VERSION);
+            Version cdxOutputVersion = Version.fromVersionString(versionParameter);
+            if (cdxOutputVersion == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM version specified.").build();
+            }
+
+            String cdxOutputMediaType = CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON;
+            CycloneDXExporter.Format cdxOutputFormat = CycloneDXExporter.Format.JSON;
+
+            if (formatParameter.equalsIgnoreCase("XML")) {
+                cdxOutputFormat = CycloneDXExporter.Format.XML;
+                cdxOutputMediaType = CycloneDxMediaType.APPLICATION_CYCLONEDX_XML;
+            }
+
+            if (!qm.hasAccess(super.getPrincipal(), component.getProject())) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();
             }
 
             final CycloneDXExporter exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY, qm);
             try {
-                if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
-                    return Response.ok(exporter.export(exporter.create(component), CycloneDXExporter.Format.JSON),
-                            CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
-                } else if (format.equalsIgnoreCase("XML")) {
-                    return Response.ok(exporter.export(exporter.create(component), CycloneDXExporter.Format.XML),
-                            CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
-                } else {
-                    return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
-                }
+                return Response.ok(exporter.export(exporter.create(component), cdxOutputFormat, cdxOutputVersion), cdxOutputMediaType).build();
             } catch (GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -255,6 +287,11 @@ public class BomResource extends AlpineResource {
                       the project will be created. In this scenario, the principal making the request will
                       additionally need the <strong>PORTFOLIO_MANAGEMENT</strong> or
                       <strong>PROJECT_CREATION_UPLOAD</strong> permission.
+                    </p>
+                    <p>
+                       The bom upload replaces all existing components. The analysis decisions are kept for components that were
+                       linked to the project before and are included in the uploaded BOM. Any components previously linked to the project
+                       that are not included in the uploaded BOM will be dropped from the project.
                     </p>
                     <p>
                       The BOM will be validated against the CycloneDX schema. If schema validation fails,
@@ -368,6 +405,11 @@ public class BomResource extends AlpineResource {
                       the project will be created. In this scenario, the principal making the request will
                       additionally need the <strong>PORTFOLIO_MANAGEMENT</strong> or
                       <strong>PROJECT_CREATION_UPLOAD</strong> permission.
+                    </p>
+                    <p>
+                       The bom upload replaces all existing components. The analysis decisions are kept for components that were
+                       linked to the project before and are included in the uploaded BOM. Any components previously linked to the project
+                       that are not included in the uploaded BOM will be dropped from the project.
                     </p>
                     <p>
                       The BOM will be validated against the CycloneDX schema. If schema validation fails,
@@ -691,5 +733,10 @@ public class BomResource extends AlpineResource {
             .content("An error occurred during BOM Validation")
             .subject(new BomValidationFailed(project, bom, errors, bomFormat)));
     }
-
+    private static boolean isValidBomFormatParameter(final String format) {
+        if (format == null) {
+            return false;
+        }
+        return format.equalsIgnoreCase("json") || format.equalsIgnoreCase("xml");
+    }
 }

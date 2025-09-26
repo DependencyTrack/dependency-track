@@ -53,7 +53,9 @@ public class SearchManager {
 
     private static final Logger LOGGER = Logger.getLogger(SearchManager.class);
 
-    public SearchResult searchIndices(final String queryString, final int limit) {
+    private SearchManager() { }
+
+    public static SearchResult searchIndices(final String queryString, final int limit) {
         final SearchResult searchResult = new SearchResult();
         final IndexManager[] indexManagers = {
                 ProjectIndexer.getInstance(),
@@ -71,7 +73,7 @@ public class SearchManager {
         return searchResult;
     }
 
-    public SearchResult searchIndex(final IndexManager indexManager, final String queryString, final int limit) {
+    public static SearchResult searchIndex(final IndexManager indexManager, final String queryString, final int limit) {
         final SearchResult searchResult = new SearchResult();
         final List<Map<String, String>> resultSet = new ArrayList<>();
         try {
@@ -139,31 +141,31 @@ public class SearchManager {
         return searchResult;
     }
 
-    public SearchResult searchProjectIndex(final String queryString, final int limit) {
+    public static SearchResult searchProjectIndex(final String queryString, final int limit) {
         return searchIndex(ProjectIndexer.getInstance(), queryString, limit);
     }
 
-    public SearchResult searchComponentIndex(final String queryString, final int limit) {
+    public static SearchResult searchComponentIndex(final String queryString, final int limit) {
         return searchIndex(ComponentIndexer.getInstance(), queryString, limit);
     }
 
-    public SearchResult searchServiceComponentIndex(final String queryString, final int limit) {
+    public static SearchResult searchServiceComponentIndex(final String queryString, final int limit) {
         return searchIndex(ServiceComponentIndexer.getInstance(), queryString, limit);
     }
 
-    public SearchResult searchLicenseIndex(final String queryString, final int limit) {
+    public static SearchResult searchLicenseIndex(final String queryString, final int limit) {
         return searchIndex(LicenseIndexer.getInstance(), queryString, limit);
     }
 
-    public SearchResult searchVulnerabilityIndex(final String queryString, final int limit) {
+    public static SearchResult searchVulnerabilityIndex(final String queryString, final int limit) {
         return searchIndex(VulnerabilityIndexer.getInstance(), queryString, limit);
     }
 
-    public SearchResult searchVulnerableSoftwareIndex(final String queryString, final int limit) {
+    public static SearchResult searchVulnerableSoftwareIndex(final String queryString, final int limit) {
         return searchIndex(VulnerableSoftwareIndexer.getInstance(), queryString, limit);
     }
 
-    public String reindex(Set<String> type) {
+    public static String reindex(Set<String> type) {
         List<IndexManager.IndexType> indexTypes = type.stream().flatMap(t -> IndexManager.IndexType.getIndexType(t).stream()).toList();
         if(indexTypes.isEmpty()) {
             throw new IllegalArgumentException("No valid index type was provided");

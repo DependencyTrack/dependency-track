@@ -23,10 +23,6 @@
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          metadata-complete="true"
          version="6.0">
-
-    <listener>
-        <listener-class>org.dependencytrack.RequirementsVerifier</listener-class>
-    </listener>
     <listener>
         <listener-class>alpine.server.metrics.MetricsInitializer</listener-class>
     </listener>

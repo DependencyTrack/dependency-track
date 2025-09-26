@@ -16,11 +16,26 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.exception;
+package org.dependencytrack.model;
 
-public class RequirementsException extends RuntimeException {
+/**
+ * Enum class for tracking individual components scope.
+ * Scope would be deriving from different SBOM provider.
+ * <a href="https://cyclonedx.org/docs/1.6/json/#components_items_scope">Cyclondx Reference</a>
+ *
+ * @author Anant Kurapati
+ * @since 4.14.0
+ */
+public enum Scope {
+    REQUIRED,
+    OPTIONAL,
+    EXCLUDED;
 
-    public RequirementsException(String message) {
-        super(message);
+    public static Scope getMappedScope(org.cyclonedx.model.Component.Scope scope) {
+        return scope == null ? null : switch (scope) {
+            case REQUIRED -> Scope.REQUIRED;
+            case EXCLUDED -> Scope.EXCLUDED;
+            case OPTIONAL -> Scope.OPTIONAL;
+        };
     }
 }

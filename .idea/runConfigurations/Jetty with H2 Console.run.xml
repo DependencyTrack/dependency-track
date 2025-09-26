@@ -36,6 +36,7 @@
           <option name="pomFileName" />
           <option name="profilesMap">
             <map>
+              <entry key="quick" value="true" />
               <entry key="h2-console" value="true" />
               <entry key="enhance" value="true" />
             </map>

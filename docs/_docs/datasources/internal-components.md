@@ -14,5 +14,6 @@ not conflict with known third-party namespaces and/or names, may opt to define i
 if the disclosure of such information is not desirable.
 
 > By default, components are not identified as internal.
+> The logic used to identify components can be configured to require either a match on namespace or name (default), or both (AND mode).
 
 ![configure internal components](/images/screenshots/configure-internal-components.png)

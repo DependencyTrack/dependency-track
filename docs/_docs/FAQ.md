@@ -19,9 +19,11 @@ This topic is heavily explained in the [Dependency Check Comparison](./../odt-od
 
 #### I expect to see vulnerable components but I don't
 
-Most common reason: You have yet to enable the [Sonatype OSS Index Analyzer](./../datasources/ossindex/). It is not
+Most common reason: You have yet to enable the [Sonatype OSS Index Analyzer]. It is not
 enabled by default but is necessary to scan dependencies represented by
 [Package URLs](./../terminology/#package-url-purl).
+
+Authentication through API Token will be required. Follow [Sonatype OSS Index Analyzer] `Authentication` instructions.
 
 #### I have just enabled OSS Index Analyzer but still don't see results
 
@@ -110,4 +112,17 @@ nginx.ingress.kubernetes.io/proxy-body-size: "100m"
 
 Please consult the [official documentation](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#custom-max-body-size)
 
+#### Policy conditions do not work for some PURLs
+
+Policy condition values are treated as regular expressions.
+
+1. Policy condition values are implicitly treated as substring matches.
+   They must be explicitly anchored with `^` and `$` to make them an exact match.
+2. Characters with special meaning in regular expressions should be escaped with a `\\`.
+   This is needed if the PURL contains a `?`, since the question mark makes the previous character optional and is not treated literally.
+   Another special character is `.`, which should also be escaped.
+3. Policy condition values support wildcards, so an `*` means that any text is allowed, including missing text.
+   For example, `^vendor/*$` would match `vendor/lib-1`, `vendor/app`, or even only `vendor/`.
+
 [defect report]: https://github.com/DependencyTrack/dependency-track/issues/new?assignees=&labels=defect%2Cin+triage&template=defect-report.yml
+[Sonatype OSS Index Analyzer]: (./../datasources/ossindex/)

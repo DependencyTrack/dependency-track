@@ -45,7 +45,6 @@ import us.springett.parsers.cpe.exceptions.CpeValidationException;
 import us.springett.parsers.cpe.values.Part;
 
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -150,7 +149,9 @@ public class FuzzyVulnerableSoftwareSearchManager {
     }
     private List<VulnerableSoftware> fuzzySearch(QueryManager qm, Part part, String vendor, String product)  {
         try {
-            us.springett.parsers.cpe.Cpe cpe = new us.springett.parsers.cpe.Cpe(part, escape(vendor), escape(product), "*", "*", "*", "*", "*", "*", "*", "*");
+            String sanitizedVendor = vendor.replace(" ", "_");
+            String sanitizedProduct = product.replace(" ", "_");
+            us.springett.parsers.cpe.Cpe cpe = new us.springett.parsers.cpe.Cpe(part, escapeLuceneQuery(sanitizedVendor), escapeLuceneQuery(sanitizedProduct), "*", "*", "*", "*", "*", "*", "*", "*");
             String cpeSearch = getLuceneCpeRegexp(cpe.toCpe23FS());
             return fuzzySearch(qm, cpeSearch);
         } catch (CpeValidationException cpeValidationException) {
@@ -239,8 +240,8 @@ public class FuzzyVulnerableSoftwareSearchManager {
                 exp.insert(0, "cpe22:/");
                 exp.append("\\/").append(cpe.getPart().getAbbreviation());
             }
-            exp.append("\\:").append(escape(getComponentRegex(cpe.getVendor())));
-            exp.append("\\:").append(escape(getComponentRegex(cpe.getProduct())));
+            exp.append("\\:").append(escapeLuceneQuery(getComponentRegex(cpe.getVendor())));
+            exp.append("\\:").append(escapeLuceneQuery(getComponentRegex(cpe.getProduct())));
             exp.append("\\:").append(getComponentRegex(cpe.getVersion()));
             exp.append("\\:").append(getComponentRegex(cpe.getUpdate()));
             exp.append("\\:").append(getComponentRegex(cpe.getEdition()));
@@ -260,19 +261,19 @@ public class FuzzyVulnerableSoftwareSearchManager {
 
     private static String getComponentRegex(String component) {
         if (component != null) {
-            return component.replace("*", ".*");
+            return component.replace("*", ".*").toLowerCase();
         } else {
             return ".*";
         }
     }
 
-    private static String escape(final String input) {
+    private static String escapeLuceneQuery(final String input) {
         if(input == null) {
             return null;
         } else if (input.equals(".*")) {
             return input;
         }
-        return QueryParser.escape(input);
+        return QueryParser.escape(input.toLowerCase());
     }
 
 }

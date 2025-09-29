@@ -124,7 +124,7 @@
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.httpclient5.version>5.4.3</lib.httpclient5.version>
         <lib.log4j-over-slf4j.version>2.0.17</lib.log4j-over-slf4j.version>
-        <lib.org-kohsuke-github-api.version>1.323</lib.org-kohsuke-github-api.version>
+        <lib.org-kohsuke-github-api.version>1.330</lib.org-kohsuke-github-api.version>
         <lib.com-asahaf-javacron.version>1.4.0</lib.com-asahaf-javacron.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.10.0.jre11</lib.jdbc-driver.mssql.version>

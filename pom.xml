@@ -138,17 +138,6 @@
         <services.bom.merge.skip>true</services.bom.merge.skip>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <!-- Resolve CVE-2025-48924 -->
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>3.18.0</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <!-- Alpine -->
         <dependency>

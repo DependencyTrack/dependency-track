@@ -6,11 +6,11 @@
   "licenseId": "gSOAP-1.3b",
   "crossRef": [
     {
-      "match": "N/A",
+      "match": "false",
       "url": "http://www.cs.fsu.edu/~engelen/license.html",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-12-30T17:57:59Z",
+      "isLive": true,
+      "timestamp": "2025-07-01T15:05:32Z",
       "isWayBackLink": false,
       "order": 0
     }

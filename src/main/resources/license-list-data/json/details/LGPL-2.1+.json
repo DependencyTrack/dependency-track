@@ -9,11 +9,11 @@
   "standardLicenseHeader": "\u003cone line to give the library\u0027s name and an idea of what it does.\u003e\nCopyright (C) \u003cyear\u003e \u003cname of author\u003e\n\nThis library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.\n\nThis library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.\n\nYou should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA\n\n",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1-standalone.html",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T18:03:23Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:59:37Z",
       "isWayBackLink": false,
       "order": 0
     },
@@ -22,7 +22,7 @@
       "url": "https://opensource.org/licenses/LGPL-2.1",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2024-12-30T18:03:23Z",
+      "timestamp": "2025-07-01T14:59:37Z",
       "isWayBackLink": false,
       "order": 1
     }

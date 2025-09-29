@@ -6,22 +6,22 @@
   "licenseId": "0BSD",
   "crossRef": [
     {
-      "match": "true",
-      "url": "http://landley.net/toybox/license.html",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T18:01:41Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/0BSD",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2024-12-30T18:01:41Z",
+      "timestamp": "2025-07-01T14:57:13Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "true",
+      "url": "http://landley.net/toybox/license.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:57:13Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

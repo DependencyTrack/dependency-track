@@ -1,0 +1,45 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Permission is granted to distribute, modify and use this program\nas long as this comment is not removed or changed.\n",
+  "standardLicenseTemplate": "Permission is granted to distribute, modify and use this program as long as this comment is not removed or changed.\n\n",
+  "name": "man2html License",
+  "licenseComments": "This license is very similar to check-cvs.",
+  "comment": "This license is very similar to check-cvs.",
+  "licenseId": "man2html",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/hamano/man2html/blob/master/man2html.c",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:52Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "N/A",
+      "url": "http://primates.ximian.com/~flucifredi/man/man-1.6g.tar.gz",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:54:52Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://docs.oracle.com/cd/E81115_01/html/E81116/licenses.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:52Z",
+      "isWayBackLink": false,
+      "order": 2
+    }
+  ],
+  "seeAlso": [
+    "http://primates.ximian.com/~flucifredi/man/man-1.6g.tar.gz",
+    "https://github.com/hamano/man2html/blob/master/man2html.c",
+    "https://docs.oracle.com/cd/E81115_01/html/E81116/licenses.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            Permission is granted to distribute, modify and use this\n            program as long as this comment is not removed or changed.\n         \u003c/p\u003e\n\n      "
+}

@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "The author or authors of this code dedicate any and all copyright interest in this code to the public domain. We make this dedication for the benefit of the public at large and to the detriment of our heirs and successors. We intend this dedication to be an overt act of relinquishment in perpetuity of all present and future rights to this code under copyright law.\n",
+  "standardLicenseTemplate": "The author or authors of this code dedicate any and all copyright interest in this code to the public domain. We make this dedication for the benefit of the public at large and to the detriment of our heirs and successors. We intend this dedication to be an overt act of relinquishment in perpetuity of all present and future rights to this code under copyright law.\n\n",
+  "name": "Unlicense - libtelnet variant",
+  "licenseComments": "This is license contains a small part of the Unlicense, but is much shorter.",
+  "comment": "This is license contains a small part of the Unlicense, but is much shorter.",
+  "licenseId": "Unlicense-libtelnet",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/seanmiddleditch/libtelnet/blob/develop/COPYING",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:50Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/seanmiddleditch/libtelnet/blob/develop/COPYING"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            The author or authors of this code dedicate any and all\n            copyright interest in this code to the public domain. We make\n            this dedication for the benefit of the public at large and\n            to the detriment of our heirs and successors. We intend this\n            dedication to be an overt act of relinquishment in perpetuity of\n            all present and future rights to this code under copyright law.\n         \u003c/p\u003e\n\n      "
+}

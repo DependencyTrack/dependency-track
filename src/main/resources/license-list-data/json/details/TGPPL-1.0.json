@@ -8,22 +8,22 @@
   "standardLicenseHeader": "*Licensed under the Transitive Grace Period Public Licence version 1.0*\n\n",
   "crossRef": [
     {
-      "match": "true",
-      "url": "https://fedoraproject.org/wiki/Licensing/TGPPL",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:57:52Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "false",
       "url": "https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/COPYING.TGPPL.rst",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:57:58Z",
+      "timestamp": "2025-07-01T14:54:54Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/TGPPL",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:58Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

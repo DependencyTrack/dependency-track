@@ -6,11 +6,11 @@
   "licenseId": "TPDL",
   "crossRef": [
     {
-      "match": "true",
+      "match": "N/A",
       "url": "https://metacpan.org/pod/Time::ParseDate#LICENSE",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T18:00:19Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T15:05:40Z",
       "isWayBackLink": false,
       "order": 0
     }

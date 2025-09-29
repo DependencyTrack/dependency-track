@@ -6,22 +6,22 @@
   "licenseId": "OGTSL",
   "crossRef": [
     {
-      "match": "true",
-      "url": "http://www.opengroup.org/testing/downloads/The_Open_Group_TSL.txt",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T18:04:45Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/OGTSL",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T18:04:45Z",
+      "timestamp": "2025-07-01T15:01:44Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "true",
+      "url": "http://www.opengroup.org/testing/downloads/The_Open_Group_TSL.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:01:45Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

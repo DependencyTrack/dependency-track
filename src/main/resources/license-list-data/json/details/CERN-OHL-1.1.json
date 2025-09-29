@@ -6,11 +6,11 @@
   "licenseId": "CERN-OHL-1.1",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://www.ohwr.org/project/licenses/wikis/cern-ohl-v1.1",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:58:31Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:58:37Z",
       "isWayBackLink": false,
       "order": 0
     }

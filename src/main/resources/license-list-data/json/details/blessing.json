@@ -6,22 +6,22 @@
   "licenseId": "blessing",
   "crossRef": [
     {
-      "match": "true",
-      "url": "https://sqlite.org/src/artifact/df5091916dbb40e6",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T18:06:27Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "https://www.sqlite.org/src/artifact/e33a4df7e32d742a?ln\u003d4-9",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T18:06:27Z",
+      "timestamp": "2025-07-01T15:06:02Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "true",
+      "url": "https://sqlite.org/src/artifact/df5091916dbb40e6",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:06:03Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

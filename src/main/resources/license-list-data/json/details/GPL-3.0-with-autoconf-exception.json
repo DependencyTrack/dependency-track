@@ -8,11 +8,11 @@
   "licenseId": "GPL-3.0-with-autoconf-exception",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://www.gnu.org/licenses/autoconf-exception-3.0.html",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T18:06:09Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:59:00Z",
       "isWayBackLink": false,
       "order": 0
     }

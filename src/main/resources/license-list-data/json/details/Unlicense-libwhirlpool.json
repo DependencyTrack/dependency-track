@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "This is free and unencumbered software released into the public domain.\nAnyone is free to copy, modify, publish, use, compile, sell, or\ndistribute this software, either in source code form or as a compiled\nbinary, for any purpose, commercial or non-commercial, and by any means.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\nEXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\n",
+  "standardLicenseTemplate": "This is free and unencumbered software released into the public domain. Anyone is free to copy, modify, publish, use, compile, sell, or distribute this software, either in source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\n\n",
+  "name": "Unlicense - libwhirlpool variant",
+  "licenseComments": "This is similar to the Unlicense, but removes the middle paragraph entirely and the last sentence.",
+  "comment": "This is similar to the Unlicense, but removes the middle paragraph entirely and the last sentence.",
+  "licenseId": "Unlicense-libwhirlpool",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/dfateyev/libwhirlpool/blob/master/README#L27",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:02:35Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/dfateyev/libwhirlpool/blob/master/README#L27"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            This is free and unencumbered software released into the\n            public domain. Anyone is free to copy, modify, publish,\n            use, compile, sell, or distribute this software, either\n            in source code form or as a compiled binary, for any\n            purpose, commercial or non-commercial, and by any means.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            THE SOFTWARE IS PROVIDED \u0026quot;AS IS\u0026quot;, WITHOUT WARRANTY\n            OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT\n            NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n            FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\n         \u003c/p\u003e\n\n      "
+}

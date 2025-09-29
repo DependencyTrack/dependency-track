@@ -10,22 +10,22 @@
   "standardLicenseHeader": "Copyright (c) [2019] [name of copyright holder]\n\n[Software Name] is licensed under the Mulan PSL v1.\n\nYou can use this software according to the terms and conditions of the Mulan PSL v1.\n\nYou may obtain a copy of Mulan PSL v1 at:\n\nhttp://license.coscl.org.cn/MulanPSL\n\nTHIS SOFTWARE IS PROVIDED ON AN \"AS IS\" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.\n\nSee the Mulan PSL v1 for more details.\n\n",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://license.coscl.org.cn/MulanPSL/",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-12-30T18:04:24Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "false",
       "url": "https://github.com/yuwenlong/longphp/blob/25dfb70cc2a466dc4bb55ba30901cbce08d164b5/LICENSE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T18:04:24Z",
+      "timestamp": "2025-07-01T14:57:13Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "N/A",
+      "url": "https://license.coscl.org.cn/MulanPSL/",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:57:15Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

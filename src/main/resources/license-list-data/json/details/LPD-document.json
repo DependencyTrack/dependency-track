@@ -6,22 +6,22 @@
   "licenseId": "LPD-document",
   "crossRef": [
     {
+      "match": "false",
+      "url": "https://github.com/Cyan4973/xxHash/blob/dev/doc/xxhash_spec.md",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:17Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
       "match": "true",
       "url": "https://www.ietf.org/rfc/rfc1952.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:58:25Z",
+      "timestamp": "2025-07-01T14:54:17Z",
       "isWayBackLink": false,
       "order": 1
-    },
-    {
-      "match": "true",
-      "url": "https://github.com/Cyan4973/xxHash/blob/dev/doc/xxhash_spec.md",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:58:26Z",
-      "isWayBackLink": false,
-      "order": 0
     }
   ],
   "seeAlso": [

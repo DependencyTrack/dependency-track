@@ -643,6 +643,7 @@
                     <includeLicenseText>false</includeLicenseText>
                     <outputReactorProjects>true</outputReactorProjects>
                     <outputFormat>json</outputFormat>
+                    <skipNotDeployed>false</skipNotDeployed>
                     <externalReferences>
                         <externalReference>
                             <type>advisories</type>

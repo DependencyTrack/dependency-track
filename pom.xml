@@ -24,7 +24,7 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>3.2.0</version>
+        <version>3.3.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -101,8 +101,6 @@
         <lib.cyclonedx-java.version>11.0.0</lib.cyclonedx-java.version>
         <lib.jakarta-validation.version>3.1.1</lib.jakarta-validation.version>
         <lib.greenmail.version>2.1.5</lib.greenmail.version>
-        <lib.jackson.version>2.20.0</lib.jackson.version>
-        <lib.jackson-databind.version>2.20.0</lib.jackson-databind.version>
         <lib.json-java.version>20250517</lib.json-java.version>
         <lib.json-unit.version>4.1.1</lib.json-unit.version>
         <lib.junit.version>5.11.4</lib.junit.version>
@@ -140,34 +138,8 @@
         <services.bom.merge.skip>true</services.bom.merge.skip>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>ossrh-snapshot</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <snapshots>
-                <updatePolicy>always</updatePolicy>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <dependencyManagement>
         <dependencies>
-            <!-- Resolve CVE-2025-7962 -->
-            <!-- TODO: Remove when upgrading to Alpine 3.3.0. It already includes this. -->
-            <dependency>
-                <groupId>org.eclipse.angus</groupId>
-                <artifactId>angus-mail</artifactId>
-                <version>2.0.5</version>
-            </dependency>
-
-            <!-- TODO: Remove when upgrading to Alpine 3.3.0. It already includes this. -->
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>2.20</version>
-            </dependency>
-
             <!-- Resolve CVE-2025-48924 -->
             <dependency>
                 <groupId>org.apache.commons</groupId>

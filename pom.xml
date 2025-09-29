@@ -98,7 +98,7 @@
         <lib.commons-text.version>1.14.0</lib.commons-text.version>
         <lib.ae-security.version>0.144.1</lib.ae-security.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.cyclonedx-java.version>10.2.1</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>11.0.0</lib.cyclonedx-java.version>
         <lib.jakarta-validation.version>3.1.1</lib.jakarta-validation.version>
         <lib.greenmail.version>2.1.5</lib.greenmail.version>
         <lib.jackson.version>2.18.3</lib.jackson.version>

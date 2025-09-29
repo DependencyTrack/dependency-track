@@ -6,11 +6,11 @@
   "licenseId": "FDK-AAC",
   "crossRef": [
     {
-      "match": "true",
+      "match": "N/A",
       "url": "https://directory.fsf.org/wiki/License:Fdk",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:57:31Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:54:17Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -19,7 +19,7 @@
       "url": "https://fedoraproject.org/wiki/Licensing/FDK-AAC",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:57:32Z",
+      "timestamp": "2025-07-01T14:54:18Z",
       "isWayBackLink": false,
       "order": 0
     }

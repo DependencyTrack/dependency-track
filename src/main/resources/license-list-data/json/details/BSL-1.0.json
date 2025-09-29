@@ -9,22 +9,22 @@
   "licenseId": "BSL-1.0",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/BSL-1.0",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:57:14Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "true",
       "url": "http://www.boost.org/LICENSE_1_0.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:57:14Z",
+      "timestamp": "2025-07-01T14:54:58Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/BSL-1.0",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:58Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

@@ -8,11 +8,11 @@
   "standardLicenseHeader": "Copyright (C) 19xx name of author\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 1.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.\n\n",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://www.gnu.org/licenses/old-licenses/gpl-1.0-standalone.html",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:56:30Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:54:19Z",
       "isWayBackLink": false,
       "order": 0
     }

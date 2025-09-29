@@ -8,11 +8,11 @@
   "licenseId": "MIT-0",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "https://github.com/awsdocs/aws-cloud9-user-guide/blob/master/LICENSE-SAMPLECODE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:54:50Z",
+      "timestamp": "2025-07-01T14:55:21Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -21,7 +21,7 @@
       "url": "https://romanrm.net/mit-zero",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:54:51Z",
+      "timestamp": "2025-07-01T14:55:22Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -30,7 +30,7 @@
       "url": "https://github.com/aws/mit-0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:54:52Z",
+      "timestamp": "2025-07-01T14:55:23Z",
       "isWayBackLink": false,
       "order": 0
     }

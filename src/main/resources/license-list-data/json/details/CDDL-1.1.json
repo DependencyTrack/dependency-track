@@ -8,22 +8,22 @@
   "licenseId": "CDDL-1.1",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "http://glassfish.java.net/public/CDDL+GPL_1_1.html",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-12-30T17:56:09Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "true",
       "url": "https://javaee.github.io/glassfish/LICENSE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:56:09Z",
+      "timestamp": "2025-07-01T14:54:48Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "N/A",
+      "url": "http://glassfish.java.net/public/CDDL+GPL_1_1.html",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:54:57Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

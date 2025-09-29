@@ -10,11 +10,11 @@
   "standardLicenseHeader": "Copyright (c) YEAR YOUR NAME . Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.1 or any later version published by the Free Software Foundation; with no Invariant Sections, with no Front-Cover Texts, and with no Back-Cover Texts. A copy of the license is included in the section entitled \"GNU Free Documentation License\".\n\n",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://www.gnu.org/licenses/old-licenses/fdl-1.1.txt",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T18:05:09Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T15:06:09Z",
       "isWayBackLink": false,
       "order": 0
     }

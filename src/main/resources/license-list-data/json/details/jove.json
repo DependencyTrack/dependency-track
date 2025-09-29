@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "This program is Copyright (C) 1986-2002 by Jonathan Payne.  JOVE is\nprovided by Jonathan and Jovehacks without charge and without\nwarranty.  You may copy, modify, and/or distribute JOVE, provided that\nthis notice is included in all the source files and documentation.\n",
+  "standardLicenseTemplate": "This program is Copyright (C) 1986-2002 by Jonathan Payne. JOVE is provided by Jonathan and Jovehacks without charge and without warranty. You may copy, modify, and/or distribute JOVE, provided that this notice is included in all the source files and documentation.\n\n",
+  "name": "Jove License",
+  "licenseId": "jove",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/jonmacs/jove/blob/4_17/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:05:01Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/jonmacs/jove/blob/4_17/LICENSE"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            This program is Copyright (C) 1986-2002 by Jonathan\n            Payne. JOVE is provided by Jonathan and Jovehacks without\n            charge and without warranty. You may copy, modify,\n            and/or distribute JOVE, provided that this notice is\n            included in all the source files and documentation.\n         \u003c/p\u003e\n\n      "
+}

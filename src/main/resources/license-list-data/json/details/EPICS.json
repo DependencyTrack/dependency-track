@@ -6,11 +6,11 @@
   "licenseId": "EPICS",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://epics.anl.gov/license/open.php",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:55:47Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:55:15Z",
       "isWayBackLink": false,
       "order": 0
     }

@@ -6,11 +6,11 @@
   "licenseId": "Clips",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "https://github.com/DrItanium/maya/blob/master/LICENSE.CLIPS",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:59:22Z",
+      "timestamp": "2025-07-01T14:54:28Z",
       "isWayBackLink": false,
       "order": 0
     }

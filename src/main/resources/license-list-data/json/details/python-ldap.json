@@ -6,11 +6,11 @@
   "licenseId": "python-ldap",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "https://github.com/python-ldap/python-ldap/blob/main/LICENCE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T18:02:27Z",
+      "timestamp": "2025-07-01T15:04:28Z",
       "isWayBackLink": false,
       "order": 0
     }

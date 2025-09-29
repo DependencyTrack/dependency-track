@@ -6,11 +6,11 @@
   "licenseId": "SugarCRM-1.1.3",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "http://www.sugarcrm.com/crm/SPL",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:55:26Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:55:50Z",
       "isWayBackLink": false,
       "order": 0
     }

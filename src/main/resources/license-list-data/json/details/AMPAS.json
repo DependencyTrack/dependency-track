@@ -6,11 +6,11 @@
   "licenseId": "AMPAS",
   "crossRef": [
     {
-      "match": "--",
+      "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing/BSD#AMPASBSD",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-12-30T17:55:06Z",
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:19Z",
       "isWayBackLink": false,
       "order": 0
     }

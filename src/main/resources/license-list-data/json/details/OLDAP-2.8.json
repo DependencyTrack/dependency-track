@@ -6,11 +6,11 @@
   "licenseId": "OLDAP-2.8",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "http://www.openldap.org/software/release/license.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:54:50Z",
+      "timestamp": "2025-07-01T14:57:59Z",
       "isWayBackLink": false,
       "order": 0
     }

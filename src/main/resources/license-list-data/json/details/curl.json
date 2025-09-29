@@ -6,11 +6,11 @@
   "licenseId": "curl",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "https://github.com/bagder/curl/blob/master/COPYING",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T18:03:42Z",
+      "timestamp": "2025-07-01T14:55:17Z",
       "isWayBackLink": false,
       "order": 0
     }

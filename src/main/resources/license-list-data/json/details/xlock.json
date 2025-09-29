@@ -6,11 +6,11 @@
   "licenseId": "xlock",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://fossies.org/linux/tiff/contrib/ras/ras2tif.c",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T18:02:01Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:57:56Z",
       "isWayBackLink": false,
       "order": 0
     }

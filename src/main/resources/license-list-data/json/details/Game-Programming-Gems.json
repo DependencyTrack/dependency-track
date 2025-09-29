@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Original version Copyright (C) Scott Bilas, 2000.\nAll rights reserved worldwide.\n\nThis software is provided \"as is\" without express or implied\nwarranties. You may freely copy and compile this source into\napplications you distribute provided that the copyright text\nbelow is included in the resulting source code, for example:\n\"Portions Copyright (C) Scott Bilas, 2000\"\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Original version Copyright (C) Scott Bilas, 2000. All rights reserved worldwide.  \";match\u003d\".{0,5000}\"\u003e\u003e\nThis software is provided \"as is\" without express or implied warranties. You may freely copy and compile this source into applications you distribute provided that the copyright text below is included in the resulting source code, for example: \"Portions Copyright (C) Scott Bilas, 2000\"\n\n",
+  "name": "Game Programming Gems License",
+  "licenseId": "Game-Programming-Gems",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/OGRECave/ogre/blob/master/OgreMain/include/OgreSingleton.h#L28C3-L35C46",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:56:11Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/OGRECave/ogre/blob/master/OgreMain/include/OgreSingleton.h#L28C3-L35C46"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003e\n            Original version Copyright (C) Scott\n            Bilas, 2000. All rights reserved worldwide.\n         \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            This software is provided \u0026quot;as is\u0026quot; without express or\n            implied warranties. You may freely copy and compile this\n            source into applications you distribute provided that the\n            copyright text below is included in the resulting source\n            code, for example: \u0026quot;Portions Copyright (C) Scott Bilas, 2000\u0026quot;\n         \u003c/p\u003e\n\n      "
+}

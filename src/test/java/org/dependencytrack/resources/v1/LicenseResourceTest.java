@@ -56,7 +56,7 @@ class LicenseResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus(), 0);
-        Assertions.assertEquals(String.valueOf(757), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(String.valueOf(778), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(100, json.size());
@@ -75,7 +75,7 @@ class LicenseResourceTest extends ResourceTest {
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
-        Assertions.assertEquals(757, json.size());
+        Assertions.assertEquals(778, json.size());
         Assertions.assertNotNull(json.getJsonObject(0).getString("name"));
         Assertions.assertNull(json.getJsonObject(0).getString("licenseText", null));
         Assertions.assertNull(json.getJsonObject(0).getString("licenseComments", null));

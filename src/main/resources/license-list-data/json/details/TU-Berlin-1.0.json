@@ -6,11 +6,11 @@
   "licenseId": "TU-Berlin-1.0",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "https://github.com/swh/ladspa/blob/7bf6f3799fdba70fda297c2d8fd9f526803d9680/gsm/COPYRIGHT",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:57:37Z",
+      "timestamp": "2025-07-01T14:54:45Z",
       "isWayBackLink": false,
       "order": 0
     }

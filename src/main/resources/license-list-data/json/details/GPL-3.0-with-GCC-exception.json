@@ -8,11 +8,11 @@
   "licenseId": "GPL-3.0-with-GCC-exception",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://www.gnu.org/licenses/gcc-exception-3.1.html",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:55:45Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T15:03:19Z",
       "isWayBackLink": false,
       "order": 0
     }

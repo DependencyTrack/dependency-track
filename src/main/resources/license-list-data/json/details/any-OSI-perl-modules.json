@@ -8,29 +8,29 @@
   "licenseId": "any-OSI-perl-modules",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://metacpan.org/pod/Qmail::Deliverable::Client#LICENSE",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:57:28Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:56:00Z",
       "isWayBackLink": false,
       "order": 1
     },
     {
-      "match": "true",
+      "match": "N/A",
       "url": "https://metacpan.org/release/JUERD/Exporter-Tidy-0.09/view/Tidy.pm#LICENSE",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:57:28Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:56:00Z",
       "isWayBackLink": false,
       "order": 0
     },
     {
-      "match": "true",
+      "match": "N/A",
       "url": "https://metacpan.org/pod/Net::MQTT::Simple#LICENSE",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:57:28Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:56:00Z",
       "isWayBackLink": false,
       "order": 2
     }

@@ -9,11 +9,11 @@
   "licenseId": "BSD-4-Clause",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "http://directory.fsf.org/wiki/License:BSD_4Clause",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:59:44Z",
+      "timestamp": "2025-07-01T14:55:59Z",
       "isWayBackLink": false,
       "order": 0
     }

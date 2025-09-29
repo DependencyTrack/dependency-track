@@ -7,11 +7,11 @@
   "licenseId": "FSFAP",
   "crossRef": [
     {
-      "match": "true",
+      "match": "N/A",
       "url": "https://www.gnu.org/prep/maintain/html_node/License-Notices-for-Other-Files.html",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:55:19Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T15:02:36Z",
       "isWayBackLink": false,
       "order": 0
     }

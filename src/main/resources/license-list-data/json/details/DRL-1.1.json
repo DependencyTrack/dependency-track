@@ -6,11 +6,11 @@
   "licenseId": "DRL-1.1",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "https://github.com/SigmaHQ/Detection-Rule-License/blob/6ec7fbde6101d101b5b5d1fcb8f9b69fbc76c04a/LICENSE.Detection.Rules.md",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T18:05:24Z",
+      "timestamp": "2025-07-01T14:55:03Z",
       "isWayBackLink": false,
       "order": 0
     }

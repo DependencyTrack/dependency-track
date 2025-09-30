@@ -48,12 +48,16 @@ import org.slf4j.MDC;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -106,32 +110,39 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
     @Override
     public void inform(Event e) {
+        if (!(e instanceof OsvMirrorEvent)) {
+            return;
+        }
 
-        if (e instanceof OsvMirrorEvent) {
+        if (this.ecosystems == null || this.ecosystems.isEmpty()) {
+            LOGGER.info("Google OSV mirroring is disabled. No ecosystem selected.");
+            return;
+        }
 
-            if (this.ecosystems != null && !this.ecosystems.isEmpty()) {
-                for (String ecosystem : this.ecosystems) {
-                    LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
-                    String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20")
-                            + "/all.zip";
-                    HttpUriRequest request = new HttpGet(url);
-                    try (var ignoredMdcOsvEcosystem = MDC.putCloseable("osvEcosystem", ecosystem);
-                         final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                        final StatusLine status = response.getStatusLine();
-                        if (status.getStatusCode() == HttpStatus.SC_OK) {
-                            try (InputStream in = response.getEntity().getContent();
-                                 ZipInputStream zipInput = new ZipInputStream(in)) {
-                                unzipFolder(zipInput);
-                            }
-                        } else {
-                            LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
-                        }
-                    } catch (Exception ex) {
-                        LOGGER.error("Exception while executing Http client request", ex);
-                    }
+        for (final var ecosystem : this.ecosystems) {
+            LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
+            final var url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20") + "/all.zip";
+            final var request = new HttpGet(url);
+            try (final var ignoredMdcOsvEcosystem = MDC.putCloseable("osvEcosystem", ecosystem); final var response = HttpClientPool.getClient().execute(request)) {
+                final var status = response.getStatusLine();
+                if (status.getStatusCode() != HttpStatus.SC_OK) {
+                    LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
+                    continue;
                 }
-            } else {
-                LOGGER.info("Google OSV mirroring is disabled. No ecosystem selected.");
+
+                final var tempFile = Files.createTempFile("google-osv-download", ".zip");
+
+                try (final var in = response.getEntity().getContent()) {
+                    Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                }
+
+                try (final var in = Files.newInputStream(tempFile, StandardOpenOption.DELETE_ON_CLOSE);
+                     final var bufferedIn = new BufferedInputStream(in);
+                     final var zipInput = new ZipInputStream(bufferedIn)) {
+                    unzipFolder(zipInput);
+                }
+            } catch (Exception ex) {
+                LOGGER.error("Exception while executing Http client request", ex);
             }
         }
     }

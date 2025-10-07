@@ -1,0 +1,924 @@
+{
+  "count": 3,
+  "lower": "5.1.1",
+  "parent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/microsoft.data.sqlclient/index.json",
+  "upper": "6.1.0",
+  "items": [
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n    \nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/5.1.1/icon",
+        "deprecation": {
+          "reasons": [
+            "CriticalBugs"
+          ],
+          "message": "An important security issue exists in this version of the package. It is recommended to update to a newer version.\nhttps://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-0056"
+        },
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/5.1.1/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/Download/microsoft.data.sqlclient/5.1.1",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "5.1.1-pre-release-test",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.interopservices.runtimeinformation/index.json",
+                "id": "System.Runtime.InteropServices.RuntimeInformation"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6.2"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni.runtime/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI.runtime"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[1.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.sqlserver.server/index.json",
+                "id": "Microsoft.SqlServer.Server"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.cryptography.cng/index.json",
+                "id": "System.Security.Cryptography.Cng"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              }
+            ],
+            "targetFramework": "net6.0"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni.runtime/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI.runtime"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[1.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.sqlserver.server/index.json",
+                "id": "Microsoft.SqlServer.Server"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              },
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.loader/index.json",
+                "id": "System.Runtime.Loader"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.cryptography.cng/index.json",
+                "id": "System.Security.Cryptography.Cng"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni.runtime/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI.runtime"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[1.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.sqlserver.server/index.json",
+                "id": "Microsoft.SqlServer.Server"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              },
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.loader/index.json",
+                "id": "System.Runtime.Loader"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.cryptography.cng/index.json",
+                "id": "System.Security.Cryptography.Cng"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              }
+            ],
+            "targetFramework": ".NETStandard2.1"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/Download/microsoft.data.sqlclient/5.1.1",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient/5.1.1.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n    \nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/5.1.2/icon",
+        "deprecation": {
+          "reasons": [
+            "CriticalBugs"
+          ],
+          "message": "An important security issue exists in this version of the package. It is recommended to update to a newer version.\nhttps://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-0056"
+        },
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/5.1.2/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/Download/microsoft.data.sqlclient/5.1.2",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "5.1.2-pre-release-test",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.interopservices.runtimeinformation/index.json",
+                "id": "System.Runtime.InteropServices.RuntimeInformation"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6.2"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni.runtime/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI.runtime"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[1.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.sqlserver.server/index.json",
+                "id": "Microsoft.SqlServer.Server"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.cryptography.cng/index.json",
+                "id": "System.Security.Cryptography.Cng"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              }
+            ],
+            "targetFramework": "net6.0"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni.runtime/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI.runtime"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[1.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.sqlserver.server/index.json",
+                "id": "Microsoft.SqlServer.Server"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              },
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.loader/index.json",
+                "id": "System.Runtime.Loader"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.cryptography.cng/index.json",
+                "id": "System.Security.Cryptography.Cng"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni.runtime/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI.runtime"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[1.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.sqlserver.server/index.json",
+                "id": "Microsoft.SqlServer.Server"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              },
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.loader/index.json",
+                "id": "System.Runtime.Loader"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.cryptography.cng/index.json",
+                "id": "System.Security.Cryptography.Cng"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              }
+            ],
+            "targetFramework": ".NETStandard2.1"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/Download/microsoft.data.sqlclient/5.1.2",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient/5.1.2.json"
+    },
+    {
+      "catalogEntry": {
+        "authors": "Microsoft",
+        "description": "Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)\n    \nCommonly Used Types:\nMicrosoft.Data.SqlClient.SqlConnection\nMicrosoft.Data.SqlClient.SqlException\nMicrosoft.Data.SqlClient.SqlParameter\nMicrosoft.Data.SqlClient.SqlDataReader\nMicrosoft.Data.SqlClient.SqlCommand\nMicrosoft.Data.SqlClient.SqlTransaction\nMicrosoft.Data.SqlClient.SqlParameterCollection\nMicrosoft.Data.SqlClient.SqlClientFactory\n\nWhen using NuGet 3.x this package requires at least version 3.4.",
+        "iconUrl": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/5.1.3/icon",
+        "language": "",
+        "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/5.1.3/license",
+        "listed": true,
+        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/Download/microsoft.data.sqlclient/5.1.3",
+        "projectUrl": "https://aka.ms/sqlclientproject",
+        "requireLicenseAcceptance": true,
+        "summary": "",
+        "tags": [
+          "sqlclient",
+          "microsoft.data.sqlclient"
+        ],
+        "title": "Microsoft.Data.SqlClient",
+        "version": "5.1.3-pre-release-test",
+        "dependencyGroups": [
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.interopservices.runtimeinformation/index.json",
+                "id": "System.Runtime.InteropServices.RuntimeInformation"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              }
+            ],
+            "targetFramework": ".NETFramework4.6.2"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni.runtime/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI.runtime"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[1.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.sqlserver.server/index.json",
+                "id": "Microsoft.SqlServer.Server"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.diagnostics.diagnosticsource/index.json",
+                "id": "System.Diagnostics.DiagnosticSource"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.cryptography.cng/index.json",
+                "id": "System.Security.Cryptography.Cng"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              }
+            ],
+            "targetFramework": "net6.0"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni.runtime/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI.runtime"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[1.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.sqlserver.server/index.json",
+                "id": "Microsoft.SqlServer.Server"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[4.5.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.buffers/index.json",
+                "id": "System.Buffers"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              },
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.loader/index.json",
+                "id": "System.Runtime.Loader"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.cryptography.cng/index.json",
+                "id": "System.Security.Cryptography.Cng"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              }
+            ],
+            "targetFramework": ".NETStandard2.0"
+          },
+          {
+            "dependencies": [
+              {
+                "range": "[5.1.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient.sni.runtime/index.json",
+                "id": "Microsoft.Data.SqlClient.SNI.runtime"
+              },
+              {
+                "range": "[1.7.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/azure.identity/index.json",
+                "id": "Azure.Identity"
+              },
+              {
+                "range": "[4.47.2, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identity.client/index.json",
+                "id": "Microsoft.Identity.Client"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
+              },
+              {
+                "range": "[6.24.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.identitymodel.jsonwebtokens/index.json",
+                "id": "Microsoft.IdentityModel.JsonWebTokens"
+              },
+              {
+                "range": "[1.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.sqlserver.server/index.json",
+                "id": "Microsoft.SqlServer.Server"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.win32.registry/index.json",
+                "id": "Microsoft.Win32.Registry"
+              },
+              {
+                "range": "[6.0.1, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.configuration.configurationmanager/index.json",
+                "id": "System.Configuration.ConfigurationManager"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.caching/index.json",
+                "id": "System.Runtime.Caching"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encoding.codepages/index.json",
+                "id": "System.Text.Encoding.CodePages"
+              },
+              {
+                "range": "[6.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.text.encodings.web/index.json",
+                "id": "System.Text.Encodings.Web"
+              },
+              {
+                "range": "[4.3.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.runtime.loader/index.json",
+                "id": "System.Runtime.Loader"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.cryptography.cng/index.json",
+                "id": "System.Security.Cryptography.Cng"
+              },
+              {
+                "range": "[5.0.0, )",
+                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/system.security.principal.windows/index.json",
+                "id": "System.Security.Principal.Windows"
+              }
+            ],
+            "targetFramework": ".NETStandard2.1"
+          }
+        ],
+        "id": "Microsoft.Data.SqlClient"
+      },
+      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/Download/microsoft.data.sqlclient/5.1.3",
+      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient/index.json",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/registration-semver2/microsoft.data.sqlclient/5.1.3.json"
+    }
+  ],
+  "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/microsoft.data.sqlclient/page/5.1.1/6.1.0.json"
+}

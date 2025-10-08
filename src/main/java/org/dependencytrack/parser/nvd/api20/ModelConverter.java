@@ -19,6 +19,8 @@
 package org.dependencytrack.parser.nvd.api20;
 
 import alpine.common.logging.Logger;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import io.github.jeremylong.openvulnerability.client.nvd.Config;
 import io.github.jeremylong.openvulnerability.client.nvd.CpeMatch;
 import io.github.jeremylong.openvulnerability.client.nvd.CveItem;
@@ -51,6 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -206,54 +209,86 @@ public final class ModelConverter {
             if (config.getNodes() == null || config.getNodes().isEmpty()) {
                 continue;
             }
-
-            config.getNodes().stream()
+            var cleanNode =  config.getNodes().stream()
                     // We can't compute negation.
                     .filter(node -> node.getNegate() == null || !node.getNegate())
-                    .filter(node -> node.getCpeMatch() != null)
-                    .flatMap(node -> extractCpeMatchesFromNode(cveId, node))
-                    // We currently have no interest in non-vulnerable versions.
-                    .filter(cpeMatch -> cpeMatch.getVulnerable() == null || cpeMatch.getVulnerable())
+                    .filter(node -> node.getCpeMatch() != null);
+
+            transformAndConfigOperatorToOr(config, cleanNode)
+                    .flatMap(node -> extractCpeMatchesFromNodeWithAndOperator(cveId, node))
                     .forEach(cpeMatches::add);
         }
 
         return cpeMatches;
     }
+    // transform `and` config operator to `or`
+    // and 'or' node operator become `and`
+    private static Stream<Node> transformAndConfigOperatorToOr(final Config config, Stream<Node> nodes) {
+        if (config.getOperator() == Config.Operator.AND) {
+            var nodeByNodeOperator = nodes.collect(Collectors.groupingBy(Node::getOperator));
 
-    private static Stream<CpeMatch> extractCpeMatchesFromNode(final String cveId, final Node node) {
+            var cpeByNodeOperator = Maps.transformValues(nodeByNodeOperator,v->v.stream().map(e-> new HashSet<>(e.getCpeMatch())).toList());
+            var allOrCombination = Sets.cartesianProduct(cpeByNodeOperator.get(Node.Operator.OR));
+            var allAndCombination = Optional.ofNullable(cpeByNodeOperator.get(Node.Operator.AND))
+                    .map(e->e.stream().flatMap(Collection::stream).toList());
+            if (allOrCombination.isEmpty() && allAndCombination.isPresent()) {
+                return Stream.of(new Node(Node.Operator.AND, allAndCombination.get()));
+            }
+            return allOrCombination.stream().map(e->{
+                allAndCombination.ifPresent(e::addAll);
+                return new Node(Node.Operator.AND, e);
+            });
+        }
+        return nodes;
+    }
+
+    private static Stream<CpeMatch> extractCpeMatchesFromNodeWithAndOperator(final String cveId, final Node node) {
+
+        var affectedOsList = new HashSet<String>();
         // Parse all CPEs in this node, and filter out those that cannot be parsed.
         // Because multiple `CpeMatch`es can refer to the same CPE, group them by CPE.
         final Map<Cpe, List<CpeMatch>> cpeMatchesByCpe = node.getCpeMatch().stream()
                 .map(cpeMatch -> {
-                    try {
-                        return Pair.of(CpeParser.parse(cpeMatch.getCriteria()), cpeMatch);
-                    } catch (CpeParsingException e) {
-                        LOGGER.warn("Failed to parse CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId), e);
-                        return null;
-                    }
+                        try {
+                            var cpe = CpeParser.parse(cpeMatch.getCriteria());
+                            if(cpeMatch.getVulnerable() == null || cpeMatch.getVulnerable()) {
+                                return Pair.of(cpe, cpeMatch);
+                            }
+                            // if vulnerable is false, it means, it's a component affected by the vulnerable component
+                            if(cpe.getPart()==Part.OPERATING_SYSTEM) {
+                                if(affectedOsList.isEmpty()){
+                                    affectedOsList.add(cpe.getProduct());
+                                } else {
+                                    LOGGER.warn("Node with AND operator should contains only one OS");
+                                }
+                            }
+                        } catch (CpeParsingException e) {
+                            LOGGER.warn("Failed to parse CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId), e);
+                        }
+                    return null;
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(Pair::getLeft, Collectors.mapping(Pair::getRight, Collectors.toList())));
-
         // CVE configurations may consist of applications and operating systems. In the case of
-        // configurations that contain both application and operating system parts, we do not
-        // want both types of CPEs to be associated to the vulnerability as it will lead to
-        // false positives on the operating system. https://nvd.nist.gov/vuln/detail/CVE-2015-0312
+        // configurations that contain both application and operating system parts, if the os is marked
+        // as not vulnerable it means that the vulnerability is in the software but it can be exploit
+        // only on the os. This CVE https://nvd.nist.gov/vuln/detail/CVE-2015-0312
         // is a good example of this as it contains application CPEs describing various versions
         // of Adobe Flash player, but also contains CPEs for all versions of Windows, macOS, and
         // Linux.
-        if (node.getOperator() == Node.Operator.AND) {
-            // Re-group `CpeMatch`es by CPE part to determine which are against applications,
-            // and which against operating systems. When matches are present for both of them,
-            // only use the ones for applications.
-            final Map<Part, List<CpeMatch>> cpeMatchesByPart = cpeMatchesByCpe.entrySet().stream()
-                    .collect(Collectors.groupingBy(
-                            entry -> entry.getKey().getPart(),
-                            Collectors.flatMapping(entry -> entry.getValue().stream(), Collectors.toList())));
-            if (!cpeMatchesByPart.getOrDefault(Part.APPLICATION, Collections.emptyList()).isEmpty()
-                    && !cpeMatchesByPart.getOrDefault(Part.OPERATING_SYSTEM, Collections.emptyList()).isEmpty()) {
-                return cpeMatchesByPart.get(Part.APPLICATION).stream();
-            }
+        //todo `node.getOperator() == Node.Operator.AND` should always be true now
+        if (!affectedOsList.isEmpty()) {
+                var affectedOs = affectedOsList.iterator().next();
+                return cpeMatchesByCpe.values().stream().flatMap(cpeMatches ->
+                    cpeMatches.stream().map(cpeMatch -> {
+                        var modifiedCriteria = cpeMatch.getCriteria().split(":");
+                        if (modifiedCriteria.length == 13 && modifiedCriteria[8].equals("*")) {
+                            modifiedCriteria[10] = affectedOs;
+                            return new CpeMatch(true, String.join(":", modifiedCriteria), cpeMatch.getMatchCriteriaId());
+                        }
+                        return cpeMatch;
+                    })
+                );
         }
 
         return cpeMatchesByCpe.values().stream()
@@ -265,7 +300,11 @@ public final class ModelConverter {
             final Cpe cpe = CpeParser.parse(cpeMatch.getCriteria());
 
             final var vs = new VulnerableSoftware();
-            vs.setCpe22(cpe.toCpe22Uri());
+            try {
+                vs.setCpe22(cpe.toCpe22Uri());
+            } catch (CpeEncodingException e) {
+                LOGGER.info("failed to setCpe22 %s".formatted(e.getMessage()));
+            }
             vs.setCpe23(cpeMatch.getCriteria());
             vs.setPart(cpe.getPart().getAbbreviation());
             vs.setVendor(cpe.getVendor());
@@ -288,9 +327,6 @@ public final class ModelConverter {
             return vs;
         } catch (CpeParsingException e) {
             LOGGER.warn("Failed to parse CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId), e);
-            return null;
-        } catch (CpeEncodingException e) {
-            LOGGER.warn("Failed to encode CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId), e);
             return null;
         }
     }

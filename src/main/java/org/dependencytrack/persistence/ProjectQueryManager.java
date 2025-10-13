@@ -1073,6 +1073,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "POLICYVIOLATION" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
                 // Deletion with CTEs does not work with H2, but verified on Postgres and MS SQL Server
                 if (!DbUtil.isH2()) {
                     if (DbUtil.isPostgreSQL()) {
@@ -1181,12 +1187,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "VIOLATIONANALYSIS" WHERE "PROJECT_ID" = ANY(?);
-                    """.replace("= ANY(?)", inExpression)
-                );
-                executeAndCloseWithArray(sqlQuery, queryParameter);
-
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
-                    DELETE FROM "POLICYVIOLATION" WHERE "PROJECT_ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);

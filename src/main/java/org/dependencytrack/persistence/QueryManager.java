@@ -1542,6 +1542,10 @@ public class QueryManager extends AlpineQueryManager {
                 final Query<?> aclDeleteQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                         DELETE FROM "PROJECT_ACCESS_TEAMS" WHERE "PROJECT_ACCESS_TEAMS"."TEAM_ID" = ?""");
                 executeAndCloseWithArray(aclDeleteQuery, team.getId());
+
+                final Query<?> notificationRuleQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "NOTIFICATIONRULE_TEAMS" WHERE "NOTIFICATIONRULE_TEAMS"."TEAM_ID" = ?""");
+                executeAndCloseWithArray(notificationRuleQuery, team.getId());
             }
 
             pm.deletePersistent(team);

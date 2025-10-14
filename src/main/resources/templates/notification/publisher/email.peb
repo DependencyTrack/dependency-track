@@ -173,7 +173,7 @@ Project Summaries:
 - Project: [{{ summaryByProject.key.name }} : {{ summaryByProject.key.version }}]
   Project URL: {{ baseUrl }}/projects/{{ summaryByProject.key.uuid }}
 {% for entry in summaryByProject.value.totalNewVulnerabilitiesCountBySeverity %}
-  + New Vulnerabilities Of Severity {{ entry.key.name }}: {{ entry.value }} (Suppressed: {{ summaryByProject.value.suppressedNewVulnerabilitiesBySeverity.get(entry.key) | default(0) }})
+  + New Vulnerabilities Of Severity {{ entry.key.name }}: {{ entry.value }} (Suppressed: {{ summaryByProject.value.suppressedNewVulnerabilitiesCountBySeverity.get(entry.key) | default(0) }})
 {%- endfor %}
 {% endfor %}
 {%- endif %}

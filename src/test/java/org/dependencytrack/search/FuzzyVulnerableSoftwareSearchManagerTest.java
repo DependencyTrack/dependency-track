@@ -21,9 +21,11 @@ import us.springett.parsers.cpe.values.Part;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import static org.dependencytrack.search.IndexConstants.VULNERABLESOFTWARE_UUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
@@ -31,6 +33,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class FuzzyVulnerableSoftwareSearchManagerTest {
@@ -84,7 +89,7 @@ public class FuzzyVulnerableSoftwareSearchManagerTest {
         us.springett.parsers.cpe.Cpe justThePart = new us.springett.parsers.cpe.Cpe(Part.APPLICATION, "*", "*", "*", "*", "*", "*", "*", "*", "*", "*");
         // wildcard all components after part to constrain fuzzing to components of same type e.g. application, operating-system
         String fuzzyTerm = FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp(justThePart.toCpe23FS());
-        SearchResult searchResult = toTest.searchIndex("product:libexpat1~0.88 AND " + fuzzyTerm);
+        SearchResult searchResult = FuzzyVulnerableSoftwareSearchManager.searchIndex("product:libexpat1~0.88 AND " + fuzzyTerm);
         // Oddly validating lucene first cuz can't decouple from that.
         assertEquals(1, searchResult.getResults().size());
         assertEquals(1, searchResult.getResults().values().iterator().next().size());
@@ -118,5 +123,62 @@ public class FuzzyVulnerableSoftwareSearchManagerTest {
         "cpe:2.3:a:dell:emc_vnx2_operating_environment:*:*:*:*:*:file:*:*").matches());
         assertTrue(pattern.matcher(
                 "cpe:2.3:a:*:file:*:*:*:*:*:file:*:*").matches());
+    }
+
+    @Test
+    public void fuzzySearchDropsMissingEntities() {
+        var qm = mock(QueryManager.class);
+
+        var id1 = UUID.randomUUID();
+        var id2 = UUID.randomUUID();
+        var results = List.of(
+                Map.of(VULNERABLESOFTWARE_UUID, id1.toString()),
+                Map.of(VULNERABLESOFTWARE_UUID, id2.toString())
+        );
+
+        var vs = mock(VulnerableSoftware.class);
+        when(qm.getObjectByUuid(VulnerableSoftware.class, id1.toString())).thenReturn(null);
+        when(qm.getObjectByUuid(VulnerableSoftware.class, id2.toString())).thenReturn(vs);
+
+        var searchResult = mock(SearchResult.class);
+        when(searchResult.getResults()).thenReturn(Map.of("vulnerablesoftware", results));
+
+        List<VulnerableSoftware> fuzzyResult;
+        try (var fvssm = mockStatic(FuzzyVulnerableSoftwareSearchManager.class)) {
+            fvssm.when(() -> FuzzyVulnerableSoftwareSearchManager.searchIndex("query")).thenReturn(searchResult);
+            fvssm.when(() -> FuzzyVulnerableSoftwareSearchManager.fuzzySearch(qm, "query")).thenCallRealMethod();
+
+            fuzzyResult = FuzzyVulnerableSoftwareSearchManager.fuzzySearch(qm, "query");
+
+            fvssm.verify(() -> FuzzyVulnerableSoftwareSearchManager.searchIndex("query"));
+        }
+
+        verify(qm).getObjectByUuid(VulnerableSoftware.class, id1.toString());
+        verify(qm).getObjectByUuid(VulnerableSoftware.class, id2.toString());
+
+        assertEquals(1, fuzzyResult.size());
+        assertSame(vs, fuzzyResult.getFirst());
+    }
+
+    @Test
+    public void fuzzySearchReturnsEmptyListIfNoResults() {
+        var qm = mock(QueryManager.class);
+
+        var searchResult = mock(SearchResult.class);
+        when(searchResult.getResults()).thenReturn(Map.of());
+
+        List<VulnerableSoftware> fuzzyResult;
+        try (var fvssm = mockStatic(FuzzyVulnerableSoftwareSearchManager.class)) {
+            fvssm.when(() -> FuzzyVulnerableSoftwareSearchManager.searchIndex("query")).thenReturn(searchResult);
+            fvssm.when(() -> FuzzyVulnerableSoftwareSearchManager.fuzzySearch(qm, "query")).thenCallRealMethod();
+
+            fuzzyResult = FuzzyVulnerableSoftwareSearchManager.fuzzySearch(qm, "query");
+
+            fvssm.verify(() -> FuzzyVulnerableSoftwareSearchManager.searchIndex("query"));
+        }
+
+        verify(qm, never()).getObjectByUuid(any(), anyString());
+
+        assertEquals(0, fuzzyResult.size());
     }
 }

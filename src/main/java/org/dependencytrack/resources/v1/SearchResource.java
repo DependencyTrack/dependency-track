@@ -28,13 +28,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.apache.commons.lang3.StringUtils;
-import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.resources.v1.vo.BomUploadResponse;
-import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchManager;
-import org.dependencytrack.search.SearchManager;
-import org.dependencytrack.search.SearchResult;
-
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -42,6 +35,13 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.resources.v1.vo.BomUploadResponse;
+import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchManager;
+import org.dependencytrack.search.SearchManager;
+import org.dependencytrack.search.SearchResult;
+
 import java.util.Collections;
 import java.util.Set;
 
@@ -208,8 +208,7 @@ public class SearchResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response vulnerableSoftwareSearch(@QueryParam("query") String query, @QueryParam("cpe") String cpe) {
         if (StringUtils.isNotBlank(cpe)) {
-            final FuzzyVulnerableSoftwareSearchManager searchManager = new FuzzyVulnerableSoftwareSearchManager(false);
-            final SearchResult searchResult = searchManager.searchIndex(FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp(cpe));
+            final SearchResult searchResult = FuzzyVulnerableSoftwareSearchManager.searchIndex(FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp(cpe));
             return Response.ok(searchResult).build();
         } else {
             final SearchManager searchManager = new SearchManager();

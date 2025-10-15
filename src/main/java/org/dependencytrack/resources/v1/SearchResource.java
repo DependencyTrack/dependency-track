@@ -202,8 +202,7 @@ public class SearchResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response vulnerableSoftwareSearch(@QueryParam("query") String query, @QueryParam("cpe") String cpe) {
         if (StringUtils.isNotBlank(cpe)) {
-            final FuzzyVulnerableSoftwareSearchManager searchManager = new FuzzyVulnerableSoftwareSearchManager(false);
-            final SearchResult searchResult = searchManager.searchIndex(FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp(cpe));
+            final SearchResult searchResult = FuzzyVulnerableSoftwareSearchManager.searchIndex(FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp(cpe));
             return Response.ok(searchResult).build();
         } else {
             final SearchResult searchResult = SearchManager.searchVulnerableSoftwareIndex(query, 1000);

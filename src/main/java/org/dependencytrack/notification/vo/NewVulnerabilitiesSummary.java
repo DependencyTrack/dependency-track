@@ -128,7 +128,7 @@ public record NewVulnerabilitiesSummary(
 
         private static ProjectSummary of(final List<ProjectFinding> findings) {
             final var newVulnerabilitiesBySeverity = new EnumMap<Severity, Integer>(Severity.class);
-            final var suppressedNewVulnerabilitiesBySeverity = new EnumMap<Severity, Integer>(Severity.class);
+            final var suppressedNewVulnerabilitiesCountBySeverity = new EnumMap<Severity, Integer>(Severity.class);
             final var totalNewVulnerabilitiesCountBySeverity = new EnumMap<Severity, Integer>(Severity.class);
 
             for (final ProjectFinding finding : findings) {
@@ -136,7 +136,7 @@ public record NewVulnerabilitiesSummary(
                 totalNewVulnerabilitiesCountBySeverity.merge(severity, 1, Integer::sum);
 
                 if (finding.suppressed()) {
-                    suppressedNewVulnerabilitiesBySeverity.merge(severity, 1, Integer::sum);
+                    suppressedNewVulnerabilitiesCountBySeverity.merge(severity, 1, Integer::sum);
                 } else {
                     newVulnerabilitiesBySeverity.merge(severity, 1, Integer::sum);
                 }
@@ -144,7 +144,7 @@ public record NewVulnerabilitiesSummary(
 
             return new ProjectSummary(
                     newVulnerabilitiesBySeverity,
-                    suppressedNewVulnerabilitiesBySeverity,
+                    suppressedNewVulnerabilitiesCountBySeverity,
                     totalNewVulnerabilitiesCountBySeverity);
         }
 

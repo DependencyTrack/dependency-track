@@ -353,7 +353,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
                     - Project: [projectName : projectVersion]
                       Project URL: /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
                     
-                      + New Vulnerabilities Of Severity MEDIUM: 1 (Suppressed: 0)
+                      + New Vulnerabilities Of Severity MEDIUM: 1 (Suppressed: 1)
                     
                     --------------------------------------------------------------------------------
                     

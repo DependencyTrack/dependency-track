@@ -24,6 +24,7 @@ import io.github.jeremylong.openvulnerability.client.nvd.CpeMatch;
 import io.github.jeremylong.openvulnerability.client.nvd.CveItem;
 import io.github.jeremylong.openvulnerability.client.nvd.CvssV2;
 import io.github.jeremylong.openvulnerability.client.nvd.CvssV3;
+import io.github.jeremylong.openvulnerability.client.nvd.CvssV4;
 import io.github.jeremylong.openvulnerability.client.nvd.LangString;
 import io.github.jeremylong.openvulnerability.client.nvd.Metrics;
 import io.github.jeremylong.openvulnerability.client.nvd.Node;
@@ -169,9 +170,24 @@ public final class ModelConverter {
             }
         }
 
+        if (metrics.getCvssMetricV40() != null && !metrics.getCvssMetricV40().isEmpty()) {
+            metrics.getCvssMetricV40().sort(comparingInt(metric -> metric.getType().ordinal()));
+
+            for (final CvssV4 metric : metrics.getCvssMetricV40()) {
+                final var cvss = CvssUtil.parse(metric.getCvssData().getVectorString());
+                final var bakedScores = cvss.getBakedScores();
+                vuln.setCvssV4Vector(cvss.toString());
+                vuln.setCvssV4BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
+                vuln.setCvssV4ExploitabilitySubScore(BigDecimal.valueOf(bakedScores.getExploitabilityScore()));
+                vuln.setCvssV4ImpactSubScore(BigDecimal.valueOf(bakedScores.getImpactScore()));
+                break;
+            }
+        }
+
         vuln.setSeverity(VulnerabilityUtil.getSeverity(
                 vuln.getCvssV2BaseScore(),
                 vuln.getCvssV3BaseScore(),
+                vuln.getCvssV4BaseScore(),
                 vuln.getOwaspRRLikelihoodScore(),
                 vuln.getOwaspRRTechnicalImpactScore(),
                 vuln.getOwaspRRBusinessImpactScore()

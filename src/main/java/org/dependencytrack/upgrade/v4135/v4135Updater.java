@@ -47,9 +47,9 @@ public class v4135Updater extends AbstractUpgradeItem {
                        SET "PART" = LOWER("PART"),
                            "VENDOR" = LOWER("VENDOR"),
                            "PRODUCT" = LOWER("PRODUCT")
-                     WHERE "PART <> LOWER("PART")
-                        OR "VENDOR <> LOWER("VENDOR")
-                        OR "PRODUCT <> LOWER("PRODUCT")"
+                     WHERE "PART" <> LOWER("PART")
+                        OR "VENDOR" <> LOWER("VENDOR")
+                        OR "PRODUCT" <> LOWER("PRODUCT")
                     """);
         }
     }

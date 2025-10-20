@@ -44,7 +44,7 @@ public class LicenseGroupPolicyEvaluator extends AbstractPolicyEvaluator {
 
     /**
      * A license group that does not exist in the database and is therefore verified based on its
-     * licenses list directly instad of a database check
+     * licenses list directly instead of a database check
      */
     private static class TemporaryLicenseGroup extends LicenseGroup {
         private static final long serialVersionUID = -1268650463377651000L;
@@ -74,7 +74,7 @@ public class LicenseGroupPolicyEvaluator extends AbstractPolicyEvaluator {
         /**
          * License group represents a list of licenses that are not allowed to be used
          */
-        ForbiddenLicenseList;
+        ForbiddenLicenseList
     }
 
     private static final Logger LOGGER = Logger.getLogger(LicenseGroupPolicyEvaluator.class);
@@ -269,7 +269,7 @@ public class LicenseGroupPolicyEvaluator extends AbstractPolicyEvaluator {
         }
         if (operation.getOperator() == SpdxOperator.PLUS) {
             // Transform `GPL-2.0+` to `GPL-2.0 OR GPL-2.0-or-later`
-            SpdxExpression arg = operation.getArguments().get(0);
+            SpdxExpression arg = operation.getArguments().getFirst();
             return canLicenseBeUsed(qm, arg, groupType, lg)
                     || canLicenseBeUsed(qm, new SpdxExpression(expr.getSpdxLicenseId() + "-or-later"), groupType, lg);
         }

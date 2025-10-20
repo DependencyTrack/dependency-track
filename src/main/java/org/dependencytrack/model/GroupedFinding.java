@@ -81,6 +81,7 @@ public class GroupedFinding implements Serializable {
         optValue(vulnerability, "severity", VulnerabilityUtil.getSeverity(o[3], (BigDecimal) o[4], (BigDecimal) o[5], (BigDecimal) o[6], (BigDecimal) o[7], (BigDecimal) o[8], (BigDecimal) o[9]));
         optValue(vulnerability, "cvssV2BaseScore", o[4]);
         optValue(vulnerability, "cvssV3BaseScore", o[5]);
+        optValue(vulnerability, "cvssV4BaseScore", o[6]);
         optValue(attribution, "analyzerIdentity", o[10]);
         optValue(vulnerability, "published", o[11]);
         optValue(vulnerability, "cwes", Finding.getCwes(o[12]));

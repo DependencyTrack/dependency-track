@@ -89,20 +89,20 @@
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
-        <lib.checkstyle.version>11.1.0</lib.checkstyle.version>
+        <lib.checkstyle.version>12.0.1</lib.checkstyle.version>
         <lib.cloud-sql-connector-jdbc-sqlserver.version>1.25.3</lib.cloud-sql-connector-jdbc-sqlserver.version>
-        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.25.3</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
-        <lib.cloud-sql-postgres-socket-factory.version>1.25.3</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.26.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.26.1</lib.cloud-sql-postgres-socket-factory.version>
         <lib.cpe-parser.version>3.0.0</lib.cpe-parser.version>
         <lib.commons-compress.version>1.28.0</lib.commons-compress.version>
         <lib.commons-text.version>1.14.0</lib.commons-text.version>
-        <lib.ae-security.version>0.145.2</lib.ae-security.version>
+        <lib.ae-security.version>0.146.0</lib.ae-security.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>11.0.0</lib.cyclonedx-java.version>
         <lib.jakarta-validation.version>3.1.1</lib.jakarta-validation.version>
-        <lib.greenmail.version>2.1.6</lib.greenmail.version>
+        <lib.greenmail.version>2.1.7</lib.greenmail.version>
         <lib.json-java.version>20250517</lib.json-java.version>
-        <lib.json-unit.version>4.1.1</lib.json-unit.version>
+        <lib.json-unit.version>5.0.0</lib.json-unit.version>
         <lib.junit.version>5.11.4</lib.junit.version>
         <lib.lucene.version>8.11.4</lib.lucene.version>
         <lib.maven-artifact.version>3.9.11</lib.maven-artifact.version>
@@ -110,11 +110,11 @@
         <lib.open-vulnerability-clients.version>9.0.1</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>3.2.4</lib.pebble.version>
-        <lib.protobuf-java.version>4.32.1</lib.protobuf-java.version>
+        <lib.protobuf-java.version>4.33.0</lib.protobuf-java.version>
         <lib.resilience4j.version>2.3.0</lib.resilience4j.version>
-        <lib.swagger-parser.version>2.1.34</lib.swagger-parser.version>
+        <lib.swagger-parser.version>2.1.35</lib.swagger-parser.version>
         <lib.junit-pioneer.version>2.3.0</lib.junit-pioneer.version>
-        <lib.testcontainers.version>1.21.3</lib.testcontainers.version>
+        <lib.testcontainers.version>2.0.0</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
         <lib.woodstox.version>7.1.1</lib.woodstox.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
@@ -124,12 +124,12 @@
         <lib.org-kohsuke-github-api.version>1.330</lib.org-kohsuke-github-api.version>
         <lib.com-asahaf-javacron.version>1.4.0</lib.com-asahaf-javacron.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>13.2.0.jre11</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>13.2.1.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.2.0</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.7.8</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.jetty.version>12.1.1</plugin.jetty.version>
+        <plugin.jetty.version>12.1.2</plugin.jetty.version>
         <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>

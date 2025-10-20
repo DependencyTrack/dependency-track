@@ -45,8 +45,8 @@ public class v4140Updater extends AbstractUpgradeItem {
             statement.execute(/* language=SQL */ """
                     ALTER TABLE "VULNERABILITY"
                         ADD COLUMN "CVSSV4BASESCORE"    numeric,
-                        ADD COLUMN "CVSSV4EXPLOITSCORE" numeric,
-                        ADD COLUMN "CVSSV4IMPACTSCORE"  numeric,
+                        ADD COLUMN "CVSSV4THREATSCORE" numeric,
+                        ADD COLUMN "CVSSV4ENVIRONMENTALSCORE"  numeric,
                         ADD COLUMN "CVSSV4VECTOR"       varchar(255);
                     """);
         }

@@ -175,11 +175,19 @@ public final class ModelConverter {
 
             for (final CvssV4 metric : metrics.getCvssMetricV40()) {
                 final var cvss = CvssUtil.parse(metric.getCvssData().getVectorString());
-                final var bakedScores = cvss.getBakedScores();
                 vuln.setCvssV4Vector(cvss.toString());
                 vuln.setCvssV4BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
-                vuln.setCvssV4ExploitabilitySubScore(BigDecimal.valueOf(bakedScores.getExploitabilityScore()));
-                vuln.setCvssV4ImpactSubScore(BigDecimal.valueOf(bakedScores.getImpactScore()));
+
+                final Double envScore = metric.getCvssData().getEnvironmentalScore();
+                if (envScore != null && !envScore.isNaN()) {
+                    vuln.setCvssV4EnvironmentalScore(BigDecimal.valueOf(envScore));
+                }
+
+                final Double threatScore = metric.getCvssData().getThreatScore();
+                if (threatScore != null && !threatScore.isNaN()) {
+                    vuln.setCvssV4ThreatScore(BigDecimal.valueOf(threatScore));
+                }
+
                 break;
             }
         }

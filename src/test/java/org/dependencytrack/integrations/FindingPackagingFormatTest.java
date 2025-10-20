@@ -119,13 +119,13 @@ class FindingPackagingFormatTest extends PersistenceCapableTest {
         Assertions.assertEquals(Severity.CRITICAL.toString(), findings.getJSONObject(0).getJSONObject("vulnerability").get("severity"));
         Assertions.assertEquals(Severity.HIGH.toString(), findings.getJSONObject(1).getJSONObject("vulnerability").get("severity"));
 
-        Assertions.assertEquals(7.2, findings.getJSONObject(0).getJSONObject("vulnerability").get("cvssV2BaseScore"));
-        Assertions.assertEquals(8.4, findings.getJSONObject(0).getJSONObject("vulnerability").get("cvssV3BaseScore"));
-        Assertions.assertEquals(8.7, findings.getJSONObject(0).getJSONObject("vulnerability").get("cvssV4BaseScore"));
+        Assertions.assertEquals(BigDecimal.valueOf(7.2), findings.getJSONObject(0).getJSONObject("vulnerability").get("cvssV2BaseScore"));
+        Assertions.assertEquals(BigDecimal.valueOf(8.4), findings.getJSONObject(0).getJSONObject("vulnerability").get("cvssV3BaseScore"));
+        Assertions.assertEquals(BigDecimal.valueOf(8.7), findings.getJSONObject(0).getJSONObject("vulnerability").get("cvssV4BaseScore"));
 
-        Assertions.assertEquals(7.3, findings.getJSONObject(1).getJSONObject("vulnerability").get("cvssV2BaseScore"));
-        Assertions.assertEquals(8.5, findings.getJSONObject(1).getJSONObject("vulnerability").get("cvssV3BaseScore"));
-        Assertions.assertEquals(8.8, findings.getJSONObject(1).getJSONObject("vulnerability").get("cvssV4BaseScore"));
+        Assertions.assertEquals(BigDecimal.valueOf(7.3), findings.getJSONObject(1).getJSONObject("vulnerability").get("cvssV2BaseScore"));
+        Assertions.assertEquals(BigDecimal.valueOf(8.5), findings.getJSONObject(1).getJSONObject("vulnerability").get("cvssV3BaseScore"));
+        Assertions.assertEquals(BigDecimal.valueOf(8.8), findings.getJSONObject(1).getJSONObject("vulnerability").get("cvssV4BaseScore"));
 
         JSONArray aliases_1 =  findings.getJSONObject(0).getJSONObject("vulnerability").getJSONArray("aliases");
         Assertions.assertTrue(aliases_1.isEmpty());

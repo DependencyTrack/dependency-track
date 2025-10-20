@@ -134,7 +134,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
         final List<Object[]> list = totalList.subList(this.pagination.getOffset(), Math.min(this.pagination.getOffset() + this.pagination.getLimit(), totalList.size()));
         final List<Finding> findings = new ArrayList<>();
         for (final Object[] o : list) {
-            final Finding finding = new Finding(UUID.fromString((String) o[30]), o);
+            final Finding finding = new Finding(UUID.fromString((String) o[31]), o);
             final Component component = getObjectByUuid(Component.class, (String) finding.getComponent().get("uuid"));
             final Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String) finding.getVulnerability().get("uuid"));
             final Analysis analysis = getAnalysis(component, vulnerability);

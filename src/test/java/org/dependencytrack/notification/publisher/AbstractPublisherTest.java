@@ -361,6 +361,7 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
         vuln.setRecommendation("vulnerabilityRecommendation");
         vuln.setCvssV2BaseScore(BigDecimal.valueOf(5.5));
         vuln.setCvssV3BaseScore(BigDecimal.valueOf(6.6));
+        vuln.setCvssV4BaseScore(BigDecimal.valueOf(7.7));
         vuln.setOwaspRRLikelihoodScore(BigDecimal.valueOf(1.1));
         vuln.setOwaspRRTechnicalImpactScore(BigDecimal.valueOf(2.2));
         vuln.setOwaspRRBusinessImpactScore(BigDecimal.valueOf(3.3));

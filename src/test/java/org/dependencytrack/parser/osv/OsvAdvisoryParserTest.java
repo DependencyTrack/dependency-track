@@ -136,6 +136,25 @@ class OsvAdvisoryParserTest {
     }
 
     @Test
+    void testParseOSVJsonWithCVSSv4() throws IOException {
+
+        String jsonFile = "src/test/resources/unit/osv.jsons/osv-GHSA-q2x7-8rv6-6q7h.json";
+        String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
+        JSONObject jsonObject = new JSONObject(jsonString);
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assertions.assertNotNull(advisory);
+        Assertions.assertEquals("GHSA-q2x7-8rv6-6q7h", advisory.getId());
+        Assertions.assertEquals("MODERATE", advisory.getSeverity());
+        Assertions.assertEquals(1, advisory.getCweIds().size());
+        Assertions.assertEquals(5, advisory.getReferences().size());
+        Assertions.assertEquals(1, advisory.getAffectedPackages().size());
+        Assertions.assertEquals("CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H", advisory.getCvssV3Vector());
+        Assertions.assertEquals("CVSS:4.0/AV:L/AC:L/AT:P/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N", advisory.getCvssV4Vector());
+        Assertions.assertEquals("CVE-2024-56326", advisory.getAliases().get(0));
+        Assertions.assertEquals("2024-12-27T19:24:19.224818Z", advisory.getModified().toString());
+    }
+
+    @Test
     void testCommitHashRanges() throws IOException {
 
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-git-commit-hash-ranges.json";

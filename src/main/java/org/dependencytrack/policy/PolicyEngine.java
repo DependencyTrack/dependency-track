@@ -34,7 +34,7 @@ import java.util.List;
 
 /**
  * A lightweight policy engine that evaluates a list of components against
- * all defined policies. Each policy is evaluated using individual policy
+ * all defined policies. Each policy is evaluated usding individual policy
  * evaluators. Additional evaluators can be easily added in the future.
  *
  * @author Steve Springett
@@ -96,7 +96,6 @@ public class PolicyEngine {
                         policyConditionViolations.addAll(policyConditionViolationsFromEvaluator);
                         policyConditionsViolated += (int) policyConditionViolationsFromEvaluator.stream()
                                 .map(pcv -> pcv.getPolicyCondition().getId())
-                                .sorted()
                                 .distinct()
                                 .count();
                     }

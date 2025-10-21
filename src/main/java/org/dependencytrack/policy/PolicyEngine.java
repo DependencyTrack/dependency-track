@@ -34,7 +34,7 @@ import java.util.List;
 
 /**
  * A lightweight policy engine that evaluates a list of components against
- * all defined policies. Each policy is evaluated usding individual policy
+ * all defined policies. Each policy is evaluated using individual policy
  * evaluators. Additional evaluators can be easily added in the future.
  *
  * @author Steve Springett

@@ -96,7 +96,6 @@ public class PolicyEngine {
                         policyConditionViolations.addAll(policyConditionViolationsFromEvaluator);
                         policyConditionsViolated += (int) policyConditionViolationsFromEvaluator.stream()
                                 .map(pcv -> pcv.getPolicyCondition().getId())
-                                .sorted()
                                 .distinct()
                                 .count();
                     }

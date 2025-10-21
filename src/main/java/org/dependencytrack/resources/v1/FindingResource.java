@@ -273,12 +273,16 @@ public class FindingResource extends AlpineResource {
                                    @QueryParam("textSearchInput") String textSearchInput,
                                    @Parameter(description = "Filter CVSSv2 from this value")
                                    @QueryParam("cvssv2From") String cvssv2From,
-                                   @Parameter(description = "Filter CVSSv2 from this Value")
+                                   @Parameter(description = "Filter CVSSv2 to this value")
                                    @QueryParam("cvssv2To") String cvssv2To,
                                    @Parameter(description = "Filter CVSSv3 from this value")
                                    @QueryParam("cvssv3From") String cvssv3From,
-                                   @Parameter(description = "Filter CVSSv3 from this Value")
+                                   @Parameter(description = "Filter CVSSv2 to this value")
                                    @QueryParam("cvssv3To") String cvssv3To,
+                                   @Parameter(description = "Filter CVSSv4 from this value")
+                                   @QueryParam("cvssv3From") String cvssv4From,
+                                   @Parameter(description = "Filter CVSSv4 to this value")
+                                   @QueryParam("cvssv3To") String cvssv4To,
                                    @Parameter(description = "Filter EPSS from this value")
                                    @QueryParam("epssFrom") String epssFrom,
                                    @Parameter(description = "Filter EPSS to this value")
@@ -302,6 +306,8 @@ public class FindingResource extends AlpineResource {
             filters.put("cvssv2To", cvssv2To);
             filters.put("cvssv3From", cvssv3From);
             filters.put("cvssv3To", cvssv3To);
+            filters.put("cvssv4From", cvssv4From);
+            filters.put("cvssv4To", cvssv4To);
             filters.put("epssFrom", epssFrom);
             filters.put("epssTo", epssTo);
             filters.put("epssPercentileFrom", epssPercentileFrom);
@@ -348,6 +354,10 @@ public class FindingResource extends AlpineResource {
                                    @QueryParam("cvssv3From") String cvssv3From,
                                    @Parameter(description = "Filter CVSSv3 to this value")
                                    @QueryParam("cvssv3To") String cvssv3To,
+                                   @Parameter(description = "Filter CVSSv4 from this value")
+                                   @QueryParam("cvssv3From") String cvssv4From,
+                                   @Parameter(description = "Filter CVSSv4 to this value")
+                                   @QueryParam("cvssv3To") String cvssv4To,
                                    @Parameter(description = "Filter EPSS from this value")
                                    @QueryParam("epssFrom") String epssFrom,
                                    @Parameter(description = "Filter EPSS to this value")
@@ -371,6 +381,8 @@ public class FindingResource extends AlpineResource {
             filters.put("cvssv2To", cvssv2To);
             filters.put("cvssv3From", cvssv3From);
             filters.put("cvssv3To", cvssv3To);
+            filters.put("cvssv4From", cvssv4From);
+            filters.put("cvssv4To", cvssv4To);
             filters.put("epssFrom", epssFrom);
             filters.put("epssTo", epssTo);
             filters.put("epssPercentileFrom", epssPercentileFrom);

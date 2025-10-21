@@ -56,7 +56,9 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                          THEN 8
                          WHEN "VULNERABILITY"."SEVERITY" = 'CRITICAL'
                          THEN 10
-                         ELSE CASE WHEN "VULNERABILITY"."CVSSV3BASESCORE" IS NOT NULL
+                         ELSE CASE WHEN "VULNERABILITY"."CVSSV4BASESCORE" IS NOT NULL
+                                   THEN "VULNERABILITY"."CVSSV4BASESCORE"
+                                   WHEN "VULNERABILITY"."CVSSV3BASESCORE" IS NOT NULL
                                    THEN "VULNERABILITY"."CVSSV3BASESCORE"
                                    ELSE "VULNERABILITY"."CVSSV2BASESCORE"
                               END
@@ -66,6 +68,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             Map.entry("vulnerability.published", "\"VULNERABILITY\".\"PUBLISHED\""),
             Map.entry("vulnerability.cvssV2BaseScore", "\"VULNERABILITY\".\"CVSSV2BASESCORE\""),
             Map.entry("vulnerability.cvssV3BaseScore", "\"VULNERABILITY\".\"CVSSV3BASESCORE\""),
+            Map.entry("vulnerability.cvssV4BaseScore", "\"VULNERABILITY\".\"CVSSV4BASESCORE\""),
             Map.entry("component.projectName", "concat(\"PROJECT\".\"NAME\", ' ', \"PROJECT\".\"VERSION\")"),
             Map.entry("component.name", "\"COMPONENT\".\"NAME\""),
             Map.entry("component.version", "\"COMPONENT\".\"VERSION\""),
@@ -229,6 +232,10 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                         processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", true, false, false);
                 case "cvssv3To" ->
                         processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV3BASESCORE\"", false, false, false);
+                case "cvssv4From" ->
+                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV4BASESCORE\"", true, false, false);
+                case "cvssv4To" ->
+                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"CVSSV4BASESCORE\"", false, false, false);
                 case "epssFrom" ->
                         processRangeFilter(queryFilter, params, filter, filters.get(filter), "\"VULNERABILITY\".\"EPSSSCORE\"", true, false, false);
                 case "epssTo" ->
@@ -249,6 +256,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                            , "VULNERABILITY"."SEVERITY"
                            , "VULNERABILITY"."CVSSV2BASESCORE"
                            , "VULNERABILITY"."CVSSV3BASESCORE"
+                           , "VULNERABILITY"."CVSSV4BASESCORE"
                            , "VULNERABILITY"."EPSSSCORE"
                            , "VULNERABILITY"."EPSSPERCENTILE"
                            , "VULNERABILITY"."OWASPRRLIKELIHOODSCORE"

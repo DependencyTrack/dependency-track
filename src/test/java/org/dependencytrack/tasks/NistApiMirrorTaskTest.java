@@ -245,6 +245,37 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testInformWithCvss4ScoredVulnerability() throws Exception {
+        stubFor(get(anyUrl())
+                .willReturn(aResponse()
+                        .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2025-9377.json"))));
+
+        new NistApiMirrorTask().inform(new NistApiMirrorEvent());
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.NVD, "CVE-2025-9377", true);
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getReferences()).isEqualTo("""
+                * [https://www.tp-link.com/us/support/faq/4308/](https://www.tp-link.com/us/support/faq/4308/)
+                * [https://www.tp-link.com/us/support/faq/4365/](https://www.tp-link.com/us/support/faq/4365/)""");
+        assertThat(vuln.getPublished()).isEqualTo("2025-08-29T18:15:43.220Z");
+        assertThat(vuln.getUpdated()).isEqualTo("2025-10-21T20:21:26.603Z");
+        assertThat(vuln.getCwes()).containsOnly(78);
+        assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H");
+        assertThat(vuln.getCvssV4Vector()).isEqualTo("CVSS:4.0/AV:N/AC:L/AT:N/PR:H/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N");
+        assertThat(vuln.getSeverity()).isEqualTo(Severity.HIGH);
+
+        // Property is in L1 cache because it was created in the test's setUp method.
+        // Evict L1 cache to reach L2 cache / datastore instead.
+        qm.getPersistenceManager().evictAll();
+        final ConfigProperty lastModifiedProperty = qm.getConfigProperty(
+                VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS.getGroupName(),
+                VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS.getPropertyName()
+        );
+        assertThat(lastModifiedProperty).isNotNull();
+        assertThat(lastModifiedProperty.getPropertyValue()).isEqualTo("1761078086");
+    }
+
+    @Test
     void testInformWithUpdatedVulnerability() throws Exception {
         final var vuln = new Vulnerability();
         vuln.setVulnId("CVE-2022-1954");

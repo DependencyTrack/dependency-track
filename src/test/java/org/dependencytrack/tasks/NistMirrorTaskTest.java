@@ -161,6 +161,33 @@ class NistMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vuln.getCvssV3ImpactSubScore()).isEqualByComparingTo("5.9");
                     assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:P/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
                     assertThat(vuln.getSeverity()).isEqualTo(Severity.MEDIUM);
+                },
+                vuln -> {
+                    assertThat(vuln.getVulnId()).isEqualTo("CVE-2022-1055");
+                    assertThat(vuln.getSource()).isEqualTo("NVD");
+                    assertThat(vuln.getDescription()).isEqualTo("""
+                            A use-after-free exists in the Linux Kernel in tc_new_tfilter that could allow a local \
+                            attacker to gain privilege escalation. The exploit requires unprivileged user namespaces. \
+                            We recommend upgrading past commit 04c2a47ffb13c29778e2a14e414ad4cb5a5db4b5""");
+                    assertThat(vuln.getReferences()).isEqualTo("""
+                            * [http://packetstormsecurity.com/files/167386/Kernel-Live-Patch-Security-Notice-LSN-0086-1.html](http://packetstormsecurity.com/files/167386/Kernel-Live-Patch-Security-Notice-LSN-0086-1.html)
+                            * [https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=04c2a47ffb13c29778e2a14e414ad4cb5a5db4b5](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=04c2a47ffb13c29778e2a14e414ad4cb5a5db4b5)
+                            * [https://kernel.dance/#04c2a47ffb13c29778e2a14e414ad4cb5a5db4b5](https://kernel.dance/#04c2a47ffb13c29778e2a14e414ad4cb5a5db4b5)
+                            * [https://security.netapp.com/advisory/ntap-20220506-0007/](https://security.netapp.com/advisory/ntap-20220506-0007/)
+                            * [https://syzkaller.appspot.com/bug?id=2212474c958978ab86525fe6832ac8102c309ffc](https://syzkaller.appspot.com/bug?id=2212474c958978ab86525fe6832ac8102c309ffc)""");
+                    assertThat(vuln.getPublished()).isInSameMinuteAs("2022-03-29T15:15:00Z");
+                    assertThat(vuln.getUpdated()).isInSameMinuteAs("2024-11-21T06:39:00Z");
+                    assertThat(vuln.getCvssV2BaseScore()).isEqualByComparingTo("4.6");
+                    assertThat(vuln.getCvssV2ExploitabilitySubScore()).isEqualByComparingTo("3.9");
+                    assertThat(vuln.getCvssV2ImpactSubScore()).isEqualByComparingTo("6.4");
+                    assertThat(vuln.getCvssV2Vector()).isEqualTo("AV:L/AC:L/Au:N/C:P/I:P/A:P");
+                    assertThat(vuln.getCvssV3BaseScore()).isEqualByComparingTo("7.8");
+                    assertThat(vuln.getCvssV3ExploitabilitySubScore()).isEqualByComparingTo("1.8");
+                    assertThat(vuln.getCvssV3ImpactSubScore()).isEqualByComparingTo("5.9");
+                    assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H");
+                    assertThat(vuln.getCvssV4BaseScore()).isEqualByComparingTo("8.6");
+                    assertThat(vuln.getCvssV4Vector()).isEqualTo("CVSS:4.0/AV:L/AC:H/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:H/SI:H/SA:N");
+                    assertThat(vuln.getSeverity()).isEqualTo(Severity.HIGH);
                 }
         );
     }

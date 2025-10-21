@@ -73,9 +73,9 @@ public class CalculatorResource extends AlpineResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getCvssScores(
-            @Parameter(description = "A valid CVSSv2 or CVSSv3 vector", required = true)
+            @Parameter(description = "A valid CVSSv2, CVSSv3 or CVSSv4 vector", required = true)
             @QueryParam("vector") String vector) {
-        final String invalidVector = "An invalid CVSSv2 or CVSSv3 vector submitted.";
+        final String invalidVector = "An invalid CVSSv2, CVSSv3 or CVSSv4 vector was submitted.";
 
         final var cvss = CvssUtil.parse(vector);
         if (cvss == null) {

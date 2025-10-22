@@ -280,9 +280,9 @@ public class FindingResource extends AlpineResource {
                                    @Parameter(description = "Filter CVSSv2 to this value")
                                    @QueryParam("cvssv3To") String cvssv3To,
                                    @Parameter(description = "Filter CVSSv4 from this value")
-                                   @QueryParam("cvssv3From") String cvssv4From,
+                                   @QueryParam("cvssv4From") String cvssv4From,
                                    @Parameter(description = "Filter CVSSv4 to this value")
-                                   @QueryParam("cvssv3To") String cvssv4To,
+                                   @QueryParam("cvssv4To") String cvssv4To,
                                    @Parameter(description = "Filter EPSS from this value")
                                    @QueryParam("epssFrom") String epssFrom,
                                    @Parameter(description = "Filter EPSS to this value")
@@ -355,9 +355,9 @@ public class FindingResource extends AlpineResource {
                                    @Parameter(description = "Filter CVSSv3 to this value")
                                    @QueryParam("cvssv3To") String cvssv3To,
                                    @Parameter(description = "Filter CVSSv4 from this value")
-                                   @QueryParam("cvssv3From") String cvssv4From,
+                                   @QueryParam("cvssv4From") String cvssv4From,
                                    @Parameter(description = "Filter CVSSv4 to this value")
-                                   @QueryParam("cvssv3To") String cvssv4To,
+                                   @QueryParam("cvssv4To") String cvssv4To,
                                    @Parameter(description = "Filter EPSS from this value")
                                    @QueryParam("epssFrom") String epssFrom,
                                    @Parameter(description = "Filter EPSS to this value")

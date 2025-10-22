@@ -122,6 +122,16 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
                 EMAIL_SMTP_TRUSTCERT.getDescription()
         );
     }
+    
+    @Test
+    public void testMailSubjectIsSetCorrectly() {
+        super.baseTestInformWithNewVulnerabilityNotification();
+
+        assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message ->
+                assertThat(message.getSubject())
+                        .isEqualTo("[Dependency-Track] New Vulnerability Identified on Project: [projectName : projectVersion]")
+        );
+    }
 
     @Test
     public void testInformWithBomConsumedNotification() {
@@ -135,24 +145,25 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
                     Bill of Materials Consumed
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Project:           projectName
                     Version:           projectVersion
                     Description:       projectDescription
                     Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     A CycloneDX BOM was consumed and will be processed
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     1970-01-01T18:31:06.000000666
                     """);
         });
     }
+
 
     @Test
     public void testInformWithBomProcessingFailedNotification() {
@@ -166,25 +177,25 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
                     Bill of Materials Processing Failed
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Project:           projectName
                     Version:           projectVersion
                     Description:       projectDescription
                     Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Cause:
                     cause
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     An error occurred while processing a BOM
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     1970-01-01T18:31:06.000000666
                     """);
         });
@@ -202,21 +213,21 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
                     Bill of Materials Validation Failed
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Project:           projectName
                     Version:           projectVersion
                     Description:       projectDescription
                     Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
                     Errors:            [$.components[928].externalReferences[1].url: does not match the iri-reference pattern must be a valid RFC 3987 IRI-reference]
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     An error occurred during BOM Validation
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     1970-01-01T00:20:34.000000888
                     """);
         });
@@ -234,25 +245,25 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
                     Bill of Materials Processing Failed
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Project:           projectName
                     Version:           projectVersion
                     Description:       projectDescription
                     Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Cause:
                     cause
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     An error occurred while processing a BOM
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     1970-01-01T18:31:06.000000666
                     """);
         });
@@ -270,19 +281,19 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
                     GitHub Advisory Mirroring
-                                               
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Level:     ERROR
                     Scope:     SYSTEM
                     Group:     DATASOURCE_MIRRORING
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     An error occurred mirroring the contents of GitHub Advisories. Check log for details.
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     1970-01-01T18:31:06.000000666
                     """);
         });
@@ -293,16 +304,16 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestInformWithNewVulnerabilityNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified on Project: [projectName : projectVersion]");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
-                    New Vulnerability Identified
-                                        
+                    New Vulnerability Identified on Project: [projectName : projectVersion]
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Vulnerability ID:  INT-001
                     Vulnerability URL: /vulnerability/?source=INTERNAL&vulnId=INT-001
                     Severity:          MEDIUM
@@ -313,13 +324,13 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
                     Version:           projectVersion
                     Description:       projectDescription
                     Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
-                                        
-                                        
+                    
+                    
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     1970-01-01T18:31:06.000000666
                     """);
         });
@@ -454,31 +465,31 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
                     Vulnerable Dependency Introduced
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Project:           [projectName : projectVersion]
                     Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
                     Component:         componentName : componentVersion
                     Component URL:     /component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6
-                                        
+                    
                     Vulnerabilities
-                                        
+                    
                     Vulnerability ID:  INT-001
                     Vulnerability URL: /vulnerability/?source=INTERNAL&vulnId=INT-001
                     Severity:          MEDIUM
                     Source:            INTERNAL
                     Description:
                     vulnerabilityDescription
-                                        
-                                        
-                                        
+                    
+                    
+                    
                     --------------------------------------------------------------------------------
-                                        
-                                        
-                                        
+                    
+                    
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     1970-01-01T18:31:06.000000666
                     """);
         });
@@ -496,30 +507,30 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
                     Analysis Decision: Finding Suppressed
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Analysis Type:  Project Analysis
-                                        
+                    
                     Analysis State:    FALSE_POSITIVE
                     Suppressed:        true
                     Vulnerability ID:  INT-001
                     Vulnerability URL: /vulnerability/?source=INTERNAL&vulnId=INT-001
                     Severity:          MEDIUM
                     Source:            INTERNAL
-                                        
+                    
                     Component:         componentName : componentVersion
                     Component URL:     /component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6
                     Project:           [projectName : projectVersion]
                     Description:       projectDescription
                     Project URL:       /projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
-                                        
-                                        
+                    
+                    
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     1970-01-01T18:31:06.000000666
                     """);
         });
@@ -537,23 +548,23 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
             assertThat((String) content.getBodyPart(0).getContent()).isEqualToIgnoringNewLines("""
                     Notification Test
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     Level:     ERROR
                     Scope:     SYSTEM
                     Group:     ANALYZER
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     ! " § $ % & / ( ) = ? \\ ' * Ö Ü Ä ®️
-                                        
+                    
                     --------------------------------------------------------------------------------
-                                        
+                    
                     1970-01-01T18:31:06.000000666
                     """);
         });
-        
+
     }
 
     @Test

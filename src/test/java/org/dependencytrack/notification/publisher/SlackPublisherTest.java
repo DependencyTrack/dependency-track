@@ -141,7 +141,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                               "type": "header",
                               "text": {
                                 "type": "plain_text",
-                                "text": "BOM_VALIDATION_FAILED | pkg:maven/org.acme/projectName@projectVersion"
+                                "text": "BOM_VALIDATION_FAILED | projectName : projectVersion"
                               }
                             },
                             {
@@ -307,7 +307,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                             {
                               "type": "section",
                               "text": {
-                                "text": "New Vulnerability Identified",
+                                "text": "New Vulnerability Identified on Project: [projectName : projectVersion]",
                                 "type": "mrkdwn"
                               },
                               "fields": [
@@ -422,7 +422,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                                 },
                                 {
                                   "type": "plain_text",
-                                  "text": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "text": "projectName : projectVersion"
                                 }
                               ]
                             },
@@ -549,7 +549,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         		},
                         		{
                         		  "type": "plain_text",
-                        		  "text": "pkg:maven/org.acme/projectName@projectVersion"
+                        		  "text": "projectName : projectVersion"
                         		}
                         	  ]
                         	},
@@ -628,7 +628,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                             {
                               "type": "section",
                               "text": {
-                                "text": "New Vulnerability Identified",
+                                "text": "New Vulnerability Identified on Project: [projectName : projectVersion]",
                                 "type": "mrkdwn"
                               },
                               "fields": [
@@ -727,7 +727,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                                 },
                                 {
                                   "type": "plain_text",
-                                  "text": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "text": "projectName : projectVersion"
                                 }
                               ]
                             }
@@ -838,7 +838,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         		},
                         		{
                         		  "type": "plain_text",
-                        		  "text": "pkg:maven/org.acme/projectName@projectVersion"
+                        		  "text": "projectName : projectVersion"
                         		}
                         	  ]
                         	}

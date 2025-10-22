@@ -186,7 +186,7 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 .scope(NotificationScope.PORTFOLIO)
                 .group(NotificationGroup.NEW_VULNERABILITY)
                 .level(NotificationLevel.INFORMATIONAL)
-                .title(NotificationConstants.Title.NEW_VULNERABILITY)
+                .title(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.NEW_VULNERABILITY, project))
                 .content("")
                 .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
                 .subject(subject);
@@ -317,6 +317,8 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
         assertThatNoException()
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
+
+
 
     private static Component createComponent(final Project project) {
         final var component = new Component();

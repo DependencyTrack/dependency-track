@@ -102,7 +102,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 },
                                 {
                                   "name": "Project",
-                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "value": "projectName : projectVersion"
                                 },
                                 {
                                   "name": "Project URL",
@@ -148,7 +148,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 },
                                 {
                                   "name": "Project",
-                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "value": "projectName : projectVersion"
                                 },
                                 {
                                   "name": "Project URL",
@@ -198,7 +198,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 },
                                 {
                                   "name": "Project",
-                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "value": "projectName : projectVersion"
                                 },
                                 {
                                   "name": "Project URL",
@@ -250,6 +250,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         """)));
     }
 
+
     @Test
     public void testInformWithNewVulnerabilityNotification() {
         super.baseTestInformWithNewVulnerabilityNotification();
@@ -260,8 +261,8 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         {
                           "@type": "MessageCard",
                           "@context": "http://schema.org/extensions",
-                          "summary": "New Vulnerability Identified",
-                          "title": "New Vulnerability Identified",
+                          "summary": "New Vulnerability Identified on Project: [projectName : projectVersion]",
+                          "title": "New Vulnerability Identified on Project: [projectName : projectVersion]",
                           "sections": [
                             {
                               "activityTitle": "Dependency-Track",
@@ -312,7 +313,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                               "facts": [
                                 {
                                   "name": "Project",
-                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "value": "projectName : projectVersion"
                                 },
                                 {
                                   "name": "Component",
@@ -374,7 +375,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 },
                                 {
                                   "name": "Project",
-                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "value": "projectName : projectVersion"
                                 }
                               ],
                               "text": ""

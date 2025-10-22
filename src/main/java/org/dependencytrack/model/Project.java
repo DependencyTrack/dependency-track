@@ -664,19 +664,15 @@ public class Project implements Serializable {
 
     @Override
     public String toString() {
-        if (getPurl() != null) {
-            return getPurl().canonicalize();
-        } else {
-            StringBuilder sb = new StringBuilder();
-            if (getGroup() != null) {
-                sb.append(getGroup()).append(" : ");
-            }
-            sb.append(getName());
-            if (getVersion() != null) {
-                sb.append(" : ").append(getVersion());
-            }
-            return sb.toString();
+        StringBuilder sb = new StringBuilder();
+        if (getGroup() != null) {
+            sb.append(getGroup()).append(" : ");
         }
+        sb.append(getName());
+        if (getVersion() != null) {
+            sb.append(" : ").append(getVersion());
+        }
+        return sb.toString();
     }
 
     private final static class BooleanDefaultTrueSerializer extends JsonSerializer<Boolean> {

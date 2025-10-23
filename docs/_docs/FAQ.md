@@ -19,11 +19,11 @@ This topic is heavily explained in the [Dependency Check Comparison](./../odt-od
 
 #### I expect to see vulnerable components but I don't
 
-Most common reason: You have yet to enable the [Sonatype OSS Index Analyzer]. It is not
+Most common reason: You have yet to enable the [Sonatype OSS Index Analyzer](./../datasources/ossindex/) It is not
 enabled by default but is necessary to scan dependencies represented by
 [Package URLs](./../terminology/#package-url-purl).
 
-Authentication through API Token will be required. Follow [Sonatype OSS Index Analyzer] `Authentication` instructions.
+Authentication through API Token will be required. Follow [Sonatype OSS Index Analyzer](./../datasources/ossindex/) `Authentication` instructions.
 
 #### I have just enabled OSS Index Analyzer but still don't see results
 
@@ -125,4 +125,3 @@ Policy condition values are treated as regular expressions.
    For example, `^vendor/*$` would match `vendor/lib-1`, `vendor/app`, or even only `vendor/`.
 
 [defect report]: https://github.com/DependencyTrack/dependency-track/issues/new?assignees=&labels=defect%2Cin+triage&template=defect-report.yml
-[Sonatype OSS Index Analyzer]: (./../datasources/ossindex/)

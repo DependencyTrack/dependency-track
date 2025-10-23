@@ -19,7 +19,7 @@ This topic is heavily explained in the [Dependency Check Comparison](./../odt-od
 
 #### I expect to see vulnerable components but I don't
 
-Most common reason: You have yet to enable the [Sonatype OSS Index Analyzer](./../datasources/ossindex/) It is not
+Most common reason: You have yet to enable the [Sonatype OSS Index Analyzer](./../datasources/ossindex/). It is not
 enabled by default but is necessary to scan dependencies represented by
 [Package URLs](./../terminology/#package-url-purl).
 

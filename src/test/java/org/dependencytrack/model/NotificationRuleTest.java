@@ -100,6 +100,16 @@ class NotificationRuleTest {
     }
 
     @Test
+    public void testNotifySeverities() {
+        List<Severity> severities = new ArrayList<>();
+        severities.add(Severity.LOW);
+        severities.add(Severity.CRITICAL);
+        NotificationRule rule = new NotificationRule();
+        rule.setNotifySeverities(severities);
+        Assertions.assertEquals(2, rule.getNotifySeverities().size());
+    }
+
+    @Test
     void testPublisher() {
         NotificationPublisher publisher = new NotificationPublisher();
         NotificationRule rule = new NotificationRule();

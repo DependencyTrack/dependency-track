@@ -151,5 +151,5 @@ public class MattermostPublisherTest extends AbstractWebhookPublisherTest<Matter
                         }
                         """)));
     }
-
+    
 }

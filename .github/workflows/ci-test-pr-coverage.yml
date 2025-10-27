@@ -18,7 +18,7 @@ jobs:
         && github.event.workflow_run.conclusion == 'success'
     steps:
     - name: Download PR test coverage report
-      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # tag=v5.0.0
+      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # tag=v6.0.0
       with:
         name: pr-test-coverage-report
         github-token: ${{ secrets.GITHUB_TOKEN }}

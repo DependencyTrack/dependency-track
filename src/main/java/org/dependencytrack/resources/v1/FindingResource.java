@@ -277,7 +277,7 @@ public class FindingResource extends AlpineResource {
                                    @QueryParam("cvssv2To") String cvssv2To,
                                    @Parameter(description = "Filter CVSSv3 from this value")
                                    @QueryParam("cvssv3From") String cvssv3From,
-                                   @Parameter(description = "Filter CVSSv2 to this value")
+                                   @Parameter(description = "Filter CVSSv3 to this value")
                                    @QueryParam("cvssv3To") String cvssv3To,
                                    @Parameter(description = "Filter CVSSv4 from this value")
                                    @QueryParam("cvssv4From") String cvssv4From,

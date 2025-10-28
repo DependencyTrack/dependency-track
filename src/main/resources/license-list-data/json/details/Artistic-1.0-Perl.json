@@ -8,11 +8,11 @@
   "licenseId": "Artistic-1.0-Perl",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "http://dev.perl.org/licenses/artistic.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:55:59Z",
+      "timestamp": "2025-07-01T14:54:20Z",
       "isWayBackLink": false,
       "order": 0
     }

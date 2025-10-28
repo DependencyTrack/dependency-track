@@ -51,4 +51,14 @@ public class MetaModel {
     public void setPublishedTimestamp(final Date publishedTimestamp) {
         this.publishedTimestamp = publishedTimestamp;
     }
+
+
+    @Override
+    public String toString() {
+        return "MetaModel{" +
+                "component=" + component +
+                ", latestVersion='" + latestVersion + '\'' +
+                ", publishedTimestamp=" + publishedTimestamp +
+                '}';
+    }
 }

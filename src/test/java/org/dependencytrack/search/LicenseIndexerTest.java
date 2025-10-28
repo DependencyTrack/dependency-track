@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
+import static org.awaitility.Awaitility.await;
+
 class LicenseIndexerTest extends PersistenceCapableTest {
 
     @Test
@@ -49,11 +51,13 @@ class LicenseIndexerTest extends PersistenceCapableTest {
         l.setName("Acme License");
         l.setLicenseId("acme-license");
         LicenseIndexer.getInstance().add(new LicenseDocument(l));
-        LicenseIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
-        SearchResult result = searchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
-        Assertions.assertEquals(1, result.getResults().size());
-        Assertions.assertEquals(1, result.getResults().get("license").size());
+        commitIndex();
+
+        await().untilAsserted(() -> {
+            SearchResult result = SearchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
+            Assertions.assertEquals(1, result.getResults().size());
+            Assertions.assertEquals(1, result.getResults().get("license").size());
+        });
     }
 
     @Test
@@ -63,17 +67,23 @@ class LicenseIndexerTest extends PersistenceCapableTest {
         l.setName("Acme License");
         l.setLicenseId("acme-license");
         LicenseIndexer.getInstance().add(new LicenseDocument(l));
-        LicenseIndexer.getInstance().commit();
-        SearchManager searchManager = new SearchManager();
+        commitIndex();
         LicenseIndexer.getInstance().remove(new LicenseDocument(l));
-        LicenseIndexer.getInstance().commit();
-        SearchResult result = searchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
-        Assertions.assertEquals(1, result.getResults().size());
-        Assertions.assertEquals(0, result.getResults().get("license").size());
+        commitIndex();
+
+        await().untilAsserted(() -> {
+            SearchResult result = SearchManager.searchIndex(LicenseIndexer.getInstance(), l.getUuid().toString(), 10);
+            Assertions.assertEquals(1, result.getResults().size());
+            Assertions.assertEquals(0, result.getResults().get("license").size());
+        });
     }
 
     @Test
     void reindexTest() {
         LicenseIndexer.getInstance().reindex();
+    }
+
+    private static void commitIndex() {
+        IndexManagerTestUtil.commitIndex(LicenseIndexer.getInstance());
     }
 }

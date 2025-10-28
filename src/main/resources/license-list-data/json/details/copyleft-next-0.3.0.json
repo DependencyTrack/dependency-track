@@ -6,11 +6,11 @@
   "licenseId": "copyleft-next-0.3.0",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "https://github.com/copyleft-next/copyleft-next/blob/master/Releases/copyleft-next-0.3.0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T17:57:48Z",
+      "timestamp": "2025-07-01T14:54:55Z",
       "isWayBackLink": false,
       "order": 0
     }

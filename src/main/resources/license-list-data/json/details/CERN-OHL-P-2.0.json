@@ -6,11 +6,11 @@
   "licenseId": "CERN-OHL-P-2.0",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://www.ohwr.org/project/cernohl/wikis/Documents/CERN-OHL-version-2",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T17:59:52Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:55:41Z",
       "isWayBackLink": false,
       "order": 0
     }

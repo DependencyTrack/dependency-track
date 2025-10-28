@@ -6,22 +6,22 @@
   "licenseId": "Minpack",
   "crossRef": [
     {
-      "match": "true",
-      "url": "http://www.netlib.org/minpack/disclaimer",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-12-30T18:04:33Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "false",
       "url": "https://gitlab.com/libeigen/eigen/-/blob/master/COPYING.MINPACK",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-12-30T18:04:34Z",
+      "timestamp": "2025-07-01T14:54:20Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "true",
+      "url": "http://www.netlib.org/minpack/disclaimer",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:21Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

@@ -51,6 +51,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.time.Duration;
@@ -366,6 +367,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     }
 
     @Test
+    @Timeout(20)
     public void testNotificationRuleTest() {
         NotificationPublisher publisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",

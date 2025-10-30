@@ -1,0 +1,16 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "Additional permission under the GNU Affero GPL version 3 section 7:\n\nIf you modify this Program, or any covered work, by linking or\ncombining it with other code, such other code is not for that reason\nalone subject to any of the requirements of the GNU Affero GPL\nversion 3.\n",
+  "name": "Romic Exception",
+  "seeAlso": [
+    "https://web.archive.org/web/20210124015834/http://mo.morsi.org/blog/2009/08/13/lesser_affero_gplv3/",
+    "https://sourceforge.net/p/romic/code/ci/3ab2856180cf0d8b007609af53154cf092efc58f/tree/COPYING",
+    "https://github.com/moll/node-mitm/blob/bbf24b8bd7596dc6e091e625363161ce91984fc7/LICENSE#L8-L11",
+    "https://github.com/zenbones/SmallMind/blob/3c62b5995fe7f27c453f140ff9b60560a0893f2a/COPYRIGHT#L25-L30",
+    "https://github.com/CubeArtisan/cubeartisan/blob/2c6ab53455237b88a3ea07be02a838a135c4ab79/LICENSE.LESSER#L10-L15",
+    "https://github.com/savearray2/py.js/blob/b781273c08c8afa89f4954de4ecf42ec01429bae/README.md#license"
+  ],
+  "licenseExceptionId": "romic-exception",
+  "licenseExceptionTemplate": "Additional permission under the GNU Affero GPL version 3 section 7:\n\nIf you modify this Program, or any covered work, by linking or combining it with other code, such other code is not for that reason alone subject to any of the requirements of the GNU Affero GPL version 3.\n\n",
+  "exceptionTextHtml": "\n      \u003cp\u003e\n         Additional permission under the GNU Affero GPL version 3 section 7:\n      \u003c/p\u003e\n\n      \u003cp\u003e\n         If you modify this Program, or any covered work, by linking or\n         combining it with other code, such other code is not for that reason\n         alone subject to any of the requirements of the GNU Affero GPL\n         version 3.\n      \u003c/p\u003e\n\n   "
+}

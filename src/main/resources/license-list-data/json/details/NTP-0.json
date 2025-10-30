@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "NTP No Attribution (NTP-0)\n\nCopyright (4-digit-year) by (CopyrightHoldersName)\n\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose is hereby granted, provided that the name of (TrademarkedName) not be used in advertising or publicity pertaining to distribution of the software without specific, written prior permission. (TrademarkedName) make no representations about the suitability of this software for any purpose. It is provided \"as is\" without express or implied warranty.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eNTP No Attribution (NTP-0)\n\n\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (4-digit-year) by (CopyrightHoldersName)  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose is hereby granted, provided that the name\u003c\u003cbeginOptional\u003e\u003es\u003c\u003cendOptional\u003e\u003eof \u003c\u003cvar;name\u003d\"TMname\";original\u003d\"(TrademarkedName)\";match\u003d\".+\"\u003e\u003e not be used in advertising or publicity pertaining to distribution of the software without specific, written prior permission. \u003c\u003cvar;name\u003d\"TMname\";original\u003d\"(TrademarkedName)\";match\u003d\".+\"\u003e\u003e make\u003c\u003cbeginOptional\u003e\u003es\u003c\u003cendOptional\u003e\u003eno representations about the suitability of this software for any purpose. It is provided \"as is\" without express or implied warranty.\n\n",
+  "name": "NTP No Attribution",
+  "licenseComments": "This license is similar to NTP, but it omits the language regarding reproduction of copyright and permission notices. It also omits the phrase \"with or without fee\".",
+  "comment": "This license is similar to NTP, but it omits the language regarding reproduction of copyright and permission notices. It also omits the phrase \"with or without fee\".",
+  "licenseId": "NTP-0",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/tytso/e2fsprogs/blob/master/lib/et/et_name.c",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:02:43Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/tytso/e2fsprogs/blob/master/lib/et/et_name.c"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eNTP No Attribution (NTP-0)\u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright (4-digit-year) by (CopyrightHoldersName)\n         \u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003ePermission to use, copy, modify, and distribute this software and its documentation for any purpose\n         is hereby granted, provided that the name\u003cvar class\u003d\"optional-license-text\"\u003es\u003c/var\u003e of\n        \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e (TrademarkedName)\u003c/span\u003e\u003c/var\u003e not be used in advertising or publicity pertaining\n        to distribution of the software without specific, written prior permission.\n        \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e (TrademarkedName)\u003c/span\u003e\u003c/var\u003e make\u003cvar class\u003d\"optional-license-text\"\u003es\u003c/var\u003e no representations about the suitability\n        of this software for any purpose. It is provided \u0026quot;as is\u0026quot; without express or implied warranty.\n      \u003c/p\u003e\n\n    "
+}

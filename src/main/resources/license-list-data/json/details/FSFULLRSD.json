@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "This file is free software; the Free Software Foundation\ngives unlimited permission to copy and/or distribute it,\nwith or without modifications, as long as this notice is preserved.\nThis file is offered as-is, without any warranty.\n",
+  "standardLicenseTemplate": "This file is free software; the Free Software Foundation gives unlimited permission to copy and/or distribute it, with or without modifications, as long as this notice is preserved. This file is offered as-is, without any warranty.\n\n",
+  "name": "FSF Unlimited License (with License Retention and Short Disclaimer)",
+  "licenseComments": "This is the same as FSFULLR but adds a short disclaimer of warranties.",
+  "comment": "This is the same as FSFULLR but adds a short disclaimer of warranties.",
+  "licenseId": "FSFULLRSD",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://git.savannah.gnu.org/cgit/gnulib.git/tree/modules/COPYING?id\u003d7b08932179d0d6b017f7df01a2ddf6e096b038e3",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:56:39Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://git.savannah.gnu.org/cgit/gnulib.git/tree/modules/COPYING?id\u003d7b08932179d0d6b017f7df01a2ddf6e096b038e3"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            This file is free software; the Free Software Foundation\n            gives unlimited permission to copy and/or distribute it,\n            with or without modifications, as long as this notice is preserved.\n            This file is offered as-is, without any warranty.\n         \u003c/p\u003e\n\n      "
+}

@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Permission is granted to make and distribute verbatim copies of \nthis manual provided the copyright notice and this permission \nnotice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of \nthis manual under the conditions for verbatim copying, provided \nthat the entire resulting derived work is distributed under the \nterms of a permission notice identical to this one.\n\nSince the Linux kernel and libraries are constantly changing, this \nmanual page may be incorrect or out-of-date. The author(s) assume \nno responsibility for errors or omissions, or for damages resulting \nfrom the use of the information contained herein.\n\nFormatted or processed versions of this manual, if unaccompanied by \nthe source, must acknowledge the copyright and authors of this work.\n",
+  "standardLicenseTemplate": "Permission is granted to make and distribute verbatim copies of this manual provided the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this manual under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.\n\nSince the Linux kernel and libraries are constantly changing, this manual page may be incorrect or out-of-date. The author(s) assume no responsibility for errors or omissions, or for damages resulting from the use of the information contained herein.\n\nFormatted or processed versions of this manual, if unaccompanied by the source, must acknowledge the copyright and authors of this work.\n\n",
+  "name": "Linux man-pages Copyleft Variant",
+  "licenseComments": "This is the same as Linux-man-pages-copyleft but omits the last sentence of the third paragraph.",
+  "comment": "This is the same as Linux-man-pages-copyleft but omits the last sentence of the third paragraph.",
+  "licenseId": "Linux-man-pages-copyleft-var",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man2/set_mempolicy.2#n5",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:55:43Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man2/set_mempolicy.2#n5"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            Permission is granted to make and distribute verbatim\n            copies of this manual provided the copyright notice\n            and this permission notice are preserved on all copies.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Permission is granted to copy and distribute modified versions\n            of this manual under the conditions for verbatim copying,\n            provided that the entire resulting derived work is distributed\n            under the terms of a permission notice identical to this one.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Since the Linux kernel and libraries are constantly changing,\n            this manual page may be incorrect or out-of-date. The author(s)\n            assume no responsibility for errors or omissions, or for damages\n            resulting from the use of the information contained herein.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Formatted or processed versions of this manual, if unaccompanied by\n            the source, must acknowledge the copyright and authors of this work.\n         \u003c/p\u003e\n\n      "
+}

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${user.home}/.dependency-track/dependency-track.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${user.home}/.dependency-track/dependency-track.%i.log</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>9</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>10MB</maxFileSize>
+        </triggeringPolicy>
+        <encoder>
+            <pattern>%date [%marker] %level [%logger] %msg%replace( [%mdc{}]){' \[\]', ''}%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date %level [%logger{0}] %msg%replace( [%mdc{}]){' \[\]', ''}%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="SECURITY_CONSOLE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${user.home}/.dependency-track/dependency-track-audit.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${user.home}/.dependency-track/dependency-track-audit.%i.log</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>9</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>10MB</maxFileSize>
+        </triggeringPolicy>
+        <filter class="org.owasp.security.logging.filter.SecurityMarkerFilter"/>
+        <encoder>
+            <pattern>%date [%marker] %level - %msg%replace( [%mdc{}]){' \[\]', ''}%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="EMBEDDED_SERVER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${user.home}/.dependency-track/server.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${user.home}/.dependency-track/server.%i.log</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>9</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>10MB</maxFileSize>
+        </triggeringPolicy>
+        <encoder>
+            <pattern>%date [%marker] %level [%logger] %msg%replace( [%mdc{}]){' \[\]', ''}%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="alpine" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
+        <appender-ref ref="FILE" />
+        <appender-ref ref="SECURITY_CONSOLE" />
+    </logger>
+
+    <logger name="org.dependencytrack" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
+        <appender-ref ref="FILE" />
+        <appender-ref ref="SECURITY_CONSOLE" />
+    </logger>
+
+    <logger name="org.eclipse.jetty" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
+        <appender-ref ref="EMBEDDED_SERVER" />
+    </logger>
+
+    <root level="WARN">
+        <appender-ref ref="FILE" />
+        <appender-ref ref="SECURITY_CONSOLE" />
+    </root>
+
+</configuration>

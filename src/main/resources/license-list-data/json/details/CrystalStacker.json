@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Crystal Stacker is freeware. This means you can pass copies around freely provided you include this document in it\u0027s original form in your distribution. Please see the \"Contacting Us\" section of this document if you need to contact us for any reason.\n\nDisclaimer\n\nNewCreature Design makes no guarantees regarding the Crystal Stacker software. We are not responsible for damages caused by it, though the software is not known to cause any problems. If you have trouble with the software, see the \"Contacting Us\" section of this document.\n\nThe source code is provided as-is and you may do with it whatsoever you please provided that you include this file in its unmodified form with any new distribution. NewCreature Design makes no gaurantees regarding the usability of the source but are willing to help with any problems you might run into. Please see the \"Contacting Us\" section of this document if you need to get in touch with us about any issues you have regarding the source.\n",
+  "standardLicenseTemplate": "Crystal Stacker is freeware. This means you can pass copies around freely provided you include this document in it\u0027s original form in your distribution. Please see the \"Contacting Us\" section of this document if you need to contact us for any reason.\n\nDisclaimer\n\nNewCreature Design makes no guarantees regarding the Crystal Stacker software. We are not responsible for damages caused by it, though the software is not known to cause any problems. If you have trouble with the software, see the \"Contacting Us\" section of this document.\n\nThe source code is provided as-is and you may do with it whatsoever you please provided that you include this file in its unmodified form with any new distribution. NewCreature Design makes no gaurantees regarding the usability of the source but are willing to help with any problems you might run into. Please see the \"Contacting Us\" section of this document if you need to get in touch with us about any issues you have regarding the source.\n\n",
+  "name": "CrystalStacker License",
+  "licenseId": "CrystalStacker",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing:CrystalStacker?rd\u003dLicensing/CrystalStacker",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:58:00Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing:CrystalStacker?rd\u003dLicensing/CrystalStacker"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cp\u003eCrystal Stacker is freeware. This means you can pass copies around freely provided you include this\n         document in it\u0026apos;s original form in your distribution. Please see the \u0026quot;Contacting Us\u0026quot; section of this\n         document if you need to contact us for any reason.\u003c/p\u003e\n\n      \u003cp\u003eDisclaimer\u003c/p\u003e\n\n      \u003cp\u003eNewCreature Design makes no guarantees regarding the Crystal Stacker software. We are not responsible for\n         damages caused by it, though the software is not known to cause any problems. If you have trouble with\n         the software, see the \u0026quot;Contacting Us\u0026quot; section of this document.\u003c/p\u003e\n\n      \u003cp\u003eThe source code is provided as-is and you may do with it whatsoever you please provided that you include\n         this file in its unmodified form with any new distribution. NewCreature Design makes no gaurantees\n         regarding the usability of the source but are willing to help with any problems you might run into.\n         Please see the \u0026quot;Contacting Us\u0026quot; section of this document if you need to get in touch with us about any\n         issues you have regarding the source.\u003c/p\u003e\n\n    "
+}

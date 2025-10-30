@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1995-2009 Gerd Neugebauer\n\ncwpuzzle.dtx is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or distributor  accepts responsibility to anyone for the consequences of using it or for whether it serves any particular purpose  or works at all, unless he says so in writing.\n\nEveryone is granted permission to copy, modify and redistribute cwpuzzle.dtx, provided this copyright notice is preserved and any modifications are indicated.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eCopyright (C) 1995-2009 Gerd Neugebauer\n\n\u003c\u003cendOptional\u003e\u003e\n\u003c\u003cvar;name\u003d\"projectName1\";original\u003d\"cwpuzzle.dtx\";match\u003d\".+\"\u003e\u003e is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or distributor accepts responsibility to anyone for the consequences of using it or for whether it serves any particular purpose or works at all, unless he says so in writing.\n\nEveryone is granted permission to copy, modify and redistribute \u003c\u003cvar;name\u003d\"projectName2\";original\u003d\"cwpuzzle.dtx\";match\u003d\".+\"\u003e\u003e , provided this copyright notice is preserved and any modifications are indicated.\n\n",
+  "name": "Crossword License",
+  "licenseId": "Crossword",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/Crossword",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:57:32Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Crossword"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eCopyright (C) 1995-2009 Gerd Neugebauer\u003c/p\u003e\n\n      \u003c/div\u003e\n\n      \u003cp\u003e\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e cwpuzzle.dtx\u003c/span\u003e\u003c/var\u003e is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or\n         distributor accepts responsibility to anyone for the consequences of using it or for whether it serves\n         any particular purpose or works at all, unless he says so in writing.\n      \u003c/p\u003e\n\n        \u003cp\u003eEveryone is granted permission to copy, modify and redistribute \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e cwpuzzle.dtx\u003c/span\u003e\u003c/var\u003e, provided this\n             copyright notice is preserved and any modifications are indicated.\n      \u003c/p\u003e\n\n    "
+}

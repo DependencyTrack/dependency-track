@@ -1,0 +1,9 @@
+{
+  "packages": [],
+  "includes": {
+    "user:pass/include/all$10dbe443e5265bcae424f7fb60cd9d01b78a1b60.json": {
+      "sha1": "10dbe443e5265bcae424f7fb60cd9d01b78a1b60"
+    }
+  },
+  "metadata-url": "p2\/%package%.json"
+}

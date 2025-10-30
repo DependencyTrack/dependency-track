@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 1991 Bell Communications Research, Inc. (Bellcore)\n\nPermission to use, copy, modify, and distribute this material\nfor any purpose and without fee is hereby granted, provided\nthat the above copyright notice and this permission notice\nappear in all copies, and that the name of Bellcore not be\nused in advertising or publicity pertaining to this\nmaterial without the specific, prior written permission\nof an authorized representative of Bellcore.\tBELLCORE\nMAKES NO REPRESENTATIONS ABOUT THE ACCURACY OR SUITABILITY\nOF THIS MATERIAL FOR ANY PURPOSE.  IT IS PROVIDED \"AS IS\",\nWITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 1991 Bell Communications Research, Inc. (Bellcore)  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this material for any purpose and without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies, and that the name of Bellcore not be used in advertising or publicity pertaining to this material without the specific, prior written permission of an authorized representative of Bellcore. BELLCORE MAKES NO REPRESENTATIONS ABOUT THE ACCURACY OR SUITABILITY OF THIS MATERIAL FOR ANY PURPOSE. IT IS PROVIDED \"AS IS\", WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.\n\n",
+  "name": "metamail License",
+  "licenseId": "metamail",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/Dual-Life/mime-base64/blob/master/Base64.xs#L12",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:59:42Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/Dual-Life/mime-base64/blob/master/Base64.xs#L12"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            \u003cp\u003e\n\t       Copyright (c) 1991 Bell Communications Research, Inc. (Bellcore)\n            \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            Permission to use, copy, modify, and distribute this material\n            for any purpose and without fee is hereby granted, provided\n            that the above copyright notice and this permission notice\n            appear in all copies, and that the name of Bellcore not be\n            used in advertising or publicity pertaining to this\n            material without the specific, prior written permission\n            of an authorized representative of Bellcore. BELLCORE\n            MAKES NO REPRESENTATIONS ABOUT THE ACCURACY OR SUITABILITY\n            OF THIS MATERIAL FOR ANY PURPOSE. IT IS PROVIDED \u0026quot;AS IS\u0026quot;,\n            WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.\n         \u003c/p\u003e\n\n      "
+}

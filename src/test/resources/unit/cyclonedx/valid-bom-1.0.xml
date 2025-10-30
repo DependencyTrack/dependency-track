@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.0" version="1">
+    <components>
+        <component type="application">
+            <group>org.example</group>
+            <name>myapplication</name>
+            <version>1.0.0</version>
+            <description>An example application</description>
+            <hashes>
+                <hash alg="MD5">2342c2eaf1feb9a80195dbaddf2ebaa3</hash>
+                <hash alg="SHA-1">68b78babe00a053f9e35ec6a2d9080f5b90122b0</hash>
+                <hash alg="SHA-256">708f1f53b41f11f02d12a11b1a38d2905d47b099afc71a0f1124ef8582ec7313</hash>
+                <hash alg="SHA-512">387b7ae16b9cae45f830671541539bf544202faae5aac544a93b7b0a04f5f846fa2f4e81ef3f1677e13aed7496408a441f5657ab6d54423e56bf6f38da124aef</hash>
+            </hashes>
+            <licenses>
+                <license>
+                    <id>Apache-2.0</id>
+                </license>
+            </licenses>
+            <copyright>Copyright Example Inc. All rights reserved.</copyright>
+            <cpe>cpe:/a:example:myapplication:1.0.0</cpe>
+            <purl>pkg:maven/com.example/myapplication@1.0.0?packaging=war</purl>
+            <modified>false</modified>
+
+            <!-- The application includes the following components -->
+            <components>
+                <component type="framework">
+                    <group>twitter</group>
+                    <name>bootstrap</name>
+                    <version>3.3.7</version>
+                    <description>The most popular front-end framework for developing responsive, mobile first projects on the web.</description>
+                    <hashes>
+                        <hash alg="MD5">3942447fac867ae5cdb3229b658f4d48</hash>
+                        <hash alg="SHA-1">e6b1000b94e835ffd37f4c6dcbdad43f4b48a02a</hash>
+                        <hash alg="SHA-256">f498a8ff2dd007e29c2074f5e4b01a9a01775c3ff3aeaf6906ea503bc5791b7b</hash>
+                        <hash alg="SHA-512">e8f33e424f3f4ed6db76a482fde1a5298970e442c531729119e37991884bdffab4f9426b7ee11fccd074eeda0634d71697d6f88a460dce0ac8d627a29f7d1282</hash>
+                    </hashes>
+                    <licenses>
+                        <license>
+                            <id>MIT</id>
+                        </license>
+                    </licenses>
+                    <purl>pkg:npm/bootstrap@3.3.7</purl>
+                    <modified>false</modified>
+                </component>
+                <component type="framework">
+                    <group>com.example</group>
+                    <name>myframework</name>
+                    <version>1.0.0</version>
+                    <description>Example Inc, enterprise framework</description>
+                    <hashes>
+                        <hash alg="MD5">cfcb0b64aacd2f81c1cd546543de965a</hash>
+                        <hash alg="SHA-1">7fbeef2346c45d565c3341f037bce4e088af8a52</hash>
+                        <hash alg="SHA-256">0384db3cec55d86a6898c489fdb75a8e75fe66b26639634983d2f3c3558493d1</hash>
+                        <hash alg="SHA-512">854909cdb9e3ca183056837144aab6d8069b377bd66445087cc7157bf0c3f620418705dd0b83bdc2f73a508c2bdb316ca1809d75ee6972d02023a3e7dd655c79</hash>
+                    </hashes>
+                    <licenses>
+                        <license>
+                            <id>Apache-2.0</id>
+                        </license>
+                    </licenses>
+                    <purl>pkg:maven/com.example/myframework@1.0.0?packaging=war</purl>
+                    <modified>false</modified>
+                </component>
+                <!-- continue adding additional components -->
+            </components>
+        </component>
+    </components>
+</bom>

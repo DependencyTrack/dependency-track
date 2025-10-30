@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 2001 Leptonica.  All rights reserved.\n\nThis software is distributed in the hope that it will be useful, but with NO WARRANTY OF ANY KIND.\n\nNo author or distributor accepts responsibility to anyone for the consequences of using this software, or for whether it serves any particular purpose or works at all, unless he or she says so in writing.  Everyone is granted permission to copy, modify and redistribute this source code, for commercial or non-commercial purposes, with the following restrictions:\n\n(1) the origin of this source code must not be misrepresented;\n(2) modified versions must be plainly marked as such; and\n(3) this notice may not be removed or altered from any source or modified source distribution.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 2001 Leptonica. All rights reserved.  \";match\u003d\".{0,5000}\"\u003e\u003e\nThis software is distributed in the hope that it will be useful, but with NO WARRANTY OF ANY KIND.\n\nNo author or distributor accepts responsibility to anyone for the consequences of using this software, or for whether it serves any particular purpose or works at all, unless he or she says so in writing. Everyone is granted permission to copy, modify and redistribute this source code, for commercial or non-commercial purposes, with the following restrictions:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"(1)\";match\u003d\".{0,20}\"\u003e\u003e the origin of this source code must not be misrepresented;\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"(2)\";match\u003d\".{0,20}\"\u003e\u003e modified versions must be plainly marked as such; and\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"(3)\";match\u003d\".{0,20}\"\u003e\u003e this notice may not be removed or altered from any source or modified source distribution.",
+  "name": "Leptonica License",
+  "licenseComments": "This is an older license for Leptonica. Currently, it uses BSD-2-Clause (see http://www.leptonica.com/about-the-license.html)",
+  "comment": "This is an older license for Leptonica. Currently, it uses BSD-2-Clause (see http://www.leptonica.com/about-the-license.html)",
+  "licenseId": "Leptonica",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/Leptonica",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:55:03Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Leptonica"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright (C) 2001 Leptonica. All rights reserved.\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003eThis software is distributed in the hope that it will be useful, but with NO WARRANTY OF ANY KIND.\u003c/p\u003e\n\n      \u003cp\u003eNo author or distributor accepts responsibility to anyone for the consequences of using this software, or\n         for whether it serves any particular purpose or works at all, unless he or she says so in writing.\n         Everyone is granted permission to copy, modify and redistribute this source code, for commercial or\n         non-commercial purposes, with the following restrictions:\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e (1)\u003c/span\u003e\u003c/var\u003e\n          the origin of this source code must not be misrepresented;\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e (2)\u003c/span\u003e\u003c/var\u003e\n          modified versions must be plainly marked as such; and\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e (3)\u003c/span\u003e\u003c/var\u003e\n          this notice may not be removed or altered from any source or modified source distribution.\n        \u003c/li\u003e\n      \n\u003c/ul\u003e\n    "
+}

@@ -1,0 +1,84 @@
+# ----
+# Site
+
+title: Dependency-Track
+url: "https://docs.dependencytrack.org"
+baseurl:
+show_full_navigation: true
+
+version: v4.13
+
+# Values for the jekyll-seo-tag gem (https://github.com/jekyll/jekyll-seo-tag)
+logo: /siteicon.png
+description: Product documentation
+author:
+  name: Steve Springett
+  email: steve.springett@owasp.org
+  twitter: stevespringett
+social:
+  name: Dependency-Track
+  links:
+    - https://github.com/DependencyTrack/dependency-track
+
+# -----
+# Build
+
+permalink: pretty
+
+plugins:
+  - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-feed
+  - jekyll-redirect-from
+  - jekyll-mermaid
+
+mermaid:
+  src: 'scripts/mermaid.min.js'
+
+exclude:
+  - vendor/
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - LICENCE
+
+collections:
+  docs:
+    title: Documentation
+    permalink: /:path/
+    output: true
+
+defaults:
+  -
+    scope:
+      path: ""
+    values:
+      layout: default
+  -
+    scope:
+      path: ""
+      type: "docs"
+    values:
+      seo:
+        type: Article
+      _comments:
+        category: Group navigation links with this field
+        order: Used to sort links in the navigation
+      _options:
+        content:
+          width: 800
+          height: 2000
+  -
+    scope:
+      path: ""
+      type: "posts"
+    values:
+      _comments:
+        type: Marks the impact of this release
+
+# -----------
+# CloudCannon
+
+types:
+  - minor
+  - major

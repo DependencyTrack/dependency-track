@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Unlimited distribution and/or modification is allowed as long as this copyright notice remains intact.\n",
+  "standardLicenseTemplate": "Unlimited distribution and/or modification is allowed as long as this copyright notice remains intact.\n\n",
+  "name": "TermReadKey License",
+  "licenseId": "TermReadKey",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/jonathanstowe/TermReadKey/blob/master/README#L9-L10",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:04:13Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/jonathanstowe/TermReadKey/blob/master/README#L9-L10"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            Unlimited distribution and/or modification is allowed\n            as long as this copyright notice remains intact.\n         \u003c/p\u003e\n\n      "
+}

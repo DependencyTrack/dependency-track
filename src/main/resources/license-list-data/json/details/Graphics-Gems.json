@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "LICENSE\n\nThis code repository predates the concept of Open Source, and predates most licenses along such lines. As such, the official license truly is:\n\nEULA: The Graphics Gems code is copyright-protected. In other words, you cannot claim the text of the code as your own and resell it. Using the code is permitted in any program, product, or library, non-commercial or commercial. Giving credit is not required, though is a nice gesture. The code comes as-is, and if there are any flaws or problems with any Gems code, nobody involved with Gems - authors, editors, publishers, or webmasters - are to be held responsible. Basically, don\u0027t be a jerk, and remember that anything free comes with no guarantee.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eLICENSE\n\nThis code repository predates the concept of Open Source, and predates most licenses along such lines. As such, the official license truly is:\n\n\u003c\u003cendOptional\u003e\u003e\nEULA: The Graphics Gems code is copyright-protected. In other words, you cannot claim the text of the code as your own and resell it. Using the code is permitted in any program, product, or library, non-commercial or commercial. Giving credit is not required, though is a nice gesture. The code comes as-is, and if there are any flaws or problems with any Gems code, nobody involved with Gems - authors, editors, publishers, or webmasters - are to be held responsible. Basically, don\u0027t be a jerk, and remember that anything free comes with no guarantee.\n\n",
+  "name": "Graphics Gems License",
+  "licenseId": "Graphics-Gems",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/erich666/GraphicsGems/blob/master/LICENSE.md",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:56:18Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/erich666/GraphicsGems/blob/master/LICENSE.md"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"optional-license-text\"\u003e \n            \u003cp\u003e\n               LICENSE\n            \u003c/p\u003e\n\n            \u003cp\u003e\n               This code repository predates the concept of Open\n               Source, and predates most licenses along such\n               lines. As such, the official license truly is:\n            \u003c/p\u003e\n\n         \u003c/div\u003e\n         \u003cp\u003e\n            EULA: The Graphics Gems code is copyright-protected. In other\n            words, you cannot claim the text of the code as your own and\n            resell it. Using the code is permitted in any program, product,\n            or library, non-commercial or commercial. Giving credit is\n            not required, though is a nice gesture. The code comes as-is,\n            and if there are any flaws or problems with any Gems code,\n            nobody involved with Gems - authors, editors, publishers, or\n            webmasters - are to be held responsible. Basically, don\u0026apos;t be a\n            jerk, and remember that anything free comes with no guarantee.\n         \u003c/p\u003e\n\n      "
+}

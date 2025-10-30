@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "               GLWT(Good Luck With That) Public License\n                 Copyright (c) Everyone, except Author\n\nEveryone is permitted to copy, distribute, modify, merge, sell, publish,\nsublicense or whatever they want with this software but at their OWN RISK.\n\n                            Preamble\n\nThe author has absolutely no clue what the code in this project does.\nIt might just work or not, there is no third option.\n\n\n                GOOD LUCK WITH THAT PUBLIC LICENSE\n   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION, AND MODIFICATION\n\n  0. You just DO WHATEVER YOU WANT TO as long as you NEVER LEAVE A\nTRACE TO TRACK THE AUTHOR of the original product to blame for or hold\nresponsible.\n\nIN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\nFROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER\nDEALINGS IN THE SOFTWARE.\n\nGood luck and Godspeed.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eGLWT(Good Luck With That) Public License\n\n\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) Everyone, except Author  \";match\u003d\".{0,5000}\"\u003e\u003e\nEveryone is permitted to copy, distribute, modify, merge, sell, publish, sublicense or whatever they want with this software but at their OWN RISK.\n\nPreamble\n\nThe author has absolutely no clue what the code in this project does. It might just work or not, there is no third option.\n\nGOOD LUCK WITH THAT PUBLIC LICENSE\n\nTERMS AND CONDITIONS FOR COPYING, DISTRIBUTION, AND MODIFICATION\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"0.\";match\u003d\".{0,20}\"\u003e\u003e You just DO WHATEVER YOU WANT TO as long as you NEVER LEAVE A TRACE TO TRACK THE AUTHOR of the original product to blame for or hold responsible.\nIN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nGood luck and Godspeed.\n\n",
+  "name": "Good Luck With That Public License",
+  "licenseId": "GLWTPL",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/me-shaon/GLWTPL/commit/da5f6bc734095efbacb442c0b31e33a65b9d6e85",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:20Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/me-shaon/GLWTPL/commit/da5f6bc734095efbacb442c0b31e33a65b9d6e85"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n            \u003cdiv class\u003d\"optional-license-text\"\u003e \n                \u003cp\u003eGLWT(Good Luck With That) Public License\u003c/p\u003e\n\n            \u003c/div\u003e\n            \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n                \u003cp\u003eCopyright (c) Everyone, except Author\u003c/p\u003e\n\n            \u003c/span\u003e\u003c/div\u003e\n\n            \u003cp\u003eEveryone is permitted to copy, distribute, modify, merge, sell, publish, sublicense or whatever they want with this software but at their OWN RISK.\u003c/p\u003e\n\n            \u003cp\u003ePreamble\u003c/p\u003e\n\n            \u003cp\u003eThe author has absolutely no clue what the code in this project does. It might just work or not, there is no third option.\u003c/p\u003e\n\n            \u003cp\u003eGOOD LUCK WITH THAT PUBLIC LICENSE\u003c/p\u003e\n\n            \u003cp\u003eTERMS AND CONDITIONS FOR COPYING, DISTRIBUTION, AND MODIFICATION\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n                \n\u003cli\u003e\n                    \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 0.\u003c/span\u003e\u003c/var\u003e You just DO WHATEVER YOU WANT TO as long as you NEVER LEAVE A TRACE TO TRACK THE AUTHOR of the original product to blame for or hold responsible.\n                \u003c/li\u003e\n            \n\u003c/ul\u003e\n            \u003cp\u003eIN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\u003c/p\u003e\n\n            \u003cp\u003eGood luck and Godspeed.\u003c/p\u003e\n\n        "
+}

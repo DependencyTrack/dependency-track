@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Fair License\n\n\u003cCopyright Information\u003e\n\nUsage of the works is permitted provided that this instrument is retained with the works, so that any entity that uses the works is notified of this instrument.\n\nDISCLAIMER: THE WORKS ARE WITHOUT WARRANTY.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eFair License\n\n\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"\u003cCopyright Information\u003e  \";match\u003d\".{0,5000}\"\u003e\u003e\nUsage of the works is permitted provided that this instrument is retained with the works, so that any entity that uses the works is notified of this instrument.\n\nDISCLAIMER: THE WORKS ARE WITHOUT WARRANTY.\n\n",
+  "name": "Fair License",
+  "licenseId": "Fair",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/Fair",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:55:33Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "N/A",
+      "url": "https://web.archive.org/web/20150926120323/http://fairlicense.org/",
+      "isValid": false,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:55:33Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://web.archive.org/web/20150926120323/http://fairlicense.org/",
+    "https://opensource.org/licenses/Fair"
+  ],
+  "isOsiApproved": true,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eFair License\u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003e\u0026lt;Copyright Information\u0026gt;\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003eUsage of the works is permitted provided that this instrument is retained with the works, so that any\n         entity that uses the works is notified of this instrument.\u003c/p\u003e\n\n      \u003cp\u003eDISCLAIMER: THE WORKS ARE WITHOUT WARRANTY.\u003c/p\u003e\n\n    "
+}

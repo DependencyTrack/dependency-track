@@ -1,0 +1,45 @@
+{
+  "id": "GHSA-77rv-6vfw-x4gc",
+  "summary": "summary new",
+  "details": "details new",
+  "aliases": [
+    "CVE-2019-3778"
+  ],
+  "modified": "2022-06-09T07:01:32.587163Z",
+  "published": "2019-03-14T15:39:30Z",
+  "database_specific": {
+    "severity": "LOW",
+    "cwe_ids": [
+      "CWE-601"
+    ],
+    "github_reviewed": true
+  },
+  "references": [],
+  "credits": [],
+  "affected": [
+    {
+      "package": {
+        "name": "org.springframework.security.oauth:spring-security-oauth2",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.springframework.security.oauth/spring-security-oauth2"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "3.1.0"
+            },
+            {
+              "fixed": "3.3.0"
+            }
+          ]
+        }
+      ],
+      "database_specific": {
+        "source": "https://github.com/oliverchang/advisory-database/blob/main/advisories/github-reviewed/2019/03/GHSA-77rv-6vfw-x4gc/GHSA-77rv-6vfw-x4gc.json"
+      }
+    }
+  ],
+  "schema_version": "1.2.0"
+}

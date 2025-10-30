@@ -1,0 +1,473 @@
+{% if notification.group == "NEW_VULNERABILITY" %}
+{
+  "blocks": [
+    {
+	  "type": "header",
+	  "text": {
+	    "type": "plain_text",
+		"text": "New Vulnerability"
+	  }
+	},
+	{
+	  "type": "context",
+	  "elements": [
+	    {
+		  "text": "*{{ notification.level | escape(strategy="json") }}*  |  *{{ notification.scope | escape(strategy="json") }}*",
+		  "type": "mrkdwn"
+		}
+	  ]
+	},
+	{
+	  "type": "divider"
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ notification.title | escape(strategy="json") }}",
+		"type": "mrkdwn"
+	  },
+	  "fields": [
+	    {
+		  "type": "mrkdwn",
+		  "text": "*VulnID*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+		},
+	    {
+		  "type": "mrkdwn",
+		  "text": "*Severity*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.vulnerability.severity | escape(strategy="json") }}"
+		},
+	    {
+		  "type": "mrkdwn",
+		  "text": "*Source*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.vulnerability.source | escape(strategy="json") }}"
+		},
+	    {
+		  "type": "mrkdwn",
+		  "text": "*Component*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.component.toString | escape(strategy="json") }}"
+		}
+	  ]
+	}{% if baseUrl is not empty %},
+	{
+	  "type": "actions",
+	  "elements": [
+	    {
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Vulnerability"
+		  },
+		  "action_id": "actionId-1",
+		  "url": "{{ baseUrl }}/vulnerabilities/{{ subject.vulnerability.source | escape(strategy="json") }}/{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+		},
+		{
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Component"
+		  },
+		  "action_id": "actionId-2",
+		  "url": "{{ baseUrl }}/components/{{ subject.component.uuid | escape(strategy="json") }}"
+		}
+	  ]
+	}
+	{% endif %}
+  ]
+}
+{% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
+{
+  "blocks": [
+    {
+	  "type": "header",
+	  "text": {
+	    "type": "plain_text",
+		"text": "New Vulnerable Dependency"
+	  }
+	},
+	{
+	  "type": "context",
+	  "elements": [
+	    {
+		  "text": "*{{ notification.level | escape(strategy="json") }}*  |  *{{ notification.scope | escape(strategy="json") }}*",
+		  "type": "mrkdwn"
+		}
+	  ]
+	},
+	{
+	  "type": "divider"
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ notification.title | escape(strategy="json") }}",
+		"type": "mrkdwn"
+	  },
+	  "fields": [
+	    {
+		  "type": "mrkdwn",
+		  "text": "*Component*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.component.toString | escape(strategy="json") }}"
+		},
+	    {
+		  "type": "mrkdwn",
+		  "text": "*Project*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.component.project.toString | escape(strategy="json") }}"
+		}
+	  ]
+	}{% if baseUrl is not empty %},
+	{
+	  "type": "actions",
+	  "elements": [
+	    {
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Project"
+		  },
+		  "action_id": "actionId-1",
+		  "url": "{{ baseUrl }}/projects/{{ subject.project.uuid | escape(strategy="json") }}"
+		},
+		{
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Component"
+		  },
+		  "action_id": "actionId-2",
+		  "url": "{{ baseUrl }}/components/{{ subject.component.uuid | escape(strategy="json") }}"
+		}
+	  ]
+	}
+	{% endif %}
+  ]
+}
+{% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}
+{
+  "blocks": [
+    {
+	  "type": "header",
+	  "text": {
+	    "type": "plain_text",
+		"text": "Project Audit Change"
+	  }
+	},
+	{
+	  "type": "context",
+	  "elements": [
+	    {
+		  "text": "*{{ notification.level | escape(strategy="json") }}*  |  *{{ notification.scope | escape(strategy="json") }}*",
+		  "type": "mrkdwn"
+		}
+	  ]
+	},
+	{
+	  "type": "divider"
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ notification.title | escape(strategy="json") }}",
+		"type": "plain_text"
+	  },
+	  "fields": [
+	    {
+		  "type": "mrkdwn",
+		  "text": "*Analysis State*"
+		},
+		{
+		  "type": "plain_text",
+		  "emoji": true,
+		  "text": "{{ subject.analysis.analysisState | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Suppressed*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.analysis.suppressed | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*VulnID*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Severity*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.vulnerability.severity | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Source*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.vulnerability.source | escape(strategy="json") }}"
+		}
+	  ]
+	},
+    {
+	  "type": "section",
+	  "fields": [
+		{
+		  "type": "mrkdwn",
+		  "text": "*Component*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.component.toString | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Project*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.project.toString | escape(strategy="json") }}"
+		}
+	  ]
+	}{% if baseUrl is not empty %},
+	{
+	  "type": "actions",
+	  "elements": [
+	    {
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Project"
+		  },
+		  "action_id": "actionId-1",
+		  "url": "{{ baseUrl }}/projects/{{ subject.project.uuid | escape(strategy="json") }}"
+		},
+		{
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Component"
+		  },
+		  "action_id": "actionId-2",
+		  "url": "{{ baseUrl }}/components/{{ subject.component.uuid | escape(strategy="json") }}"
+		},
+	    {
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Vulnerability"
+		  },
+		  "action_id": "actionId-3",
+		  "url": "{{ baseUrl }}/vulnerabilities/{{ subject.vulnerability.source | escape(strategy="json") }}/{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+		}
+	  ]
+	}
+	{% endif %}
+  ]
+}
+{% elseif notification.group == "POLICY_VIOLATION" %}
+{
+  "blocks": [
+    {
+	  "type": "header",
+	  "text": {
+	    "type": "plain_text",
+		"text": "Policy Violation"
+	  }
+	},
+	{
+	  "type": "context",
+	  "elements": [
+	    {
+		  "text": "*{{ notification.level | escape(strategy="json") }}*  |  *{{ notification.scope | escape(strategy="json") }}* | *{{ subject.policyViolation.type | escape(strategy="json") }}*",
+		  "type": "mrkdwn"
+		}
+	  ]
+	},
+	{
+	  "type": "divider"
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "OWASP Dependency-Track detected a policy violation. Details of the violation follow.",
+		"type": "plain_text"
+	  },
+	  "fields": [
+	    {
+		  "type": "mrkdwn",
+		  "text": "*Subject*"
+		},
+		{
+		  "type": "plain_text",
+		  "emoji": true,
+		  "text": "{{ subject.policyViolation.policyCondition.subject | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Operator*"
+		},
+		{
+		  "type": "plain_text",
+		  "emoji": true,
+		  "text": "{{ subject.policyViolation.policyCondition.operator | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Value*"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "`{{ subject.policyViolation.policyCondition.value | escape(strategy="json") }}`"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Component*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.component.toString | escape(strategy="json") }}"
+		},
+		{
+		  "type": "mrkdwn",
+		  "text": "*Project*"
+		},
+		{
+		  "type": "plain_text",
+		  "text": "{{ subject.project.toString | escape(strategy="json") }}"
+		}
+	  ]
+	}{% if baseUrl is not empty %},
+	{
+	  "type": "actions",
+	  "elements": [
+	    {
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Project"
+		  },
+		  "action_id": "actionId-1",
+		  "url": "{{ baseUrl }}/projects/{{ subject.project.uuid | escape(strategy="json") }}"
+		},
+		{
+		  "type": "button",
+		  "text": {
+		    "type": "plain_text",
+			"text": "View Component"
+		  },
+		  "action_id": "actionId-2",
+		  "url": "{{ baseUrl }}/components/{{ subject.component.uuid | escape(strategy="json") }}"
+		}
+	  ]
+	}
+	{% endif %}
+  ]
+}
+{% elseif notification.group == "BOM_VALIDATION_FAILED" %}
+{
+  "blocks": [
+    {
+	  "type": "header",
+	  "text": {
+	    "type": "plain_text",
+		"text": "{{ notification.group | escape(strategy="json") }} | {{ subject.project.toString | escape(strategy="json") }}"
+	  }
+	},
+	{
+	  "type": "context",
+	  "elements": [
+	    {
+		  "text": "*{{ notification.level | escape(strategy="json") }}*  |  *{{ notification.scope | escape(strategy="json") }}*",
+		  "type": "mrkdwn"
+		}
+	  ]
+	},
+	{
+	  "type": "divider"
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ notification.title | escape(strategy="json") }}",
+		"type": "plain_text"
+	  }
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ notification.content | escape(strategy="json") }}",
+		"type": "plain_text"
+	  }
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ subject.errors.toString | escape(strategy="json") }}",
+		"type": "plain_text"
+	  }
+	}
+  ]
+}
+{% else %}
+{
+  "blocks": [
+    {
+	  "type": "header",
+	  "text": {
+	    "type": "plain_text",
+		"text": "{{ notification.group | escape(strategy="json") }}"
+	  }
+	},
+	{
+	  "type": "context",
+	  "elements": [
+	    {
+		  "text": "*{{ notification.level | escape(strategy="json") }}*  |  *{{ notification.scope | escape(strategy="json") }}*",
+		  "type": "mrkdwn"
+		}
+	  ]
+	},
+	{
+	  "type": "divider"
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ notification.title | escape(strategy="json") }}",
+		"type": "plain_text"
+	  }
+	},
+	{
+	  "type": "section",
+	  "text": {
+	    "text": "{{ notification.content | escape(strategy="json") }}",
+		"type": "plain_text"
+	  }
+	}
+  ]
+}
+{% endif %}

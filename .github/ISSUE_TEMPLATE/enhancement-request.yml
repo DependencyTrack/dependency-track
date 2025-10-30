@@ -1,0 +1,46 @@
+name: Enhancement Request
+description: File an enhancement request
+labels: [ "enhancement" ]
+body:
+- type: markdown
+  attributes:
+    value: |
+      Thank you for helping us in making Dependency-Track better!
+      
+      **Is the enhancement you'd like to request only UI-related?**
+      We have a dedicated repo for the frontend, please create an issue [there](https://github.com/DependencyTrack/frontend/issues/new/choose)!
+      Unsure? That's fine, just report it here! The maintainers will migrate the issue if necessary.
+      
+      **Please do not ask questions here!**
+      If you'd like to bounce ideas off or wonder whether what you want makes sense,
+      you can reach out to maintainers and the broader community via various channels.
+      Refer to our [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/master/CONTRIBUTING.md#asking-questions) to find out where and how to ask questions.
+- type: textarea
+  id: behavior-current
+  attributes:
+    label: Current Behavior
+    description: |-
+      Describe the current behavior that you observed.
+      Consider providing screenshots, log output, and other supplementary data.
+      
+      *Files and images can be included via drag and drop into this text field.*
+  validations:
+    required: true
+- type: textarea
+  id: behavior-proposed
+  attributes:
+    label: Proposed Behavior
+    description: >-
+      Describe how you expect Dependency-Track to behave instead.
+      Please include *why* you want the new behavior.
+  validations:
+    required: true
+- type: checkboxes
+  id: checklist
+  attributes:
+    label: Checklist
+    options:
+    - label: I have read and understand the [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/master/CONTRIBUTING.md#filing-issues)
+      required: true
+    - label: I have checked the [existing issues](https://github.com/DependencyTrack/dependency-track/issues) for whether this enhancement was already requested
+      required: true

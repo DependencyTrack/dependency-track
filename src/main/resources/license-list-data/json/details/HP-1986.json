@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "(c) Copyright 1986 HEWLETT-PACKARD COMPANY \n\nTo anyone who acknowledges that this file is provided \"AS IS\" \nwithout any express or implied warranty: permission to use, copy, \nmodify, and distribute this file for any purpose is hereby granted \nwithout fee, provided that the above copyright notice and this notice \nappears in all copies, and that the name of Hewlett-Packard Company \nnot be used in advertising or publicity pertaining to distribution \nof the software without specific, written prior permission. Hewlett-Packard \nCompany makes no representations about the suitability of this software for any purpose.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"(c) Copyright 1986 HEWLETT-PACKARD COMPANY\";match\u003d\".{0,5000}\"\u003e\u003e\nTo anyone who acknowledges that this file is provided \"AS IS\" without any express or implied warranty: permission to use, copy, modify, and distribute this file for any purpose is hereby granted without fee, provided that the above copyright notice and this notice appears in all copies, and that the name of Hewlett-Packard Company not be used in advertising or publicity pertaining to distribution of the software without specific, written prior permission. Hewlett-Packard Company makes no representations about the suitability of this software for any purpose.\n\n",
+  "name": "Hewlett-Packard 1986 License",
+  "licenseId": "HP-1986",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://sourceware.org/git/?p\u003dnewlib-cygwin.git;a\u003dblob;f\u003dnewlib/libc/machine/hppa/memchr.S;h\u003d1cca3e5e8867aa4bffef1f75a5c1bba25c0c441e;hb\u003dHEAD#l2",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:56:41Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://sourceware.org/git/?p\u003dnewlib-cygwin.git;a\u003dblob;f\u003dnewlib/libc/machine/hppa/memchr.S;h\u003d1cca3e5e8867aa4bffef1f75a5c1bba25c0c441e;hb\u003dHEAD#l2"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            (c) Copyright 1986 HEWLETT-PACKARD COMPANY\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            To anyone who acknowledges that this file is provided \u0026quot;AS IS\u0026quot;\n            without any express or implied warranty: permission to use, copy,\n            modify, and distribute this file for any purpose is hereby granted\n            without fee, provided that the above copyright notice and this\n            notice appears in all copies, and that the name of Hewlett-Packard\n            Company not be used in advertising or publicity pertaining to\n            distribution of the software without specific, written prior\n            permission. Hewlett-Packard Company makes no representations\n            about the suitability of this software for any purpose.\n         \u003c/p\u003e\n\n      "
+}

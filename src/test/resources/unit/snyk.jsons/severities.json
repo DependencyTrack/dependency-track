@@ -1,0 +1,78 @@
+{
+  "severities1": [
+    {
+      "source": "SNYK",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H/E:P"
+    },
+    {
+      "source": "RHEL",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    },
+    {
+      "source": "NVD",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    }
+  ],
+  "severities2": [
+    {
+      "source": "SNYK",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H/E:P"
+    },
+    {
+      "source": "RHEL",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    }
+  ],
+  "severities3": [
+    {
+      "source": "RHEL",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    },
+    {
+      "source": "NVD",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    }
+  ],
+  "severities4": [
+    {
+      "source": "RHEL",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    },
+    {
+      "source": "SUSE",
+      "level": "high",
+      "score": null,
+      "vector": null
+    }
+  ],
+  "severities5": [
+    {
+      "source": "RHEL",
+      "level": "high",
+      "score": 7.5,
+      "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    },
+    {
+      "source": "NVD",
+      "level": "high",
+      "score": null,
+      "vector": null
+    }
+  ]
+}

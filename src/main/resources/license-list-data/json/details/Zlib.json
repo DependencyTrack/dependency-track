@@ -1,0 +1,34 @@
+{
+  "isDeprecatedLicenseId": false,
+  "isFsfLibre": true,
+  "licenseText": "zlib License\n\nThis software is provided \u0027as-is\u0027, without any express or implied warranty.  In no event will the authors be held liable for any damages arising from the use of this software.\n\nPermission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:\n\n     1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.\n\n     2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.\n\n     3. This notice may not be removed or altered from any source distribution.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003ezlib License\n\n\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) \u003cyear\u003e \u003ccopyright holders\u003e  \";match\u003d\".{0,5000}\"\u003e\u003e\nThis software is provided \u0027as-is\u0027, without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.\n\nPermission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"1.\";match\u003d\".{0,20}\"\u003e\u003e The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"2.\";match\u003d\".{0,20}\"\u003e\u003e Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"3.\";match\u003d\".{0,20}\"\u003e\u003e This notice may not be removed or altered from any source distribution.",
+  "name": "zlib License",
+  "licenseId": "Zlib",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "http://www.zlib.net/zlib_license.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:59:07Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/Zlib",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:59:07Z",
+      "isWayBackLink": false,
+      "order": 1
+    }
+  ],
+  "seeAlso": [
+    "http://www.zlib.net/zlib_license.html",
+    "https://opensource.org/licenses/Zlib"
+  ],
+  "isOsiApproved": true,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003ezlib License\u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright (c) \u0026lt;year\u0026gt; \u0026lt;copyright holders\u0026gt;\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n      \u003cp\u003eThis software is provided \u0026apos;as-is\u0026apos;, without any express or implied warranty. In no event will the authors\n         be held liable for any damages arising from the use of this software.\u003c/p\u003e\n\n      \u003cp\u003ePermission is granted to anyone to use this software for any purpose, including commercial applications,\n         and to alter it and redistribute it freely, subject to the following restrictions:\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 1.\u003c/span\u003e\u003c/var\u003e\n          The origin of this software must not be misrepresented; you must not claim that you wrote the\n             original software. If you use this software in a product, an acknowledgment in the product\n             documentation would be appreciated but is not required.\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 2.\u003c/span\u003e\u003c/var\u003e\n          Altered source versions must be plainly marked as such, and must not be misrepresented as being\n             the original software.\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 3.\u003c/span\u003e\u003c/var\u003e\n          This notice may not be removed or altered from any source distribution.\n        \u003c/li\u003e\n      \n\u003c/ul\u003e\n    "
+}

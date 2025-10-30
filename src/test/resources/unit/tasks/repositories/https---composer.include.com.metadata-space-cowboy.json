@@ -1,0 +1,211 @@
+{
+    "packages": {
+        "space\/module-core": {
+           "1.4.9": {
+                "name": "space\/module-core",
+                "version": "1.4.9",
+                "version_normalized": "1.4.9.0",
+                "dist": {
+                    "type": "tar"
+                },
+                "require": {
+                    "magento\/framework": "102.0.*|103.0.*",
+                    "php": "^7.1|^8.0"
+                },
+                "conflict": {
+                    "space\/module-helpdesk": "<1.1.83",
+                    "space\/module-rma": "<2.0.39"
+                },
+                "time": "2023-01-17 12:40:35",
+                "type": "magento2-module",
+                "autoload": {
+                    "files": [
+                        "src\/Core\/registration.php"
+                    ],
+                    "psr-4": {
+                        "space\\Core\\": "src\/Core"
+                    }
+                },
+                "license": [
+                    "proprietary"
+                ],
+                "description": "space Core"
+            }
+        },
+        "space\/toy": {
+           "1.1.0": {
+                "name": "space\/toy",
+                "version": "1.1.0",
+                "version_normalized": "1.1.0.0",
+                "dist": {
+                    "type": "tar"
+                },
+                "require": {
+                    "space\/module-misspell": "1.0.*",
+                    "space\/module-search-autocomplete": "1.1.*",
+                    "space\/module-search-elastic": "1.2.*",
+                    "space\/module-search-landing": "1.0.*",
+                    "space\/module-search-report": "1.0.*"
+                },
+                "time": "2018-04-05 09:56:42",
+                "type": "magento2-module",
+                "license": [
+                    "proprietary"
+                ],
+                "description": "Elastic Search Ultimate"
+            },
+            "1.1.1": {
+                "name": "space\/toy",
+                "version": "1.1.1",
+                "version_normalized": "1.1.1.0",
+                "dist": {
+                    "type": "tar"
+                },
+                "require": {
+                    "space\/module-misspell": "1.0.*",
+                    "space\/module-search-autocomplete": "1.1.*|1.2.*",
+                    "space\/module-search-elastic": "1.2.*",
+                    "space\/module-search-landing": "1.0.*",
+                    "space\/module-search-report": "1.0.*"
+                },
+                "time": "2020-05-15 10:50:32",
+                "type": "magento2-module",
+                "autoload": {
+                    "files": [
+                        "src\/SearchElasticUltimate\/registration.php"
+                    ],
+                    "psr-4": {
+                        "space\\SearchElasticUltimate\\": "src\/SearchElasticUltimate"
+                    }
+                },
+                "license": [
+                    "proprietary"
+                ],
+                "description": "Elastic Search Ultimate"
+            }
+        },
+        "space\/cowboy": {
+            "1.0.1": {
+                "name": "space\/cowboy",
+                "version": "1.0.1",
+                "version_normalized": "1.0.1.0",
+                "dist": {
+                    "type": "tar"
+                },
+                "require": {
+                    "space\/module-misspell": "1.0.*",
+                    "space\/module-search-autocomplete": "1.0.*",
+                    "space\/module-search-sphinx": "1.0.*"
+                },
+                "time": "2016-03-09 09:06:41",
+                "type": "magento2-module",
+                "autoload": {
+                    "files": [],
+                    "psr-4": []
+                },
+                "license": [
+                    "proprietary"
+                ],
+                "description": "Sphinx Search Ultimate"
+            },
+           "2.3.7": {
+                "name": "space\/cowboy",
+                "version": "2.3.7",
+                "version_normalized": "2.3.7.0",
+                "dist": {
+                    "type": "tar"
+                },
+                "require": {
+                    "magento\/framework": "103.0.*",
+                    "space\/module-core": "dev-master|^1.4.39",
+                    "space\/module-report": "dev-master|*"
+                },
+                "conflict": {
+                    "hyva-themes\/magento2-space-search-autocomplete": "*",
+                    "space\/module-blog-mx": "<2.0.0"
+                },
+                "time": "2024-12-10 12:14:27",
+                "type": "magento2-module",
+                "autoload": {
+                    "files": [
+                        "src\/SearchUltimate\/registration.php",
+                        "src\/Misspell\/registration.php",
+                        "src\/Search\/registration.php",
+                        "src\/SearchAutocomplete\/registration.php",
+                        "src\/SearchElastic\/registration.php",
+                        "src\/SearchLanding\/registration.php",
+                        "src\/SearchMysql\/registration.php",
+                        "src\/SearchReport\/registration.php",
+                        "src\/SearchSphinx\/registration.php",
+                        "src\/SearchGraphQl\/registration.php"
+                    ],
+                    "psr-4": {
+                        "space\\SearchUltimate\\": "src\/SearchUltimate",
+                        "space\\Misspell\\": "src\/Misspell",
+                        "space\\Search\\": "src\/Search",
+                        "space\\SearchAutocomplete\\": "src\/SearchAutocomplete",
+                        "space\\SearchElastic\\": "src\/SearchElastic",
+                        "space\\SearchLanding\\": "src\/SearchLanding",
+                        "space\\SearchMysql\\": "src\/SearchMysql",
+                        "space\\SearchReport\\": "src\/SearchReport",
+                        "space\\SearchSphinx\\": "src\/SearchSphinx",
+                        "space\\SearchGraphQl\\": "src\/SearchGraphQl"
+                    }
+                },
+                "license": [
+                    "proprietary"
+                ],
+                "description": "Search Ultimate"
+            },
+            "6.6.6": {
+                "name": "space\/cowboy",
+                "version": "6.6.6",
+                "version_normalized": "6.6.6.0",
+                "dist": {
+                    "type": "tar"
+                },
+                "require": {
+                    "magento\/framework": "103.0.*",
+                    "space\/module-core": "dev-master|^1.4.39",
+                    "space\/module-report": "dev-master|*"
+                },
+                "conflict": {
+                    "hyva-themes\/magento2-space-search-autocomplete": "*",
+                    "space\/module-blog-mx": "<2.0.0"
+                },
+                "time": "2024-12-20 06:16:51",
+                "type": "magento2-module",
+                "autoload": {
+                    "files": [
+                        "src\/SearchUltimate\/registration.php",
+                        "src\/Misspell\/registration.php",
+                        "src\/Search\/registration.php",
+                        "src\/SearchAutocomplete\/registration.php",
+                        "src\/SearchElastic\/registration.php",
+                        "src\/SearchLanding\/registration.php",
+                        "src\/SearchMysql\/registration.php",
+                        "src\/SearchReport\/registration.php",
+                        "src\/SearchSphinx\/registration.php",
+                        "src\/SearchGraphQl\/registration.php"
+                    ],
+                    "psr-4": {
+                        "space\\SearchUltimate\\": "src\/SearchUltimate",
+                        "space\\Misspell\\": "src\/Misspell",
+                        "space\\Search\\": "src\/Search",
+                        "space\\SearchAutocomplete\\": "src\/SearchAutocomplete",
+                        "space\\SearchElastic\\": "src\/SearchElastic",
+                        "space\\SearchLanding\\": "src\/SearchLanding",
+                        "space\\SearchMysql\\": "src\/SearchMysql",
+                        "space\\SearchReport\\": "src\/SearchReport",
+                        "space\\SearchSphinx\\": "src\/SearchSphinx",
+                        "space\\SearchGraphQl\\": "src\/SearchGraphQl"
+                    }
+                },
+                "license": [
+                    "proprietary"
+                ],
+                "description": "Search Ultimate"
+            }
+        }
+    }
+}

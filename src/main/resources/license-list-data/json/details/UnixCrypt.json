@@ -1,0 +1,43 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 1996 Aki Yoshida. All rights reserved.\n\nPermission to use, copy, modify and distribute this software\nfor non-commercial or commercial purposes and without fee is\nhereby granted provided that this copyright notice appears in\nall copies.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 1996 Aki Yoshida. All rights reserved.\";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify and distribute this software for non-commercial or commercial purposes and without fee is hereby granted provided that this copyright notice appears in all copies.\n\n",
+  "name": "UnixCrypt License",
+  "licenseId": "UnixCrypt",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://opensource.apple.com/source/JBoss/JBoss-737/jboss-all/jetty/src/main/org/mortbay/util/UnixCrypt.java.auto.html",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:55:23Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://foss.heptapod.net/python-libs/passlib/-/blob/branch/stable/LICENSE#L70",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:55:24Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://archive.eclipse.org/jetty/8.0.1.v20110908/xref/org/eclipse/jetty/http/security/UnixCrypt.html",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:55:26Z",
+      "isWayBackLink": false,
+      "order": 2
+    }
+  ],
+  "seeAlso": [
+    "https://foss.heptapod.net/python-libs/passlib/-/blob/branch/stable/LICENSE#L70",
+    "https://opensource.apple.com/source/JBoss/JBoss-737/jboss-all/jetty/src/main/org/mortbay/util/UnixCrypt.java.auto.html",
+    "https://archive.eclipse.org/jetty/8.0.1.v20110908/xref/org/eclipse/jetty/http/security/UnixCrypt.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n        \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n\t    Copyright (c) 1996 Aki Yoshida. All rights reserved.\n\t\u003c/span\u003e\u003c/var\u003e\n\n\t\u003cp\u003e\n            Permission to use, copy, modify and distribute this software\n            for non-commercial or commercial purposes and without fee is\n            hereby granted provided that this copyright notice appears in\n            all copies.\n\t\u003c/p\u003e\n\n    "
+}

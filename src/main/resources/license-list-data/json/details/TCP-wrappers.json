@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright 1995 by Wietse Venema. All rights reserved. Some individual files may be covered by other copyrights.\n\nThis material was originally written and compiled by Wietse Venema at Eindhoven University of Technology, The Netherlands, in 1990, 1991, 1992, 1993, 1994 and 1995.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that this entire copyright notice is duplicated in all such copies.\n\nThis software is provided \"as is\" and without any expressed or implied warranties, including, without limitation, the implied warranties of merchantibility and fitness for any particular purpose.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1995 by Wietse Venema. All rights reserved. Some individual files may be covered by other copyrights.  \";match\u003d\".{0,5000}\"\u003e\u003e\nThis material was originally written and compiled by Wietse Venema at Eindhoven University of Technology, The Netherlands, in 1990, 1991, 1992, 1993, 1994 and 1995.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that this entire copyright notice is duplicated in all such copies.\n\nThis software is provided \"as is\" and without any expressed or implied warranties, including, without limitation, the implied warranties of merchantibility and fitness for any particular purpose.\n\n",
+  "name": "TCP Wrappers License",
+  "licenseId": "TCP-wrappers",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "http://rc.quest.com/topics/openssh/license.php#tcpwrappers",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:56:39Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "http://rc.quest.com/topics/openssh/license.php#tcpwrappers"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright 1995 by Wietse Venema. All rights reserved. Some\n         individual files may be covered by other copyrights.\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n      \u003cp\u003eThis material was originally written and compiled by Wietse\n         Venema at Eindhoven University of Technology, The Netherlands,\n         in 1990, 1991, 1992, 1993, 1994 and 1995.\u003c/p\u003e\n\n      \u003cp\u003eRedistribution and use in source and binary forms, with or\n         without modification, are permitted provided that this entire\n         copyright notice is duplicated in all such copies.\u003c/p\u003e\n\n      \u003cp\u003eThis software is provided \u0026quot;as is\u0026quot; and without any expressed or\n         implied warranties, including, without limitation, the implied\n         warranties of merchantibility and fitness for any particular\n         purpose.\u003c/p\u003e\n\n    "
+}

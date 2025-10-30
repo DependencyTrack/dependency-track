@@ -1,0 +1,35 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "LICENSE\n-------\n\nLZMA SDK is written and placed in the public domain by Igor Pavlov.\n\nSome code in LZMA is based on public domain code from another developers:\n  1) PPMd var.H (2001): Dmitry Shkarin\n  2) SHA-256: Wei Dai (Crypto++ library)\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eLICENSE\n\n-------\n\n\u003c\u003cendOptional\u003e\u003e\nLZMA SDK is written and placed in the public domain by Igor Pavlov.\n\nSome code in LZMA is based on public domain code from another developers: 1) PPMd var.H (2001): Dmitry Shkarin 2) SHA-256: Wei Dai (Crypto++ library)\n\n",
+  "name": "LZMA SDK License (versions 9.11 to 9.20)",
+  "licenseComments": "The license text currently displayed on the 7-zip SDK website is not the same as any of the lzma.txt file in the root folders of the .tar.bz SDK distributions (versions 922 and below) that are hosted on SourceForge, nor is it the same as the .7z distributions (versions 935 and above) which shifted the license text to DOC\\lzma-sdk.txt. This license applies to versions between 9.11 and 9.20 (inclusive).",
+  "comment": "The license text currently displayed on the 7-zip SDK website is not the same as any of the lzma.txt file in the root folders of the .tar.bz SDK distributions (versions 922 and below) that are hosted on SourceForge, nor is it the same as the .7z distributions (versions 935 and above) which shifted the license text to DOC\\lzma-sdk.txt. This license applies to versions between 9.11 and 9.20 (inclusive).",
+  "licenseId": "LZMA-SDK-9.11-to-9.20",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://sourceforge.net/projects/sevenzip/files/LZMA%20SDK/",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:57:46Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://www.7-zip.org/sdk.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:57:47Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://www.7-zip.org/sdk.html",
+    "https://sourceforge.net/projects/sevenzip/files/LZMA%20SDK/"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003e\n          LICENSE\n         \u003c/p\u003e\n\n         \u003cp\u003e\n          -------\n         \u003c/p\u003e\n\n         \u003c/div\u003e\n        \u003cp\u003e\n          LZMA SDK is written and placed in the public domain by Igor Pavlov.\n        \u003c/p\u003e\n\n        \u003cp\u003e\n          Some code in LZMA is based on public domain code from another developers:\n            1) PPMd var.H (2001): Dmitry Shkarin\n            2) SHA-256: Wei Dai (Crypto++ library)\n         \u003c/p\u003e\n\n      "
+}

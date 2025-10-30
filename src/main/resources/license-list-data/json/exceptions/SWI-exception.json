@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "As a special exception, if you link this library with other files,\ncompiled with a Free Software compiler, to produce an executable, this\nlibrary does not by itself cause the resulting executable to be covered\nby the GNU General Public License. This exception does not however\ninvalidate any other reasons why the executable file might be covered by\nthe GNU General Public License.\n\n",
+  "name": "SWI exception",
+  "licenseComments": "This exception is closely similar to GNU-compiler-exception but delineates that the library is compiled with a Free Software compiler, which is slightly broader than a GNU compiler.",
+  "seeAlso": [
+    "https://github.com/SWI-Prolog/packages-clpqr/blob/bfa80b9270274f0800120d5b8e6fef42ac2dc6a5/clpqr/class.pl"
+  ],
+  "licenseExceptionId": "SWI-exception",
+  "licenseExceptionTemplate": "As a special exception, if you link this library with other files, compiled with a Free Software compiler, to produce an executable, this library does not by itself cause the resulting executable to be covered by the GNU General Public License. This exception does not however invalidate any other reasons why the executable file might be covered by the GNU General Public License.\n\n",
+  "exceptionTextHtml": "\n      \u003cp\u003e\n         As a special exception, if you link this library with other\n         files, compiled with a Free Software compiler, to produce an\n         executable, this library does not by itself cause the resulting\n         executable to be covered by the GNU General Public License. This\n         exception does not however invalidate any other reasons why the\n         executable file might be covered by the GNU General Public License.\n      \u003c/p\u003e\n\n   "
+}

@@ -1,0 +1,13 @@
+{
+  "data": {
+    "securityAdvisories": {
+      "pageInfo": {},
+      "nodes": [
+        {
+          "id": "GHSA-8v27-2fg9-7h62",
+          "withdrawnAt": "2021-05-04T20:26:20Z"
+        }
+      ]
+    }
+  }
+}

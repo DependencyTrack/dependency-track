@@ -1,0 +1,10 @@
+.github/
+.idea/
+docs/
+scripts/
+src/
+!src/main/docker/create-jre.sh
+!src/main/docker/logback*.xml
+target/
+!target/*.jar
+/*.md

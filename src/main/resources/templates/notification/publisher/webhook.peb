@@ -1,0 +1,11 @@
+{
+  "notification": {
+    "level": "{{ notification.level | escape(strategy="json") }}",
+    "scope": "{{ notification.scope | escape(strategy="json") }}",
+    "group": "{{ notification.group | escape(strategy="json") }}",
+    "timestamp": "{{ notification.timestamp }}",
+    "title": "{{ notification.title | escape(strategy="json") }}",
+    "content": "{{ notification.content | escape(strategy="json") }}",
+    "subject": {% if subjectJson != null %}{{ subjectJson | raw }}{% else %}null{% endif %}
+  }
+}

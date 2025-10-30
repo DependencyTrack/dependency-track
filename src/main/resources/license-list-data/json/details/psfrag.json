@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "psfrag.dtx\nCopyright (C) 1996 Craig Barratt, Michael C. Grant, and David Carlisle.\nAll rights are reserved.\n\nThis system is distributed in the hope that it will be  useful, but WITHOUT ANY WARRANTY; without even the  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Don\u0027t come complaining to us if you modify this file and it doesn\u0027t work! If this file is modified by anyone but the authors, those changes and their authors must be explicitly stated HERE.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003epsfrag.dtx\n\n\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1996 Craig Barratt, Michael C. Grant, and David Carlisle.   All rights are reserved.  \";match\u003d\".{0,5000}\"\u003e\u003e\nThis system is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Don\u0027t come complaining to us if you modify this file and it doesn\u0027t work! If this file is modified by anyone but the authors, those changes and their authors must be explicitly stated HERE.\n\n",
+  "name": "psfrag License",
+  "licenseId": "psfrag",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/psfrag",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:59:09Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/psfrag"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003epsfrag.dtx\u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright (C) 1996 Craig Barratt, Michael C. Grant, and David Carlisle.\u003c/p\u003e\n\n         \u003cp\u003eAll rights are reserved.\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003eThis system is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the\n         implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Don\u0026apos;t come complaining to us if\n         you modify this file and it doesn\u0026apos;t work! If this file is modified by anyone but the authors, those\n         changes and their authors must be explicitly stated HERE.\u003c/p\u003e\n\n    "
+}

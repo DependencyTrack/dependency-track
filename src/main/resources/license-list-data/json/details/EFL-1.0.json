@@ -1,0 +1,35 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Eiffel Forum License, version 1\n\nPermission is hereby granted to use, copy, modify and/or distribute this package, provided that:\n\n     - copyright notices are retained unchanged\n\n     - any distribution of this package, whether modified or not, includes this file\n\nPermission is hereby also granted to distribute binary programs which depend on this package, provided that:\n\n     - if the binary program depends on a modified version of this package, you must publicly release the modified version of this package\n\nTHIS PACKAGE IS PROVIDED \"AS IS\" AND WITHOUT WARRANTY. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS BE LIABLE TO ANY PARTY FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THIS PACKAGE.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eEiffel Forum License, version 1\n\n\u003c\u003cendOptional\u003e\u003e\nPermission is hereby granted to use, copy, modify and/or distribute this package, provided that:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"-\";match\u003d\".{0,20}\"\u003e\u003e copyright notices are retained unchanged\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"-\";match\u003d\".{0,20}\"\u003e\u003e any distribution of this package, whether modified or not, includes this file\nPermission is hereby also granted to distribute binary programs which depend on this package, provided that:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"-\";match\u003d\".{0,20}\"\u003e\u003e if the binary program depends on a modified version of this package, you must publicly release the modified version of this package\nTHIS PACKAGE IS PROVIDED \"AS IS\" AND WITHOUT WARRANTY. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS BE LIABLE TO ANY PARTY FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THIS PACKAGE.\n\n",
+  "name": "Eiffel Forum License v1.0",
+  "licenseComments": "This license has been superseded by v2.0",
+  "comment": "This license has been superseded by v2.0",
+  "licenseId": "EFL-1.0",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/EFL-1.0",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:28Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://www.eiffel-nice.org/license/forum.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:29Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "http://www.eiffel-nice.org/license/forum.txt",
+    "https://opensource.org/licenses/EFL-1.0"
+  ],
+  "isOsiApproved": true,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eEiffel Forum License, version 1\u003c/p\u003e\n\n      \u003c/div\u003e\n\n      \u003cp\u003ePermission is hereby granted to use, copy, modify and/or distribute this package, provided that:\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e -\u003c/span\u003e\u003c/var\u003e\n          copyright notices are retained unchanged\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e -\u003c/span\u003e\u003c/var\u003e\n          any distribution of this package, whether modified or not, includes this file\n          \u003c/li\u003e\n      \n\u003c/ul\u003e\n      \u003cp\u003ePermission is hereby also granted to distribute binary programs which depend on this package,\n         provided that:\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e -\u003c/span\u003e\u003c/var\u003e\n          if the binary program depends on a modified version of this package, you must publicly\n             release the modified version of this package\n        \u003c/li\u003e\n      \n\u003c/ul\u003e\n      \u003cp\u003eTHIS PACKAGE IS PROVIDED \u0026quot;AS IS\u0026quot; AND WITHOUT WARRANTY. ANY EXPRESS OR IMPLIED WARRANTIES,\n         INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\n         PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS BE LIABLE TO ANY PARTY FOR ANY DIRECT, INDIRECT,\n         INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THIS\n         PACKAGE.\u003c/p\u003e\n\n    "
+}

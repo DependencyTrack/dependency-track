@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "GL2PS LICENSE Version 2, November 2003\n\nCopyright (C) 2003, Christophe Geuzaine\n\nPermission to use, copy, and distribute this software and its documentation for any purpose with or without fee is hereby granted, provided that the copyright notice appear in all copies and that both that copyright notice and this permission notice appear in supporting documentation.\n\nPermission to modify and distribute modified versions of this software is granted, provided that:\n\n1) the modifications are licensed under the same terms as this software;\n\n2) you make available the source code of any modifications that you distribute, either on the same media as you distribute any executable or other form of this software, or via a mechanism generally accepted in the software development community for the electronic transfer of data.\n\nThis software is provided \"as is\" without express or implied warranty.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eGL2PS LICENSE Version 2, November 2003\n\n\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 2003, Christophe Geuzaine  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, and distribute this software and its documentation for any purpose with or without fee is hereby granted, provided that the copyright notice appear in all copies and that both that copyright notice and this permission notice appear in supporting documentation.\n\nPermission to modify and distribute modified versions of this software is granted, provided that:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"1)\";match\u003d\".{0,20}\"\u003e\u003e the modifications are licensed under the same terms as this software;\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"2)\";match\u003d\".{0,20}\"\u003e\u003e you make available the source code of any modifications that you distribute, either on the same media as you distribute any executable or other form of this software, or via a mechanism generally accepted in the software development community for the electronic transfer of data.\nThis software is provided \"as is\" without express or implied warranty.\n\n",
+  "name": "GL2PS License",
+  "licenseId": "GL2PS",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "http://www.geuz.org/gl2ps/COPYING.GL2PS",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:57:55Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "http://www.geuz.org/gl2ps/COPYING.GL2PS"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eGL2PS LICENSE Version 2, November 2003\u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright (C) 2003, Christophe Geuzaine\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003ePermission to use, copy, and distribute this software and its documentation for any purpose with or\n         without fee is hereby granted, provided that the copyright notice appear in all copies and that both\n         that copyright notice and this permission notice appear in supporting documentation.\u003c/p\u003e\n\n      \u003cp\u003ePermission to modify and distribute modified versions of this software is granted, provided that:\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 1)\u003c/span\u003e\u003c/var\u003e\n          the modifications are licensed under the same terms as this software;\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 2)\u003c/span\u003e\u003c/var\u003e\n          you make available the source code of any modifications that you distribute, either on the same\n             media as you distribute any executable or other form of this software, or via a mechanism\n             generally accepted in the software development community for the electronic transfer of\n             data.\n        \u003c/li\u003e\n      \n\u003c/ul\u003e\n      \u003cp\u003eThis software is provided \u0026quot;as is\u0026quot; without express or implied warranty.\u003c/p\u003e\n\n    "
+}

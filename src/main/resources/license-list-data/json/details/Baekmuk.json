@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 1986-2002 Kim Jeong-Hwan All rights reserved.\n         \nPermission to use, copy, modify and distribute this font\nis hereby granted, provided that both the copyright notice\nand this permission notice appear in all copies of the\nfont, derivative works or modified versions, and that the\nfollowing acknowledgement appear in supporting documentation:\nBaekmuk Batang, Baekmuk Dotum, Baekmuk Gulim, and Baekmuk\nHeadline are registered trademarks owned by Kim Jeong-Hwan.\n",
+  "standardLicenseTemplate": "Copyright (c) 1986-2002 Kim Jeong-Hwan All rights reserved.\n\nPermission to use, copy, modify and distribute this font is hereby granted, provided that both the copyright notice and this permission notice appear in all copies of the font, derivative works or modified versions, and that the following acknowledgement appear in supporting documentation: Baekmuk Batang, Baekmuk Dotum, Baekmuk Gulim, and Baekmuk Headline are registered trademarks owned by Kim Jeong-Hwan.\n\n",
+  "name": "Baekmuk License",
+  "licenseId": "Baekmuk",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing:Baekmuk?rd\u003dLicensing/Baekmuk",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:57:01Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing:Baekmuk?rd\u003dLicensing/Baekmuk"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            Copyright (c) 1986-2002 Kim Jeong-Hwan All rights reserved.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Permission to use, copy, modify and distribute this font\n            is hereby granted, provided that both the copyright notice\n            and this permission notice appear in all copies of the\n            font, derivative works or modified versions, and that the\n            following acknowledgement appear in supporting documentation:\n            Baekmuk Batang, Baekmuk Dotum, Baekmuk Gulim, and Baekmuk\n            Headline are registered trademarks owned by Kim Jeong-Hwan.\n         \u003c/p\u003e\n\n      "
+}

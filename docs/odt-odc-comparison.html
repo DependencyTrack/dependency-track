@@ -1,0 +1,175 @@
+---
+title: Dependency-Check Comparison
+sitemap: true
+---
+
+<p>
+    Identifying risk in supply chains containing third-party and open source components involves identifying known
+    vulnerabilities, component age and "freshness", license terms, project health, chain of custody, and a host of
+    other factors. Component analysis is applicable to software being developed, purchased, or as a result of being
+    embedded in a device (or the device itself). If a vulnerability is possible for a given component (software or
+    hardware) it can and should be analyzed.
+</p>
+<p>
+    One of the most common questions that arise from people familiar with either Dependency-Check or
+    Dependency-Track is the distinction between the two.
+
+    What's the relationship between them and how they are different?
+</p>
+<table>
+    <thead>
+        <tr>
+            <th width="20%"></th>
+            <th width="40%">Dependency-Track</th>
+            <th width="40%">Dependency-Check</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Software type</strong></td>
+            <td>Platform</td>
+            <td>
+                Library with multiple implementations:
+                <ul>
+                    <li>Command line interface</li>
+                    <li>Build plugins (Maven, Ant, etc)</li>
+                    <li>Jenkins plugin</li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Approach</strong></td>
+            <td>Software Bill-of-Materials (SBOM) which can be automatically generated at build-time or obtained from vendors</td>
+            <td>Scans files on filesystem and extracts evidence with varying degrees of confidence</td>
+        </tr>
+        <tr>
+            <td><strong>Vulnerability intelligence</strong></td>
+            <td>
+                <ul>
+                    <li>Precise matching via NVD</li>
+                    <li>Sonatype OSS Index</li>
+                    <li>GitHub Advisories</li>
+                    <li>VulnDB</li>
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    <li>Fuzzy matching via NVD</li>
+                    <li>Sonatype OSS Index</li>
+                    <li>NPM Audit API</li>
+                    <li>Retire.js</li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Outdated version identification</strong></td>
+            <td>
+                <ul>
+                    <li>Cargo (Rust)</li>
+                    <li>Composer (PHP)</li>
+                    <li>Hex (Erlang/Elixir)</li>
+                    <li>RubyGems (Ruby)</li>
+                    <li>Maven (Java)</li>
+                    <li>NPM (JavaScript)</li>
+                    <li>NuGet (.NET)</li>
+                    <li>PyPI (Python)</li>
+                </ul>
+            </td>
+            <td>None</td>
+        </tr>
+        <tr>
+            <td><strong>Ecosystems supported</strong></td>
+            <td>Ecosystem agnostic (all ecosystems supported)</td>
+            <td>10+ with varying degrees of maturity</td>
+        </tr>
+        <tr>
+            <td><strong>Reporting</strong></td>
+            <td>Dynamic intelligence and metrics delivered via REST API or web interface</td>
+            <td>Per-project statically generated HTML, XML, JSON, and CSV reports</td>
+        </tr>
+        <tr>
+            <td><strong>License support</strong></td>
+            <td>Resolves over 500 SPDX license IDs as well as supporting unresolved license names</td>
+            <td>Unresolved license names as evidence</td>
+        </tr>
+        <tr>
+            <td><strong>Jenkins plugin</strong></td>
+            <td>Yes (bidirectional)</td>
+            <td>Yes (unidirectional)</td>
+        </tr>
+        <tr>
+            <td><strong>Sonarqube plugin</strong></td>
+            <td>No</td>
+            <td>Yes</td>
+        </tr>
+        <tr>
+            <td><strong>Vulnerability aggregation</strong></td>
+            <td>
+                <ul>
+                    <li>CodeDx (vendor supported)</li>
+                    <li>Defect Dojo (vendor supported)</li>
+                    <li>Kenna Security (natively supported)</li>
+                    <li>Fortify SSC (natively supported)</li>
+                    <li>Security Compass (vendor supported)</li>
+                    <li>ThreadFix (vendor supported)</li>
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    <li>CodeDx (vendor supported)</li>
+                    <li>Defect Dojo (vendor supported)</li>
+                    <li>Nucleus Security (vendor supported)</li>
+                    <li>Orchestron (vendor supported)</li>
+                    <li>Security Compass (vendor supported)</li>
+                    <li>ThreadFix (vendor supported)</li>
+                    <li>ZeroNorth (vendor supported)</li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Notification support</strong></td>
+            <td>
+                <ul>
+                    <li>Slack</li>
+                    <li>Microsoft Teams</li>
+                    <li>Mattermost</li>
+                    <li>Cisco WebEx</li>
+                    <li>Webhooks</li>
+                    <li>Email</li>
+                    <li>Jira</li>
+                </ul>
+            </td>
+            <td>None</td>
+        </tr>
+        <tr>
+            <td><strong>Auditing</strong></td>
+            <td>Per-project and global auditing workflow supporting analysis decisions, comments, and suppressions that are captured and tracked in a per-finding audit log</td>
+            <td>Suppression file with support for CPE, filename, and regex pattern matching</td>
+        </tr>
+        <tr>
+            <td><strong>Private vulnerability repository</strong></td>
+            <td>Yes</td>
+            <td>No</td>
+        </tr>
+        <tr>
+            <td><strong>Perspectives</strong></td>
+            <td>
+                <ul>
+                    <li>Portfolio of projects (applications, services, devices, etc)</li>
+                    <li>Project</li>
+                    <li>Dependency</li>
+                    <li>Component</li>
+                    <li>Vulnerability</li>
+                    <li>License</li>
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    <li>Project</li>
+                    <li>Dependency</li>
+                    <li>Vulnerability</li>
+                </ul>
+            </td>
+        </tr>
+    </tbody>
+</table>

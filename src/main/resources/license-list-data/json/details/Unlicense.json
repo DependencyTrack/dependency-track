@@ -1,0 +1,26 @@
+{
+  "isDeprecatedLicenseId": false,
+  "isFsfLibre": true,
+  "licenseText": "This is free and unencumbered software released into the public domain.\n\nAnyone is free to copy, modify, publish, use, compile, sell, or distribute this software, either in source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means.\n\nIn jurisdictions that recognize copyright laws, the author or authors of this software dedicate any and all copyright interest in the software to the public domain. We make this dedication for the benefit of the public at large and to the detriment of our heirs and\nsuccessors. We intend this dedication to be an overt act of relinquishment in perpetuity of all present and future rights to this software under copyright law.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nFor more information, please refer to \u003chttp://unlicense.org/\u003e\n",
+  "standardLicenseTemplate": "This is free and unencumbered software released into the public domain.\n\nAnyone is free to copy, modify, publish, use, compile, sell, or distribute this software, either in source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means.\n\nIn jurisdictions that recognize copyright laws, the author or authors of this software dedicate any and all copyright interest in the software to the public domain. We make this dedication for the benefit of the public at large and to the detriment of our heirs and successors. We intend this dedication to be an overt act of relinquishment in perpetuity of all present and future rights to this software under copyright law.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n\u003c\u003cbeginOptional\u003e\u003eFor more information, please refer to \u003chttps://unlicense.org/\u003e\n\n\u003c\u003cendOptional\u003e\u003e",
+  "name": "The Unlicense",
+  "licenseComments": "This is a public domain dedication",
+  "comment": "This is a public domain dedication",
+  "licenseId": "Unlicense",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://unlicense.org/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:57:36Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://unlicense.org/"
+  ],
+  "isOsiApproved": true,
+  "licenseTextHtml": "\n      \u003cp\u003eThis is free and unencumbered software released into the public domain.\u003c/p\u003e\n\n      \u003cp\u003eAnyone is free to copy, modify, publish, use, compile, sell, or distribute this software, either in\n         source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any\n         means.\u003c/p\u003e\n\n      \u003cp\u003eIn jurisdictions that recognize copyright laws, the author or authors of this software dedicate any and\n         all copyright interest in the software to the public domain. We make this dedication for the benefit\n         of the public at large and to the detriment of our heirs and\n        successors. We intend this dedication to be an overt act of relinquishment in perpetuity of all\n             present and future rights to this software under copyright law.\n      \u003c/p\u003e\n\n      \u003cp\u003eTHE SOFTWARE IS PROVIDED \u0026quot;AS IS\u0026quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\n         LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN\n         NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION\n         OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR\n         OTHER DEALINGS IN THE SOFTWARE.\u003c/p\u003e\n\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \u003cp\u003eFor more information, please refer to \u0026lt;https://unlicense.org/\u0026gt;\u003c/p\u003e\n\u003c/div\u003e\n    "
+}

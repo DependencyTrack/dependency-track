@@ -1,0 +1,18 @@
+{
+  "count": 2,
+  "items": [
+    {
+      "count": 64,
+      "lower": "1.0.19123.2-Preview",
+      "upper": "5.1.0",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/microsoft.data.sqlclient/page/1.0.19123.2-preview/5.1.0.json"
+    },
+    {
+      "count": 25,
+      "lower": "5.1.1",
+      "upper": "6.1.0",
+      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/microsoft.data.sqlclient/page/5.1.1/6.1.0.json"
+    }
+  ],
+  "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration-semver2/microsoft.data.sqlclient/index.json"
+}

@@ -1,0 +1,26 @@
+{
+  "isDeprecatedLicenseId": true,
+  "licenseText": "insert GPL v2 license text here\n\nGCC Linking Exception\n\nIn addition to the permissions in the GNU General Public License, the Free Software Foundation gives you unlimited permission to link the compiled version of this file into combinations with other programs, and to distribute those combinations without any restriction coming from the use of this file. (The General Public License restrictions do apply in other respects; for example, they cover modification of the file, and distribution when not linked into a combine executable.\n\n",
+  "standardLicenseTemplate": "insert GPL v2 license text here\n\nGCC Linking Exception\n\nIn addition to the permissions in the GNU General Public License, the Free Software Foundation gives you unlimited permission to link the compiled version of this file into combinations with other programs, and to distribute those combinations without any restriction coming from the use of this file. (The General Public License restrictions do apply in other respects; for example, they cover modification of the file, and distribution when not linked into a combine executable.\n\n",
+  "name": "GNU General Public License v2.0 w/GCC Runtime Library exception",
+  "licenseComments": "DEPRECATED: Use license expression including main license, \"WITH\" operator, and identifier: GCC-exception-2.0",
+  "comment": "DEPRECATED: Use license expression including main license, \"WITH\" operator, and identifier: GCC-exception-2.0",
+  "licenseId": "GPL-2.0-with-GCC-exception",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://gcc.gnu.org/git/?p\u003dgcc.git;a\u003dblob;f\u003dgcc/libgcc1.c;h\u003d762f5143fc6eed57b6797c82710f3538aa52b40b;hb\u003dcb143a3ce4fb417c68f5fa2691a1b1b1053dfba9#l10",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:01:36Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://gcc.gnu.org/git/?p\u003dgcc.git;a\u003dblob;f\u003dgcc/libgcc1.c;h\u003d762f5143fc6eed57b6797c82710f3538aa52b40b;hb\u003dcb143a3ce4fb417c68f5fa2691a1b1b1053dfba9#l10"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n\t     \u003cp\u003einsert GPL v2 license text here\u003c/p\u003e\n\n\t     \u003cp\u003eGCC Linking Exception \u003c/p\u003e\n\n\t     \u003cp\u003eIn addition to the permissions in the GNU General Public License, the Free Software Foundation gives you unlimited permission to link the compiled version of this file into combinations with other programs, and to distribute those combinations without any restriction coming from the use of this file. (The General Public License restrictions do apply in other respects; for example, they cover modification of the file, and distribution when not linked into a combine executable.\u003c/p\u003e\n\n    ",
+  "deprecatedVersion": "2.0rc2"
+}

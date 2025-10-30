@@ -1,0 +1,69 @@
+{
+    "packages": [],
+    "notify-batch": "https:\/\/packagist.org\/downloads\/",
+    "providers-url": "\/p\/%package%$%hash%.json",
+    "metadata-url": "\/p2\/%package%.json",
+    "metadata-changes-url": "https:\/\/packagist.org\/metadata\/changes.json",
+    "search": "https:\/\/packagist.org\/search.json?q=%query%&type=%type%",
+    "list": "https:\/\/packagist.org\/packages\/list.json",
+    "security-advisories": {
+        "metadata": true,
+        "api-url": "https:\/\/packagist.org\/api\/security-advisories\/"
+    },
+    "providers-api": "https:\/\/packagist.org\/providers\/%package%.json",
+    "warning": "Support for Composer 1 will be shutdown on August 1st 2025. You should upgrade to Composer 2. See https:\/\/blog.packagist.com\/shutting-down-packagist-org-support-for-composer-1-x\/",
+    "warning-versions": "<1.99",
+    "provider-includes": {
+        "p\/provider-2013$%hash%.json": {
+            "sha256": "c8f66b919e1bc413cf539ae5e1c3641aaa7201bb35236028083b6a29db54819f"
+        },
+        "p\/provider-2014$%hash%.json": {
+            "sha256": "94ebaab6c9615b692bcd554dc13706cc5031b9a9627638bab9946fcbc9bf08a1"
+        },
+        "p\/provider-2015$%hash%.json": {
+            "sha256": "2b1532a5da804f7436f2b3149e48dd759749d9f22ac96e3eefba8937a8b107b5"
+        },
+        "p\/provider-2016$%hash%.json": {
+            "sha256": "5dc2ed83294c0276fb6fb5a8b4c54b352a2c2b47d6fbfb23aa1b4aa609582008"
+        },
+        "p\/provider-2017$%hash%.json": {
+            "sha256": "ff924ce644237ec99649173d2c4837302c592a55d60da597c73ed242918be50d"
+        },
+        "p\/provider-2018$%hash%.json": {
+            "sha256": "56e61c2baea4a692b533dba5b6886f654a3c3545e96463c6e4133073a829e7fa"
+        },
+        "p\/provider-2019$%hash%.json": {
+            "sha256": "c262cdac424514f851f81246c8e0903ef7186ab6512bb4839b65a7ac8652d0b9"
+        },
+        "p\/provider-2020$%hash%.json": {
+            "sha256": "3a86d50c668a7d53edffcdef112844a35436e914f8a7753a3e5f8d6c7b1dce4e"
+        },
+        "p\/provider-2021$%hash%.json": {
+            "sha256": "b692808b8deebd71a240b47a75cc7e574dcb4c12716576cdb5d747341cc334af"
+        },
+        "p\/provider-2022$%hash%.json": {
+            "sha256": "0accffd503220a2214fa75043b0a05dc50faea35dd8fe49a6bcf78abfa2a7c30"
+        },
+        "p\/provider-2023$%hash%.json": {
+            "sha256": "fe0ecb56d5a8115fc2e1458d1b98a3b4d51d04f9e865919783e0be6651b7b251"
+        },
+        "p\/provider-2024-01$%hash%.json": {
+            "sha256": "b38bb9babb5f7cdc083fe8e37bbef94742af7e9781f3ab9e576de08c5f605f84"
+        },
+        "p\/provider-2024-04$%hash%.json": {
+            "sha256": "cabad2053691f922e76c894efac5ea6088afb58bd4ea648e71773d48260e51b1"
+        },
+        "p\/provider-2024-07$%hash%.json": {
+            "sha256": "af17a240b260e3e701f5e6a1f5f90f2f492c8bc48105eaac4fc2a56e77fd2701"
+        },
+        "p\/provider-2024-10$%hash%.json": {
+            "sha256": "7d947c5ebdcf0d5344611c49735ae7ca4a7e695526a85360a63273c83f8cc06f"
+        },
+        "p\/provider-archived$%hash%.json": {
+            "sha256": "0c2739922be632b3788c5bddb8f33e90de9697641fe11f888a43afbad106457c"
+        },
+        "p\/provider-latest$%hash%.json": {
+            "sha256": "6fe454899c10d7cc91d7aef76fb2f0c50dcc59f81882caa38b8be00c6b8717b8"
+        }
+    }
+}

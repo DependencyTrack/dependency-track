@@ -1,0 +1,332 @@
+{
+  "id": "GHSA-77rv-6vfw-x4gc",
+  "summary": "Critical severity vulnerability that affects org.springframework.security.oauth:spring-security-oauth and org.springframework.security.oauth:spring-security-oauth2",
+  "details": "Spring Security OAuth, versions 2.3 prior to 2.3.5, and 2.2 prior to 2.2.4, and 2.1 prior to 2.1.4, and 2.0 prior to 2.0.17, and older unsupported versions could be susceptible to an open redirector attack that can leak an authorization code.\n\nA malicious user or attacker can craft a request to the authorization endpoint using the authorization code grant type, and specify a manipulated redirection URI via the \"redirect_uri\" parameter. This can cause the authorization server to redirect the resource owner user-agent to a URI under the control of the attacker with the leaked authorization code.\n\nThis vulnerability exposes applications that meet all of the following requirements: Act in the role of an Authorization Server (e.g. @EnableAuthorizationServer) and uses the DefaultRedirectResolver in the AuthorizationEndpoint. \n\nThis vulnerability does not expose applications that: Act in the role of an Authorization Server and uses a different RedirectResolver implementation other than DefaultRedirectResolver, act in the role of a Resource Server only (e.g. @EnableResourceServer), act in the role of a Client only (e.g. @EnableOAuthClient).",
+  "aliases": [
+    "CVE-2019-3778"
+  ],
+  "modified": "2022-06-09T07:01:32.587163Z",
+  "published": "2019-03-14T15:39:30Z",
+  "database_specific": {
+    "severity": "LOW",
+    "cwe_ids": [
+      "CWE-601"
+    ],
+    "github_reviewed": true
+  },
+  "references": [
+    {
+      "type": "ADVISORY",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2019-3778"
+    },
+    {
+      "type": "ADVISORY",
+      "url": "https://github.com/advisories/GHSA-77rv-6vfw-x4gc"
+    },
+    {
+      "type": "WEB",
+      "url": "https://pivotal.io/security/cve-2019-3778"
+    },
+    {
+      "type": "WEB",
+      "url": "https://www.oracle.com/security-alerts/cpujan2021.html"
+    },
+    {
+      "type": "WEB",
+      "url": "http://packetstormsecurity.com/files/153299/Spring-Security-OAuth-2.3-Open-Redirection.html"
+    },
+    {
+      "type": "WEB",
+      "url": "http://www.securityfocus.com/bid/107153"
+    }
+  ],
+  "credits": [
+    {
+      "name": "Skywalker"
+    },
+    {
+      "name": "Solo"
+    }
+  ],
+  "affected": [
+    {
+      "package": {
+        "name": "org.springframework.security.oauth:spring-security-oauth",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.springframework.security.oauth/spring-security-oauth"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "2.0.17"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "1.0.0.RELEASE",
+        "1.0.1.RELEASE",
+        "1.0.2.RELEASE",
+        "1.0.3.RELEASE",
+        "1.0.4.RELEASE",
+        "1.0.5.RELEASE",
+        "2.0.0.RELEASE",
+        "2.0.1.RELEASE",
+        "2.0.10.RELEASE",
+        "2.0.11.RELEASE",
+        "2.0.12.RELEASE",
+        "2.0.13.RELEASE",
+        "2.0.14.RELEASE",
+        "2.0.15.RELEASE",
+        "2.0.16.RELEASE",
+        "2.0.2.RELEASE",
+        "2.0.3.RELEASE",
+        "2.0.4.RELEASE",
+        "2.0.5.RELEASE",
+        "2.0.6.RELEASE",
+        "2.0.7.RELEASE",
+        "2.0.8.RELEASE",
+        "2.0.9.RELEASE"
+      ],
+      "database_specific": {
+        "source": "https://github.com/oliverchang/advisory-database/blob/main/advisories/github-reviewed/2019/03/GHSA-77rv-6vfw-x4gc/GHSA-77rv-6vfw-x4gc.json"
+      }
+    },
+    {
+      "package": {
+        "name": "org.springframework.security.oauth:spring-security-oauth2",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.springframework.security.oauth/spring-security-oauth2"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "2.0.17"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "1.0.0.RELEASE",
+        "1.0.1.RELEASE",
+        "1.0.2.RELEASE",
+        "1.0.3.RELEASE",
+        "1.0.4.RELEASE",
+        "1.0.5.RELEASE",
+        "2.0.0.RELEASE",
+        "2.0.1.RELEASE",
+        "2.0.10.RELEASE",
+        "2.0.11.RELEASE",
+        "2.0.12.RELEASE",
+        "2.0.13.RELEASE",
+        "2.0.14.RELEASE",
+        "2.0.15.RELEASE",
+        "2.0.16.RELEASE",
+        "2.0.2.RELEASE",
+        "2.0.3.RELEASE",
+        "2.0.4.RELEASE",
+        "2.0.5.RELEASE",
+        "2.0.6.RELEASE",
+        "2.0.7.RELEASE",
+        "2.0.8.RELEASE",
+        "2.0.9.RELEASE"
+      ],
+      "database_specific": {
+        "source": "https://github.com/oliverchang/advisory-database/blob/main/advisories/github-reviewed/2019/03/GHSA-77rv-6vfw-x4gc/GHSA-77rv-6vfw-x4gc.json"
+      }
+    },
+    {
+      "package": {
+        "name": "org.springframework.security.oauth:spring-security-oauth",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.springframework.security.oauth/spring-security-oauth"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.1.0"
+            },
+            {
+              "fixed": "2.1.4"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "2.1.0.RELEASE",
+        "2.1.1.RELEASE",
+        "2.1.2.RELEASE",
+        "2.1.3.RELEASE"
+      ],
+      "database_specific": {
+        "source": "https://github.com/oliverchang/advisory-database/blob/main/advisories/github-reviewed/2019/03/GHSA-77rv-6vfw-x4gc/GHSA-77rv-6vfw-x4gc.json"
+      }
+    },
+    {
+      "package": {
+        "name": "org.springframework.security.oauth:spring-security-oauth2",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.springframework.security.oauth/spring-security-oauth2"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.1.0"
+            },
+            {
+              "fixed": "2.1.4"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "2.1.0.RELEASE",
+        "2.1.1.RELEASE",
+        "2.1.2.RELEASE",
+        "2.1.3.RELEASE"
+      ],
+      "database_specific": {
+        "source": "https://github.com/oliverchang/advisory-database/blob/main/advisories/github-reviewed/2019/03/GHSA-77rv-6vfw-x4gc/GHSA-77rv-6vfw-x4gc.json"
+      }
+    },
+    {
+      "package": {
+        "name": "org.springframework.security.oauth:spring-security-oauth",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.springframework.security.oauth/spring-security-oauth"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.2.0"
+            },
+            {
+              "fixed": "2.2.4"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "2.2.0.RELEASE",
+        "2.2.1.RELEASE",
+        "2.2.2.RELEASE",
+        "2.2.3.RELEASE"
+      ],
+      "database_specific": {
+        "source": "https://github.com/oliverchang/advisory-database/blob/main/advisories/github-reviewed/2019/03/GHSA-77rv-6vfw-x4gc/GHSA-77rv-6vfw-x4gc.json"
+      }
+    },
+    {
+      "package": {
+        "name": "org.springframework.security.oauth:spring-security-oauth2",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.springframework.security.oauth/spring-security-oauth2"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.2.0"
+            },
+            {
+              "fixed": "2.2.4"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "2.2.0.RELEASE",
+        "2.2.1.RELEASE",
+        "2.2.2.RELEASE",
+        "2.2.3.RELEASE"
+      ],
+      "database_specific": {
+        "source": "https://github.com/oliverchang/advisory-database/blob/main/advisories/github-reviewed/2019/03/GHSA-77rv-6vfw-x4gc/GHSA-77rv-6vfw-x4gc.json"
+      }
+    },
+    {
+      "package": {
+        "name": "org.springframework.security.oauth:spring-security-oauth",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.springframework.security.oauth/spring-security-oauth"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.3.0"
+            },
+            {
+              "fixed": "2.3.5"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "2.3.0.RELEASE",
+        "2.3.1.RELEASE",
+        "2.3.2.RELEASE",
+        "2.3.3.RELEASE",
+        "2.3.4.RELEASE"
+      ],
+      "database_specific": {
+        "source": "https://github.com/oliverchang/advisory-database/blob/main/advisories/github-reviewed/2019/03/GHSA-77rv-6vfw-x4gc/GHSA-77rv-6vfw-x4gc.json"
+      }
+    },
+    {
+      "package": {
+        "name": "org.springframework.security.oauth:spring-security-oauth2",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.springframework.security.oauth/spring-security-oauth2"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.3.0"
+            },
+            {
+              "fixed": "2.3.5"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "2.3.0.RELEASE",
+        "2.3.1.RELEASE",
+        "2.3.2.RELEASE",
+        "2.3.3.RELEASE",
+        "2.3.4.RELEASE"
+      ],
+      "database_specific": {
+        "source": "https://github.com/oliverchang/advisory-database/blob/main/advisories/github-reviewed/2019/03/GHSA-77rv-6vfw-x4gc/GHSA-77rv-6vfw-x4gc.json"
+      }
+    }
+  ],
+  "schema_version": "1.2.0",
+  "severity": [
+    {
+      "type": "CVSS_V3",
+      "score": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H"
+    }
+  ]
+}

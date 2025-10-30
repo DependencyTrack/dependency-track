@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "Digia Qt LGPL Exception version 1.1\n\nAs a special exception to the GNU Lesser General Public License version 2.1,\nthe object code form of a \"work that uses the Library\" may incorporate material\nfrom a header file that is part of the Library. You may distribute such object\ncode under terms of your choice, provided that the incorporated material (i)\ndoes not exceed more than 5% of the total size of the Library; and (ii) is\nlimited to numerical parameters, data structure layouts, accessors, macros,\ninline functions and templates.\n",
+  "name": "Digia Qt LGPL Exception version 1.1",
+  "licenseComments": "This has some similarities to Qt-LGPL-exception-1.1.",
+  "seeAlso": [
+    "https://src.fedoraproject.org/rpms/qtlockedfile/blob/rawhide/f/LGPL_EXCEPTION"
+  ],
+  "licenseExceptionId": "Digia-Qt-LGPL-exception-1.1",
+  "licenseExceptionTemplate": "\u003c\u003cbeginOptional\u003e\u003eDigia Qt LGPL Exception version 1.1\n\n\u003c\u003cendOptional\u003e\u003e\nAs a special exception to the GNU Lesser General Public License version 2.1, the object code form of a \"work that uses the Library\" may incorporate material from a header file that is part of the Library. You may distribute such object code under terms of your choice, provided that the incorporated material (i) does not exceed more than 5% of the total size of the Library; and (ii) is limited to numerical parameters, data structure layouts, accessors, macros, inline functions and templates.\n\n",
+  "exceptionTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n        \u003cp\u003e\n         Digia Qt LGPL Exception version 1.1\n        \u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cp\u003e\n         As a special exception to the\n         GNU Lesser General Public License version 2.1, the object code form\n         of a \u0026quot;work that uses the Library\u0026quot; may incorporate material from a\n         header file that is part of the Library. You may distribute such\n         object code under terms of your choice, provided that the incorporated\n         material (i) does not exceed more than 5% of the total size of\n         the Library; and (ii) is limited to numerical parameters, data\n         structure layouts, accessors, macros, inline functions and templates.\n      \u003c/p\u003e\n\n   "
+}

@@ -1,0 +1,266 @@
+{
+    "minified": "composer/2.0",
+    "packages": {
+        "io/captain-hook": [
+            {
+                "authors": [
+                    {
+                        "email": "info@helhum.io",
+                        "name": "Helmut Hummel"
+                    }
+                ],
+                "autoload": {
+                    "psr-4": {
+                        "io\\ClassAliasLoader\\": "src/"
+                    }
+                },
+                "description": "Amends the composer class loader to support class aliases to provide backwards compatibility for packages",
+                "dist": {
+                    "reference": "cf2aebabe1886474da7194e1531900039263b3e0",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/io/captain-hook/zipball/cf2aebabe1886474da7194e1531900039263b3e0"
+                },
+                "extra": {
+                    "branch-alias": {
+                        "dev-main": "1.1.x-dev"
+                    },
+                    "class": "io\\ClassAliasLoader\\Plugin"
+                },
+                "funding": [
+                ],
+                "homepage": "http://github.com/io/captain-hook",
+                "keywords": [
+                    "autoloader",
+                    "composer",
+                    "classloader",
+                    "alias"
+                ],
+                "license": [
+                    "MIT"
+                ],
+                "name": "io/captain-hook",
+                "replace": {
+                    "helhum/captain-hook": "*"
+                },
+                "require": {
+                    "composer-plugin-api": "^1.0 || ^2.0",
+                    "php": ">=7.1"
+                },
+                "require-dev": {
+                    "composer/composer": "^1.1@dev || ^2.0@dev",
+                    "mikey179/vfsstream": "~1.4.0@dev",
+                    "phpunit/phpunit": ">4.8 <9"
+                },
+                "source": {
+                    "reference": "cf2aebabe1886474da7194e1531900039263b3e0",
+                    "type": "git",
+                    "url": "https://github.com/io/captain-hook.git"
+                },
+                "support": {
+                    "issues": "https://github.com/io/captain-hook/issues",
+                    "source": "https://github.com/io/captain-hook/tree/v1.2.0"
+                },
+                "time": "2024-10-11T08:11:39+00:00",
+                "type": "composer-plugin",
+                "version": "v1.2.0",
+                "version_normalized": "1.2.0.0"
+            },
+            {
+                "dist": {
+                    "reference": "f6fc1f5fb04c42195e8e663b43aced4919ef318f",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/io/captain-hook/zipball/f6fc1f5fb04c42195e8e663b43aced4919ef318f"
+                },
+                "require": {
+                    "composer-plugin-api": "^1.0 || ^2.0",
+                    "php": ">=5.3.7"
+                },
+                "source": {
+                    "reference": "f6fc1f5fb04c42195e8e663b43aced4919ef318f",
+                    "type": "git",
+                    "url": "https://github.com/io/captain-hook.git"
+                },
+                "support": {
+                    "issues": "https://github.com/io/captain-hook/issues",
+                    "source": "https://github.com/io/captain-hook/tree/v1.1.4"
+                },
+                "time": "2022-08-07T14:48:42+00:00",
+                "version": "v1.1.4",
+                "version_normalized": "1.1.4.0"
+            },
+            {
+                "dist": {
+                    "reference": "575f59581541f299f3a86a95b1db001ee6e1d2e0",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/io/captain-hook/zipball/575f59581541f299f3a86a95b1db001ee6e1d2e0"
+                },
+                "extra": {
+                    "branch-alias": {
+                        "dev-master": "1.1.x-dev"
+                    },
+                    "class": "io\\ClassAliasLoader\\Plugin"
+                },
+                "require-dev": {
+                    "composer/composer": "^1.1@dev || ^2.0@dev",
+                    "mikey179/vfsstream": "~1.4.0@dev",
+                    "phpunit/phpunit": ">4.8 <8"
+                },
+                "source": {
+                    "reference": "575f59581541f299f3a86a95b1db001ee6e1d2e0",
+                    "type": "git",
+                    "url": "https://github.com/io/captain-hook.git"
+                },
+                "support": {
+                    "issues": "https://github.com/io/captain-hook/issues",
+                    "source": "https://github.com/io/captain-hook/tree/v1.1.3"
+                },
+                "time": "2020-05-24T13:03:22+00:00",
+                "version": "v1.1.3",
+                "version_normalized": "1.1.3.0"
+            },
+            {
+                "dist": {
+                    "reference": "ead04a4d7bc215ca1faa895977c5ea349f0b7383",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/io/captain-hook/zipball/ead04a4d7bc215ca1faa895977c5ea349f0b7383"
+                },
+                "source": {
+                    "reference": "ead04a4d7bc215ca1faa895977c5ea349f0b7383",
+                    "type": "git",
+                    "url": "https://github.com/io/captain-hook.git"
+                },
+                "support": {
+                    "issues": "https://github.com/io/captain-hook/issues",
+                    "source": "https://github.com/io/captain-hook/tree/v1.1.2"
+                },
+                "time": "2020-05-07T12:46:20+00:00",
+                "version": "v1.1.2",
+                "version_normalized": "1.1.2.0"
+            },
+            {
+                "dist": {
+                    "reference": "ee417366a289871460910ae1703976e9903a5e80",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/io/captain-hook/zipball/ee417366a289871460910ae1703976e9903a5e80"
+                },
+                "source": {
+                    "reference": "ee417366a289871460910ae1703976e9903a5e80",
+                    "type": "git",
+                    "url": "https://github.com/io/captain-hook.git"
+                },
+                "support": {
+                    "issues": "https://github.com/io/captain-hook/issues",
+                    "source": "https://github.com/io/captain-hook/tree/v1.1.1"
+                },
+                "time": "2020-04-30T10:13:10+00:00",
+                "version": "v1.1.1",
+                "version_normalized": "1.1.1.0"
+            },
+            {
+                "dist": {
+                    "reference": "282b56758ee542b9bc9f2c3cd12da22b76ddba3f",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/io/captain-hook/zipball/282b56758ee542b9bc9f2c3cd12da22b76ddba3f"
+                },
+                "source": {
+                    "reference": "282b56758ee542b9bc9f2c3cd12da22b76ddba3f",
+                    "type": "git",
+                    "url": "https://github.com/io/captain-hook.git"
+                },
+                "support": {
+                    "issues": "https://github.com/io/captain-hook/issues",
+                    "source": "https://github.com/io/captain-hook/tree/v1.1.0"
+                },
+                "time": "2020-04-29T19:51:20+00:00",
+                "version": "v1.1.0",
+                "version_normalized": "1.1.0.0"
+            },
+            {
+                "dist": {
+                    "reference": "994ee9bebe847da862d0edc6f075df4693dfa8e2",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/io/captain-hook/zipball/994ee9bebe847da862d0edc6f075df4693dfa8e2"
+                },
+                "require-dev": {
+                    "composer/composer": "^1.1@dev || ^2.0@dev",
+                    "mikey179/vfsstream": "~1.4.0@dev",
+                    "phpunit/phpunit": "^4.8"
+                },
+                "source": {
+                    "reference": "994ee9bebe847da862d0edc6f075df4693dfa8e2",
+                    "type": "git",
+                    "url": "https://github.com/io/captain-hook.git"
+                },
+                "support": {
+                    "issues": "https://github.com/io/captain-hook/issues",
+                    "source": "https://github.com/io/captain-hook/tree/master"
+                },
+                "time": "2020-03-29T16:12:26+00:00",
+                "version": "v1.0.2",
+                "version_normalized": "1.0.2.0"
+            },
+            {
+                "dist": {
+                    "reference": "4972f9f6c2bad07ab1620b5c9717fa626e9b03b0",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/io/captain-hook/zipball/4972f9f6c2bad07ab1620b5c9717fa626e9b03b0"
+                },
+                "extra": {
+                    "branch-alias": {
+                        "dev-master": "1.0.x-dev"
+                    },
+                    "class": "io\\ClassAliasLoader\\Plugin"
+                },
+                "funding": "__unset",
+                "require": {
+                    "composer-plugin-api": "^1.0",
+                    "php": ">=5.3.7"
+                },
+                "require-dev": {
+                    "composer/composer": "dev-master",
+                    "mikey179/vfsstream": "1.4.*@dev",
+                    "phpunit/phpunit": "^4.8"
+                },
+                "source": {
+                    "reference": "4972f9f6c2bad07ab1620b5c9717fa626e9b03b0",
+                    "type": "git",
+                    "url": "https://github.com/io/captain-hook.git"
+                },
+                "time": "2018-10-03T12:49:56+00:00",
+                "version": "1.0.1",
+                "version_normalized": "1.0.1.0"
+            },
+            {
+                "dist": {
+                    "reference": "a9dd295c81ed0b51455644be420ab9210cad688f",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/io/captain-hook/zipball/a9dd295c81ed0b51455644be420ab9210cad688f"
+                },
+                "require-dev": {
+                    "composer/composer": "dev-master",
+                    "mikey179/vfsstream": "1.4.*@dev",
+                    "phpunit/phpunit": "~4.7.0"
+                },
+                "source": {
+                    "reference": "a9dd295c81ed0b51455644be420ab9210cad688f",
+                    "type": "git",
+                    "url": "https://github.com/io/captain-hook.git"
+                },
+                "time": "2015-10-06T10:25:44+00:00",
+                "version": "1.0.0",
+                "version_normalized": "1.0.0.0"
+            }
+        ]
+    },
+    "security-advisories": [
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "notify-batch": "/8/downloads",
+    "metadata-url": "/files/packages/8/p2/%package%.json",
+    "available-package-patterns": [
+      "drupal/*"
+    ],
+    "search": "/8/search.json?s=%query%",
+    "warning": "Drupal.org packages ARE NO LONGER AVAILABLE FOR COMPOSER 1!!! Composer 1 is NOT supported. You should upgrade to Composer 2 now! See https://www.drupal.org/drupalorg/blog/ending-packagesdrupalorg-support-for-composer-1",
+    "warning-versions": "\u003C1.99",
+    "security-advisories": {
+      "metadata": true,
+      "api-url": "https://packages.drupal.org/8/security-advisories"
+    }
+  }

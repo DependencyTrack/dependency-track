@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "# Copyright (c) 2006, 2010  Micah Cowan\n#\n# Redistribution of this program in any form, with or without\n# modifications, is permitted, provided that the above copyright is\n# retained in distributions of this program in source form.\n#\n# (This is a free, non-copyleft license compatible with pretty much any\n# other free or proprietary license, including the GPL. It\u0027s essentially\n# a scaled-down version of the \"modified\" BSD license.)\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 2006, 2010 Micah Cowan  \";match\u003d\".{0,5000}\"\u003e\u003e\nRedistribution of this program in any form, with or without modifications, is permitted, provided that the above copyright is retained in distributions of this program in source form.\n\n(This is a free, non-copyleft license compatible with pretty much any other free or proprietary license, including the GPL. It\u0027s essentially a scaled-down version of the \"modified\" BSD license.)\n\n",
+  "name": "Checkmk License",
+  "licenseId": "checkmk",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/libcheck/check/blob/master/checkmk/checkmk.in",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:58:28Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/libcheck/check/blob/master/checkmk/checkmk.in"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright (c) 2006, 2010  Micah Cowan\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003eRedistribution of this program in any form, with or without\n modifications, is permitted, provided that the above copyright is\n retained in distributions of this program in source form.\u003c/p\u003e\n\n\u003cp\u003e (This is a free, non-copyleft license compatible with pretty much any\nother free or proprietary license, including the GPL. It\u0026apos;s essentially\na scaled-down version of the \u0026quot;modified\u0026quot; BSD license.)\n\u003c/p\u003e\n\n    "
+}

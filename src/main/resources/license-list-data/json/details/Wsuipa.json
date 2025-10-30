@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "This file was added by Clea F. Rees on 2008/11/30 with the permission of Dean Guenther and pointers to this file were added to all source files.\n\nUnlimited copying and redistribution of each of the files is permitted as long as the file is not modified. Modifications, and redistribution of modified versions, are also permitted, but only if the resulting file is renamed.\n\nThe copyright holder is Washington State University. The original author of the fonts is Janene Winter. The primary contact (as of 2008) is Dean Guenther.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eThis file was added by Clea F. Rees on 2008/11/30 with the permission of Dean Guenther and pointers to this file were added to all source files.\n\n\u003c\u003cendOptional\u003e\u003e\nUnlimited copying and redistribution of each of the files is permitted as long as the file is not modified. Modifications, and redistribution of modified versions, are also permitted, but only if the resulting file is renamed.\n\n\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"The copyright holder is Washington State University. The original author of the fonts is Janene Winter. The primary contact (as of 2008) is Dean Guenther.  \";match\u003d\".{0,5000}\"\u003e\u003e",
+  "name": "Wsuipa License",
+  "licenseId": "Wsuipa",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/Wsuipa",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:02:41Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Wsuipa"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eThis file was added by Clea F. Rees on 2008/11/30 with the permission of Dean Guenther and pointers to\n         this file were added to all source files.\u003c/p\u003e\n\n      \u003c/div\u003e\n\n      \u003cp\u003eUnlimited copying and redistribution of each of the files is permitted as long as the file is not\n         modified. Modifications, and redistribution of modified versions, are also permitted, but only if the\n         resulting file is renamed.\u003c/p\u003e\n\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eThe copyright holder is Washington State University. The original author of the fonts is Janene Winter.\n         The primary contact (as of 2008) is Dean Guenther.\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n    "
+}

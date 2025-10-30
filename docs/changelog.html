@@ -1,0 +1,18 @@
+---
+title: Change Log
+---
+
+<p>Subscribe with <a href="{{ site.baseurl }}/feed.xml">RSS</a> to keep up with the latest changes.</p>
+
+<div class="changelog">
+	{% for change in site.posts %}
+		<div class="changelog-item">
+			<h3>{{ change.title }}</h3>
+			<p><span class="date">{{ change.date | date: "%B %d, %Y" }}</span> <span class="badge {{ change.type }}">{{ change.type }}</span></p>
+
+			{{ change.content }}
+
+			<p class="editor-link"><a href="cloudcannon:collections/{{ change.path }}" class="btn"><strong>&#9998;</strong> Update Entry</a></p>
+		</div>
+	{% endfor %}
+</div>

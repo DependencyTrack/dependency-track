@@ -1,0 +1,26 @@
+{
+  "isDeprecatedLicenseId": true,
+  "licenseText": "insert GPL v2 license text here\n\nFont Exception\n\nAs a special exception, if you create a document which uses this font, and embed this font or unaltered portions of this font into the document, this font does not by itself cause the resulting document to be covered by the GNU General Public License. This exception does not however invalidate any other reasons why the document might be covered by the GNU General Public License. If you modify this font, you may extend this exception to your version of the font, but you are not obligated to do so. If you do not wish to do so, delete this exception statement from your version.\n\n",
+  "standardLicenseTemplate": "insert GPL v2 license text here\n\nFont Exception\n\nAs a special exception, if you create a document which uses this font, and embed this font or unaltered portions of this font into the document, this font does not by itself cause the resulting document to be covered by the GNU General Public License. This exception does not however invalidate any other reasons why the document might be covered by the GNU General Public License. If you modify this font, you may extend this exception to your version of the font, but you are not obligated to do so. If you do not wish to do so, delete this exception statement from your version.\n\n",
+  "name": "GNU General Public License v2.0 w/Font exception",
+  "licenseComments": "DEPRECATED: Use license expression including main license, \"WITH\" operator, and identifier: Font-exception-2.0",
+  "comment": "DEPRECATED: Use license expression including main license, \"WITH\" operator, and identifier: Font-exception-2.0",
+  "licenseId": "GPL-2.0-with-font-exception",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://www.gnu.org/licenses/gpl-faq.html#FontException",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:55:11Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://www.gnu.org/licenses/gpl-faq.html#FontException"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n\t     \u003cp\u003einsert GPL v2 license text here\u003c/p\u003e\n\n\t     \u003cp\u003eFont Exception\u003c/p\u003e\n\n\t     \u003cp\u003eAs a special exception, if you create a document which uses this font, and embed this font or unaltered portions of this font into the document, this font does not by itself cause the resulting document to be covered by the GNU General Public License. This exception does not however invalidate any other reasons why the document might be covered by the GNU General Public License. If you modify this font, you may extend this exception to your version of the font, but you are not obligated to do so. If you do not wish to do so, delete this exception statement from your version.\u003c/p\u003e\n\n    ",
+  "deprecatedVersion": "2.0rc2"
+}

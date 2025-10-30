@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1996-2002,2005,2006 David Muir Sharnoff.  \nCopyright (C) 2005 Aristotle Pagaltzis \nCopyright (C) 2012-2013 Google, Inc.\n\nThis module may be modified, used, copied, and redistributed at your own risk.\nAlthough allowed by the preceding license, please do not publicly\nredistribute modified versions of this code with the name \"Text::Tabs\"\nunless it passes the unmodified Text::Tabs test suite.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1996-2002,2005,2006 David Muir Sharnoff. Copyright (C) 2005 Aristotle Pagaltzis Copyright (C) 2012-2013 Google, Inc.  \";match\u003d\".{0,5000}\"\u003e\u003e\nThis module may be modified, used, copied, and redistributed at your own risk. Although allowed by the preceding license, please do not publicly redistribute modified versions of this code with the name \"Text::Tabs\" unless it passes the unmodified Text::Tabs test suite.\n\n",
+  "name": "Text-Tabs+Wrap License",
+  "licenseId": "TTWL",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/ap/Text-Tabs/blob/master/lib.modern/Text/Tabs.pm#L148",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:03:35Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/TTWL",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:03:36Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/TTWL",
+    "https://github.com/ap/Text-Tabs/blob/master/lib.modern/Text/Tabs.pm#L148"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            \u003cp\u003e\n               Copyright (C) 1996-2002,2005,2006 David Muir Sharnoff.\u003cbr /\u003e\n\n               Copyright (C) 2005 Aristotle Pagaltzis\u003cbr /\u003e\n\n               Copyright (C) 2012-2013 Google, Inc.\n            \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            This module may be modified, used, copied, and redistributed at your\n            own risk. Although allowed by the preceding license, please do not\n            publicly redistribute modified versions of this code with the name\n            \u0026quot;Text::Tabs\u0026quot; unless it passes the unmodified Text::Tabs test suite.\n         \u003c/p\u003e\n\n      "
+}

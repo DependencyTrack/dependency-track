@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "The author disclaims copyright to this source code. In place of a legal notice, here is a blessing:\n\nMay you do good and not evil.\nMay you find forgiveness for yourself and forgive others.\nMay you share freely, never taking more than you give.\n",
+  "standardLicenseTemplate": "The author disclaims copyright to this source code. In place of a legal notice, here is a blessing:\n\n   May you do good and not evil.\n\n   May you find forgiveness for yourself and forgive others.\n\n   May you share freely, never taking more than you give.\n   \n   ",
+  "name": "SQLite Blessing",
+  "licenseId": "blessing",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://www.sqlite.org/src/artifact/e33a4df7e32d742a?ln\u003d4-9",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:06:02Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "true",
+      "url": "https://sqlite.org/src/artifact/df5091916dbb40e6",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:06:03Z",
+      "isWayBackLink": false,
+      "order": 1
+    }
+  ],
+  "seeAlso": [
+    "https://www.sqlite.org/src/artifact/e33a4df7e32d742a?ln\u003d4-9",
+    "https://sqlite.org/src/artifact/df5091916dbb40e6"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n        \u003cp\u003eThe author disclaims copyright to this source code. In place of a legal notice, here is a blessing:\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n            \n\u003cli\u003e\u003cp\u003eMay you do good and not evil.\u003c/p\u003e\n\u003c/li\u003e\n            \n\u003cli\u003e\u003cp\u003eMay you find forgiveness for yourself and forgive others.\u003c/p\u003e\n\u003c/li\u003e\n            \n\u003cli\u003e\u003cp\u003eMay you share freely, never taking more than you give.\u003c/p\u003e\n\u003c/li\u003e\n        \n\u003c/ul\u003e\n    "
+}

@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "COPYRIGHT and LICENSE\n\nThis program is free and open software. You may use, modify,\ndistribute, and sell this program (and any modified variants) in any\nway you wish, provided you do not restrict others from doing the same.\n",
+  "standardLicenseTemplate": "COPYRIGHT and LICENSE\nThis program is free and open software. You may use, modify, distribute, and sell this program (and any modified variants) in any way you wish, provided you do not restrict others from doing the same.\n\n",
+  "name": "App::s2p License",
+  "licenseId": "App-s2p",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/App-s2p",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:55:14Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/App-s2p"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         COPYRIGHT and LICENSE\n         \u003cp\u003e\n            This program is free and open software. You may use,\n            modify, distribute, and sell this program (and any\n            modified variants) in any way you wish, provided\n            you do not restrict others from doing the same.\n         \u003c/p\u003e\n\n      "
+}

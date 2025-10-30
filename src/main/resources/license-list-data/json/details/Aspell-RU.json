@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Permission to use, copy, redistribute is granted.\nPermission to redistribute modifications in patch form is granted.\nPermission to redistribute binaries made of modified sources is granted.\nAll other rights reserved.\n",
+  "standardLicenseTemplate": "Permission to use, copy, redistribute is granted. Permission to redistribute modifications in patch form is granted. Permission to redistribute binaries made of modified sources is granted. All other rights reserved.\n\n",
+  "name": "Aspell Russian License",
+  "licenseId": "Aspell-RU",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://ftp.gnu.org/gnu/aspell/dict/ru/aspell6-ru-0.99f7-1.tar.bz2",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:56:02Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://ftp.gnu.org/gnu/aspell/dict/ru/aspell6-ru-0.99f7-1.tar.bz2"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            Permission to use, copy, redistribute is granted.\n            Permission to redistribute modifications in patch form\n            is granted. Permission to redistribute binaries made of\n            modified sources is granted. All other rights reserved.\n         \u003c/p\u003e\n\n      "
+}

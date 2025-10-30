@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright 1992 by Jutta Degener and Carsten Bormann,\nTechnische Universitaet Berlin\n\nAny use of this software is permitted provided that this notice is not removed and that neither the authors nor the Technische Universitaet Berlin are deemed to have made any representations as to the suitability of this software for any purpose nor are held responsible for any defects of this software.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.\n\nAs a matter of courtesy, the authors request to be informed about uses this software has found, about bugs in this software, and about any improvements that may be of general interest.\n\nBerlin, 15.09.1992\nJutta Degener\nCarsten Bormann\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1992, 1993, 1994 by Jutta Degener and Carsten Bormann,   Technische Universitaet Berlin  \";match\u003d\".{0,5000}\"\u003e\u003e\nAny use of this software is permitted provided that this notice is not removed and that neither the authors nor the Technische Universitaet Berlin are deemed to have made any representations as to the suitability of this software for any purpose nor are held responsible for any defects of this software. THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.\n\nAs a matter of courtesy, the authors request to be informed about uses this software has found, about bugs in this software, and about any improvements that may be of general interest.\n\n\u003c\u003cbeginOptional\u003e\u003eBerlin, \u003c\u003cvar;name\u003d\"footerDate\";original\u003d\"28.11.1994\";match\u003d\".+\"\u003e\u003e\n\nJutta Degener\n\nCarsten Bormann\n\n\u003c\u003cendOptional\u003e\u003e",
+  "name": "Technische Universitaet Berlin License 1.0",
+  "licenseId": "TU-Berlin-1.0",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/swh/ladspa/blob/7bf6f3799fdba70fda297c2d8fd9f526803d9680/gsm/COPYRIGHT",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:45Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/swh/ladspa/blob/7bf6f3799fdba70fda297c2d8fd9f526803d9680/gsm/COPYRIGHT"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n        \u003cp\u003eCopyright 1992, 1993, 1994 by Jutta Degener and Carsten Bormann,\n\t      \u003c/p\u003e\n\n        \u003cp\u003eTechnische Universitaet Berlin\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003e\n        Any use of this software is permitted provided that this notice is not\n        removed and that neither the authors nor the Technische Universitaet Berlin\n        are deemed to have made any representations as to the suitability of this\n        software for any purpose nor are held responsible for any defects of\n        this software.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.\n      \u003c/p\u003e\n\n      \u003cp\u003e\n        As a matter of courtesy, the authors request to be informed about uses\n        this software has found, about bugs in this software, and about any\n        improvements that may be of general interest.\n      \u003c/p\u003e\n\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n        \u003cp\u003eBerlin, \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e 28.11.1994\u003c/span\u003e\u003c/var\u003e\u003c/p\u003e\n\n        \u003cp\u003eJutta Degener\u003c/p\u003e\n\n        \u003cp\u003eCarsten Bormann\u003c/p\u003e\n\n      \u003c/div\u003e\n    "
+}

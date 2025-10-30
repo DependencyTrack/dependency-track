@@ -1,0 +1,43 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright \u003cyyyy, yyyy\u003e The Open Group\n\nPermission to use, copy, modify, distribute, and sell this software and\nits documentation for any purpose is hereby granted without fee,\nprovided that the above copyright notice appear in all copies and that\nboth that copyright notice and this permission notice appear in\nsupporting documentation.\n\nThe above copyright notice and this permission notice shall be included\nin all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS\nOR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\nIN NO EVENT SHALL THE OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR\nOTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,\nARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR\nOTHER DEALINGS IN THE SOFTWARE.\n\nExcept as contained in this notice, the name of The Open Group\nshall not be used in advertising or otherwise to promote the sale, use\nor other dealings in this Software without prior written authorization\nfrom The Open Group.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright \u003cyyyy, yyyy\u003e The Open Group  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, distribute, and sell this software and its documentation for any purpose is hereby granted without fee, provided that the above copyright notice appear in all copies and that both that copyright notice and this permission notice appear in supporting documentation.\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL \u003c\u003cvar;name\u003d\"name1\";original\u003d\"THE OPEN GROUP\";match\u003d\".*\"\u003e\u003e BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nExcept as contained in this notice, the name of \u003c\u003cvar;name\u003d\"name2\";original\u003d\"The Open Group\";match\u003d\".+\"\u003e\u003e shall not be used in advertising or otherwise to promote the sale, use or other dealings in this Software without prior written authorization from \u003c\u003cvar;name\u003d\"name3\";original\u003d\"The Open Group\";match\u003d\".+\"\u003e\u003e .\n\n",
+  "name": "MIT Open Group variant",
+  "licenseId": "MIT-open-group",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/app/xauth/-/blob/master/COPYING",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:58:43Z",
+      "isWayBackLink": false,
+      "order": 2
+    },
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/app/xsetroot/-/blob/master/COPYING",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:58:43Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/app/iceauth/-/blob/master/COPYING",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:58:45Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://gitlab.freedesktop.org/xorg/app/iceauth/-/blob/master/COPYING",
+    "https://gitlab.freedesktop.org/xorg/app/xsetroot/-/blob/master/COPYING",
+    "https://gitlab.freedesktop.org/xorg/app/xauth/-/blob/master/COPYING"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n            \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n                \u003cp\u003eCopyright \u0026lt;yyyy, yyyy\u0026gt; The Open Group\u003c/p\u003e\n\n            \u003c/span\u003e\u003c/div\u003e\n            \u003cp\u003ePermission to use, copy, modify, distribute, and sell this\n                software and its documentation for any purpose is hereby granted\n                without fee, provided that the above copyright notice appear in\n                all copies and that both that copyright notice and this\n                permission notice appear in supporting documentation.\n            \u003c/p\u003e\n\n            \u003cp\u003eThe above copyright notice and this permission notice shall be\n                included in all copies or substantial portions of the Software.\n            \u003c/p\u003e\n\n            \u003cp\u003eTHE SOFTWARE IS PROVIDED \u0026quot;AS IS\u0026quot;, WITHOUT WARRANTY OF ANY KIND,\n                EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES\n                OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\n                NONINFRINGEMENT. IN NO EVENT SHALL \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .*\"\u003e THE OPEN GROUP\u003c/span\u003e\u003c/var\u003e BE LIABLE FOR ANY CLAIM,\n                DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,\n                TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH\n                THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n            \u003c/p\u003e\n\n            \u003cp\u003eExcept as contained in this notice, the name of \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e The Open Group\u003c/span\u003e\u003c/var\u003e\n                shall not be used in advertising or otherwise to promote the\n                sale, use or other dealings in this Software without prior\n                written authorization from \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e The Open Group\u003c/span\u003e\u003c/var\u003e.\n            \u003c/p\u003e\n\n        "
+}

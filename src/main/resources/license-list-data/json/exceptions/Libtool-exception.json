@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "As a special exception to the GNU General Public License, if you distribute this file as part of a program or library that is built using GNU Libtool, you may include this file under the same distribution terms that you use for the rest of that program.\n",
+  "name": "Libtool Exception",
+  "seeAlso": [
+    "http://git.savannah.gnu.org/cgit/libtool.git/tree/m4/libtool.m4",
+    "https://git.savannah.gnu.org/cgit/libtool.git/tree/libltdl/lt__alloc.c#n15"
+  ],
+  "licenseExceptionId": "Libtool-exception",
+  "licenseExceptionTemplate": "As a special exception to the GNU\u003c\u003cbeginOptional\u003e\u003e Lesser\u003c\u003cendOptional\u003e\u003e General Public License, if you distribute this file as part of a program or library that is built using GNU Libtool, you may include this file under the same distribution terms that you use for the rest of that program.\n\n",
+  "exceptionTextHtml": "\n      \u003cp\u003eAs a special exception to the GNU \u003cvar class\u003d\"optional-license-text\"\u003e Lesser\u003c/var\u003e General Public License, if you\n         distribute this file as part of a program or library that is\n         built using GNU Libtool, you may include this file under the\n         same distribution terms that you use for the rest of that\n         program.\u003c/p\u003e\n\n    "
+}

@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Permission to use, copy, modify, and distribute this software\nfor any purpose and without fee is hereby granted. The author\ndisclaims all warranties with regard to this software.\n",
+  "standardLicenseTemplate": "Permission to use, copy, modify, and distribute this software for any purpose and without fee is hereby granted. The author disclaims all warranties with regard to this software.\n\n",
+  "name": "Historical Permission Notice and Disclaimer - Markus Kuhn variant",
+  "licenseId": "HPND-Markus-Kuhn",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://sourceware.org/git/?p\u003dbinutils-gdb.git;a\u003dblob;f\u003dreadline/readline/support/wcwidth.c;h\u003d0f5ec995796f4813abbcf4972aec0378ab74722a;hb\u003dHEAD#l55",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:03:50Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:03:51Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c",
+    "https://sourceware.org/git/?p\u003dbinutils-gdb.git;a\u003dblob;f\u003dreadline/readline/support/wcwidth.c;h\u003d0f5ec995796f4813abbcf4972aec0378ab74722a;hb\u003dHEAD#l55"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n\t \u003cp\u003e\n\t\tPermission to use, copy, modify, and distribute this software\n\t\tfor any purpose and without fee is hereby granted. The author\n\t\tdisclaims all warranties with regard to this software.\n         \u003c/p\u003e\n\n      "
+}

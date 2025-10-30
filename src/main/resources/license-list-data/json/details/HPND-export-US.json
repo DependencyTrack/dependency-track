@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1990 by the Massachusetts Institute of Technology\n\nExport of this software from the United States of America may  require a specific license from the United States Government.  It is the responsibility of any person or organization contemplating  export to obtain such a license before exporting.\n\nWITHIN THAT CONSTRAINT, permission to use, copy, modify, and  distribute this software and its documentation for any purpose and  without fee is hereby granted, provided that the above copyright  notice appear in all copies and that both that copyright notice and  this permission notice appear in supporting documentation, and that  the name of M.I.T. not be used in advertising or publicity pertaining  to distribution of the software without specific, written prior  permission. M.I.T. makes no representations about the suitability of  this software for any purpose. It is provided \"as is\" without express  or implied warranty.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1990 by the Massachusetts Institute of Technology\";match\u003d\".{0,5000}\"\u003e\u003e\nExport of this software from the United States of America may require a specific license from the United States Government. It is the responsibility of any person or organization contemplating export to obtain such a license before exporting.\n\nWITHIN THAT CONSTRAINT, permission to use, copy, modify, and distribute this software and its documentation for any purpose and without fee is hereby granted, provided that the above copyright notice appear in all copies and that both that copyright notice and this permission notice appear in supporting documentation, and that the name of M.I.T. not be used in advertising or publicity pertaining to distribution of the software without specific, written prior permission. M.I.T. makes no representations about the suitability of this software for any purpose. It is provided \"as is\" without express or implied warranty.\n\n",
+  "name": "HPND with US Government export control warning",
+  "licenseComments": "This license is found in the Kermit project. It is similar to HPND, with an additional initial statement regarding export control laws.",
+  "comment": "This license is found in the Kermit project. It is similar to HPND, with an additional initial statement regarding export control laws.",
+  "licenseId": "HPND-export-US",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://www.kermitproject.org/ck90.html#source",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:59:52Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://www.kermitproject.org/ck90.html#source"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n\t\t\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n\t\tCopyright (C) 1990 by the Massachusetts Institute of Technology\n\t\t\u003c/span\u003e\u003c/var\u003e\n\n\t\t\u003cp\u003eExport of this software from the United States of America may\n\t\trequire a specific license from the United States Government.\n\t\tIt is the responsibility of any person or organization contemplating\n\t\texport to obtain such a license before exporting.\u003c/p\u003e\n\n\t\t\u003cp\u003eWITHIN THAT CONSTRAINT, permission to use, copy, modify, and\n\t\tdistribute this software and its documentation for any purpose and\n\t\twithout fee is hereby granted, provided that the above copyright\n\t\tnotice appear in all copies and that both that copyright notice and\n\t\tthis permission notice appear in supporting documentation, and that\n\t\tthe name of M.I.T. not be used in advertising or publicity pertaining\n\t\tto distribution of the software without specific, written prior\n\t\tpermission. M.I.T. makes no representations about the suitability of\n\t\tthis software for any purpose. It is provided \u0026quot;as is\u0026quot; without express\n\t\tor implied warranty.\u003c/p\u003e\n\n\t\t"
+}

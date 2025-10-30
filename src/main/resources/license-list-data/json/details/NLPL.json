@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "NO LIMIT PUBLIC LICENSE\n     Version 0, June 2012\n\nGilles LAMIRAL\nLa Billais\n35580 Baulon\nFrance\n\nNO LIMIT PUBLIC LICENSE\n\nTerms and conditions for copying, distribution, modification\nor anything else.\n\n     0. No limit to do anything with this work and this license.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eNO LIMIT PUBLIC LICENSE\n\nVersion 0, June 2012\n\n\u003c\u003cendOptional\u003e\u003e\u003c\u003cbeginOptional\u003e\u003e Gilles LAMIRAL\n\nLa Billais\n\n35580 Baulon\n\nFrance\n\n\u003c\u003cendOptional\u003e\u003e\u003c\u003cbeginOptional\u003e\u003e NO LIMIT PUBLIC LICENSE\n\n\u003c\u003cendOptional\u003e\u003e\nTerms and conditions for copying, distribution, modification or anything else.\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"0.\";match\u003d\".{0,20}\"\u003e\u003e No limit to do anything with this work and this license.",
+  "name": "No Limit Public License",
+  "licenseId": "NLPL",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/NLPL",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:55:17Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/NLPL"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eNO LIMIT PUBLIC LICENSE\u003c/p\u003e\n\n         \u003cp\u003eVersion 0, June 2012\u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eGilles LAMIRAL\u003c/p\u003e\n\n         \u003cp\u003eLa Billais\u003c/p\u003e\n\n         \u003cp\u003e35580 Baulon\u003c/p\u003e\n\n         \u003cp\u003eFrance\u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003eNO LIMIT PUBLIC LICENSE\u003c/p\u003e\n\n      \u003c/div\u003e\n\n      \u003cp\u003eTerms and conditions for copying, distribution, modification or anything else.\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 0.\u003c/span\u003e\u003c/var\u003e\n          No limit to do anything with this work and this license.\n        \u003c/li\u003e\n      \n\u003c/ul\u003e\n    "
+}

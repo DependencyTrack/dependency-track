@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Noweb is copyright 1989-2000 by Norman Ramsey. All rights reserved.\n\nNoweb is protected by copyright. It is not public-domain software or shareware, and it is not protected by a ``copyleft\u0027\u0027 agreement like the one used by the Free Software Foundation.\n\nNoweb is available free for any use in any field of endeavor. You may redistribute noweb in whole or in part provided you acknowledge its source and include this COPYRIGHT file. You may modify noweb and create derived works, provided you retain this copyright notice, but the result may not be called noweb without my written consent.\n\nYou may sell noweb if you wish. For example, you may sell a CD-ROM including noweb.\n\nYou may sell a derived work, provided that all source code for your derived work is available, at no additional charge, to anyone who buys your derived work in any form. You must give permisson for said source code to be used and modified under the terms of this license. You must state clearly that your work uses or is based on noweb and that noweb is available free of change. You must also request that bug reports on your work be reported to you.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Noweb is copyright 1989-2000 by Norman Ramsey. All rights reserved.  \";match\u003d\".{0,5000}\"\u003e\u003e\nNoweb is protected by copyright. It is not public-domain software or shareware, and it is not protected by a ``copyleft\u0027\u0027 agreement like the one used by the Free Software Foundation.\n\nNoweb is available free for any use in any field of endeavor. You may redistribute noweb in whole or in part provided you acknowledge its source and include this COPYRIGHT file. You may modify noweb and create derived works, provided you retain this copyright notice, but the result may not be called noweb without my written consent.\n\nYou may sell noweb if you wish. For example, you may sell a CD-ROM including noweb.\n\nYou may sell a derived work, provided that all source code for your derived work is available, at no additional charge, to anyone who buys your derived work in any form. You must give permisson for said source code to be used and modified under the terms of this license. You must state clearly that your work uses or is based on noweb and that noweb is available free of change. You must also request that bug reports on your work be reported to you.\n\n",
+  "name": "Noweb License",
+  "licenseId": "Noweb",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/Noweb",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:36Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Noweb"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eNoweb is copyright 1989-2000 by Norman Ramsey. All rights reserved.\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003eNoweb is protected by copyright. It is not public-domain software or shareware, and it is not protected\n         by a ``copyleft\u0026apos;\u0026apos; agreement like the one used by the Free Software Foundation.\u003c/p\u003e\n\n      \u003cp\u003eNoweb is available free for any use in any field of endeavor. You may redistribute noweb in whole or in\n         part provided you acknowledge its source and include this COPYRIGHT file. You may modify noweb and\n         create derived works, provided you retain this copyright notice, but the result may not be called\n         noweb without my written consent.\u003c/p\u003e\n\n      \u003cp\u003eYou may sell noweb if you wish. For example, you may sell a CD-ROM including noweb.\u003c/p\u003e\n\n      \u003cp\u003eYou may sell a derived work, provided that all source code for your derived work is available, at no\n         additional charge, to anyone who buys your derived work in any form. You must give permisson for said\n         source code to be used and modified under the terms of this license. You must state clearly that your\n         work uses or is based on noweb and that noweb is available free of change. You must also request that\n         bug reports on your work be reported to you.\u003c/p\u003e\n\n    "
+}

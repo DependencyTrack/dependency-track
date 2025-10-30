@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright © 2001-2025 Audacious developers and others\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice,\n   this list of conditions, and the following disclaimer.\n\n2. Redistributions in binary form must reproduce the above copyright notice,\n   this list of conditions, and the following disclaimer in the\n   documentation provided with the distribution.\n\nThis software is provided “as is” and without any warranty, express or\nimplied.  In no event shall the authors be liable for any damages arising\nfrom the use of this software.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright © 2001-2025 Audacious developers and others  \";match\u003d\".{0,5000}\"\u003e\u003e\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"1.\";match\u003d\".{0,20}\"\u003e\u003e\n   Redistributions of source code must retain the above copyright notice, this list of conditions, and the following disclaimer.\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"2.\";match\u003d\".{0,20}\"\u003e\u003e\n   Redistributions in binary form must reproduce the above copyright notice, this list of conditions, and the following disclaimer in the documentation provided with the distribution.\n\nThis software is provided \"as is\" and without any warranty, express or implied. In no event shall the authors be liable for any damages arising from the use of this software.\n\n",
+  "name": "BSD 2-Clause pkgconf disclaimer variant",
+  "licenseId": "BSD-2-Clause-pkgconf-disclaimer",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/audacious-media-player/audacious/blob/master/src/audacious/main.cc",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:04:21Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/audacious-media-player/audacious/blob/master/COPYING",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:04:21Z",
+      "isWayBackLink": false,
+      "order": 1
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/audacious-media-player/audacious/blob/master/src/audacious/main.cc",
+    "https://github.com/audacious-media-player/audacious/blob/master/COPYING"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n           \u003cp\u003eCopyright © 2001-2025 Audacious developers and others\n           \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            Redistribution and use in source and binary\n            forms, with or without modification, are permitted\n            provided that the following conditions are met:\n         \u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n            \n\u003cli\u003e\n               \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 1.\u003c/span\u003e\u003c/var\u003e\n               \u003cp\u003e\n                  Redistributions of source code must retain the above copyright\n                  notice, this list of conditions, and the following disclaimer.\n               \u003c/p\u003e\n\n            \u003c/li\u003e\n            \n\u003cli\u003e\n               \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 2.\u003c/span\u003e\u003c/var\u003e\n               \u003cp\u003e\n                  Redistributions in binary form must reproduce\n                  the above copyright notice, this list of\n                  conditions, and the following disclaimer in the\n                  documentation provided with the distribution.\n               \u003c/p\u003e\n\n            \u003c/li\u003e\n         \n\u003c/ul\u003e\n         \u003cp\u003e\n            This software is provided \u0026quot;as is\u0026quot; and without any warranty,\n            express or implied. In no event shall the authors be liable\n            for any damages arising from the use of this software.\n         \u003c/p\u003e\n\n      "
+}

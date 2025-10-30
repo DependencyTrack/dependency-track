@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "The font and related files in this directory are distributed under the\nGNU AFFERO GENERAL PUBLIC LICENSE Version 3 (see the file COPYING), with\nthe following exemption:\n\nAs a special exception, permission is granted to include these font\nprograms in a Postscript or PDF file that consists of a document that\ncontains text to be displayed or printed using this font, regardless\nof the conditions or license applying to the document itself.\n",
+  "name": "PS/PDF font exception (2017-08-17)",
+  "licenseComments": "Author-suggested standard header language recommends use with AGPL-3.0-only",
+  "seeAlso": [
+    "https://github.com/ArtifexSoftware/urw-base35-fonts/blob/65962e27febc3883a17e651cdb23e783668c996f/LICENSE"
+  ],
+  "licenseExceptionId": "PS-or-PDF-font-exception-20170817",
+  "licenseExceptionTemplate": "\u003c\u003cbeginOptional\u003e\u003eThe font and related files in this directory are distributed under the GNU AFFERO GENERAL PUBLIC LICENSE Version 3 (see the file COPYING), with the following exemption:\n\n\u003c\u003cendOptional\u003e\u003e\nAs a special exception, permission is granted to include these font programs in a Postscript or PDF file that consists of a document that contains text to be displayed or printed using this font, regardless of the conditions or license applying to the document itself.\n\n",
+  "exceptionTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n        \u003cp\u003eThe font and related files in this directory are distributed under the\n        GNU AFFERO GENERAL PUBLIC LICENSE Version 3 (see the file COPYING), with\n        the following exemption:\u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cp\u003eAs a special exception, permission is granted to include these font\n        programs in a Postscript or PDF file that consists of a document that\n        contains text to be displayed or printed using this font, regardless\n        of the conditions or license applying to the document itself.\u003c/p\u003e\n\n    "
+}

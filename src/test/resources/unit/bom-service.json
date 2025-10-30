@@ -1,0 +1,40 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "acme-app@0.0.0",
+      "type": "application",
+      "name": "acme-app",
+      "version": "0.0.0"
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "acme-lib@1.0.0",
+      "type": "library",
+      "name": "acme-lib",
+      "version": "1.0.0"
+    }
+  ],
+  "services": [
+    {
+      "bom-ref": "acme-service@2.0.0",
+      "name": "acme-service",
+      "version": "2.0.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "acme-app@0.0.0",
+      "dependsOn": [
+        "acme-lib@1.0.0"
+      ]
+    },
+    {
+      "ref": "acme-lib@1.0.0"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1995 S. M. Patel (smpatel@wam.umd.edu)\n\nPermission to use, copy, modify, and distribute this\nsoftware and its documentation for any purpose and without\nfee is hereby granted, provided that the above copyright\nnotice appear in all copies and that both that copyright\nnotice and this permission notice appear in supporting\ndocumentation.  No representations are made about the\nsuitability of this software for any purpose.  It is\nprovided \"as is\" without express or implied warranty.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1995 S. M. Patel (smpatel@wam.umd.edu)  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose and without fee is hereby granted, provided that the above copyright notice appear in all copies and that both that copyright notice and this permission notice appear in supporting documentation. No representations are made about the suitability of this software for any purpose. It is provided \"as is\" without express or implied warranty.\n\n",
+  "name": "Historical Permission Notice and Disclaimer - Netrek variant",
+  "licenseId": "HPND-Netrek",
+  "crossRef": [],
+  "seeAlso": [],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003e\n            Copyright (C) 1995 S. M. Patel (smpatel@wam.umd.edu)\n         \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            Permission to use, copy, modify, and distribute this software\n            and its documentation for any purpose and without fee is hereby\n            granted, provided that the above copyright notice appear in all\n            copies and that both that copyright notice and this permission\n            notice appear in supporting documentation. No representations\n            are made about the suitability of this software for any purpose.\n            It is provided \u0026quot;as is\u0026quot; without express or implied warranty.\n         \u003c/p\u003e\n\n      "
+}

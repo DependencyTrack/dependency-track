@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 2007, 2008, 2009, 2010 Karl Berry.\nCopyright (C) 1988, 1994, 2007 Stephen Gilmore.\nCopyright (C) 1994, 1995, 1996 Torsten Martinsen.\n\nPermission is granted to make and distribute verbatim copies of this manual provided the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this manual under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.\n\nPermission is granted to copy and distribute translations of this manual into another language, under the above conditions for modified versions.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 2007, 2008, 2009, 2010 Karl Berry. Copyright (C) 1988, 1994, 2007 Stephen Gilmore. Copyright (C) 1994, 1995, 1996 Torsten Martinsen.  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission is granted to make and distribute verbatim copies of this manual provided the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this manual under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.\n\nPermission is granted to copy and distribute translations of this manual into another language, under the above conditions for modified versions.\n\n",
+  "name": "Latex2e License",
+  "licenseId": "Latex2e",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/Latex2e",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:23Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Latex2e"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright (C) 2007, 2008, 2009, 2010 Karl Berry.\n        \u003cbr /\u003e\nCopyright (C) 1988, 1994, 2007 Stephen Gilmore.\n        \u003cbr /\u003e\nCopyright (C) 1994, 1995, 1996 Torsten Martinsen.\n      \u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003ePermission is granted to make and distribute verbatim copies of this manual provided the copyright notice\n         and this permission notice are preserved on all copies.\u003c/p\u003e\n\n      \u003cp\u003ePermission is granted to copy and distribute modified versions of this manual under the conditions for\n         verbatim copying, provided that the entire resulting derived work is distributed under the terms of a\n         permission notice identical to this one.\u003c/p\u003e\n\n      \u003cp\u003ePermission is granted to copy and distribute translations of this manual into another language, under the\n         above conditions for modified versions.\u003c/p\u003e\n\n    "
+}

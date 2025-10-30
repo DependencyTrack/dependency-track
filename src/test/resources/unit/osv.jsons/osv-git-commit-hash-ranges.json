@@ -1,0 +1,67 @@
+{
+  "id": "OSV-2021-1820",
+  "summary": "Heap-buffer-overflow in r_str_utf8_codepoint",
+  "details": "OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=48098\n\n```\nCrash type: Heap-buffer-overflow READ 1\nCrash state:\nr_str_utf8_codepoint\nr_str_char_fullwidth\nr_str_len_utf8_ansi\n```\n",
+  "modified": "2022-06-19T00:00:52.240913Z",
+  "published": "2022-06-19T00:00:52.240583Z",
+  "references": [
+    {
+      "type": "REPORT",
+      "url": "https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=48098"
+    }
+  ],
+  "affected": [
+    {
+      "package": {
+        "name": "radare2",
+        "ecosystem": "OSS-Fuzz",
+        "purl": "pkg:generic/radare2"
+      },
+      "ranges": [
+        {
+          "type": "GIT",
+          "repo": "https://github.com/radareorg/radare2",
+          "events": [
+            {
+              "introduced": "775f2b3d8d6d44f3312f9911dcf70b203268f387"
+            },
+            {
+              "fixed": "2cfc1d7e12adf87a28ac78abb32233cf39c6d54a"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "4.4.0",
+        "4.5.1",
+        "5.0.0",
+        "5.1.0",
+        "5.1.1",
+        "5.2.0",
+        "5.2.1",
+        "5.3.0",
+        "5.3.1",
+        "5.4.0",
+        "5.4.0-git",
+        "5.4.2",
+        "5.5.0",
+        "5.5.2",
+        "5.5.4",
+        "5.6.0",
+        "5.6.2",
+        "5.6.4",
+        "5.6.6",
+        "5.6.8",
+        "5.7.0",
+        "release-5.0.0"
+      ],
+      "ecosystem_specific": {
+        "severity": "MEDIUM"
+      },
+      "database_specific": {
+        "source": "https://github.com/google/oss-fuzz-vulns/blob/main/vulns/radare2/OSV-2021-1820.yaml"
+      }
+    }
+  ],
+  "schema_version": "1.2.0"
+}

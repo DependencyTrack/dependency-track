@@ -1,0 +1,168 @@
+{
+  "@type": "MessageCard",
+  "@context": "http://schema.org/extensions",
+  "summary": "{{ notification.title | escape(strategy="json") }}",
+  "title": "{{ notification.title | escape(strategy="json") }}",
+  "sections": [
+    {
+      "activityTitle": "Dependency-Track",
+      "activitySubtitle": "{{ timestamp }}",
+      "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+      {% if notification.group == "NEW_VULNERABILITY" %}
+      "facts": [
+        {
+          "name": "VulnID",
+          "value": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+        },
+        {
+          "name": "Severity",
+          "value": "{{ subject.vulnerability.severity | escape(strategy="json") }}"
+        },
+        {
+          "name": "Source",
+          "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
+        },
+        {
+          "name": "Component",
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
+        }
+      ],
+      {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
+      "facts": [
+        {
+          "name": "Project",
+          "value": "{{ subject.component.project.toString | escape(strategy="json") }}"
+        },
+        {
+          "name": "Component",
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
+        }
+      ],
+      {% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}
+      "facts": [
+        {
+          "name": "Analysis Type",
+          "value": "Project Analysis"
+        },
+        {
+          "name": "Analysis State",
+          "value": "{{ subject.analysis.analysisState | escape(strategy="json") }}"
+        },
+        {
+          "name": "Suppressed",
+          "value": "{{ subject.analysis.suppressed | escape(strategy="json") }}"
+        },
+        {
+          "name": "VulnID",
+          "value": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+        },
+        {
+          "name": "Severity",
+          "value": "{{ subject.vulnerability.severity | escape(strategy="json") }}"
+        },
+        {
+          "name": "Source",
+          "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
+        },
+        {
+          "name": "Component",
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
+        },
+        {
+          "name": "Project",
+          "value": "{{ subject.project.toString | escape(strategy="json") }}"
+        }
+      ],
+      {% elseif notification.group == "POLICY_VIOLATION" %}
+      "facts": [
+        {
+          "name": "Subject",
+          "value": "{{ subject.policyViolation.policyCondition.subject | escape(strategy="json") }}"
+        },
+        {
+          "name": "Operator",
+          "value": "{{ subject.policyViolation.policyCondition.operator | escape(strategy="json") }}"
+        },
+        {
+          "name": "Value",
+          "value": "{{ subject.policyViolation.policyCondition.value | escape(strategy="json") }}"
+        },
+        {
+          "name": "Component",
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
+        },
+        {
+          "name": "Project",
+          "value": "{{ subject.project.toString | escape(strategy="json") }}"
+        }
+      ],
+      {% elseif notification.group == "BOM_PROCESSING_FAILED" %}
+      "facts": [
+        {
+          "name": "Level",
+          "value": "{{ notification.level | escape(strategy="json") }}"
+        },
+        {
+          "name": "Scope",
+          "value": "{{ notification.scope | escape(strategy="json") }}"
+        },
+        {
+          "name": "Group",
+          "value": "{{ notification.group | escape(strategy="json") }}"
+        },
+        {
+          "name": "Project",
+          "value": "{{ subject.project.toString | escape(strategy="json") }}"
+        },
+        {
+          "name": "Project URL",
+          "value": "{{ baseUrl }}/projects/{{ subject.project.uuid | escape(strategy='json') }}"
+        }
+      ],
+      {% elseif notification.group == "BOM_VALIDATION_FAILED" %}
+      "facts": [
+        {
+          "name": "Level",
+          "value": "{{ notification.level | escape(strategy="json") }}"
+        },
+        {
+          "name": "Scope",
+          "value": "{{ notification.scope | escape(strategy="json") }}"
+        },
+        {
+          "name": "Group",
+          "value": "{{ notification.group | escape(strategy="json") }}"
+        },
+        {
+          "name": "Project",
+          "value": "{{ subject.project.toString | escape(strategy="json") }}"
+        },
+        {
+          "name": "Project URL",
+          "value": "{{ baseUrl }}/projects/{{ subject.project.uuid | escape(strategy='json') }}"
+        },
+        {
+          "name": "Errors",
+          "value": "{{ subject.errors.toString | escape(strategy='json') }}"
+        }
+      ],
+      {% else %}
+      "facts": [
+        {
+          "name": "Level",
+          "value": "{{ notification.level | escape(strategy="json") }}"
+        },
+        {
+          "name": "Scope",
+          "value": "{{ notification.scope | escape(strategy="json") }}"
+        },
+        {
+          "name": "Group",
+          "value": "{{ notification.group | escape(strategy="json") }}"
+        }
+      ],
+      {% endif %}
+      "text": "{{ notification.content | escape(strategy="json") }}"
+    }
+  ]
+}

@@ -1,0 +1,537 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:d8e07202-6817-42c1-8cae-20254567672f",
+  "version": 1,
+  "services": [
+    {
+      "bom-ref": "service:gov.nist.nvd",
+      "provider": {
+        "name": "National Institute of Standards and Technology (NIST)",
+        "url": [
+          "https://nist.gov"
+        ],
+        "contact": [
+          {
+            "email": "nvd@nist.gov"
+          }
+        ]
+      },
+      "group": "gov.nist.nvd",
+      "name": "National Vulnerability Database (NVD)",
+      "description": "The NVD is the U.S. government repository of standards based vulnerability management data represented using the Security Content Automation Protocol (SCAP). This data enables automation of vulnerability management, security measurement, and compliance. The NVD includes databases of security checklist references, security-related software flaws, misconfigurations, product names, and impact metrics.",
+      "endpoints": [
+        "https://nvd.nist.gov/feeds"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ],
+      "licenses": [
+        {
+          "license":
+          {
+            "name": "Public domain"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.sonatype.ossindex",
+      "provider": {
+        "name": "Sonatype",
+        "url": [
+          "https://sonatype.com"
+        ],
+        "contact": [
+          {
+            "email": "ossindex@sonatype.org"
+          }
+        ]
+      },
+      "group": "org.sonatype.ossindex",
+      "name": "OSS Index",
+      "description": "The NVD is the U.S. government repository of standards based vulnerability management data represented using the Security Content Automation Protocol (SCAP). This data enables automation of vulnerability management, security measurement, and compliance. The NVD includes databases of security checklist references, security-related software flaws, misconfigurations, product names, and impact metrics.",
+      "endpoints": [
+        "https://ossindex.sonatype.org/api/v3/component-report",
+        "https://ossindex.sonatype.org/api/v3/version"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.cyberriskanalytics.vulndb",
+      "provider": {
+        "name": "Risk Based Security",
+        "url": [
+          "https://riskbasedsecurity.com/"
+        ],
+        "contact": [
+          {
+            "email": "support@riskbasedsecurity.com"
+          },
+          {
+            "phone": "1-855-RBS-RISK",
+            "email": "sales@riskbasedsecurity.com"
+          }
+        ]
+      },
+      "group": "com.cyberriskanalytics.vulndb",
+      "name": "VulnDB",
+      "description": "VulnDB is the most comprehensive and timely vulnerability intelligence available and provides actionable information about the latest in security vulnerabilities via an easy-to-use SaaS Portal, or a RESTful API that allows easy integration into GRC tools and ticketing systems. VulnDB allows organizations to search and be alerted on the latest vulnerabilities, both in end-user software and the 3rd Party Libraries or dependencies. A subscription to VulnDB provides organizations with simple to understand ratings and metrics on their vendors and products, and how each contributes to the organization’s risk-profile and cost of ownership.",
+      "endpoints": [
+        "https://vulndb.cyberriskanalytics.com/api/v1/account_status",
+        "https://vulndb.cyberriskanalytics.com/api/v1/vendors/",
+        "https://vulndb.cyberriskanalytics.com/api/v1/products/",
+        "https://vulndb.cyberriskanalytics.com/api/v1/versions/by_product_id",
+        "https://vulndb.cyberriskanalytics.com/api/v1/vulnerabilities/",
+        "https://vulndb.cyberriskanalytics.com/api/v1/vulnerabilities/find_by_cpe"
+      ],
+      "authenticated": true,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.github.api",
+      "provider": {
+        "name": "GitHub",
+        "url": [
+          "https://github.com/"
+        ]
+      },
+      "group": "com.github.api",
+      "name": "GitHub Advisories",
+      "description": "Security vulnerability database inclusive of CVEs and GitHub originated security advisories from the world of open source software.",
+      "endpoints": [
+        "https://api.github.com/graphql"
+      ],
+      "authenticated": true,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:io.crates",
+      "provider": {
+        "name": "Crates.io",
+        "url": [
+          "https://crates.io"
+        ]
+      },
+      "group": "io.crates",
+      "name": "Crates.io",
+      "description": "The Rust community’s crate registry",
+      "endpoints": [
+        "https://crates.io/api/v1/crates"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.packagist.repo",
+      "provider": {
+        "name": "Packagist",
+        "url": [
+          "https://packagist.org"
+        ]
+      },
+      "group": "org.packagist.repo",
+      "name": "Crates.io",
+      "description": "The PHP Package Repository",
+      "endpoints": [
+        "https://repo.packagist.org/p/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.rubygems",
+      "provider": {
+        "name": "RubyGems",
+        "url": [
+          "https://rubygems.org"
+        ]
+      },
+      "group": "org.rubygems",
+      "name": "RubyGems",
+      "description": "RubyGems.org is the Ruby community’s gem hosting service.",
+      "endpoints": [
+        "https://rubygems.org/api/v1/versions"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.golang.proxy",
+      "provider": {
+        "name": "Google",
+        "url": [
+          "https://go.dev/"
+        ]
+      },
+      "group": "org.golang.proxy",
+      "name": "Go Module Mirror, Index, and Checksum Database",
+      "description": "The Go team is providing the following services run by Google: a module mirror for accelerating Go module downloads, an index for discovering new modules, and a global go.sum database for authenticating module content.",
+      "endpoints": [
+        "https://proxy.golang.org/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:pm.hex",
+      "provider": {
+        "name": "Six Colors AB.",
+        "url": [
+          "https://hex.pm"
+        ],
+        "contact": [
+          {
+            "name": "Eric Meadows-Jönsson",
+            "phone": "+46 070-893 94 01"
+          }
+        ]
+      },
+      "group": "pm.hex",
+      "name": "hex",
+      "description": "The package manager for the Erlang ecosystem.",
+      "endpoints": [
+        "https://hex.pm/api/packages"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.maven.repo1",
+      "provider": {
+        "name": "Sonatype",
+        "url": [
+          "https://sonatype.com"
+        ]
+      },
+      "group": "org.maven.repo1",
+      "name": "Maven Central",
+      "description": "Package repository for the Java ecosystem.",
+      "endpoints": [
+        "https://repo1.maven.org/maven2"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.atlassian.maven",
+      "provider": {
+        "name": "Atlassian",
+        "url": [
+          "https://atlassian.com"
+        ]
+      },
+      "group": "com.atlassian.maven",
+      "name": "Atlassian Public",
+      "description": "Package repository for the Java ecosystem.",
+      "endpoints": [
+        "https://packages.atlassian.com/content/repositories/atlassian-public/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.jboss.repository",
+      "provider": {
+        "name": "RedHat",
+        "url": [
+          "https://redhat.com"
+        ]
+      },
+      "group": "org.jboss.repository",
+      "name": "JBoss Releases",
+      "description": "Package repository for the Java ecosystem.",
+      "endpoints": [
+        "https://repository.jboss.org/nexus/content/repositories/releases/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.clojars.repo",
+      "provider": {
+        "name": "Clojars",
+        "url": [
+          "https://clojars.org/"
+        ]
+      },
+      "group": "org.clojars.repo",
+      "name": "Clojars",
+      "description": "Clojars is an easy to use community repository for open source Clojure libraries",
+      "endpoints": [
+        "https://repo.clojars.org/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.google.maven",
+      "provider": {
+        "name": "Google",
+        "url": [
+          "https://google.com"
+        ]
+      },
+      "group": "com.google.maven",
+      "name": "Google's Maven Repository",
+      "endpoints": [
+        "https://maven.google.com/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.npmjs.registry",
+      "provider": {
+        "name": "npm",
+        "url": [
+          "https://www.npmjs.com/"
+        ]
+      },
+      "group": "org.npmjs.registry",
+      "name": "NPM Registry",
+      "description": "Package repository for the Node.js and JavaScript ecosystems.",
+      "endpoints": [
+        "https://registry.npmjs.org/-/package/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.nuget.api",
+      "provider": {
+        "name": "Microsoft",
+        "url": [
+          "https://www.microsoft.com/"
+        ],
+        "contact": [
+          {
+            "email": "support@nuget.org"
+          }
+        ]
+      },
+      "group": "org.nuget.api",
+      "name": "NuGet Registry",
+      "description": "Package repository for the .NET ecosystem.",
+      "endpoints": [
+        "https://api.nuget.org/v3-flatcontainer/",
+        "https://api.nuget.org/v3/registration3/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:dev.osv",
+      "provider": {
+        "name": "Google",
+        "url": [
+          "https://google.com"
+        ]
+      },
+      "group": "dev.osv",
+      "name": "OSV",
+      "description": "OSV is a distributed vulnerability database for Open Source",
+      "endpoints": [
+        "https://osv-vulnerabilities.storage.googleapis.com"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.pypi",
+      "provider": {
+        "name": "Python Software Foundation",
+        "url": [
+          "https://www.python.org/psf/"
+        ],
+        "contact": [
+          {
+            "email": "psf@python.org"
+          }
+        ]
+      },
+      "group": "org.pypi",
+      "name": "PyPI",
+      "description": "The Python Package Index (PyPI) is a repository of software for the Python programming language.",
+      "endpoints": [
+        "https://pypi.org/pypi/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:io.snyk",
+      "provider": {
+        "name": "Snyk",
+        "url": [
+          "https://snyk.io"
+        ]
+      },
+      "group": "io.snyk",
+      "name": "Snyk",
+      "description": "Snyk is a developer security platform. Integrating directly into development tools, workflows, and automation pipelines, Snyk makes it easy for teams to find, prioritize, and fix security vulnerabilities in code, dependencies, containers, and infrastructure as code. Supported by industry-leading application and security intelligence, Snyk puts security expertise in any developer's toolkit.",
+      "endpoints": [
+        "https://api.snyk.io"
+      ],
+      "authenticated": true,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.aquasec",
+      "provider": {
+        "name": "Trivy"
+      },
+      "group": "com.aquasec",
+      "name": "Trivy",
+      "description": "Trivy is a comprehensive and versatile security scanner. Trivy has scanners that look for security issues, and targets where it can find those issues.",
+      "authenticated": true,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.dependencytrack.metrics",
+      "provider": {
+        "name": "OWASP"
+      },
+      "group": "org.dependencytrack",
+      "name": "metrics",
+      "description": "Dependency-Track telemetry service.",
+      "endpoints": [
+        "https://metrics.dependencytrack.org"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ],
+      "externalReferences": [
+        {
+          "url": "https://docs.dependencytrack.org/getting-started/telemetry/",
+          "type": "documentation"
+        }
+      ]
+    }
+  ]
+}

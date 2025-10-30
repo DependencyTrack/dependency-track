@@ -1,0 +1,141 @@
+name: Release CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version-overwrite:
+        required: false
+        default: ''
+        description: 'Use this to overwrite the version number to release, otherwise uses the current SNAPSHOT version (expected format x.y.z)'
+        type: string
+
+permissions: { }
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.variables.outputs.version }}
+      next-version: ${{ steps.variables.outputs.next-version }}
+      release-branch: ${{ steps.variables.outputs.release-branch }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # tag=v5.0.0
+
+      - name: Setup Environment
+        id: variables
+        run: |-
+          VERSION="${{ github.event.inputs.version-overwrite }}"
+          if [[ -z ${VERSION} ]]; then
+            CURRENT_SNAPSHOT=`yq -p=xml '.project.version' pom.xml`
+            VERSION=${CURRENT_SNAPSHOT%-SNAPSHOT}
+          fi
+          NEXT_VERSION="${VERSION%.*}.$((${VERSION##*.} + 1))-SNAPSHOT"
+
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "next-version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
+          echo "release-branch=${VERSION%.*}.x" >> $GITHUB_OUTPUT
+
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      # Required for pushing changes via git command (rather than via GitHub API).
+      # TODO: Use bot credentials for git, or rewrite the "Commit Version" step to use API instead.
+      contents: write
+    needs:
+      - prepare-release
+
+    env:
+      VERSION: ${{ needs.prepare-release.outputs.version }}
+      BRANCH_NAME: ${{ needs.prepare-release.outputs.release-branch }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # tag=v5.0.0
+
+      - name: Set up JDK
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # tag=v5.0.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Set Version
+        run: mvn -B --no-transfer-progress versions:set -DnewVersion=${VERSION}
+
+      - name: Commit Version
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_TOKEN }}
+        run: |-
+          MESSAGE="prepare-release: set version to ${VERSION}"
+          CONTENT=$(base64 -i pom.xml)
+
+          if [[ -z `git ls-remote --quiet --heads origin "${BRANCH_NAME}"` ]]; then
+            SHA=$(git rev-parse ${GITHUB_REF#refs/heads/}:pom.xml)
+
+            # https://gist.github.com/swinton/03e84635b45c78353b1f71e41007fc7c
+            gh api --method PUT /repos/{owner}/{repo}/contents/pom.xml \
+              --field message="${MESSAGE}" \
+              --field content="${CONTENT}" \
+              --field encoding="base64" \
+              --field branch="${GITHUB_REF_NAME}" \
+              --field sha="${SHA}"
+
+            git fetch
+            git reset --hard "origin/${GITHUB_REF_NAME}"
+            git checkout -b "${BRANCH_NAME}"
+            git push origin "${BRANCH_NAME}"
+          else
+            git checkout "${BRANCH_NAME}"
+            SHA=$(git rev-parse ${BRANCH_NAME}:pom.xml)
+
+            gh api --method PUT /repos/{owner}/{repo}/contents/pom.xml \
+              --field message="${MESSAGE}" \
+              --field content="${CONTENT}" \
+              --field encoding="base64" \
+              --field branch="${BRANCH_NAME}" \
+              --field sha="${SHA}"
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_TOKEN }}
+        run: |-
+          gh release create "${{ needs.prepare-release.outputs.version }}" \
+            --target "${{ needs.prepare-release.outputs.release-branch }}" \
+            --title "${{ needs.prepare-release.outputs.version }}" \
+            --generate-notes
+
+  post-release:
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-release
+      - create-release
+
+    env:
+      NEXT_VERSION: ${{ needs.prepare-release.outputs.next-version }}
+      BRANCH_NAME: ${{ needs.prepare-release.outputs.release-branch }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # tag=v5.0.0
+        with:
+          ref: ${{ needs.prepare-release.outputs.release-branch }}
+
+      - name: Set SNAPSHOT Version after Release
+        run: mvn -B --no-transfer-progress versions:set -DnewVersion=${NEXT_VERSION}
+
+      - name: Commit SNAPSHOT Version
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_TOKEN }}
+        run: |-
+          MESSAGE="prepare-iteration: set version to ${NEXT_VERSION}"
+          CONTENT=$(base64 -i pom.xml)
+          SHA=$(git rev-parse ${BRANCH_NAME}:pom.xml)
+
+          gh api --method PUT /repos/{owner}/{repo}/contents/pom.xml \
+            --field message="${MESSAGE}" \
+            --field content="${CONTENT}" \
+            --field encoding="base64" \
+            --field branch="${BRANCH_NAME}" \
+            --field sha="${SHA}"

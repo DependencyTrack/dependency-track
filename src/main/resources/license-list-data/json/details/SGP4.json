@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "There is no license associated with the code and you may use it for any purpose—personal or commercial—as you wish. We ask only that you include citations in your documentation and source code to show the source of the code and provide links to the main page, to facilitate communications regarding any questions on the theory or source code.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eSGP4 Permission Notice\u003c\u003cendOptional\u003e\u003e\nThere is no license associated with the code and you may use it for any purpose—personal or commercial—as you wish. We ask only that you include citations in your documentation and source code to show the source of the code and provide links to the main page, to facilitate communications regarding any questions on the theory or source code.\n\n",
+  "name": "SGP4 Permission Notice",
+  "licenseId": "SGP4",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://celestrak.org/publications/AIAA/2006-6753/faq.php",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:02:13Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://celestrak.org/publications/AIAA/2006-6753/faq.php"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"optional-license-text\"\u003e \n            SGP4 Permission Notice\n         \u003c/var\u003e\n         \u003cp\u003e\n            There is no license associated with the code and you may use it for any\n            purpose—personal or commercial—as you wish. We ask only that you include\n            citations in your documentation and source code to show the source of\n            the code and provide links to the\n            main page, to\n            facilitate communications regarding any questions on the theory or source\n            code.\n         \u003c/p\u003e\n\n      "
+}

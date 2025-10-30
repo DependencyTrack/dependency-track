@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "\"THE BEER-WARE LICENSE\" (Revision 42):  \u003cphk@FreeBSD.ORG\u003e wrote this file. As long as you retain this notice you  can do whatever you want with this stuff. If we meet some day, and you think  this stuff is worth it, you can buy me a beer in return Poul-Henning Kamp\n",
+  "standardLicenseTemplate": "\"THE BEER-WARE LICENSE\" (Revision 42):\n\n\u003c\u003cvar;name\u003d\"email\";original\u003d\"\u003cphk@FreeBSD.ORG\u003e\";match\u003d\"\u003cphk@FreeBSD.ORG\u003e|\u003cphk@login.dkuug.dk\u003e\"\u003e\u003e wrote this file. As long as you retain this notice you can do whatever you want with this stuff. If we meet some day, and you think this stuff is worth it, you can buy me a beer in return Poul-Henning Kamp\n\n",
+  "name": "Beerware License",
+  "licenseId": "Beerware",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://people.freebsd.org/~phk/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:02:26Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/Beerware",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:02:27Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Beerware",
+    "https://people.freebsd.org/~phk/"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n       \u003cp\u003e\u0026quot;THE BEER-WARE LICENSE\u0026quot; (Revision 42):\u003c/p\u003e\n\n      \u003cp\u003e\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern \u003cphk@FreeBSD.ORG\u003e|\u003cphk@login.dkuug.dk\u003e\"\u003e \u0026lt;phk@FreeBSD.ORG\u0026gt;\u003c/span\u003e\u003c/var\u003e wrote this file. As long as you retain\n         this notice you can do whatever you want with this stuff. If we meet some day, and you think this\n         stuff is worth it, you can buy me a beer in return Poul-Henning Kamp\u003c/p\u003e\n\n    "
+}

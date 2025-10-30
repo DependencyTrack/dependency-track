@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (Unpublished-all rights reserved under the copyright laws of the United States), U.S. Government as represented by the Administrator of the National Aeronautics and Space Administration. No copyright is claimed in the United States under Title 17, U.S. Code.\n\nPermission to freely use, copy, modify, and distribute this software and its documentation without fee is hereby granted, provided that this copyright notice and disclaimer of warranty appears in all copies.\n\nDISCLAIMER:\n\nTHE SOFTWARE IS PROVIDED \u0027AS IS\u0027 WITHOUT ANY WARRANTY OF ANY KIND, EITHER EXPRESSED, IMPLIED, OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, ANY WARRANTY THAT THE SOFTWARE WILL CONFORM TO SPECIFICATIONS, ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND FREEDOM FROM INFRINGEMENT, AND ANY WARRANTY THAT THE DOCUMENTATION WILL CONFORM TO THE SOFTWARE, OR ANY WARRANTY THAT THE SOFTWARE WILL BE ERROR FREE. IN NO EVENT SHALL NASA BE LIABLE FOR ANY DAMAGES, INCLUDING, BUT NOT LIMITED TO, DIRECT, INDIRECT, SPECIAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF, RESULTING FROM, OR IN ANY WAY CONNECTED WITH THIS SOFTWARE, WHETHER OR NOT BASED UPON WARRANTY, CONTRACT, TORT , OR OTHERWISE, WHETHER OR NOT INJURY WAS SUSTAINED BY PERSONS OR PROPERTY OR OTHERWISE, AND WHETHER OR NOT LOSS WAS SUSTAINED FROM, OR AROSE OUT OF THE RESULTS OF, OR USE OF, THE SOFTWARE OR SERVICES PROVIDED HEREUNDER.\"\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (Unpublished-all rights reserved under the copyright laws of the United States), U.S. Government as represented by the Administrator of the National Aeronautics and Space Administration. No copyright is claimed in the United States under Title 17, U.S. Code.\";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to freely use, copy, modify, and distribute this software and its documentation without fee is hereby granted, provided that this copyright notice and disclaimer of warranty appears in all copies.\n\nDISCLAIMER:\n\nTHE SOFTWARE IS PROVIDED \u0027AS IS\u0027 WITHOUT ANY WARRANTY OF ANY KIND, EITHER EXPRESSED, IMPLIED, OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, ANY WARRANTY THAT THE SOFTWARE WILL CONFORM TO SPECIFICATIONS, ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND FREEDOM FROM INFRINGEMENT, AND ANY WARRANTY THAT THE DOCUMENTATION WILL CONFORM TO THE SOFTWARE, OR ANY WARRANTY THAT THE SOFTWARE WILL BE ERROR FREE. IN NO EVENT SHALL NASA BE LIABLE FOR ANY DAMAGES, INCLUDING, BUT NOT LIMITED TO, DIRECT, INDIRECT, SPECIAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF, RESULTING FROM, OR IN ANY WAY CONNECTED WITH THIS SOFTWARE, WHETHER OR NOT BASED UPON WARRANTY, CONTRACT, TORT , OR OTHERWISE, WHETHER OR NOT INJURY WAS SUSTAINED BY PERSONS OR PROPERTY OR OTHERWISE, AND WHETHER OR NOT LOSS WAS SUSTAINED FROM, OR AROSE OUT OF THE RESULTS OF, OR USE OF, THE SOFTWARE OR SERVICES PROVIDED HEREUNDER.\u003c\u003cbeginOptional\u003e\u003e \"\u003c\u003cendOptional\u003e\u003e\n\n",
+  "name": "CFITSIO License",
+  "licenseId": "CFITSIO",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://heasarc.gsfc.nasa.gov/docs/software/ftools/fv/doc/license.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:55:45Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/f_user/node9.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:55:45Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/f_user/node9.html",
+    "https://heasarc.gsfc.nasa.gov/docs/software/ftools/fv/doc/license.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (Unpublished-all rights reserved under the\n            copyright laws of the United States), U.S. Government\n            as represented by the Administrator of the National\n            Aeronautics and Space Administration. No copyright is\n            claimed in the United States under Title 17, U.S. Code.\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            Permission to freely use, copy, modify, and distribute\n            this software and its documentation without fee is\n            hereby granted, provided that this copyright notice\n            and disclaimer of warranty appears in all copies.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            DISCLAIMER:\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            THE SOFTWARE IS PROVIDED \u0026apos;AS IS\u0026apos; WITHOUT ANY WARRANTY OF ANY KIND,\n            EITHER EXPRESSED, IMPLIED, OR STATUTORY, INCLUDING, BUT NOT LIMITED\n            TO, ANY WARRANTY THAT THE SOFTWARE WILL CONFORM TO SPECIFICATIONS,\n            ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR\n            PURPOSE, AND FREEDOM FROM INFRINGEMENT, AND ANY WARRANTY THAT THE\n            DOCUMENTATION WILL CONFORM TO THE SOFTWARE, OR ANY WARRANTY THAT\n            THE SOFTWARE WILL BE ERROR FREE. IN NO EVENT SHALL NASA BE LIABLE\n            FOR ANY DAMAGES, INCLUDING, BUT NOT LIMITED TO, DIRECT, INDIRECT,\n            SPECIAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF, RESULTING\n            FROM, OR IN ANY WAY CONNECTED WITH THIS SOFTWARE, WHETHER OR NOT\n            BASED UPON WARRANTY, CONTRACT, TORT , OR OTHERWISE, WHETHER OR\n            NOT INJURY WAS SUSTAINED BY PERSONS OR PROPERTY OR OTHERWISE,\n            AND WHETHER OR NOT LOSS WAS SUSTAINED FROM, OR AROSE OUT OF THE\n            RESULTS OF, OR USE OF, THE SOFTWARE OR SERVICES PROVIDED HEREUNDER.\n            \u003cvar class\u003d\"optional-license-text\"\u003e \n               \u0026quot;\n            \u003c/var\u003e\n         \u003c/p\u003e\n\n      "
+}

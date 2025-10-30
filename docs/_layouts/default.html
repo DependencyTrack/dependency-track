@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="generator" content="Jekyll v{{ jekyll.version }}">
+
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap">
+		<link rel="stylesheet" href="{{ site.baseurl }}/css/main.css">
+		<link rel="apple-touch-icon" href="{{ site.baseurl }}/apple-touch-icon.png">
+		<link rel="icon" type="image/png" href="{{ site.baseurl }}/touch-icon.png" sizes="192x192">
+		<link rel="shortcut icon" type="image/ico" href="{{ site.baseurl }}/favicon.ico"/>
+
+		{% feed_meta %}
+		{% seo %}
+	</head>
+
+	<body>
+		<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=47937257-839d-491d-b693-703d11b910ad" style="display:none" />
+		<header>
+			<h1>
+				<a href="{{ site.baseurl }}/"><img src="{{ site.baseurl }}/images/dt-logo-white-text.svg" alt="{{ site.title }} logo"></a>{{ site.version }}
+				<button type="button" class="open-nav" id="open-nav"></button>
+			</h1>
+
+			<form action="{{ site.baseurl }}/search/" method="get">
+				<input type="text" name="q" id="search-input" placeholder="Search" autofocus>
+				<input type="submit" value="Search" style="display: none;">
+			</form>
+
+			<nav {% if site.show_full_navigation %}class="full-navigation"{% endif %}>
+				<ul>
+					<li class="nav-item top-level {% if page.url == '/' %}current{% endif %}">
+						{% assign home = site.html_pages | where: 'url', '/' | first %}
+						<a href="{{ site.baseurl }}/">{{ home.title }}</a>
+					</li>
+				</ul>
+
+				<ul>
+					{% assign grouped = site.docs | sort: 'chapter' | group_by: 'category'%}
+					{% for group in grouped %}
+						<li class="nav-item top-level {% if group.name == page.category %}current{% endif %}">
+							{% assign items = group.items | sort: 'order' %}
+							<a href="{{ site.baseurl }}{{ items.first.url }}">{{ group.name }}</a>
+							<ul>
+								{% for item in items %}
+									<li class="nav-item {% if item.url == page.url %}current{% endif %}"><a href="{{ site.baseurl }}{{ item.url }}">{{ item.title }}</a></li>
+								{% endfor %}
+							</ul>
+						</li>
+					{% endfor %}
+				</ul>
+
+				<ul>
+					<li class="nav-item top-level {% if page.url == '/changelog/' %}current{% endif %}">
+						{% assign changelog = site.html_pages | where: 'url', '/changelog/' | first %}
+						<a href="{{ site.baseurl }}/changelog/">{{ changelog.title }}</a>
+					</li>
+				</ul>
+			</nav>
+		</header>
+
+		<section class="main">
+			<div class="page-header">
+				<h2>{% if page.category %}{{ page.category }}{% else %}{{ site.title }}{% endif %}</h2>
+				<h3>{{ page.title }}</h3>
+			</div>
+			<article class="content">
+				{% include anchor_headings.html html=content anchorBody="#" anchorClass="anchor" generateId=true h_max=3 %}
+			</article>
+		</section>
+
+		<script>
+			document.getElementById("open-nav").addEventListener("click", function () {
+				document.body.classList.toggle("nav-open");
+			});
+		</script>
+	</body>
+</html>

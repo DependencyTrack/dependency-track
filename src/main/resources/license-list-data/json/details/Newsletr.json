@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright 1989--2004 by Hunter Goatley.\n\nPermission is granted to anyone to use this software for any purpose  on any computer system, and to redistribute it freely, subject to the  following restrictions:\n\n1. This software is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n2. Altered versions must be plainly marked as such, and must not be  misrepresented as being the original software.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1989--2004 by Hunter Goatley.  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission is granted to anyone to use this software for any purpose on any computer system, and to redistribute it freely, subject to the following restrictions:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"1.\";match\u003d\".{0,20}\"\u003e\u003e This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"2.\";match\u003d\".{0,20}\"\u003e\u003e Altered versions must be plainly marked as such, and must not be misrepresented as being the original software.",
+  "name": "Newsletr License",
+  "licenseId": "Newsletr",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/Newsletr",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:03:52Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Newsletr"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright 1989--2004 by Hunter Goatley.\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003ePermission is granted to anyone to use this software for any purpose on any computer system, and to\n         redistribute it freely, subject to the following restrictions:\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 1.\u003c/span\u003e\u003c/var\u003e\n          This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;\n             without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 2.\u003c/span\u003e\u003c/var\u003e\n          Altered versions must be plainly marked as such, and must not be misrepresented as being the\n             original software.\n        \u003c/li\u003e\n      \n\u003c/ul\u003e\n    "
+}

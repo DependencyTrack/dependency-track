@@ -1,0 +1,45 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "As far as I am concerned, the code I have written for this software\ncan be used freely for any purpose.  Any derived versions of this\nsoftware must be clearly marked as such, and if the derived work is\nincompatible with the protocol description in the RFC file, it must be\ncalled by a name other than \"ssh\" or \"Secure Shell\".\n",
+  "standardLicenseTemplate": "As far as I am concerned, the code I have written for this software can be used freely for any purpose. Any derived versions of this software must be clearly marked as such, and if the derived work is incompatible with the protocol description in the RFC file, it must be called by a name other than \"ssh\" or \"Secure Shell\".\n\n",
+  "name": "SSH short notice",
+  "licenseComments": "This is short version of SSH-OpenSSH that appears in some files associated with the original SSH implementation.",
+  "comment": "This is short version of SSH-OpenSSH that appears in some files associated with the original SSH implementation.",
+  "licenseId": "SSH-short",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://joinup.ec.europa.eu/svn/lesoll/trunk/italc/lib/src/dsa_key.cpp",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T15:02:17Z",
+      "isWayBackLink": false,
+      "order": 2
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/openssh/openssh-portable/blob/1b11ea7c58cd5c59838b5fa574cd456d6047b2d4/pathnames.h",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:02:17Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "http://web.mit.edu/kolya/.f/root/athena.mit.edu/sipb.mit.edu/project/openssh/OldFiles/src/openssh-2.9.9p2/ssh-add.1",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T15:02:18Z",
+      "isWayBackLink": false,
+      "order": 1
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/openssh/openssh-portable/blob/1b11ea7c58cd5c59838b5fa574cd456d6047b2d4/pathnames.h",
+    "http://web.mit.edu/kolya/.f/root/athena.mit.edu/sipb.mit.edu/project/openssh/OldFiles/src/openssh-2.9.9p2/ssh-add.1",
+    "https://joinup.ec.europa.eu/svn/lesoll/trunk/italc/lib/src/dsa_key.cpp"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n        \u003cp\u003eAs far as I am concerned, the code I have written for this software\n        can be used freely for any purpose.  Any derived versions of this\n        software must be clearly marked as such, and if the derived work is\n        incompatible with the protocol description in the RFC file, it must be\n        called by a name other than \u0026quot;ssh\u0026quot; or \u0026quot;Secure Shell\u0026quot;.\n        \u003c/p\u003e\n\n    "
+}

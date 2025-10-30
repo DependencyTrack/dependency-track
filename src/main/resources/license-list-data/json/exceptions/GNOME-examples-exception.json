@@ -1,0 +1,13 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "As a special exception, the copyright holders give you permission to copy, modify, and distribute the example code contained in this document under the terms of your choosing, without restriction.\n",
+  "name": "GNOME examples exception",
+  "licenseComments": "This exception has been used with CC-BY-SA-3.0.",
+  "seeAlso": [
+    "https://gitlab.gnome.org/Archive/gnome-devel-docs/-/blob/master/platform-demos/C/legal.xml?ref_type\u003dheads",
+    "http://meldmerge.org/help/"
+  ],
+  "licenseExceptionId": "GNOME-examples-exception",
+  "licenseExceptionTemplate": "As a special exception, the copyright holders give you permission to copy, modify, and distribute the example code contained in this document under the terms of your choosing, without restriction.\n\n",
+  "exceptionTextHtml": "\n      \u003cp\u003e\n         As a special exception, the copyright holders give you permission\n         to copy, modify, and distribute the example code contained in this\n         document under the terms of your choosing, without restriction.\n      \u003c/p\u003e\n\n   "
+}

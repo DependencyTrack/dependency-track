@@ -1,0 +1,43 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 1993 Cornell University, Kongji Huang\nAll rights reserved.\n\nPermission to use, copy, modify, and distribute this software and its\ndocumentation for any purpose, without fee, and without written\nagreement is hereby granted, provided that the above copyright notice\nand the following two paragraphs appear in all copies of this\nsoftware.\n\nIN NO EVENT SHALL THE CORNELL UNIVERSITY BE LIABLE TO ANY PARTY FOR\nDIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING\nOUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF CORNELL\nUNIVERSITY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\nTHE CORNELL UNIVERSITY SPECIFICALLY DISCLAIMS ANY WARRANTIES,\nINCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF\nMERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE\nPROVIDED HEREUNDER IS ON AN \"AS IS\" BASIS, AND CORNELL UNIVERSITY HAS\nNO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,\nOR MODIFICATIONS.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 1993 Cornell University, Kongji Huang All rights reserved.\";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose, without fee, and without written agreement is hereby granted, provided that the above copyright notice and the following two paragraphs appear in all copies of this software.\n\nIN NO EVENT SHALL \u003c\u003cvar;name\u003d\"disclaimer1\";original\u003d\"THE CORNELL UNIVERSITY\";match\u003d\".+\"\u003e\u003e BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF \u003c\u003cvar;name\u003d\"disclaimer2\";original\u003d\"CORNELL UNIVERSITY\";match\u003d\".+\"\u003e\u003e HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n\u003c\u003cvar;name\u003d\"disclaimer3\";original\u003d\"THE CORNELL UNIVERSITY\";match\u003d\".+\"\u003e\u003e SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN \"AS IS\" BASIS, AND \u003c\u003cvar;name\u003d\"disclaimer4\";original\u003d\"CORNELL UNIVERSITY\";match\u003d\".+\"\u003e\u003e HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.\n\n",
+  "name": "Cornell Lossless JPEG License",
+  "licenseId": "Cornell-Lossless-JPEG",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/libopenraw/libopenraw/blob/master/lib/ljpegdecompressor.cpp#L32",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:57:27Z",
+      "isWayBackLink": false,
+      "order": 2
+    },
+    {
+      "match": "N/A",
+      "url": "https://www.mssl.ucl.ac.uk/~mcrw/src/20050920/proto.h",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:57:29Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://android.googlesource.com/platform/external/dng_sdk/+/refs/heads/master/source/dng_lossless_jpeg.cpp#16",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:57:29Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://android.googlesource.com/platform/external/dng_sdk/+/refs/heads/master/source/dng_lossless_jpeg.cpp#16",
+    "https://www.mssl.ucl.ac.uk/~mcrw/src/20050920/proto.h",
+    "https://gitlab.freedesktop.org/libopenraw/libopenraw/blob/master/lib/ljpegdecompressor.cpp#L32"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n\t\t\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n\t\t\tCopyright (c) 1993 Cornell University, Kongji Huang\u003cbr /\u003e\n\n\t\t\tAll rights reserved.\n\t\t\u003c/span\u003e\u003c/var\u003e\n\n\t\t\u003cp\u003ePermission to use, copy, modify, and distribute this software and its\n\t\tdocumentation for any purpose, without fee, and without written\n\t\tagreement is hereby granted, provided that the above copyright notice\n\t\tand the following two paragraphs appear in all copies of this\n\t\tsoftware.\u003c/p\u003e\n\n\t\t\u003cp\u003eIN NO EVENT SHALL \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e THE CORNELL UNIVERSITY\u003c/span\u003e\u003c/var\u003e BE LIABLE TO ANY PARTY FOR\n\t\tDIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING\n\t\tOUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e CORNELL\n\t\tUNIVERSITY\u003c/span\u003e\u003c/var\u003e HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\u003c/p\u003e\n\n\t\t\u003cp\u003e\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e THE CORNELL UNIVERSITY\u003c/span\u003e\u003c/var\u003e SPECIFICALLY DISCLAIMS ANY WARRANTIES,\n\t\tINCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF\n\t\tMERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE\n\t\tPROVIDED HEREUNDER IS ON AN \u0026quot;AS IS\u0026quot; BASIS, AND \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e CORNELL UNIVERSITY\u003c/span\u003e\u003c/var\u003e HAS\n\t\tNO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,\n\t\tOR MODIFICATIONS.\u003c/p\u003e\n\n\t"
+}

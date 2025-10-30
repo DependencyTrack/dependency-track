@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "* Copyright (C) 2000-2004 by Etnus, LLC\n *\n * Permission is hereby granted to use, reproduce, prepare derivative\n * works, and to redistribute to others.\n *\n *\t\t\t\t  DISCLAIMER\n *\n * Neither Etnus, nor any of their employees, makes any warranty\n * express or implied, or assumes any legal liability or\n * responsibility for the accuracy, completeness, or usefulness of any\n * information, apparatus, product, or process disclosed, or\n * represents that its use would not infringe privately owned rights.\n *\n * This code was written by\n * James Cownie: Etnus, LLC. \u003cjcownie@etnus.com\u003e\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 2000-2004 by Etnus, LLC  \";match\u003d\".{0,5000}\"\u003e\u003e Permission is hereby granted to use, reproduce, prepare derivative works, and to redistribute to others. DISCLAIMER Neither \u003c\u003cvar;name\u003d\"copyrightHolderAsIs\";original\u003d\"Etnus\";match\u003d\".+\"\u003e\u003e , nor any of their employees, makes any warranty express or implied, or assumes any legal liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or process disclosed, or represents that its use would not infringe privately owned rights. This code was written by \u003c\u003cvar;name\u003d\"author\";original\u003d\"James Cownie: Etnus, LLC. \u003cjcownie@etnus.com\u003e\";match\u003d\".+\"\u003e\u003e",
+  "name": "mpi Permissive License",
+  "licenseId": "mpi-permissive",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://sources.debian.org/src/openmpi/4.1.0-10/ompi/debuggers/msgq_interface.h/?hl\u003d19#L19",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:55:37Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://sources.debian.org/src/openmpi/4.1.0-10/ompi/debuggers/msgq_interface.h/?hl\u003d19#L19"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright (C) 2000-2004 by Etnus, LLC\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n  Permission is hereby granted to use, reproduce, prepare derivative\n  works, and to redistribute to others.\n\n\t\t\t\t  DISCLAIMER\n\n  Neither \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e Etnus\u003c/span\u003e\u003c/var\u003e, nor any of their employees, makes any warranty\n  express or implied, or assumes any legal liability or\n  responsibility for the accuracy, completeness, or usefulness of any\n  information, apparatus, product, or process disclosed, or\n  represents that its use would not infringe privately owned rights.\n\n  This code was written by\n  \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e James Cownie: Etnus, LLC. \u0026lt;jcownie@etnus.com\u0026gt;\u003c/span\u003e\u003c/var\u003e\n    "
+}

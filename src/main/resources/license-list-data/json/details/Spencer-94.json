@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright 1992, 1993, 1994 Henry Spencer.  All rights reserved.\nThis software is not subject to any license of the American Telephone and Telegraph Company or of the Regents of the University of California.\n\nPermission is granted to anyone to use this software for any purpose on any computer system, and to alter it and redistribute it, subject to the following restrictions:\n\n1. The author is not responsible for the consequences of use of this software, no matter how awful, even if they arise from flaws in it.\n\n2. The origin of this software must not be misrepresented, either by explicit claim or by omission.  Since few users ever read sources, credits must appear in the documentation.\n\n3. Altered versions must be plainly marked as such, and must not be misrepresented as being the original software.  Since few users ever read sources, credits must appear in the documentation.\n\n4. This notice may not be removed or altered.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright YEAR NAME. All rights reserved. Written by NAME  \";match\u003d\".{0,5000}\"\u003e\u003e\nThis software is not subject to any license of the American Telephone and Telegraph Company or of the Regents of the University of California.\nPermission is granted to anyone to use this software for any purpose on any computer system, and to alter it and redistribute it\u003c\u003cbeginOptional\u003e\u003e freely\u003c\u003cendOptional\u003e\u003e , subject to the following restrictions:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"1.\";match\u003d\".{0,20}\"\u003e\u003e The author is not responsible for the consequences of use of this software, no matter how awful, even if they arise from flaws in it.\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"2.\";match\u003d\".{0,20}\"\u003e\u003e The origin of this software must not be misrepresented, either by explicit claim or by omission. Since few users ever read sources, credits must appear in the documentation.\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"3.\";match\u003d\".{0,20}\"\u003e\u003e Altered versions must be plainly marked as such, and must not be misrepresented as being the original software. Since few users ever read sources, credits must appear in the documentation.\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"4.\";match\u003d\".{0,20}\"\u003e\u003e This notice may not be removed or altered.",
+  "name": "Spencer License 94",
+  "licenseId": "Spencer-94",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://metacpan.org/release/KNOK/File-MMagic-1.30/source/COPYING#L28",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:59:37Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/Henry_Spencer_Reg-Ex_Library_License",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:59:38Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Henry_Spencer_Reg-Ex_Library_License",
+    "https://metacpan.org/release/KNOK/File-MMagic-1.30/source/COPYING#L28"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright YEAR NAME. All rights reserved.\n         \u003cbr /\u003e\nWritten by NAME\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003eThis software is not subject to any license of the American Telephone and Telegraph Company or of the\n         Regents of the University of California.\n      \u003cbr /\u003e\nPermission is granted to anyone to use this software for any purpose on any computer system, and to alter it\n         and redistribute it \u003cvar class\u003d\"optional-license-text\"\u003e freely\u003c/var\u003e, subject to the following restrictions:\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 1.\u003c/span\u003e\u003c/var\u003e\n          The author is not responsible for the consequences of use of this software, no matter how awful, even\n             if they arise from flaws in it.\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 2.\u003c/span\u003e\u003c/var\u003e\n          The origin of this software must not be misrepresented, either by explicit claim or by omission.\n             Since few users ever read sources, credits must appear in the documentation.\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 3.\u003c/span\u003e\u003c/var\u003e\n          Altered versions must be plainly marked as such, and must not be misrepresented as being the original\n             software. Since few users ever read sources, credits must appear in the documentation.\n        \u003c/li\u003e\n        \n\u003cli\u003e\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 4.\u003c/span\u003e\u003c/var\u003e\n          This notice may not be removed or altered.\n        \u003c/li\u003e\n      \n\u003c/ul\u003e\n    "
+}

@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 1987 Regents of the University of California. All rights reserved. \n\nRedistribution and use in source and binary forms are permitted provided \nthat the above copyright notice and this paragraph are duplicated in all \nsuch forms and that any documentation, advertising materials, and other \nmaterials related to such distribution and use acknowledge that the software \nwas developed by the University of California, Berkeley. The name of the \nUniversity may not be used to endorse or promote products derived from this \nsoftware without specific prior written permission. THIS SOFTWARE IS PROVIDED \n``AS IS\u0027\u0027 AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT \nLIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 1987 Regents of the University of California. All rights reserved.\";match\u003d\".{0,5000}\"\u003e\u003e\nRedistribution and use in source and binary forms are permitted provided that the above copyright notice and this paragraph are duplicated in all such forms and that any documentation, advertising materials, and other materials related to such distribution and use acknowledge that the software was developed by \u003c\u003cvar;name\u003d\"acknowledgedDeveloperNames\";original\u003d\"the University of California, Berkeley.\";match\u003d\"[^.]+\\.\"\u003e\u003e The name of \u003c\u003cvar;name\u003d\"noEndorseNames\";original\u003d\"the University\";match\u003d\"[^.]+\"\u003e\u003e may not be used to endorse or promote products derived from this software without specific prior written permission. THIS SOFTWARE IS PROVIDED ``AS IS\u0027\u0027 AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "name": "BSD 4.3 TAHOE License",
+  "licenseId": "BSD-4.3TAHOE",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://git.savannah.gnu.org/cgit/indent.git/tree/doc/indent.texi?id\u003da74c6b4ee49397cf330b333da1042bffa60ed14f#n1788",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T15:06:09Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/389ds/389-ds-base/blob/main/ldap/include/sysexits-compat.h#L15",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:06:09Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/389ds/389-ds-base/blob/main/ldap/include/sysexits-compat.h#L15",
+    "https://git.savannah.gnu.org/cgit/indent.git/tree/doc/indent.texi?id\u003da74c6b4ee49397cf330b333da1042bffa60ed14f#n1788"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (c) 1987 Regents of the University\n            of California. All rights reserved.\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            Redistribution and use in source and binary forms are permitted\n            provided that the above copyright notice and this paragraph\n            are duplicated in all such forms and that any documentation,\n            advertising materials, and other materials related to such\n            distribution and use acknowledge that the software was developed\n            by \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern [^.]+\\.\"\u003e the\n            University of California, Berkeley.\u003c/span\u003e\u003c/var\u003e The name of\n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern [^.]+\"\u003e the University\u003c/span\u003e\u003c/var\u003e\n            may not be used to endorse or promote products derived\n            from this software without specific prior written permission.\n            THIS SOFTWARE IS PROVIDED ``AS IS\u0026apos;\u0026apos; AND WITHOUT ANY EXPRESS OR\n            IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED\n            WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.\n         \u003c/p\u003e\n\n      "
+}

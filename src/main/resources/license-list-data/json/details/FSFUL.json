@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.\n\nThis configure script is free software; the Free Software Foundation gives unlimited permission to copy, distribute and modify it.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.  \";match\u003d\".{0,5000}\"\u003e\u003e\nThis \u003c\u003cvar;name\u003d\"file\";original\u003d\"configure\";match\u003d\".+\"\u003e\u003e script is free software; the Free Software Foundation gives unlimited permission to copy, distribute and modify it.\n\n",
+  "name": "FSF Unlimited License",
+  "licenseId": "FSFUL",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/FSF_Unlimited_License",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:27Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/FSF_Unlimited_License"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003eThis \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e configure\u003c/span\u003e\u003c/var\u003e script is free software; the Free Software Foundation gives unlimited permission to copy,\n         distribute and modify it.\u003c/p\u003e\n\n    "
+}

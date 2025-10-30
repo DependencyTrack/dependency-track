@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,\n2003, 2004, 2005, 2006, 2007, 2008, 2009  Free Software Foundation, Inc.\n\nThis Makefile.in is free software; the Free Software Foundation\ngives unlimited permission to copy and/or distribute it,\nwith or without modifications, as long as this notice is preserved.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY, to the extent permitted by law; without\neven the implied warranty of MERCHANTABILITY or FITNESS FOR A\nPARTICULAR PURPOSE.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.\";match\u003d\".{0,5000}\"\u003e\u003e\nThis \u003c\u003cvar;name\u003d\"file\";original\u003d\"Makefile.in\";match\u003d\"(Makefile.in)|(file)\"\u003e\u003e is free software; \u003c\u003cvar;name\u003d\"author\";original\u003d\"the Free Software Foundation\";match\u003d\"(as a special exception the author)|(the Free Software Foundation)\"\u003e\u003e gives unlimited permission to copy and/or distribute it, with or without modifications, as long as this notice is preserved.\n\nThis \u003c\u003cvar;name\u003d\"file\";original\u003d\"program\";match\u003d\"(program)|(file)\"\u003e\u003e is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, to the extent permitted by law; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "name": "FSF Unlimited License (With License Retention and Warranty Disclaimer)",
+  "licenseId": "FSFULLRWD",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://lists.gnu.org/archive/html/autoconf/2012-04/msg00061.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:56:10Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://lists.gnu.org/archive/html/autoconf/2012-04/msg00061.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (C) 1994, 1995, 1996, 1997, 1998,\n            1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,\n            2007, 2008, 2009 Free Software Foundation, Inc.\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            This \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern (Makefile.in)|(file)\"\u003e Makefile.in\u003c/span\u003e\u003c/var\u003e\n            is free software; \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern (as a special exception the author)|(the Free Software Foundation)\"\u003e the Free Software Foundation\u003c/span\u003e\u003c/var\u003e gives\n            unlimited permission to copy and/or distribute it, with or\n            without modifications, as long as this notice is preserved.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            This \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern (program)|(file)\"\u003e program\u003c/span\u003e\u003c/var\u003e is distributed in the hope that it will\n            be useful, but WITHOUT ANY WARRANTY, to the extent\n            permitted by law; without even the implied warranty of\n            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n         \u003c/p\u003e\n\n      "
+}

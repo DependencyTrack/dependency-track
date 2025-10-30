@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright 1993 Francis Borceux\nYou may freely use, modify, and/or distribute each of the files in this package without limitation.  The package consists of the following files:\n\nREADME\ncompatibility/OldDiagram\ncompatibility/OldMaxiDiagram\ncompatibility/OldMicroDiagram\ncompatibility/OldMiniDiagram\ncompatibility/OldMultipleArrows\ndiagram/Diagram\ndiagram/MaxiDiagram\ndiagram/MicroDiagram\ndiagram/MiniDiagram\ndiagram/MultipleArrows\nuser-guides/Diagram_Mode_d_Emploi\nuser-guides/Diagram_Read_Me\n\nOf course no support is guaranteed, but the author will attempt to assist with problems.  Current email address:\nfrancis dot borceux at uclouvain dot be.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1993 Francis Borceux  \";match\u003d\".{0,5000}\"\u003e\u003e\nYou may freely use, modify, and/or distribute each of the files in this package without limitation. The package consists of the following files:\nREADME\ncompatibility/OldDiagram\ncompatibility/OldMaxiDiagram\ncompatibility/OldMicroDiagram\ncompatibility/OldMiniDiagram\ncompatibility/OldMultipleArrows\ndiagram/Diagram\ndiagram/MaxiDiagram\ndiagram/MicroDiagram\ndiagram/MiniDiagram\ndiagram/MultipleArrows\nuser-guides/Diagram_Mode_d_Emploi\nuser-guides/Diagram_Read_Me\n\nOf course no support is guaranteed, but the author will attempt to assist with problems. Current email address:\nfrancis dot borceux at uclouvain dot be.\n\n",
+  "name": "Borceux license",
+  "licenseId": "Borceux",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/Borceux",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:57:34Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Borceux"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003eCopyright 1993 Francis Borceux\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003eYou may freely use, modify, and/or distribute each of the files in this package without limitation. The\n         package consists of the following files:\n        \u003cbr /\u003e\nREADME\n        \u003cbr /\u003e\ncompatibility/OldDiagram\n        \u003cbr /\u003e\ncompatibility/OldMaxiDiagram\n        \u003cbr /\u003e\ncompatibility/OldMicroDiagram\n        \u003cbr /\u003e\ncompatibility/OldMiniDiagram\n        \u003cbr /\u003e\ncompatibility/OldMultipleArrows\n        \u003cbr /\u003e\ndiagram/Diagram\n        \u003cbr /\u003e\ndiagram/MaxiDiagram\n        \u003cbr /\u003e\ndiagram/MicroDiagram\n        \u003cbr /\u003e\ndiagram/MiniDiagram\n        \u003cbr /\u003e\ndiagram/MultipleArrows\n        \u003cbr /\u003e\nuser-guides/Diagram_Mode_d_Emploi\n        \u003cbr /\u003e\nuser-guides/Diagram_Read_Me\n      \u003c/p\u003e\n\n      \u003cp\u003eOf course no support is guaranteed, but the author will attempt to assist with problems. Current email address:\n        \u003cbr /\u003e\nfrancis dot borceux at uclouvain dot be.\n      \u003c/p\u003e\n\n    "
+}

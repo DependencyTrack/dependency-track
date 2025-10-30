@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "This source code has been made available to you by IBM on an AS-IS basis.  Anyone receiving this source is licensed under IBM copyrights to use it in any way he or she deems fit, including copying it, modifying it, compiling it, and redistributing it either with or without modifications.  No license under IBM patents or patent applications is to be implied by the copyright license.\n\nAny user of this software should understand that IBM cannot provide technical support for this software and will not be responsible for any consequences resulting from the use of this software.\n\nAny person who transfers this source code or any derivative work must include the IBM copyright notice, this paragraph, and the preceding two paragraphs in the transferred software.\n\nCOPYRIGHT   I B M   CORPORATION 2002\nLICENSED MATERIAL  -  PROGRAM PROPERTY OF I B M\n",
+  "standardLicenseTemplate": "This source code has been made available to you by IBM on an AS-IS basis. Anyone receiving this source is licensed under IBM copyrights to use it in any way he or she deems fit, including copying it, modifying it, compiling it, and redistributing it either with or without modifications. No license under IBM patents or patent applications is to be implied by the copyright license.\n\nAny user of this software should understand that IBM cannot provide technical support for this software and will not be responsible for any consequences resulting from the use of this software.\n\nAny person who transfers this source code or any derivative work must include the IBM copyright notice, this paragraph, and the preceding two paragraphs in the transferred software.\n\nCOPYRIGHT I B M CORPORATION 2002\nLICENSED MATERIAL - PROGRAM PROPERTY OF I B M\n\n",
+  "name": "IBM PowerPC Initialization and Boot Software",
+  "licenseId": "IBM-pibs",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "http://git.denx.de/?p\u003du-boot.git;a\u003dblob;f\u003darch/powerpc/cpu/ppc4xx/miiphy.c;h\u003d297155fdafa064b955e53e9832de93bfb0cfb85b;hb\u003d9fab4bf4cc077c21e43941866f3f2c196f28670d",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:56:06Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "http://git.denx.de/?p\u003du-boot.git;a\u003dblob;f\u003darch/powerpc/cpu/ppc4xx/miiphy.c;h\u003d297155fdafa064b955e53e9832de93bfb0cfb85b;hb\u003d9fab4bf4cc077c21e43941866f3f2c196f28670d"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n      \u003cp\u003eThis source code has been made available to you by IBM on an AS-IS basis. Anyone receiving this source is\n         licensed under IBM copyrights to use it in any way he or she deems fit, including copying it,\n         modifying it, compiling it, and redistributing it either with or without modifications. No license\n         under IBM patents or patent applications is to be implied by the copyright license.\u003c/p\u003e\n\n      \u003cp\u003eAny user of this software should understand that IBM cannot provide technical support for this software\n         and will not be responsible for any consequences resulting from the use of this software.\u003c/p\u003e\n\n      \u003cp\u003eAny person who transfers this source code or any derivative work must include the IBM copyright notice,\n         this paragraph, and the preceding two paragraphs in the transferred software.\u003c/p\u003e\n\n      \u003cp\u003eCOPYRIGHT I B M CORPORATION 2002\n        \u003cbr /\u003e\nLICENSED MATERIAL - PROGRAM PROPERTY OF I B M\n      \u003c/p\u003e\n\n    "
+}

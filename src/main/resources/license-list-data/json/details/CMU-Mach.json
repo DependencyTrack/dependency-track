@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 1991,1990,1989 Carnegie Mellon University\nAll Rights Reserved.\n\nPermission to use, copy, modify and distribute this software and its\ndocumentation is hereby granted, provided that both the copyright\nnotice and this permission notice appear in all copies of the\nsoftware, derivative works or modified versions, and any portions\nthereof, and that both notices appear in supporting documentation.\n\nCARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS \"AS IS\"\nCONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR\nANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.\n\nCarnegie Mellon requests users of this software to return to\n\n Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU\n School of Computer Science\n Carnegie Mellon University\n Pittsburgh PA 15213-3890\n\nany improvements or extensions that they make and grant Carnegie Mellon\nthe rights to redistribute these changes.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 1991,1990,1989 Carnegie Mellon University All Rights Reserved.\";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify and distribute this software and its documentation is hereby granted, provided that both the copyright notice and this permission notice appear in all copies of the software, derivative works or modified versions, and any portions thereof, and that both notices appear in supporting documentation.\n\nCARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS \"AS IS\" CONDITION. CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.\n\n\u003c\u003cbeginOptional\u003e\u003eCarnegie Mellon requests users of this software to return to\n\nSoftware Distribution Coordinator or Software.Distribution@CS.CMU.EDU School of Computer Science Carnegie Mellon University Pittsburgh PA 15213-3890\n\nany improvements or extensions that they make and grant Carnegie Mellon the rights to redistribute these changes.\n\n\u003c\u003cendOptional\u003e\u003e",
+  "name": "CMU Mach License",
+  "licenseId": "CMU-Mach",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://www.cs.cmu.edu/~410/licenses.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:55:25Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://www.cs.cmu.edu/~410/licenses.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (c) 1991,1990,1989 Carnegie\n            Mellon University All Rights Reserved.\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            Permission to use, copy, modify and distribute this software and its\n            documentation is hereby granted, provided that both the copyright\n            notice and this permission notice appear in all copies of the\n            software, derivative works or modified versions, and any portions\n            thereof, and that both notices appear in supporting documentation.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS \u0026quot;AS IS\u0026quot;\n            CONDITION. CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR\n            ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.\n         \u003c/p\u003e\n\n         \u003cdiv class\u003d\"optional-license-text\"\u003e \n            \u003cp\u003e\n               Carnegie Mellon requests users of this software to return to\n            \u003c/p\u003e\n\n            \u003cp\u003e\n               Software Distribution Coordinator or\n               Software.Distribution@CS.CMU.EDU School of Computer\n               Science Carnegie Mellon University Pittsburgh PA 15213-3890\n            \u003c/p\u003e\n\n            \u003cp\u003e\n               any improvements or extensions that they make and grant\n               Carnegie Mellon the rights to redistribute these changes.\n            \u003c/p\u003e\n\n         \u003c/div\u003e\n      "
+}

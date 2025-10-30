@@ -1,0 +1,160 @@
+#####################################################
+# This Docker Compose file contains two services
+#    Dependency-Track API Server
+#    Dependency-Track FrontEnd
+#####################################################
+
+services:
+  apiserver:
+    image: dependencytrack/apiserver
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # The Dependency-Track container can be configured using any of the
+    # available configuration properties defined in:
+    # https://docs.dependencytrack.org/getting-started/configuration/
+    # All properties are upper case with periods replaced by underscores.
+    #
+    # Database Properties
+    #   ALPINE_DATABASE_MODE: "external"
+    #   ALPINE_DATABASE_URL: "jdbc:postgresql://postgres10:5432/dtrack"
+    #   ALPINE_DATABASE_DRIVER: "org.postgresql.Driver"
+    #   ALPINE_DATABASE_USERNAME: "dtrack"
+    #   ALPINE_DATABASE_PASSWORD: "changeme"
+    #   ALPINE_DATABASE_POOL_ENABLED: "true"
+    #   ALPINE_DATABASE_POOL_MAX_SIZE: "20"
+    #   ALPINE_DATABASE_POOL_MIN_IDLE: "10"
+    #   ALPINE_DATABASE_POOL_IDLE_TIMEOUT: "300000"
+    #   ALPINE_DATABASE_POOL_MAX_LIFETIME: "600000"
+    #
+    # Optional LDAP Properties
+    #   ALPINE_LDAP_ENABLED: "true"
+    #   ALPINE_LDAP_SERVER_URL: "ldap://ldap.example.com:389"
+    #   ALPINE_LDAP_BASEDN: "dc=example,dc=com"
+    #   ALPINE_LDAP_SECURITY_AUTH: "simple"
+    #   ALPINE_LDAP_BIND_USERNAME: ""
+    #   ALPINE_LDAP_BIND_PASSWORD: ""
+    #   ALPINE_LDAP_AUTH_USERNAME_FORMAT: "%s@example.com"
+    #   ALPINE_LDAP_ATTRIBUTE_NAME: "userPrincipalName"
+    #   ALPINE_LDAP_ATTRIBUTE_MAIL: "mail"
+    #   ALPINE_LDAP_GROUPS_FILTER: "(&(objectClass=group)(objectCategory=Group))"
+    #   ALPINE_LDAP_USER_GROUPS_FILTER: "(member:1.2.840.113556.1.4.1941:={USER_DN})"
+    #   ALPINE_LDAP_GROUPS_SEARCH_FILTER: "(&(objectClass=group)(objectCategory=Group)(cn=*{SEARCH_TERM}*))"
+    #   ALPINE_LDAP_USERS_SEARCH_FILTER: "(&(objectClass=user)(objectCategory=Person)(cn=*{SEARCH_TERM}*))"
+    #   ALPINE_LDAP_USER_PROVISIONING: "false"
+    #   ALPINE_LDAP_TEAM_SYNCHRONIZATION: "false"
+    #
+    # Optional OpenID Connect (OIDC) Properties
+    #   ALPINE_OIDC_ENABLED: "true"
+    #   ALPINE_OIDC_ISSUER: "https://auth.example.com/auth/realms/example"
+    #   ALPINE_OIDC_CLIENT_ID: ""
+    #   ALPINE_OIDC_USERNAME_CLAIM: "preferred_username"
+    #   ALPINE_OIDC_TEAMS_CLAIM: "groups"
+    #   ALPINE_OIDC_USER_PROVISIONING: "true"
+    #   ALPINE_OIDC_TEAM_SYNCHRONIZATION: "true"
+    #
+    # Optional HTTP Proxy Settings
+    #   ALPINE_HTTP_PROXY_ADDRESS: "proxy.example.com"
+    #   ALPINE_HTTP_PROXY_PORT: "8888"
+    #   ALPINE_HTTP_PROXY_USERNAME: ""
+    #   ALPINE_HTTP_PROXY_PASSWORD: ""
+    #   ALPINE_NO_PROXY: ""
+    #
+    # Optional HTTP Outbound Connection Timeout Settings. All values are in seconds.
+    #   ALPINE_HTTP_TIMEOUT_CONNECTION: "30"
+    #   ALPINE_HTTP_TIMEOUT_SOCKET: "30"
+    #   ALPINE_HTTP_TIMEOUT_POOL: "60"
+    #
+    # Optional Cross-Origin Resource Sharing (CORS) Headers
+    #   ALPINE_CORS_ENABLED: "true"
+    #   ALPINE_CORS_ALLOW_ORIGIN: "*"
+    #   ALPINE_CORS_ALLOW_METHODS: "GET, POST, PUT, DELETE, OPTIONS"
+    #   ALPINE_CORS_ALLOW_HEADERS: "Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count, *"
+    #   ALPINE_CORS_EXPOSE_HEADERS: "Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count"
+    #   ALPINE_CORS_ALLOW_CREDENTIALS: "true"
+    #   ALPINE_CORS_MAX_AGE: "3600"
+    #
+    # Optional logging configuration
+    #   LOGGING_LEVEL: "INFO"
+    #   LOGGING_CONFIG_PATH: "logback.xml"
+    #
+    # Optional metrics properties
+    #   ALPINE_METRICS_ENABLED: "true"
+    #   ALPINE_METRICS_AUTH_USERNAME: ""
+    #   ALPINE_METRICS_AUTH_PASSWORD: ""
+    #
+    # Optional environmental variables to enable default notification publisher templates override and set the base directory to search for templates
+    #   DEFAULT_TEMPLATES_OVERRIDE_ENABLED: "false"
+    #   DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY: "/data"
+    #
+    # Optional configuration for the Snyk analyzer
+    #   SNYK_THREAD_BATCH_SIZE: "10"
+    #
+    # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8"
+    #   EXTRA_JAVA_OPTIONS: ""
+    environment:
+      ALPINE_DATABASE_MODE: "external"
+      ALPINE_DATABASE_URL: "jdbc:postgresql://postgres:5432/dtrack"
+      ALPINE_DATABASE_DRIVER: "org.postgresql.Driver"
+      ALPINE_DATABASE_USERNAME: "dtrack"
+      ALPINE_DATABASE_PASSWORD: "dtrack"
+    deploy:
+      resources:
+        limits:
+          memory: 12288m
+        reservations:
+          memory: 8192m
+      restart_policy:
+        condition: on-failure
+    ports:
+    - '8081:8080'
+    volumes:
+    - 'dtrack-data:/data'
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -t 1 -T 3 --no-proxy -q -O /dev/null http://127.0.0.1:8080$${CONTEXT}health || exit 1" ]
+      interval: 30s
+      start_period: 60s
+      timeout: 3s
+    restart: unless-stopped
+
+  frontend:
+    image: dependencytrack/frontend
+    depends_on:
+      apiserver:
+        condition: service_healthy
+    environment:
+      # The base URL of the API server.
+      # NOTE:
+      #   * This URL must be reachable by the browsers of your users.
+      #   * The frontend container itself does NOT communicate with the API server directly, it just serves static files.
+      #   * When deploying to dedicated servers, please use the external IP or domain of the API server.
+      API_BASE_URL: "http://localhost:8081"
+      # OIDC_ISSUER: ""
+      # OIDC_CLIENT_ID: ""
+      # OIDC_SCOPE: ""
+      # OIDC_FLOW: ""
+      # OIDC_LOGIN_BUTTON_TEXT: ""
+      # volumes:
+      # - "/host/path/to/config.json:/app/static/config.json"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: "dtrack"
+      POSTGRES_USER: "dtrack"
+      POSTGRES_PASSWORD: "dtrack"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    volumes:
+    - "postgres-data:/var/lib/postgresql/data"
+    restart: unless-stopped
+
+volumes:
+  dtrack-data: {}
+  postgres-data: {}

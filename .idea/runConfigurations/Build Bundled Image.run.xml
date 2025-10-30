@@ -1,0 +1,23 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Build Bundled Image" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
+    <deployment type="dockerfile">
+      <settings>
+        <option name="imageTag" value="dependencytrack/bundled:local" />
+        <option name="buildArgs">
+          <list>
+            <DockerEnvVarImpl>
+              <option name="name" value="WAR_FILENAME" />
+              <option name="value" value="dependency-track-bundled.jar" />
+            </DockerEnvVarImpl>
+          </list>
+        </option>
+        <option name="buildOnly" value="true" />
+        <option name="contextFolderPath" value="." />
+        <option name="sourceFilePath" value="src/main/docker/Dockerfile" />
+      </settings>
+    </deployment>
+    <method v="2">
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Build Bundled" run_configuration_type="MavenRunConfiguration" />
+    </method>
+  </configuration>
+</component>

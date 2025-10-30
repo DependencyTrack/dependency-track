@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Permission is granted to distribute possibly modified\ncopies of this page provided the header is included\nverbatim, and in case of nontrivial modification author\nand date of the modification is added to the header.\n",
+  "standardLicenseTemplate": "Permission is granted to distribute possibly modified copies of this page provided the header is included verbatim, and in case of nontrivial modification author and date of the modification is added to the header.\n\n",
+  "name": "Linux man-pages - 1 paragraph",
+  "licenseId": "Linux-man-pages-1-para",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man2/getcpu.2#n4",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:35Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man2/getcpu.2#n4"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            Permission is granted to distribute possibly modified\n            copies of this page provided the header is included\n            verbatim, and in case of nontrivial modification author\n            and date of the modification is added to the header.\n         \u003c/p\u003e\n\n      "
+}

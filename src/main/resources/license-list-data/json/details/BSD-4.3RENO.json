@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 1987 Regents of the University of California.\nAll rights reserved.\n\nRedistribution and use in source and binary forms are permitted\nprovided that this notice is preserved and that due credit is given\nto the University of California at Berkeley. The name of the University\nmay not be used to endorse or promote products derived from this\nsoftware without specific written prior permission. This software\nis provided ``as is\u0027\u0027 without express or implied warranty.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 1987 Regents of the University of California. All rights reserved.\";match\u003d\".{0,5000}\"\u003e\u003e\nRedistribution and use in source and binary forms are permitted provided that this notice is preserved and that due credit is given to the \u003c\u003cvar;name\u003d\"name\";original\u003d\"University of California at Berkeley\";match\u003d\".+\"\u003e\u003e . The name of the University may not be used to endorse or promote products derived from this software without specific \u003c\u003cvar;name\u003d\"written\";original\u003d\"written prior\";match\u003d\"written prior|prior written\"\u003e\u003e permission. This software is provided ``as is\u0027\u0027 without express or implied warranty.\n\n",
+  "name": "BSD 4.3 RENO License",
+  "licenseId": "BSD-4.3RENO",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://git.openldap.org/openldap/openldap/-/blob/master/COPYRIGHT#L55-63",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:59:19Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://sourceware.org/git/?p\u003dbinutils-gdb.git;a\u003dblob;f\u003dlibiberty/strcasecmp.c;h\u003d131d81c2ce7881fa48c363dc5bf5fb302c61ce0b;hb\u003dHEAD",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:59:19Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://sourceware.org/git/?p\u003dbinutils-gdb.git;a\u003dblob;f\u003dlibiberty/strcasecmp.c;h\u003d131d81c2ce7881fa48c363dc5bf5fb302c61ce0b;hb\u003dHEAD",
+    "https://git.openldap.org/openldap/openldap/-/blob/master/COPYRIGHT#L55-63"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (c) 1987 Regents of the University\n            of California. All rights reserved.\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            Redistribution and use in source and binary forms are permitted\n            provided that this notice is preserved and that due credit is\n            given to the \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e University of California at Berkeley\u003c/span\u003e\u003c/var\u003e. \n            The name of the University may not be used to endorse or promote products derived\n            from this software without specific \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern written prior|prior written\"\u003e written prior\u003c/span\u003e\u003c/var\u003e permission. This\n            software is provided ``as is\u0026apos;\u0026apos; without express or implied warranty.\n         \u003c/p\u003e\n\n      "
+}

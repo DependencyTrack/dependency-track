@@ -1,0 +1,5506 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:d7cf8503-6d80-4219-ab4c-3bab8f250ee7",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2023-08-14T18:28:05.217Z",
+    "tools": [
+      {
+        "vendor": "cyclonedx",
+        "name": "cdxgen",
+        "version": "9.4.0"
+      }
+    ],
+    "authors": [
+      {
+        "name": "Prabhu Subramanian",
+        "email": "prabhu@appthreat.com"
+      }
+    ],
+    "component": {
+      "name": "Test",
+      "type": "application",
+      "group": "test",
+      "version": "latest",
+      "properties": [
+        {
+          "name": "buildFile",
+          "value": "/home/roland/test/android/build.gradle"
+        },
+        {
+          "name": "projectDir",
+          "value": "/home/roland/test/android"
+        },
+        {
+          "name": "rootDir",
+          "value": "/home/roland/test/android"
+        }
+      ],
+      "purl": "pkg:maven/test/Test@latest?type=jar",
+      "bom-ref": "pkg:maven/test/Test@latest?type=jar",
+      "components": [
+        {
+          "name": "app",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/android/app/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/android/app"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/app@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/app@latest?type=jar"
+        },
+        {
+          "name": "criusm_ssl-pinning",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/@criusm/ssl-pinning/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/@criusm/ssl-pinning/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/criusm_ssl-pinning@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/criusm_ssl-pinning@latest?type=jar"
+        },
+        {
+          "name": "jail-monkey",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/jail-monkey/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/jail-monkey/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/jail-monkey@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/jail-monkey@latest?type=jar"
+        },
+        {
+          "name": "react-native-async-storage_async-storage",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/@react-native-async-storage/async-storage/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/@react-native-async-storage/async-storage/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-async-storage_async-storage@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-async-storage_async-storage@latest?type=jar"
+        },
+        {
+          "name": "react-native-blob-util",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-blob-util/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-blob-util/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-blob-util@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-blob-util@latest?type=jar"
+        },
+        {
+          "name": "react-native-clipboard_clipboard",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/@react-native-clipboard/clipboard/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/@react-native-clipboard/clipboard/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-clipboard_clipboard@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-clipboard_clipboard@latest?type=jar"
+        },
+        {
+          "name": "react-native-community_cameraroll",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/@react-native-community/cameraroll/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/@react-native-community/cameraroll/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-community_cameraroll@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-community_cameraroll@latest?type=jar"
+        },
+        {
+          "name": "react-native-community_datetimepicker",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/@react-native-community/datetimepicker/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/@react-native-community/datetimepicker/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-community_datetimepicker@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-community_datetimepicker@latest?type=jar"
+        },
+        {
+          "name": "react-native-community_netinfo",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/@react-native-community/netinfo/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/@react-native-community/netinfo/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-community_netinfo@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-community_netinfo@latest?type=jar"
+        },
+        {
+          "name": "react-native-community_picker",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/@react-native-community/picker/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/@react-native-community/picker/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-community_picker@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-community_picker@latest?type=jar"
+        },
+        {
+          "name": "react-native-config",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-config/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-config/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-config@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-config@latest?type=jar"
+        },
+        {
+          "name": "react-native-cookies",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-cookies/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-cookies/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-cookies@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-cookies@latest?type=jar"
+        },
+        {
+          "name": "react-native-device-info",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-device-info/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-device-info/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-device-info@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-device-info@latest?type=jar"
+        },
+        {
+          "name": "react-native-document-picker",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-document-picker/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-document-picker/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-document-picker@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-document-picker@latest?type=jar"
+        },
+        {
+          "name": "react-native-file-viewer",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-file-viewer/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-file-viewer/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-file-viewer@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-file-viewer@latest?type=jar"
+        },
+        {
+          "name": "react-native-firebase_app",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/@react-native-firebase/app/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/@react-native-firebase/app/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-firebase_app@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-firebase_app@latest?type=jar"
+        },
+        {
+          "name": "react-native-firebase_messaging",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/@react-native-firebase/messaging/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/@react-native-firebase/messaging/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-firebase_messaging@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-firebase_messaging@latest?type=jar"
+        },
+        {
+          "name": "react-native-fs",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-fs/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-fs/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-fs@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-fs@latest?type=jar"
+        },
+        {
+          "name": "react-native-gesture-handler",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-gesture-handler/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-gesture-handler/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-gesture-handler@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-gesture-handler@latest?type=jar"
+        },
+        {
+          "name": "react-native-i18n",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-i18n/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-i18n/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-i18n@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-i18n@latest?type=jar"
+        },
+        {
+          "name": "react-native-image-crop-picker",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-image-crop-picker/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-image-crop-picker/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-image-crop-picker@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-image-crop-picker@latest?type=jar"
+        },
+        {
+          "name": "react-native-keychain",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-keychain/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-keychain/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-keychain@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-keychain@latest?type=jar"
+        },
+        {
+          "name": "react-native-locale",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-locale/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-locale/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-locale@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-locale@latest?type=jar"
+        },
+        {
+          "name": "react-native-masked-view_masked-view",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/@react-native-masked-view/masked-view/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/@react-native-masked-view/masked-view/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-masked-view_masked-view@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-masked-view_masked-view@latest?type=jar"
+        },
+        {
+          "name": "react-native-permissions",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-permissions/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-permissions/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-permissions@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-permissions@latest?type=jar"
+        },
+        {
+          "name": "react-native-reanimated",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-reanimated/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-reanimated/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-reanimated@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-reanimated@latest?type=jar"
+        },
+        {
+          "name": "react-native-safe-area-context",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-safe-area-context/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-safe-area-context/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-safe-area-context@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-safe-area-context@latest?type=jar"
+        },
+        {
+          "name": "react-native-screens",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-screens/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-screens/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-screens@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-screens@latest?type=jar"
+        },
+        {
+          "name": "react-native-share",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-share/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-share/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-share@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-share@latest?type=jar"
+        },
+        {
+          "name": "react-native-splash-screen",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-splash-screen/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-splash-screen/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-splash-screen@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-splash-screen@latest?type=jar"
+        },
+        {
+          "name": "react-native-svg",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-svg/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-svg/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-svg@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-svg@latest?type=jar"
+        },
+        {
+          "name": "react-native-version-number",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-version-number/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-version-number/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-version-number@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-version-number@latest?type=jar"
+        },
+        {
+          "name": "react-native-webview",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/react-native-webview/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/react-native-webview/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/react-native-webview@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/react-native-webview@latest?type=jar"
+        },
+        {
+          "name": "rn-qr-generator",
+          "type": "application",
+          "group": "Test",
+          "version": "latest",
+          "properties": [
+            {
+              "name": "buildFile",
+              "value": "/home/roland/test/node_modules/rn-qr-generator/android/build.gradle"
+            },
+            {
+              "name": "projectDir",
+              "value": "/home/roland/test/node_modules/rn-qr-generator/android"
+            },
+            {
+              "name": "rootDir",
+              "value": "/home/roland/test/android"
+            }
+          ],
+          "purl": "pkg:maven/Test/rn-qr-generator@latest?type=jar",
+          "bom-ref": "pkg:maven/Test/rn-qr-generator@latest?type=jar"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.react",
+      "name": "react-native",
+      "version": "0.67.5",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.infer.annotation",
+      "name": "infer-annotation",
+      "version": "0.18.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.infer.annotation/infer-annotation@0.18.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.infer.annotation/infer-annotation@0.18.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.code.findbugs",
+      "name": "jsr305",
+      "version": "3.0.2",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.code.findbugs/jsr305@3.0.2?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.code.findbugs/jsr305@3.0.2?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-annotations-jvm",
+      "version": "1.3.72",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-annotations-jvm@1.3.72?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-annotations-jvm@1.3.72?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.yoga",
+      "name": "proguard-annotations",
+      "version": "1.19.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.yoga/proguard-annotations@1.19.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.yoga/proguard-annotations@1.19.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "javax.inject",
+      "name": "javax.inject",
+      "version": "1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/javax.inject/javax.inject@1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/javax.inject/javax.inject@1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.appcompat",
+      "name": "appcompat",
+      "version": "1.2.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.appcompat/appcompat@1.2.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.appcompat/appcompat@1.2.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.annotation",
+      "name": "annotation",
+      "version": "1.2.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.6.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.core/core@1.6.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.core/core@1.6.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.annotation",
+      "name": "annotation-experimental",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.annotation/annotation-experimental@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.annotation/annotation-experimental@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-runtime",
+      "version": "2.2.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.2.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.2.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-common",
+      "version": "2.2.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-common@2.2.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-common@2.2.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.arch.core",
+      "name": "core-common",
+      "version": "2.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.versionedparcelable",
+      "name": "versionedparcelable",
+      "version": "1.1.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.collection",
+      "name": "collection",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.cursoradapter",
+      "name": "cursoradapter",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.cursoradapter/cursoradapter@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.cursoradapter/cursoradapter@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.fragment",
+      "name": "fragment",
+      "version": "1.2.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.viewpager",
+      "name": "viewpager",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.viewpager/viewpager@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.viewpager/viewpager@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.customview",
+      "name": "customview",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.customview/customview@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.customview/customview@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.loader",
+      "name": "loader",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.loader/loader@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.loader/loader@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata",
+      "version": "2.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata@2.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-livedata@2.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.arch.core",
+      "name": "core-runtime",
+      "version": "2.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.arch.core/core-runtime@2.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.arch.core/core-runtime@2.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata-core",
+      "version": "2.2.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.2.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.2.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel",
+      "version": "2.2.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.2.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.2.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.activity",
+      "name": "activity",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.activity/activity@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.activity/activity@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.savedstate",
+      "name": "savedstate",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.savedstate/savedstate@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.savedstate/savedstate@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel-savedstate",
+      "version": "2.2.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.2.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.2.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.appcompat",
+      "name": "appcompat-resources",
+      "version": "1.2.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.appcompat/appcompat-resources@1.2.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.appcompat/appcompat-resources@1.2.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.vectordrawable",
+      "name": "vectordrawable",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.vectordrawable/vectordrawable@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.vectordrawable/vectordrawable@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.vectordrawable",
+      "name": "vectordrawable-animated",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.interpolator",
+      "name": "interpolator",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.interpolator/interpolator@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.interpolator/interpolator@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.drawerlayout",
+      "name": "drawerlayout",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.drawerlayout/drawerlayout@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.drawerlayout/drawerlayout@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.autofill",
+      "name": "autofill",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.autofill/autofill@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.autofill/autofill@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.swiperefreshlayout",
+      "name": "swiperefreshlayout",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "fresco",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/fresco@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/fresco@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "soloader",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/soloader@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/soloader@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "fbcore",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.soloader",
+      "name": "soloader",
+      "version": "0.10.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.soloader/soloader@0.10.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.soloader/soloader@0.10.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.soloader",
+      "name": "annotation",
+      "version": "0.10.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.soloader/annotation@0.10.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.soloader/annotation@0.10.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.soloader",
+      "name": "nativeloader",
+      "version": "0.10.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.soloader/nativeloader@0.10.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.soloader/nativeloader@0.10.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "ui-common",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/ui-common@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/ui-common@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "drawee",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/drawee@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/drawee@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "imagepipeline",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.parse.bolts",
+      "name": "bolts-tasks",
+      "version": "1.4.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.parse.bolts/bolts-tasks@1.4.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.parse.bolts/bolts-tasks@1.4.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "imagepipeline-base",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/imagepipeline-base@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/imagepipeline-base@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "imagepipeline-native",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/imagepipeline-native@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/imagepipeline-native@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "memory-type-ashmem",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/memory-type-ashmem@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/memory-type-ashmem@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "memory-type-native",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/memory-type-native@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/memory-type-native@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "memory-type-java",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/memory-type-java@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/memory-type-java@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "middleware",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/middleware@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/middleware@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "nativeimagefilters",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/nativeimagefilters@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/nativeimagefilters@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "nativeimagetranscoder",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/nativeimagetranscoder@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/nativeimagetranscoder@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fresco",
+      "name": "imagepipeline-okhttp3",
+      "version": "2.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fresco/imagepipeline-okhttp3@2.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fresco/imagepipeline-okhttp3@2.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.squareup.okhttp3",
+      "name": "okhttp",
+      "version": "4.9.2",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.squareup.okhttp3/okhttp@4.9.2?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.squareup.okhttp3/okhttp@4.9.2?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.squareup.okio",
+      "name": "okio",
+      "version": "2.9.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.squareup.okio/okio@2.9.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.squareup.okio/okio@2.9.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib",
+      "version": "1.6.10",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains",
+      "name": "annotations",
+      "version": "13.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains/annotations@13.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains/annotations@13.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-common",
+      "version": "1.6.10",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.6.10?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.6.10?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.squareup.okhttp3",
+      "name": "okhttp-urlconnection",
+      "version": "4.9.2",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.squareup.okhttp3/okhttp-urlconnection@4.9.2?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.squareup.okhttp3/okhttp-urlconnection@4.9.2?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-jdk8",
+      "version": "1.4.10",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk8@1.4.10?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk8@1.4.10?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-jdk7",
+      "version": "1.4.10",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk7@1.4.10?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk7@1.4.10?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.fbjni",
+      "name": "fbjni-java-only",
+      "version": "0.2.2",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.fbjni/fbjni-java-only@0.2.2?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.fbjni/fbjni-java-only@0.2.2?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.facebook.conceal",
+      "name": "conceal",
+      "version": "1.1.3",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.facebook.conceal/conceal@1.1.3?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.facebook.conceal/conceal@1.1.3?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.multidex",
+      "name": "multidex",
+      "version": "2.0.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.multidex/multidex@2.0.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.multidex/multidex@2.0.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "pro.piwik.sdk",
+      "name": "piwik-sdk",
+      "version": "1.0.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/pro.piwik.sdk/piwik-sdk@1.0.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/pro.piwik.sdk/piwik-sdk@1.0.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.jakewharton.timber",
+      "name": "timber",
+      "version": "4.5.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.jakewharton.timber/timber@4.5.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.jakewharton.timber/timber@4.5.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-basement",
+      "version": "18.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-ads-identifier",
+      "version": "18.0.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-ads-identifier@18.0.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-ads-identifier@18.0.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.webkit",
+      "name": "android-jsc-intl",
+      "version": "r250230",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.webkit/android-jsc-intl@r250230?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.webkit/android-jsc-intl@r250230?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-bom",
+      "version": "26.8.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-bom@26.8.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-bom@26.8.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-messaging",
+      "version": "21.0.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-messaging@21.0.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-messaging@21.0.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-common",
+      "version": "19.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-common@19.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-common@19.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-encoders",
+      "version": "16.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-encoders@16.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-encoders@16.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-iid",
+      "version": "21.0.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-iid@21.0.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-iid@21.0.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-installations",
+      "version": "16.3.5",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-installations@16.3.5?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-installations@16.3.5?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-tasks",
+      "version": "17.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-components",
+      "version": "16.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-components@16.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-components@16.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-annotations",
+      "version": "16.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-annotations@16.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-annotations@16.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-auth",
+      "version": "19.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-auth@19.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-auth@19.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-auth-api-phone",
+      "version": "17.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-auth-api-phone@17.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-auth-api-phone@17.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-base",
+      "version": "17.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-base@17.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-base@17.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-auth-base",
+      "version": "17.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-auth-base@17.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-auth-base@17.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.datatransport",
+      "name": "transport-api",
+      "version": "2.2.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.datatransport/transport-api@2.2.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.datatransport/transport-api@2.2.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.datatransport",
+      "name": "transport-backend-cct",
+      "version": "2.3.3",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.datatransport/transport-backend-cct@2.3.3?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.datatransport/transport-backend-cct@2.3.3?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.datatransport",
+      "name": "transport-runtime",
+      "version": "2.2.5",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.datatransport/transport-runtime@2.2.5?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.datatransport/transport-runtime@2.2.5?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-encoders-json",
+      "version": "17.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-encoders-json@17.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-encoders-json@17.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-cloud-messaging",
+      "version": "16.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-cloud-messaging@16.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-cloud-messaging@16.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-stats",
+      "version": "17.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-stats@17.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-stats@17.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.legacy",
+      "name": "legacy-support-core-utils",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.legacy/legacy-support-core-utils@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.legacy/legacy-support-core-utils@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.documentfile",
+      "name": "documentfile",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.documentfile/documentfile@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.documentfile/documentfile@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.localbroadcastmanager",
+      "name": "localbroadcastmanager",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.localbroadcastmanager/localbroadcastmanager@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.localbroadcastmanager/localbroadcastmanager@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.print",
+      "name": "print",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.print/print@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.print/print@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-datatransport",
+      "version": "17.0.10",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-datatransport@17.0.10?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-datatransport@17.0.10?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-iid-interop",
+      "version": "17.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-iid-interop@17.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-iid-interop@17.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-installations-interop",
+      "version": "16.0.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-installations-interop@16.0.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-installations-interop@16.0.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.firebase",
+      "name": "firebase-measurement-connector",
+      "version": "18.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.firebase/firebase-measurement-connector@18.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.firebase/firebase-measurement-connector@18.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.scottyab",
+      "name": "rootbeer-lib",
+      "version": "0.0.9",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.scottyab/rootbeer-lib@0.0.9?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.scottyab/rootbeer-lib@0.0.9?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.apache.commons",
+      "name": "commons-lang3",
+      "version": "3.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.apache.commons/commons-lang3@3.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.apache.commons/commons-lang3@3.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.android.installreferrer",
+      "name": "installreferrer",
+      "version": "1.1.2",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.android.installreferrer/installreferrer@1.1.2?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.android.installreferrer/installreferrer@1.1.2?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-iid",
+      "version": "17.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-iid@17.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-iid@17.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.core",
+      "name": "core-ktx",
+      "version": "1.6.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.core/core-ktx@1.6.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.core/core-ktx@1.6.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.github.yalantis",
+      "name": "ucrop",
+      "version": "2.2.6-native",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.github.yalantis/ucrop@2.2.6-native?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.github.yalantis/ucrop@2.2.6-native?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.exifinterface",
+      "name": "exifinterface",
+      "version": "1.1.0-beta01",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.exifinterface/exifinterface@1.1.0-beta01?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.exifinterface/exifinterface@1.1.0-beta01?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.transition",
+      "name": "transition",
+      "version": "1.2.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.transition/transition@1.2.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.transition/transition@1.2.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.coordinatorlayout",
+      "name": "coordinatorlayout",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.coordinatorlayout/coordinatorlayout@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.coordinatorlayout/coordinatorlayout@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.material",
+      "name": "material",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.material/material@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.material/material@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.cardview",
+      "name": "cardview",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.cardview/cardview@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.cardview/cardview@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.recyclerview",
+      "name": "recyclerview",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.recyclerview/recyclerview@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.recyclerview/recyclerview@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.viewpager2",
+      "name": "viewpager2",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.viewpager2/viewpager2@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.viewpager2/viewpager2@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.android.support",
+      "name": "appcompat-v7",
+      "version": "androidx.appcompat",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.android.support/appcompat-v7@androidx.appcompat?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.android.support/appcompat-v7@androidx.appcompat?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.webkit",
+      "name": "webkit",
+      "version": "1.4.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.webkit/webkit@1.4.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.webkit/webkit@1.4.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.zxing",
+      "name": "core",
+      "version": "3.3.3",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.zxing/core@3.3.3?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.zxing/core@3.3.3?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.appcompat",
+      "name": "appcompat",
+      "version": "1.0.2",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.appcompat/appcompat@1.0.2?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.appcompat/appcompat@1.0.2?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.annotation",
+      "name": "annotation",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.core/core@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.core/core@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-runtime",
+      "version": "2.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-common",
+      "version": "2.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-common@2.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-common@2.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.arch.core",
+      "name": "core-common",
+      "version": "2.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.arch.core/core-common@2.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.arch.core/core-common@2.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.versionedparcelable",
+      "name": "versionedparcelable",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.collection",
+      "name": "collection",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.arch.core",
+      "name": "core-runtime",
+      "version": "2.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.arch.core/core-runtime@2.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.arch.core/core-runtime@2.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata-core",
+      "version": "2.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel",
+      "version": "2.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.fragment",
+      "name": "fragment",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.fragment/fragment@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.fragment/fragment@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.legacy",
+      "name": "legacy-support-core-ui",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.legacy/legacy-support-core-ui@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.legacy/legacy-support-core-ui@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.coordinatorlayout",
+      "name": "coordinatorlayout",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.coordinatorlayout/coordinatorlayout@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.coordinatorlayout/coordinatorlayout@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.slidingpanelayout",
+      "name": "slidingpanelayout",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.slidingpanelayout/slidingpanelayout@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.slidingpanelayout/slidingpanelayout@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.swiperefreshlayout",
+      "name": "swiperefreshlayout",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.asynclayoutinflater",
+      "name": "asynclayoutinflater",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.asynclayoutinflater/asynclayoutinflater@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.asynclayoutinflater/asynclayoutinflater@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.vectordrawable",
+      "name": "vectordrawable",
+      "version": "1.0.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.vectordrawable/vectordrawable@1.0.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.vectordrawable/vectordrawable@1.0.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.vectordrawable",
+      "name": "vectordrawable-animated",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib",
+      "version": "1.4.10",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.10?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.10?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-common",
+      "version": "1.4.10",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.4.10?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.4.10?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-base",
+      "version": "17.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-base@17.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-base@17.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-basement",
+      "version": "17.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-basement@17.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-basement@17.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "com.google.android.gms",
+      "name": "play-services-basement",
+      "version": "17.1.1",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-runtime",
+      "version": "2.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-common",
+      "version": "2.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-common@2.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-common@2.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.fragment",
+      "name": "fragment",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.fragment/fragment@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.fragment/fragment@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel",
+      "version": "2.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.activity",
+      "name": "activity",
+      "version": "1.0.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.activity/activity@1.0.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.activity/activity@1.0.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib",
+      "version": "1.5.20",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.5.20?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.5.20?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-common",
+      "version": "1.5.20",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.5.20?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.5.20?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.appcompat",
+      "name": "appcompat",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.appcompat/appcompat@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.appcompat/appcompat@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.appcompat",
+      "name": "appcompat-resources",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.appcompat/appcompat-resources@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.appcompat/appcompat-resources@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.transition",
+      "name": "transition",
+      "version": "1.2.0-rc01",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.transition/transition@1.2.0-rc01?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.transition/transition@1.2.0-rc01?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.transition",
+      "name": "transition",
+      "version": "1.1.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.transition/transition@1.1.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.transition/transition@1.1.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib",
+      "version": "1.4.31",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.31?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.31?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-common",
+      "version": "1.4.31",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.4.31?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.4.31?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.core/core@1.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.core/core@1.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    },
+    {
+      "author": "",
+      "publisher": "",
+      "group": "androidx.core",
+      "name": "core-ktx",
+      "version": "1.5.0",
+      "description": "",
+      "scope": "required",
+      "licenses": [],
+      "purl": "pkg:maven/androidx.core/core-ktx@1.5.0?type=jar",
+      "type": "library",
+      "bom-ref": "pkg:maven/androidx.core/core-ktx@1.5.0?type=jar",
+      "properties": [
+        {
+          "name": "GradleProfileName",
+          "value": "releaseRuntimeClasspath"
+        }
+      ]
+    }
+  ],
+  "services": [],
+  "dependencies": [
+    {
+      "ref": "pkg:maven/test/Test@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/Test/app@latest?type=jar",
+        "pkg:maven/Test/criusm_ssl-pinning@latest?type=jar",
+        "pkg:maven/Test/jail-monkey@latest?type=jar",
+        "pkg:maven/Test/react-native-async-storage_async-storage@latest?type=jar",
+        "pkg:maven/Test/react-native-blob-util@latest?type=jar",
+        "pkg:maven/Test/react-native-clipboard_clipboard@latest?type=jar",
+        "pkg:maven/Test/react-native-community_cameraroll@latest?type=jar",
+        "pkg:maven/Test/react-native-community_datetimepicker@latest?type=jar",
+        "pkg:maven/Test/react-native-community_netinfo@latest?type=jar",
+        "pkg:maven/Test/react-native-community_picker@latest?type=jar",
+        "pkg:maven/Test/react-native-config@latest?type=jar",
+        "pkg:maven/Test/react-native-cookies@latest?type=jar",
+        "pkg:maven/Test/react-native-device-info@latest?type=jar",
+        "pkg:maven/Test/react-native-document-picker@latest?type=jar",
+        "pkg:maven/Test/react-native-file-viewer@latest?type=jar",
+        "pkg:maven/Test/react-native-firebase_app@latest?type=jar",
+        "pkg:maven/Test/react-native-firebase_messaging@latest?type=jar",
+        "pkg:maven/Test/react-native-fs@latest?type=jar",
+        "pkg:maven/Test/react-native-gesture-handler@latest?type=jar",
+        "pkg:maven/Test/react-native-i18n@latest?type=jar",
+        "pkg:maven/Test/react-native-image-crop-picker@latest?type=jar",
+        "pkg:maven/Test/react-native-keychain@latest?type=jar",
+        "pkg:maven/Test/react-native-locale@latest?type=jar",
+        "pkg:maven/Test/react-native-masked-view_masked-view@latest?type=jar",
+        "pkg:maven/Test/react-native-permissions@latest?type=jar",
+        "pkg:maven/Test/react-native-reanimated@latest?type=jar",
+        "pkg:maven/Test/react-native-safe-area-context@latest?type=jar",
+        "pkg:maven/Test/react-native-screens@latest?type=jar",
+        "pkg:maven/Test/react-native-share@latest?type=jar",
+        "pkg:maven/Test/react-native-splash-screen@latest?type=jar",
+        "pkg:maven/Test/react-native-svg@latest?type=jar",
+        "pkg:maven/Test/react-native-version-number@latest?type=jar",
+        "pkg:maven/Test/react-native-webview@latest?type=jar",
+        "pkg:maven/Test/rn-qr-generator@latest?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/app@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/Test/react-native-keychain@latest?type=jar",
+        "pkg:maven/Test/react-native-i18n@latest?type=jar",
+        "pkg:maven/Test/react-native-cookies@latest?type=jar",
+        "pkg:maven/Test/criusm_ssl-pinning@latest?type=jar",
+        "pkg:maven/Test/react-native-async-storage_async-storage@latest?type=jar",
+        "pkg:maven/Test/react-native-clipboard_clipboard@latest?type=jar",
+        "pkg:maven/Test/react-native-community_cameraroll@latest?type=jar",
+        "pkg:maven/Test/react-native-community_datetimepicker@latest?type=jar",
+        "pkg:maven/Test/react-native-community_netinfo@latest?type=jar",
+        "pkg:maven/Test/react-native-community_picker@latest?type=jar",
+        "pkg:maven/Test/react-native-firebase_app@latest?type=jar",
+        "pkg:maven/Test/react-native-firebase_messaging@latest?type=jar",
+        "pkg:maven/Test/react-native-masked-view_masked-view@latest?type=jar",
+        "pkg:maven/Test/jail-monkey@latest?type=jar",
+        "pkg:maven/Test/react-native-blob-util@latest?type=jar",
+        "pkg:maven/Test/react-native-config@latest?type=jar",
+        "pkg:maven/Test/react-native-device-info@latest?type=jar",
+        "pkg:maven/Test/react-native-document-picker@latest?type=jar",
+        "pkg:maven/Test/react-native-file-viewer@latest?type=jar",
+        "pkg:maven/Test/react-native-fs@latest?type=jar",
+        "pkg:maven/Test/react-native-gesture-handler@latest?type=jar",
+        "pkg:maven/Test/react-native-image-crop-picker@latest?type=jar",
+        "pkg:maven/Test/react-native-locale@latest?type=jar",
+        "pkg:maven/Test/react-native-permissions@latest?type=jar",
+        "pkg:maven/Test/react-native-reanimated@latest?type=jar",
+        "pkg:maven/Test/react-native-safe-area-context@latest?type=jar",
+        "pkg:maven/Test/react-native-screens@latest?type=jar",
+        "pkg:maven/Test/react-native-share@latest?type=jar",
+        "pkg:maven/Test/react-native-splash-screen@latest?type=jar",
+        "pkg:maven/Test/react-native-svg@latest?type=jar",
+        "pkg:maven/Test/react-native-version-number@latest?type=jar",
+        "pkg:maven/Test/react-native-webview@latest?type=jar",
+        "pkg:maven/Test/rn-qr-generator@latest?type=jar",
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.1.0?type=jar",
+        "pkg:maven/androidx.multidex/multidex@2.0.1?type=jar",
+        "pkg:maven/com.facebook.soloader/soloader@0.10.1?type=jar",
+        "pkg:maven/pro.piwik.sdk/piwik-sdk@1.0.1?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-ads-identifier@18.0.1?type=jar",
+        "pkg:maven/org.webkit/android-jsc-intl@r250230?type=jar",
+        "pkg:maven/com.google.zxing/core@3.3.3?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.infer.annotation/infer-annotation@0.18.0?type=jar",
+        "pkg:maven/com.facebook.yoga/proguard-annotations@1.19.0?type=jar",
+        "pkg:maven/javax.inject/javax.inject@1?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat@1.2.0?type=jar",
+        "pkg:maven/androidx.autofill/autofill@1.1.0?type=jar",
+        "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.1.0?type=jar",
+        "pkg:maven/com.facebook.fresco/fresco@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline-okhttp3@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/ui-common@2.5.0?type=jar",
+        "pkg:maven/com.facebook.soloader/soloader@0.10.1?type=jar",
+        "pkg:maven/com.google.code.findbugs/jsr305@3.0.2?type=jar",
+        "pkg:maven/com.squareup.okhttp3/okhttp@4.9.2?type=jar",
+        "pkg:maven/com.squareup.okhttp3/okhttp-urlconnection@4.9.2?type=jar",
+        "pkg:maven/com.squareup.okio/okio@2.9.0?type=jar",
+        "pkg:maven/com.facebook.fbjni/fbjni-java-only@0.2.2?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat@1.0.2?type=jar",
+        "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.0.0?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.infer.annotation/infer-annotation@0.18.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.code.findbugs/jsr305@3.0.2?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-annotations-jvm@1.3.72?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.code.findbugs/jsr305@3.0.2?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-annotations-jvm@1.3.72?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/com.facebook.yoga/proguard-annotations@1.19.0?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/javax.inject/javax.inject@1?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/androidx.appcompat/appcompat@1.2.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.cursoradapter/cursoradapter@1.0.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat-resources@1.2.0?type=jar",
+        "pkg:maven/androidx.drawerlayout/drawerlayout@1.0.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/androidx.core/core@1.6.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation-experimental@1.1.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.2.0?type=jar",
+        "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.1?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.annotation/annotation-experimental@1.1.0?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.2.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.lifecycle/lifecycle-common@2.2.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-common@2.2.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.cursoradapter/cursoradapter@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.viewpager/viewpager@1.0.0?type=jar",
+        "pkg:maven/androidx.loader/loader@1.0.0?type=jar",
+        "pkg:maven/androidx.activity/activity@1.1.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.2.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.2.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.viewpager/viewpager@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.customview/customview@1.0.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.customview/customview@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.loader/loader@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-livedata@2.0.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.0.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-livedata@2.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.arch.core/core-runtime@2.1.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.2.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-runtime@2.0.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.0.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.arch.core/core-runtime@2.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.2.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.lifecycle/lifecycle-common@2.2.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-runtime@2.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.2.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.activity/activity@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.2.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.2.0?type=jar",
+        "pkg:maven/androidx.savedstate/savedstate@1.0.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.savedstate/savedstate@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-common@2.2.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-common@2.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.2.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.savedstate/savedstate@1.0.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.2.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.2.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.appcompat/appcompat-resources@1.2.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.vectordrawable/vectordrawable@1.1.0?type=jar",
+        "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.vectordrawable/vectordrawable@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.vectordrawable/vectordrawable@1.1.0?type=jar",
+        "pkg:maven/androidx.interpolator/interpolator@1.0.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.interpolator/interpolator@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.drawerlayout/drawerlayout@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.customview/customview@1.0.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.autofill/autofill@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.interpolator/interpolator@1.0.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/fresco@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/soloader@2.5.0?type=jar",
+        "pkg:maven/com.facebook.soloader/nativeloader@0.10.1?type=jar",
+        "pkg:maven/com.facebook.fresco/ui-common@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/drawee@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline-native@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-ashmem@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-native@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-java@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/nativeimagefilters@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/nativeimagetranscoder@2.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/soloader@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+        "pkg:maven/com.facebook.soloader/soloader@0.10.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/com.facebook.soloader/soloader@0.10.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.soloader/annotation@0.10.1?type=jar",
+        "pkg:maven/com.facebook.soloader/nativeloader@0.10.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.soloader/annotation@0.10.1?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/com.facebook.soloader/nativeloader@0.10.1?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/ui-common@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/drawee@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline-native@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-ashmem@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-native@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-java@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/ui-common@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/middleware@2.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.soloader/nativeloader@0.10.1?type=jar",
+        "pkg:maven/com.facebook.soloader/annotation@0.10.1?type=jar",
+        "pkg:maven/com.parse.bolts/bolts-tasks@1.4.0?type=jar",
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline-base@2.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.parse.bolts/bolts-tasks@1.4.0?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/imagepipeline-base@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.infer.annotation/infer-annotation@0.18.0?type=jar",
+        "pkg:maven/com.facebook.soloader/annotation@0.10.1?type=jar",
+        "pkg:maven/com.parse.bolts/bolts-tasks@1.4.0?type=jar",
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/imagepipeline-native@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+        "pkg:maven/com.facebook.soloader/soloader@0.10.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/memory-type-ashmem@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/memory-type-native@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline-native@2.5.0?type=jar",
+        "pkg:maven/com.facebook.soloader/nativeloader@0.10.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/memory-type-java@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline-native@2.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/middleware@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/ui-common@2.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/nativeimagefilters@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline-native@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-ashmem@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-native@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-java@2.5.0?type=jar",
+        "pkg:maven/com.facebook.soloader/nativeloader@0.10.1?type=jar",
+        "pkg:maven/com.parse.bolts/bolts-tasks@1.4.0?type=jar",
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/nativeimagetranscoder@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/imagepipeline-base@2.5.0?type=jar",
+        "pkg:maven/com.facebook.soloader/nativeloader@0.10.1?type=jar",
+        "pkg:maven/com.parse.bolts/bolts-tasks@1.4.0?type=jar",
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fresco/imagepipeline-okhttp3@2.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.fresco/fbcore@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/imagepipeline-native@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-ashmem@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-native@2.5.0?type=jar",
+        "pkg:maven/com.facebook.fresco/memory-type-java@2.5.0?type=jar",
+        "pkg:maven/com.squareup.okhttp3/okhttp@4.9.2?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.squareup.okhttp3/okhttp@4.9.2?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.squareup.okio/okio@2.9.0?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.5.20?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.31?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.squareup.okio/okio@2.9.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.6.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.4.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.5.20?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.5.20?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.31?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.4.31?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains/annotations@13.0?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.6.10?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains/annotations@13.0?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.6.10?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/com.squareup.okhttp3/okhttp-urlconnection@4.9.2?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.squareup.okhttp3/okhttp@4.9.2?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk8@1.4.10?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk8@1.4.10?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk7@1.4.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.5.20?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.31?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk7@1.4.10?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.10?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.5.20?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.31?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.fbjni/fbjni-java-only@0.2.2?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.soloader/nativeloader@0.10.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-keychain@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.facebook.conceal/conceal@1.1.3?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.facebook.conceal/conceal@1.1.3?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/react-native-i18n@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-cookies@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.multidex/multidex@2.0.1?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/pro.piwik.sdk/piwik-sdk@1.0.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.jakewharton.timber/timber@4.5.1?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.jakewharton.timber/timber@4.5.1?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-ads-identifier@18.0.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.webkit/android-jsc-intl@r250230?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/criusm_ssl-pinning@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-async-storage_async-storage@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-clipboard_clipboard@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-community_cameraroll@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-community_datetimepicker@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-community_netinfo@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-community_picker@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-firebase_app@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.google.firebase/firebase-bom@26.8.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-common@19.5.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-auth@19.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-bom@26.8.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.firebase/firebase-messaging@21.0.1?type=jar",
+        "pkg:maven/com.google.firebase/firebase-common@19.5.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-encoders@16.1.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-iid@21.0.1?type=jar",
+        "pkg:maven/com.google.firebase/firebase-installations@16.3.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-messaging@21.0.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/com.google.android.datatransport/transport-api@2.2.1?type=jar",
+        "pkg:maven/com.google.android.datatransport/transport-backend-cct@2.3.3?type=jar",
+        "pkg:maven/com.google.android.datatransport/transport-runtime@2.2.5?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-cloud-messaging@16.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-stats@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-common@19.5.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-components@16.1.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-datatransport@17.0.10?type=jar",
+        "pkg:maven/com.google.firebase/firebase-encoders@16.1.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-encoders-json@17.1.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-iid@21.0.1?type=jar",
+        "pkg:maven/com.google.firebase/firebase-installations@16.3.5?type=jar",
+        "pkg:maven/com.google.firebase/firebase-installations-interop@16.0.1?type=jar",
+        "pkg:maven/com.google.firebase/firebase-measurement-connector@18.0.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-common@19.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-components@16.1.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-encoders@16.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-iid@21.0.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.legacy/legacy-support-core-utils@1.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-cloud-messaging@16.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-stats@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-common@19.5.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-components@16.1.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-iid-interop@17.0.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-installations@16.3.5?type=jar",
+        "pkg:maven/com.google.firebase/firebase-installations-interop@16.0.1?type=jar",
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-installations@16.3.5?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-common@19.5.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-components@16.1.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-installations-interop@16.0.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-components@16.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-annotations@16.0.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-annotations@16.0.0?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-auth@19.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar",
+        "pkg:maven/androidx.loader/loader@1.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-auth-api-phone@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-auth-base@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-base@17.1.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-auth-api-phone@17.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.android.gms/play-services-base@17.1.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-base@17.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-auth-base@17.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-base@17.1.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-firebase_messaging@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.google.firebase/firebase-bom@26.8.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-messaging@21.0.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.datatransport/transport-api@2.2.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.datatransport/transport-backend-cct@2.3.3?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/com.google.android.datatransport/transport-api@2.2.1?type=jar",
+        "pkg:maven/com.google.android.datatransport/transport-runtime@2.2.5?type=jar",
+        "pkg:maven/com.google.firebase/firebase-encoders@16.1.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-encoders-json@17.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.datatransport/transport-runtime@2.2.5?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/com.google.android.datatransport/transport-api@2.2.1?type=jar",
+        "pkg:maven/javax.inject/javax.inject@1?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-encoders-json@17.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-encoders@16.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-cloud-messaging@16.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-stats@17.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.legacy/legacy-support-core-utils@1.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.legacy/legacy-support-core-utils@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.documentfile/documentfile@1.0.0?type=jar",
+        "pkg:maven/androidx.loader/loader@1.0.0?type=jar",
+        "pkg:maven/androidx.localbroadcastmanager/localbroadcastmanager@1.0.0?type=jar",
+        "pkg:maven/androidx.print/print@1.0.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.documentfile/documentfile@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.localbroadcastmanager/localbroadcastmanager@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.print/print@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-datatransport@17.0.10?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/com.google.android.datatransport/transport-api@2.2.1?type=jar",
+        "pkg:maven/com.google.android.datatransport/transport-backend-cct@2.3.3?type=jar",
+        "pkg:maven/com.google.android.datatransport/transport-runtime@2.2.5?type=jar",
+        "pkg:maven/com.google.firebase/firebase-common@19.5.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-components@16.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-iid-interop@17.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.android.gms/play-services-base@17.1.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-installations-interop@16.0.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-annotations@16.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.firebase/firebase-measurement-connector@18.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-masked-view_masked-view@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/jail-monkey@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.scottyab/rootbeer-lib@0.0.9?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.scottyab/rootbeer-lib@0.0.9?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/react-native-blob-util@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.apache.commons/commons-lang3@3.0?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/react-native-config@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-device-info@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.android.installreferrer/installreferrer@1.1.2?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-iid@17.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.android.installreferrer/installreferrer@1.1.2?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-iid@17.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-base@17.1.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@18.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-stats@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-base@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-document-picker@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-file-viewer@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-fs@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-gesture-handler@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core-ktx@1.6.0?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.core/core-ktx@1.6.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.5.20?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-image-crop-picker@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.1.0?type=jar",
+        "pkg:maven/com.github.yalantis/ucrop@2.2.6-native?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.github.yalantis/ucrop@2.2.6-native?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.appcompat/appcompat@1.2.0?type=jar",
+        "pkg:maven/androidx.exifinterface/exifinterface@1.1.0-beta01?type=jar",
+        "pkg:maven/androidx.transition/transition@1.2.0?type=jar",
+        "pkg:maven/com.squareup.okhttp3/okhttp@4.9.2?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat@1.1.0?type=jar",
+        "pkg:maven/androidx.transition/transition@1.2.0-rc01?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.exifinterface/exifinterface@1.1.0-beta01?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.transition/transition@1.2.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-locale@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-permissions@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-reanimated@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/androidx.transition/transition@1.2.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-safe-area-context@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-screens@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar",
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat@1.2.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar",
+        "pkg:maven/androidx.coordinatorlayout/coordinatorlayout@1.1.0?type=jar",
+        "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.1.0?type=jar",
+        "pkg:maven/com.google.android.material/material@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core-ktx@1.6.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.coordinatorlayout/coordinatorlayout@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.customview/customview@1.0.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.material/material@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat@1.2.0?type=jar",
+        "pkg:maven/androidx.cardview/cardview@1.0.0?type=jar",
+        "pkg:maven/androidx.coordinatorlayout/coordinatorlayout@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.2.0?type=jar",
+        "pkg:maven/androidx.recyclerview/recyclerview@1.1.0?type=jar",
+        "pkg:maven/androidx.transition/transition@1.2.0?type=jar",
+        "pkg:maven/androidx.vectordrawable/vectordrawable@1.1.0?type=jar",
+        "pkg:maven/androidx.viewpager2/viewpager2@1.0.0?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.cardview/cardview@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.recyclerview/recyclerview@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.customview/customview@1.0.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.viewpager2/viewpager2@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar",
+        "pkg:maven/androidx.recyclerview/recyclerview@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-share@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.android.support/appcompat-v7@androidx.appcompat?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.cursoradapter/cursoradapter@1.0.0?type=jar",
+        "pkg:maven/androidx.legacy/legacy-support-core-utils@1.0.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.0.0?type=jar",
+        "pkg:maven/androidx.vectordrawable/vectordrawable@1.0.1?type=jar",
+        "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-splash-screen@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.android.support/appcompat-v7@androidx.appcompat?type=jar",
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-svg@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-version-number@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/react-native-webview@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar",
+        "pkg:maven/androidx.webkit/webkit@1.4.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.webkit/webkit@1.4.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.zxing/core@3.3.3?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/Test/criusm_ssl-pinning@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.appcompat/appcompat@1.0.2?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.cursoradapter/cursoradapter@1.0.0?type=jar",
+        "pkg:maven/androidx.legacy/legacy-support-core-utils@1.0.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.0.0?type=jar",
+        "pkg:maven/androidx.vectordrawable/vectordrawable@1.0.1?type=jar",
+        "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/androidx.core/core@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.0.0?type=jar",
+        "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.1.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.lifecycle/lifecycle-common@2.0.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-common@2.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.arch.core/core-common@2.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.arch.core/core-runtime@2.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.0.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.lifecycle/lifecycle-common@2.0.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.0.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-runtime@2.0.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-common@2.1.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.fragment/fragment@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.legacy/legacy-support-core-ui@1.0.0?type=jar",
+        "pkg:maven/androidx.legacy/legacy-support-core-utils@1.0.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.loader/loader@1.0.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.legacy/legacy-support-core-ui@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.legacy/legacy-support-core-utils@1.0.0?type=jar",
+        "pkg:maven/androidx.customview/customview@1.0.0?type=jar",
+        "pkg:maven/androidx.viewpager/viewpager@1.0.0?type=jar",
+        "pkg:maven/androidx.coordinatorlayout/coordinatorlayout@1.0.0?type=jar",
+        "pkg:maven/androidx.drawerlayout/drawerlayout@1.0.0?type=jar",
+        "pkg:maven/androidx.slidingpanelayout/slidingpanelayout@1.0.0?type=jar",
+        "pkg:maven/androidx.interpolator/interpolator@1.0.0?type=jar",
+        "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.0.0?type=jar",
+        "pkg:maven/androidx.asynclayoutinflater/asynclayoutinflater@1.0.0?type=jar",
+        "pkg:maven/androidx.cursoradapter/cursoradapter@1.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.coordinatorlayout/coordinatorlayout@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.customview/customview@1.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.slidingpanelayout/slidingpanelayout@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.customview/customview@1.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.interpolator/interpolator@1.0.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.asynclayoutinflater/asynclayoutinflater@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.vectordrawable/vectordrawable@1.0.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.vectordrawable/vectordrawable@1.0.1?type=jar",
+        "pkg:maven/androidx.legacy/legacy-support-core-ui@1.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.10?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.4.10?type=jar",
+        "pkg:maven/org.jetbrains/annotations@13.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.4.10?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/Test/jail-monkey@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.scottyab/rootbeer-lib@0.0.9?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-async-storage_async-storage@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-blob-util@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-clipboard_clipboard@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-community_cameraroll@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-community_datetimepicker@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-community_netinfo@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-community_picker@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-config@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-cookies@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-device-info@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.android.installreferrer/installreferrer@1.1.2?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-iid@17.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-base@17.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-basement@17.0.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-tasks@17.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-basement@17.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-document-picker@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-file-viewer@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-firebase_app@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.google.firebase/firebase-bom@26.8.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-common@19.5.0?type=jar",
+        "pkg:maven/com.google.android.gms/play-services-auth@19.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/com.google.android.gms/play-services-basement@17.1.1?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-firebase_messaging@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/Test/react-native-firebase_app@latest?type=jar",
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.google.firebase/firebase-bom@26.8.0?type=jar",
+        "pkg:maven/com.google.firebase/firebase-messaging@21.0.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-fs@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-gesture-handler@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core-ktx@1.6.0?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.5.20?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.lifecycle/lifecycle-common@2.1.0?type=jar",
+        "pkg:maven/androidx.arch.core/core-common@2.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-common@2.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.fragment/fragment@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.viewpager/viewpager@1.0.0?type=jar",
+        "pkg:maven/androidx.loader/loader@1.0.0?type=jar",
+        "pkg:maven/androidx.activity/activity@1.0.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.activity/activity@1.0.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.6.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.1.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.1.0?type=jar",
+        "pkg:maven/androidx.savedstate/savedstate@1.0.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.5.20?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains/annotations@13.0?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.5.20?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.5.20?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-i18n@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-image-crop-picker@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.1.0?type=jar",
+        "pkg:maven/com.github.yalantis/ucrop@2.2.6-native?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.appcompat/appcompat@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.cursoradapter/cursoradapter@1.0.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.1.0?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat-resources@1.1.0?type=jar",
+        "pkg:maven/androidx.drawerlayout/drawerlayout@1.0.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.appcompat/appcompat-resources@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.vectordrawable/vectordrawable@1.1.0?type=jar",
+        "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.1.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.transition/transition@1.2.0-rc01?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-keychain@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.facebook.conceal/conceal@1.1.3?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-locale@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-masked-view_masked-view@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-permissions@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-reanimated@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/androidx.transition/transition@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.transition/transition@1.1.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core@1.1.0?type=jar",
+        "pkg:maven/androidx.collection/collection@1.0.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-safe-area-context@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.10?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-screens@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.31?type=jar",
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/androidx.appcompat/appcompat@1.1.0?type=jar",
+        "pkg:maven/androidx.fragment/fragment@1.2.1?type=jar",
+        "pkg:maven/androidx.coordinatorlayout/coordinatorlayout@1.1.0?type=jar",
+        "pkg:maven/androidx.swiperefreshlayout/swiperefreshlayout@1.0.0?type=jar",
+        "pkg:maven/com.google.android.material/material@1.1.0?type=jar",
+        "pkg:maven/androidx.core/core-ktx@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.31?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.4.31?type=jar",
+        "pkg:maven/org.jetbrains/annotations@13.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.4.31?type=jar",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:maven/androidx.core/core@1.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.2.0?type=jar",
+        "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.1?type=jar",
+        "pkg:maven/androidx.collection/collection@1.1.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/androidx.core/core-ktx@1.5.0?type=jar",
+      "dependsOn": [
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.31?type=jar",
+        "pkg:maven/androidx.annotation/annotation@1.2.0?type=jar",
+        "pkg:maven/androidx.core/core@1.5.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-share@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-splash-screen@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.android.support/appcompat-v7@androidx.appcompat?type=jar",
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-svg@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-version-number@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/react-native-webview@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.4.10?type=jar",
+        "pkg:maven/androidx.webkit/webkit@1.4.0?type=jar"
+      ]
+    },
+    {
+      "ref": "pkg:maven/Test/rn-qr-generator@latest?type=jar",
+      "dependsOn": [
+        "pkg:maven/com.facebook.react/react-native@0.67.5?type=jar",
+        "pkg:maven/com.google.zxing/core@3.3.3?type=jar"
+      ]
+    }
+  ]
+}

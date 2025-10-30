@@ -1,0 +1,604 @@
+{
+    "packages": {
+        "jean85/composer-provided-replaced-stub-package": {
+            "1.0.0": {
+                "authors": [
+                    {
+                        "email": "alessandro.lai85@gmail.com",
+                        "name": "Alessandro Lai"
+                    }
+                ],
+                "description": "This is only a stub package used in the tests of jean85/pretty-package-versions",
+                "dist": {
+                    "reference": "a89d3f39a6149d33b6f6ebecc2f5f44fd4a2cf90",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/Jean85/composer-provided-replaced-stub-package/zipball/a89d3f39a6149d33b6f6ebecc2f5f44fd4a2cf90"
+                },
+                "funding": [
+                ],
+                "homepage": "",
+                "keywords": [
+                ],
+                "license": [
+                    "MIT"
+                ],
+                "name": "jean85/composer-provided-replaced-stub-package",
+                "provide": {
+                    "psr/log-implementation": "1.0.0"
+                },
+                "replace": {
+                    "monolog/monolog": "*"
+                },
+                "source": {
+                    "reference": "a89d3f39a6149d33b6f6ebecc2f5f44fd4a2cf90",
+                    "type": "git",
+                    "url": "https://github.com/Jean85/composer-provided-replaced-stub-package.git"
+                },
+                "time": "2020-04-28T10:17:21+00:00",
+                "type": "library",
+                "uid": 3820116,
+                "version": "1.0.0",
+                "version_normalized": "1.0.0.0"
+            },
+            "dev-master": {
+                "authors": [
+                    {
+                        "email": "alessandro.lai85@gmail.com",
+                        "name": "Alessandro Lai"
+                    }
+                ],
+                "default-branch": true,
+                "description": "This is only a stub package used in the tests of jean85/pretty-package-versions",
+                "dist": {
+                    "reference": "a89d3f39a6149d33b6f6ebecc2f5f44fd4a2cf90",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/Jean85/composer-provided-replaced-stub-package/zipball/a89d3f39a6149d33b6f6ebecc2f5f44fd4a2cf90"
+                },
+                "funding": [
+                ],
+                "homepage": "",
+                "keywords": [
+                ],
+                "license": [
+                    "MIT"
+                ],
+                "name": "jean85/composer-provided-replaced-stub-package",
+                "provide": {
+                    "psr/log-implementation": "1.0.0"
+                },
+                "replace": {
+                    "monolog/monolog": "*"
+                },
+                "source": {
+                    "reference": "a89d3f39a6149d33b6f6ebecc2f5f44fd4a2cf90",
+                    "type": "git",
+                    "url": "https://github.com/Jean85/composer-provided-replaced-stub-package.git"
+                },
+                "time": "2020-04-28T10:17:21+00:00",
+                "type": "library",
+                "uid": 4108141,
+                "version": "dev-master",
+                "version_normalized": "9999999-dev"
+            }
+        },
+        "jtl/connector-shopware": {
+            "2.11.0": {
+                "authors": [
+                    {
+                        "email": "info@jtl-software.de",
+                        "homepage": "http://www.jtl-software.de",
+                        "name": "JTL-Software GmbH",
+                        "role": "Founder"
+                    }
+                ],
+                "autoload": {
+                    "psr-4": {
+                        "\\": "plugins/",
+                        "jtl\\Connector\\Shopware\\": "src/"
+                    }
+                },
+                "description": "Shopware 5 Connector based on jtl/connector",
+                "dist": {
+                    "reference": "dbe81dc55bcfc250e210a40925817d3222910fee",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/jtl-software/connector-shopware5/zipball/dbe81dc55bcfc250e210a40925817d3222910fee"
+                },
+                "extra": {
+                    "installer-name": "jtlconnector"
+                },
+                "funding": [
+                ],
+                "homepage": "http://www.jtl-software.de",
+                "keywords": [
+                    "connector",
+                    "shopware",
+                    "jtl"
+                ],
+                "license": [
+                    "LGPL-3.0-or-later"
+                ],
+                "name": "jtl/connector-shopware",
+                "replace": {
+                    "monolog/monolog": "*"
+                },
+                "require": {
+                    "jtl/connector": "^3.3",
+                    "phing/phing": "^2.16",
+                    "php": ">=7.1.3",
+                    "symfony/yaml": "^3.4",
+                    "theiconic/name-parser": "^0.1.1"
+                },
+                "require-dev": {
+                    "phpunit/phpunit": "^7.5"
+                },
+                "source": {
+                    "reference": "dbe81dc55bcfc250e210a40925817d3222910fee",
+                    "type": "git",
+                    "url": "https://github.com/jtl-software/connector-shopware5.git"
+                },
+                "time": "2021-07-05T11:20:18+00:00",
+                "type": "shopware-frontend-plugin",
+                "uid": 5338928,
+                "version": "2.11.0",
+                "version_normalized": "2.11.0.0"
+            },
+           "dev-task/attribute_refactorings": {
+                "authors": [
+                    {
+                        "email": "info@jtl-software.de",
+                        "homepage": "http://www.jtl-software.de",
+                        "name": "JTL-Software GmbH",
+                        "role": "Founder"
+                    }
+                ],
+                "autoload": {
+                    "psr-4": {
+                        "\\": "plugins/",
+                        "jtl\\Connector\\Shopware\\": "src/"
+                    }
+                },
+                "description": "Shopware 5 Connector based on jtl/connector",
+                "dist": {
+                    "reference": "af20195040e30bfb5f94e1a0eb0a9fd18c3e547f",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/jtl-software/connector-shopware5/zipball/af20195040e30bfb5f94e1a0eb0a9fd18c3e547f"
+                },
+                "extra": {
+                    "installer-name": "jtlconnector"
+                },
+                "funding": [
+                ],
+                "homepage": "http://www.jtl-software.de",
+                "keywords": [
+                    "connector",
+                    "shopware",
+                    "jtl"
+                ],
+                "license": [
+                    "LGPL-3.0-or-later"
+                ],
+                "name": "jtl/connector-shopware",
+                "replace": {
+                    "monolog/monolog": "*"
+                },
+                "require": {
+                    "jtl/connector": "^3.3",
+                    "phing/phing": "^2.16",
+                    "php": ">=7.1.3",
+                    "symfony/yaml": "^3.4",
+                    "theiconic/name-parser": "^0.1.1"
+                },
+                "require-dev": {
+                    "phpunit/phpunit": "^7.5"
+                },
+                "source": {
+                    "reference": "af20195040e30bfb5f94e1a0eb0a9fd18c3e547f",
+                    "type": "git",
+                    "url": "https://github.com/jtl-software/connector-shopware5.git"
+                },
+                "time": "2021-08-30T07:49:42+00:00",
+                "type": "shopware-frontend-plugin",
+                "uid": 5474722,
+                "version": "dev-task/attribute_refactorings",
+                "version_normalized": "dev-task/attribute_refactorings"
+            }
+        },
+        "monolog/monolog": {
+            "1.0.0": {
+                "authors": [
+                    {
+                        "email": "j.boggiano@seld.be",
+                        "homepage": "http://seld.be",
+                        "name": "Jordi Boggiano",
+                        "role": "Developer"
+                    }
+                ],
+                "description": "Logging for PHP 5.3",
+                "dist": {
+                    "reference": "433b98d4218c181bae01865901aac045585e8a1a",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/Seldaek/monolog/zipball/433b98d4218c181bae01865901aac045585e8a1a"
+                },
+                "homepage": "http://github.com/Seldaek/monolog",
+                "keywords": [
+                    "log",
+                    "logging"
+                ],
+                "license": [
+                    "MIT"
+                ],
+                "name": "monolog/monolog",
+                "require": {
+                    "php": ">=5.3.0"
+                },
+                "source": {
+                    "reference": "433b98d4218c181bae01865901aac045585e8a1a",
+                    "type": "git",
+                    "url": "https://github.com/Seldaek/monolog.git"
+                },
+                "time": "2011-07-07T16:21:02+00:00",
+                "type": "library",
+                "uid": 5151,
+                "version": "1.0.0",
+                "version_normalized": "1.0.0.0"
+            },
+           "3.8.0": {
+                "authors": [
+                    {
+                        "email": "j.boggiano@seld.be",
+                        "homepage": "https://seld.be",
+                        "name": "Jordi Boggiano"
+                    }
+                ],
+                "autoload": {
+                    "psr-4": {
+                        "Monolog\\": "src/Monolog"
+                    }
+                },
+                "description": "Sends your logs to files, sockets, inboxes, databases and various web services",
+                "dist": {
+                    "reference": "32e515fdc02cdafbe4593e30a9350d486b125b67",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/Seldaek/monolog/zipball/32e515fdc02cdafbe4593e30a9350d486b125b67"
+                },
+                "extra": {
+                    "branch-alias": {
+                        "dev-main": "3.x-dev"
+                    }
+                },
+                "funding": [
+                    {
+                        "type": "github",
+                        "url": "https://github.com/Seldaek"
+                    },
+                    {
+                        "type": "tidelift",
+                        "url": "https://tidelift.com/funding/github/packagist/monolog/monolog"
+                    }
+                ],
+                "homepage": "https://github.com/Seldaek/monolog",
+                "keywords": [
+                    "log",
+                    "logging",
+                    "psr-3"
+                ],
+                "license": [
+                    "MIT"
+                ],
+                "name": "monolog/monolog",
+                "provide": {
+                    "psr/log-implementation": "3.0.0"
+                },
+                "require": {
+                    "php": ">=8.1",
+                    "psr/log": "^2.0 || ^3.0"
+                },
+                "require-dev": {
+                    "aws/aws-sdk-php": "^3.0",
+                    "doctrine/couchdb": "~1.0@dev",
+                    "elasticsearch/elasticsearch": "^7 || ^8",
+                    "ext-json": "*",
+                    "graylog2/gelf-php": "^1.4.2 || ^2.0",
+                    "guzzlehttp/guzzle": "^7.4.5",
+                    "guzzlehttp/psr7": "^2.2",
+                    "mongodb/mongodb": "^1.8",
+                    "php-amqplib/php-amqplib": "~2.4 || ^3",
+                    "php-console/php-console": "^3.1.8",
+                    "phpstan/phpstan": "^2",
+                    "phpstan/phpstan-deprecation-rules": "^2",
+                    "phpstan/phpstan-strict-rules": "^2",
+                    "phpunit/phpunit": "^10.5.17 || ^11.0.7",
+                    "predis/predis": "^1.1 || ^2",
+                    "rollbar/rollbar": "^4.0",
+                    "ruflin/elastica": "^7 || ^8",
+                    "symfony/mailer": "^5.4 || ^6",
+                    "symfony/mime": "^5.4 || ^6"
+                },
+                "source": {
+                    "reference": "32e515fdc02cdafbe4593e30a9350d486b125b67",
+                    "type": "git",
+                    "url": "https://github.com/Seldaek/monolog.git"
+                },
+                "suggest": {
+                    "aws/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
+                    "doctrine/couchdb": "Allow sending log messages to a CouchDB server",
+                    "elasticsearch/elasticsearch": "Allow sending log messages to an Elasticsearch server via official client",
+                    "ext-amqp": "Allow sending log messages to an AMQP server (1.0+ required)",
+                    "ext-curl": "Required to send log messages using the IFTTTHandler, the LogglyHandler, the SendGridHandler, the SlackWebhookHandler or the TelegramBotHandler",
+                    "ext-mbstring": "Allow to work properly with unicode symbols",
+                    "ext-mongodb": "Allow sending log messages to a MongoDB server (via driver)",
+                    "ext-openssl": "Required to send log messages using SSL",
+                    "ext-sockets": "Allow sending log messages to a Syslog server (via UDP driver)",
+                    "graylog2/gelf-php": "Allow sending log messages to a GrayLog2 server",
+                    "mongodb/mongodb": "Allow sending log messages to a MongoDB server (via library)",
+                    "php-amqplib/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib",
+                    "rollbar/rollbar": "Allow sending log messages to Rollbar",
+                    "ruflin/elastica": "Allow sending log messages to an Elastic Search server"
+                },
+                "time": "2024-11-12T13:57:08+00:00",
+                "type": "library",
+                "uid": 8586646,
+                "version": "3.8.0",
+                "version_normalized": "3.8.0.0"
+            },
+            "3.8.1": {
+                "authors": [
+                    {
+                        "email": "j.boggiano@seld.be",
+                        "homepage": "https://seld.be",
+                        "name": "Jordi Boggiano"
+                    }
+                ],
+                "autoload": {
+                    "psr-4": {
+                        "Monolog\\": "src/Monolog"
+                    }
+                },
+                "description": "Sends your logs to files, sockets, inboxes, databases and various web services",
+                "dist": {
+                    "reference": "aef6ee73a77a66e404dd6540934a9ef1b3c855b4",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/Seldaek/monolog/zipball/aef6ee73a77a66e404dd6540934a9ef1b3c855b4"
+                },
+                "extra": {
+                    "branch-alias": {
+                        "dev-main": "3.x-dev"
+                    }
+                },
+                "funding": [
+                    {
+                        "type": "github",
+                        "url": "https://github.com/Seldaek"
+                    },
+                    {
+                        "type": "tidelift",
+                        "url": "https://tidelift.com/funding/github/packagist/monolog/monolog"
+                    }
+                ],
+                "homepage": "https://github.com/Seldaek/monolog",
+                "keywords": [
+                    "log",
+                    "logging",
+                    "psr-3"
+                ],
+                "license": [
+                    "MIT"
+                ],
+                "name": "monolog/monolog",
+                "provide": {
+                    "psr/log-implementation": "3.0.0"
+                },
+                "require": {
+                    "php": ">=8.1",
+                    "psr/log": "^2.0 || ^3.0"
+                },
+                "require-dev": {
+                    "aws/aws-sdk-php": "^3.0",
+                    "doctrine/couchdb": "~1.0@dev",
+                    "elasticsearch/elasticsearch": "^7 || ^8",
+                    "ext-json": "*",
+                    "graylog2/gelf-php": "^1.4.2 || ^2.0",
+                    "guzzlehttp/guzzle": "^7.4.5",
+                    "guzzlehttp/psr7": "^2.2",
+                    "mongodb/mongodb": "^1.8",
+                    "php-amqplib/php-amqplib": "~2.4 || ^3",
+                    "php-console/php-console": "^3.1.8",
+                    "phpstan/phpstan": "^2",
+                    "phpstan/phpstan-deprecation-rules": "^2",
+                    "phpstan/phpstan-strict-rules": "^2",
+                    "phpunit/phpunit": "^10.5.17 || ^11.0.7",
+                    "predis/predis": "^1.1 || ^2",
+                    "rollbar/rollbar": "^4.0",
+                    "ruflin/elastica": "^7 || ^8",
+                    "symfony/mailer": "^5.4 || ^6",
+                    "symfony/mime": "^5.4 || ^6"
+                },
+                "source": {
+                    "reference": "aef6ee73a77a66e404dd6540934a9ef1b3c855b4",
+                    "type": "git",
+                    "url": "https://github.com/Seldaek/monolog.git"
+                },
+                "suggest": {
+                    "aws/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
+                    "doctrine/couchdb": "Allow sending log messages to a CouchDB server",
+                    "elasticsearch/elasticsearch": "Allow sending log messages to an Elasticsearch server via official client",
+                    "ext-amqp": "Allow sending log messages to an AMQP server (1.0+ required)",
+                    "ext-curl": "Required to send log messages using the IFTTTHandler, the LogglyHandler, the SendGridHandler, the SlackWebhookHandler or the TelegramBotHandler",
+                    "ext-mbstring": "Allow to work properly with unicode symbols",
+                    "ext-mongodb": "Allow sending log messages to a MongoDB server (via driver)",
+                    "ext-openssl": "Required to send log messages using SSL",
+                    "ext-sockets": "Allow sending log messages to a Syslog server (via UDP driver)",
+                    "graylog2/gelf-php": "Allow sending log messages to a GrayLog2 server",
+                    "mongodb/mongodb": "Allow sending log messages to a MongoDB server (via library)",
+                    "php-amqplib/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib",
+                    "rollbar/rollbar": "Allow sending log messages to Rollbar",
+                    "ruflin/elastica": "Allow sending log messages to an Elastic Search server"
+                },
+                "time": "2024-12-05T17:15:07+00:00",
+                "type": "library",
+                "uid": 8656379,
+                "version": "3.8.1",
+                "version_normalized": "3.8.1.0"
+            },
+            "dev-main": {
+                "authors": [
+                    {
+                        "email": "j.boggiano@seld.be",
+                        "homepage": "https://seld.be",
+                        "name": "Jordi Boggiano"
+                    }
+                ],
+                "autoload": {
+                    "psr-4": {
+                        "Monolog\\": "src/Monolog"
+                    }
+                },
+                "default-branch": true,
+                "description": "Sends your logs to files, sockets, inboxes, databases and various web services",
+                "dist": {
+                    "reference": "d97d5e9468aa7d10f95b2e0468f39afdbd08a4d1",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/Seldaek/monolog/zipball/d97d5e9468aa7d10f95b2e0468f39afdbd08a4d1"
+                },
+                "extra": {
+                    "branch-alias": {
+                        "dev-main": "3.x-dev"
+                    }
+                },
+                "funding": [
+                    {
+                        "type": "github",
+                        "url": "https://github.com/Seldaek"
+                    },
+                    {
+                        "type": "tidelift",
+                        "url": "https://tidelift.com/funding/github/packagist/monolog/monolog"
+                    }
+                ],
+                "homepage": "https://github.com/Seldaek/monolog",
+                "keywords": [
+                    "log",
+                    "logging",
+                    "psr-3"
+                ],
+                "license": [
+                    "MIT"
+                ],
+                "name": "monolog/monolog",
+                "provide": {
+                    "psr/log-implementation": "3.0.0"
+                },
+                "require": {
+                    "php": ">=8.1",
+                    "psr/log": "^2.0 || ^3.0"
+                },
+                "require-dev": {
+                    "aws/aws-sdk-php": "^3.0",
+                    "doctrine/couchdb": "~1.0@dev",
+                    "elasticsearch/elasticsearch": "^7 || ^8",
+                    "ext-json": "*",
+                    "graylog2/gelf-php": "^1.4.2 || ^2.0",
+                    "guzzlehttp/guzzle": "^7.4.5",
+                    "guzzlehttp/psr7": "^2.2",
+                    "mongodb/mongodb": "^1.8",
+                    "php-amqplib/php-amqplib": "~2.4 || ^3",
+                    "php-console/php-console": "^3.1.8",
+                    "phpstan/phpstan": "^2",
+                    "phpstan/phpstan-deprecation-rules": "^2",
+                    "phpstan/phpstan-strict-rules": "^2",
+                    "phpunit/phpunit": "^10.5.17 || ^11.0.7",
+                    "predis/predis": "^1.1 || ^2",
+                    "rollbar/rollbar": "^4.0",
+                    "ruflin/elastica": "^7 || ^8",
+                    "symfony/mailer": "^5.4 || ^6",
+                    "symfony/mime": "^5.4 || ^6"
+                },
+                "source": {
+                    "reference": "d97d5e9468aa7d10f95b2e0468f39afdbd08a4d1",
+                    "type": "git",
+                    "url": "https://github.com/Seldaek/monolog.git"
+                },
+                "suggest": {
+                    "aws/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
+                    "doctrine/couchdb": "Allow sending log messages to a CouchDB server",
+                    "elasticsearch/elasticsearch": "Allow sending log messages to an Elasticsearch server via official client",
+                    "ext-amqp": "Allow sending log messages to an AMQP server (1.0+ required)",
+                    "ext-curl": "Required to send log messages using the IFTTTHandler, the LogglyHandler, the SendGridHandler, the SlackWebhookHandler or the TelegramBotHandler",
+                    "ext-mbstring": "Allow to work properly with unicode symbols",
+                    "ext-mongodb": "Allow sending log messages to a MongoDB server (via driver)",
+                    "ext-openssl": "Required to send log messages using SSL",
+                    "ext-sockets": "Allow sending log messages to a Syslog server (via UDP driver)",
+                    "graylog2/gelf-php": "Allow sending log messages to a GrayLog2 server",
+                    "mongodb/mongodb": "Allow sending log messages to a MongoDB server (via library)",
+                    "php-amqplib/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib",
+                    "rollbar/rollbar": "Allow sending log messages to Rollbar",
+                    "ruflin/elastica": "Allow sending log messages to an Elastic Search server"
+                },
+                "time": "2024-12-10T13:30:50+00:00",
+                "type": "library",
+                "uid": 4731227,
+                "version": "dev-main",
+                "version_normalized": "dev-main"
+            }
+        },
+        "phpointless/monolol": {
+            "1.0.0": {
+                "authors": [
+                    {
+                        "email": "contact@romain-renaud.fr",
+                        "name": "Romain Renaud"
+                    }
+                ],
+                "autoload": {
+                    "psr-4": {
+                        "Monolol\\": "lib"
+                    }
+                },
+                "description": "PSR-3 compliant lol-gger",
+                "dist": {
+                    "reference": "1991e6b72b52229dc43147fd2c208f21896021bb",
+                    "shasum": "",
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/PHPointless/monolol/zipball/1991e6b72b52229dc43147fd2c208f21896021bb"
+                },
+                "homepage": "",
+                "keywords": [
+                    "PSR3",
+                    "LoL",
+                    "lol-gging"
+                ],
+                "license": [
+                    "MIT"
+                ],
+                "name": "phpointless/monolol",
+                "provide": {
+                    "monolog/monolog": "1.12"
+                },
+                "require": {
+                    "monolog/monolog": "~1.12"
+                },
+                "require-dev": {
+                    "phpunit/phpunit": "~4.5"
+                },
+                "source": {
+                    "reference": "1991e6b72b52229dc43147fd2c208f21896021bb",
+                    "type": "git",
+                    "url": "https://github.com/PHPointless/monolol.git"
+                },
+                "time": "2015-03-04T13:27:14+00:00",
+                "type": "library",
+                "uid": 347741,
+                "version": "1.0.0",
+                "version_normalized": "1.0.0.0"
+            }
+        }
+    }
+}

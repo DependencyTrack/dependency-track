@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "In addition, when this program is distributed with Asterisk in any \nform that would qualify as a \u0027combined work\u0027 or as a \u0027derivative work\u0027 \n(but not mere aggregation), you can redistribute and/or modify the \ncombination under the terms of the license provided with that copy \nof Asterisk, instead of the license terms granted here.\n",
+  "name": "Asterisk exception",
+  "seeAlso": [
+    "https://github.com/asterisk/libpri/blob/7f91151e6bd10957c746c031c1f4a030e8146e9a/pri.c#L22",
+    "https://github.com/asterisk/libss7/blob/03e81bcd0d28ff25d4c77c78351ddadc82ff5c3f/ss7.c#L24"
+  ],
+  "licenseExceptionId": "Asterisk-exception",
+  "licenseExceptionTemplate": "In addition, when this program is distributed with Asterisk in any form that would qualify as a \u0027combined work\u0027 or as a \u0027derivative work\u0027 (but not mere aggregation), you can redistribute and/or modify the combination under the terms of the license provided with that copy of Asterisk, instead of the license terms granted here.\n\n",
+  "exceptionTextHtml": "\n         \u003cp\u003e\n            In addition, when this program is distributed with Asterisk in any\n            form that would qualify as a \u0026apos;combined work\u0026apos; or as a \u0026apos;derivative\n            work\u0026apos; (but not mere aggregation), you can redistribute and/or\n            modify the combination under the terms of the license provided with\n            that copy of Asterisk, instead of the license terms granted here.\n         \u003c/p\u003e\n\n      "
+}

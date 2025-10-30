@@ -1,0 +1,1798 @@
+{
+  "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json",
+  "@type": [
+    "catalog:CatalogRoot",
+    "PackageRegistration",
+    "catalog:Permalink"
+  ],
+  "commitId": "678d20c8-1bca-41c1-ae13-74410a6b284b",
+  "commitTimeStamp": "2025-07-15T04:46:16.960872+00:00",
+  "count": 1,
+  "items": [
+    {
+      "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json#page/0.3.0-beta.1/1.12.0-beta.2",
+      "@type": "catalog:CatalogPage",
+      "commitId": "678d20c8-1bca-41c1-ae13-74410a6b284b",
+      "commitTimeStamp": "2025-07-15T04:46:16.960872+00:00",
+      "count": 42,
+      "items": [
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/0.3.0-beta.1.json",
+          "@type": "Package",
+          "commitId": "903fef5c-d8ec-451e-a1cd-15336006e299",
+          "commitTimeStamp": "2020-07-23T22:19:56.7482106+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.23.22.19.18/opentelemetry.instrumentation.sqlclient.0.3.0-beta.1.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.23.22.19.18/opentelemetry.instrumentation.sqlclient.0.3.0-beta.1.json#dependencygroup/.netframework4.5.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.23.22.19.18/opentelemetry.instrumentation.sqlclient.0.3.0-beta.1.json#dependencygroup/.netframework4.5.2/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[0.3.0-beta.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.5.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.23.22.19.18/opentelemetry.instrumentation.sqlclient.0.3.0-beta.1.json#dependencygroup/.netframework4.6.1",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.23.22.19.18/opentelemetry.instrumentation.sqlclient.0.3.0-beta.1.json#dependencygroup/.netframework4.6.1/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[0.3.0-beta.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.1"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.23.22.19.18/opentelemetry.instrumentation.sqlclient.0.3.0-beta.1.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.23.22.19.18/opentelemetry.instrumentation.sqlclient.0.3.0-beta.1.json#dependencygroup/.netstandard2.0/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[0.3.0-beta.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/0.3.0-beta.1/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/0.3.0-beta.1/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/0.3.0-beta.1/opentelemetry.instrumentation.sqlclient.0.3.0-beta.1.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2020-07-23T22:17:08.01+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Tracing",
+              "OpenTelemetry",
+              "Management",
+              "Monitoring",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "0.3.0-beta.1"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/0.3.0-beta.1/opentelemetry.instrumentation.sqlclient.0.3.0-beta.1.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/0.4.0-beta.2.json",
+          "@type": "Package",
+          "commitId": "e8ea11f0-fd39-4d0a-a0cd-55017c41ca94",
+          "commitTimeStamp": "2020-07-25T00:08:20.1853079+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.25.00.07.51/opentelemetry.instrumentation.sqlclient.0.4.0-beta.2.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.25.00.07.51/opentelemetry.instrumentation.sqlclient.0.4.0-beta.2.json#dependencygroup/.netframework4.5.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.25.00.07.51/opentelemetry.instrumentation.sqlclient.0.4.0-beta.2.json#dependencygroup/.netframework4.5.2/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[0.4.0-beta.2, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.5.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.25.00.07.51/opentelemetry.instrumentation.sqlclient.0.4.0-beta.2.json#dependencygroup/.netframework4.6.1",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.25.00.07.51/opentelemetry.instrumentation.sqlclient.0.4.0-beta.2.json#dependencygroup/.netframework4.6.1/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[0.4.0-beta.2, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.1"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.25.00.07.51/opentelemetry.instrumentation.sqlclient.0.4.0-beta.2.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2020.07.25.00.07.51/opentelemetry.instrumentation.sqlclient.0.4.0-beta.2.json#dependencygroup/.netstandard2.0/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[0.4.0-beta.2, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/0.4.0-beta.2/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/0.4.0-beta.2/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/0.4.0-beta.2/opentelemetry.instrumentation.sqlclient.0.4.0-beta.2.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2020-07-25T00:05:50.913+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Tracing",
+              "OpenTelemetry",
+              "Management",
+              "Monitoring",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "0.4.0-beta.2"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/0.4.0-beta.2/opentelemetry.instrumentation.sqlclient.0.4.0-beta.2.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.0.0-rc1.1.json",
+          "@type": "Package",
+          "commitId": "9e2c19c6-acfc-46ad-b4ef-b647ffd9b780",
+          "commitTimeStamp": "2020-11-18T06:00:54.3217685+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2020.11.18.06.00.18/opentelemetry.instrumentation.sqlclient.1.0.0-rc1.1.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2020.11.18.06.00.18/opentelemetry.instrumentation.sqlclient.1.0.0-rc1.1.json#dependencygroup/.netframework4.5.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2020.11.18.06.00.18/opentelemetry.instrumentation.sqlclient.1.0.0-rc1.1.json#dependencygroup/.netframework4.5.2/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[1.0.0-rc1.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.5.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2020.11.18.06.00.18/opentelemetry.instrumentation.sqlclient.1.0.0-rc1.1.json#dependencygroup/.netframework4.6.1",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2020.11.18.06.00.18/opentelemetry.instrumentation.sqlclient.1.0.0-rc1.1.json#dependencygroup/.netframework4.6.1/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[1.0.0-rc1.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.1"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2020.11.18.06.00.18/opentelemetry.instrumentation.sqlclient.1.0.0-rc1.1.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2020.11.18.06.00.18/opentelemetry.instrumentation.sqlclient.1.0.0-rc1.1.json#dependencygroup/.netstandard2.0/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[1.0.0-rc1.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc1.1/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.0.0-rc1.1/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc1.1/opentelemetry.instrumentation.sqlclient.1.0.0-rc1.1.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2020-11-18T05:58:08.243+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "Tracing",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.0.0-rc1.1"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc1.1/opentelemetry.instrumentation.sqlclient.1.0.0-rc1.1.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.0.0-rc2.json",
+          "@type": "Package",
+          "commitId": "da1b3b89-ec62-47e0-93ac-ca8e59952d11",
+          "commitTimeStamp": "2021-01-30T03:44:51.3895665+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2021.01.30.03.43.51/opentelemetry.instrumentation.sqlclient.1.0.0-rc2.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2021.01.30.03.43.51/opentelemetry.instrumentation.sqlclient.1.0.0-rc2.json#dependencygroup/.netframework4.5.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2021.01.30.03.43.51/opentelemetry.instrumentation.sqlclient.1.0.0-rc2.json#dependencygroup/.netframework4.5.2/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[1.0.0-rc2, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.5.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2021.01.30.03.43.51/opentelemetry.instrumentation.sqlclient.1.0.0-rc2.json#dependencygroup/.netframework4.6.1",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2021.01.30.03.43.51/opentelemetry.instrumentation.sqlclient.1.0.0-rc2.json#dependencygroup/.netframework4.6.1/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[1.0.0-rc2, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.1"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2021.01.30.03.43.51/opentelemetry.instrumentation.sqlclient.1.0.0-rc2.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2021.01.30.03.43.51/opentelemetry.instrumentation.sqlclient.1.0.0-rc2.json#dependencygroup/.netstandard2.0/opentelemetry",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry",
+                    "range": "[1.0.0-rc2, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc2/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.0.0-rc2/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc2/opentelemetry.instrumentation.sqlclient.1.0.0-rc2.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2021-01-30T03:41:42.74+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "Tracing",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.0.0-rc2"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc2/opentelemetry.instrumentation.sqlclient.1.0.0-rc2.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.1.json",
+          "@type": "Package",
+          "commitId": "ee716666-9402-4ba5-bc01-c3ede5205b05",
+          "commitTimeStamp": "2022-03-30T19:19:33.4763471+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2022.03.30.19.18.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.1.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2022.03.30.19.18.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.1.json#dependencygroup/.netframework4.6.1",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2022.03.30.19.18.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.1.json#dependencygroup/.netframework4.6.1/opentelemetry.api",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api",
+                    "range": "[1.2.0-rc4, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.1"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2022.03.30.19.18.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.1.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2022.03.30.19.18.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.1.json#dependencygroup/.netstandard2.0/opentelemetry.api",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api",
+                    "range": "[1.2.0-rc4, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.1/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.0.0-rc9.1/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.1/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.1.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2022-03-30T19:15:05.493+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "Tracing",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.0.0-rc9.1"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.1/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.1.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.9.json",
+          "@type": "Package",
+          "commitId": "40a2066e-6eeb-4379-a820-1b22d7be5a17",
+          "commitTimeStamp": "2022-11-07T20:29:23.7140928+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2022.11.07.20.28.27/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.9.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2022.11.07.20.28.27/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.9.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2022.11.07.20.28.27/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.9.json#dependencygroup/.netframework4.6.2/opentelemetry.api",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api",
+                    "range": "[1.4.0-beta.3, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2022.11.07.20.28.27/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.9.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2022.11.07.20.28.27/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.9.json#dependencygroup/.netstandard2.0/opentelemetry.api",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api",
+                    "range": "[1.4.0-beta.3, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.9/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.0.0-rc9.9/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.9/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.9.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2022-11-07T20:25:50.54+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "Tracing",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.0.0-rc9.9"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.9/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.9.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.10.json",
+          "@type": "Package",
+          "commitId": "dc5190c7-8e8d-4860-962e-1a2610715b0e",
+          "commitTimeStamp": "2022-12-12T23:14:37.151084+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2022.12.12.23.13.34/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.10.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2022.12.12.23.13.34/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.10.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2022.12.12.23.13.34/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.10.json#dependencygroup/.netframework4.6.2/opentelemetry.extensions.dependencyinjection",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Extensions.DependencyInjection",
+                    "range": "[1.4.0-rc.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.extensions.dependencyinjection/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2022.12.12.23.13.34/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.10.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[5.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2022.12.12.23.13.34/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.10.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2022.12.12.23.13.34/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.10.json#dependencygroup/.netstandard2.0/opentelemetry.extensions.dependencyinjection",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Extensions.DependencyInjection",
+                    "range": "[1.4.0-rc.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.extensions.dependencyinjection/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2022.12.12.23.13.34/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.10.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[5.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.10/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.0.0-rc9.10/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.10/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.10.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2022-12-12T23:11:08.723+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "Tracing",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.0.0-rc9.10"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.10/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.10.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.14.json",
+          "@type": "Package",
+          "commitId": "1f75b960-9916-4429-97ce-edf129d8c290",
+          "commitTimeStamp": "2023-02-24T22:42:08.8774583+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2023.02.24.22.41.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.14.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.02.24.22.41.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.14.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.02.24.22.41.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.14.json#dependencygroup/.netframework4.6.2/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.4.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.02.24.22.41.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.14.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.02.24.22.41.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.14.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.02.24.22.41.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.14.json#dependencygroup/.netstandard2.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.4.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.02.24.22.41.33/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.14.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.14/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.0.0-rc9.14/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.14/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.14.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2023-02-24T22:39:13.95+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "Tracing",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.0.0-rc9.14"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.0.0-rc9.14/opentelemetry.instrumentation.sqlclient.1.0.0-rc9.14.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.5.0-beta.1.json",
+          "@type": "Package",
+          "commitId": "feca05f5-af02-4438-af9b-5eaa8e71486b",
+          "commitTimeStamp": "2023-06-06T01:02:04.3324928+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2023.06.06.01.01.44/opentelemetry.instrumentation.sqlclient.1.5.0-beta.1.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.06.06.01.01.44/opentelemetry.instrumentation.sqlclient.1.5.0-beta.1.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.06.06.01.01.44/opentelemetry.instrumentation.sqlclient.1.5.0-beta.1.json#dependencygroup/.netframework4.6.2/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.5.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.06.06.01.01.44/opentelemetry.instrumentation.sqlclient.1.5.0-beta.1.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.06.06.01.01.44/opentelemetry.instrumentation.sqlclient.1.5.0-beta.1.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.06.06.01.01.44/opentelemetry.instrumentation.sqlclient.1.5.0-beta.1.json#dependencygroup/.netstandard2.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.5.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.06.06.01.01.44/opentelemetry.instrumentation.sqlclient.1.5.0-beta.1.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.5.0-beta.1/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.5.0-beta.1/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.5.0-beta.1/opentelemetry.instrumentation.sqlclient.1.5.0-beta.1.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2023-06-06T00:58:33.67+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "Tracing",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.5.0-beta.1"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.5.0-beta.1/opentelemetry.instrumentation.sqlclient.1.5.0-beta.1.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.5.1-beta.1.json",
+          "@type": "Package",
+          "commitId": "7a6044fc-7d9f-4d6e-88c1-99d2df39c89f",
+          "commitTimeStamp": "2023-07-21T02:05:53.3054318+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/.netframework4.6.2/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/.netframework4.6.2/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.5.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/net6.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/net6.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/net6.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/net6.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.5.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": "net6.0"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/.netstandard2.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.07.21.02.05.11/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.json#dependencygroup/.netstandard2.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.5.1, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.5.1-beta.1/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.5.1-beta.1/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.5.1-beta.1/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2023-07-21T02:02:40.367+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "Tracing",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.5.1-beta.1"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.5.1-beta.1/opentelemetry.instrumentation.sqlclient.1.5.1-beta.1.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.6.0-beta.2.json",
+          "@type": "Package",
+          "commitId": "8b79662b-2d97-4c59-b916-8f9ac5660c6f",
+          "commitTimeStamp": "2023-10-27T00:27:41.1632751+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/.netframework4.6.2/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/.netframework4.6.2/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.6.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/net6.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/net6.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/net6.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/net6.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.6.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": "net6.0"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/net8.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/net8.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/net8.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/net8.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.6.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": "net8.0"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/.netstandard2.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[3.1.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.10.27.00.27.07/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.json#dependencygroup/.netstandard2.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.6.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.6.0-beta.2/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.6.0-beta.2/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.6.0-beta.2/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2023-10-27T00:23:42.083+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "Tracing",
+              "Metrics",
+              "Logging",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.6.0-beta.2"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.6.0-beta.2/opentelemetry.instrumentation.sqlclient.1.6.0-beta.2.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.6.0-beta.3.json",
+          "@type": "Package",
+          "commitId": "e898efd0-81a6-43b3-b63a-0a7521da464d",
+          "commitTimeStamp": "2023-11-17T23:38:21.5370124+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/.netframework4.6.2/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[8.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[8.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/.netframework4.6.2/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.6.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/net6.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/net6.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[8.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/net6.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[8.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/net6.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.6.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": "net6.0"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/net8.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/net8.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[8.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/net8.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[8.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/net8.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.6.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": "net8.0"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/.netstandard2.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[8.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[8.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2023.11.17.23.37.38/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.json#dependencygroup/.netstandard2.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.6.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.6.0-beta.3/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.6.0-beta.3/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.6.0-beta.3/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2023-11-17T23:35:35.383+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "Tracing",
+              "Metrics",
+              "Logging",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.6.0-beta.3"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.6.0-beta.3/opentelemetry.instrumentation.sqlclient.1.6.0-beta.3.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.10.0-beta.1.json",
+          "@type": "Package",
+          "commitId": "20fe0f65-5453-429b-a13e-4f072e6bff92",
+          "commitTimeStamp": "2024-12-09T06:33:37.1357523+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/.netframework4.6.2/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/.netframework4.6.2/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.10.0, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/net8.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/net8.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/net8.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/net8.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.10.0, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": "net8.0"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/.netstandard2.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2024.12.09.06.32.32/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.json#dependencygroup/.netstandard2.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.10.0, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET.",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.10.0-beta.1/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.10.0-beta.1/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.10.0-beta.1/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2024-12-09T06:29:48.79+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.10.0-beta.1"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.10.0-beta.1/opentelemetry.instrumentation.sqlclient.1.10.0-beta.1.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.11.0-beta.1.json",
+          "@type": "Package",
+          "commitId": "51d9134b-7d19-4696-ac87-17ec7607ddd1",
+          "commitTimeStamp": "2025-01-27T08:36:54.1524806+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/.netframework4.6.2/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/.netframework4.6.2/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.11.1, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/net8.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/net8.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/net8.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/net8.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.11.1, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": "net8.0"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/.netstandard2.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.01.27.08.36.33/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.json#dependencygroup/.netstandard2.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.11.1, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET.",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.11.0-beta.1/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.11.0-beta.1/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.11.0-beta.1/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2025-01-27T08:33:38.18+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.11.0-beta.1"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.11.0-beta.1/opentelemetry.instrumentation.sqlclient.1.11.0-beta.1.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.11.0-beta.2.json",
+          "@type": "Package",
+          "commitId": "471ab436-868a-4510-ae9d-7977dd762d84",
+          "commitTimeStamp": "2025-03-05T18:40:44.7200821+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/.netframework4.6.2/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/.netframework4.6.2/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.11.2, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/net8.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/net8.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/net8.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/net8.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.11.2, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": "net8.0"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/.netstandard2.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.03.05.18.40.06/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.json#dependencygroup/.netstandard2.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.11.2, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET.",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.11.0-beta.2/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.11.0-beta.2/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.11.0-beta.2/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2025-03-05T18:37:38.027+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.11.0-beta.2"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.11.0-beta.2/opentelemetry.instrumentation.sqlclient.1.11.0-beta.2.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.12.0-beta.1.json",
+          "@type": "Package",
+          "commitId": "37a9c74b-f10e-407c-acac-b409da0d0f75",
+          "commitTimeStamp": "2025-05-06T07:57:41.6136043+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/.netframework4.6.2/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/.netframework4.6.2/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.12.0, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/net8.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/net8.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/net8.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/net8.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.12.0, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": "net8.0"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/.netstandard2.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.05.06.07.56.45/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.json#dependencygroup/.netstandard2.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.12.0, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET.",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.12.0-beta.1/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.12.0-beta.1/license",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.12.0-beta.1/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2025-05-06T07:52:40.797+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.12.0-beta.1"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.12.0-beta.1/opentelemetry.instrumentation.sqlclient.1.12.0-beta.1.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        },
+        {
+          "@id": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/1.12.0-beta.2.json",
+          "@type": "Package",
+          "commitId": "678d20c8-1bca-41c1-ae13-74410a6b284b",
+          "commitTimeStamp": "2025-07-15T04:46:16.960872+00:00",
+          "catalogEntry": {
+            "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json",
+            "@type": "PackageDetails",
+            "authors": "OpenTelemetry Authors",
+            "dependencyGroups": [
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/.netframework4.6.2",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/.netframework4.6.2/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/.netframework4.6.2/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/.netframework4.6.2/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.12.0, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETFramework4.6.2"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/net8.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/net8.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/net8.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/net8.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.12.0, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": "net8.0"
+              },
+              {
+                "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/.netstandard2.0",
+                "@type": "PackageDependencyGroup",
+                "dependencies": [
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/.netstandard2.0/microsoft.extensions.configuration",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Configuration",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.configuration/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/.netstandard2.0/microsoft.extensions.options",
+                    "@type": "PackageDependency",
+                    "id": "Microsoft.Extensions.Options",
+                    "range": "[9.0.0, )",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/microsoft.extensions.options/index.json"
+                  },
+                  {
+                    "@id": "https://api.nuget.org/v3/catalog0/data/2025.07.15.04.45.58/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.json#dependencygroup/.netstandard2.0/opentelemetry.api.providerbuilderextensions",
+                    "@type": "PackageDependency",
+                    "id": "OpenTelemetry.Api.ProviderBuilderExtensions",
+                    "range": "[1.12.0, 2.0.0)",
+                    "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.api.providerbuilderextensions/index.json"
+                  }
+                ],
+                "targetFramework": ".NETStandard2.0"
+              }
+            ],
+            "description": "SqlClient instrumentation for OpenTelemetry .NET.",
+            "iconUrl": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.12.0-beta.2/icon",
+            "id": "OpenTelemetry.Instrumentation.SqlClient",
+            "language": "",
+            "licenseExpression": "Apache-2.0",
+            "licenseUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.12.0-beta.2/license",
+            "readmeUrl": "https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient/1.12.0-beta.2#show-readme-container",
+            "listed": true,
+            "minClientVersion": "",
+            "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.12.0-beta.2/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.nupkg",
+            "projectUrl": "https://opentelemetry.io/",
+            "published": "2025-07-15T04:42:33.33+00:00",
+            "requireLicenseAcceptance": true,
+            "summary": "",
+            "tags": [
+              "Observability",
+              "OpenTelemetry",
+              "Monitoring",
+              "Telemetry",
+              "distributed-tracing"
+            ],
+            "title": "",
+            "version": "1.12.0-beta.2"
+          },
+          "packageContent": "https://api.nuget.org/v3-flatcontainer/opentelemetry.instrumentation.sqlclient/1.12.0-beta.2/opentelemetry.instrumentation.sqlclient.1.12.0-beta.2.nupkg",
+          "registration": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"
+        }
+      ],
+      "parent": "https://api.nuget.org/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json",
+      "lower": "0.3.0-beta.1",
+      "upper": "1.12.0-beta.2"
+    }
+  ],
+  "@context": {
+    "@vocab": "http://schema.nuget.org/schema#",
+    "catalog": "http://schema.nuget.org/catalog#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "items": {
+      "@id": "catalog:item",
+      "@container": "@set"
+    },
+    "commitTimeStamp": {
+      "@id": "catalog:commitTimeStamp",
+      "@type": "xsd:dateTime"
+    },
+    "commitId": {
+      "@id": "catalog:commitId"
+    },
+    "count": {
+      "@id": "catalog:count"
+    },
+    "parent": {
+      "@id": "catalog:parent",
+      "@type": "@id"
+    },
+    "tags": {
+      "@id": "tag",
+      "@container": "@set"
+    },
+    "reasons": {
+      "@container": "@set"
+    },
+    "packageTargetFrameworks": {
+      "@id": "packageTargetFramework",
+      "@container": "@set"
+    },
+    "dependencyGroups": {
+      "@id": "dependencyGroup",
+      "@container": "@set"
+    },
+    "dependencies": {
+      "@id": "dependency",
+      "@container": "@set"
+    },
+    "packageContent": {
+      "@type": "@id"
+    },
+    "published": {
+      "@type": "xsd:dateTime"
+    },
+    "registration": {
+      "@type": "@id"
+    }
+  }
+}

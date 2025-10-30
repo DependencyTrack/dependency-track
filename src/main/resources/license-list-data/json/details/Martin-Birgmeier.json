@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) 1993 Martin Birgmeier All rights reserved. \n\nYou may redistribute unmodified or modified versions of this source code provided that the above copyright notice and this and the following conditions are retained. \n\nThis software is provided ``as is\u0027\u0027, and comes with no warranties of any kind. I shall in no event be liable for anything that happens to anyone/anything when using this software.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) 1993 Martin Birgmeier All rights reserved.\";match\u003d\".{0,5000}\"\u003e\u003e\nYou may redistribute unmodified or modified versions of this source code provided that the above copyright notice and this and the following conditions are retained.\n\nThis software is provided ``as is\u0027\u0027, and comes with no warranties of any kind. I shall in no event be liable for anything that happens to anyone/anything when using this software.\n\n",
+  "name": "Martin Birgmeier License",
+  "licenseId": "Martin-Birgmeier",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/Perl/perl5/blob/blead/util.c#L6136",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:57:57Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/Perl/perl5/blob/blead/util.c#L6136"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (c) 1993 Martin Birgmeier All rights reserved.\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            You may redistribute unmodified or modified versions of\n            this source code provided that the above copyright notice\n            and this and the following conditions are retained.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            This software is provided ``as is\u0026apos;\u0026apos;, and comes with no warranties\n            of any kind. I shall in no event be liable for anything\n            that happens to anyone/anything when using this software.\n         \u003c/p\u003e\n\n      "
+}

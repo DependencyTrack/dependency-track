@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1994-2001, OFFIS\n\nThis software and supporting documentation were developed by\n \nKuratorium OFFIS e.V.\nHealthcare Information and Communication Systems\nEscherweg 2\nD-26121 Oldenburg, Germany\n \nTHIS SOFTWARE IS MADE AVAILABLE,  AS IS,  AND OFFIS MAKES NO  WARRANTY\nREGARDING  THE  SOFTWARE,  ITS  PERFORMANCE,  ITS  MERCHANTABILITY  OR\nFITNESS FOR ANY PARTICULAR USE, FREEDOM FROM ANY COMPUTER DISEASES  OR\nITS CONFORMITY TO ANY SPECIFICATION. THE ENTIRE RISK AS TO QUALITY AND\nPERFORMANCE OF THE SOFTWARE IS WITH THE USER.\n\nCopyright of the software  and  supporting  documentation  is,  unless\notherwise stated, owned by OFFIS, and free access is hereby granted as\na license to  use  this  software,  copy  this  software  and  prepare\nderivative works based upon this software.  However, any  distribution\nof this software source code or supporting documentation or derivative\nworks  (source code and  supporting documentation)  must  include  the\nthree paragraphs of this copyright notice.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1994-2001, OFFIS\";match\u003d\".{0,5000}\"\u003e\u003e\nThis software and supporting documentation were developed by\nKuratorium OFFIS e.V. Healthcare Information and Communication Systems\nEscherweg 2\nD-26121 Oldenburg, Germany\n\nTHIS SOFTWARE IS MADE AVAILABLE, AS IS, AND OFFIS MAKES NO WARRANTY REGARDING THE SOFTWARE, ITS PERFORMANCE, ITS MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR USE, FREEDOM FROM ANY COMPUTER DISEASES OR ITS CONFORMITY TO ANY SPECIFICATION. THE ENTIRE RISK AS TO QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH THE USER.\n\nCopyright of the software and supporting documentation is, unless otherwise stated, owned by OFFIS, and free access is hereby granted as a license to use this software, copy this software and prepare derivative works based upon this software. However, any distribution of this software source code or supporting documentation or derivative works (source code and supporting documentation) must include the three paragraphs of this copyright notice.\n\n",
+  "name": "OFFIS License",
+  "licenseId": "OFFIS",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://sourceforge.net/p/xmedcon/code/ci/master/tree/libs/dicom/README",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2025-07-01T14:58:03Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://sourceforge.net/p/xmedcon/code/ci/master/tree/libs/dicom/README"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            Copyright (C) 1994-2001, OFFIS\n         \u003c/span\u003e\u003c/var\u003e\n        \u003cp\u003e This software and supporting documentation were developed\n         by \u003cbr /\u003e\nKuratorium OFFIS e.V. Healthcare Information and\n           Communication Systems \u003cbr /\u003e\nEscherweg 2 \u003cbr /\u003e\nD-26121 Oldenburg, Germany\u003c/p\u003e\n\n         \u003cp\u003e\n            THIS SOFTWARE IS MADE AVAILABLE, AS IS, AND OFFIS MAKES NO WARRANTY\n            REGARDING THE SOFTWARE, ITS PERFORMANCE, ITS MERCHANTABILITY\n            OR FITNESS FOR ANY PARTICULAR USE, FREEDOM FROM ANY COMPUTER\n            DISEASES OR ITS CONFORMITY TO ANY SPECIFICATION. THE ENTIRE RISK\n            AS TO QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH THE USER.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Copyright of the software and supporting documentation is, unless\n            otherwise stated, owned by OFFIS, and free access is hereby granted\n            as a license to use this software, copy this software and prepare\n            derivative works based upon this software. However, any distribution\n            of this software source code or supporting documentation or\n            derivative works (source code and supporting documentation)\n            must include the three paragraphs of this copyright notice.\n         \u003c/p\u003e\n\n      "
+}

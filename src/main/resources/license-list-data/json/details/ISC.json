@@ -1,0 +1,46 @@
+{
+  "isDeprecatedLicenseId": false,
+  "isFsfLibre": true,
+  "licenseText": "ISC License:\n\nCopyright (c) 2004-2010 by Internet Systems Consortium, Inc. (\"ISC\")\nCopyright (c) 1995-2003 by Internet Software Consortium\n\nPermission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\" AND ISC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e\u003c\u003cvar;name\u003d\"title\";original\u003d\"ISC License\";match\u003d\"(The )?ISC License( \\(ISC[L]?\\))?:?\"\u003e\u003e\n\n\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"\u003ccopyright notice\u003e  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and\u003c\u003cbeginOptional\u003e\u003e /or\u003c\u003cendOptional\u003e\u003e distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\" AND \u003c\u003cvar;name\u003d\"author\";original\u003d\"THE AUTHOR\";match\u003d\".+\"\u003e\u003e DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL \u003c\u003cvar;name\u003d\"authorLiability\";original\u003d\"THE AUTHOR\";match\u003d\".+\"\u003e\u003e BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.\n\n",
+  "name": "ISC License",
+  "licenseComments": "The ISC License text changed \u0027and\u0027 to \u0027and/or\u0027 in July 2007.",
+  "comment": "The ISC License text changed \u0027and\u0027 to \u0027and/or\u0027 in July 2007.",
+  "licenseId": "ISC",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://www.isc.org/downloads/software-support-policy/isc-license/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:27Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://www.isc.org/licenses/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:27Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/ISC",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T14:54:27Z",
+      "isWayBackLink": false,
+      "order": 2
+    }
+  ],
+  "seeAlso": [
+    "https://www.isc.org/licenses/",
+    "https://www.isc.org/downloads/software-support-policy/isc-license/",
+    "https://opensource.org/licenses/ISC"
+  ],
+  "isOsiApproved": true,
+  "licenseTextHtml": "\n      \u003cdiv class\u003d\"optional-license-text\"\u003e \n         \u003cp\u003e\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern (The )?ISC License( \\(ISC[L]?\\))?:?\"\u003e ISC License\u003c/span\u003e\u003c/var\u003e\u003c/p\u003e\n\n      \u003c/div\u003e\n      \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003e\u0026lt;copyright notice\u0026gt;\u003c/p\u003e\n\n      \u003c/span\u003e\u003c/div\u003e\n\n      \u003cp\u003ePermission to use, copy, modify, and\u003cvar class\u003d\"optional-license-text\"\u003e /or\u003c/var\u003e distribute this software for any purpose with or without fee is\n         hereby granted, provided that the above copyright notice and this permission notice appear in all\n         copies.\u003c/p\u003e\n\n      \u003cp\u003eTHE SOFTWARE IS PROVIDED \u0026quot;AS IS\u0026quot; AND \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e THE AUTHOR\u003c/span\u003e\u003c/var\u003e DISCLAIMS ALL\n         WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND\n         FITNESS. IN NO EVENT SHALL \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .+\"\u003e THE AUTHOR\u003c/span\u003e\u003c/var\u003e BE LIABLE FOR ANY\n         SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF\n         USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING\n         OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.\u003c/p\u003e\n\n    "
+}

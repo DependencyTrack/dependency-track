@@ -10,9 +10,11 @@ projects and components. Policies are configurable and can be enforced for the p
 limited to specific projects. Policies are evaluated when an SBOM is uploaded.
 
 There are three types of policy violations:
-* License
-* Security
-* Operational
+* **License**
+* **Security**
+* **Operational**
+
+---
 
 ## License Violation
 If you want to check whether the declared licenses of the components in a project are compatible with guidelines that
@@ -41,18 +43,37 @@ license combinations according to the SPDX expression would include a license th
 Dependency-Track comes with pre-configured groups of related licenses (e.g. Copyleft) that provide a starting point for
 organizations to create custom license policies.
 
+**Subjects under License policies:**
+- **LICENSE** → Checks for a specific declared license on a component.
+- **LICENSE GROUP** → Checks whether the license belongs to a defined license group (e.g., Copyleft, Non-commercial, Permissive, Weak Copyleft).
+
+---
+
 ## Security Violation
 Policy conditions can specify the severity of vulnerabilities. A vulnerability affecting a component can result in a 
 policy violation if the policy condition matches the severity of the vulnerability. Vulnerabilities that are suppressed
 will not result in a policy violation.
 
-## Operational Violation
-Policy conditions can specify zero or more:
-* Coordinates (group, name, version)
-* Package URL
-* CPE
-* SWID Tag ID
-* Hash (MD5, SHA, SHA3, Blake2b, Blake3)
+**Subjects under Security policies:**
+- **CWE** → Identifies violations based on Common Weakness Enumeration identifiers.
+- **SEVERITY** → Triggers when vulnerability severity (e.g., Critical, High) meets the policy condition.
+- **VULNERABILITY ID** → Matches specific vulnerability identifiers.
+- **EPSS** → Uses the Exploit Prediction Scoring System score to assess exploit likelihood.
 
+---
+
+## Operational Violation
 This allows organizations to create lists of allowable and/or prohibited components. Future versions
 of Dependency-Track will incorporate additional operational parameters into the policy framework.
+
+**Subjects under Security policies:**
+- **AGE** → Enforces policies based on the Finding’s age (e.g., older than N days). Age in ISO-8601 period format (e.g. P1Y = 1 Year; P2Y3M = 2 Years, 3 Months)
+- **COORDINATES** → Matches a component using its group, name, and version identifiers.
+- **PACKAGE URL (purl)** → Applies conditions based on the package URL (purl) of a component.
+- **Common Platform Enumeration (CPE)** → Checks components using their CPE identifier.
+- **SWID Tag ID** → Targets components identified by their Software Identification (SWID) tag ID.
+- **COMPONENT HASH** → Enforces policies using a component’s cryptographic hash (e.g., MD5, SHA, SHA3, Blake2b, Blake3).
+- **VERSION** → Evaluates policies against a component’s version number.
+- **VERSION DISTANCE** → Compares the version difference from the available release (Epoch, Major, Minor, Patch).
+
+---

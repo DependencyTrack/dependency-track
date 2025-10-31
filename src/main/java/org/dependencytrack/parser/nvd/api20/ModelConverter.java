@@ -24,6 +24,7 @@ import io.github.jeremylong.openvulnerability.client.nvd.CpeMatch;
 import io.github.jeremylong.openvulnerability.client.nvd.CveItem;
 import io.github.jeremylong.openvulnerability.client.nvd.CvssV2;
 import io.github.jeremylong.openvulnerability.client.nvd.CvssV3;
+import io.github.jeremylong.openvulnerability.client.nvd.CvssV4;
 import io.github.jeremylong.openvulnerability.client.nvd.LangString;
 import io.github.jeremylong.openvulnerability.client.nvd.Metrics;
 import io.github.jeremylong.openvulnerability.client.nvd.Node;
@@ -169,9 +170,32 @@ public final class ModelConverter {
             }
         }
 
+        if (metrics.getCvssMetricV40() != null && !metrics.getCvssMetricV40().isEmpty()) {
+            metrics.getCvssMetricV40().sort(comparingInt(metric -> metric.getType().ordinal()));
+
+            for (final CvssV4 metric : metrics.getCvssMetricV40()) {
+                final var cvss = CvssUtil.parse(metric.getCvssData().getVectorString());
+                vuln.setCvssV4Vector(cvss.toString());
+                vuln.setCvssV4BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
+
+                final Double envScore = metric.getCvssData().getEnvironmentalScore();
+                if (envScore != null && !envScore.isNaN()) {
+                    vuln.setCvssV4EnvironmentalScore(BigDecimal.valueOf(envScore));
+                }
+
+                final Double threatScore = metric.getCvssData().getThreatScore();
+                if (threatScore != null && !threatScore.isNaN()) {
+                    vuln.setCvssV4ThreatScore(BigDecimal.valueOf(threatScore));
+                }
+
+                break;
+            }
+        }
+
         vuln.setSeverity(VulnerabilityUtil.getSeverity(
                 vuln.getCvssV2BaseScore(),
                 vuln.getCvssV3BaseScore(),
+                vuln.getCvssV4BaseScore(),
                 vuln.getOwaspRRLikelihoodScore(),
                 vuln.getOwaspRRTechnicalImpactScore(),
                 vuln.getOwaspRRBusinessImpactScore()

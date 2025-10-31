@@ -76,6 +76,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
+import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV4Score;
 
 public class OsvDownloadTask implements LoggableSubscriber {
 
@@ -280,12 +281,23 @@ public class OsvDownloadTask implements LoggableSubscriber {
         vuln.setSeverity(calculateOSVSeverity(advisory));
         vuln.setCvssV2Vector(advisory.getCvssV2Vector());
         vuln.setCvssV3Vector(advisory.getCvssV3Vector());
+        vuln.setCvssV4Vector(advisory.getCvssV4Vector());
         return vuln;
     }
 
     // calculate severity of vulnerability on priority-basis (database, ecosystem)
     public Severity calculateOSVSeverity(OsvAdvisory advisory) {
 
+        // derive from database_specific cvss v4 vector if available
+        if(advisory.getCvssV4Vector() != null) {
+            var cvss = CvssUtil.parse(advisory.getCvssV4Vector());
+            if (cvss != null) {
+                var score = cvss.getBakedScores();
+                return normalizedCvssV4Score(score.getOverallScore());
+            } else {
+                LOGGER.warn("Unable to determine severity from CVSSv4 vector: " + advisory.getCvssV4Vector());
+            }
+        }
         // derive from database_specific cvss v3 vector if available
         if(advisory.getCvssV3Vector() != null) {
             var cvss = CvssUtil.parse(advisory.getCvssV3Vector());

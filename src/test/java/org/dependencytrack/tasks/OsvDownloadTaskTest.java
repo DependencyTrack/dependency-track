@@ -364,6 +364,21 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testParseAdvisoryWithCvss4ScoreToVulnerability() throws IOException {
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-q2x7-8rv6-6q7h.json");
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assertions.assertNotNull(advisory);
+        final var task = new OsvDownloadTask();
+        Vulnerability vuln = task.mapAdvisoryToVulnerability(qm, advisory);
+        Assertions.assertNotNull(vuln);
+        Assertions.assertEquals("GITHUB", vuln.getSource());
+        Assertions.assertEquals(Severity.MEDIUM, vuln.getSeverity());
+        Assertions.assertEquals("CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H", vuln.getCvssV3Vector());
+        Assertions.assertEquals("CVSS:4.0/AV:L/AC:L/AT:P/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N", vuln.getCvssV4Vector());
+    }
+
+    @Test
     void testParseAdvisoryToVulnerabilityWithInvalidPurl() throws IOException {
         final var task = new OsvDownloadTask();
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-invalid-purl.json");

@@ -24,7 +24,8 @@ updates:
   schedule:
     interval: daily
   ignore:
-  - update-types:
+  - dependency-name: "*"
+    update-types:
     - version-update:semver-major
 - package-ecosystem: docker
   target-branch: 4.13.x
@@ -32,5 +33,6 @@ updates:
   schedule:
     interval: daily
   ignore:
-  - update-types:
+  - dependency-name: "*"
+    update-types:
     - version-update:semver-major

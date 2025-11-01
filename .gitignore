@@ -23,3 +23,7 @@ target/
 # nix 
 .direnv
 .pre-commit-config.yaml
+
+# Local files to ignore (do not push)
+.github/copilot-instructions.md
+set-java21.ps1

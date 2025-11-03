@@ -21,9 +21,11 @@ RUN mvn -q -e clean package -DskipTests
 # ===========================
 # 3️⃣ FINAL IMAGE (Runtime)
 # ===========================
-FROM eclipse-temurin:21-jre-jammy
-WORKDIR /app
-COPY --from=backend-builder /app/backend/target/*.jar app.jar
-COPY --from=frontend-builder /app/frontend/dist /app/static
+FROM jetty:23-jdk21
+WORKDIR /var/lib/jetty
+# Copy built WAR into Jetty webapps as ROOT.war
+COPY --from=backend-builder /app/backend/target/*.war /var/lib/jetty/webapps/ROOT.war
+# Copy frontend static files into Jetty webapps (adjust path as needed)
+COPY --from=frontend-builder /app/frontend/dist /var/lib/jetty/webapps/static
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","app.jar"]
+# Jetty image provides its own startup; no custom ENTRYPOINT required

@@ -1,3 +1,30 @@
+# Ignore Git metadata
+.git
+
+# OS files
+*.DS_Store
+Thumbs.db
+
+# Java build output
+**/target
+
+# Node build artifacts
+**/node_modules
+frontend/dist
+
+# Jekyll / docs build
+docs/_site
+
+# IDE files
+.vscode
+.idea
+
+# Logs and temp
+*.log
+tmp/
+
+# Docker files
+Dockerfile
 .github/
 .idea/
 docs/

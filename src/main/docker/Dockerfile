@@ -27,7 +27,7 @@ ARG WAR_FILENAME=dependency-track-apiserver.jar
 
 FROM eclipse-temurin:25_36-jre-jammy@sha256:78fdf7893e016b223576b290231288252c369aa21e443278af07ac04f7f592f7 AS jre-build
 
-FROM debian:stable-slim@sha256:a771c85b2287eae7ce8fe0a4c2637d575c5d991555ae680c187c5572153648d9
+FROM debian:stable-slim@sha256:17a6a8a36e1e00de93ae0b24c0b34c47faa3e92450d1d8d451a80c3d91148e43
 
 ARG COMMIT_SHA
 ARG APP_VERSION

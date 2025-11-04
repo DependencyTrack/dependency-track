@@ -1,31 +1,18 @@
-# ===========================
-# 1️⃣ FRONTEND BUILD (Node)
-# ===========================
-FROM node:18 AS frontend-builder
-WORKDIR /app/frontend
-COPY ../frontend/package*.json ./
-RUN npm ci
-COPY ../frontend/ .
-RUN npm run build
-
-# ===========================
-# 2️⃣ BACKEND BUILD (Maven)
-# ===========================
-FROM maven:3.9.8-eclipse-temurin-21 AS backend-builder
-WORKDIR /app/backend
+FROM maven:3.9.8-eclipse-temurin-21 AS build
+WORKDIR /build
 COPY pom.xml .
-RUN mvn -q -e -U dependency:go-offline
+RUN mvn -q -e -U -Penhance dependency:go-offline || mvn -q -e -U dependency:go-offline
 COPY . .
-RUN mvn -q -e clean package -DskipTests
+# Produce executable Jar with embedded Jetty (official profile combination)
+RUN mvn -q -e package -P quick -P enhance -P embedded-jetty -Dprotobuf.skip=true -Dlogback.configuration.file=src/main/docker/logback.xml
 
-# ===========================
-# 3️⃣ FINAL IMAGE (Runtime)
-# ===========================
-FROM jetty:23-jdk21
-WORKDIR /var/lib/jetty
-# Copy built WAR into Jetty webapps as ROOT.war
-COPY --from=backend-builder /app/backend/target/*.war /var/lib/jetty/webapps/ROOT.war
-# Copy frontend static files into Jetty webapps (adjust path as needed)
-COPY --from=frontend-builder /app/frontend/dist /var/lib/jetty/webapps/static
+FROM eclipse-temurin:21-jre AS runtime
+ENV JAVA_OPTIONS="-XX:+UseParallelGC -XX:+UseStringDeduplication -XX:MaxRAMPercentage=85" \
+	LOGGING_LEVEL=INFO
+WORKDIR /opt/dtrack
+RUN mkdir -p /root/.dependency-track
+COPY --from=build /build/target/dependency-track-apiserver.jar ./dependency-track-apiserver.jar
+COPY --from=build /build/src/main/docker/logback.xml ./logback.xml
+COPY --from=build /build/src/main/docker/logback-json.xml ./logback-json.xml
 EXPOSE 8080
-# Jetty image provides its own startup; no custom ENTRYPOINT required
+ENTRYPOINT ["java","-XX:+UseParallelGC","-XX:+UseStringDeduplication","-XX:MaxRAMPercentage=85","--add-opens","java.base/java.util.concurrent=ALL-UNNAMED","-Dlogback.configurationFile=logback.xml","-DdependencyTrack.logging.level=INFO","-jar","dependency-track-apiserver.jar","-context","/"]

@@ -1,0 +1,74 @@
+# Multi-stage build combining compilation + official runtime
+# Stage 1: Build the application
+FROM maven:3.9.8-eclipse-temurin-21 AS build
+WORKDIR /build
+COPY pom.xml .
+RUN mvn -q -e -U -Penhance dependency:go-offline || mvn -q -e -U dependency:go-offline
+COPY . .
+# Build with embedded Jetty (official way)
+RUN mvn -B package -P enhance -P embedded-jetty -DskipTests -Dprotobuf.skip=true -Dservices.bom.merge.skip=true -Dlogback.configuration.file=src/main/docker/logback.xml
+
+# Stage 2: Official runtime from upstream Dockerfile
+FROM eclipse-temurin:25_36-jre-jammy@sha256:78fdf7893e016b223576b290231288252c369aa21e443278af07ac04f7f592f7 AS jre-build
+
+FROM debian:stable-slim@sha256:a771c85b2287eae7ce8fe0a4c2637d575c5d991555ae680c187c5572153648d9
+
+ARG COMMIT_SHA=unknown
+ARG APP_VERSION=4.14.0-SNAPSHOT
+ARG APP_DIR=/opt/owasp/dependency-track/
+ARG DATA_DIR=/data/
+ARG UID=1000
+ARG GID=1000
+ARG WAR_FILENAME=dependency-track-apiserver.jar
+
+ENV TZ=Etc/UTC \
+    LOGGING_LEVEL=INFO \
+    JAVA_OPTIONS="-XX:+UseParallelGC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxRAMPercentage=90.0" \
+    EXTRA_JAVA_OPTIONS="" \
+    CONTEXT="/" \
+    WAR_FILENAME=${WAR_FILENAME} \
+    JAVA_HOME=/opt/java/openjdk \
+    PATH="/opt/java/openjdk/bin:${PATH}" \
+    LANG=C.UTF-8 \
+    HOME=${DATA_DIR} \
+    DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false \
+    DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=${DATA_DIR} \
+    LOGGING_CONFIG_PATH="logback.xml"
+
+RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
+    && groupadd --system --gid ${GID} dtrack || true \
+    && useradd --system --no-user-group --gid dtrack --no-create-home --home-dir ${DATA_DIR} --comment "dtrack user" --shell /bin/false --uid ${UID} dtrack || true \
+    && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
+    && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
+    && apt-get -yqq update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends wget \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
+COPY --from=build /build/target/dependency-track-apiserver.jar ${APP_DIR}
+COPY --from=build /build/src/main/docker/logback.xml ${APP_DIR}
+COPY --from=build /build/src/main/docker/logback-json.xml ${APP_DIR}
+
+USER ${UID}
+WORKDIR ${APP_DIR}
+
+CMD exec java ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
+    --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
+    -Dlogback.configurationFile=${LOGGING_CONFIG_PATH} \
+    -DdependencyTrack.logging.level=${LOGGING_LEVEL} \
+    -jar ${WAR_FILENAME} \
+    -context ${CONTEXT}
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD wget -t 1 -T 3 --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
+
+LABEL \
+    org.opencontainers.image.vendor="OWASP" \
+    org.opencontainers.image.title="Official Dependency-Track Container image" \
+    org.opencontainers.image.description="Dependency-Track is an intelligent Component Analysis platform" \
+    org.opencontainers.image.version="${APP_VERSION}" \
+    org.opencontainers.image.url="https://dependencytrack.org/" \
+    org.opencontainers.image.source="https://github.com/DependencyTrack/dependency-track" \
+    org.opencontainers.image.revision="${COMMIT_SHA}" \
+    org.opencontainers.image.licenses="Apache-2.0"
